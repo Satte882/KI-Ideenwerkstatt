@@ -391,13 +391,11 @@ def process_analysis_detail(request, pk):
         .order_by("-revision")
         .first()
     )
-    investigation_effective_budget = None
-    if current_investigation_snapshot is not None:
-        from ki_radar.accelerator.investigation_runtime import budget_from_snapshot
-
-        investigation_effective_budget = budget_from_snapshot(
-            current_investigation_snapshot.run_limits
-        )
+    investigation_effective_budget = (
+        dict(current_investigation_snapshot.run_limits)
+        if current_investigation_snapshot is not None
+        else None
+    )
 
     return render(
         request,
