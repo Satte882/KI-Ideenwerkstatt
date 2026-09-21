@@ -296,11 +296,36 @@ def assert_comparable_runs(*, fixed: InvestigationRun, adaptive: InvestigationRu
 
 def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[str, Any]:
     runs = list(campaign.investigation_runs.order_by("created_at"))
+    reservations = list(
+        campaign.provider_reservations.select_related("run", "model_call").order_by("created_at")
+    )
+    reservations_by_run: dict[str, list[InvestigationProviderReservation]] = {}
+    for reservation in reservations:
+        reservations_by_run.setdefault(str(reservation.run_id), []).append(reservation)
+
     matrix: dict[str, dict[str, int]] = {
         variant: {"adaptive_real_scored": 0, "fixed_real_scored": 0}
         for variant in ("A", "B", "C")
     }
+    usage_by_arm: dict[str, dict[str, int]] = {}
+    usage_by_variant: dict[str, dict[str, int]] = {}
     attempts: list[dict[str, Any]] = []
+
+    def add_usage(bucket: dict[str, dict[str, int]], key: str, values: dict[str, int]) -> None:
+        target = bucket.setdefault(
+            key or "unspecified",
+            {
+                "tool_calls": 0,
+                "model_calls": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "provider_calls": 0,
+                "cost_microunits": 0,
+            },
+        )
+        for metric, value in values.items():
+            target[metric] += int(value)
+
     for run in runs:
         metadata = dict(run.evidence_metadata or {})
         variant = str(metadata.get("variant") or "").upper()
@@ -314,6 +339,28 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         ):
             key = f"{run.execution_mode}_real_scored"
             matrix[variant][key] += 1
+
+        run_reservations = reservations_by_run.get(str(run.pk), [])
+        provider_calls = len(run_reservations)
+        cost_microunits = sum(
+            int(item.actual_cost_microunits or 0)
+            for item in run_reservations
+            if item.status == InvestigationProviderReservation.Status.SETTLED
+        )
+        usage = {
+            "tool_calls": int(run.usage.get("tool_calls", 0)),
+            "model_calls": int(run.usage.get("model_calls", 0)),
+            "input_tokens": int(run.usage.get("input_tokens", 0)),
+            "output_tokens": int(run.usage.get("output_tokens", 0)),
+            "provider_calls": provider_calls,
+            "cost_microunits": cost_microunits,
+        }
+        add_usage(usage_by_arm, run.execution_mode, usage)
+        add_usage(usage_by_variant, variant, usage)
+
+        runtime_seconds = None
+        if run.finished_at is not None:
+            runtime_seconds = max(0, int((run.finished_at - run.started_at).total_seconds()))
         attempts.append(
             {
                 "run_id": str(run.pk),
@@ -323,16 +370,11 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
                 "arm": run.execution_mode,
                 "status": run.status,
                 "clarification_reason": run.clarification_reason,
-                "tool_calls": int(run.usage.get("tool_calls", 0)),
-                "model_calls": int(run.usage.get("model_calls", 0)),
-                "input_tokens": int(run.usage.get("input_tokens", 0)),
-                "output_tokens": int(run.usage.get("output_tokens", 0)),
+                "runtime_seconds": runtime_seconds,
+                **usage,
             }
         )
 
-    reservations = list(
-        campaign.provider_reservations.select_related("run", "model_call").order_by("created_at")
-    )
     reservation_summary = {
         status: sum(1 for item in reservations if item.status == status)
         for status in (
@@ -341,6 +383,22 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
             InvestigationProviderReservation.Status.UNCERTAIN,
         )
     }
+    outstanding: list[str] = []
+    for variant in ("A", "B", "C"):
+        adaptive_missing = max(0, 3 - matrix[variant]["adaptive_real_scored"])
+        if adaptive_missing:
+            outstanding.append(
+                f"{variant}: {adaptive_missing} reale adaptive gewertete Läufe fehlen."
+            )
+        if matrix[variant]["fixed_real_scored"] < 1:
+            outstanding.append(f"{variant}: realer Fixed-Route-Vergleich fehlt.")
+    outstanding.extend(
+        [
+            "Unabhängiger verblindeter menschlicher Fachreview ist noch nicht dokumentiert.",
+            "Aktive menschliche Bearbeitungszeit ist noch nicht gemessen.",
+        ]
+    )
+
     nine_real_adaptive_complete = all(
         matrix[variant]["adaptive_real_scored"] >= 3 for variant in ("A", "B", "C")
     )
@@ -353,12 +411,14 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         "matrix": matrix,
         "nine_real_adaptive_runs_complete": nine_real_adaptive_complete,
         "fixed_comparison_present": fixed_comparison_present,
-        "effectiveness_proof_complete": (
-            nine_real_adaptive_complete and fixed_comparison_present
-        ),
+        "effectiveness_proof_complete": False,
         "attempts": attempts,
+        "usage_by_arm": usage_by_arm,
+        "usage_by_variant": usage_by_variant,
         "provider_reservations": reservation_summary,
+        "outstanding_requirements": outstanding,
         "human_active_time_seconds": None,
         "independent_human_review": "not_recorded",
         "ten_x_claim_allowed": False,
     }
+
