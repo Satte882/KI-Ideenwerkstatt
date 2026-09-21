@@ -409,7 +409,7 @@ def settle_provider_attempt(
         pk=reservation.campaign_id
     )
     if actual_input_tokens < 0 or actual_output_tokens < 0:
-        raise InvestigationRunError("Providerverbrauch ist ungültig.", code="invalid_provider_usage")
+        raise InvestigationRunError(\n            "Providerverbrauch ist ungültig.",\n            code="invalid_provider_usage",\n        )
     usage = dict(campaign.usage)
     usage["reserved_input_tokens"] = max(
         0,
