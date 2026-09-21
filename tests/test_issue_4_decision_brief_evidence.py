@@ -549,9 +549,7 @@ def test_human_solution_option_change_is_reported_not_overwritten(
     assert not process.solution_options.filter(
         recommendation=SolutionOption.Recommendation.PREFERRED
     ).exists()
-    created = process.solution_options.exclude(pk=existing.pk).get(
-        name="Status quo beibehalten"
-    )
+    created = process.solution_options.exclude(pk=existing.pk).get(name="Status quo beibehalten")
     assert created.recommendation == SolutionOption.Recommendation.CANDIDATE
     assert created.evaluation_status == SolutionOption.EvaluationStatus.DRAFT
 
