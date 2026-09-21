@@ -1,14 +1,68 @@
 {
-  "version": "vs1-source-packs-v1",
+  "version": "vs1-source-packs-v2",
   "A": {
     "supported_signal": "approver availability is associated with longer approval time",
-    "counterevidence": "missing information is not sufficient as sole explanation"
+    "counterevidence": "missing information is not sufficient as sole explanation",
+    "analysis": {
+      "group_by": "approver_available",
+      "aggregation": "mean",
+      "value_column": "approval_hours",
+      "unit_column": "unit",
+      "groups": {
+        "yes": {"value": "5", "population": 2},
+        "no": {"value": "29.5", "population": 2}
+      },
+      "excluded_rows": [
+        {"row": 5, "reason": "missing_value"}
+      ],
+      "expected_delta": "24.5"
+    }
   },
   "B": {
-    "critical_gap": "total_eligible is missing; escalation rate cannot be established"
+    "critical_gap": "total_eligible is missing; escalation rate cannot be established",
+    "profile": {
+      "column": "total_eligible",
+      "missing": 3,
+      "type": "empty"
+    }
   },
   "C": {
     "supported_signal": "queue retries are associated with longer approval time",
-    "contrast_to_A": "the supported cause differs from case A"
+    "contrast_to_A": "the supported cause differs from case A",
+    "analysis": {
+      "group_by": "queue_retries",
+      "aggregation": "mean",
+      "value_column": "approval_hours",
+      "unit_column": "unit",
+      "groups": {
+        "0": {"value": "5.5", "population": 2},
+        "4": {"value": "23", "population": 1},
+        "5": {"value": "27", "population": 1}
+      }
+    }
+  },
+  "edge_cases": {
+    "null_and_wrong_type": {
+      "groups": {
+        "A": {"value": "15", "population": 2},
+        "B": {"value": "40", "population": 2}
+      },
+      "excluded_rows": [
+        {"row": 3, "reason": "missing_value"},
+        {"row": 6, "reason": "non_numeric_value"}
+      ],
+      "difference": "25"
+    },
+    "unit_conflict": {
+      "groups": [],
+      "findings_contain": ["Einheitenkonflikt", "keine eindeutige Einheit"]
+    },
+    "empty_group": {
+      "groups": [],
+      "finding_contains": "Leere Vergleichspopulation"
+    },
+    "duplicates": {
+      "duplicate_rows": 1
+    }
   }
 }
