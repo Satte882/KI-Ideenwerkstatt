@@ -63,6 +63,7 @@ from .investigation_tools import (
 
 LOOP_VERSION = "vs1-agent-loop-v1"
 BUDGET_VERSION = "vs1-budget-v1"
+FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 
 DEFAULT_BUDGET = {
@@ -284,6 +285,9 @@ def base_execution_snapshot(
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
         "execution_mode": execution_mode,
+        "fixed_route_version": (
+            FIXED_ROUTE_VERSION if execution_mode == "fixed" else None
+        ),
         "evidence_metadata": dict(evidence_metadata or {}),
         "decision_brief_required": bool(decision_brief_required),
         "evidence_campaign": (
@@ -512,9 +516,16 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     "Das Gesamtnachweisbudget gehört nicht zu diesem Fall.",
                     code="invalid_evidence_budget",
                 )
-        if (execution_mode == "fixed" or evidence_metadata.get("evidence_phase")) and (
-            evidence_campaign is None
-        ):
+        evidence_provider_mode = str(
+            evidence_metadata.get("provider_mode") or ""
+        ).strip().casefold()
+        evidence_phase = str(
+            evidence_metadata.get("phase")
+            or evidence_metadata.get("evidence_phase")
+            or ""
+        ).strip().casefold()
+        real_evidence_run = evidence_provider_mode == "real" and bool(evidence_phase)
+        if (execution_mode == "fixed" or real_evidence_run) and evidence_campaign is None:
             raise InvestigationRunError(
                 "Die reale Nachweisphase darf ohne explizites persistentes "
                 "Gesamtbudget nicht starten.",
