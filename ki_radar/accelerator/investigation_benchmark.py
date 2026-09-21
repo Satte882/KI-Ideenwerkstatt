@@ -194,7 +194,6 @@ def validate_evidence_attempt(
         )
 
 
-
 def _fixed_reference(source: InvestigationSource) -> dict[str, Any]:
     if source.source_type in {
         InvestigationSource.SourceType.TEXT,
