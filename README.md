@@ -4,6 +4,17 @@
 
 > AI Business Architecture, Portfolio- und Decision-Governance-Cockpit für kleine und mittlere Unternehmen
 
+## Aktuelle Entwicklungsrichtung
+
+Dieses Repository ist der experimentelle Nachfolger des eingefrorenen Referenzstands
+`Satte882/KI-UseCase-Radar`. Der aktuelle verbindliche Produktauftrag ist GitHub
+Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1).
+
+Die nachfolgend beschriebenen Fähigkeiten bilden die **heutige Baseline**, nicht das
+Endziel der Transformation. Ziel ist, die fachliche Arbeit zwischen Geschäftsproblem,
+Evidenz, Diagnose, Lösungsraum, Entscheidung, Governance, Pilot und Delivery weitgehend
+autonom auszuführen, während verbindliche Entscheidungen beim Menschen bleiben.
+
 KI-Ideenwerkstatt verbindet Business Architecture, Prozessdiagnose, lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung in einem nachvollziehbaren Arbeitsmodell.
 
 Das System beantwortet nicht nur, **welche KI-Ideen existieren**, sondern vor allem:

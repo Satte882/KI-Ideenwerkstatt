@@ -1,6 +1,6 @@
 # KI-Ideenwerkstatt Produkt-Roadmap
 
-**Stand:** 19.09.2026
+**Stand:** 21.09.2026
 
 **Status:** Produktstand und strategische Richtung, kein Terminversprechen
 
@@ -10,7 +10,7 @@ Diese Datei beschreibt **was KI-Ideenwerkstatt als Produkt bereits kann und welc
 
 Sie beschreibt bewusst **nicht**, wie einzelne Funktionen technisch umgesetzt wurden. Dafür sind die jeweiligen GitHub-Issues, Pull Requests, Gap-Analysen, Completion-Dokumente und – bei architekturrelevanten Entscheidungen – die ADRs maßgeblich.
 
-Die konkrete Abarbeitungsreihenfolge offener Issues nach fachlichen und technischen Abhängigkeiten wird getrennt im [`planning/EXECUTION_PLAN.md`](planning/EXECUTION_PLAN.md) geführt. Dadurch bleibt diese Roadmap auf Produktstand und strategische Richtung fokussiert, während der Execution Plan Rework-Risiken und Implementierungsreihenfolge steuert.
+Für die aktuelle Transformation ist GitHub Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1) der verbindliche Produktauftrag. Der bisherige [`planning/EXECUTION_PLAN.md`](planning/EXECUTION_PLAN.md) bleibt als historische und technische Referenz erhalten, begrenzt aber die Sequenzierung von Issue #1 nicht.
 
 Die Zukunftssicht folgt den Horizonten **Now / Next / Later**:
 
@@ -197,15 +197,29 @@ Zentrale Nachweise: #279–#287, #295 und #310.
 
 # Now – aktueller Fokus
 
-**Nächster verbindlicher Umfang:** Den nach #435 aktuellen Produktstand und die offenen Issues fachlich priorisieren. Bis zu dieser Entscheidung beginnt keine weitere Produktfunktion.
+**Verbindlicher Produktauftrag:** GitHub Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1).
+
+Der heute ausgelieferte Funktionsumfang unter **Shipped** ist die Baseline. Ziel ist die Transformation vom geführten Workflow mit punktueller KI-Unterstützung zu einem System, das die fachliche Analysearbeit zwischen Problem, Evidenz, Diagnose, Lösungsraum, Entscheidung, Governance, Pilot und Delivery weitgehend autonom erledigt.
+
+Erfolg wird nicht an Codeumfang oder sichtbaren KI-Features gemessen, sondern insbesondere an:
+
+- deutlich weniger aktiver menschlicher Arbeitszeit bis zum reviewfähigen Decision Package;
+- mindestens 90 % weniger manueller Feldpflege;
+- wenigen, nur entscheidungsrelevanten Rückfragen;
+- vollständiger Provenance relevanter Aussagen;
+- null erfundenen Fakten oder Messwerten;
+- automatisch geprüfter Konsistenz von Discovery bis Delivery;
+- mindestens gleichwertiger oder besserer Ergebnisqualität gegenüber der manuellen Referenz.
+
+Die detaillierte Definition of Done und Verifikation stehen in Issue #1.
 
 ---
 
 # Next – priorisierte nächste Probleme
 
-**Next zuletzt geprüft:** 2026-09-19
+**Next zuletzt geprüft:** 2026-09-21
 
-Nach dem Merge von #435 ist bewusst **keine neue Produktfunktion verbindlich priorisiert**. Der in #307 beschriebene zusätzliche Decision-Space bleibt geparkt und wird nicht automatisch als Nächstes umgesetzt.
+Bis Issue #1 umgesetzt und gegen die Baseline gemessen wurde, gibt es keinen konkurrierenden separaten Next-Scope. Danach wird auf Basis der Messergebnisse neu priorisiert. Bestehende Later-Themen bleiben Optionen und dürfen innerhalb von Issue #1 nur dann vorgezogen werden, wenn sie nachweislich dem 10x-Ziel dienen.
 
 ---
 
@@ -279,7 +293,7 @@ Der in #307 beschriebene zusätzliche Decision-Space bleibt als strategische Opt
 1. Die Roadmap beschreibt **Produktfähigkeit, Problem und Richtung**, nicht technische Implementierungsdetails.
 2. `Shipped` wird nach relevanten Produktmerges auf Capability-Ebene aktualisiert; einzelne Fixes werden nicht als eigene Roadmap-Punkte gespiegelt.
 3. `Now`, `Next` und `Later` sind Prioritätshorizonte, keine Kalendertermine.
-4. `Next` oder `Later` werden nicht automatisch umgesetzt; vor jedem neuen Inkrement ist eine explizite Produktentscheidung und ein Gap-Check gegen den aktuellen `main` erforderlich.
+4. Während Issue #1 läuft, bestimmt dessen Ziel und Definition of Done die Sequenzierung; separate Zwischenfreigaben sind nur für irreversible fachliche Entscheidungen oder echte Produkt-Trade-offs erforderlich. Nach Abschluss von Issue #1 gilt für neue `Next`- oder `Later`-Themen wieder eine explizite Produktpriorisierung.
 5. GitHub-Issues und Pull Requests bleiben der detaillierte Umsetzungs- und Änderungssachverhalt.
 6. Gap-Analysen, Methodik- und Completion-Dokumente bleiben der vertiefende fachliche beziehungsweise technische Nachweis.
 7. ADRs dokumentieren ausschließlich relevante Architekturentscheidungen mit Kontext, Entscheidung und Konsequenzen; sie dienen nicht als Capability-Inventar.

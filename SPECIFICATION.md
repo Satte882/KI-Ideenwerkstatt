@@ -1,6 +1,6 @@
 # Umsetzungsauftrag: KI-Ideenwerkstatt
 
-> **Status:** Dieses Dokument beschreibt die ursprüngliche Basisspezifikation des ersten Umsetzungsschritts. Der aktuelle Produktstand umfasst zusätzlich geführten Intake, evidenzbasierte Freigaben, Portfolio-Matrix, optionale Value-Stream- und Prozessanalyse, explizite Lösungsoptionen sowie versionierte Delivery Packages. Maßgeblich für den aktuellen Funktionsumfang sind [README.md](README.md) und [docs/DISCOVERY_ARCHITECTURE.md](docs/DISCOVERY_ARCHITECTURE.md).
+> **Status: Historische Baseline – kein aktueller Produktauftrag.** Dieses Dokument beschreibt die ursprüngliche Basisspezifikation des ersten Umsetzungsschritts. Normative Formulierungen in diesem Dokument gelten nur für diesen historischen Scope und dürfen GitHub Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1), [AGENTS.md](AGENTS.md) oder den aktuellen `Now`-Fokus in [docs/ROADMAP.md](docs/ROADMAP.md) nicht einschränken. Der heutige Funktionsstand ist in [README.md](README.md) beschrieben.
 
 ## 1. Zweck
 

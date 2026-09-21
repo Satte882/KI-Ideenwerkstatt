@@ -150,13 +150,13 @@ Es beschreibt Produktqualität, nicht eine austauschbare Landingpage-Ästhetik.
 - Funktioniert die Ansicht auf Desktop, Tablet und Mobile?
 - Sind bestehende fachliche Funktionen vollständig erhalten?
 
-## Branch-Regel
+## Arbeitsregel für UI-Änderungen
 
-Das bestätigte Design wird über kleine AP-Branches in
-`agent/ui-control-room-integration` integriert und dort konsistent auf alle Seiten
-übertragen. `main` bleibt bis zur finalen Abnahme unangetastet. Auf `main` sind
-Selbst-Ausnahmen nicht zulässig; dort braucht jede Abweichung von diesem Dokument
-eine ausdrückliche Freigabe.
+Für KI-Ideenwerkstatt gilt keine historische Pflicht mehr, UI-Arbeiten über
+`agent/ui-control-room-integration` zu führen. Änderungen erfolgen im aktuellen
+Arbeitskontext des Repositories. Das Design-System bleibt für produktive Oberflächen
+verbindlich; eine bewusste Änderung dieser Regeln im Rahmen von Issue #1 muss
+explizit, nachvollziehbar und konsistent erfolgen statt sie stillschweigend zu umgehen.
 
 ## Abgeschlossene UI-Migration
 
