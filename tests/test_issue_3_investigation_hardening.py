@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Barrier
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import close_old_connections, connection
 from django.utils import timezone
 
@@ -363,6 +364,68 @@ def test_verifier_replays_analysis_without_side_effect_and_mismatch_blocks_succe
     assert report.model_call.context_refs["source_snapshot_id"] == str(run.source_snapshot_id)
     assert report.bound_hashes["manifest"] == run.manifest_hash
     assert run.execution_snapshot["verifier"]["prompt_version"]
+
+
+@pytest.mark.django_db
+def test_replay_detects_real_persisted_result_payload_tamper(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="replay-tamper",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.source_id),
+            "group_by": "available",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="hyp-availability",
+    )
+    result_id = step.result_ref["tool_result_id"]
+
+    with pytest.raises(ValidationError):
+        InvestigationToolResult.objects.filter(pk=result_id).update(
+            result_payload={"status": "tampered"}
+        )
+
+    stored = InvestigationToolResult.objects.get(pk=result_id)
+    tampered_payload = dict(stored.result_payload)
+    tampered_payload["differences"] = [
+        {
+            "from_group": "yes",
+            "to_group": "no",
+            "delta": "999",
+        }
+    ]
+    field = InvestigationToolResult._meta.get_field("result_payload")
+    db_value = field.get_db_prep_value(tampered_payload, connection)
+    table = connection.ops.quote_name(InvestigationToolResult._meta.db_table)
+    column = connection.ops.quote_name(field.column)
+    pk_column = connection.ops.quote_name(InvestigationToolResult._meta.pk.column)
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE {table} SET {column} = %s WHERE {pk_column} = %s",
+            [db_value, result_id],
+        )
+
+    replay = replay_tool_result(actor=owner, result_id=result_id)
+
+    assert replay.matches is False
+    assert "result_payload" in replay.mismatch_fields
+    assert replay.stored_hash != replay.replay_hash
 
 
 @pytest.mark.django_db
