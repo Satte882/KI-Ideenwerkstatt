@@ -131,7 +131,9 @@ def replace_check(checks, claim_id, **changes):
 
 def test_01_critical_gap_with_unused_allowed_action_continues():
     checks = replace_check(base_checks(), "problem", status="open", evidence_refs=())
-    result = evaluate_policy(\n        ready_state(checks=checks, verifier=None, allowed_action_available=True)\n    )
+    result = evaluate_policy(
+        ready_state(checks=checks, verifier=None, allowed_action_available=True)
+    )
     assert result.outcome == PolicyOutcome.CONTINUE
     assert "critical_unresolved:problem" in result.blockers
 
