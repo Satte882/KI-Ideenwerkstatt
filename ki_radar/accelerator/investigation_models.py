@@ -241,7 +241,6 @@ class InvestigationToolResult(TimeStampedModel):
         return f"{self.tool_name}:{self.id}"
 
 
-
 class InvestigationRun(TimeStampedModel):
     """Persistent technical VS1/2 run; not a fachlicher lifecycle status."""
 
@@ -357,9 +356,7 @@ class InvestigationRun(TimeStampedModel):
                 "budget_limits",
                 "execution_snapshot",
             )
-            current = (
-                type(self).objects.filter(pk=self.pk).values(*immutable_fields).first()
-            )
+            current = type(self).objects.filter(pk=self.pk).values(*immutable_fields).first()
             if current and any(current[name] != getattr(self, name) for name in immutable_fields):
                 raise ValidationError(
                     "Der Ausführungssnapshot eines Investigation-Runs ist unveränderlich."
