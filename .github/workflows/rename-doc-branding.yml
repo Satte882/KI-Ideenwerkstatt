@@ -1,0 +1,53 @@
+name: Rename documentation branding
+
+on:
+  push:
+    paths:
+      - ".github/workflows/rename-doc-branding.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Rename product references in Markdown
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = [
+              ("KI-UseCase-Radar", "KI-Ideenwerkstatt"),
+              ("KI-Radar", "KI-Ideenwerkstatt"),
+          ]
+
+          changed = []
+          for path in Path(".").rglob("*.md"):
+              if ".git" in path.parts:
+                  continue
+              text = path.read_text(encoding="utf-8")
+              new = text
+              for old, replacement in replacements:
+                  new = new.replace(old, replacement)
+              if new != text:
+                  path.write_text(new, encoding="utf-8")
+                  changed.append(str(path))
+
+          print(f"Changed {len(changed)} Markdown files")
+          for path in changed:
+              print(path)
+          PY
+      - name: Commit documentation rename
+        run: |
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.md' 'docs/**/*.md' 2>/dev/null || true
+          git add -u
+          git commit -m "Rename documentation to KI-Ideenwerkstatt"
+          git push
