@@ -26,11 +26,11 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
     InvestigationProviderReservation,
     InvestigationRun,
+    InvestigationSource,
     InvestigationSourceFolder,
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
-    DEFAULT_BUDGET,
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
@@ -456,7 +456,10 @@ def test_variant_b_missing_denominator_stays_human_clarification(
             decision_brief_required=True,
         ),
     )
-    csv_source = snapshot.sources.get(filename="cases.csv")
+    csv_source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
     step = execute_tool_step(
         actor=owner,
         run_id=handle.run_id,
@@ -503,7 +506,10 @@ def test_human_solution_option_change_is_reported_not_overwritten(
             decision_brief_required=True,
         ),
     )
-    source = snapshot.sources.get(filename="cases.csv")
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
     step = execute_tool_step(
         actor=owner,
         run_id=handle.run_id,
@@ -727,7 +733,7 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
     snapshot = process.investigation_source_snapshots.get()
     assert snapshot.folder_id == folder.pk
     assert snapshot.decision_question == question
-    assert snapshot.run_limits == DEFAULT_BUDGET
+    assert snapshot.run_limits == {}
     assert snapshot.sources.count() == 1
 
     detail = client.get(process.get_absolute_url())
