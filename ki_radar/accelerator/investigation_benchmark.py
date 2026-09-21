@@ -73,11 +73,7 @@ def _fixed_comparison_specs(
     if not numeric:
         return []
     outcome = next(
-        (
-            name
-            for name in numeric
-            if any(marker in name.casefold() for marker in _OUTCOME_MARKERS)
-        ),
+        (name for name in numeric if any(marker in name.casefold() for marker in _OUTCOME_MARKERS)),
         numeric[0],
     )
     excluded_names = {outcome}
@@ -304,8 +300,7 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         reservations_by_run.setdefault(str(reservation.run_id), []).append(reservation)
 
     matrix: dict[str, dict[str, int]] = {
-        variant: {"adaptive_real_scored": 0, "fixed_real_scored": 0}
-        for variant in ("A", "B", "C")
+        variant: {"adaptive_real_scored": 0, "fixed_real_scored": 0} for variant in ("A", "B", "C")
     }
     usage_by_arm: dict[str, dict[str, int]] = {}
     usage_by_variant: dict[str, dict[str, int]] = {}
@@ -421,4 +416,3 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         "independent_human_review": "not_recorded",
         "ten_x_claim_allowed": False,
     }
-
