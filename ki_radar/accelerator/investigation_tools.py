@@ -4,7 +4,6 @@ import csv
 import hashlib
 import io
 import json
-import os
 import stat
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -978,6 +977,12 @@ def compare_groups(
             "values": unit_values,
             "missing_rows": missing_unit_rows,
         }
+        if missing_unit_rows:
+            findings.append(
+                f"{len(missing_unit_rows)} Zeilen haben für die Wertespalte keine eindeutige Einheit."
+            )
+        if not unit_values and relevant_for_units:
+            findings.append("Einheit für die Wertespalte ist im Vergleichsbestand unklar.")
         if len(unit_values) > 1:
             findings.append("Einheitenkonflikt: mehrere Einheiten im Vergleichsbestand.")
             result_payload = {
