@@ -94,7 +94,7 @@ def investigation_authorize(request, process_pk):
                         process_analysis_id=process.pk,
                         folder_id=folder.pk,
                         decision_question=question,
-                        run_limits=dict(DEFAULT_BUDGET),
+                        run_limits={},
                     ),
                 )
             except InvestigationToolError as exc:
