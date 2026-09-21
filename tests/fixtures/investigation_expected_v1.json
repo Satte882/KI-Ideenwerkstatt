@@ -15,7 +15,7 @@
       "excluded_rows": [
         {"row": 5, "reason": "missing_value"}
       ],
-      "expected_delta": "24.5"
+      "expected_difference": {"from_group": "no", "to_group": "yes", "delta": "-24.5"}
     }
   },
   "B": {
