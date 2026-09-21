@@ -357,9 +357,13 @@ class InvestigationRun(TimeStampedModel):
                 "budget_limits",
                 "execution_snapshot",
             )
-            current = (\n                type(self).objects.filter(pk=self.pk).values(*immutable_fields).first()\n            )
+            current = (
+                type(self).objects.filter(pk=self.pk).values(*immutable_fields).first()
+            )
             if current and any(current[name] != getattr(self, name) for name in immutable_fields):
-                raise ValidationError(\n                    "Der Ausführungssnapshot eines Investigation-Runs ist unveränderlich."\n                )
+                raise ValidationError(
+                    "Der Ausführungssnapshot eines Investigation-Runs ist unveränderlich."
+                )
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
