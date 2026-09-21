@@ -492,7 +492,7 @@ def test_fixture_contract_keeps_expected_answers_outside_source_rooms():
         (fixture_root / "investigation_benchmark_prep_v1.json").read_text(encoding="utf-8")
     )
 
-    assert set(expected) == {"version", "A", "B", "C"}
+    assert set(expected) == {"version", "A", "B", "C", "edge_cases"}
     assert neutral["status"] == "draft"
     assert neutral["owner_role"] == "Business Owner"
     assert neutral["cause_hypotheses"] == ""
