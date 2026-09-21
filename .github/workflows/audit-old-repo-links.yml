@@ -22,6 +22,7 @@ jobs:
             'raw.githubusercontent.com/Satte882/KI-UseCase-Radar'
             'api.github.com/repos/Satte882/KI-UseCase-Radar'
             'KI-UseCase-Radar'
+            'KI-Radar'
           )
           found=0
           for p in "${patterns[@]}"; do
