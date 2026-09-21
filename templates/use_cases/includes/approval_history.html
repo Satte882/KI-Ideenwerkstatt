@@ -1,0 +1,123 @@
+<div class="app-card mb-4" id="approval" data-testid="approval-history">
+  <div class="card-header">
+    <strong>Freigabe- und Prüfverlauf</strong>
+    <div class="small text-muted mt-1">Jede Entscheidung bleibt mit ihrer Bewertung, Erstentscheidung, Auflage und unabhängigen Zweitprüfung getrennt nachvollziehbar. Neueste Entscheidung zuerst.</div>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for approval in use_case.approval_decisions.all %}
+    <article class="list-group-item bg-transparent py-4" data-approval-id="{{ approval.pk }}">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div>
+          <div class="eyebrow mb-1">Entscheidungsartefakt #{{ approval.pk }}</div>
+          <h3 class="h5 mb-1">{{ approval.get_decision_status_display }}</h3>
+          <div class="small text-muted">Erstellt {{ approval.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {% if approval.is_pending_second_approval %}
+          <span class="badge state-review">Zweitprüfung offen</span>
+          {% elif approval.is_returned_from_second_approval %}
+          <span class="badge state-blocked">Begründet zurückgegeben</span>
+          {% elif approval.second_approved_by %}
+          <span class="badge state-ready">Unabhängig bestätigt</span>
+          {% elif approval.is_final %}
+          <span class="badge state-ready">Finale Entscheidung</span>
+          {% else %}
+          <span class="badge state-review">Nicht final</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="border rounded p-3 mb-3" data-testid="assessment-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <strong>1. Bewertung v{{ approval.assessment.version }}</strong>
+          <span class="small text-muted">{{ approval.assessment.assessment_date|date:"d.m.Y" }}</span>
+        </div>
+        <dl class="row small mb-2">
+          <dt class="col-sm-4 text-muted">Rolle</dt><dd class="col-sm-8">Bewertende Person</dd>
+          <dt class="col-sm-4 text-muted">Person</dt><dd class="col-sm-8">{{ approval.assessment.assessed_by|default:"Nicht dokumentiert" }}</dd>
+          <dt class="col-sm-4 text-muted">Empfehlung</dt><dd class="col-sm-8">{{ approval.assessment.get_recommendation_display }}</dd>
+          <dt class="col-sm-4 text-muted">Confidence</dt><dd class="col-sm-8">{{ approval.assessment.confidence_label }}</dd>
+        </dl>
+        <div class="small text-muted mb-2">{{ approval.assessment.rationale }}</div>
+        {% if approval.assessment.evidence_url %}<a class="small" href="{{ approval.assessment.evidence_url }}" target="_blank" rel="noopener noreferrer">Bewertungsnachweis öffnen</a>{% endif %}
+      </div>
+
+      <div class="border rounded p-3 mb-3" data-testid="first-decision-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <strong>2. Erstentscheidung</strong>
+          <span class="small text-muted">{{ approval.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <dl class="row small mb-2">
+          <dt class="col-sm-4 text-muted">Rolle</dt><dd class="col-sm-8">Erstentscheidende Person</dd>
+          <dt class="col-sm-4 text-muted">Person</dt><dd class="col-sm-8">{{ approval.decided_by|default:"Nicht dokumentiert" }}</dd>
+          <dt class="col-sm-4 text-muted">Entscheidung</dt><dd class="col-sm-8">{{ approval.get_decision_status_display }}</dd>
+          <dt class="col-sm-4 text-muted">Governance-Grundlage</dt><dd class="col-sm-8">{% if approval.governance_confirmed %}Bestätigt{% else %}Nicht bestätigt{% endif %}</dd>
+        </dl>
+        <div class="text-preline small">{{ approval.rationale }}</div>
+      </div>
+
+      {% if approval.conditions or approval.second_approval_requested_at or approval.second_approval_assignee %}
+      <div class="border rounded p-3 mb-3" data-testid="conditions-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <strong>3. Auflagen und Prüfauftrag</strong>
+          <span class="small text-muted">{{ approval.second_approval_requested_at|date:"d.m.Y H:i"|default:"Kein separater Prüfauftrag" }}</span>
+        </div>
+        <dl class="row small mb-2">
+          <dt class="col-sm-4 text-muted">Auflage</dt><dd class="col-sm-8 text-preline">{{ approval.conditions|default:"Keine Auflage dokumentiert" }}</dd>
+          <dt class="col-sm-4 text-muted">Verantwortlich</dt><dd class="col-sm-8">{{ approval.condition_owner|default:"Nicht dokumentiert" }}</dd>
+          <dt class="col-sm-4 text-muted">Fälligkeit</dt><dd class="col-sm-8">{{ approval.condition_due_date|date:"d.m.Y"|default:"Nicht festgelegt" }}</dd>
+          <dt class="col-sm-4 text-muted">Bevorzugte Zweitprüfung</dt><dd class="col-sm-8">{{ approval.second_approval_assignee|default:"Nicht zugewiesen" }}</dd>
+        </dl>
+      </div>
+      {% endif %}
+
+      {% if approval.is_pending_second_approval %}
+      <div class="border rounded p-3" data-testid="second-review-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+          <div>
+            <strong>4. Unabhängige Zweitprüfung ausstehend</strong>
+            <div class="small text-muted mt-1">Bevorzugt zugewiesen: {{ approval.second_approval_assignee|default:"Nicht dokumentiert" }}. Andere unabhängige berechtigte Personen dürfen übernehmen.</div>
+          </div>
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'use_cases:second_approval_review' approval.pk %}">Zweitprüfung öffnen</a>
+        </div>
+      </div>
+      {% elif approval.is_returned_from_second_approval %}
+      <div class="border rounded p-3" data-testid="second-review-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <strong>4. Begründet zurückgegeben</strong>
+          <span class="small text-muted">{{ approval.second_approval_returned_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <dl class="row small mb-2">
+          <dt class="col-sm-4 text-muted">Rolle</dt><dd class="col-sm-8">Unabhängig prüfende Person</dd>
+          <dt class="col-sm-4 text-muted">Person</dt><dd class="col-sm-8">{{ approval.second_approval_returned_by|default:"Nicht dokumentiert" }}</dd>
+        </dl>
+        <div class="text-preline small">{{ approval.second_approval_return_reason }}</div>
+        <div class="small text-muted mt-2">Die Erstentscheidung bleibt als historisches Artefakt erhalten, wurde jedoch nicht final bestätigt.</div>
+      </div>
+      {% elif approval.second_approved_by %}
+      <div class="border rounded p-3" data-testid="second-review-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+          <strong>4. Unabhängig bestätigt</strong>
+          <span class="small text-muted">{{ approval.finalized_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <dl class="row small mb-0">
+          <dt class="col-sm-4 text-muted">Rolle</dt><dd class="col-sm-8">Unabhängig bestätigende Person</dd>
+          <dt class="col-sm-4 text-muted">Tatsächlich bestätigt</dt><dd class="col-sm-8">{{ approval.second_approved_by }}</dd>
+          <dt class="col-sm-4 text-muted">Bevorzugt zugewiesen</dt><dd class="col-sm-8">{{ approval.second_approval_assignee|default:"Nicht dokumentiert" }}</dd>
+        </dl>
+      </div>
+      {% elif approval.is_final %}
+      <div class="border rounded p-3" data-testid="final-step-{{ approval.pk }}">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <strong>3. Entscheidung finalisiert</strong>
+          <span class="small text-muted">{{ approval.finalized_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <div class="small text-muted mt-1">Für diesen Entscheidungstyp war keine unabhängige Zweitbestätigung erforderlich.</div>
+      </div>
+      {% endif %}
+    </article>
+    {% empty %}
+    <div class="list-group-item bg-transparent text-muted">Noch keine Freigabeentscheidung dokumentiert.</div>
+    {% endfor %}
+  </div>
+</div>

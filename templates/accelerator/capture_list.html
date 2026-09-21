@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Meine Erfassungen – KI-Radar{% endblock %}
+{% block body_class %}page-capture-list{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-lists.css' %}">
+{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-list-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">Accelerator · Persönlicher Arbeitsbereich</div>
+    <h1 class="cr-page-header__title">Meine Erfassungen</h1>
+    <p class="cr-page-header__summary">Eigene Entwürfe fortsetzen und abgeschlossene Arbeitsstände nachvollziehen.</p>
+  </div>
+  <div class="cr-list-header__actions">
+    {% if can_start_value_stream %}<a class="btn btn-outline-secondary" href="{% url 'accelerator:value_stream_start' %}">Value Stream geführt erfassen</a>{% endif %}
+    {% if can_start_use_case %}<a class="btn btn-primary" href="{% url 'accelerator:use_case_start' %}">Use Case geführt erfassen</a>{% endif %}
+  </div>
+</header>
+
+<section class="cr-section cr-list-section" aria-label="Eigene Erfassungen">
+  <div class="table-responsive cr-list-table-wrap capture-session-table-wrap">
+    <table class="table cr-list-table align-middle mb-0 capture-session-table">
+      <thead>
+        <tr>
+          <th scope="col">Erfassung</th>
+          <th scope="col">Art</th>
+          <th scope="col">Status</th>
+          <th scope="col">Fortschritt</th>
+          <th scope="col">Letzte Änderung</th>
+          <th scope="col">Ablauf</th>
+          <th scope="col" class="text-end">Nächste Aktion</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for session in capture_sessions %}
+        <tr>
+          <td data-label="Erfassung">
+            <strong>{{ session.working_title|default:session.get_capture_type_display }}</strong>
+            <div class="text-muted small">{{ session.pk|stringformat:"s"|slice:":8" }}</div>
+          </td>
+          <td data-label="Art">{{ session.get_capture_type_display }}</td>
+          <td data-label="Status"><span class="badge {% if session.status == 'completed' %}state-ready{% elif session.status == 'draft' %}state-review{% else %}state-blocked{% endif %}">{{ session.get_status_display }}</span></td>
+          <td data-label="Fortschritt">{{ session.answered_required_count }} / {{ session.required_question_count }} Pflichtantworten · {{ session.progress_percent }} %</td>
+          <td data-label="Letzte Änderung"><time datetime="{{ session.updated_at|date:'c' }}">{{ session.updated_at|date:"d.m.Y H:i" }}</time></td>
+          <td data-label="Ablauf"><time datetime="{{ session.expires_at|date:'c' }}">{{ session.expires_at|date:"d.m.Y" }}</time></td>
+          <td data-label="Nächste Aktion" class="text-end">
+            {% if session.status == 'draft' %}
+            <a class="btn btn-sm btn-primary" href="{% url 'accelerator:capture_step' session.pk 1 %}">Fortsetzen</a>
+            {% else %}
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:capture_review' session.pk %}">Ansehen</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="capture-session-empty"><p class="cr-empty-state">Noch keine eigenen Erfassungen vorhanden.</p></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

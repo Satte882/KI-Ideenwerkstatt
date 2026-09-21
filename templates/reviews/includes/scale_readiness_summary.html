@@ -1,0 +1,26 @@
+<div
+  class="app-card decision-panel mb-4"
+  id="scale-readiness-summary"
+  aria-live="polite"
+  aria-atomic="true"
+  data-scale-preview-url="{% url 'reviews:scale_readiness_preview' use_case.pk %}"
+>
+  <div class="card-header d-flex justify-content-between gap-2">
+    <div>
+      <strong>Scale Readiness</strong>
+      <div class="small text-muted">Entscheidungsvorschau · noch nicht gespeichert</div>
+    </div>
+    {% if scale_result.state == "ready" %}<span class="badge state-ready">{{ scale_result.state_label }}</span>{% elif scale_result.state == "conditional" %}<span class="badge state-review">{{ scale_result.state_label }}</span>{% else %}<span class="badge state-blocked">{{ scale_result.state_label }}</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <p class="small text-muted">Sechs Prüffelder bündeln Pilotwirkung, Governance, Delivery, ML Test Score und Betriebsnachweise. Es wird kein zusätzlicher Gesamtscore berechnet.</p>
+    <dl class="row mb-0 small scale-readiness-dimensions">
+      {% for dimension in scale_result.dimensions %}<dt class="col-8">{{ dimension.label }}</dt><dd class="col-4 text-end">{% if dimension.state == "ready" %}Erfüllt{% elif dimension.state == "conditional" %}Mit Auflage{% else %}Nicht erfüllt{% endif %}</dd>{% endfor %}
+      <dt class="col-8">ML Test Score</dt><dd class="col-4 text-end">{% if scale_result.final_ml_score != None %}{{ scale_result.final_ml_score }}{% else %}Offen{% endif %}</dd>
+    </dl>
+    {% if scale_result.findings %}<div class="section-title mt-3">Aktuelle Findings</div><ul class="decision-list">{% for finding in scale_result.findings %}<li><strong>{% if finding.severity == "blocker" %}Blocker{% else %}Auflage{% endif %}:</strong> {{ finding.message }}</li>{% endfor %}</ul>{% endif %}
+    <div class="section-title mt-3">Nächste Aktion</div>
+    {% if scale_result.blockers %}<p class="small mb-0"><strong>Hard Blocker beheben:</strong> {{ scale_result.blockers.0.message }}</p>{% elif scale_result.conditions %}<p class="small mb-0"><strong>Auflage absichern:</strong> {{ scale_result.conditions.0.message }} Maßnahme, Owner und Frist verbindlich dokumentieren.</p>{% else %}<p class="small mb-0"><strong>GO dokumentieren:</strong> Keine blockierende Aktion; die verantwortete Go-live-Entscheidung kann gespeichert werden.</p>{% endif %}
+    <p class="small text-muted mt-3 mb-0" data-scale-preview-feedback>{% if is_preview_update %}Vorschau anhand der aktuellen Eingaben aktualisiert.{% else %}Die Vorschau aktualisiert sich beim Bearbeiten der Nachweise.{% endif %}</p>
+  </div>
+</div>

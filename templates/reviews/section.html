@@ -1,0 +1,14 @@
+<section class="cr-review-section cr-review-section--{{ style }}">
+  <header class="cr-review-section__heading">
+    <h2>{{ title }}</h2>
+    <span class="badge state-{% if style == 'danger' %}blocked{% elif style == 'warning' %}review{% else %}optional{% endif %}">{{ items|length }}</span>
+  </header>
+  <div class="cr-review-section__items">
+    {% for item in items %}
+    <a href="{{ item.get_absolute_url }}" class="cr-review-item">
+      <span><strong>{{ item.short_id }}</strong> {{ item.title }}</span>
+      <time datetime="{% if item.next_review_date %}{{ item.next_review_date|date:'Y-m-d' }}{% endif %}">{{ item.next_review_date|date:"d.m.Y"|default:"–" }}</time>
+    </a>
+    {% empty %}<p class="cr-empty-state">Keine Einträge.</p>{% endfor %}
+  </div>
+</section>

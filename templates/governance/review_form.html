@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ review_label }} – {{ use_case.short_id }}{% endblock %}
+{% block body_class %}page-governance-review{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Governance · Fachprüfung" %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ journey.path_label }} · Formale Governance-Fachprüfung</div>
+    <h1 class="cr-page-header__title">{{ review_label }}</h1>
+    <p class="cr-work-header__summary">{{ use_case.short_id }} – {{ use_case.title }}</p>
+  </div>
+  <div class="cr-work-header__actions"><a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Zum Use Case</a></div>
+</header>
+{% include "includes/status_dimensions.html" %}
+<div class="alert alert-info"><strong>Eigenständiges Prüfartefakt.</strong> Das Governance-Screening begründet nur den Prüfbedarf. Ein Status „offen“ wird erst durch ein formales Ergebnis mit Nachweis abgeschlossen; „nicht relevant“ bleibt als begründete Screening-Entscheidung sichtbar.</div>
+<div class="row g-4">
+  <div class="col-xl-5">
+    <div class="app-card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2"><strong>Herleitung aus dem Screening</strong><span class="badge {% if review_required %}text-bg-warning{% else %}text-bg-light border text-dark{% endif %}">{% if review_required %}Offen{% else %}Nicht relevant{% endif %}</span></div>
+      <div class="card-body">
+        <dl class="row mb-3 small">
+          <dt class="col-5 text-muted">Screening</dt><dd class="col-7">{{ screening.assessment_date|date:"d.m.Y" }}</dd>
+          <dt class="col-5 text-muted">Erfasst</dt><dd class="col-7">{{ screening.created_at|date:"d.m.Y H:i" }}</dd>
+          <dt class="col-5 text-muted">Person</dt><dd class="col-7">{% if screening.reviewer %}{{ screening.reviewer.get_display_name }}{% else %}System / unbekannt{% endif %}</dd>
+          <dt class="col-5 text-muted">Grundlage</dt><dd class="col-7">{{ screening.basis_version }}</dd>
+          <dt class="col-5 text-muted">Screening-Ergebnis</dt><dd class="col-7">{{ screening.get_result_display }}</dd>
+        </dl>
+        <div class="section-title">Begründung des Status</div>
+        <div class="text-preline">{{ review_rationale }}</div>
+      </div>
+    </div>
+
+    {% if latest_review %}
+    <div class="app-card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2"><strong>Aktuelles Prüfartefakt</strong><span class="badge {% if latest_review.status == 'not_relevant' %}text-bg-light border text-dark{% elif latest_review.status == 'open' %}text-bg-warning{% elif latest_review.result == 'failed' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ latest_review.display_status }}</span></div>
+      <div class="card-body small">
+        <dl class="row mb-3">
+          <dt class="col-5 text-muted">Person</dt><dd class="col-7">{% if latest_review.reviewer %}{{ latest_review.reviewer.get_display_name }}{% else %}System / unbekannt{% endif %}</dd>
+          <dt class="col-5 text-muted">Fachrolle</dt><dd class="col-7">{{ latest_review.responsible_role|default:"Nicht dokumentiert" }}</dd>
+          <dt class="col-5 text-muted">Prüfdatum</dt><dd class="col-7">{{ latest_review.reviewed_at|date:"d.m.Y" }}</dd>
+          <dt class="col-5 text-muted">Zeitstempel</dt><dd class="col-7">{{ latest_review.created_at|date:"d.m.Y H:i" }}</dd>
+        </dl>
+        <div class="section-title">Begründung</div><div class="text-preline mb-3">{{ latest_review.rationale }}</div>
+        {% if latest_review.risks %}<div class="section-title">Risiken</div><div class="text-preline mb-3">{{ latest_review.risks }}</div>{% endif %}
+        {% if latest_review.measures %}<div class="section-title">Maßnahmen</div><div class="text-preline mb-3">{{ latest_review.measures }}</div>{% endif %}
+        {% if latest_review.conditions %}<div class="section-title">Auflagen</div><div class="text-preline mb-3">{{ latest_review.conditions }}</div>{% endif %}
+        {% if latest_review.evidence_url %}<a href="{{ latest_review.evidence_url }}" target="_blank" rel="noopener noreferrer">Nachweis öffnen</a>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="app-card">
+      <div class="card-header"><strong>Artefakthistorie</strong><div class="small text-muted mt-1">Neue Screenings und Prüfungen ergänzen die Historie; frühere Aussagen bleiben sichtbar.</div></div>
+      <div class="list-group list-group-flush history-list">
+        {% for review in review_history %}
+        <div class="list-group-item bg-transparent">
+          <div class="d-flex justify-content-between gap-2"><strong>{{ review.display_status }}</strong><span class="small text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</span></div>
+          <div class="small text-muted">{% if review.reviewer %}{{ review.reviewer.get_display_name }}{% else %}System / unbekannt{% endif %}{% if review.responsible_role %} · {{ review.responsible_role }}{% endif %}</div>
+          <div class="small mt-1">{{ review.rationale|truncatechars:180 }}</div>
+        </div>
+        {% empty %}<div class="list-group-item bg-transparent text-muted">Noch kein Prüfartefakt vorhanden.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-7">
+    {% if review_required %}
+    <form method="post" class="app-card cr-work-form">
+      {% csrf_token %}
+      <div class="card-header"><strong>Formale Prüfung abschließen</strong><div class="small text-muted mt-1">Ergebnis, Person, Fachrolle, Begründung und Nachweis werden gemeinsam gespeichert. Abhängig vom Ergebnis sind zusätzliche Angaben serverseitig verpflichtend.</div></div>
+      <div class="card-body">
+        {{ form.non_field_errors }}
+        <div class="row g-3">
+          {% for field in form %}
+          <div class="{% if field.name == 'reviewed_at' or field.name == 'responsible_role' or field.name == 'result' or field.name == 'evidence_url' %}col-md-6{% else %}col-12{% endif %}">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            <div class="text-danger small">{{ field.errors }}</div>
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card-footer d-flex flex-wrap gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Abbrechen</a>
+        <button class="btn btn-primary" type="submit">Prüfartefakt speichern und Gate neu prüfen</button>
+      </div>
+    </form>
+    {% else %}
+    <div class="app-card">
+      <div class="card-header d-flex justify-content-between align-items-center"><strong>Bewusste Nicht-Relevanz</strong><span class="badge text-bg-light border text-dark">Nicht relevant</span></div>
+      <div class="card-body">
+        <p>Das aktuelle Screening hat diese Fachprüfung mit Begründung als nicht relevant eingestuft. Dieser Status ist kein unerledigter Prüfpunkt und erzeugt kein positives Prüfergebnis.</p>
+        <div class="section-title">Begründung</div><div class="text-preline">{{ review_rationale }}</div>
+      </div>
+      <div class="card-footer"><a class="btn btn-primary" href="{{ use_case.get_absolute_url }}">Zum Use Case</a></div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

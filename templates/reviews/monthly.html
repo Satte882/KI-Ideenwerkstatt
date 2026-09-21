@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Monatsreview – KI-Radar{% endblock %}
+{% block body_class %}page-monthly-review{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-lists.css' %}">
+{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-list-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">Entscheidungs- und Pflegebedarf</div>
+    <h1 class="cr-page-header__title">Monatsreview</h1>
+    <p class="cr-page-header__summary">Priorisierte Arbeitsliste zum <time datetime="{{ today|date:'Y-m-d' }}">{{ today|date:"d.m.Y" }}</time> – von überfälligen Entscheidungen bis zu fehlenden Nachweisen.</p>
+  </div>
+</header>
+<section class="cr-section cr-review-grid review-grid" aria-label="Review-Arbeitslisten">
+  {% include "reviews/section.html" with title="Überfällige Reviews" items=overdue style="danger" %}
+  {% include "reviews/section.html" with title="In den nächsten 30 Tagen" items=due_soon style="warning" %}
+  {% include "reviews/section.html" with title="Ohne Review-Termin" items=missing_review_date style="secondary" %}
+  {% include "reviews/section.html" with title="Seit 60 Tagen unverändert" items=stale style="secondary" %}
+  {% include "reviews/section.html" with title="Piloten ohne Ergebnis" items=pilots_without_result style="warning" %}
+  {% include "reviews/section.html" with title="Ohne Governance-Screening" items=missing_governance style="warning" %}
+</section>
+{% endblock %}

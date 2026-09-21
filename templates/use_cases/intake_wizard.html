@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static metric_tags %}
+{% block title %}Use Case aufnehmen – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-intake-wizard{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Geführte Use-Case-Aufnahme · Schritt {{ step }} von {{ total_steps }}</div>
+    <h1 class="page-title">{{ step_config.title }}</h1>
+    <p class="page-subtitle">{{ step_config.subtitle }}</p>
+  </div>
+</div>
+
+<nav class="wizard-stepper mb-3" aria-label="Schritte der Use-Case-Aufnahme">
+  {% for item in step_states %}
+    {% if item.is_reachable and not item.is_current %}<a class="wizard-step wizard-step-{{ item.state }}" href="{% url 'use_cases:intake_step' item.number %}">{% else %}<div class="wizard-step wizard-step-{{ item.state }}{% if item.is_current %} wizard-step-current{% endif %}"{% if item.is_current %} aria-current="step"{% endif %}>{% endif %}
+      <span class="wizard-step-symbol" aria-hidden="true">{{ item.symbol }}</span>
+      <span class="wizard-step-label">{{ item.label }}</span>
+      <span class="visually-hidden">{% if item.state == 'complete' %}vollständig{% elif item.state == 'error' %}enthält Fehler{% else %}noch offen{% endif %}{% if item.is_current %}, aktueller Schritt{% endif %}</span>
+    {% if item.is_reachable and not item.is_current %}</a>{% else %}</div>{% endif %}
+  {% endfor %}
+</nav>
+
+<div class="progress mb-3" role="progressbar" aria-label="Fortschritt" aria-valuenow="{{ step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}">
+  <div class="progress-bar {{ progress_class }}"></div>
+</div>
+
+{% if has_intake_draft %}
+<div class="d-flex justify-content-end mb-3">
+  <form method="post" action="{% url 'use_cases:intake_discard' %}">
+    {% csrf_token %}
+    <button class="btn btn-sm btn-outline-danger" type="submit">Laufenden Intake bewusst verwerfen</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="app-card mb-4">
+  {% if form %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if form.errors %}<div class="alert alert-danger" role="alert"><strong>Bitte prüfen Sie die markierten Angaben.</strong> Dieser Schritt enthält {{ form.errors|length }} offene {% if form.errors|length == 1 %}Angabe{% else %}Angaben{% endif %}.</div>{% endif %}
+      {{ form.non_field_errors }}
+      {% if step_config.example %}
+      <div class="alert alert-info"><strong>Orientierung:</strong> {{ step_config.example }}</div>
+      {% endif %}
+      <div class="row g-3">
+        {% for field in form %}
+        <div id="field-{{ field.name }}" class="col-12{% if field.errors %} field-attention field-error{% endif %}">
+          {% if field.field.widget.input_type == 'checkbox' %}
+          <div class="form-check mt-2">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+          {% else %}
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% endif %}
+          {% if field.errors %}<div class="field-attention-message" role="alert"><span aria-hidden="true">⚠</span> {{ field.errors }}</div>{% endif %}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between gap-2">
+      <div>{% if previous_step %}<a class="btn btn-outline-secondary" href="{% url 'use_cases:intake_step' previous_step %}">Zurück</a>{% endif %}</div>
+      <button class="btn btn-primary">Weiter</button>
+    </div>
+  </form>
+  {% else %}
+  {% metric_set candidate as metric %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+        <div><div class="section-title">Entscheidungsreife</div><h2 class="h4 mb-1">{{ candidate.title }}</h2><div class="text-muted">{{ candidate.business_unit }} · {{ candidate.affected_process }}</div></div>
+        <span class="badge {% if blockers %}state-blocked{% else %}state-ready{% endif %}">{% if blockers %}Weitere Klärung erforderlich{% else %}Bereit zur Bewertung{% endif %}</span>
+      </div>
+      {% if blockers %}
+      <div class="alert alert-danger"><strong>{{ blockers|length }} Pflichtangaben fehlen. Der Use Case ist noch nicht bewertungsbereit.</strong><ul class="mb-0 mt-2">{% for blocker in blockers %}<li><span aria-hidden="true">⚠</span> {{ blocker }}</li>{% endfor %}</ul></div>
+      {% endif %}
+      <div class="row g-4">
+        <div class="col-md-6"><div class="section-title">Problem</div><p>{{ candidate.problem_statement }}</p></div>
+        <div class="col-md-6"><div class="section-title">Prozess</div><p>{{ candidate.affected_process }}</p><p class="small text-muted">{{ candidate.summary }}</p></div>
+        <div class="col-md-6"><div class="section-title">Erwarteter Nutzen</div><p>{{ candidate.expected_benefit }}</p></div>
+        <div class="col-md-6"><div class="section-title">Primäre Kennzahl</div><p>{{ candidate.metric_name }}: {{ metric.baseline.display }} → {{ metric.target.display }}</p></div>
+        <div class="col-md-6"><div class="section-title">Daten</div><p>{{ candidate.data_sources }}</p></div>
+        <div class="col-md-6">
+          <div class="section-title">Erforderliche Prüfungen</div>
+          <dl class="review-requirements mb-0">
+            <dt>Datenschutz</dt>
+            <dd>{% if candidate.privacy_review_required %}Erforderlich{% else %}Nicht erforderlich{% endif %}</dd>
+            <dt>Informationssicherheit</dt>
+            <dd>{% if candidate.security_review_required %}Erforderlich{% else %}Nicht erforderlich{% endif %}</dd>
+            <dt>Recht</dt>
+            <dd>{% if candidate.legal_review_required %}Erforderlich{% else %}Nicht erforderlich{% endif %}</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="border rounded p-3 mt-4" data-testid="intake-handover-preview">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="section-title">Wirkung der Aktion</div>
+            <strong>Zur Bewertung bereitstellen</strong>
+          </div>
+          <div class="col-md-4">
+            <div class="section-title">Nächste Bearbeitung</div>
+            <strong>KI-Koordination</strong>
+          </div>
+          <div class="col-md-4">
+            <div class="section-title">Rollenbasierter Arbeitsvorrat</div>
+            <a href="{% url 'reporting:dashboard' %}">Arbeitsvorrat → Meine Aufgaben</a>
+          </div>
+        </div>
+        <div class="small text-muted mt-3">
+          Es wird keine einzelne Person zugewiesen. Nach dem Speichern sehen berechtigte
+          KI-Koordinatoren den Use Case als ausführbare Bewertungsaufgabe in ihrem Arbeitsvorrat.
+        </div>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between gap-2">
+      <a class="btn btn-outline-secondary" href="{% url 'use_cases:intake_step' 5 %}">Zurück</a>
+      <button class="btn btn-primary" {% if blockers %}disabled{% endif %}>Use Case anlegen und zur Bewertung bereitstellen</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

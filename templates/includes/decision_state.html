@@ -1,0 +1,83 @@
+<section class="cr-decision-state uc-decision-state" id="decision-state" aria-labelledby="decision-state-title">
+  <div class="cr-decision-state__main uc-decision-state__main">
+    <div class="cr-decision-state__kicker uc-decision-state__kicker">Entscheidungsstand</div>
+    <div class="cr-decision-state__headline uc-decision-state__headline">
+      <h2 id="decision-state-title">{{ use_case.get_decision_status_display }}</h2>
+    </div>
+  </div>
+  <dl class="cr-decision-state__facts uc-decision-state__facts">
+    <div><dt>Priorität</dt><dd>{{ use_case.get_priority_display }}</dd></div>
+    <div><dt>Einmalkosten</dt><dd>{{ one_time_cost.display }}</dd></div>
+    <div><dt>Laufende Kosten</dt><dd>{{ recurring_cost.display }}</dd></div>
+  </dl>
+</section>
+
+{% for approval in use_case.approval_decisions.all %}
+{% if approval.is_pending_second_approval %}
+<section class="uc-second-approval" id="approval-pending" aria-labelledby="second-approval-title">
+  <div>
+    <div class="uc-attention-kicker">Entscheidung wartet</div>
+    <h2 id="second-approval-title">Unabhängige Zweitprüfung ausstehend</h2>
+    <p>{{ approval.get_decision_status_display }} wurde von {% if approval.decided_by %}{{ approval.decided_by.get_display_name }}{% else %}einer berechtigten Person{% endif %} vorgeschlagen. Bevorzugt zugewiesen: {% if approval.second_approval_assignee %}{{ approval.second_approval_assignee.get_display_name }}{% else %}nicht dokumentiert{% endif %}. Der Entscheidungsstatus wurde noch nicht verändert.</p>
+    {% if approval.second_approval_requested_at %}<div class="uc-secondary-copy">Prüfauftrag seit {{ approval.second_approval_requested_at|date:"d.m.Y H:i" }} · Andere unabhängige berechtigte Personen dürfen übernehmen.</div>{% endif %}
+  </div>
+  {% if journey.next_action.key != 'approval' %}<a class="btn btn-warning" href="{% url 'use_cases:second_approval_review' approval.pk %}">Zweitprüfung öffnen</a>{% endif %}
+</section>
+{% endif %}
+{% endfor %}
+
+<section class="cr-section cr-decision-readiness uc-readiness" id="decision-readiness" aria-labelledby="decision-readiness-title">
+  <header class="cr-section-heading cr-decision-readiness__heading uc-readiness__heading">
+    <div>
+      <h2 id="decision-readiness-title">{{ decision_check.title }}</h2>
+      <p>Voraussetzungen und Hinweise für das aktuell geprüfte Lifecycle-Gate.</p>
+    </div>
+    <span class="badge state-{{ decision_check.state }}">{{ decision_check.state_label }}</span>
+  </header>
+  <div class="cr-decision-readiness__body uc-readiness__body">
+    {% if blocker_details %}
+      <div class="cr-decision-readiness__summary uc-readiness__summary">
+        <div><strong>{{ blocker_details|length }} Voraussetzungen offen</strong><span>Datenblocker führen direkt zum Feld, Prozessblocker zur zuständigen Ansicht.</span></div>
+        {% if first_blocker and journey.next_action.key != 'use_case' %}<a class="btn btn-outline-danger btn-sm" href="{{ first_blocker.target_href }}">Zum ersten offenen Punkt</a>{% endif %}
+      </div>
+      <div class="blocker-actions uc-blocker-actions">
+        {% for blocker in blocker_details %}
+        <div class="blocker-action blocker-{{ blocker.category }}">
+          <div><span class="blocker-icon" aria-hidden="true">⚠</span><strong>{{ blocker.label }}</strong><div class="small text-muted">{% if blocker.category == 'data' %}Angabe ergänzen{% else %}Prozessschritt abschließen{% endif %}</div></div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ blocker.target_href }}">{{ blocker.action_label }}</a>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if decision_check.warnings %}
+      <div class="cr-decision-warning {% if blocker_details %}cr-decision-warning--separated{% endif %} uc-warning-list {% if blocker_details %}uc-warning-list--separated{% endif %}">
+        <strong>Prüfhinweise</strong>
+        <ul class="decision-list">{% for warning in decision_check.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+    {% if gate_blocker_details %}
+      <div class="mt-3" id="upcoming-gate-readiness" data-testid="upcoming-gate-readiness">
+        <div class="cr-decision-readiness__summary uc-readiness__summary">
+          <div><strong>Nächstes Gate vorbereiten · {{ gate_blocker_details|length }} Voraussetzungen offen</strong><span>Diese Readiness-Punkte bleiben sichtbar, blockieren die laufende Pilotarbeit aber nicht.</span></div>
+        </div>
+        <div class="blocker-actions uc-blocker-actions mt-3">
+          {% for blocker in gate_blocker_details %}
+          <div class="blocker-action blocker-{{ blocker.category }}">
+            <div>
+              <span class="blocker-icon" aria-hidden="true">{% if blocker.category == 'time' %}◷{% else %}⚠{% endif %}</span>
+              <strong>{{ blocker.label }}</strong>
+              <div class="small text-muted">{% if blocker.category == 'data' %}Angabe ergänzen{% elif blocker.category == 'time' %}Zeitliche Voraussetzung; dokumentierte Ausnahme möglich{% else %}Prozessschritt abschließen{% endif %}</div>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ blocker.target_href }}">{{ blocker.action_label }}</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    {% if not blocker_details and not decision_check.warnings and not gate_blocker_details %}<p class="cr-decision-ready uc-ready-copy">Alle strukturierten Voraussetzungen für diese Lifecycle-Entscheidung sind erfüllt.</p>{% endif %}
+  </div>
+</section>
+
+<div class="cr-next-action uc-next-action" id="next-action">
+  {% include "includes/next_action.html" %}
+</div>

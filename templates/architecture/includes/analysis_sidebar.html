@@ -1,0 +1,10 @@
+{% if analysis_navigation %}
+<div class="sidebar-local-depth" aria-label="Lokale Analysetiefe">
+  {% for step in analysis_navigation.steps %}
+    {% if step.url %}<a href="{{ step.url }}" class="sidebar-local-step sidebar-local-{{ step.state }}{% if step.is_active %} sidebar-local-active{% endif %}"{% if step.is_active %} aria-current="step"{% endif %}>{% else %}<span class="sidebar-local-step sidebar-local-{{ step.state }}{% if step.is_active %} sidebar-local-active{% endif %}"{% if step.is_active %} aria-current="step"{% endif %}>{% endif %}
+      <span aria-hidden="true">{% if step.is_active %}●{% elif step.state == 'complete' %}✓{% elif step.state == 'current' %}●{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}</span>
+      <span>{{ step.label }}</span>
+    {% if step.url %}</a>{% else %}</span>{% endif %}
+  {% endfor %}
+</div>
+{% endif %}

@@ -1,0 +1,11 @@
+<div class="alert alert-secondary mb-3">
+  <strong>Skalenanker Niedrig · Mittel · Hoch</strong>
+  <ul class="mb-1 mt-2 small">
+    <li><strong>{% if scope == 'stage' %}Impact{% else %}Strategischer Impact{% endif %}:</strong> Niedrig = lokal/indirekt · Mittel = relevanter Bereichs- oder Stakeholder-Beitrag · Hoch = unmittelbarer Einfluss auf zentrale Ziele, Stakeholder oder kritischen Betrieb.</li>
+    {% if scope == 'value_stream' %}<li><strong>Wirtschaftliches Potenzial:</strong> Niedrig = kleiner oder unsicherer Hebel · Mittel = relevanter, nachvollziehbarer Hebel · Hoch = wesentlicher Hebel auf Kosten, Erlös, Kapazität oder Risiko.</li>{% endif %}
+    <li><strong>Problemintensität:</strong> Niedrig = selten/lokal mit geringen Folgen · Mittel = wiederkehrend mit spürbaren Folgen · Hoch = häufig oder kritisch mit starken Qualitäts-, Zeit-, Kosten- oder Risikofolgen.</li>
+    <li><strong>{% if scope == 'stage' %}Datenlage{% else %}Datenzugänglichkeit{% endif %}:</strong> Niedrig = fehlend/schwer zugänglich oder kaum nutzbar · Mittel = teilweise verfügbar, Klärung/Aufbereitung nötig · Hoch = relevante Daten sind zugänglich und ausreichend nutzbar.</li>
+    <li><strong>Veränderungsaufwand:</strong> Niedrig = begrenzte Anpassung weniger Rollen/Systeme · Mittel = mehrere Beteiligte oder Integrationen mit planbarem Aufwand · Hoch = erhebliche organisatorische/technische Änderung oder starke Abhängigkeiten.</li>
+  </ul>
+  <div class="small text-muted">„Hoch“ ist nicht pauschal positiv: Bei Impact oder Datenlage beschreibt es eine starke Ausgangslage, beim Veränderungsaufwand einen hohen Aufwand.</div>
+</div>

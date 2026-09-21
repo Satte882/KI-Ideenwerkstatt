@@ -1,0 +1,50 @@
+<div class="modal fade" id="value-stream-methodology-modal" tabindex="-1" aria-labelledby="value-stream-methodology-title" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <div class="eyebrow mb-2">Value Stream · Methodische Leitplanke</div>
+          <h2 class="modal-title fs-5" id="value-stream-methodology-title">Methodik &amp; Beispiel</h2>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Begriffe trennen:</strong> Capability = was das Unternehmen können muss; Value Stream = wie für einen Stakeholder Wert bzw. ein relevantes Ergebnis entsteht; Prozess = wie der konkrete Ablauf ausgeführt wird.</p>
+
+        <h3 class="h6 mt-4">Value Stream sauber schneiden</h3>
+        <p>Ein Value Stream beginnt mit einem klaren <strong>Auslöser (Trigger)</strong>, beschreibt die fachliche Veränderung, durch die Wert entsteht, und endet mit einem <strong>relevanten Ergebnis (Outcome)</strong> für den Stakeholder.</p>
+        <ul>
+          <li>Trigger und Empfänger/Stakeholder klar benennen.</li>
+          <li>Scope-In und Scope-Out ausdrücklich abgrenzen.</li>
+          <li>Vergleichbare Value Streams auf ähnlicher Flughöhe beschreiben (Granularität).</li>
+        </ul>
+
+        <h3 class="h6 mt-4">Phasen als Wertfortschritt</h3>
+        <p>Eine Phase ist mehr als eine Tätigkeit: Was liegt vorher vor, was verändert sich fachlich und welcher relevante Zustand oder welches Ergebnis ist danach erreicht?</p>
+        <p class="mb-0"><code>Ausgangszustand → fachliche Veränderung → Wertfortschritt → Ergebniszustand</code> ist ein Denkmodell, keine Liste zusätzlicher Pflichtfelder.</p>
+
+        <h3 class="h6 mt-4">Mehrere mögliche Value Streams</h3>
+        <p>Als pragmatische Auswahlhilfe kann <strong>Geschäftliche Bedeutung × Veränderungsbedarf</strong> (<span lang="en">Business Importance × Transformation Need</span>) verwendet werden. Berücksichtigen Sie z. B. strategische bzw. wirtschaftliche Relevanz und Stakeholder-Wert sowie Engpässe, manuelle Aufwände, Qualitätsprobleme oder Änderungsdruck. Daraus entsteht kein neues Pflicht-Scoring.</p>
+
+        <h3 class="h6 mt-4">Kurzes Beispiel</h3>
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Value Stream</dt><dd class="col-sm-9">Beschaffungsbedarf bis Bestellung</dd>
+          <dt class="col-sm-3">Trigger</dt><dd class="col-sm-9">Bestätigter Beschaffungsbedarf liegt vor.</dd>
+          <dt class="col-sm-3">Stakeholder</dt><dd class="col-sm-9">Bedarfsträger und Einkauf.</dd>
+          <dt class="col-sm-3">Outcome</dt><dd class="col-sm-9">Fachlich und kaufmännisch freigegebene Bestellung wurde ausgelöst.</dd>
+          <dt class="col-sm-3">Scope-In</dt><dd class="col-sm-9">Bedarf konkretisieren, Anbieter/Angebote prüfen, Entscheidung und Bestellung.</dd>
+          <dt class="col-sm-3">Scope-Out</dt><dd class="col-sm-9">Wareneingang, Rechnungsprüfung und Zahlung.</dd>
+          <dt class="col-sm-3">Beispielphase</dt><dd class="col-sm-9">„Angebote vergleichbar machen“: Aus unterschiedlich strukturierten Angeboten entsteht eine fachlich vergleichbare Entscheidungsgrundlage.</dd>
+        </dl>
+
+        <div class="alert alert-secondary mt-4 mb-0">
+          Nach der Fokusphase folgt die Prozessanalyse und anschließend der Lösungsraum. KI ist dabei eine mögliche Option neben organisatorischen, regelbasierten und klassischen technischen Lösungen.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-secondary" href="{% url 'accelerator:value_stream_methodology_download' %}">Methodik herunterladen</a>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Zur Erfassung</button>
+      </div>
+    </div>
+  </div>
+</div>

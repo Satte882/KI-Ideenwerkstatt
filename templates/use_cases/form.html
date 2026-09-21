@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-use-case-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow mb-2">Use-Case-Daten</div><h1 class="page-title">{{ title }}</h1><p class="page-subtitle">Primäre Erfolgsmetrik, Baseline, Ziel und Messmethode sind Voraussetzung für die finale Freigabe. Ist-Wert, Messzeitraum, Messdatum und Nachweis werden vor dem Go-live ergänzt.</p></div>
+</div>
+{% if highlight_field %}<div class="alert alert-warning" role="status"><strong>Readiness-Kontext:</strong> Das relevante Feld ist nachfolgend markiert. Der aktuelle Korrekturkontext steht direkt am Feld.</div>{% endif %}
+<form method="post" class="cr-work-form">{% csrf_token %}{{ form.non_field_errors }}
+  {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+  <input type="hidden" name="highlight" value="{{ highlight_field }}">
+  {% for field in form %}
+    {% if field.name == 'title' %}<div class="form-section"><div class="section-title">Fachlicher Kontext</div><div class="row g-3">
+    {% elif field.name == 'solution_type' %}</div></div><div class="form-section"><div class="section-title">Lösung und Daten</div><div class="row g-3">
+    {% elif field.name == 'expected_benefit' %}</div></div><div class="form-section"><div class="section-title">Nutzenhypothese</div><div class="row g-3">
+    {% elif field.name == 'metric_name' %}</div></div><div class="form-section decision-panel"><div class="section-title">Primäre Erfolgsmetrik</div><p class="text-muted small">Genau eine Kennzahl verbindet Baseline, Ziel und gemessenes Ergebnis. Diese Angaben bilden die verbindliche Entscheidungsgrundlage.</p><div class="row g-3">
+    {% elif field.name == 'baseline' %}</div></div><div class="form-section"><div class="section-title">Ergänzende qualitative Beschreibung</div><p class="text-muted small">Diese Freitexte bleiben für Kontext und Migration bestehender Einträge erhalten. Verbindliche Gates nutzen die strukturierte Metrik.</p><div class="row g-3">
+    {% elif field.name == 'one_time_cost' %}</div></div><div class="form-section"><div class="section-title">Kosten</div><div class="row g-3">
+    {% elif field.name == 'business_value' %}</div></div><div class="form-section"><div class="section-title">Qualitative Einordnung</div><div class="row g-3">
+    {% elif field.name == form.governance_boundary_field %}</div></div><div class="form-section"><div class="section-title">Governance-Prüfstatus</div><p class="text-muted small">Prüfbedarf und formale Ergebnisse werden ausschließlich in separaten Governance-Artefakten dokumentiert. Diese Stammdatenmaske kann keinen Prüfstatus verändern.</p><div class="row g-3 mb-3">{% for status in form.governance_statuses %}<div class="col-md-4"><div class="border rounded p-2 h-100"><div class="d-flex flex-wrap align-items-center justify-content-between gap-2"><strong>{{ status.kind.label }}</strong><span class="badge {{ status.badge_class }}">{{ status.label }}</span></div>{% if status.result %}<div class="small mt-1"><strong>Ergebnis:</strong> {{ status.result }}</div>{% endif %}<div class="small text-muted mt-1">{{ status.attribution_note }}{% if status.actor %}: {{ status.actor }}{% endif %}{% if status.changed_at %}, {% if status.changed_at_has_time %}{{ status.changed_at|date:"d.m.Y H:i" }}{% else %}{{ status.changed_at|date:"d.m.Y" }}{% endif %}{% endif %}</div>{% if status.target_url %}<a class="btn btn-sm btn-outline-secondary w-100 mt-2" href="{{ status.target_url }}">Prüfartefakt öffnen</a>{% endif %}</div></div>{% endfor %}</div><div class="section-title">Freigaben und Betrieb</div><div class="row g-3">
+    {% endif %}
+
+    <div id="field-{{ field.name }}" class="{% if field.name == 'problem_statement' or field.name == 'summary' or field.name == 'target_users' or field.name == 'source_systems' or field.name == 'data_sources' or field.name == 'interface_description' or field.name == 'intended_users' or field.name == 'intended_purpose' or field.name == 'expected_benefit' or field.name == 'metric_measurement_method' or field.name == 'baseline' or field.name == 'success_criterion' or field.name == 'realized_result' or field.name == 'human_oversight' or field.name == 'support_responsibility' %}col-12{% else %}col-md-6{% endif %}{% if field.name == highlight_field or field.errors %} field-attention{% endif %}{% if field.errors %} field-error{% endif %}">
+      {% if field.field.widget.input_type == 'checkbox' %}<div class="form-check mt-4">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+      {% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% endif %}
+      {% if field.field.disabled and field.name == 'business_owner' or field.field.disabled and field.name == 'coordinator' %}<div class="form-text"><strong>Schreibgeschützt.</strong> Nur KI-Koordinatoren können diese Zuordnung in den Use-Case-Stammdaten ändern.</div>{% endif %}
+      {% if field.name == highlight_field %}
+        {% if field.name == 'technical_owner' %}
+          {% if use_case.technical_owner and use_case.technical_owner.is_active and not use_case.technical_owner.is_anonymized %}
+          <div id="attention-{{ field.name }}" class="field-attention-message" role="status">
+            <span aria-hidden="true">✓</span> <strong>Technical Owner im Use Case ist bereits verwendbar:</strong> {{ use_case.technical_owner.get_display_name }}. Eine verbleibende Abweichung zur bestehenden Delivery-Package-Version wird im Delivery Package entschieden, nicht in diesem Feld.
+          </div>
+          {% else %}
+          <div id="attention-{{ field.name }}" class="field-attention-message" role="status">
+            <span aria-hidden="true">⚠</span> <strong>Technical Owner im Use Case korrigieren:</strong> Das Feld ist leer oder die zugeordnete Person ist nicht verwendbar. Wähle eine aktive Person. Falls danach eine bestehende Delivery-Package-Version von dieser Zuordnung abweicht, folgt die Quellenentscheidung im Delivery Package.
+          </div>
+          {% endif %}
+        {% else %}
+        <div id="attention-{{ field.name }}" class="field-attention-message" role="status"><span aria-hidden="true">⚠</span> {{ field.label }} ist für die nächste Entscheidung erforderlich.</div>
+        {% endif %}
+      {% endif %}
+      {% if field.errors %}<div class="field-attention-message" role="alert"><span aria-hidden="true">⚠</span> {{ field.errors }}</div>{% endif %}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  </div></div>
+  <div class="d-flex gap-2 justify-content-end"><a class="btn btn-outline-secondary" href="{% if return_to %}{{ return_to }}{% elif use_case %}{{ use_case.get_absolute_url }}{% else %}{% url 'use_cases:list' %}{% endif %}">Abbrechen</a><button class="btn btn-primary px-4">Speichern{% if return_to %} und zurückkehren{% endif %}</button></div>
+</form>
+{% endblock %}
+{% block extra_js %}
+{% if highlight_field %}
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const target = document.getElementById('field-{{ highlight_field|escapejs }}');
+  if (!target) return;
+  target.scrollIntoView({behavior: 'smooth', block: 'center'});
+  const input = target.querySelector('input, textarea, select');
+  if (input && !input.disabled) input.focus({preventScroll: true});
+});
+</script>
+{% endif %}
+{% endblock %}

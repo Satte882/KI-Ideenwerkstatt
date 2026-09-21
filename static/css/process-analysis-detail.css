@@ -1,0 +1,16 @@
+/* Zusammengehörige Überschrift und Inhalt in den Prozessdetails klar gruppieren. */
+.ui-control-room.page-process-analysis #prozessdetails .artifact-disclosure {
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis #prozessdetails .artifact-disclosure:first-child {
+  border-top: 0;
+}
+
+.ui-control-room.page-process-analysis #prozessdetails .artifact-disclosure > summary,
+.ui-control-room.page-process-analysis #prozessdetails .artifact-disclosure[open] > summary {
+  min-height: var(--touch-target-min);
+  margin-bottom: 0;
+  padding: 9px 0;
+}

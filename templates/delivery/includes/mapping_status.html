@@ -1,0 +1,62 @@
+<div class="app-card mb-4" id="block8-mapping-status" data-testid="block8-mapping-status">
+  <div class="card-header">
+    <strong>Evidence-to-Delivery Mapping</strong>
+    <div class="small text-muted mt-1">Herkunft, offene Lücken, Konflikte und geänderte Quellen der bestehenden Delivery-Arbeitsfassung.</div>
+  </div>
+  <div class="card-body">
+    {% if mapping_status.is_legacy %}
+    <div class="alert alert-secondary mb-0" data-testid="block8-mapping-legacy">
+      <strong>Bestands-Package ohne Block-8-Nachweis.</strong> Es erfolgt keine stille Migration. Erst ein expliziter Refresh baut den Mapping-Nachweis auf.
+    </div>
+    {% else %}
+    <div class="kpi-strip mb-3">
+      <div class="kpi-cell"><small>Gemappt</small><strong>{{ mapping_status.mapped_count }}</strong></div>
+      <div class="kpi-cell"><small>Lücken</small><strong>{{ mapping_status.gap_count }}</strong></div>
+      <div class="kpi-cell"><small>Konflikte</small><strong>{{ mapping_status.conflict_count }}</strong></div>
+      <div class="kpi-cell"><small>Geänderte Quellen</small><strong>{{ mapping_status.stale_source_count }}</strong></div>
+    </div>
+    <div class="list-group list-group-flush">
+      {% for field in mapping_status.fields %}
+      <div class="list-group-item bg-transparent px-0" data-mapping-field="{{ field.target_field }}">
+        <div class="d-flex justify-content-between gap-3 flex-wrap">
+          <strong>{{ field.field_label }}</strong>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="badge {% if field.status == 'mapped' %}state-ready{% elif field.status == 'conflict' %}state-blocked{% else %}state-review{% endif %}">{{ field.status_label }}</span>
+            {% if field.source_changed and field.status == 'conflict' %}<span class="badge state-review">Quelle geändert</span>{% endif %}
+            {% if field.can_refine %}
+            <form method="post" action="{% url 'delivery:refine_mapping_text' package.pk field.target_field %}" class="d-inline" data-testid="block8-residual-action">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Sprachlich verdichten</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% if field.sources %}
+        <div class="small text-muted mt-1">
+          {% for source in field.sources %}
+          <span>{{ source.label }} · {{ source.source_field }} · Version {{ source.source_version|default:source.semantic_version|default:"–" }}</span>{% if not forloop.last %}<span> · </span>{% endif %}
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="small text-muted mt-1">Keine bestätigte Quelle verfügbar.</div>
+        {% endif %}
+        {% if field.status == 'gap' %}
+        <div class="alert alert-secondary mt-2 mb-0"><strong>Offene Lücke:</strong> Für dieses V1-Feld liegt keine ausreichende bestätigte Evidence vor.</div>
+        {% elif field.conflict %}
+        <div class="alert alert-warning mt-2 mb-0" data-testid="block8-mapping-conflict">
+          <strong>Konflikt – keine automatische Überschreibung.</strong>
+          <dl class="readiness-finding-details small mb-0 mt-2">
+            <dt>Zuletzt gemappt</dt><dd class="text-preline">{{ field.conflict.previous_mapped_value|default:"–" }}</dd>
+            <dt>Aktueller Delivery-Wert</dt><dd class="text-preline">{{ field.conflict.current_value|default:"–" }}</dd>
+            <dt>Neuer Quellenstand</dt><dd class="text-preline">{{ field.conflict.candidate_value|default:"–" }}</dd>
+          </dl>
+        </div>
+        {% elif field.source_changed %}
+        <div class="alert alert-warning mt-2 mb-0"><strong>Quelle geändert:</strong> Der aktuelle Evidence-Hash weicht vom zuletzt gespeicherten Mapping-Nachweis ab. Der Delivery-Wert wurde durch diese Anzeige nicht verändert.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Analyse – KI-Radar{% endblock %}
+{% block body_class %}page-value-stream-list{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-lists.css' %}">
+{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-list-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">Discovery &amp; Business Architecture</div>
+    <h1 class="cr-page-header__title">Value Streams und Fokusfelder</h1>
+    <p class="cr-page-header__summary">End-to-End-Wertschöpfung erfassen, anhand einheitlicher Kriterien priorisieren und nur ausgewählte Bereiche vertiefen.</p>
+  </div>
+  {% if can_create %}
+  <div class="cr-list-header__actions">
+    {% if capture_draft_count %}<a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_list' %}">Meine Erfassungen ({{ capture_draft_count }})</a>{% endif %}
+    <a
+      class="btn btn-outline-secondary"
+      href="{% url 'accelerator:value_stream_start' %}"
+      data-bs-toggle="tooltip"
+      data-bs-trigger="hover focus"
+      data-bs-placement="bottom"
+      data-bs-title="Fragen schrittweise beantworten oder per WIN + H diktieren. Es entsteht zunächst ein Entwurf."
+    >Geführt erfassen <span class="ms-1" aria-hidden="true">ⓘ</span></a>
+    <a class="btn btn-primary" href="{% url 'architecture:value_stream_create' %}">Value Stream anlegen</a>
+  </div>
+  {% endif %}
+</header>
+
+{% if can_create and capture_value_stream_draft_count %}
+<div class="cr-inline-note">
+  <strong>{% if capture_value_stream_draft_count == 1 %}1 offener Value-Stream-Entwurf{% else %}{{ capture_value_stream_draft_count }} offene Value-Stream-Entwürfe{% endif %}:</strong>
+  <a href="{% url 'accelerator:capture_list' %}">Erfassungen fortsetzen</a>.
+</div>
+{% else %}
+<div class="cr-inline-note">
+  <strong>Optionaler Discovery-Pfad:</strong> Erst Discovery und Fokusentscheidung, danach Prozess-Deep-Dive und Use-Case-Ableitung. Bereits bekannte Einzelvorhaben können weiterhin direkt aufgenommen werden.
+</div>
+{% endif %}
+
+<section class="cr-section cr-list-card-grid architecture-grid" aria-label="Value Streams">
+  {% for stream in value_streams %}
+  <a class="cr-list-card architecture-card" href="{{ stream.get_absolute_url }}">
+    <div class="d-flex justify-content-between gap-3 align-items-start">
+      <div>
+        <div class="section-title mb-1">{% if stream.focus %}{{ stream.focus.get_business_domain_display }}{% else %}{{ stream.business_unit }}{% endif %}</div>
+        <h2 class="h5 mb-2">{{ stream.name }}</h2>
+      </div>
+      {% if stream.focus %}<span class="badge {% if stream.focus.is_selected %}state-ready{% elif stream.focus.is_terminal %}state-blocked{% else %}state-review{% endif %}">{{ stream.focus.get_status_display }}</span>{% else %}<span class="badge state-blocked">Screening fehlt</span>{% endif %}
+    </div>
+    <p class="text-muted mb-3">{{ stream.description|default:stream.scope_in|truncatechars:180 }}</p>
+    {% if stream.focus.capability %}<div class="small mb-3"><strong>Capability:</strong> {{ stream.focus.capability }}</div>{% endif %}
+    <div class="architecture-card-meta">
+      <span>{{ stream.stage_total }} Phasen</span>
+      <span>{% if stream.owner %}Owner: {{ stream.owner.get_display_name }}{% else %}Owner offen{% endif %}</span>
+    </div>
+  </a>
+  {% empty %}
+  <p class="cr-empty-state">Noch keine Value Streams vorhanden. Der direkte Use-Case-Intake bleibt unverändert nutzbar.</p>
+  {% endfor %}
+</section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/guided-capture-tooltip.js' %}" defer></script>{% endblock %}

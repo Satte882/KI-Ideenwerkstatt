@@ -1,0 +1,60 @@
+{% load workflow_tags %}
+{% if request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'detail' %}
+{# The migrated Use Case workspace owns DecisionState, Next Action and LifecycleRail locally. #}
+{% elif request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'value_stream_detail' %}
+{# The migrated Value Stream workspace owns Next Action and LifecycleRail locally. #}
+{% elif request.resolver_match.namespace == 'reporting' and request.resolver_match.url_name == 'outcome_workspace' %}
+{# Wirkung & Betrieb owns its subordinate outcome lifecycle locally. #}
+{% elif request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'process_analysis_detail' %}
+{# The migrated Process Analysis workspace owns Next Action and LifecycleRail locally. #}
+{% elif request.resolver_match.namespace == 'delivery' and request.resolver_match.url_name == 'package_detail' %}
+{# The migrated Delivery Package workspace owns Next Action and LifecycleRail locally. #}
+{% elif request.resolver_match.namespace == 'governance' and request.resolver_match.url_name == 'create' or request.resolver_match.namespace == 'governance' and request.resolver_match.url_name == 'review' %}
+{# Migrated Governance forms own LifecycleRail locally. #}
+{% elif request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'assessment_create' or request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'approval_decision_create' %}
+{# Migrated assessment and decision forms own LifecycleRail locally. #}
+{% elif journey %}
+{% workflow_steps journey request as workflow %}
+<header class="app-topbar app-topbar-journey" aria-label="Arbeitsfortschritt">
+  <div class="journey-topbar-main">
+    <div class="journey-topbar-heading">
+      <span class="journey-topbar-kicker">End-to-End-Arbeitsmodell · Arbeitsraum 1 · Auswahl &amp; Freigabe</span>
+      <strong>{{ journey.path_label }}</strong>
+    </div>
+    {% if workflow %}
+    <nav class="journey-progress" aria-label="Phasen des Arbeitsmodells">
+      {% for step in workflow %}
+      {% if step.divider_before %}<span class="journey-progress-divider" aria-hidden="true"></span>{% endif %}
+      <a class="journey-progress-step journey-progress-{{ step.state }}{% if step.view_active %} journey-progress-view-active{% endif %}" href="{{ step.url }}"{% if step.view_active %} aria-current="page"{% elif step.state == 'current' %} aria-current="step"{% endif %}>
+        <span class="journey-progress-marker" aria-hidden="true">
+          {% if step.state == 'complete' %}✓{% elif step.state == 'current' %}●{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}
+        </span>
+        <span class="journey-progress-label">{{ step.label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+
+  {% if journey.next_action %}
+  {% with action=journey.next_action %}
+  <div class="journey-topbar-next journey-topbar-next-{{ action.state }}" data-testid="journey-next-action-context">
+    <div class="journey-topbar-next-copy">
+      <span class="journey-topbar-kicker">Nächster Schritt</span>
+      <strong>{{ action.label }}</strong>
+      {% if action.reason %}<span class="journey-topbar-next-reason">{{ action.reason }}</span>{% endif %}
+    </div>
+  </div>
+  {% endwith %}
+  {% elif journey.completion_message %}
+  <div class="journey-topbar-next journey-topbar-complete">
+    <div class="journey-topbar-next-copy">
+      <span class="journey-topbar-kicker">Status</span>
+      <strong>Journey abgeschlossen</strong>
+      <span class="journey-topbar-next-reason">{{ journey.completion_message }}</span>
+    </div>
+    <span class="badge state-ready">Abgeschlossen</span>
+  </div>
+  {% endif %}
+</header>
+{% endif %}

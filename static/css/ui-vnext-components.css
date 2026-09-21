@@ -1,0 +1,532 @@
+/*
+ * Wiederverwendbare Daten-, Formular- und Entscheidungs-Komponenten.
+ */
+
+.ui-vnext .btn {
+  min-height: 42px;
+  padding: .62rem .9rem;
+  border-radius: var(--radius-sm);
+  font-size: .78rem;
+  font-weight: 720;
+  letter-spacing: .01em;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.ui-vnext .btn:hover {
+  transform: translateY(-1px);
+}
+
+.ui-vnext .btn-primary {
+  --bs-btn-color: var(--on-accent);
+  --bs-btn-bg: var(--ice-strong);
+  --bs-btn-border-color: var(--ice-strong);
+  --bs-btn-hover-color: var(--on-accent);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--ice-strong) 88%, var(--ink));
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--ice-strong) 88%, var(--ink));
+  --bs-btn-active-color: var(--on-accent);
+  --bs-btn-active-bg: var(--ice);
+  --bs-btn-active-border-color: var(--ice);
+  color: var(--on-accent);
+  box-shadow:
+    inset 0 1px color-mix(in srgb, var(--ink) 72%, transparent),
+    0 9px 24px color-mix(in srgb, var(--ice-deep) 12%, transparent);
+}
+
+.ui-vnext .btn-primary:hover {
+  color: var(--on-accent);
+  box-shadow:
+    inset 0 1px color-mix(in srgb, var(--ink) 80%, transparent),
+    0 12px 30px color-mix(in srgb, var(--ice-deep) 20%, transparent);
+}
+
+.ui-vnext .btn-outline-secondary,
+.ui-vnext .btn-outline-primary {
+  --bs-btn-color: var(--muted-strong);
+  --bs-btn-border-color: var(--line);
+  --bs-btn-hover-color: var(--ink);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--silver) 7%, transparent);
+  --bs-btn-hover-border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--surface-0) 36%, transparent);
+}
+
+.ui-vnext .btn-outline-danger {
+  --bs-btn-color: var(--danger);
+  --bs-btn-border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  --bs-btn-hover-color: var(--ink);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--danger) 16%, transparent);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+}
+
+.ui-vnext .btn-warning {
+  --bs-btn-color: var(--on-accent);
+  --bs-btn-bg: var(--warning);
+  --bs-btn-border-color: var(--warning);
+}
+
+.ui-vnext .btn-sm {
+  min-height: 34px;
+  padding: .42rem .65rem;
+}
+
+.ui-vnext .card,
+.ui-vnext .app-card {
+  border-color: var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(150deg, color-mix(in srgb, var(--ice) 3%, transparent), transparent 42%),
+    color-mix(in srgb, var(--surface-1) 96%, transparent);
+  box-shadow:
+    var(--shadow-1),
+    var(--shadow-2),
+    inset 0 1px color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+
+.ui-vnext .card-header {
+  padding: 15px 18px;
+  border-bottom-color: var(--line-soft);
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--surface-2) 58%, transparent);
+}
+
+.ui-vnext .card-header strong {
+  color: var(--ink);
+  font-weight: 680;
+  letter-spacing: -.012em;
+}
+
+.ui-vnext .card-body {
+  padding: 18px;
+}
+
+.ui-vnext .card-footer {
+  padding: 14px 18px;
+  border-top-color: var(--line-soft);
+  background: color-mix(in srgb, var(--surface-2) 38%, transparent);
+}
+
+.ui-vnext .form-section {
+  padding: 20px;
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ice) 3%, transparent), transparent 44%),
+    var(--surface-1);
+  box-shadow: var(--shadow-1), inset 0 1px color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.ui-vnext .form-label {
+  margin-bottom: 6px;
+  color: var(--muted-strong);
+  font-size: .68rem;
+  font-weight: 740;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.ui-vnext .form-control,
+.ui-vnext .form-select {
+  min-height: 42px;
+  border-color: var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background-color: color-mix(in srgb, var(--surface-3) 38%, var(--surface-input));
+  box-shadow:
+    inset 0 1px 3px color-mix(in srgb, var(--surface-0) 72%, transparent),
+    0 1px 0 color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.ui-vnext textarea.form-control {
+  min-height: 118px;
+}
+
+.ui-vnext .form-control::placeholder {
+  color: color-mix(in srgb, var(--muted) 68%, transparent);
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-required-empty {
+  border-color: color-mix(in srgb, var(--danger) 62%, transparent);
+  background-color: var(--surface-input);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-optional-empty {
+  border-color: color-mix(in srgb, var(--warning) 32%, transparent);
+  background-color: color-mix(in srgb, var(--warning) 9%, var(--surface-input));
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-filled {
+  border-color: var(--line-strong);
+  background-color: color-mix(in srgb, var(--surface-3) 38%, var(--surface-input));
+  box-shadow: inset 0 1px 3px color-mix(in srgb, var(--surface-0) 72%, transparent);
+}
+
+.ui-vnext .form-control:hover,
+.ui-vnext .form-select:hover {
+  border-color: var(--line-strong);
+}
+
+.ui-vnext .form-control:focus,
+.ui-vnext .form-select:focus {
+  border-color: color-mix(in srgb, var(--ice) 72%, transparent);
+  color: var(--ink);
+  background-color: var(--surface-input);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ice) 10%, transparent);
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-required-empty:focus {
+  border-color: color-mix(in srgb, var(--danger) 72%, transparent);
+  background-color: var(--surface-input);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-optional-empty:focus {
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+  background-color: color-mix(in srgb, var(--warning) 12%, var(--surface-input));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 13%, transparent);
+}
+
+.ui-vnext :is(.form-control, .form-select).field-guidance-filled:focus {
+  border-color: color-mix(in srgb, var(--ice) 72%, transparent);
+  background-color: var(--surface-input);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ice) 10%, transparent);
+}
+
+.ui-vnext .form-check-input {
+  border-color: var(--line-strong);
+  background-color: var(--surface-input);
+}
+
+.ui-vnext .form-check-input:checked {
+  border-color: var(--ice);
+  background-color: var(--ice);
+}
+
+.ui-vnext .form-check-label {
+  color: var(--ink-soft);
+}
+
+.ui-vnext .form-text,
+.ui-vnext .text-muted {
+  color: var(--muted) !important;
+}
+
+.ui-vnext .errorlist,
+.ui-vnext .invalid-feedback,
+.ui-vnext .field-attention-message {
+  color: var(--danger);
+}
+
+.ui-vnext .field-attention {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.ui-vnext .field-attention :is(.form-control, .form-select) {
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
+}
+
+.ui-vnext .table-card {
+  overflow: hidden;
+}
+
+.ui-vnext .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ink-soft);
+  --bs-table-hover-bg: color-mix(in srgb, var(--ice) 5%, transparent);
+  --bs-table-hover-color: var(--ink);
+  margin: 0;
+}
+
+.ui-vnext .table > :not(caption) > * > * {
+  padding: 13px 16px;
+  border-bottom-color: var(--line-soft);
+}
+
+.ui-vnext .table thead {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+}
+
+.ui-vnext .table thead th {
+  border-bottom-color: var(--line);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-1) 97%, transparent);
+  font-size: .65rem;
+  font-weight: 760;
+  letter-spacing: .1em;
+}
+
+.ui-vnext .table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.ui-vnext .table a {
+  color: var(--ice);
+  font-weight: 680;
+}
+
+.ui-vnext .table a:hover {
+  color: var(--ice-strong);
+}
+
+.ui-vnext .table a.btn-primary,
+.ui-vnext .table a.btn-primary:hover,
+.ui-vnext .table a.btn-primary:focus {
+  color: var(--on-accent);
+}
+
+.ui-vnext .table a.btn-outline-secondary {
+  color: var(--muted-strong);
+}
+
+.ui-vnext .table a.btn-outline-secondary:hover,
+.ui-vnext .table a.btn-outline-secondary:focus {
+  color: var(--ink);
+}
+
+.ui-vnext .table a.btn-outline-danger {
+  color: var(--danger);
+}
+
+.ui-vnext .table a.btn-outline-danger:hover,
+.ui-vnext .table a.btn-outline-danger:focus {
+  color: var(--ink);
+}
+
+.ui-vnext .badge,
+.ui-vnext .badge-soft,
+.ui-vnext .portfolio-status-key {
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+.ui-vnext .badge-soft {
+  border-color: var(--line);
+  color: var(--muted-strong);
+  background: color-mix(in srgb, var(--silver) 8%, transparent);
+}
+
+.ui-vnext .state-ready {
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 11%, transparent);
+}
+
+.ui-vnext .state-review {
+  border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 11%, transparent);
+}
+
+.ui-vnext .state-blocked {
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 11%, transparent);
+}
+
+.ui-vnext .alert {
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-vnext .alert-info {
+  border-color: color-mix(in srgb, var(--ice) 24%, transparent);
+  background: color-mix(in srgb, var(--ice) 7%, var(--surface-2));
+}
+
+.ui-vnext .alert-warning {
+  border-color: color-mix(in srgb, var(--warning) 25%, transparent);
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface-2));
+}
+
+.ui-vnext .alert-danger {
+  border-color: color-mix(in srgb, var(--danger) 25%, transparent);
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface-2));
+}
+
+.ui-vnext .alert-secondary {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--silver) 4%, var(--surface-2));
+}
+
+.ui-vnext .list-group-item {
+  border-color: var(--line-soft);
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+.ui-vnext .list-group-item-action:hover,
+.ui-vnext .list-group-item-action:focus {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ice) 5%, transparent) !important;
+}
+
+.ui-vnext .metric-grid {
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ui-vnext .metric-card {
+  min-height: 114px;
+  padding: 16px 17px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1), var(--shadow-2);
+}
+
+.ui-vnext .metric-card::after {
+  right: -30px;
+  top: -36px;
+  width: 105px;
+  height: 105px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ice) 14%, transparent), transparent 68%);
+}
+
+.ui-vnext .metric-label,
+.ui-vnext .section-title {
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+}
+
+.ui-vnext .metric-value {
+  margin-top: 9px;
+  color: var(--ink);
+  font-size: 1.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-vnext .metric-note {
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+.ui-vnext .kpi-strip {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+}
+
+.ui-vnext .kpi-cell {
+  background: var(--surface-1);
+}
+
+.ui-vnext .kpi-cell small {
+  color: var(--muted);
+}
+
+.ui-vnext .decision-panel {
+  border-left-color: var(--ice);
+}
+
+.ui-vnext .decision-list li,
+.ui-vnext .review-requirements dd {
+  color: var(--ink-soft);
+}
+
+.ui-vnext .copilot-box {
+  border-color: color-mix(in srgb, var(--ice) 24%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface-input);
+  box-shadow: inset 0 1px color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.ui-vnext .progress {
+  height: 7px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+}
+
+.ui-vnext .progress-bar {
+  background: linear-gradient(90deg, var(--ice-deep), var(--ice-strong));
+}
+
+.ui-vnext .wizard-step {
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-1) 76%, transparent);
+}
+
+.ui-vnext .wizard-step:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+.ui-vnext .wizard-step-current {
+  outline-color: color-mix(in srgb, var(--ice) 55%, transparent);
+  color: var(--ink);
+}
+
+.ui-vnext .wizard-step-complete {
+  color: var(--success);
+}
+
+.ui-vnext .wizard-step-error {
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  color: var(--danger);
+}
+
+.ui-vnext .blocker-action {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 72%, transparent);
+}
+
+.ui-vnext .blocker-data {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.ui-vnext .blocker-process {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+
+.ui-vnext .blocker-icon {
+  color: var(--danger);
+}
+
+.ui-vnext details summary {
+  color: var(--muted-strong);
+}
+
+.ui-vnext hr,
+.ui-vnext .border-top,
+.ui-vnext .border {
+  border-color: var(--line) !important;
+}
+
+.ui-vnext code {
+  color: var(--ice-strong);
+}
+
+@media (max-width: 720px) {
+  .ui-vnext .btn {
+    min-height: 42px;
+  }
+
+  .ui-vnext .card-body,
+  .ui-vnext .form-section {
+    padding: 16px;
+  }
+
+  .ui-vnext .metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-vnext .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}

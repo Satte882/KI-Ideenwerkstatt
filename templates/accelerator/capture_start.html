@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Geführte {{ capture_label }}-Erfassung – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-capture-start{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Accelerator · Erfassung ohne LLM</div>
+    <h1 class="page-title">{{ capture_label }}-Entwurf starten</h1>
+    <p class="page-subtitle">Der Entwurf wird persistent gespeichert und legt noch kein reguläres Fachobjekt an.</p>
+  </div>
+  {% if capture_type == 'value_stream' %}
+  <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#value-stream-methodology-modal">Methodik &amp; Beispiel</button>
+  {% endif %}
+</div>
+
+{% if capture_type == 'value_stream' %}{% include "accelerator/_value_stream_methodology_modal.html" %}{% endif %}
+
+<div class="app-card mb-4">
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if form.errors %}<div class="alert alert-danger" role="alert">Bitte prüfen Sie die Arbeitsbezeichnung.</div>{% endif %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.working_title.id_for_label }}">{{ form.working_title.label }} *</label>
+        {{ form.working_title }}
+        {% if form.working_title.errors %}<div class="field-attention-message" role="alert">{{ form.working_title.errors }}</div>{% endif %}
+        <div class="form-text">{{ form.working_title.help_text }}</div>
+      </div>
+      <div class="alert alert-secondary mb-0">
+        Antworten bleiben ein unbestätigter Arbeitsstand. Entscheidungen, Validierungen und Freigaben werden nicht gesetzt.
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between gap-2">
+      <a class="btn btn-outline-secondary" href="{{ overview_url }}">Abbrechen</a>
+      <button class="btn btn-primary" type="submit">Erfassung starten</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+/* Arbeitsgestaltung als eigenständige Fläche innerhalb der Prozessanalyse. */
+.ui-control-room.page-process-analysis .work-design-entry {
+  padding: 20px 22px 4px;
+  border-left: 1px solid var(--line-soft);
+  background: var(--surface-1);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__row:last-child {
+  border-bottom: 0;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__summary {
+  min-width: 0;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__role {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__role h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: .9rem;
+  font-weight: 680;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__summary p {
+  margin: 5px 0 2px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__meta {
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.ui-control-room.page-process-analysis .work-design-entry .btn {
+  flex: 0 0 auto;
+  min-height: var(--touch-target-min);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__empty {
+  display: grid;
+  gap: 4px;
+  padding: 18px 0;
+  border: 0;
+  background: transparent;
+}

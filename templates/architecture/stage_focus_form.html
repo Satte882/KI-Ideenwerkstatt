@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Fokusphase auswählen – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-stage-focus-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ value_stream.business_unit }} · {{ value_stream.name }}</div>
+    <h1 class="page-title">Fokusphase nachvollziehbar auswählen</h1>
+    <p class="page-subtitle">Phasen anhand derselben Kriterien vergleichen und die Auswahlquelle für die Prozessdetailanalyse speichern.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ value_stream.get_absolute_url }}">Zum Value Stream</a>
+</div>
+
+<div class="alert alert-secondary mb-4">
+  Die Bewertung ist eine kompakte Priorisierung, keine Vollanalyse. Hypothesen sind in früher Discovery zulässig, müssen aber als solche sichtbar bleiben. Time-to-Value ist ein Trade-off und keine automatische Rangfolge.
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <div class="app-card mb-4">
+    <div class="card-header"><strong>1. Phasen vergleichen</strong><div class="small text-muted mt-1">Impact, Problemintensität, Verbesserungspotenzial, Datenlage, Veränderungsaufwand und Time-to-Value einheitlich einordnen; Evidenzbasis separat sichtbar halten.</div></div>
+    <div class="card-body">
+      {% include "architecture/_screening_level_anchors.html" with scope="stage" %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Fokus</th><th>Phase und Indikatoren</th><th>Impact</th><th>Problemintensität</th><th>Verbesserungspotenzial</th><th>Datenlage</th><th>Veränderungsaufwand</th><th>Time-to-Value</th><th>Evidenzbasis</th></tr></thead>
+          <tbody>
+            {% for row in form.stage_rows %}
+            <tr>
+              <td><input type="radio" name="selected_stage" value="{{ row.stage.pk }}" id="focus-{{ row.stage.pk }}" {% if form.selected_stage.value|stringformat:'s' == row.stage.pk|stringformat:'s' %}checked{% endif %}></td>
+              <td>
+                <label for="focus-{{ row.stage.pk }}"><strong>{{ row.stage.sequence }}. {{ row.stage.name }}</strong></label>
+                <div class="small text-muted mt-1">{{ row.stage.description|default:"Aktivität noch nicht beschrieben" }}</div>
+                <div class="small mt-2"><strong>Engpässe:</strong> {{ row.stage.pain_points|default:"–" }}</div>
+                <div class="small"><strong>Baseline:</strong> {{ row.stage.baseline_metrics|default:"–" }}</div>
+              </td>
+              {% for field in row.fields %}
+              <td>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors }}</div>{% endif %}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if form.selected_stage.errors %}<div class="invalid-feedback d-block mt-2">{{ form.selected_stage.errors }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="app-card mb-4">
+    <div class="card-header"><strong>2. Auswahl begründen</strong></div>
+    <div class="card-body">
+      <div class="mb-3"><label class="form-label" for="{{ form.rationale.id_for_label }}">{{ form.rationale.label }}</label>{{ form.rationale }}{% if form.rationale.errors %}<div class="invalid-feedback d-block">{{ form.rationale.errors }}</div>{% endif %}</div>
+      <div class="form-check mb-3">{{ form.is_short_path }}<label class="form-check-label" for="{{ form.is_short_path.id_for_label }}">{{ form.is_short_path.label }}</label><div class="form-text">{{ form.is_short_path.help_text }}</div></div>
+      <div><label class="form-label" for="{{ form.short_path_reason.id_for_label }}">{{ form.short_path_reason.label }}</label>{{ form.short_path_reason }}{% if form.short_path_reason.errors %}<div class="invalid-feedback d-block">{{ form.short_path_reason.errors }}</div>{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2">
+    <a class="btn btn-outline-secondary" href="{{ value_stream.get_absolute_url }}">Abbrechen</a>
+    <button class="btn btn-primary" type="submit">Fokusphase und Kriterien speichern</button>
+  </div>
+</form>
+{% endblock %}

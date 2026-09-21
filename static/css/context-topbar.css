@@ -1,0 +1,300 @@
+.app-topbar {
+  min-height: 72px;
+  height: auto;
+  padding: 10px 24px;
+  gap: 24px;
+}
+
+.app-topbar-journey {
+  align-items: stretch;
+}
+
+.journey-topbar-main {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+
+.journey-topbar-heading,
+.topbar-context-copy,
+.journey-topbar-next-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.journey-topbar-heading strong,
+.topbar-context-copy strong,
+.journey-topbar-next-copy strong {
+  color: var(--text);
+  font-size: .84rem;
+  line-height: 1.25;
+}
+
+.journey-topbar-kicker,
+.topbar-context-kicker {
+  color: var(--muted);
+  font-size: .63rem;
+  font-weight: 750;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.journey-progress {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  overflow: visible;
+  padding: 4px 2px;
+}
+
+.journey-progress-step {
+  min-width: 0;
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.journey-progress-step:not(:last-child)::after {
+  content: "";
+  width: 18px;
+  height: 1px;
+  margin-left: 2px;
+  background: rgba(148, 163, 184, .28);
+}
+
+.journey-progress-step:hover {
+  color: var(--text);
+}
+
+.journey-progress-view-active .journey-progress-marker {
+  outline: 2px solid rgba(169, 154, 255, .78);
+  outline-offset: 2px;
+}
+
+.journey-progress-view-active .journey-progress-label {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: rgba(169, 154, 255, .78);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.journey-progress-marker {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, .34);
+  border-radius: 50%;
+  background: rgba(13, 20, 34, .96);
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.journey-progress-label {
+  min-width: 0;
+  font-size: .72rem;
+  font-weight: 680;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.journey-progress-complete {
+  color: var(--success);
+}
+
+.journey-progress-complete .journey-progress-marker {
+  border-color: rgba(53, 212, 154, .42);
+  background: rgba(53, 212, 154, .1);
+}
+
+.journey-progress-current {
+  color: #ffd38a;
+}
+
+.journey-progress-current .journey-progress-marker {
+  border-color: rgba(243, 185, 95, .62);
+  background: rgba(243, 185, 95, .14);
+  box-shadow: 0 0 0 4px rgba(243, 185, 95, .07);
+}
+
+.journey-progress-blocked {
+  color: #ff91a3;
+}
+
+.journey-progress-blocked .journey-progress-marker {
+  border-color: rgba(255, 107, 130, .62);
+  background: rgba(255, 107, 130, .12);
+  box-shadow: 0 0 0 4px rgba(255, 107, 130, .06);
+}
+
+.journey-progress-optional .journey-progress-marker {
+  border-style: dashed;
+}
+
+.journey-topbar-next {
+  flex: 0 1 min(400px, 34vw);
+  min-width: 280px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 14px;
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+
+.journey-topbar-next-reason {
+  max-width: 38rem;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .68rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.journey-topbar-next-blocked {
+  border-left-color: rgba(255, 107, 130, .32);
+}
+
+.journey-topbar-complete {
+  border-left-color: rgba(53, 212, 154, .3);
+}
+
+.app-topbar-context {
+  min-height: 64px;
+}
+
+.topbar-context-purpose {
+  color: var(--muted);
+  font-size: .78rem;
+  text-align: right;
+}
+
+@media (max-width: 1250px) {
+  .journey-topbar-main {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .journey-topbar-heading {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .journey-topbar-kicker {
+    margin-bottom: 0;
+  }
+
+  .journey-topbar-next-reason {
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-topbar-journey {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .journey-progress {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 5px;
+  }
+
+  .journey-progress-step {
+    display: grid;
+    grid-template-columns: 23px minmax(0, 1fr);
+    align-items: center;
+    min-height: 34px;
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .journey-progress-step:not(:last-child)::after {
+    display: none;
+  }
+
+  .journey-topbar-next {
+    min-width: 0;
+    width: 100%;
+    flex-basis: auto;
+    padding: 8px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 720px) {
+  .app-topbar {
+    display: flex;
+    position: static;
+    padding: 12px 14px;
+  }
+
+  .app-topbar-context {
+    min-height: 56px;
+  }
+
+  .topbar-context-purpose {
+    display: none;
+  }
+
+  .journey-topbar-main {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .journey-topbar-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    max-width: 100%;
+  }
+
+  .journey-topbar-heading > *,
+  .journey-topbar-next-copy {
+    max-width: 100%;
+  }
+
+  .journey-topbar-heading strong,
+  .journey-topbar-kicker,
+  .journey-topbar-next-reason {
+    overflow-wrap: anywhere;
+  }
+
+  .journey-progress {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journey-progress-label {
+    font-size: .68rem;
+  }
+
+  .journey-topbar-next {
+    min-width: 0;
+    max-width: 100%;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .journey-progress {
+    grid-template-columns: 1fr;
+  }
+}

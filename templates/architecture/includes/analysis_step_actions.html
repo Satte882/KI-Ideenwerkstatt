@@ -1,0 +1,15 @@
+{% if analysis_navigation %}
+  {% if analysis_navigation.previous or analysis_navigation.next %}
+  <nav class="analysis-step-actions" aria-label="Navigation zwischen Analyseschritten">
+    <div>
+      {% if analysis_navigation.previous %}<a class="btn btn-outline-secondary" href="{{ analysis_navigation.previous.url }}">← Zurück zu {{ analysis_navigation.previous.label }}</a>{% endif %}
+    </div>
+    <div class="analysis-step-actions-current" aria-live="polite">
+      Aktueller Schritt: <strong>{% for step in analysis_navigation.steps %}{% if step.is_active %}{{ step.label }}{% endif %}{% endfor %}</strong>
+    </div>
+    <div>
+      {% if analysis_navigation.next %}<a class="btn btn-primary" href="{{ analysis_navigation.next.url }}">Weiter zu {{ analysis_navigation.next.label }} →</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+{% endif %}

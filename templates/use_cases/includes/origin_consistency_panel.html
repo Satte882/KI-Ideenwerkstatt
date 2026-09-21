@@ -1,0 +1,32 @@
+{% load static %}
+{% if show_origin_consistency %}
+<div
+  class="uc-source-drift mt-3"
+  data-origin-consistency
+  data-generate-url="{{ origin_consistency_generate_url }}"
+  data-feedback-url="{{ origin_consistency_feedback_url }}"
+>
+  <strong>Ursprung & strategischer Kontext · KI-Herkunftskonsistenz</strong>
+  <p class="mb-2">Herkunft aus Discovery oder direkte Verknüpfung bleiben nachvollziehbar. Die optionale Read-only-Prüfung vergleicht den Use Case mit der dokumentierten Herkunft; es werden keine Use-Case-Daten automatisch geändert.</p>
+  {% csrf_token %}
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm"
+      data-origin-consistency-generate
+      {% if not origin_consistency_enabled %}disabled{% endif %}
+    >Konsistenz prüfen</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-origin-consistency-regenerate>Erneut prüfen</button>
+    <span class="uc-secondary-copy" role="status" aria-live="polite" data-origin-consistency-status>
+      {% if not origin_consistency_enabled %}{{ origin_consistency_disabled_reason }}{% endif %}
+    </span>
+  </div>
+  <div class="mt-3 d-none" data-origin-consistency-result></div>
+  <div class="mt-2 d-none" data-origin-consistency-feedback>
+    <span class="uc-secondary-copy">War diese Prüfung hilfreich?</span>
+    <button type="button" class="btn btn-outline-secondary btn-sm ms-1" data-origin-consistency-helpful="1">Hilfreich</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm ms-1" data-origin-consistency-helpful="0">Nicht hilfreich</button>
+  </div>
+</div>
+<script src="{% static 'js/origin-consistency.js' %}" defer></script>
+{% endif %}

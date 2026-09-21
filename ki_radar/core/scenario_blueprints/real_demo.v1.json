@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.0",
+  "scenario_key": "real-demo-procurement-order",
+  "scenario_name": "[Real-DEMO] Beschaffungsbedarf bis Bestellung",
+  "references": {
+    "business_unit": {
+      "name": "[DEMO] Prozesse & Organisation"
+    },
+    "actors": {
+      "creator": {
+        "username": "demo_ki_koordinator"
+      },
+      "value_stream_owner": {
+        "username": "demo_business_owner"
+      },
+      "business_owner": {
+        "username": "demo_business_owner"
+      },
+      "coordinator": {
+        "username": "demo_ki_koordinator"
+      },
+      "technical_owner": {
+        "username": "demo_ki_koordinator"
+      }
+    }
+  },
+  "value_stream": {
+    "key": "real-demo-procurement-order",
+    "name": "[Real-DEMO] Beschaffungsbedarf bis Bestellung",
+    "status": "draft",
+    "description": "End-to-End-Wertstrom vom fachlich bestätigten Beschaffungsbedarf bis zur vorbereiteten Bestellung.",
+    "trigger": "Ein fachlich bestätigter und budgetierter Beschaffungsbedarf liegt vor.",
+    "outcome": "Eine nachvollziehbar vorbereitete Bestellung kann durch den Einkauf ausgelöst werden.",
+    "scope_in": "Vom fachlich bestätigten Beschaffungsbedarf bis zur vorbereiteten und dokumentierten Bestellung.",
+    "scope_out": "Vertragsverhandlung, autonome Lieferantenauswahl, finale Vergabeentscheidung und Rechnungsprüfung.",
+    "strategic_objective": "Beschaffungsentscheidungen beschleunigen, vereinheitlichen und nachvollziehbar vorbereiten.",
+    "stakeholders": "Anfordernder Fachbereich, Einkauf, Budgetverantwortliche, Lieferanten, Compliance und IT.",
+    "constraints": "Die finale Lieferanten- und Vergabeentscheidung bleibt beim verantwortlichen Einkauf.",
+    "focus": {
+      "business_domain": "procurement",
+      "capability": "Supplier Sourcing und Angebotsvergleich",
+      "status": "not_screened"
+    },
+    "stages": [
+      {
+        "key": "bedarf-klaeren",
+        "sequence": 1,
+        "name": "Beschaffungsbedarf klären",
+        "description": "Bedarf, Budgetrahmen, Muss-Kriterien und erwartetes Ergebnis werden fachlich beschrieben.",
+        "actors": "Anfordernder Fachbereich und Budgetverantwortliche",
+        "systems": "E-Mail, Kollaborationsplattform und ERP",
+        "documents": "Bedarfsbeschreibung, Budgetfreigabe und Kriterienkatalog",
+        "pain_points": "Unvollständige Anforderungen und uneinheitliche Kriterien führen zu Rückfragen.",
+        "baseline_metrics": "Mehrere Rückfragen bis ein vergleichbarer Bedarf vorliegt."
+      },
+      {
+        "key": "angebote-einholen",
+        "sequence": 2,
+        "name": "Angebote einholen",
+        "description": "Geeignete Lieferanten werden angefragt und Angebote vollständig eingesammelt.",
+        "actors": "Einkauf, anfordernder Fachbereich und Lieferanten",
+        "systems": "Shared Inbox, Dateiablage und ERP",
+        "documents": "Anfragen, Lieferantenangebote und Rückfragen",
+        "pain_points": "Uneinheitliche Formate, fehlende Angaben und wiederholtes Nachfassen.",
+        "baseline_metrics": "Mindestens fünf Angebote und mehrere Nachfassschleifen je Vorgang."
+      },
+      {
+        "key": "angebote-vergleichen",
+        "sequence": 3,
+        "name": "Angebote vergleichen und Bestellung vorbereiten",
+        "description": "Angebote werden strukturiert, auf Vollständigkeit geprüft und nach freigegebenen Kriterien verglichen.",
+        "actors": "Einkauf und anfordernder Fachbereich",
+        "systems": "E-Mail, PDF/Word, Dateiablage, Tabellenkalkulation und ERP",
+        "documents": "Angebote, Kriterienkatalog, Lieferantenstammdaten und Entscheidungsvorlage",
+        "pain_points": "Manuelle Datenübertragung, Medienbrüche und schwer nachvollziehbare Vergleiche.",
+        "baseline_metrics": "Median elf Minuten Bearbeitungszeit für den strukturierten Vergleich eines Angebots."
+      }
+    ]
+  },
+  "process_analysis": {
+    "key": "angebote-vergleichen-prozess",
+    "stage_key": "angebote-vergleichen",
+    "name": "Angebote vergleichen und Bestellung vorbereiten",
+    "status": "draft",
+    "scope_start": "Mindestens fünf Lieferantenangebote liegen vor.",
+    "scope_end": "Eine vollständige, nachvollziehbare Vergleichsübersicht und vorbereitete Bestellung liegen vor.",
+    "trigger": "Eingang des fünften angeforderten Angebots.",
+    "outcome": "Der Einkauf erhält eine belastbare Entscheidungsgrundlage für die menschliche Lieferantenauswahl.",
+    "current_flow": "Angebote öffnen, Angaben manuell übertragen, Vollständigkeit prüfen, Rückfragen formulieren, Kriterien vergleichen und Bestellung vorbereiten.",
+    "roles": "Der Einkauf strukturiert und vergleicht; der Fachbereich prüft fachliche Kriterien und die finale Entscheidung.",
+    "systems": "E-Mail, PDF/Word, Dateiablage, Tabellenkalkulation und ERP.",
+    "data_objects": "Angebote, Preis- und Leistungspositionen, Lieferzeiten, Vertragsbedingungen, Kriterienkatalog und Lieferantenstammdaten.",
+    "business_rules": "Muss-Kriterien werden vor dem gewichteten Vergleich geprüft; die finale Auswahl bleibt menschlich.",
+    "handoffs": "Rückfragen gehen an Lieferanten; die finale Entscheidung und Bestellung verbleiben beim Einkauf.",
+    "bottlenecks": "Manuelle Extraktion, Medienbrüche, fehlende Angaben und wiederholte Nachfassschleifen.",
+    "exceptions": "Unvollständige Angebote, abweichende Einheiten, Nebenangebote und verspätete Rückmeldungen.",
+    "baseline_metrics": "Median elf Minuten Bearbeitungszeit je strukturiert verglichenem Angebot.",
+    "target_state_principles": "Daten strukturiert vorbereiten, Lücken sichtbar machen, Kriterien nachvollziehbar anwenden und die Entscheidung beim Menschen belassen."
+  },
+  "solution_options": [
+    {
+      "key": "standardisierung",
+      "name": "Standardisierte Angebotsvorlage und Muss-Kriterien",
+      "option_type": "organizational",
+      "recommendation": "candidate",
+      "evaluation_status": "draft",
+      "description": "Lieferanten erhalten eine einheitliche Angebotsvorlage; Muss-Kriterien und Verantwortlichkeiten werden verbindlich beschrieben.",
+      "expected_value": "Weniger Rückfragen und besser vergleichbare Angebote ohne neue Anwendung.",
+      "bottleneck_coverage": "Reduziert fehlende Angaben und Formatabweichungen, beseitigt aber nicht die manuelle Übertragung.",
+      "feasibility": "high",
+      "data_requirements": "Freigegebene Angebotsvorlage und Kriterienkatalog.",
+      "application_impact": "Keine neue Anwendung erforderlich.",
+      "integration_effort": "low",
+      "integration_impact": "Keine technische Integration.",
+      "technology_constraints": "Vorlagen müssen für unterschiedliche Beschaffungskategorien handhabbar bleiben.",
+      "risks": "Lieferanten verwenden die Vorlage nicht vollständig oder zusätzliche Informationen bleiben unstrukturiert.",
+      "architecture_fit": "Organisatorischer Basisschritt mit geringem technischem Aufwand."
+    },
+    {
+      "key": "regelbasierter-vergleich",
+      "name": "Regelbasierter Angebotsvergleich",
+      "option_type": "rule_automation",
+      "recommendation": "candidate",
+      "evaluation_status": "draft",
+      "description": "Strukturierte Angebotsdaten werden anhand fester Muss-Kriterien und Berechnungsregeln verglichen.",
+      "expected_value": "Konsistente Prüfungen und weniger manuelle Rechen- und Übertragungsarbeit.",
+      "bottleneck_coverage": "Automatisiert eindeutige Regeln, benötigt jedoch bereits strukturierte und vollständige Eingabedaten.",
+      "feasibility": "medium",
+      "data_requirements": "Strukturierte Angebotsdaten, Kriterienkatalog und eindeutige Berechnungsregeln.",
+      "application_impact": "Kleiner regelbasierter Arbeitsbereich oder Erweiterung einer vorhandenen Lösung.",
+      "integration_effort": "medium",
+      "integration_impact": "Dateiablage und ERP zunächst über kontrollierten Import oder Export.",
+      "technology_constraints": "Nur explizite Regeln; keine autonome fachliche Gewichtung oder Vergabeentscheidung.",
+      "risks": "Unstrukturierte Angebote und Sonderfälle erfordern weiterhin manuelle Bearbeitung.",
+      "architecture_fit": "Geeignet für stabile Kriterien und strukturierte Daten, begrenzt bei Dokumentenvielfalt."
+    },
+    {
+      "key": "assistierter-angebotsvergleich",
+      "name": "Assistierter Angebotsvergleich",
+      "option_type": "assistant",
+      "recommendation": "candidate",
+      "evaluation_status": "draft",
+      "description": "Angebotsdaten werden extrahiert und normalisiert, fehlende Angaben markiert und ein nachvollziehbarer Kriterienvergleich vorbereitet.",
+      "expected_value": "Weniger Bearbeitungszeit und eine konsistentere, prüfbare Entscheidungsvorbereitung.",
+      "bottleneck_coverage": "Adressiert manuelle Extraktion, Formatabweichungen, fehlende Angaben und wiederkehrende Vergleichsschritte.",
+      "feasibility": "medium",
+      "data_requirements": "Lieferantenangebote, Kriterienkatalog und Lieferantenstammdaten.",
+      "application_impact": "Neuer assistierter Arbeitsbereich für den Einkauf.",
+      "integration_effort": "medium",
+      "integration_impact": "Shared Inbox und Dateiablage; ERP-Abgleich zunächst per kontrolliertem Export.",
+      "technology_constraints": "Nachvollziehbare Quellen und Kriterien; keine autonome Lieferanten- oder Vergabeentscheidung.",
+      "risks": "Fehlerhafte Extraktion, fehlende Angaben oder unangemessene Normalisierung müssen vor Nutzung erkannt werden.",
+      "architecture_fit": "Assistenz ergänzt bestehende führende Systeme und erhält die menschliche Entscheidung."
+    }
+  ],
+  "use_case": {
+    "key": "real-demo-assisted-offer-comparison",
+    "title": "[Real-DEMO] Assistierter Angebotsvergleich",
+    "status": "idea",
+    "decision_status": "clarification",
+    "summary": "Angebotsdaten strukturiert vorbereiten, Lücken markieren und einen nachvollziehbaren Kriterienvergleich unterstützen.",
+    "problem_statement": "Uneinheitliche Angebotsformate, fehlende Angaben und manuelle Übertragung erzeugen hohen Aufwand und erschweren einen konsistenten Vergleich.",
+    "affected_process": "Angebote vergleichen und Bestellung vorbereiten",
+    "target_users": "Strategischer Einkauf und anfordernder Fachbereich",
+    "priority": "normal",
+    "solution_type": "assistant",
+    "hosting_type": "unknown",
+    "provider": "",
+    "product_name": "",
+    "model_name": "",
+    "source_systems": "Shared Inbox, Dateiablage und ERP",
+    "data_sources": "Lieferantenangebote, Kriterienkatalog und Lieferantenstammdaten",
+    "interface_description": "Dateiablage und ERP zunächst über kontrollierten Import oder Export.",
+    "intended_users": "Einkäuferinnen und Einkäufer mit Vergabeverantwortung",
+    "intended_purpose": "Angebote strukturieren, fehlende Angaben sichtbar machen und den Vergleich vorbereiten.",
+    "expected_benefit": "Bearbeitungszeit je strukturiert verglichenem Angebot von elf auf 8,25 Minuten reduzieren.",
+    "benefit_category": "Zeitersparnis und Entscheidungsqualität",
+    "metric": {
+      "name": "Bearbeitungszeit je Angebotsvergleich",
+      "type": "duration",
+      "direction": "lower",
+      "unit": "Minuten",
+      "baseline": 11.0,
+      "target": 8.25,
+      "measurement_method": "Median der Bearbeitungszeit je Angebot bei mindestens fünf Angeboten pro Vorgang."
+    },
+    "one_time_cost": 0,
+    "recurring_cost": 0,
+    "business_value": "medium",
+    "technical_feasibility": "medium",
+    "data_readiness": "medium",
+    "risk_complexity": "medium",
+    "human_oversight": "Die Lösung bereitet den Vergleich vor; fachliche Prüfung und finale Lieferantenauswahl bleiben beim verantwortlichen Einkauf.",
+    "support_responsibility": "Im Entwurf noch festzulegen.",
+    "classification": {
+      "business_domain": "procurement",
+      "capability": "Supplier Sourcing und Angebotsvergleich",
+      "process_area": "Angebote vergleichen und Bestellung vorbereiten"
+    }
+  },
+  "origin": {
+    "stage_key": "angebote-vergleichen",
+    "process_analysis_key": "angebote-vergleichen-prozess",
+    "solution_option_key": "assistierter-angebotsvergleich"
+  }
+}

@@ -1,0 +1,70 @@
+[project]
+name = "ki-radar"
+version = "0.1.0"
+description = "Branchenneutrales Register zur Steuerung von KI-Use-Cases in KMU"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "Django==5.2.16",
+  "argon2-cffi>=23.1,<26",
+  "django-axes==8.3.1",
+  "django-simple-history==3.12.0",
+  "gunicorn>=23,<24",
+  "psycopg[binary]>=3.2,<3.3",
+  "sentry-sdk[django]>=2.0,<3",
+  "whitenoise[brotli]==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+  "bandit[toml]>=1.8,<2",
+  "pip-audit>=2.9,<3",
+  "pytest>=9.0.3,<10",
+  "pytest-cov>=6,<8",
+  "pytest-django>=4.11,<5",
+  "ruff>=0.12,<1",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_tests.py"]
+addopts = "-ra --strict-markers --strict-config --cov=ki_radar --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "*/migrations/*",
+  "*/tests/*",
+  "manage.py",
+  "config/*",
+]
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "def __str__",
+  "raise NotImplementedError",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+extend-exclude = ["*/migrations/*", "output/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ", "S", "SIM", "RUF"]
+ignore = ["DJ001", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*.py" = ["S101", "S106"]
+"tests/test_guided_journey.py" = ["E501", "S101", "S106"]
+"tests/test_golden_path_to_closure.py" = ["E501", "S101", "S106"]
+"ki_radar/core/demo_architecture_data.py" = ["E501"]
+"ki_radar/core/golden_path_demo.py" = ["E501"]
+"ki_radar/use_cases/journey.py" = ["E501"]
+"config/settings/*.py" = ["S105"]
+"config/settings/dev.py" = ["S104", "S105"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations", ".venv"]
+skips = ["B101"]

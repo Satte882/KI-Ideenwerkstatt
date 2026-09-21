@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Delivery Package bearbeiten – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-delivery-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header delivery-edit-header">
+  <div class="delivery-edit-heading">
+    <div class="eyebrow mb-2">{{ package.use_case.short_id }} · Version {{ package.version }}</div>
+    <h1 class="page-title">Delivery Package sektionsweise bearbeiten</h1>
+    <p class="page-subtitle">Eine Sektion fokussieren, vorhandene Quellen prüfen und nur die offenen Delivery-Lücken konkretisieren.</p>
+  </div>
+  <div class="delivery-edit-actions">
+    <a class="btn btn-outline-secondary" href="{{ return_to }}">Zur Readiness</a>
+  </div>
+</div>
+
+<div class="alert alert-secondary mb-4">
+  Änderungen setzen ausschließlich die bearbeitete Sektion wieder auf <strong>Prüfung erforderlich</strong>. Nach dem Speichern wird die vollständige Readiness-Liste serverseitig neu bewertet.
+</div>
+{% if highlight_field %}<div class="alert alert-warning"><strong>Readiness-Kontext:</strong> Das angeforderte Feld ist geöffnet und markiert. Aktuelle Findings werden direkt am Feld angezeigt.</div>{% endif %}
+
+<div class="app-card mb-4" data-testid="delivery-section-navigation">
+  <div class="card-header"><strong>Sektionsworkflow</strong><div class="small text-muted mt-1">Status, Zuständigkeit, offene Felder und übernommene Quellen sind vor dem Öffnen sichtbar.</div></div>
+  <div class="card-body delivery-section-navigation">
+    {% for row in section_rows %}
+    <section class="delivery-section-nav-item delivery-section-{{ row.state }}{% if row.is_active %} delivery-section-nav-active{% endif %}" data-section-key="{{ row.key }}">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div><strong>{{ forloop.counter }}. {{ row.label }}</strong><div class="small text-muted mt-1">{{ row.responsible_role }} · {{ row.responsible_person }}</div></div>
+        <span class="delivery-section-status delivery-section-status-{{ row.state }}">Delivery Readiness: {{ row.state_label }}</span>
+      </div>
+      <div class="delivery-section-nav-metrics small">
+        <span><strong>{{ row.open_field_count }}</strong> offene Felder</span>
+        <span><strong>{{ row.finding_count }}</strong> Findings</span>
+        <span><strong>{{ row.source_count }}</strong> Quellen</span>
+      </div>
+      {% if row.review %}<div class="small text-muted">{{ row.review.get_content_origin_display }} · Sektionsprüfung: {{ row.review.get_review_status_display }}</div>{% endif %}
+      <div class="mt-3">
+        {% if row.is_active %}<span class="badge badge-soft">Aktive Sektion</span>
+        {% elif row.can_edit %}<a class="btn btn-sm btn-outline-secondary" href="{{ row.edit_url }}">Sektion öffnen</a>
+        {% else %}<span class="small text-muted">Nur lesen · Für deine Rolle nicht bearbeitbar</span>{% endif %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+
+<form method="post" data-testid="focused-delivery-section-form">
+  {% csrf_token %}
+  <input type="hidden" name="return_to" value="{{ return_to }}">
+  <input type="hidden" name="highlight" value="{{ highlight_field }}">
+  <input type="hidden" name="section" value="{{ active_section }}">
+  {{ form.ai_assist_run_id }}
+  {{ form.ai_assist_edited }}
+  {{ form.ai_assist_edit_ratio }}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+  {% for group in form.section_groups %}
+    {% if group.active %}
+    <section class="app-card mb-4{% if group.key == highlight_section %} field-attention{% endif %}" id="section-{{ group.key }}" data-editable-section data-active-section="{{ group.key }}">
+      <div class="card-header">
+        <strong>{{ group.label }}</strong>
+        <div class="small text-muted mt-1">Zuständig: {{ group.responsible_role }} · {{ group.responsible_person }}</div>
+        {% if group.key == "scope_and_users" %}
+        <div class="small text-muted mt-1"><strong>Priorisierung nach MoSCoW:</strong> Must entspricht dem verbindlichen MVP-Mindestumfang. Should und Could sind nachgelagert; Won't this time ist bewusst für diese Delivery-Version zurückgestellt und nicht identisch mit „Nicht im Scope“.</div>
+        {% endif %}
+      </div>
+      <div class="card-body delivery-form-grid">
+        {% for field in group.fields %}
+        <div id="field-{{ field.name }}" class="delivery-form-field{% if field.name == highlight_field or field.errors %} field-attention{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.name == highlight_field %}
+            {% for row in section_rows %}
+              {% if row.key == group.key %}
+                {% for finding in row.findings %}
+                  {% if finding.field_name == field.name %}
+                  <div class="field-attention-message mt-2" data-testid="delivery-highlight-finding" data-finding-code="{{ finding.code }}">
+                    <div><strong>{{ finding.title }}</strong></div>
+                    <div><strong>Ursache:</strong> {{ finding.cause }}</div>
+                    <div><strong>Readiness-Regel:</strong> {{ finding.rule }}</div>
+                    <div><strong>Zuständig:</strong> {{ finding.responsible_role }} · {{ finding.responsible_person }}</div>
+                    <div><strong>Nächster Schritt:</strong> {{ finding.action_label|default:"Angabe korrigieren und erneut prüfen" }}</div>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if field.name == "mvp_scope" %}
+            {% with ai=form.mvp_scope_ai_state %}
+              {% if ai.show %}
+              <div class="app-card mt-3" data-mvp-scope-ai data-generate-url="{% url 'delivery:mvp_scope_ai_generate' package.pk %}" data-event-url="{% url 'delivery:mvp_scope_ai_event' package.pk %}" data-static-ready="{{ ai.static_ready|yesno:'true,false' }}">
+                <div class="card-body">
+                  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                    <div>
+                      <strong>KI-Unterstützung für Must / MVP-Scope</strong>
+                      <div class="small text-muted mt-1">Der Entwurf konkretisiert ausschließlich den unverzichtbaren Minimum-Scope. Should, Could und Won't this time werden nicht automatisch priorisiert. Verarbeitet werden nur ausgewählte Problem-, Ziel-, Scope-, Nutzer- und Lösungskontexte über OpenRouter; gespeichert oder bestätigt wird nichts automatisch.</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-ai-generate aria-busy="false"{% if not ai.static_ready %} disabled{% endif %}>
+                      <span class="spinner-border spinner-border-sm d-none" aria-hidden="true" data-ai-spinner></span>
+                      <span data-ai-generate-label>KI-Entwurf erstellen</span>
+                    </button>
+                  </div>
+                  {% if ai.static_missing %}
+                  <div class="small text-muted mt-2" data-ai-static-missing>KI-Entwurf noch nicht verfügbar. Fehlender Basis-Kontext: {{ ai.static_missing|join:", " }}.</div>
+                  {% endif %}
+                  <div class="small mt-2" role="status" aria-live="polite" data-ai-status></div>
+
+                  <section class="mt-3" data-ai-result hidden tabindex="-1">
+                    <div class="alert alert-warning mb-3"><strong>KI-Entwurf – noch nicht fachlich bestätigt</strong></div>
+                    <label class="form-label" for="mvp-scope-ai-preview">Editierbare Vorschau</label>
+                    <textarea id="mvp-scope-ai-preview" class="form-control" rows="8" data-ai-preview></textarea>
+
+                    <div class="row g-3 mt-1">
+                      <div class="col-lg-6">
+                        <strong class="small">Verwendete Quellen</strong>
+                        <ul class="small mb-0" data-ai-sources></ul>
+                      </div>
+                      <div class="col-lg-6">
+                        <strong class="small">Unsicherheit</strong>
+                        <div class="small" data-ai-uncertainty></div>
+                      </div>
+                      <div class="col-lg-4">
+                        <strong class="small">Zu ergänzen</strong>
+                        <ul class="small mb-0" data-ai-missing></ul>
+                      </div>
+                      <div class="col-lg-4">
+                        <strong class="small">Annahmen</strong>
+                        <ul class="small mb-0" data-ai-assumptions></ul>
+                      </div>
+                      <div class="col-lg-4">
+                        <strong class="small">Konflikte</strong>
+                        <ul class="small mb-0" data-ai-conflicts></ul>
+                      </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                      <button type="button" class="btn btn-sm btn-primary" data-ai-adopt>In Feld übernehmen</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-ai-regenerate>Neu erzeugen</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-ai-discard>Verwerfen</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center mt-3 small">
+                      <span>War der Entwurf hilfreich?</span>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-ai-helpful>Hilfreich</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-ai-not-helpful>Nicht hilfreich</button>
+                    </div>
+                  </section>
+                </div>
+              </div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="field-attention-message">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+  <div class="app-card card-body d-flex flex-wrap justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{{ return_to }}">Abbrechen</a><button class="btn btn-primary">Sektion speichern und zur Readiness zurückkehren</button></div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/delivery-mvp-scope-ai.js' %}" defer></script>
+{% if highlight_field %}
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const target = document.getElementById('field-{{ highlight_field|escapejs }}');
+  if (!target) return;
+  target.scrollIntoView({behavior: 'smooth', block: 'center'});
+  const input = target.querySelector('input, textarea, select');
+  if (input && !input.disabled) input.focus({preventScroll: true});
+});
+</script>
+{% endif %}
+{% endblock %}

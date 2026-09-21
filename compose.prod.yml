@@ -1,0 +1,87 @@
+name: ki-radar-prod
+services:
+  db:
+    image: postgres:17.5-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ki_radar}
+      POSTGRES_USER: ${POSTGRES_USER:-ki_radar}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [prod_db:/var/lib/postgresql/data]
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ki_radar} -d ${POSTGRES_DB:-ki_radar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  app:
+    image: ${KI_RADAR_IMAGE:-ki-radar:local}
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SECRET_KEY_FILE: /run/secrets/django_secret_key
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-ki_radar}
+      POSTGRES_USER: ${POSTGRES_USER:-ki_radar}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS}
+      SENTRY_DSN_FILE: /run/secrets/sentry_dsn
+      SENTRY_ENVIRONMENT: production
+      MONITORING_TOKEN_FILE: /run/secrets/monitoring_token
+      ANONYMIZATION_LEDGER_PATH: /app/var/anonymization-ledger.jsonl
+      APP_VERSION: ${APP_VERSION:-unknown}
+    secrets: [django_secret_key, db_password, sentry_dsn, monitoring_token]
+    volumes:
+      - prod_static:/app/staticfiles
+      - prod_var:/app/var
+    networks: [backend]
+    depends_on:
+      db: {condition: service_healthy}
+  nginx:
+    image: nginx:1.28.0-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - prod_static:/srv/static:ro
+      - ./deploy/certs:/etc/nginx/certs:ro
+    networks: [backend]
+    depends_on: [app]
+  backup:
+    profiles: ["jobs"]
+    image: ${KI_RADAR_IMAGE:-ki-radar:local}
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SECRET_KEY_FILE: /run/secrets/django_secret_key
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-ki_radar}
+      POSTGRES_USER: ${POSTGRES_USER:-ki_radar}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      BACKUP_DIR: /backups
+      ANONYMIZATION_LEDGER_PATH: /app/var/anonymization-ledger.jsonl
+    secrets: [django_secret_key, db_password]
+    volumes:
+      - prod_backups:/backups
+      - prod_var:/app/var
+    networks: [backend]
+    entrypoint: ["/bin/sh", "/app/scripts/backup.sh"]
+    depends_on:
+      db: {condition: service_healthy}
+networks:
+  backend:
+volumes:
+  prod_db:
+  prod_static:
+  prod_var:
+  prod_backups:
+secrets:
+  django_secret_key:
+    file: ${SECRETS_DIR:-./secrets/prod}/django_secret_key
+  db_password:
+    file: ${SECRETS_DIR:-./secrets/prod}/db_password
+  sentry_dsn:
+    file: ${SECRETS_DIR:-./secrets/prod}/sentry_dsn
+  monitoring_token:
+    file: ${SECRETS_DIR:-./secrets/prod}/monitoring_token

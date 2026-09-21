@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}RSD Demo – KI-Ideenwerkstatt{% endblock %}</title>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/demo-portal.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="presentation-page {% block body_class %}{% endblock %}">
+  <header class="presentation-topbar">
+    <a class="presentation-rsd-brand" href="{% url 'demo-portal' %}" aria-label="RSD Demo-Übersicht">
+      <img src="{% static 'img/rsd-logo.svg' %}" alt="RSD Reise Service Deutschland">
+      <span>
+        <small>Vorbereitet für RSD</small>
+        <strong>KI-Ideenwerkstatt</strong>
+      </span>
+    </a>
+    {% if request.resolver_match.url_name != 'demo-portal' %}
+    <nav class="presentation-nav" aria-label="Präsentationsnavigation">
+      <a href="{% url 'demo-portal' %}">Übersicht</a>
+      <a href="{% url 'reporting:dashboard' %}">KI-Use-Case-Radar</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main class="presentation-main">
+    {% for message in messages %}<div class="presentation-message">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

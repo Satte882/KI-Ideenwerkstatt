@@ -1,0 +1,51 @@
+name: ki-radar-staging
+services:
+  db:
+    image: postgres:17.5-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ki_radar_staging
+      POSTGRES_USER: ki_radar_staging
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [staging_db:/var/lib/postgresql/data]
+    networks: [staging_backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ki_radar_staging -d ki_radar_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  app:
+    image: ${KI_RADAR_IMAGE:-ki-radar:local}
+    restart: unless-stopped
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SECRET_KEY_FILE: /run/secrets/django_secret_key
+      POSTGRES_HOST: db
+      POSTGRES_DB: ki_radar_staging
+      POSTGRES_USER: ki_radar_staging
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,staging.ki-radar.local
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://staging.ki-radar.local
+      DJANGO_SECURE_SSL_REDIRECT: "false"
+      SENTRY_ENVIRONMENT: staging
+      ANONYMIZATION_LEDGER_PATH: /app/var/anonymization-ledger.jsonl
+    secrets: [django_secret_key, db_password]
+    volumes:
+      - staging_static:/app/staticfiles
+      - staging_var:/app/var
+    networks: [staging_backend]
+    ports: ["127.0.0.1:8001:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+networks:
+  staging_backend:
+volumes:
+  staging_db:
+  staging_static:
+  staging_var:
+secrets:
+  django_secret_key:
+    file: ${STAGING_SECRETS_DIR:-./secrets/staging}/django_secret_key
+  db_password:
+    file: ${STAGING_SECRETS_DIR:-./secrets/staging}/db_password

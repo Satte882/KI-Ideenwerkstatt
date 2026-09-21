@@ -1,0 +1,371 @@
+/*
+ * Globaler Seitenrahmen: Navigation, Kontextleiste und Inhaltskopf.
+ */
+
+.ui-vnext .app-shell {
+  grid-template-columns: 268px minmax(0, 1fr);
+}
+
+.ui-vnext .app-sidebar {
+  padding: 26px 17px 18px;
+  border-right-color: var(--line);
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--ice) 7%, transparent), transparent 17rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-1) 99%, transparent), color-mix(in srgb, var(--surface-0) 99%, transparent));
+  box-shadow: inset -1px 0 color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.ui-vnext .brand {
+  gap: 13px;
+  padding: 0 9px 28px;
+}
+
+.ui-vnext .brand-mark {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ice) 42%, transparent);
+  border-radius: 10px;
+  color: var(--ice-strong);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ice) 18%, transparent), transparent 54%),
+    var(--surface-2);
+  box-shadow:
+    inset 0 1px color-mix(in srgb, var(--ink) 12%, transparent),
+    0 10px 28px color-mix(in srgb, var(--surface-0) 68%, transparent);
+  font-size: .72rem;
+  letter-spacing: .12em;
+}
+
+.ui-vnext .brand-mark::after {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--ice) 28%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.ui-vnext .brand strong {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 720;
+  letter-spacing: -.015em;
+}
+
+.ui-vnext .brand small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .65rem;
+  letter-spacing: .035em;
+}
+
+.ui-vnext .sidebar-nav {
+  padding-right: 4px;
+}
+
+.ui-vnext .nav-caption {
+  padding-inline: 13px;
+  color: color-mix(in srgb, var(--muted) 78%, transparent);
+  font-size: .62rem;
+  letter-spacing: .16em;
+}
+
+.ui-vnext .sidebar-link {
+  position: relative;
+  gap: 11px;
+  margin: 2px 0;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted-strong);
+  font-size: .87rem;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ui-vnext .sidebar-link::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: -5px;
+  width: 2px;
+  border-radius: 2px;
+  content: "";
+  background: transparent;
+}
+
+.ui-vnext .sidebar-link:hover {
+  color: var(--ink);
+  border-color: var(--line-soft);
+  background: color-mix(in srgb, var(--silver) 6%, transparent);
+}
+
+.ui-vnext .sidebar-link.active {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ice) 14%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ice) 12%, transparent), color-mix(in srgb, var(--ice) 3%, transparent));
+}
+
+.ui-vnext .sidebar-link.active::before {
+  background: var(--ice);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ice) 55%, transparent);
+}
+
+.ui-vnext .nav-icon {
+  color: var(--muted-strong);
+  font-size: .93rem;
+}
+
+.ui-vnext .sidebar-local-depth {
+  border-left-color: var(--line);
+}
+
+.ui-vnext .sidebar-local-step {
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+
+.ui-vnext .sidebar-local-step:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--silver) 6%, transparent);
+}
+
+.ui-vnext .sidebar-local-current {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+.ui-vnext .sidebar-workspace-separator {
+  height: 1px;
+  margin: 19px 11px 13px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ice) 40%, transparent), var(--line-soft));
+}
+
+.ui-vnext .sidebar-footer {
+  border-top-color: var(--line-soft);
+}
+
+.ui-vnext .user-avatar {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--silver);
+  background: var(--surface-3);
+}
+
+.ui-vnext .sidebar-account-trigger {
+  border-radius: var(--radius-sm);
+}
+
+.ui-vnext .sidebar-account-trigger:hover,
+.ui-vnext .sidebar-account-trigger[aria-expanded="true"] {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--silver) 6%, transparent);
+}
+
+.ui-vnext .sidebar-account-menu {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  box-shadow: var(--shadow-3);
+}
+
+.ui-vnext .sidebar-account-menu .dropdown-item {
+  color: var(--ink-soft);
+}
+
+.ui-vnext .sidebar-account-menu .dropdown-item:hover,
+.ui-vnext .sidebar-account-menu .dropdown-item:focus {
+  color: var(--ink);
+  background: var(--surface-3);
+}
+
+.ui-vnext .app-topbar {
+  min-height: 76px;
+  height: auto;
+  padding: 10px 30px;
+  border-bottom-color: var(--line-soft);
+  background: color-mix(in srgb, var(--surface-0) 82%, transparent);
+  box-shadow: 0 10px 34px color-mix(in srgb, var(--surface-0) 55%, transparent);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+.ui-vnext .journey-topbar-kicker {
+  color: var(--muted);
+  letter-spacing: .13em;
+}
+
+.ui-vnext .journey-topbar-heading {
+  color: var(--ink);
+}
+
+.ui-vnext .journey-progress-marker {
+  border-color: var(--line);
+  background: var(--surface-1);
+}
+
+.ui-vnext .journey-progress-step:not(:last-child)::after {
+  background: var(--line);
+}
+
+.ui-vnext .journey-progress-label {
+  color: var(--muted-strong);
+}
+
+.ui-vnext .journey-progress-view-active .journey-progress-marker {
+  outline-color: color-mix(in srgb, var(--ice) 72%, transparent);
+}
+
+.ui-vnext .journey-progress-view-active .journey-progress-label {
+  color: var(--ice-strong);
+  text-decoration-color: color-mix(in srgb, var(--ice) 70%, transparent);
+}
+
+.ui-vnext .journey-progress-complete {
+  color: var(--success);
+}
+
+.ui-vnext .journey-progress-complete .journey-progress-marker {
+  border-color: color-mix(in srgb, var(--success) 42%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+
+.ui-vnext .journey-progress-current {
+  color: var(--warning);
+}
+
+.ui-vnext .journey-progress-current .journey-progress-marker {
+  border-color: color-mix(in srgb, var(--warning) 62%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--warning) 7%, transparent);
+}
+
+.ui-vnext .journey-progress-blocked {
+  color: var(--danger);
+}
+
+.ui-vnext .journey-progress-blocked .journey-progress-marker {
+  border-color: color-mix(in srgb, var(--danger) 62%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.ui-vnext .journey-topbar-next {
+  border-left-color: var(--line);
+}
+
+.ui-vnext .journey-topbar-next-blocked {
+  border-left-color: color-mix(in srgb, var(--danger) 32%, transparent);
+}
+
+.ui-vnext .journey-topbar-complete {
+  border-left-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+.ui-vnext .app-content {
+  max-width: 1680px;
+  padding: 28px 42px 56px;
+}
+
+.ui-vnext .app-content-wide {
+  max-width: none;
+}
+
+.ui-vnext .page-header {
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 2px 2px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-vnext .page-header > div:first-child {
+  min-width: 0;
+  max-width: 920px;
+}
+
+.ui-vnext .eyebrow {
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 760;
+  letter-spacing: .15em;
+}
+
+.ui-vnext .page-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(2rem, 2.6vw, 2.65rem);
+  font-weight: 680;
+  letter-spacing: -.045em;
+  line-height: 1.06;
+}
+
+.ui-vnext .page-subtitle {
+  max-width: 780px;
+  margin-top: 7px;
+  color: var(--muted-strong);
+  font-size: .86rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1380px) {
+  .ui-vnext .app-content {
+    padding-inline: 30px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ui-vnext .app-shell {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  .ui-vnext .app-sidebar {
+    padding-inline: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .ui-vnext .app-sidebar {
+    padding: 10px 14px;
+  }
+
+  .ui-vnext .brand {
+    padding: 0;
+  }
+
+  .ui-vnext .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ui-vnext .app-content {
+    padding: 24px 15px 42px;
+  }
+
+  .ui-vnext .page-header {
+    align-items: stretch;
+    padding-bottom: 20px;
+  }
+
+  .ui-vnext .page-header > :last-child {
+    width: 100%;
+  }
+
+  .ui-vnext .page-header > :last-child.btn {
+    width: auto;
+    align-self: flex-start;
+  }
+
+  .ui-vnext .page-title {
+    font-size: 2.25rem;
+  }
+
+  .ui-vnext .journey-topbar-next {
+    border-top-color: var(--line);
+  }
+}

@@ -1,0 +1,347 @@
+{
+  "schema_version": "1.1",
+  "benchmark_version": "block9-v2",
+  "supersedes": "block9-v1",
+  "supersession_reason": "The mandatory non-scored warm-up on 2026-08-08 showed that block9-v1 could not reach its frozen shared end state through the real six-step manual intake.",
+  "frozen": true,
+  "freeze_rule": "Do not change fact sets, path-required facts, start/stop rules, target fields, scoring rules, or run order after the first scored block9-v2 run.",
+  "reference": {
+    "blueprint_path": "ki_radar/core/scenario_blueprints/real_demo.v1.json",
+    "blueprint_canonical_sha256": "a910863c3f677eb95b593e8031f48e54f811c5bb55295b4e601ae6f13a0b70d5",
+    "scenario_key": "real-demo-procurement-order",
+    "v1_fixture_canonical_sha256": "e3c894f6ee2a87cc7755380fc6dc43f7352796bfaa31cddd56491997f38f7dab",
+    "technical_measurements_from_v1_reusable": true,
+    "technical_measurements_reason": "Blueprint and Delivery technical controls, their inputs, checksums and measurement boundaries are unchanged by the interactive-contract correction."
+  },
+  "operator_contract": {
+    "mode": "single_system_familiar_operator",
+    "warm_up_runs": 1,
+    "warm_up_rule": "Warm-up validates that both UI paths can reach the frozen fachlicher Endzustand. If not, no scored run may start.",
+    "scored_runs_per_interactive_path": 3,
+    "interactive_order": [
+      "manual-A-1",
+      "accelerator-A-1",
+      "accelerator-A-2",
+      "manual-A-2",
+      "manual-A-3",
+      "accelerator-A-3"
+    ],
+    "quality_run": "accelerator-B-1",
+    "blueprint_control_runs": 1,
+    "delivery_runs": 3,
+    "environment": "same local Docker Compose stack, browser, permissions and LLM configuration for all scored interactive runs",
+    "bias_note": "Order alternation reduces sequence effects but does not remove operator familiarity or memory effects."
+  },
+  "shared_end_state": {
+    "object": "UseCase fachlicher Erfassungsstand",
+    "required_status": "idea",
+    "decision_status_scored": false,
+    "decision_status_rule": "Do not normalize lifecycle state for the benchmark. Record the natural path result; manual intake creates ready, the prepared Accelerator target remains clarification unless an existing non-gate product action changes it.",
+    "scored_fields": [
+      "title",
+      "summary",
+      "problem_statement",
+      "affected_process",
+      "target_users",
+      "solution_type",
+      "source_systems",
+      "data_sources",
+      "interface_description",
+      "intended_users",
+      "intended_purpose",
+      "expected_benefit",
+      "benefit_category",
+      "metric_name",
+      "metric_type",
+      "metric_direction",
+      "metric_unit",
+      "metric_baseline",
+      "metric_target",
+      "metric_measurement_method",
+      "human_oversight"
+    ],
+    "excluded_gate_fields": [
+      "governance review result",
+      "approval/final decision",
+      "delivery confirmation",
+      "handover",
+      "pilot start",
+      "go-live"
+    ],
+    "stop_rule": "Stop when all scored fields are saved with an explicit supported fact or visibly left open because the frozen fact set marks the value missing or conflicting; path-specific non-gate editing needed to reach those fields is part of end-to-end time."
+  },
+  "common_path_facts": {
+    "business_unit": "[BENCHMARK] Prozesse & Organisation",
+    "business_owner": "benchmark_business_owner",
+    "submitter": "benchmark_operator",
+    "business_domain": "procurement",
+    "business_capability": "Source-to-Pay",
+    "hosting_type": "unknown",
+    "privacy_review_required": false,
+    "security_review_required": false,
+    "legal_review_required": false,
+    "product_name": null,
+    "priority": null
+  },
+  "paths": {
+    "manual": {
+      "kind": "interactive",
+      "start_state": "No benchmark UseCase exists; empty/reset six-step intake session; benchmark BusinessUnit and dedicated benchmark users exist.",
+      "start_clock": "First user action on the regular use_cases:new intake.",
+      "route": [
+        "complete the real six-step intake with frozen case facts plus common_path_facts",
+        "create the UseCase through the normal step-6 submit",
+        "open the regular UseCase edit UI",
+        "populate interface_description, benefit_category and human_oversight from frozen facts",
+        "final explicit save and review"
+      ],
+      "intake_semantics": {
+        "summary_ui_label": "Heutiger Ablauf und Auslöser",
+        "source_systems_ui_label": "Heute verwendete Systeme und Dokumente",
+        "data_sources_ui_label": "Benötigte Daten und bekannte Datenquellen"
+      },
+      "post_intake_edit_fields": [
+        "interface_description",
+        "benefit_category",
+        "human_oversight"
+      ],
+      "expected_decision_status_after_intake": "ready",
+      "stop_clock": "After the final regular UseCase edit save/review when the shared fachlicher Endzustand is met.",
+      "seed_fields_excluded_from_scoring": [
+        "business_unit",
+        "business_owner",
+        "submitter",
+        "status"
+      ]
+    },
+    "blueprint": {
+      "kind": "technical_control",
+      "unchanged_from_v1": true,
+      "start_state": "Required benchmark reference users/groups/business unit exist and no benchmark scenario graph exists.",
+      "start_clock": "Immediately before apply_scenario_blueprint --apply.",
+      "stop_clock": "Command returns successfully and the expected draft graph is persisted.",
+      "seed_fields_excluded_from_scoring": []
+    },
+    "accelerator": {
+      "kind": "interactive",
+      "start_state": "A new CaptureSession is already bound to a minimal editable benchmark UseCase target; this technical preparation happens before the clock because current adoption requires an existing one-target binding.",
+      "start_clock": "First user action in step 1 of the prepared Accelerator CaptureSession.",
+      "route": [
+        "complete the guided CaptureSession with frozen case facts plus common_path_facts",
+        "complete and analyze the CaptureSession",
+        "review and explicitly adopt, edit-adopt or reject candidates",
+        "use structured review for supported structured metric candidates",
+        "use the regular UseCase edit UI only for remaining scored fields not writable through adoption",
+        "final explicit save and review"
+      ],
+      "known_plain_text_adoption_fields": [
+        "title",
+        "summary",
+        "problem_statement",
+        "affected_process",
+        "target_users",
+        "source_systems",
+        "data_sources",
+        "interface_description",
+        "intended_users",
+        "intended_purpose",
+        "expected_benefit",
+        "benefit_category",
+        "human_oversight",
+        "support_responsibility"
+      ],
+      "normal_edit_fallback_scored_fields": [
+        "solution_type"
+      ],
+      "expected_seed_decision_status": "clarification",
+      "stop_clock": "After the final explicit candidate/structured review or regular UseCase edit save needed to meet the shared fachlicher Endzustand.",
+      "seed_fields_excluded_from_scoring": [
+        "business_unit",
+        "business_owner",
+        "submitter",
+        "status",
+        "decision_status"
+      ],
+      "seed_values": {
+        "status": "idea",
+        "decision_status": "clarification",
+        "business_unit": "[BENCHMARK] Prozesse & Organisation",
+        "business_owner": "benchmark_business_owner",
+        "submitter": "benchmark_operator"
+      }
+    },
+    "delivery": {
+      "kind": "secondary",
+      "unchanged_from_v1": true,
+      "start_state": "Identical isolated approved upstream UseCase/Decision state for manual and mapper variants.",
+      "start_clock": "Immediately before manual Delivery drafting or Block-8 mapping starts.",
+      "stop_clock": "All frozen Delivery target fields are populated, explicitly open, or conflict-marked; no confirmation/handover action is performed.",
+      "excluded_from_30_minute_primary": true
+    }
+  },
+  "cases": {
+    "A": {
+      "name": "Zeitbenchmark / Golden Path",
+      "purpose": "Speed comparison on a complete, known procurement case with all facts required by the real interactive paths and without artificial traps.",
+      "facts": {
+        "title": "[BENCHMARK-A] Assistierter Angebotsvergleich",
+        "summary": "Lieferantenangebote aus Shared Inbox und Dateiablage werden heute manuell übertragen und verglichen; der Vorgang endet mit der Vorbereitung der Bestellung im ERP.",
+        "problem_statement": "Uneinheitliche Angebotsformate, fehlende Angaben und manuelle Übertragung erzeugen hohen Aufwand und erschweren einen konsistenten Vergleich.",
+        "affected_process": "Angebote vergleichen und Bestellung vorbereiten",
+        "target_users": "Strategischer Einkauf und anfordernder Fachbereich",
+        "solution_type": "assistant",
+        "source_systems": "Shared Inbox, Dateiablage und ERP",
+        "data_sources": "Lieferantenangebote, Kriterienkatalog und Lieferantenstammdaten",
+        "interface_description": "Dateiablage und ERP zunächst über kontrollierten Import oder Export.",
+        "intended_users": "Einkäuferinnen und Einkäufer mit Vergabeverantwortung",
+        "intended_purpose": "Angebote strukturieren, fehlende Angaben sichtbar machen und den Vergleich vorbereiten.",
+        "expected_benefit": "Bearbeitungszeit je strukturiert verglichenem Angebot von elf auf 8,25 Minuten reduzieren.",
+        "benefit_category": "Zeitersparnis und Entscheidungsqualität",
+        "metric_name": "Bearbeitungszeit je Angebotsvergleich",
+        "metric_type": "duration",
+        "metric_direction": "lower",
+        "metric_unit": "Minuten",
+        "metric_baseline": "11.0",
+        "metric_target": "8.25",
+        "metric_measurement_method": "Median der Bearbeitungszeit je Angebot bei mindestens fünf Angeboten pro Vorgang.",
+        "human_oversight": "Die Lösung bereitet den Vergleich vor; fachliche Prüfung und finale Lieferantenauswahl bleiben beim verantwortlichen Einkauf.",
+        "support_responsibility": null,
+        "provider": null,
+        "model_name": null
+      },
+      "quality_expectations": {
+        "missing_scored_facts": 0,
+        "source_conflicts": 0,
+        "scope_traps": 0,
+        "must_not_invent": [
+          "provider",
+          "model_name",
+          "support_responsibility"
+        ],
+        "number_unit_pairs": [
+          {
+            "field": "metric_baseline",
+            "value": "11.0",
+            "unit": "Minuten"
+          },
+          {
+            "field": "metric_target",
+            "value": "8.25",
+            "unit": "Minuten"
+          }
+        ]
+      }
+    },
+    "B": {
+      "name": "Qualitäts-/Robustheitsbenchmark",
+      "purpose": "Challenge gap detection, source-conflict handling, scope separation, numeric normalization and no-invention behavior with otherwise complete scored facts.",
+      "facts": {
+        "title": "[BENCHMARK-B] Assistierter Angebotsvergleich",
+        "summary": "Lieferantenangebote aus unterschiedlichen Dokumentformaten werden heute manuell übertragen und für die Bestellvorbereitung verglichen.",
+        "problem_statement": "Angebote werden manuell aus unterschiedlichen Dokumentformaten übertragen; einzelne Pflichtangaben fehlen regelmäßig.",
+        "affected_process": "Angebote vergleichen und Bestellung vorbereiten",
+        "target_users": "Strategischer Einkauf",
+        "solution_type": "assistant",
+        "source_systems": "Shared Inbox, Dateiablage und ERP",
+        "data_sources": "Lieferantenangebote und Kriterienkatalog",
+        "interface_description": "Dateiablage und ERP zunächst über kontrollierten Import oder Export.",
+        "intended_users": "Einkäuferinnen und Einkäufer mit Vergabeverantwortung",
+        "intended_purpose": "Angebote strukturieren, fehlende Angaben sichtbar machen und einen Vergleich vorbereiten.",
+        "expected_benefit": "Die Bearbeitungszeit des Angebotsvergleichs soll sinken; der konkrete Zielwert muss wegen widersprüchlicher Quellen geklärt werden.",
+        "benefit_category": "Zeitersparnis und Entscheidungsqualität",
+        "metric_name": "Bearbeitungszeit je Angebotsvergleich",
+        "metric_type": "duration",
+        "metric_direction": "lower",
+        "metric_unit": "Minuten",
+        "metric_baseline": "11",
+        "metric_target": null,
+        "metric_target_conflicting": [
+          "8.25",
+          "8.5"
+        ],
+        "metric_measurement_method": "Median der Bearbeitungszeit je Angebot bei mindestens fünf Angeboten pro Vorgang.",
+        "human_oversight": "Die Lösung bereitet den Vergleich vor; fachliche Prüfung und finale Lieferantenauswahl bleiben beim verantwortlichen Einkauf.",
+        "expected_benefit_source_1": "Bearbeitungszeit von 11 Minuten auf 8,25 Minuten reduzieren.",
+        "expected_benefit_source_2_newer": "Neuere Fachnotiz nennt 8,5 Minuten als Ziel; Änderung ist noch nicht bestätigt.",
+        "scope_sentence": "Die Assistenz darf den Vergleich vorbereiten; die finale Lieferantenauswahl und Vergabeentscheidung bleiben beim Einkauf und sind nicht im Scope.",
+        "provider": null,
+        "model_name": null,
+        "support_responsibility": null
+      },
+      "quality_expectations": {
+        "missing_required_facts": 1,
+        "missing_fact_keys": [
+          "support_responsibility"
+        ],
+        "source_conflicts": 1,
+        "conflict_keys": [
+          "metric_target"
+        ],
+        "scope_traps": 1,
+        "scope_out_must_not_leak_into_positive_scope_fields": [
+          "finale Lieferantenauswahl",
+          "Vergabeentscheidung"
+        ],
+        "must_not_invent": [
+          "provider",
+          "model_name",
+          "support_responsibility"
+        ],
+        "number_unit_pairs": [
+          {
+            "field": "metric_baseline",
+            "value": "11",
+            "unit": "Minuten"
+          }
+        ],
+        "expected_behavior": [
+          "Do not silently choose one conflicting target value.",
+          "Keep the missing support responsibility open.",
+          "Do not treat final supplier selection or award decision as allowed purpose.",
+          "Do not invent provider or model."
+        ]
+      }
+    }
+  },
+  "measurement_contract": {
+    "time_components": [
+      "active_input_seconds",
+      "navigation_seconds",
+      "review_seconds",
+      "correction_seconds",
+      "system_wait_seconds",
+      "end_to_end_seconds"
+    ],
+    "quality_counts": [
+      "correct_field_mappings",
+      "field_mapping_errors",
+      "number_unit_errors",
+      "scope_errors",
+      "invented_values",
+      "missed_required_gaps",
+      "stale_source_conflicts_missed",
+      "suggestions_adopted",
+      "suggestions_adopted_edited",
+      "suggestions_rejected",
+      "errors",
+      "aborts"
+    ],
+    "llm_metrics": [
+      "calls",
+      "prompt_tokens",
+      "completion_tokens",
+      "total_tokens",
+      "cost",
+      "duration_ms",
+      "errors"
+    ],
+    "delivery_metrics": [
+      "deterministic_fields",
+      "llm_fields",
+      "open_gaps",
+      "conflicts",
+      "manually_corrected_fields"
+    ],
+    "raw_run_rule": "Record every scored, failed or aborted run unchanged. Never discard a run because its result is unfavorable."
+  }
+}

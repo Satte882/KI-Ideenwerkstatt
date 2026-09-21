@@ -1,0 +1,16 @@
+{% if back or overview or recommendation %}
+<nav class="d-flex flex-wrap align-items-center gap-2 gap-md-3 small mb-3 pb-2 border-bottom" aria-label="Kontextnavigation" data-testid="context-navigation">
+  {% if back %}
+  <a class="link-secondary text-decoration-none" href="{{ back.url }}">← {{ back.label }}</a>
+  {% endif %}
+  {% if overview %}
+  <a class="link-secondary text-decoration-none" href="{{ overview.url }}">{{ overview.label }}</a>
+  {% endif %}
+  {% if recommendation %}
+  <span class="ms-md-auto d-inline-flex align-items-center gap-1">
+    <span class="text-muted">Empfohlen:</span>
+    <a class="link-secondary text-decoration-none" href="{{ recommendation.url }}">{{ recommendation.label }} →</a>
+  </span>
+  {% endif %}
+</nav>
+{% endif %}

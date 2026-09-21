@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Entscheidung – {{ use_case.short_id }}{% endblock %}
+{% block body_class %}page-decision-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Freigabe · Verbindliche Entscheidung" %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ journey.path_label }} · {{ use_case.short_id }} · Verbindliche Entscheidung</div>
+    <h1 class="cr-page-header__title">{{ use_case.title }}</h1>
+    <p class="cr-work-header__summary">Bewertung und Entscheidung sind personell getrennt. Positive Entscheidungen werden zusätzlich gegen Pflicht-Evidenz und Governance-Prüfungen validiert.</p>
+  </div>
+</header>
+{% include "includes/status_dimensions.html" %}
+
+<div class="app-card mb-4" id="governance-artifacts">
+  <div class="card-header"><strong>Governance-Prüfartefakte</strong><div class="small text-muted mt-1">Das Screening identifiziert den Prüfbedarf; formale Datenschutz-, Security- und Rechtsprüfungen bleiben eigenständige Nachweise.</div></div>
+  <div class="card-body"><div class="row g-3">
+    {% for status in governance_statuses %}<div class="col-md-4"><div class="border rounded p-3 h-100"><div class="d-flex justify-content-between gap-2"><strong>{{ status.kind.label }}</strong><span class="badge {{ status.badge_class }}">{{ status.label }}</span></div>{% if status.result %}<div class="small mt-2"><strong>Ergebnis:</strong> {{ status.result }}</div>{% endif %}<div class="small text-muted mt-2">{{ status.attribution_note }}{% if status.actor %}: {{ status.actor }}{% endif %}{% if status.changed_at %}, {% if status.changed_at_has_time %}{{ status.changed_at|date:"d.m.Y H:i" }}{% else %}{{ status.changed_at|date:"d.m.Y" }}{% endif %}{% endif %}</div>{% if status.target_url %}<a class="btn btn-sm btn-outline-secondary w-100 mt-3" href="{{ status.target_url }}">Prüfartefakt öffnen</a>{% endif %}</div></div>{% endfor %}
+  </div></div>
+</div>
+
+<div class="app-card mb-4" id="decision-roles">
+  <div class="card-header"><strong>Rollen und Personentrennung</strong><div class="small text-muted mt-1">Eine Checkbox oder ein Rollenwechsel derselben Person ersetzt keine unabhängige Entscheidung.</div></div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6 col-xl-3"><div class="section-title">Bewertende Person</div><strong>{% if assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}Nicht dokumentiert{% endif %}</strong><div class="small text-muted">Assessment v{{ assessment.version }}</div></div>
+      <div class="col-md-6 col-xl-3"><div class="section-title">Business Owner</div><strong>{% if use_case.business_owner %}{{ use_case.business_owner.get_display_name }}{% else %}Nicht zugewiesen{% endif %}</strong><div class="small text-muted">Fachliche Verantwortung</div></div>
+      <div class="col-md-6 col-xl-3"><div class="section-title">Zugewiesene KI-Koordination</div><strong>{% if use_case.coordinator %}{{ use_case.coordinator.get_display_name }}{% else %}Nicht zugewiesen{% endif %}</strong><div class="small text-muted">Koordination des Entscheidungswegs</div></div>
+      <div class="col-md-6 col-xl-3"><div class="section-title">Aktuell entscheidende Person</div><strong>{{ deciding_actor.get_display_name }}</strong><div class="small text-muted">Angemeldete, ausführende Person</div></div>
+    </div>
+  </div>
+</div>
+
+{% if approval_blocker_details %}
+<div class="app-card decision-panel mb-4" id="decision-blockers">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div><strong>Entscheidung nicht ausführbar</strong><div class="small text-muted mt-1">Für „{{ selected_status_label }}“ sind {{ approval_blocker_details|length }} harte Voraussetzungen offen. Das Entscheidungsformular wird erst danach freigeschaltet.</div></div>
+    <span class="badge state-blocked">Blockiert</span>
+  </div>
+  <div class="card-body">
+    <div class="blocker-actions">
+      {% for blocker in approval_blocker_details %}
+      <div class="blocker-action blocker-{{ blocker.category }}">
+        <div><span class="blocker-icon" aria-hidden="true">⚠</span><strong>{{ blocker.label }}</strong><div class="small text-muted">Dieser Punkt kann nicht durch die Entscheidungsbestätigung übersteuert werden.</div></div>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ blocker.target_href }}">{{ blocker.action_label }}</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% if decision_alternatives %}
+    <hr>
+    <div class="section-title">Zulässige alternative Entscheidungen</div>
+    <p class="small text-muted">Diese Alternativen besitzen für die aktuell handelnde Person keine harten Voraussetzungen. Sie werden separat geprüft und begründet.</p>
+    <div class="d-flex flex-wrap gap-2">{% for alternative in decision_alternatives %}<a class="btn btn-outline-secondary" href="{{ alternative.url }}">{{ alternative.label }} prüfen</a>{% endfor %}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if approval_check.warnings %}
+<div class="alert alert-warning mb-4"><strong>Abweichungshinweise</strong><ul class="mb-0 mt-2">{% for warning in approval_check.warnings %}<li>{{ warning }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-xl-5">
+    <div class="app-card mb-4" id="assessment-recommendation">
+      <div class="card-header d-flex justify-content-between gap-3"><div><strong>Unverbindliche Bewertungsempfehlung</strong><div class="small text-muted mt-1">Assessment v{{ assessment.version }} liefert einen Vorschlag, trifft aber keine Entscheidung.</div></div><span class="badge {% if assessment.confidence_level == 'low' %}state-blocked{% elif assessment.confidence_level == 'medium' %}state-review{% else %}state-ready{% endif %}">Confidence {{ assessment.confidence_label }}</span></div>
+      <div class="card-body">
+        <div class="border rounded p-3 mb-4">
+          <div class="section-title">Empfohlener Entscheidungsweg</div>
+          <strong>{{ assessment.get_recommendation_display }}</strong>
+          <div class="small text-muted mt-1">Vorschlag aus der Bewertung; noch keine verbindliche Entscheidung.</div>
+        </div>
+        <dl class="row mb-0 small">
+          <dt class="col-6 text-muted">Bewertende Person</dt><dd class="col-6">{% if assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}–{% endif %}</dd>
+          <dt class="col-6 text-muted">Wirtschaftlicher Nutzen</dt><dd class="col-6">{{ assessment.get_business_value_display }}</dd>
+          <dt class="col-6 text-muted">Strategischer Beitrag</dt><dd class="col-6">{{ assessment.get_strategic_fit_display }}</dd>
+          <dt class="col-6 text-muted">Technische Machbarkeit</dt><dd class="col-6">{{ assessment.get_technical_feasibility_display }}</dd>
+          <dt class="col-6 text-muted">Datenreife</dt><dd class="col-6">{{ assessment.get_data_readiness_display }}</dd>
+          <dt class="col-6 text-muted">Risiko und Komplexität</dt><dd class="col-6">{{ assessment.get_risk_complexity_display }}</dd>
+        </dl>
+        <hr>
+        <div class="section-title">Bewertungsbegründung</div>
+        <div class="border rounded p-3 small mb-3">{{ assessment.rationale|linebreaksbr }}</div>
+        <a href="{{ assessment.evidence_url }}" target="_blank" rel="noopener noreferrer">Bewertungsnachweis öffnen</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-7">
+    {% if decision_form_enabled %}
+    <form method="post" class="cr-work-form" id="decision-form" data-initially-dirty="{% if form.is_bound %}true{% else %}false{% endif %}">
+      {% csrf_token %}<input type="hidden" name="return_to" value="{{ return_to }}">
+      <div class="app-card" id="binding-decision">
+        <div class="card-header"><strong>Verbindliche Entscheidung</strong><div class="small text-muted mt-1">{% if selected_status == assessment.recommendation %}Die Vorauswahl „{{ selected_status_label }}“ stammt aus der Bewertungsempfehlung. Sie ist ein Vorschlag und wird erst durch das Speichern verbindlich.{% else %}Ausgewählter Prüfpfad: {{ selected_status_label }}. Die Entscheidung wird erst nach erneuter serverseitiger Gate-Prüfung gespeichert.{% endif %}</div></div>
+        <div class="card-body">
+          {{ form.non_field_errors }}
+          <div class="border rounded p-3 mb-4" id="decision-status-section">
+            <div class="section-title">Verbindlicher Entscheidungsstatus</div>
+            <label class="form-label" for="{{ form.decision_status.id_for_label }}">{{ form.decision_status.label }}{% if form.decision_status.field.required %} *{% endif %}</label>
+            {{ form.decision_status }}
+            <div class="text-danger small">{{ form.decision_status.errors }}</div>
+            <div class="form-text">Die Auswahl ist noch nicht gespeichert und kann von der Bewertungsempfehlung abweichen.</div>
+          </div>
+
+          <div class="border rounded p-3 mb-4" id="decision-rationale-section">
+            <div class="section-title">Begründung und Governance-Bestätigung</div>
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.rationale.id_for_label }}">{{ form.rationale.label }}{% if form.rationale.field.required %} *{% endif %}</label>
+              {{ form.rationale }}
+              <div class="text-danger small">{{ form.rationale.errors }}</div>
+              {% if form.rationale.help_text %}<div class="form-text">{{ form.rationale.help_text }}</div>{% endif %}
+            </div>
+            <div class="form-check mt-3">
+              {{ form.governance_confirmed }}
+              <label class="form-check-label" for="{{ form.governance_confirmed.id_for_label }}">{{ form.governance_confirmed.label }}</label>
+            </div>
+            <div class="text-danger small">{{ form.governance_confirmed.errors }}</div>
+            {% if form.governance_confirmed.help_text %}<div class="form-text">{{ form.governance_confirmed.help_text }}</div>{% endif %}
+          </div>
+
+          <div class="border rounded p-3" id="conditional-decision-fields" data-required-status="approved_with_conditions">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+              <div><div class="section-title">Auflagen und unabhängige Zweitprüfung</div><strong>Nur für „Mit Auflagen freigeben“ verpflichtend</strong></div>
+              <span class="badge badge-soft" id="conditional-requirement-state" aria-live="polite"></span>
+            </div>
+            <p class="small text-muted" id="conditional-requirement-note">Die Pflichtkennzeichnung folgt unmittelbar der gewählten Entscheidung. Die serverseitige Validierung bleibt verbindlich.</p>
+            <div class="row g-3">
+              <div class="col-12" data-conditional-field="conditions">
+                <label class="form-label" for="{{ form.conditions.id_for_label }}">{{ form.conditions.label }}<span class="conditional-required-marker{% if not form.conditions.field.required %} d-none{% endif %}" data-required-marker-for="conditions" aria-hidden="true"> *</span></label>
+                {{ form.conditions }}
+                <div class="text-danger small">{{ form.conditions.errors }}</div>
+                {% if form.conditions.help_text %}<div class="form-text">{{ form.conditions.help_text }}</div>{% endif %}
+              </div>
+              <div class="col-md-6" data-conditional-field="condition_owner">
+                <label class="form-label" for="{{ form.condition_owner.id_for_label }}">{{ form.condition_owner.label }}<span class="conditional-required-marker{% if not form.condition_owner.field.required %} d-none{% endif %}" data-required-marker-for="condition_owner" aria-hidden="true"> *</span></label>
+                {{ form.condition_owner }}
+                <div class="text-danger small">{{ form.condition_owner.errors }}</div>
+                {% if form.condition_owner.help_text %}<div class="form-text">{{ form.condition_owner.help_text }}</div>{% endif %}
+              </div>
+              <div class="col-md-6" data-conditional-field="condition_due_date">
+                <label class="form-label" for="{{ form.condition_due_date.id_for_label }}">{{ form.condition_due_date.label }}<span class="conditional-required-marker{% if not form.condition_due_date.field.required %} d-none{% endif %}" data-required-marker-for="condition_due_date" aria-hidden="true"> *</span></label>
+                {{ form.condition_due_date }}
+                <div class="text-danger small">{{ form.condition_due_date.errors }}</div>
+                {% if form.condition_due_date.help_text %}<div class="form-text">{{ form.condition_due_date.help_text }}</div>{% endif %}
+              </div>
+              <div class="col-12" data-conditional-field="second_approval_assignee">
+                <label class="form-label" for="{{ form.second_approval_assignee.id_for_label }}">{{ form.second_approval_assignee.label }}<span class="conditional-required-marker{% if not form.second_approval_assignee.field.required %} d-none{% endif %}" data-required-marker-for="second_approval_assignee" aria-hidden="true"> *</span></label>
+                {{ form.second_approval_assignee }}
+                <div class="text-danger small">{{ form.second_approval_assignee.errors }}</div>
+                {% if form.second_approval_assignee.help_text %}<div class="form-text">{{ form.second_approval_assignee.help_text }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer d-flex flex-wrap justify-content-end align-items-center gap-2"><span class="small text-muted me-auto">Mit dem Speichern wird die Entscheidung verbindlich dokumentiert. Bei ungespeicherten Änderungen warnt der Browser vor dem Verlassen der Seite.</span><a class="btn btn-outline-secondary" href="{{ return_to }}">Abbrechen</a><button class="btn btn-primary">Verbindliche Entscheidung speichern</button></div>
+      </div>
+    </form>
+    {% else %}
+    <div class="app-card">
+      <div class="card-header"><strong>Formular gesperrt</strong></div>
+      <div class="card-body"><p class="mb-0 text-muted">Behebe zuerst die oben aufgeführten Voraussetzungen oder wähle eine zulässige alternative Entscheidung. Es können hier noch keine Entscheidungsdaten eingegeben werden.</p></div>
+      <div class="card-footer"><a class="btn btn-outline-secondary" href="{{ return_to }}">Zurück zum Use Case</a></div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(() => {
+  "use strict";
+
+  const form = document.getElementById("decision-form");
+  if (!form) {
+    return;
+  }
+
+  const conditionalStatus = "approved_with_conditions";
+  const statusField = document.getElementById("id_decision_status");
+  const conditionalSection = document.getElementById("conditional-decision-fields");
+  const conditionalState = document.getElementById("conditional-requirement-state");
+  const conditionalFieldNames = [
+    "conditions",
+    "condition_owner",
+    "condition_due_date",
+    "second_approval_assignee",
+  ];
+
+  const syncConditionalRequirements = () => {
+    if (!statusField) {
+      return;
+    }
+    const required = statusField.value === conditionalStatus;
+    conditionalFieldNames.forEach((fieldName) => {
+      const input = document.getElementById(`id_${fieldName}`);
+      const marker = form.querySelector(`[data-required-marker-for="${fieldName}"]`);
+      if (input) {
+        input.required = required;
+        input.setAttribute("aria-required", required ? "true" : "false");
+      }
+      if (marker) {
+        marker.classList.toggle("d-none", !required);
+      }
+    });
+    if (conditionalSection) {
+      conditionalSection.classList.toggle("border-warning", required);
+    }
+    if (conditionalState) {
+      conditionalState.textContent = required ? "Pflichtangaben aktiv" : "Derzeit optional";
+    }
+  };
+
+  syncConditionalRequirements();
+  if (statusField) {
+    statusField.addEventListener("change", syncConditionalRequirements);
+  }
+
+  let isDirty = form.dataset.initiallyDirty === "true";
+  let isSubmitting = false;
+  const markDirty = () => {
+    isDirty = true;
+  };
+
+  form.addEventListener("input", markDirty);
+  form.addEventListener("change", markDirty);
+  form.addEventListener("submit", () => {
+    isSubmitting = true;
+  });
+  window.addEventListener("beforeunload", (event) => {
+    if (!isDirty || isSubmitting) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = "";
+  });
+})();
+</script>
+{% endblock %}

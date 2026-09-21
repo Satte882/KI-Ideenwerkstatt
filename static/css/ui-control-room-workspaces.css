@@ -1,0 +1,667 @@
+/* Shared presentation layer for migrated detail and decision workspaces. */
+
+.ui-control-room .cr-work-header {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.ui-control-room .cr-work-header__summary {
+  max-width: 76ch;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.ui-control-room .cr-work-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 52%;
+}
+
+.ui-control-room .cr-work-header__actions .btn {
+  white-space: nowrap;
+}
+
+.ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 2px 2px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-header > div:first-child {
+  min-width: 0;
+}
+
+.ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.85rem, 2.2vw, 2.35rem);
+  font-weight: 680;
+  letter-spacing: -.04em;
+}
+
+.ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-subtitle {
+  max-width: 78ch;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.ui-control-room.page-detail-workspace .app-card,
+.ui-control-room.page-form-workspace .app-card {
+  border-color: var(--line);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-control-room.page-form-workspace .form-section {
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ice) 3%, transparent), transparent 46%),
+    var(--surface-2);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-control-room.page-review-form .scale-evidence-heading {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 14px 0 8px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-review-form .scale-evidence-heading strong {
+  color: var(--ink);
+  font-size: .84rem;
+}
+
+.ui-control-room.page-review-form .scale-evidence-heading span {
+  color: var(--muted);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+.ui-control-room.page-review-form #scale-readiness-summary[aria-busy="true"] {
+  opacity: .74;
+  transition: opacity 120ms ease;
+}
+
+.ui-control-room.page-form-workspace form[method="post"] :is(input, select, textarea):focus-visible,
+.ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-header .btn:focus-visible {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+.ui-control-room.page-form-workspace .wizard-stepper {
+  padding: 10px 0;
+  border-block: 1px solid var(--line-soft);
+  background: transparent;
+}
+
+.ui-control-room.page-form-workspace .progress {
+  height: 3px;
+  border-radius: 0;
+  background: var(--line-soft);
+}
+
+.ui-control-room.page-form-workspace .progress-bar {
+  background: var(--ice);
+}
+
+.ui-control-room.page-process-analysis .architecture-summary-grid,
+.ui-control-room.page-delivery-package .kpi-strip {
+  margin-top: 24px;
+}
+
+.ui-control-room.page-process-analysis .app-card,
+.ui-control-room.page-delivery-package .app-card,
+.ui-control-room.page-governance-form .app-card,
+.ui-control-room.page-governance-review .app-card,
+.ui-control-room.page-assessment-form .app-card,
+.ui-control-room.page-decision-form .app-card {
+  border-color: var(--line-soft);
+  box-shadow: none;
+}
+
+.ui-control-room .cr-work-form > .app-card,
+.ui-control-room .cr-work-form.app-card {
+  border-top: 2px solid var(--line);
+}
+
+.ui-control-room .cr-work-form .card-header {
+  border-bottom-color: var(--line);
+  background: var(--surface-2);
+}
+
+.ui-control-room .cr-work-form .card-footer {
+  border-top-color: var(--line);
+  background: var(--surface-1);
+}
+
+.ui-control-room.page-governance-form .cr-work-form > .card-body,
+.ui-control-room.page-governance-review .cr-work-form > .card-body,
+.ui-control-room.page-assessment-form .cr-work-form .card-body,
+.ui-control-room.page-decision-form .cr-work-form .card-body {
+  padding-block: 20px;
+}
+
+.ui-control-room.page-assessment-form .cr-work-form > .d-flex:last-child {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-top: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--surface-0) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.ui-control-room .cr-work-form :is(input, select, textarea):focus-visible,
+.ui-control-room .cr-work-header__actions .btn:focus-visible {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+@media (min-width: 992px) {
+  .ui-control-room.page-solution-compare .comparison-matrix:is(
+    .comparison-options-2,
+    .comparison-options-3
+  ) {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .ui-control-room.page-solution-compare .comparison-matrix:is(
+    .comparison-options-2,
+    .comparison-options-3
+  ) th:first-child {
+    width: 20%;
+  }
+
+  .ui-control-room.page-solution-compare .comparison-matrix:is(
+    .comparison-options-2,
+    .comparison-options-3
+  ) :is(th, td) {
+    overflow-wrap: anywhere;
+  }
+
+  .ui-control-room.page-solution-compare .comparison-matrix:is(
+    .comparison-options-2,
+    .comparison-options-3
+  ) th {
+    white-space: normal;
+  }
+
+  .ui-control-room.page-solution-compare .comparison-matrix:is(
+    .comparison-options-2,
+    .comparison-options-3
+  ) .badge {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 900px) {
+  .ui-control-room .cr-work-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .ui-control-room .cr-work-header__actions {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ui-control-room .cr-work-header__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .ui-control-room .cr-work-header__actions .btn,
+  .ui-control-room:is(.page-detail-workspace, .page-form-workspace) .page-header .btn,
+  .ui-control-room .cr-work-form .card-footer .btn,
+  .ui-control-room.page-form-workspace form[method="post"] .card-footer .btn,
+  .ui-control-room .cr-work-form > .d-flex:last-child .btn {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .ui-control-room .cr-work-form .card-footer,
+  .ui-control-room.page-form-workspace form[method="post"] .card-footer,
+  .ui-control-room .cr-work-form > .d-flex:last-child {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .ui-control-room .cr-work-form .card-footer .me-auto {
+    margin-right: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-control-room .cr-work-form *,
+  .ui-control-room .cr-work-header * {
+    scroll-behavior: auto;
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* TASKSHIFT / Work Design integration */
+.ui-control-room.page-process-analysis .work-design-entry {
+  position: relative;
+  border-left: 3px solid var(--ice-deep);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--ice) 5%, transparent), transparent 48%),
+    var(--surface-1);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__empty {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry__empty span {
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.ui-control-room.page-work-design-task-form .work-design-range[data-rating-ready="false"] {
+  opacity: .38;
+  cursor: not-allowed;
+}
+
+.ui-control-room.page-work-design-task-form output[data-assessed="false"] {
+  color: var(--muted-strong);
+}
+
+.ui-control-room .work-design-matrix-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, .8fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.ui-control-room .work-design-axis {
+  color: var(--muted-strong);
+  font-size: .72rem;
+  font-weight: 650;
+  letter-spacing: .02em;
+}
+
+.ui-control-room .work-design-axis-y {
+  margin-bottom: 8px;
+}
+
+.ui-control-room .work-design-axis-x {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.ui-control-room .work-design-quadrant {
+  position: relative;
+  min-height: 390px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(90deg, transparent 49.8%, var(--line) 49.8%, var(--line) 50.2%, transparent 50.2%),
+    linear-gradient(0deg, transparent 49.8%, var(--line) 49.8%, var(--line) 50.2%, transparent 50.2%),
+    var(--surface-2);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-control-room .work-design-quadrant__label {
+  position: absolute;
+  z-index: 1;
+  max-width: 42%;
+  color: var(--ink-soft);
+  font-size: .76rem;
+  font-weight: 650;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.ui-control-room .work-design-quadrant__label small {
+  display: inline-block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 500;
+}
+
+.ui-control-room .work-design-quadrant__label.is-top-left {
+  top: 14px;
+  left: 16px;
+}
+
+.ui-control-room .work-design-quadrant__label.is-top-right {
+  top: 14px;
+  right: 16px;
+  text-align: right;
+}
+
+.ui-control-room .work-design-quadrant__label.is-bottom-left {
+  bottom: 14px;
+  left: 16px;
+}
+
+.ui-control-room .work-design-quadrant__label.is-bottom-right {
+  right: 16px;
+  bottom: 14px;
+  text-align: right;
+}
+
+.ui-control-room .work-design-quadrant__point {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, 50%);
+  border: 1px solid var(--ice);
+  border-radius: 50%;
+  color: var(--on-accent);
+  background: var(--ice);
+  box-shadow: var(--shadow-2);
+  font-size: .76rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.ui-control-room .work-design-quadrant__point:hover,
+.ui-control-room .work-design-quadrant__point:focus-visible {
+  color: var(--on-accent);
+  background: var(--ice-strong);
+}
+
+.ui-control-room .work-design-matrix-legend {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.ui-control-room .work-design-matrix-legend__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: var(--surface-1);
+  text-decoration: none;
+}
+
+.ui-control-room .work-design-matrix-legend__item:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.ui-control-room .work-design-matrix-legend__item small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.ui-control-room .work-design-matrix-legend__number {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--ice-strong);
+  background: var(--surface-3);
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.ui-control-room .work-design-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ui-control-room .work-design-task-row {
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  scroll-margin-top: 18px;
+}
+
+.ui-control-room .work-design-task-row:target {
+  border-color: var(--ice-deep);
+  box-shadow: 0 0 0 1px var(--ice-deep);
+}
+
+.ui-control-room .work-design-task-row__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.ui-control-room .work-design-task-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ui-control-room .work-design-task-actions .btn {
+  min-width: 116px;
+}
+
+.ui-control-room .work-design-task-row__facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room .work-design-task-row__facts div {
+  min-width: 0;
+}
+
+.ui-control-room .work-design-task-row__facts span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+
+.ui-control-room .work-design-task-row__facts strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink-soft);
+  font-size: .76rem;
+  font-weight: 600;
+}
+
+.ui-control-room .work-design-empty-state {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.ui-control-room .work-design-empty-state > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ui-control-room .work-design-empty-state span {
+  color: var(--muted);
+  font-size: .78rem;
+}
+
+.ui-control-room.page-solution-option-form .work-design-solution-details > summary {
+  font-weight: 650;
+}
+
+.ui-control-room.page-process-analysis .solution-option-card.is-newly-added {
+  border-color: var(--ice-deep);
+  box-shadow: 0 0 0 1px var(--ice-deep), var(--shadow-2);
+}
+
+@media (max-width: 1100px) {
+  .ui-control-room .work-design-matrix-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-control-room .work-design-task-row__facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .ui-control-room .work-design-quadrant {
+    min-height: 320px;
+  }
+
+  .ui-control-room .work-design-task-row__head,
+  .ui-control-room .work-design-empty-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ui-control-room .work-design-task-actions {
+    justify-content: flex-start;
+  }
+
+  .ui-control-room .work-design-task-row__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .ui-control-room .work-design-task-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .ui-control-room .work-design-task-actions .btn,
+  .ui-control-room .work-design-empty-state .btn {
+    width: 100%;
+  }
+
+  .ui-control-room .work-design-task-row__facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* TASKSHIFT AP5: visual separation and CSP-safe matrix positioning */
+.ui-control-room.page-process-analysis .work-design-entry {
+  margin-bottom: 32px;
+}
+
+.ui-control-room.page-process-analysis .solution-space-card {
+  margin-top: 0;
+}
+
+.ui-control-room .solution-design-context {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.ui-control-room .solution-design-context > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ui-control-room .work-design-quadrant__point.matrix-x-0 { left: 4%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-5 { left: 8.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-10 { left: 13.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-15 { left: 17.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-20 { left: 22.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-25 { left: 27%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-30 { left: 31.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-35 { left: 36.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-40 { left: 40.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-45 { left: 45.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-50 { left: 50%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-55 { left: 54.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-60 { left: 59.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-65 { left: 63.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-70 { left: 68.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-75 { left: 73%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-80 { left: 77.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-85 { left: 82.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-90 { left: 86.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-95 { left: 91.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-x-100 { left: 96%; }
+
+.ui-control-room .work-design-quadrant__point.matrix-y-0 { bottom: 4%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-5 { bottom: 8.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-10 { bottom: 13.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-15 { bottom: 17.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-20 { bottom: 22.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-25 { bottom: 27%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-30 { bottom: 31.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-35 { bottom: 36.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-40 { bottom: 40.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-45 { bottom: 45.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-50 { bottom: 50%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-55 { bottom: 54.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-60 { bottom: 59.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-65 { bottom: 63.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-70 { bottom: 68.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-75 { bottom: 73%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-80 { bottom: 77.6%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-85 { bottom: 82.2%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-90 { bottom: 86.8%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-95 { bottom: 91.4%; }
+.ui-control-room .work-design-quadrant__point.matrix-y-100 { bottom: 96%; }
+
+@media (max-width: 760px) {
+  .ui-control-room .solution-design-context {
+    flex-direction: column;
+  }
+}

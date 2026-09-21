@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ idea.title }} – Ideen-Inbox{% endblock %}
+{% block body_class %}page-detail-workspace page-idea-detail{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+  <div>
+    <div class="eyebrow mb-2">Ideen-Inbox · noch kein Use Case</div>
+    <h1 class="page-title">{{ idea.title }}</h1>
+    <p class="page-subtitle mb-0">{% if idea.business_unit %}{{ idea.business_unit.name }} · {% endif %}erfasst vor {{ idea.age_days }} Tag{% if idea.age_days != 1 %}en{% endif %}{% if idea.submitted_by %} · {{ idea.submitted_by.get_display_name }}{% endif %}</p>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    {% if idea.state == 'open' %}<span class="badge state-ready">Offen</span>{% elif idea.state == 'dismissed' %}<span class="badge text-bg-secondary">Nicht weiterverfolgt</span>{% else %}<span class="badge text-bg-success">Übernommen</span>{% endif %}
+    {% if idea.is_stale %}<span class="badge text-bg-warning">lange offen</span>{% endif %}
+    {% if can_edit %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'use_cases:idea_edit' idea.pk %}">Idee korrigieren</a>{% endif %}
+  </div>
+</div>
+
+<nav class="cr-local-work-status mb-4" aria-label="Arbeitsbereiche dieser Idee" data-testid="local-work-status">
+  <div class="cr-local-work-status__header">
+    <div><span class="cr-local-work-status__kicker">Auf dieser Seite ·</span> <strong class="cr-local-work-status__title">Arbeitsbereiche</strong></div>
+    <span class="cr-local-work-status__hint">Sektionsnavigation, kein Lifecycle</span>
+  </div>
+  <div class="cr-local-work-status__items">
+    <a class="cr-local-work-status__item" href="#idea" data-work-target="idea" data-work-state="done"><span class="cr-local-work-status__marker" aria-hidden="true">✓</span><span class="cr-local-work-status__label">Idee</span><span class="cr-local-work-status__state">Erfasst</span></a>
+    <a class="cr-local-work-status__item" href="#quick-triage" data-work-target="quick-triage" data-work-state="{% if idea.triage_complete %}done{% else %}open{% endif %}"><span class="cr-local-work-status__marker" aria-hidden="true">{% if idea.triage_complete %}✓{% else %}○{% endif %}</span><span class="cr-local-work-status__label">Quick-Triage</span><span class="cr-local-work-status__state">{% if idea.triage_complete %}Erledigt{% else %}Offen{% endif %}</span></a>
+    <a class="cr-local-work-status__item" href="#abschluss" data-work-target="abschluss" data-work-state="{% if idea.state == 'open' %}open{% else %}done{% endif %}"><span class="cr-local-work-status__marker" aria-hidden="true">{% if idea.state == 'open' %}○{% else %}✓{% endif %}</span><span class="cr-local-work-status__label">Abschluss</span><span class="cr-local-work-status__state">{% if idea.state == 'open' %}Offen{% else %}Erledigt{% endif %}</span></a>
+  </div>
+</nav>
+
+<section id="idea" class="app-card mb-4" tabindex="-1">
+  <div class="card-body">
+    <div class="section-title">Idee</div>
+    <h2 class="h5">Problem / Beobachtung</h2>
+    <p class="mb-4">{{ idea.description|linebreaksbr }}</p>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="text-muted small">Organisationseinheit</div><strong>{% if idea.business_unit %}{{ idea.business_unit.name }}{% else %}Noch offen{% endif %}</strong></div>
+      <div class="col-md-6"><div class="text-muted small">Quelle / ursprünglicher Einreicher</div><strong>{% if idea.source_note %}{{ idea.source_note }}{% else %}Nicht angegeben{% endif %}</strong></div>
+    </div>
+  </div>
+</section>
+
+<section id="quick-triage" class="app-card mb-4" tabindex="-1">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+      <div>
+        <div class="section-title">Quick-Triage</div>
+        <h2 class="h5 mb-1">Impact · Confidence · Validierbarkeit</h2>
+        <p class="text-muted mb-1">Nur Orientierung für die Reihenfolge in der Ideen-Inbox. Kein Assessment und keine Promote-Automatik.</p>
+        <p class="small text-muted mb-0">Angelehnt an die <a href="https://www.productboard.com/glossary/product-prioritization-frameworks/" target="_blank" rel="noopener noreferrer">ICE-Methode</a> (Impact, Confidence, Ease). Validierbarkeit ersetzt hier bewusst „Ease“, weil in dieser frühen Phase die schnelle Überprüfbarkeit einer Idee entscheidend ist.</p>
+      </div>
+      <div class="text-end"><div class="text-muted small">Quick Score</div><div class="h3 mb-0">{% if idea.quick_score is not None %}{{ idea.quick_score }}{% else %}–{% endif %}</div></div>
+    </div>
+    {% if can_triage %}
+    <form method="post" action="{% url 'use_cases:idea_triage' idea.pk %}">
+      {% csrf_token %}
+      <div class="row g-3">
+        {% for field in triage_form %}<div class="col-md-4"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
+      </div>
+      <div class="mt-3"><button class="btn btn-outline-primary" type="submit">Quick-Triage speichern</button></div>
+    </form>
+    {% else %}
+    <div class="row g-3">
+      <div class="col-md-4"><div class="text-muted small">Impact</div><strong>{{ idea.impact|default:"–" }}</strong></div>
+      <div class="col-md-4"><div class="text-muted small">Confidence</div><strong>{{ idea.confidence|default:"–" }}</strong></div>
+      <div class="col-md-4"><div class="text-muted small">Validierbarkeit</div><strong>{{ idea.ease|default:"–" }}</strong></div>
+    </div>
+    {% endif %}
+    {% if idea.triaged_at %}<div class="small text-muted mt-3">Zuletzt triagiert {{ idea.triaged_at|date:"d.m.Y H:i" }}{% if idea.triaged_by %} durch {{ idea.triaged_by.get_display_name }}{% endif %}.</div>{% endif %}
+  </div>
+</section>
+
+<section id="abschluss" class="app-card mb-4" tabindex="-1">
+  <div class="card-body">
+    <div class="section-title">Abschluss</div>
+    {% if idea.state == 'promoted' %}
+      <h2 class="h5">Als Use Case übernommen</h2>
+      <p>Die Idee ist abgeschlossen. Ab hier ist der Use Case der Source of Truth; Assessment-, Governance- und Lifecycle-Zustände werden nicht in die Idee zurückgespiegelt.</p>
+      {% if idea.promoted_use_case %}<a class="btn btn-primary" href="{{ idea.promoted_use_case.get_absolute_url }}">{{ idea.promoted_use_case.short_id }} öffnen</a>{% endif %}
+    {% elif idea.state == 'dismissed' %}
+      <h2 class="h5">Nicht weiterverfolgt</h2>
+      <p class="mb-0">{{ idea.decision_note }}</p>
+    {% else %}
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <h2 class="h5">Use-Case-Aufnahme starten</h2>
+          <p>Startet den vorhandenen 6-Schritt-Intake mit Titel, Beschreibung und – falls vorhanden – Organisationseinheit als Vorbelegung. Es wird jetzt noch kein Use Case angelegt.</p>
+          {% if has_intake_draft %}
+          <div class="alert alert-warning">
+            <strong>Es läuft bereits eine Use-Case-Aufnahme.</strong> Diese Idee überschreibt den bestehenden Draft nicht. Setzen Sie den Draft fort oder verwerfen Sie ihn dort bewusst.
+            <div class="mt-2"><a class="btn btn-sm btn-outline-primary" href="{% url 'use_cases:create' %}">Laufenden Intake fortsetzen</a></div>
+          </div>
+          {% elif can_promote %}
+          <form method="post" action="{% url 'use_cases:idea_promote' idea.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Use-Case-Aufnahme starten</button></form>
+          {% else %}
+          <p class="text-muted mb-0">Nur Business Owner bzw. KI-Koordination mit bestehender Intake-Berechtigung können die Aufnahme starten.</p>
+          {% endif %}
+        </div>
+        <div class="col-lg-5">
+          <h2 class="h5">Nicht weiterverfolgen</h2>
+          {% if can_triage %}
+          <form method="post" action="{% url 'use_cases:idea_dismiss' idea.pk %}">
+            {% csrf_token %}
+            <label class="form-label" for="{{ dismiss_form.decision_note.id_for_label }}">{{ dismiss_form.decision_note.label }} *</label>
+            {{ dismiss_form.decision_note }}
+            <div class="form-text">{{ dismiss_form.decision_note.help_text }}</div>
+            <button class="btn btn-outline-danger mt-3" type="submit">Nicht weiterverfolgen</button>
+          </form>
+          {% else %}
+          <p class="text-muted mb-0">Triage- und Abschlussaktionen sind Business Ownern und KI-Koordination vorbehalten.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<a class="btn btn-outline-secondary" href="{% url 'use_cases:idea_list' %}">Zur Ideen-Inbox</a>
+{% endblock %}

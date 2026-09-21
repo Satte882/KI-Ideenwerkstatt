@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static architecture_advisor_tags %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-solution-option-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.name }}</div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Organisatorische, regelbasierte, klassische Software-, KI- und hybride Optionen vergleichbar dokumentieren.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Abbrechen</a>
+</div>
+
+{% if work_design_source %}
+<section class="cr-section mb-4" data-testid="work-design-solution-source">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Lösungsdesign-Kontext aus der Arbeitsgestaltung</h2>
+      <p>Die TASKSHIFT-Aufgabe bleibt unverändert in der Arbeitsgestaltung. Hier wird eine konkrete Lösungsalternative für diese Aufgabe angelegt; der Lösungstyp wird bewusst gewählt und der TASKSHIFT-Snapshot als Herkunft eingefroren.</p>
+    </div>
+    {% if work_design_task %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_assessment_detail' work_design_task.assessment.pk %}">Arbeitsgestaltung öffnen</a>
+    {% endif %}
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-4"><div class="section-title">Rolle</div><strong>{{ work_design_source.role_name }}</strong></div>
+    <div class="col-md-8"><div class="section-title">Aufgabe</div><strong>{{ work_design_source.task_name }}</strong></div>
+    <div class="col-md-4"><div class="section-title">TASKSHIFT-Empfehlung</div><div>{{ work_design_source.recommendation_label }}</div></div>
+    <div class="col-md-4"><div class="section-title">Übernahmepotenzial</div><div>{{ work_design_source.potential_score }}/100</div></div>
+    <div class="col-md-4"><div class="section-title">Verantwortungsgrenze</div><div>{{ work_design_source.boundary_score }}/100</div></div>
+    <div class="col-md-7"><div class="section-title">Ziel-Aufgabenteilung</div><div class="text-preline">{{ work_design_source.target_work_split|default:"Noch nicht beschrieben" }}</div></div>
+    <div class="col-md-5"><div class="section-title">Fachfreigabe</div><div>{% if work_design_source.approval_required %}{{ work_design_source.approval_role }}{% else %}Keine Pflichtfreigabe aus TASKSHIFT{% endif %}</div><div class="small text-muted mt-1">{{ work_design_source.control_point }}</div></div>
+  </div>
+</section>
+{% endif %}
+
+<form method="post" class="app-card">
+  {% csrf_token %}
+  <div class="card-header">
+    <strong>Lösungsoption bewerten</strong>
+    <div class="small text-muted mt-1">{% if work_design_source %}Beschreibe hier eine echte Lösungsalternative für die ausgewählte Aufgabe. Die vollständige Bewertung kann direkt hier oder später im Lösungsraum erfolgen.{% else %}Hier wird die Option bewertet. Die bevorzugte Lösung wird anschließend ausschließlich in der Vergleichsansicht ausgewählt. Methodik: Opportunities &amp; Solutions (ADM Phase E).{% endif %}</div>
+  </div>
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+    {% if work_design_source %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}{{ form.name.errors }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" for="{{ form.option_type.id_for_label }}">{{ form.option_type.label }}</label>
+        {{ form.option_type }}
+        <div class="form-text">Bewusste Auswahl im Lösungsraum; TASKSHIFT legt keinen Lösungstyp fest.</div>
+        {{ form.option_type.errors }}
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}{{ form.description.errors }}
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="{{ form.expected_value.id_for_label }}">{{ form.expected_value.label }}</label>
+        {{ form.expected_value }}{{ form.expected_value.errors }}
+      </div>
+    </div>
+
+    <details class="architecture-disclosure work-design-solution-details mt-4" {% if form.errors %}open{% elif option and option.evaluation_status == 'assessed' %}open{% endif %}>
+      <summary>Vertiefte Lösungsbewertung <span class="text-muted">(optional beim Handoff)</span></summary>
+      <div class="pt-3">
+        <p class="small text-muted mb-3">Diese Angaben werden für einen belastbaren Vergleich benötigt. Der Entwurf kann zunächst gespeichert und später vervollständigt werden.</p>
+        <div class="row g-3">
+          {% for field in form %}
+            {% if field.name != 'name' and field.name != 'option_type' and field.name != 'description' and field.name != 'expected_value' %}
+            <div class="{% if field.name == 'evaluation_status' or field.name == 'integration_effort' or field.name == 'feasibility' or field.name == 'time_to_value' or field.name == 'evidence_basis' %}col-md-6{% else %}col-12{% endif %}">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {{ field.errors }}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </details>
+    {% else %}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="{% if field.name == 'name' or field.name == 'option_type' or field.name == 'evaluation_status' or field.name == 'integration_effort' or field.name == 'feasibility' or field.name == 'time_to_value' or field.name == 'evidence_basis' %}col-md-6{% else %}col-12{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="card-body border-top border-secondary-subtle text-end">
+    <button class="btn btn-primary">{% if work_design_source %}{% if option %}Änderungen speichern{% else %}Lösungsoption speichern{% endif %}{% else %}Speichern{% endif %}</button>
+  </div>
+</form>
+
+{% if option %}
+{% architecture_advisor_panel option %}
+
+<div class="app-card mt-4">
+  <div class="card-header"><strong>Option nicht weiterverfolgen</strong><div class="small text-muted mt-1">Die Option wird aus aktivem Vergleich und Auswahl entfernt, bleibt aber für Audit und Herkunftsnachweis erhalten.</div></div>
+  <div class="card-body d-flex justify-content-between align-items-center gap-3 flex-wrap">
+    <div class="small text-muted">Bevorzugte, bereits ausgewählte oder mit einem Use Case verknüpfte Optionen sind geschützt und können nicht aus dem aktiven Vergleich entfernt werden.</div>
+    <form method="post" action="{% url 'architecture:solution_option_retire' option.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-outline-danger" type="submit">Nicht weiterverfolgen</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

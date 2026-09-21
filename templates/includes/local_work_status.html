@@ -1,0 +1,113 @@
+{% if request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'detail' %}
+<nav class="cr-local-work-status" aria-label="Arbeitsbereiche dieser Seite" data-testid="local-work-status">
+  <div class="cr-local-work-status__header">
+    <div>
+      <span class="cr-local-work-status__kicker">Auf dieser Seite ·</span>
+      <strong class="cr-local-work-status__title">Arbeitsbereiche</strong>
+    </div>
+    <span class="cr-local-work-status__hint">Bewertung, Governance, Freigabe und Metrik</span>
+  </div>
+  <div class="cr-local-work-status__items">
+    {% for step in journey.steps %}
+      {% if step.key == 'assessment' or step.key == 'governance' or step.key == 'approval' %}
+      <a class="cr-local-work-status__item" href="#{% if step.key == 'assessment' %}assessment{% elif step.key == 'governance' %}governance-evidence{% else %}decision-history{% endif %}" data-work-target="{% if step.key == 'assessment' %}assessment{% elif step.key == 'governance' %}governance-evidence{% else %}decision-history{% endif %}" data-work-state="{% if step.state == 'complete' %}done{% elif step.state == 'blocked' %}blocked{% elif step.state == 'optional' %}optional{% else %}open{% endif %}">
+        <span class="cr-local-work-status__marker" aria-hidden="true">{% if step.state == 'complete' %}✓{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}</span>
+        <span class="cr-local-work-status__label">{{ step.label }}</span>
+        <span class="cr-local-work-status__state">{% if step.state == 'complete' %}Erledigt{% elif step.state == 'blocked' %}Blockiert{% elif step.state == 'optional' %}Optional{% else %}Offen{% endif %}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+    <a class="cr-local-work-status__item" href="#metric-title" data-work-target="metric-title" data-work-state="{% if use_case.metric_name %}neutral{% else %}open{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if use_case.metric_name %}·{% else %}○{% endif %}</span>
+      <span class="cr-local-work-status__label">Metrik</span>
+      <span class="cr-local-work-status__state">{% if use_case.metric_name %}Definiert{% else %}Offen{% endif %}</span>
+    </a>
+  </div>
+</nav>
+{% elif request.resolver_match.namespace == 'delivery' and request.resolver_match.url_name == 'package_detail' %}
+<nav class="cr-local-work-status" aria-label="Arbeitsbereiche dieses Delivery Packages" data-testid="local-work-status">
+  <div class="cr-local-work-status__header">
+    <div>
+      <span class="cr-local-work-status__kicker">Auf dieser Seite ·</span>
+      <strong class="cr-local-work-status__title">Arbeitsbereiche</strong>
+    </div>
+    <span class="cr-local-work-status__hint">Readiness-Sektionen dieses Delivery Packages</span>
+  </div>
+  <div class="cr-local-work-status__items">
+    {% for row in section_rows %}
+    <a class="cr-local-work-status__item" href="#section-{{ row.key }}" data-work-target="section-{{ row.key }}" data-work-state="{% if row.state == 'confirmed' %}done{% elif row.state == 'blocked' %}blocked{% else %}open{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if row.state == 'confirmed' %}✓{% elif row.state == 'blocked' %}!{% else %}○{% endif %}</span>
+      <span class="cr-local-work-status__label">{{ row.label }}</span>
+      <span class="cr-local-work-status__state">{{ row.state_label }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</nav>
+{% elif request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'process_analysis_detail' %}
+<nav class="cr-local-work-status" aria-label="Arbeitsbereiche dieser Prozessanalyse" data-testid="local-work-status">
+  <div class="cr-local-work-status__header">
+    <div>
+      <span class="cr-local-work-status__kicker">Auf dieser Seite ·</span>
+      <strong class="cr-local-work-status__title">Arbeitsbereiche</strong>
+    </div>
+    <span class="cr-local-work-status__hint">Prozessanalyse, Validierung, Arbeitsgestaltung und Lösungsoptionen</span>
+  </div>
+  <div class="cr-local-work-status__items">
+    {% for step in journey.steps %}
+      {% if step.key == 'process' %}
+      <a class="cr-local-work-status__item" href="#prozessanalyse" data-work-target="prozessanalyse" data-work-state="{% if step.state == 'complete' %}done{% elif step.state == 'blocked' %}blocked{% else %}open{% endif %}">
+        <span class="cr-local-work-status__marker" aria-hidden="true">{% if step.state == 'complete' %}✓{% elif step.state == 'blocked' %}!{% else %}○{% endif %}</span>
+        <span class="cr-local-work-status__label">Prozessanalyse</span>
+        <span class="cr-local-work-status__state">{% if step.state == 'complete' %}Dokumentiert{% elif step.state == 'blocked' %}Blockiert{% else %}In Arbeit{% endif %}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+    <a class="cr-local-work-status__item" href="#process-validation" data-work-target="process-validation" data-work-state="{% if latest_validation and latest_validation.process_version == process_analysis.version %}done{% else %}open{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if latest_validation and latest_validation.process_version == process_analysis.version %}✓{% else %}○{% endif %}</span>
+      <span class="cr-local-work-status__label">Validierung</span>
+      <span class="cr-local-work-status__state">{% if latest_validation and latest_validation.process_version == process_analysis.version %}Nachgewiesen{% else %}Offen{% endif %}</span>
+    </a>
+    <a class="cr-local-work-status__item" href="#arbeitsgestaltung" data-work-target="arbeitsgestaltung" data-work-state="optional">
+      <span class="cr-local-work-status__marker" aria-hidden="true">–</span>
+      <span class="cr-local-work-status__label">Arbeitsgestaltung</span>
+      <span class="cr-local-work-status__state">Optional</span>
+    </a>
+    {% for step in journey.steps %}
+      {% if step.key == 'solution' %}
+      <a class="cr-local-work-status__item" href="#loesungsoptionen" data-work-target="loesungsoptionen" data-work-state="{% if step.state == 'complete' %}done{% elif step.state == 'blocked' %}blocked{% elif step.state == 'optional' %}optional{% else %}open{% endif %}">
+        <span class="cr-local-work-status__marker" aria-hidden="true">{% if step.state == 'complete' %}✓{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}</span>
+        <span class="cr-local-work-status__label">Lösungsoptionen</span>
+        <span class="cr-local-work-status__state">{% if step.state == 'complete' %}Erledigt{% elif step.state == 'blocked' %}Blockiert{% elif step.state == 'optional' %}Optional{% else %}Offen{% endif %}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+</nav>
+{% elif request.resolver_match.namespace == 'reporting' and request.resolver_match.url_name == 'outcome_workspace' and selected_use_case %}
+<nav class="cr-local-work-status" aria-label="Arbeitsbereiche dieses Wirkungsworkspaces" data-testid="local-work-status">
+  <div class="cr-local-work-status__header">
+    <div>
+      <span class="cr-local-work-status__kicker">Auf dieser Seite ·</span>
+      <strong class="cr-local-work-status__title">Arbeitsbereiche</strong>
+    </div>
+    <span class="cr-local-work-status__hint">Wirkungsmessung, Delivery und Scale Review</span>
+  </div>
+  <div class="cr-local-work-status__items">
+    <a class="cr-local-work-status__item" href="#outcome-measurement" data-work-target="outcome-measurement" data-work-state="{% if selected_use_case.metric_actual is not None %}done{% else %}open{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if selected_use_case.metric_actual is not None %}✓{% else %}○{% endif %}</span>
+      <span class="cr-local-work-status__label">Wirkungsmessung</span>
+      <span class="cr-local-work-status__state">{% if selected_use_case.metric_actual is not None %}Gemessen{% else %}Offen{% endif %}</span>
+    </a>
+    <a class="cr-local-work-status__item" href="#outcome-delivery-context" data-work-target="outcome-delivery-context" data-work-state="{% if selected_use_case.latest_delivery and selected_use_case.latest_delivery.status == 'handed_over' %}done{% elif selected_use_case.latest_delivery %}open{% else %}neutral{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if selected_use_case.latest_delivery and selected_use_case.latest_delivery.status == 'handed_over' %}✓{% elif selected_use_case.latest_delivery %}○{% else %}·{% endif %}</span>
+      <span class="cr-local-work-status__label">Delivery</span>
+      <span class="cr-local-work-status__state">{% if selected_use_case.latest_delivery and selected_use_case.latest_delivery.status == 'handed_over' %}Übergeben{% elif selected_use_case.latest_delivery %}Offen{% else %}Nicht vorhanden{% endif %}</span>
+    </a>
+    {% if latest_scale_review %}
+    <a class="cr-local-work-status__item" href="#outcome-scale-review" data-work-target="outcome-scale-review" data-work-state="done"><span class="cr-local-work-status__marker" aria-hidden="true">✓</span><span class="cr-local-work-status__label">Scale Review</span><span class="cr-local-work-status__state">Vorhanden</span></a>
+    {% else %}
+    <a class="cr-local-work-status__item" href="{% url 'reporting:outcome_workspace' %}?stage=decision&amp;use_case={{ selected_use_case.pk }}" data-work-state="{% if active_stage == 'decision' %}open{% else %}optional{% endif %}"><span class="cr-local-work-status__marker" aria-hidden="true">{% if active_stage == 'decision' %}○{% else %}–{% endif %}</span><span class="cr-local-work-status__label">Scale Review</span><span class="cr-local-work-status__state">{% if active_stage == 'decision' %}Offen{% else %}Optional{% endif %}</span></a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

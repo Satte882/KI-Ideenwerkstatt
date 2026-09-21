@@ -1,0 +1,41 @@
+{
+  "schema": "block8-real-demo-v1",
+  "direct_mapping": {
+    "problem_context": "Uneinheitliche Angebote verlängern die Auswahl.",
+    "target_outcome": "Durchlaufzeit messbar reduzieren."
+  },
+  "composition": {
+    "measurement_plan_has_baseline_target": true,
+    "acceptance_criteria_has_success_criterion": true,
+    "system_landscape_has_selected_solution": true
+  },
+  "gap": {
+    "operations_and_support": "gap"
+  },
+  "first_evidence": {
+    "operations_and_support": "mapped",
+    "value": "IT Application Management"
+  },
+  "staleness": {
+    "problem_context": true,
+    "target_outcome": false
+  },
+  "conflict": {
+    "field": "problem_context",
+    "status": "conflict",
+    "overwrite": false
+  },
+  "gates": {
+    "initial_status": "draft",
+    "auto_ready": false,
+    "auto_confirmed": false,
+    "auto_handover": false
+  },
+  "llm": {
+    "provider_failure_preserves_deterministic": true,
+    "cache_reuses_result": true
+  },
+  "handover": {
+    "refresh_blocked": true
+  }
+}

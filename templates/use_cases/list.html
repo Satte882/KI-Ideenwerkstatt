@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Use Cases – KI-Radar{% endblock %}
+{% block body_class %}page-use-case-list{% endblock %}
+{% block content_class %}use-case-register-page{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-lists.css' %}">
+{% endblock %}
+{% block content %}
+<section class="cr-page-header cr-list-header register-hero" aria-labelledby="register-title">
+  <div class="cr-page-header__copy register-heading">
+    <div class="register-kicker"><span aria-hidden="true"></span> Entscheidungsregister</div>
+    <h1 class="cr-page-header__title" id="register-title">KI-Use-Cases</h1>
+    <p class="cr-page-header__summary">Initiativen nach Domäne und Entscheidungsstand einordnen, überfliegen und direkt öffnen.</p>
+  </div>
+  <div class="cr-list-header__actions register-actions">
+    <a class="btn btn-outline-secondary register-export" href="{% url 'use_cases:export_csv' %}">CSV exportieren</a>
+    {% if can_create %}
+    {% if capture_draft_count %}<a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_list' %}">Meine Erfassungen ({{ capture_draft_count }})</a>{% endif %}
+    <a
+      class="btn btn-outline-secondary"
+      href="{% url 'accelerator:use_case_start' %}"
+      data-bs-toggle="tooltip"
+      data-bs-trigger="hover focus"
+      data-bs-placement="bottom"
+      data-bs-title="Fragen schrittweise beantworten oder per WIN + H diktieren. Es entsteht zunächst ein Entwurf."
+    >Geführt erfassen <span class="ms-1" aria-hidden="true">ⓘ</span></a>
+    <a class="btn btn-primary" href="{% url 'use_cases:create' %}">Use Case anlegen <span aria-hidden="true">＋</span></a>
+    {% endif %}
+  </div>
+</section>
+
+{% if can_create and capture_use_case_draft_count %}
+<div class="cr-inline-note">
+  <strong>{% if capture_use_case_draft_count == 1 %}1 offener Use-Case-Entwurf{% else %}{{ capture_use_case_draft_count }} offene Use-Case-Entwürfe{% endif %}:</strong>
+  <a href="{% url 'accelerator:capture_list' %}">Erfassungen fortsetzen</a>.
+</div>
+{% endif %}
+
+<section class="cr-filter-deck filter-deck" aria-label="Use Cases filtern">
+  <form method="get" class="cr-filter-grid register-filters">
+    <div class="cr-filter-field filter-field filter-search">
+      <label class="form-label" for="filter-query">Suche</label>
+      <div class="search-control">
+        <span aria-hidden="true">⌕</span>
+        <input class="form-control" id="filter-query" name="q" value="{{ request.GET.q }}" placeholder="Titel, ID, Problem oder Capability">
+      </div>
+    </div>
+    <div class="cr-filter-field filter-field filter-primary">
+      <label class="form-label" for="filter-domain">Fachdomäne</label>
+      <select class="form-select" id="filter-domain" name="business_domain">
+        <option value="">Alle Domänen</option>
+        {% for value,label in business_domain_choices %}<option value="{{ value }}" {% if request.GET.business_domain == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="cr-filter-field filter-field filter-primary">
+      <label class="form-label" for="filter-status">Status</label>
+      <select class="form-select" id="filter-status" name="status">
+        <option value="">Alle Status</option>
+        {% for value,label in status_choices %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="cr-filter-field filter-field">
+      <label class="form-label" for="filter-review">Review</label>
+      <select class="form-select" id="filter-review" name="review_state">
+        <option value="">Alle Termine</option>
+        <option value="overdue" {% if request.GET.review_state == 'overdue' %}selected{% endif %}>Überfällig</option>
+        <option value="due_30" {% if request.GET.review_state == 'due_30' %}selected{% endif %}>In 30 Tagen</option>
+        <option value="missing" {% if request.GET.review_state == 'missing' %}selected{% endif %}>Ohne Termin</option>
+      </select>
+    </div>
+    <div class="cr-filter-field filter-field">
+      <label class="form-label" for="filter-value">Geschäftswert</label>
+      <select class="form-select" id="filter-value" name="business_value">
+        <option value="">Alle Werte</option>
+        {% for value,label in level_choices %}<option value="{{ value }}" {% if request.GET.business_value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="cr-filter-submit filter-actions">
+      <button class="btn btn-primary" type="submit">Filtern</button>
+      <a class="cr-filter-reset filter-reset" href="{% url 'use_cases:list' %}">Zurücksetzen</a>
+    </div>
+  </form>
+</section>
+
+<section class="cr-section cr-list-section register-results" aria-labelledby="results-title">
+  <div class="cr-section-heading results-heading">
+    <div>
+      <div class="register-kicker">Aktueller Bestand</div>
+      <h2 id="results-title">{{ use_cases|length }} Use Case{{ use_cases|length|pluralize:"s" }}</h2>
+    </div>
+    <span class="results-hint"><span aria-hidden="true">↗</span> Zeile zum Öffnen auswählen</span>
+  </div>
+  <div class="cr-list-table-wrap register-table-wrap" tabindex="0" aria-label="Use-Case-Tabelle, horizontal scrollbar">
+    <table class="table cr-list-table register-table align-middle">
+      <colgroup>
+        <col class="col-use-case"><col class="col-classification"><col class="col-phase">
+        <col class="col-decision"><col class="col-maturity"><col class="col-owner"><col class="col-due">
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">Use Case</th>
+          <th scope="col">Einordnung</th>
+          <th scope="col">Phase</th>
+          <th scope="col">Nächste Entscheidung</th>
+          <th scope="col">Reife</th>
+          <th scope="col">Owner</th>
+          <th scope="col">Fällig</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in use_cases %}
+        <tr class="use-case-row" tabindex="0" data-row-link="{{ item.get_absolute_url }}" aria-label="{{ item.short_id }} · {{ item.title }} öffnen">
+          <td>
+            <a class="use-case-row-link" href="{{ item.get_absolute_url }}"><span>{{ item.short_id }}</span>{{ item.title }}</a>
+            <div class="row-meta">{{ item.business_unit }}</div>
+          </td>
+          <td>
+            <span class="badge domain-badge">{{ item.classification.get_business_domain_display }}</span>
+            {% if item.classification.capability %}<div class="row-meta mt-1">{{ item.classification.capability }}</div>{% endif %}
+          </td>
+          <td><span class="badge phase-badge">{{ item.get_status_display }}</span></td>
+          <td class="decision-cell">{{ item.decision_check.title }}</td>
+          <td>
+            <span class="badge state-{{ item.register_state }}">{{ item.register_state_label }}</span>
+            {% if item.register_state_detail %}<div class="row-meta mt-1">{{ item.register_state_detail }}</div>{% endif %}
+          </td>
+          <td class="owner-cell">{{ item.business_owner.get_display_name }}</td>
+          <td class="due-cell">{% if item.decision_due %}<time datetime="{{ item.decision_due|date:'Y-m-d' }}">{{ item.decision_due|date:"d.m.Y" }}</time>{% else %}–{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="7"><p class="cr-empty-state">Keine Use Cases gefunden.<span>Filter zurücksetzen oder Suchbegriff anpassen.</span></p></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/ui-vnext.js' %}" defer></script>
+<script src="{% static 'js/guided-capture-tooltip.js' %}" defer></script>
+{% endblock %}

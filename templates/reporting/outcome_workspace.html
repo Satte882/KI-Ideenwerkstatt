@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static metric_tags %}
+
+{% block title %}{% if active_stage == "decision" %}Scale Readiness &amp; Ergebnisentscheidung{% else %}{{ active_stage_copy.title }}{% endif %} · Wirkung & Betrieb · KI-Radar{% endblock %}
+{% block body_class %}page-outcome-workspace{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}?v=issue-417-local-work-status">
+{% endblock %}
+{% block content_class %}app-content-wide outcome-workspace-content{% endblock %}
+
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="6" lifecycle_kicker="Teilprozess" lifecycle_title="Wirkung & Betrieb" lifecycle_context=selected_use_case.short_id %}
+{% include "includes/local_work_status.html" %}
+
+<div class="page-header outcome-page-header">
+  <div>
+    <div class="outcome-eyebrow">Wirkung &amp; Betrieb · Review- und Entscheidungsinformationen</div>
+    <h1 class="page-title">{% if active_stage == "decision" %}Scale Readiness &amp; Ergebnisentscheidung{% else %}{{ active_stage_copy.title }}{% endif %}</h1>
+    <p class="page-subtitle">{% if active_stage == "decision" %}Produktionsfähigkeit nach der Wirkungsmessung bündeln und die bestehende Lifecycle-Entscheidung treffen.{% else %}{{ active_stage_copy.purpose }}{% endif %}</p>
+  </div>
+</div>
+
+<section class="outcome-workbench">
+  <div class="app-card outcome-control-card outcome-control-card--primary">
+    <div class="card-body">
+      <div class="outcome-control-heading">
+        <div>
+          <div class="outcome-eyebrow">Steuerung</div>
+          <h2>Status und nächste Handlung</h2>
+        </div>
+        <span class="badge badge-soft">{% if active_stage == "decision" %}Scale Readiness{% else %}{{ active_stage_copy.title }}{% endif %}</span>
+      </div>
+
+      <form method="get" class="outcome-use-case-picker">
+        <input type="hidden" name="stage" value="{{ active_stage }}">
+        <label for="outcome-use-case">Use Case</label>
+        <div>
+          <select id="outcome-use-case" name="use_case" class="form-select">
+            {% for item in use_cases %}
+            <option value="{{ item.pk }}"{% if selected_use_case and item.pk == selected_use_case.pk %} selected{% endif %}>{{ item.short_id }} · {{ item.title }}</option>
+            {% empty %}
+            <option value="">Keine Use Cases vorhanden</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-outline-secondary" type="submit">Anzeigen</button>
+        </div>
+      </form>
+
+      {% if active_stage_action %}
+      <div class="outcome-stage-action" data-testid="outcome-primary-action">
+        <div class="outcome-stage-action-copy">
+          <div class="outcome-eyebrow">{% if active_stage_action.url %}Nächster Schritt{% else %}Status{% endif %}</div>
+          <strong>{% if active_stage_action.url %}Handlung verfügbar{% else %}Kein Handlungsbedarf{% endif %}</strong>
+          <p>{{ active_stage_action.reason }}</p>
+        </div>
+        {% if active_stage_action.url %}
+        <a class="btn btn-primary btn-sm" href="{{ active_stage_action.url }}"{% if active_stage_action.external %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ active_stage_action.action_label }} →</a>
+        {% else %}
+        <span class="badge badge-soft">Keine Aktion erforderlich</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if active_stage == "decision" %}
+      <div class="alert alert-secondary mt-3 mb-0">
+        <strong>Scale Readiness bündelt, dupliziert nicht.</strong>
+        Pilotwirkung, Governance und Delivery bleiben in ihren bestehenden Sources of Truth. ML-Test-Score-, Release-, Rollback- und Monitoring-Nachweise werden im bestehenden Review nur in der für die Entscheidung verwendeten Version referenziert.
+      </div>
+      {% if latest_scale_review %}
+      <section class="outcome-scale-decision" id="outcome-scale-review" aria-labelledby="saved-scale-decision-title">
+        <div class="outcome-scale-decision__heading">
+          <div>
+            <div class="outcome-eyebrow">Gespeicherte Entscheidung</div>
+            <h3 id="saved-scale-decision-title">Scale-Readiness-Snapshot vom {{ latest_scale_review.review_date|date:"d.m.Y" }}</h3>
+          </div>
+          {% if latest_scale_review.scale_readiness_snapshot.state == "ready" %}<span class="badge state-ready">GO · Bereit</span>{% elif latest_scale_review.scale_readiness_snapshot.state == "conditional" %}<span class="badge state-review">CONDITIONAL GO · Bereit mit Auflagen</span>{% else %}<span class="badge state-blocked">NO-GO · Nicht bereit</span>{% endif %}
+        </div>
+        <dl class="outcome-scale-decision__facts">
+          <div><dt>Tailoring</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.tailoring_level|default:"–" }}</dd></div>
+          <div><dt>ML Test Score</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.ml_test_score.final|default:"–" }}</dd></div>
+          <div><dt>Produktivversion</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.delivery.production_version|default:"–" }}</dd></div>
+          <div><dt>Nächster Review</dt><dd>{{ latest_scale_review.next_review_date|date:"d.m.Y"|default:"–" }}</dd></div>
+        </dl>
+        {% if latest_scale_review.scale_readiness_snapshot.dimensions %}<dl class="outcome-scale-decision__dimensions">{% for dimension in latest_scale_review.scale_readiness_snapshot.dimensions %}<div><dt>{{ dimension.label }}</dt><dd>{% if dimension.state == "ready" %}Erfüllt{% elif dimension.state == "conditional" %}Mit Auflage{% else %}Nicht erfüllt{% endif %}</dd></div>{% endfor %}</dl>{% endif %}
+        {% if latest_scale_review.open_actions %}<p class="mb-1"><strong>Maßnahme:</strong> {{ latest_scale_review.open_actions }}</p><p class="small text-muted mb-0"><strong>Owner:</strong> {% if latest_scale_review.action_owner %}{{ latest_scale_review.action_owner.get_display_name }}{% else %}–{% endif %} · <strong>Frist:</strong> {{ latest_scale_review.action_due_date|date:"d.m.Y"|default:"–" }}</p>{% endif %}
+      </section>
+      {% endif %}
+      {% endif %}
+
+      <div class="outcome-responsibility-pair">
+        <div><span>KI-Radar</span><p>{{ active_stage_copy.ki_radar }}</p></div>
+        <div><span>Externes Delivery-System</span><p>{{ active_stage_copy.external }}</p></div>
+      </div>
+    </div>
+  </div>
+
+  {% if selected_use_case %}
+  {% metric_set selected_use_case as metric %}
+  <div class="app-card outcome-use-case-card" id="outcome-measurement">
+    <div class="card-body">
+      <div class="outcome-use-case-heading">
+        <div>
+          <div class="outcome-eyebrow">{{ selected_use_case.short_id }} · {{ selected_use_case.get_status_display }}</div>
+          <h2>{{ selected_use_case.title }}</h2>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ selected_use_case.get_absolute_url }}#use-case-overview">Vollständige Metrikdetails öffnen</a>
+      </div>
+
+      <details class="outcome-use-case-context">
+        <summary>Use-Case-Kontext anzeigen</summary>
+        <p>{{ selected_use_case.summary|default:selected_use_case.problem_statement }}</p>
+      </details>
+
+      <div class="outcome-metric-grid">
+        <div><small>Baseline</small><strong>{{ metric.baseline.display }}</strong></div>
+        <div><small>Ziel</small><strong>{{ metric.target.display }}</strong></div>
+        <div><small>Ist</small><strong>{{ metric.actual.display }}</strong></div>
+        <div><small>Ergebnis</small><strong>{{ selected_use_case.metric_result_label }}</strong></div>
+      </div>
+
+      <dl class="outcome-facts" id="outcome-delivery-context">
+        <div><dt>Business Owner</dt><dd>{{ selected_use_case.business_owner.get_display_name }}</dd></div>
+        <div><dt>Technical Owner</dt><dd>{% if selected_use_case.technical_owner %}{{ selected_use_case.technical_owner.get_display_name }}{% else %}Nicht zugeordnet{% endif %}</dd></div>
+        <div><dt>Nächster Review</dt><dd>{{ selected_use_case.next_review_date|default:"Nicht geplant" }}</dd></div>
+        <div><dt>Delivery</dt><dd>{% if selected_use_case.latest_delivery %}v{{ selected_use_case.latest_delivery.version }} · {{ selected_use_case.latest_delivery.get_status_display }}{% else %}Kein Package{% endif %}</dd></div>
+      </dl>
+    </div>
+  </div>
+  {% else %}
+  <div class="app-card outcome-empty-state"><div class="card-body"><h2>Keine Use Cases vorhanden</h2><p>Nach dem Anlegen oder Einspielen von Daten werden Review- und Entscheidungsinformationen hier zusammengeführt.</p></div></div>
+  {% endif %}
+</section>
+
+<section class="app-card outcome-boundary-compact" aria-labelledby="system-boundary-heading">
+  <div class="card-body">
+    <div class="outcome-boundary-summary">
+      <div>
+        <div class="outcome-eyebrow">Systemgrenze</div>
+        <h2 id="system-boundary-heading">Entscheidungsrelevanter Review-Snapshot</h2>
+      </div>
+      <p>KI-Radar verdichtet Ergebnisse für Portfolio- und Managemententscheidungen. Jira, Azure DevOps oder GitHub bleiben für die operative Umsetzung führend.</p>
+    </div>
+    <details class="outcome-boundary-details">
+      <summary>Verantwortlichkeiten anzeigen</summary>
+      <div class="outcome-boundary-columns">
+        <div>
+          <strong>KI-Radar</strong>
+          <p>Baseline, Ziel, Ist-Wert, Nachweis, wesentliche Auflagen, Empfehlung und Folgeentscheidung.</p>
+        </div>
+        <div>
+          <strong>Externes Delivery-System</strong>
+          <p>Backlog, Tasks, Sprints, technische Details, Ressourcensteuerung und täglicher Fortschritt.</p>
+        </div>
+      </div>
+      <small>Die Review- und Entscheidungsinformationen werden zum Review-Termin manuell bestätigt; es gibt keine Live-Synchronisation.</small>
+    </details>
+  </div>
+</section>
+
+<section class="outcome-summary-grid" aria-label="Portfolio-Snapshot">
+  <div class="app-card"><div class="card-body"><small>Pilot</small><strong>{{ pilot_total }}</strong></div></div>
+  <div class="app-card"><div class="card-body"><small>Wirkung gemessen</small><strong>{{ measured_total }}</strong></div></div>
+  <div class="app-card"><div class="card-body"><small>Im Betrieb</small><strong>{{ operation_total }}</strong></div></div>
+  <div class="app-card"><div class="card-body"><small>Beendet</small><strong>{{ ended_total }}</strong></div></div>
+</section>
+{% endblock %}

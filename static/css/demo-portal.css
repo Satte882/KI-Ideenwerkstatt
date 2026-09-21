@@ -1,0 +1,361 @@
+/*
+ * Präsentationsoberfläche für Interview-/Demo-Inhalte.
+ * Bewusste, vom App-Design getrennte Gestaltung; vom Nutzer am 07.09.2026 freigegeben.
+ */
+
+:root {
+  --presentation-bg: #f3f6f8;
+  --presentation-surface: #ffffff;
+  --presentation-ink: #152637;
+  --presentation-muted: #647381;
+  --presentation-line: #d9e1e7;
+  --presentation-blue: #07578d;
+  --presentation-blue-soft: #eaf3f8;
+  --presentation-orange: #f5aa00;
+  --presentation-shadow: 0 18px 48px rgba(21, 38, 55, .09);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--presentation-bg);
+}
+
+body.presentation-page {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--presentation-ink);
+  background:
+    linear-gradient(180deg, var(--presentation-surface) 0 112px, transparent 112px),
+    var(--presentation-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.presentation-page a {
+  color: inherit;
+}
+
+.presentation-page a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--presentation-blue) 35%, transparent);
+  outline-offset: 4px;
+}
+
+.presentation-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  width: min(1400px, calc(100% - 72px));
+  min-height: 112px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--presentation-line);
+}
+
+.presentation-rsd-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-decoration: none;
+}
+
+.presentation-rsd-brand img {
+  display: block;
+  width: 145px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.presentation-rsd-brand span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 20px;
+  border-left: 1px solid var(--presentation-line);
+}
+
+.presentation-rsd-brand small {
+  color: var(--presentation-muted);
+  font-size: .74rem;
+  font-weight: 650;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.presentation-rsd-brand strong {
+  color: var(--presentation-ink);
+  font-size: 1.08rem;
+  font-weight: 720;
+  letter-spacing: -.015em;
+}
+
+.presentation-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.presentation-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--presentation-line);
+  border-radius: 9px;
+  color: var(--presentation-blue);
+  background: var(--presentation-surface);
+  font-size: .88rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.presentation-nav a:hover {
+  border-color: color-mix(in srgb, var(--presentation-blue) 35%, var(--presentation-line));
+  background: var(--presentation-blue-soft);
+}
+
+.presentation-main {
+  width: min(1400px, calc(100% - 72px));
+  margin: 0 auto;
+  padding: 42px 0 64px;
+}
+
+.presentation-hero,
+.presentation-case-shell {
+  max-width: 1040px;
+}
+
+.presentation-kicker {
+  margin: 0 0 12px;
+  color: var(--presentation-blue);
+  font-size: .76rem;
+  font-weight: 760;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.presentation-hero h1,
+.presentation-case-shell h1 {
+  max-width: 1000px;
+  margin: 0;
+  color: var(--presentation-ink);
+  font-size: clamp(2.35rem, 4.2vw, 3.9rem);
+  font-weight: 730;
+  letter-spacing: -.05em;
+  line-height: 1;
+}
+
+.presentation-lead {
+  max-width: 880px;
+  margin: 16px 0 0;
+  color: var(--presentation-muted);
+  font-size: clamp(1.02rem, 1.45vw, 1.22rem);
+  line-height: 1.48;
+}
+
+.presentation-hero::after {
+  display: block;
+  width: 82px;
+  height: 4px;
+  margin-top: 22px;
+  border-radius: 5px;
+  content: "";
+  background: linear-gradient(90deg, var(--presentation-orange) 0 58%, var(--presentation-blue) 58% 100%);
+}
+
+.presentation-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 34px;
+}
+
+.presentation-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 25px 26px 23px;
+  overflow: hidden;
+  border: 1px solid var(--presentation-line);
+  border-radius: 14px;
+  color: var(--presentation-ink);
+  background: var(--presentation-surface);
+  box-shadow: 0 1px 0 rgba(21, 38, 55, .03);
+  text-decoration: none;
+  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease;
+}
+
+.presentation-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  content: "";
+  background: linear-gradient(90deg, var(--presentation-blue), var(--presentation-orange));
+}
+
+.presentation-card:hover {
+  border-color: color-mix(in srgb, var(--presentation-blue) 25%, var(--presentation-line));
+  box-shadow: var(--presentation-shadow);
+  transform: translateY(-4px);
+}
+
+.presentation-card-number {
+  color: var(--presentation-blue);
+  font-size: .82rem;
+  font-weight: 730;
+  font-variant-numeric: tabular-nums;
+}
+
+.presentation-card-type {
+  margin-top: 22px;
+  color: var(--presentation-muted);
+  font-size: .7rem;
+  font-weight: 760;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.presentation-card h2 {
+  margin: 10px 0 0;
+  color: var(--presentation-ink);
+  font-size: clamp(1.24rem, 1.55vw, 1.5rem);
+  font-weight: 710;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+}
+
+.presentation-card p {
+  margin: 14px 0 0;
+  color: var(--presentation-muted);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.presentation-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 20px;
+  color: var(--presentation-blue);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.presentation-card-action span {
+  font-size: 1.2rem;
+}
+
+.presentation-case-shell {
+  padding-top: 10px;
+}
+
+.presentation-case-shell h1 {
+  font-size: clamp(2.3rem, 4vw, 3.8rem);
+}
+
+.presentation-placeholder {
+  margin-top: 40px;
+  padding: 30px 32px;
+  border: 1px solid var(--presentation-line);
+  border-left: 5px solid var(--presentation-orange);
+  border-radius: 12px;
+  background: var(--presentation-surface);
+  box-shadow: 0 10px 32px rgba(21, 38, 55, .05);
+}
+
+.presentation-placeholder-label {
+  color: var(--presentation-blue);
+  font-size: .78rem;
+  font-weight: 760;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.presentation-placeholder p {
+  max-width: 800px;
+  margin: 11px 0 0;
+  color: var(--presentation-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.presentation-message {
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--presentation-line);
+  border-radius: 10px;
+  background: var(--presentation-surface);
+}
+
+@media (max-width: 1050px) {
+  .presentation-topbar,
+  .presentation-main {
+    width: min(100% - 40px, 900px);
+  }
+
+  .presentation-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation-card {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 680px) {
+  .presentation-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 0 18px;
+  }
+
+  .presentation-rsd-brand {
+    gap: 14px;
+  }
+
+  .presentation-rsd-brand img {
+    width: 120px;
+    height: 60px;
+  }
+
+  .presentation-rsd-brand span {
+    padding-left: 14px;
+  }
+
+  .presentation-nav {
+    width: 100%;
+  }
+
+  .presentation-nav a {
+    justify-content: center;
+    flex: 1;
+  }
+
+  .presentation-main {
+    padding: 36px 0 52px;
+  }
+
+  .presentation-card-grid {
+    margin-top: 30px;
+  }
+
+  .presentation-card {
+    min-height: 285px;
+    padding: 24px 22px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presentation-page *,
+  .presentation-page *::before,
+  .presentation-page *::after {
+    transition-duration: .01ms !important;
+  }
+}

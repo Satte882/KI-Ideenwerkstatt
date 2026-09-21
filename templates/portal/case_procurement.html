@@ -1,0 +1,140 @@
+{% extends "portal/presentation_base.html" %}
+{% load static %}
+
+{% block title %}Projektbeispiel: Angebotsvergleich im Einkauf – RSD Demo{% endblock %}
+{% block body_class %}presentation-case procurement-case{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/case-procurement.css' %}">
+<script src="{% static 'js/case-procurement.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<a class="procurement-back-link" href="{% url 'demo-portal' %}">Zur Übersicht</a>
+
+<section class="procurement-deck" aria-label="Projektbeispiel Angebotsvergleich im Einkauf">
+  <div class="procurement-scene-track procurement-scene-track--one" data-procurement-scene data-steps="3">
+    <article class="procurement-slide" id="procurement-slide-1" data-step="3" aria-labelledby="procurement-slide-1-title">
+      <header class="procurement-slide-header">
+        <div>
+          <p class="procurement-eyebrow">Projektbeispiel · Einkauf</p>
+          <h1 id="procurement-slide-1-title">Angebotsvergleich im Einkauf: erst standardisieren, dann KI einsetzen</h1>
+        </div>
+        <div class="procurement-slide-index" aria-label="Folie 1 von 2">1/2</div>
+      </header>
+
+      <div class="procurement-step-indicator" aria-hidden="true">
+        <span class="procurement-step-dot" data-step-dot="1">Problem</span>
+        <span class="procurement-step-dot" data-step-dot="2">Standardisieren</span>
+        <span class="procurement-step-dot" data-step-dot="3">KI gezielt einsetzen</span>
+      </div>
+
+      <div class="procurement-transformation">
+        <section class="procurement-source-panel" aria-labelledby="procurement-today-title">
+          <div class="procurement-section-label">Heute</div>
+          <h2 id="procurement-today-title">Unterschiedliche Angebote, manuelle Aufbereitung</h2>
+          <div class="procurement-source-documents" aria-label="Beispielhafte Eingangsformate">
+            <div class="procurement-document procurement-document--pdf"><strong>PDF</strong><span>Lieferant A</span></div>
+            <div class="procurement-document procurement-document--excel"><strong>Excel</strong><span>Lieferant B</span></div>
+            <div class="procurement-document procurement-document--mail"><strong>E-Mail</strong><span>Lieferant C</span></div>
+          </div>
+          <div class="procurement-pain-points">
+            <span>manuelle Prüfung</span>
+            <span>unterschiedliche Angaben</span>
+            <span>Rückfragen</span>
+          </div>
+        </section>
+
+        <div class="procurement-transform-arrow" aria-hidden="true">
+          <span>Standardisieren</span>
+          <div>→</div>
+        </div>
+
+        <section class="procurement-target-panel" aria-labelledby="procurement-target-title">
+          <div class="procurement-section-label">Ziel</div>
+          <h2 id="procurement-target-title">Eine gemeinsame Vergleichsgrundlage</h2>
+          <div class="procurement-comparison-table" role="table" aria-label="Standardisierte Angebotsdaten">
+            <div class="procurement-table-row procurement-table-row--head" role="row">
+              <span role="columnheader">Kriterium</span><span role="columnheader">A</span><span role="columnheader">B</span><span role="columnheader">C</span>
+            </div>
+            <div class="procurement-table-row" role="row"><strong role="rowheader">Preis</strong><span>94.200 €</span><span>96.800 €</span><span>92.900 €</span></div>
+            <div class="procurement-table-row" role="row"><strong role="rowheader">Lieferzeit</strong><span>18 T.</span><span>25 T.</span><span>32 T.</span></div>
+            <div class="procurement-table-row" role="row"><strong role="rowheader">Zahlungsziel</strong><span>30 T.</span><span>60 T.</span><span>30 T.</span></div>
+            <div class="procurement-table-row" role="row"><strong role="rowheader">Fracht</strong><span>inkl.</span><span>1.200 €</span><span class="procurement-missing">fehlt</span></div>
+          </div>
+          <p class="procurement-target-note">Pflichtfelder, Einheiten und Konditionen werden einheitlich aufbereitet; Lücken bleiben sichtbar.</p>
+        </section>
+      </div>
+
+      <div class="procurement-role-flow" aria-label="Rollenverteilung zwischen KI, Regelwerk und Einkauf">
+        <div class="procurement-role">
+          <span class="procurement-role-number">01</span>
+          <div><strong>KI</strong><p>erkennt und extrahiert Informationen aus unterschiedlichen Angeboten</p></div>
+        </div>
+        <div class="procurement-role-arrow" aria-hidden="true">→</div>
+        <div class="procurement-role">
+          <span class="procurement-role-number">02</span>
+          <div><strong>Regelwerk</strong><p>prüft Pflichtfelder, normalisiert Konditionen und macht Angebote vergleichbar</p></div>
+        </div>
+        <div class="procurement-role-arrow" aria-hidden="true">→</div>
+        <div class="procurement-role procurement-role--decision">
+          <span class="procurement-role-number">03</span>
+          <div><strong>Einkauf</strong><p>bewertet die Entscheidungsgrundlage und trifft die Lieferantenentscheidung</p></div>
+        </div>
+      </div>
+
+      <p class="procurement-key-message">Automatisiert wird die aufwendige <strong>Vorbereitung der Entscheidung</strong> – nicht die Lieferantenentscheidung.</p>
+    </article>
+  </div>
+
+  <div class="procurement-scene-track procurement-scene-track--two" data-procurement-scene data-steps="2">
+    <article class="procurement-slide" id="procurement-slide-2" data-step="2" aria-labelledby="procurement-slide-2-title">
+      <header class="procurement-slide-header">
+        <div>
+          <p class="procurement-eyebrow">Ergebnis · Business Value</p>
+          <h2 id="procurement-slide-2-title">Weniger manueller Aufwand, weniger Rückfragen, schnellere Entscheidungen</h2>
+        </div>
+        <div class="procurement-slide-index" aria-label="Folie 2 von 2">2/2</div>
+      </header>
+
+      <div class="procurement-step-indicator procurement-step-indicator--two" aria-hidden="true">
+        <span class="procurement-step-dot" data-step-dot="1">Wirkung</span>
+        <span class="procurement-step-dot" data-step-dot="2">Veränderung im Prozess</span>
+      </div>
+
+      <div class="procurement-kpis" aria-label="Ergebniskennzahlen">
+        <div class="procurement-kpi">
+          <span class="procurement-kpi-value">5,0 → 2,8 Tage</span>
+          <strong>–44 %</strong>
+          <span>Entscheidungsdurchlaufzeit</span>
+        </div>
+        <div class="procurement-kpi">
+          <span class="procurement-kpi-value">–70 %</span>
+          <strong>weniger</strong>
+          <span>Lieferantenrückfragen</span>
+        </div>
+      </div>
+
+      <div class="procurement-impact-grid">
+        <section class="procurement-before-after" aria-labelledby="procurement-change-title">
+          <h3 id="procurement-change-title">Was sich im Prozess verändert hat</h3>
+          <div class="procurement-change-row procurement-change-row--head"><span>Vorher</span><span>Nachher</span></div>
+          <div class="procurement-change-row"><span>Angebote individuell aufbereiten</span><strong>Einheitliches Vergleichsschema</strong></div>
+          <div class="procurement-change-row"><span>Fehlende Angaben spät erkennen</span><strong>Lücken früh sichtbar</strong></div>
+          <div class="procurement-change-row"><span>Wissen stark bei Einzelnen</span><strong>Vergleichslogik im Prozess verankert</strong></div>
+          <div class="procurement-change-row"><span>Viel Zeit für Vorbereitung</span><strong>Mehr Zeit für fachliche Bewertung</strong></div>
+        </section>
+
+        <section class="procurement-business-impact" aria-labelledby="procurement-business-title">
+          <h3 id="procurement-business-title">Was das für das Geschäft bedeutet</h3>
+          <div class="procurement-benefit"><span>01</span><div><strong>Geschwindigkeit</strong><p>Entscheidungen werden früher möglich und Beschaffungsvorgänge laufen schneller durch.</p></div></div>
+          <div class="procurement-benefit"><span>02</span><div><strong>Skalierbarkeit</strong><p>Mehr Angebotsvolumen erzeugt nicht proportional mehr manuellen Vergleichsaufwand.</p></div></div>
+          <div class="procurement-benefit"><span>03</span><div><strong>Vertretbarkeit</strong><p>Vergleich und Vorbereitung hängen weniger von einzelnen Schlüsselpersonen ab.</p></div></div>
+        </section>
+      </div>
+
+      <p class="procurement-control-principle"><strong>Kontrollprinzip:</strong> KI bereitet vor, der Einkauf entscheidet.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

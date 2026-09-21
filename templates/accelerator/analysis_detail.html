@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static accelerator_adoption %}
+{% block title %}Extraktionsvorschau – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-accelerator-analysis{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ capture_label }} · Extraktionsvorschau</div>
+    <h1 class="page-title">{{ session.working_title|default:capture_label }}</h1>
+    <p class="page-subtitle">Prüfen Sie jeden Feldvorschlag einzeln. Berechtigung, Ausgangswert und aktueller Datenbankstand werden vor jeder Übernahme erneut geprüft.</p>
+  </div>
+  <span class="badge {% if analysis.status == 'success' %}state-ready{% elif analysis.status == 'running' %}state-review{% else %}state-blocked{% endif %}">{{ analysis.get_status_display }}</span>
+</div>
+
+{% if analysis.status == 'failed' %}
+<div class="alert alert-danger" role="alert">
+  <strong>Die Analyse konnte nicht abgeschlossen werden.</strong>
+  Fehlercode: {{ analysis.error_code|default:"unbekannt" }}. Die Capture Session und frühere erfolgreiche Vorschauen bleiben erhalten.
+</div>
+{% endif %}
+
+<section class="app-card mb-4" aria-labelledby="analysis-meta-heading">
+  <div class="card-body">
+    <h2 class="h5" id="analysis-meta-heading">Analyselauf</h2>
+    <dl class="row mb-0 mt-3">
+      <dt class="col-sm-4">Gestartet</dt><dd class="col-sm-8">{{ analysis.started_at|date:"d.m.Y H:i:s" }}</dd>
+      <dt class="col-sm-4">Provider und Modell</dt><dd class="col-sm-8">{{ analysis.provider }} · {{ analysis.model_name|default:"Provider-Standard" }}</dd>
+      <dt class="col-sm-4">Quellstand</dt><dd class="col-sm-8">Revision {{ analysis.source_revision }} · Katalog {{ analysis.catalog_version }} · Antwortschema {{ analysis.answer_schema_version }}</dd>
+      <dt class="col-sm-4">Vertrag</dt><dd class="col-sm-8">Prompt {{ analysis.prompt_version }} · Extraktionsschema {{ analysis.extraction_schema_version }}</dd>
+      <dt class="col-sm-4">Nutzung</dt><dd class="col-sm-8">{{ analysis.total_tokens|default:"–" }} Tokens{% if analysis.cost is not None %} · Geschätzte LLM-Kosten: {{ analysis.cost }} USD{% endif %}</dd>
+    </dl>
+  </div>
+</section>
+
+{% if analysis.open_questions %}
+<section class="app-card mb-4" aria-labelledby="open-questions-heading">
+  <div class="card-body">
+    <h2 class="h5" id="open-questions-heading">Offene Fragen</h2>
+    <ul class="mb-0 mt-3">
+      {% for finding in analysis.open_questions %}<li>{{ finding.message }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if analysis.contradictions %}
+<section class="app-card mb-4" aria-labelledby="contradictions-heading">
+  <div class="card-body">
+    <h2 class="h5" id="contradictions-heading">Widersprüche</h2>
+    <ul class="mb-0 mt-3">
+      {% for finding in analysis.contradictions %}<li>{{ finding.message }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% if suggestion_groups %}
+<div class="d-grid gap-4">
+  {% for group in suggestion_groups %}
+  <section class="app-card" aria-labelledby="suggestion-group-{{ forloop.counter }}">
+    <div class="card-body">
+      <div class="eyebrow mb-2">{{ group.object_label }}{% if group.group_key %} · {{ group.group_key }}{% endif %}</div>
+      <h2 class="h5" id="suggestion-group-{{ forloop.counter }}">Feldvorschläge</h2>
+      <div class="d-grid gap-3 mt-3">
+        {% for suggestion in group.suggestions %}
+        <article class="border-top pt-3" aria-labelledby="suggestion-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+          <div class="d-flex justify-content-between gap-2 flex-wrap align-items-start">
+            <div>
+              <h3 class="h6 mb-1" id="suggestion-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">{{ suggestion.target_field }}</h3>
+              <span class="text-muted small">{{ suggestion.field_type }}</span>
+            </div>
+            <span class="badge {{ suggestion.uncertainty_class }}">Unsicherheit: {{ suggestion.uncertainty }}</span>
+          </div>
+          <div class="mt-3"><strong>Vorschlag</strong><div class="mt-1">{{ suggestion.display_value|linebreaksbr }}</div></div>
+          <div class="mt-3"><strong>Quelle</strong><div class="text-muted mt-1">{{ suggestion.source_question }}</div><blockquote class="mt-2 mb-0">{{ suggestion.source_excerpt }}</blockquote></div>
+          <div class="mt-3"><strong>Begründung der Unsicherheit</strong><div class="text-muted mt-1">{{ suggestion.uncertainty_reason }}</div></div>
+          {% adoption_controls analysis suggestion.target_field %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% elif analysis.status == 'success' %}
+<div class="alert alert-info" role="status">Die Analyse enthielt keine gültigen Feldvorschläge. Prüfen Sie die offenen Fragen.</div>
+{% endif %}
+
+{% if analysis.status == 'success' and session.target_object %}
+<section class="app-card mt-4" aria-labelledby="structured-review-entry-heading">
+  <div class="card-body d-flex justify-content-between gap-3 flex-wrap align-items-center">
+    <div>
+      <h2 class="h5 mb-1" id="structured-review-entry-heading">Strukturierte Vorschläge</h2>
+      <p class="text-muted mb-0">Metriken, Phasen und Prozessanalysen einzeln prüfen und danach atomar übernehmen.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'accelerator:structured_review' analysis.id %}">Strukturierte Vorschläge prüfen</a>
+  </div>
+</section>
+{% endif %}
+
+<div class="d-flex justify-content-between gap-2 flex-wrap mt-4">
+  <a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_review' session.pk %}">Zur Erfassung</a>
+  {% if session.status == 'completed' %}
+  <form method="post" action="{% url 'accelerator:capture_analyze' session.pk %}">
+    {% csrf_token %}
+    <button class="btn btn-primary" type="submit">Neu analysieren</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,774 @@
+/*
+ * Spezifische Seitentypen: Register, Architektur, Portfolio, Delivery,
+ * Reviews, Wirkungsarbeitsraum und Login.
+ */
+
+/* Use-Case-Register */
+
+.ui-vnext .register-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 2px 2px 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-vnext .register-heading {
+  max-width: 760px;
+}
+
+.ui-vnext .register-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 760;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+}
+
+.ui-vnext .register-kicker > span {
+  width: 18px;
+  height: 1px;
+  background: var(--ice);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ice) 50%, transparent);
+}
+
+.ui-vnext .register-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-vnext .register-export {
+  border-color: transparent;
+  background: transparent;
+}
+
+.ui-vnext .filter-deck {
+  position: relative;
+  margin-bottom: 20px;
+  padding: 14px 16px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--ice) 4%, transparent), transparent 38%),
+    color-mix(in srgb, var(--surface-1) 86%, transparent);
+  box-shadow:
+    var(--shadow-1),
+    var(--shadow-2),
+    inset 0 1px color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+
+.ui-vnext .filter-deck::before {
+  position: absolute;
+  top: -1px;
+  right: 8%;
+  left: 8%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ice) 34%, transparent), transparent);
+}
+
+.ui-vnext .register-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(230px, 1.8fr)
+    repeat(2, minmax(140px, 1fr))
+    repeat(2, minmax(130px, .9fr))
+    auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.ui-vnext .filter-field {
+  min-width: 0;
+}
+
+.ui-vnext .filter-primary .form-label {
+  color: color-mix(in srgb, var(--ice-strong) 72%, var(--muted));
+}
+
+.ui-vnext .filter-primary .form-select {
+  border-color: color-mix(in srgb, var(--ice) 21%, transparent);
+  background-color: color-mix(in srgb, var(--surface-1) 94%, transparent);
+}
+
+.ui-vnext .search-control {
+  position: relative;
+}
+
+.ui-vnext .search-control > span {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 13px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  transform: translateY(-52%);
+  pointer-events: none;
+}
+
+.ui-vnext .search-control .form-control {
+  padding-left: 37px;
+}
+
+.ui-vnext .filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 1px;
+}
+
+.ui-vnext .filter-actions .btn {
+  min-width: 82px;
+}
+
+.ui-vnext .filter-reset {
+  color: var(--muted);
+  font-size: .7rem;
+  text-decoration: none;
+}
+
+.ui-vnext .filter-reset:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ui-vnext .register-results {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-1) 93%, transparent);
+  box-shadow:
+    var(--shadow-1),
+    var(--shadow-3),
+    inset 0 1px color-mix(in srgb, var(--ink) 2.5%, transparent);
+}
+
+.ui-vnext .results-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background:
+    radial-gradient(circle at 88% -60%, color-mix(in srgb, var(--ice) 10%, transparent), transparent 18rem),
+    color-mix(in srgb, var(--surface-2) 76%, transparent);
+}
+
+.ui-vnext .results-heading h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 1.02rem;
+  font-weight: 680;
+  letter-spacing: -.018em;
+}
+
+.ui-vnext .results-hint {
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+.ui-vnext .register-table-wrap {
+  min-height: 300px;
+  max-height: calc(100vh - 390px);
+  overflow: auto;
+}
+
+.ui-vnext .register-table {
+  min-width: 1120px;
+  table-layout: fixed;
+}
+
+.ui-vnext .register-table .col-use-case { width: 22%; }
+.ui-vnext .register-table .col-classification { width: 15%; }
+.ui-vnext .register-table .col-phase { width: 12%; }
+.ui-vnext .register-table .col-decision { width: 20%; }
+.ui-vnext .register-table .col-maturity { width: 11%; }
+.ui-vnext .register-table .col-owner { width: 12%; }
+.ui-vnext .register-table .col-due { width: 8%; }
+
+.ui-vnext .register-table thead th {
+  height: 43px;
+}
+
+.ui-vnext .use-case-row {
+  cursor: pointer;
+}
+
+.ui-vnext .use-case-row:hover,
+.ui-vnext .use-case-row:focus-visible {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ice) 7.5%, transparent), color-mix(in srgb, var(--ice) 2%, transparent));
+}
+
+.ui-vnext .use-case-row > td:first-child {
+  box-shadow: inset 2px 0 transparent;
+  transition: box-shadow 150ms ease;
+}
+
+.ui-vnext .use-case-row:hover > td:first-child,
+.ui-vnext .use-case-row:focus-visible > td:first-child {
+  box-shadow: inset 2px 0 var(--ice);
+}
+
+.ui-vnext .use-case-row-link {
+  display: block;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: .84rem;
+  font-weight: 680;
+  line-height: 1.35;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-vnext .use-case-row-link span {
+  margin-right: 7px;
+  color: var(--ice);
+  font-size: .67rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .035em;
+}
+
+.ui-vnext .row-meta {
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: .69rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-vnext .register-table .badge {
+  max-width: 100%;
+  padding: .36rem .5rem;
+  overflow: hidden;
+  font-size: .64rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-vnext .domain-badge {
+  border: 1px solid var(--line);
+  color: var(--muted-strong);
+  background: color-mix(in srgb, var(--silver) 8%, transparent);
+}
+
+.ui-vnext .phase-badge {
+  border: 1px solid color-mix(in srgb, var(--ice) 24%, transparent);
+  color: var(--ice-strong);
+  background: color-mix(in srgb, var(--ice-deep) 11%, transparent);
+}
+
+.ui-vnext .owner-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-vnext .due-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui-vnext .empty-row td {
+  height: 180px;
+  color: var(--muted-strong);
+  text-align: center;
+}
+
+.ui-vnext .empty-row span {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+/* Architektur und Delivery */
+
+.ui-vnext .architecture-grid,
+.ui-vnext .solution-option-grid,
+.ui-vnext .delivery-artifact-grid {
+  gap: 12px;
+}
+
+.ui-vnext .architecture-card {
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
+  box-shadow: var(--shadow-1), var(--shadow-2);
+}
+
+.ui-vnext .architecture-card:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ice) 38%, transparent);
+  background: color-mix(in srgb, var(--ice) 5%, var(--surface-1));
+}
+
+.ui-vnext .architecture-card-meta {
+  color: var(--muted);
+}
+
+.ui-vnext .architecture-artifact-grid {
+  background: var(--line);
+}
+
+.ui-vnext .architecture-artifact-grid section {
+  background: var(--surface-1);
+}
+
+.ui-vnext .text-preline,
+.ui-vnext .stage-facts dd {
+  color: var(--ink-soft);
+}
+
+.ui-vnext .value-stream-stage,
+.ui-vnext .solution-option-card {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-vnext .value-stream-stage:not(:last-child)::after {
+  border-color: var(--line);
+  color: var(--ice-strong);
+  background: var(--surface-2);
+}
+
+.ui-vnext .stage-number {
+  border-radius: var(--radius-sm);
+  color: var(--ice-strong);
+  background: color-mix(in srgb, var(--ice) 13%, transparent);
+}
+
+.ui-vnext .stage-facts dt {
+  color: var(--muted);
+}
+
+.ui-vnext .stage-use-cases {
+  border-top-color: var(--line);
+}
+
+.ui-vnext .solution-option-preferred {
+  border-color: color-mix(in srgb, var(--success) 48%, transparent);
+  background: color-mix(in srgb, var(--success) 4%, var(--surface-1));
+}
+
+/* Portfolio */
+
+.ui-vnext .portfolio-filters {
+  overflow: hidden;
+}
+
+.ui-vnext .portfolio-matrix {
+  gap: 7px;
+}
+
+.ui-vnext .matrix-corner,
+.ui-vnext .matrix-axis,
+.ui-vnext .matrix-cell {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+}
+
+.ui-vnext .matrix-corner,
+.ui-vnext .matrix-axis,
+.ui-vnext .matrix-cell-heading {
+  color: var(--muted);
+}
+
+.ui-vnext .matrix-cell-heading span {
+  border-radius: 5px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--silver) 12%, transparent);
+}
+
+.ui-vnext .portfolio-chip {
+  border-color: var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+  box-shadow: var(--shadow-1);
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+
+.ui-vnext .portfolio-chip:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ice) 48%, transparent);
+  background: color-mix(in srgb, var(--ice) 6%, var(--surface-2));
+}
+
+.ui-vnext .portfolio-status-key {
+  border-color: var(--line);
+}
+
+.ui-vnext .portfolio-status-clarification,
+.ui-vnext .portfolio-status-ready,
+.ui-vnext .portfolio-status-approved_with_conditions {
+  border-color: color-mix(in srgb, var(--ice) 30%, transparent);
+  color: var(--ice-strong);
+  background: color-mix(in srgb, var(--ice) 10%, transparent);
+}
+
+.ui-vnext .portfolio-status-deferred {
+  border-color: color-mix(in srgb, var(--warning) 30%, transparent);
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.ui-vnext .portfolio-status-approved {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+}
+
+.ui-vnext .portfolio-status-not_pursued {
+  border-color: var(--line);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--silver) 6%, transparent);
+}
+
+.ui-vnext .landscape-card {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+}
+
+.ui-vnext .landscape-total {
+  border: 1px solid color-mix(in srgb, var(--ice) 18%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--ice-strong);
+  background: color-mix(in srgb, var(--ice) 12%, transparent);
+}
+
+/* Wirkungs- und Betriebsarbeitsraum */
+
+.ui-vnext .outcome-use-case-card {
+  border-color: color-mix(in srgb, var(--ice) 28%, transparent);
+}
+
+.ui-vnext .outcome-responsibility-pair > div,
+.ui-vnext .outcome-metric-grid > div,
+.ui-vnext .outcome-summary-grid .card-body,
+.ui-vnext .outcome-boundary-columns > div {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent);
+}
+
+.ui-vnext .outcome-stage-action,
+.ui-vnext .outcome-boundary-details {
+  border-top-color: var(--line);
+}
+
+.ui-vnext .outcome-stage-action-copy strong,
+.ui-vnext .outcome-responsibility-pair span,
+.ui-vnext .outcome-facts dd,
+.ui-vnext .outcome-boundary-details summary,
+.ui-vnext .outcome-boundary-columns strong {
+  color: var(--ink-soft);
+}
+
+.ui-vnext .outcome-facts {
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+}
+
+.ui-vnext .outcome-facts > div {
+  background: var(--surface-1);
+}
+
+/* Login */
+
+.ui-vnext .login-shell {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  padding: 32px;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 12%, color-mix(in srgb, var(--ice) 14%, transparent), transparent 30rem),
+    radial-gradient(circle at 82% 86%, color-mix(in srgb, var(--ice-deep) 9%, transparent), transparent 34rem),
+    var(--surface-0);
+}
+
+.ui-vnext .login-shell::before {
+  position: fixed;
+  z-index: -1;
+  inset: 24px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  content: "";
+  pointer-events: none;
+}
+
+.ui-vnext .login-panel {
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(360px, 1fr);
+  width: min(860px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-1) 94%, transparent);
+  box-shadow: var(--shadow-3), inset 0 1px color-mix(in srgb, var(--ink) 3%, transparent);
+}
+
+.ui-vnext .login-context {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 430px;
+  padding: 34px;
+  border-right: 1px solid var(--line);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ice) 10%, transparent), transparent 52%),
+    var(--surface-2);
+}
+
+.ui-vnext .login-context .brand {
+  padding: 0;
+}
+
+.ui-vnext .login-context-copy {
+  color: var(--muted-strong);
+  font-size: .86rem;
+  line-height: 1.6;
+}
+
+.ui-vnext .login-form {
+  align-self: center;
+  padding: 44px;
+}
+
+.ui-vnext .login-form h1 {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 2rem;
+  font-weight: 680;
+  letter-spacing: -.04em;
+}
+
+/* Reviews */
+
+.ui-vnext .review-grid .card {
+  height: 100%;
+  border-radius: var(--radius-md);
+}
+
+.ui-vnext .review-grid .card-header {
+  min-height: 58px;
+}
+
+@media (max-width: 1380px) {
+  .ui-vnext .register-filters {
+    grid-template-columns: minmax(230px, 2fr) repeat(4, minmax(125px, 1fr));
+  }
+
+  .ui-vnext .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ui-vnext .register-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ui-vnext .filter-search,
+  .ui-vnext .filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .ui-vnext .register-hero,
+  .ui-vnext .outcome-page-header,
+  .ui-vnext .outcome-use-case-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ui-vnext .register-heading {
+    min-width: 0;
+  }
+
+  .ui-vnext .register-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .ui-vnext .register-actions .btn {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .ui-vnext .filter-deck {
+    padding: 18px 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .ui-vnext .register-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-vnext .filter-search,
+  .ui-vnext .filter-actions {
+    grid-column: auto;
+  }
+
+  .ui-vnext .filter-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ui-vnext .filter-actions .btn {
+    width: 100%;
+  }
+
+  .ui-vnext .filter-reset {
+    padding: 5px;
+    text-align: center;
+  }
+
+  .ui-vnext .results-hint {
+    display: none;
+  }
+
+  .ui-vnext .register-results {
+    border-radius: var(--radius-md);
+  }
+
+  .ui-vnext .register-table-wrap {
+    max-height: 62vh;
+  }
+
+  .ui-vnext .capture-session-table-wrap {
+    overflow: visible;
+  }
+
+  .ui-vnext .capture-session-table,
+  .ui-vnext .capture-session-table tbody,
+  .ui-vnext .capture-session-table tr,
+  .ui-vnext .capture-session-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .ui-vnext .capture-session-table {
+    min-width: 0;
+  }
+
+  .ui-vnext .capture-session-table thead {
+    display: none;
+  }
+
+  .ui-vnext .capture-session-table tbody {
+    padding: 12px;
+  }
+
+  .ui-vnext .capture-session-table tr {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--surface-1) 90%, transparent);
+  }
+
+  .ui-vnext .capture-session-table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .ui-vnext .capture-session-table td {
+    display: grid;
+    grid-template-columns: minmax(7rem, .7fr) minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 0;
+    border: 0;
+    text-align: left !important;
+  }
+
+  .ui-vnext .capture-session-table td::before {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    content: attr(data-label);
+  }
+
+  .ui-vnext .capture-session-table td:first-child {
+    display: block;
+    padding-top: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .ui-vnext .capture-session-table td:first-child::before {
+    display: none;
+  }
+
+  .ui-vnext .capture-session-table td:last-child {
+    display: block;
+    padding-top: 12px;
+  }
+
+  .ui-vnext .capture-session-table td:last-child::before {
+    display: none;
+  }
+
+  .ui-vnext .capture-session-table td:last-child .btn {
+    width: 100%;
+  }
+
+  .ui-vnext .capture-session-table .capture-session-empty {
+    display: block;
+    padding: 18px;
+  }
+
+  .ui-vnext .capture-session-table .capture-session-empty::before {
+    display: none;
+  }
+
+  .ui-vnext .login-shell {
+    padding: 16px;
+  }
+
+  .ui-vnext .login-shell::before {
+    inset: 8px;
+  }
+
+  .ui-vnext .login-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-vnext .login-context {
+    min-height: 0;
+    padding: 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ui-vnext .login-context-copy {
+    display: none;
+  }
+
+  .ui-vnext .login-form {
+    padding: 28px 24px;
+  }
+}

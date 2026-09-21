@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Arbeitsgestaltung · {{ assessment.role_name }} – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-work-design-workspace{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ process_analysis.stage.value_stream.name }} · {{ process_analysis.name }}</div>
+    <h1 class="cr-page-header__title">Arbeitsgestaltung · {{ assessment.role_name }}</h1>
+    <p class="cr-work-header__summary">Welche Aufgaben können mit KI näher an diese Rolle wandern – und wo muss Fachverantwortung sichtbar bleiben?</p>
+  </div>
+  <div class="cr-work-header__actions">
+    <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+    {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'architecture:work_design_assessment_update' assessment.pk %}">Rolle / Outcome bearbeiten</a>{% endif %}
+  </div>
+</header>
+
+{% if assessment.is_stale %}
+<div class="alert alert-warning" data-testid="work-design-stale-warning">
+  <strong>Prozesskontext wurde seit dieser Arbeitsgestaltung geändert.</strong>
+  Die Bewertung basiert auf Prozessversion v{{ assessment.process_version }}, aktuell ist v{{ process_analysis.version }}. Bestehende Ergebnisse werden nicht automatisch überschrieben.
+</div>
+{% endif %}
+
+<section class="cr-section" data-testid="work-design-role-frame">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Rollenbetrachtung</h2>
+      <p>TASKSHIFT v{{ assessment.method_version }} · {{ assessment.get_status_display }} · Version {{ assessment.version }}</p>
+    </div>
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-4"><div class="section-title">Bestätigte Rolle</div><strong>{{ assessment.role_name }}</strong></div>
+    <div class="col-md-8"><div class="section-title">Geschäftsergebnis</div><div class="text-preline">{{ assessment.business_outcome }}</div></div>
+  </div>
+</section>
+
+<details class="architecture-disclosure mb-4" data-testid="work-design-process-context">
+  <summary>Prozesskontext anzeigen</summary>
+  <div class="pt-3">
+    <div class="row g-4">
+      <div class="col-md-6"><div class="section-title">Rollen und Verantwortlichkeiten</div><div class="text-preline">{{ process_analysis.roles }}</div></div>
+      <div class="col-md-6"><div class="section-title">Übergaben und Schnittstellen</div><div class="text-preline">{{ process_analysis.handoffs|default:"Noch nicht dokumentiert" }}</div></div>
+      <div class="col-md-6"><div class="section-title">Bottlenecks</div><div class="text-preline">{{ process_analysis.bottlenecks }}</div></div>
+      <div class="col-md-6"><div class="section-title">Baseline</div><div class="text-preline">{{ process_analysis.baseline_metrics }}</div></div>
+    </div>
+  </div>
+</details>
+
+<section class="cr-section" id="work-design-portfolio" data-testid="work-design-portfolio">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Aufgabenvergleich</h2>
+      <p>Übernahmepotenzial und Verantwortungsgrenze sind transparente Heuristiken, keine Prognose. Eine Bewertung ersetzt keine Governance- oder Freigabeentscheidung.</p>
+    </div>
+    {% if can_edit and task_rows %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_task_create' assessment.pk %}">Weitere Aufgabe bewerten</a>
+    {% endif %}
+  </header>
+
+  {% if task_rows %}
+  <div class="work-design-matrix-layout mt-3">
+    <div>
+      <div class="work-design-axis work-design-axis-y">Verantwortungsgrenze ↑</div>
+      <div class="work-design-quadrant" data-testid="work-design-matrix" aria-label="TASKSHIFT-Aufgabenmatrix: Übernahmepotenzial gegen Verantwortungsgrenze">
+        <div class="work-design-quadrant__label is-top-left">Vorbereiten<br><small>Fachfreigabe bleibt</small></div>
+        <div class="work-design-quadrant__label is-top-right">Übernehmen + Freigabe<br><small>hoher Nutzen, hohe Verantwortung</small></div>
+        <div class="work-design-quadrant__label is-bottom-left">Handoff / später<br><small>geringer Erweiterungsnutzen</small></div>
+        <div class="work-design-quadrant__label is-bottom-right">Übernehmen<br><small>hoher Nutzen, klare Leitplanken</small></div>
+        <div class="work-design-quadrant__midline is-vertical"></div>
+        <div class="work-design-quadrant__midline is-horizontal"></div>
+        {% for row in task_rows %}
+          {% if row.result %}
+          <a class="work-design-quadrant__point matrix-x-{{ row.matrix_x }} matrix-y-{{ row.matrix_y }}"
+             href="#work-design-task-{{ row.task.pk }}"
+             title="{{ row.task.name }} · Potenzial {{ row.result.potential_score }}/100 · Verantwortung {{ row.result.boundary_score }}/100"
+             aria-label="{{ forloop.counter }}. {{ row.task.name }}">
+            {{ forloop.counter }}
+          </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="work-design-axis work-design-axis-x">Übernahmepotenzial →</div>
+    </div>
+
+    <aside class="work-design-matrix-legend" aria-label="Aufgaben in der Matrix">
+      <div class="section-title">Aufgaben</div>
+      {% for row in task_rows %}
+      <a href="#work-design-task-{{ row.task.pk }}" class="work-design-matrix-legend__item">
+        <span class="work-design-matrix-legend__number">{{ forloop.counter }}</span>
+        <span><strong>{{ row.task.name }}</strong>{% if row.result %}<small>{{ row.result.recommendation_label }} · {{ row.result.potential_score }}/100 · {{ row.result.boundary_score }}/100</small>{% else %}<small>Bewertung unvollständig</small>{% endif %}</span>
+      </a>
+      {% endfor %}
+    </aside>
+  </div>
+
+  <div class="work-design-task-list mt-4">
+    {% for row in task_rows %}
+    <article class="work-design-task-row" id="work-design-task-{{ row.task.pk }}">
+      <div class="work-design-task-row__head">
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="work-design-matrix-legend__number">{{ forloop.counter }}</span>
+            <strong>{{ row.task.name }}</strong>
+            {% if row.result %}
+            <span class="badge {% if row.result.recommendation == 'keep-handoff' %}state-blocked{% elif row.result.recommendation == 'explore' %}state-review{% else %}state-ready{% endif %}">{{ row.result.recommendation_label }}</span>
+            {% else %}
+            <span class="badge state-review">Bewertung unvollständig</span>
+            {% endif %}
+          </div>
+          {% if row.task.target_work_split %}<div class="small text-muted mt-2">{{ row.task.target_work_split }}</div>{% endif %}
+          {% if row.task.source_area %}<div class="small text-muted mt-1">Herkunft: {{ row.task.source_area }}</div>{% endif %}
+        </div>
+        {% if can_edit %}
+        <div class="work-design-task-actions">
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_task_update' row.task.pk %}">Bearbeiten</a>
+          {% if row.result %}
+            {% if process_analysis.stage.value_stream.focus.is_selected %}
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_task_select_solution_design' row.task.pk %}">Für Lösungsdesign auswählen</a>
+            {% else %}
+            <span class="d-inline-flex" tabindex="0" title="Der Value Stream muss zuerst als Fokus bestätigt werden.">
+              <button class="btn btn-sm btn-outline-secondary" type="button" disabled>Für Lösungsdesign auswählen</button>
+            </span>
+            {% endif %}
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if row.result %}
+      <div class="work-design-task-row__facts">
+        <div><span>Potenzial</span><strong>{{ row.result.potential_score }}/100</strong></div>
+        <div><span>Verantwortung</span><strong>{{ row.result.boundary_score }}/100</strong></div>
+        <div><span>Freigabe</span><strong>{% if row.result.approval_required %}{{ row.task.approval_role }}{% else %}Keine Pflichtfreigabe{% endif %}</strong></div>
+        <div><span>Arbeitsmodus</span><strong>{{ row.result.ai_mode }}</strong></div>
+        <div><span>Designmuster</span><strong>{{ row.result.design_pattern }}</strong></div>
+      </div>
+      {% if not process_analysis.stage.value_stream.focus.is_selected and can_edit %}
+      <div class="cr-inline-note mt-3 mb-0">
+        <strong>Lösungsdesign noch gesperrt.</strong>
+        <span>Der Value Stream muss zuerst als Fokus bestätigt werden.</span>
+        <a href="{{ process_analysis.stage.value_stream.get_absolute_url }}#fokusphase">Fokusentscheidung öffnen</a>
+      </div>
+      {% endif %}
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="work-design-empty-state mt-3">
+    <div>
+      <strong>Noch keine Aufgabe bewertet.</strong>
+      <span>Beginne mit einem konkreten Handoff oder Arbeitsschritt dieser Rolle.</span>
+    </div>
+    {% if can_edit %}<a class="btn btn-primary" href="{% url 'architecture:work_design_task_create' assessment.pk %}">Erste Aufgabe bewerten</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

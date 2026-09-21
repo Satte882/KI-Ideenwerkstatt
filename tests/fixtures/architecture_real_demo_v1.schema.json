@@ -1,0 +1,584 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ki-usecase-radar:architecture-real-demo-fixture:v1",
+  "title": "KI-UseCase-Radar Architecture Real-DEMO Fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fixture_version",
+    "data_classification",
+    "contract_versions",
+    "advisor_cases",
+    "quality_cases",
+    "real_demo"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "architecture-real-demo-fixture-schema-v1"
+    },
+    "fixture_version": {
+      "const": "architecture-real-demo-v1"
+    },
+    "data_classification": {
+      "const": "synthetic_anonymized"
+    },
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "architecture_advisor_ruleset",
+        "generation_schema",
+        "generation_prompt",
+        "quality_contract",
+        "critic_schema",
+        "critic_prompt",
+        "repair_schema",
+        "repair_prompt"
+      ],
+      "properties": {
+        "architecture_advisor_ruleset": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation_prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quality_contract": {
+          "type": "string",
+          "minLength": 1
+        },
+        "critic_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "critic_prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repair_schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repair_prompt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "advisor_cases": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/advisor_case"
+      }
+    },
+    "quality_cases": {
+      "type": "array",
+      "minItems": 14,
+      "items": {
+        "$ref": "#/$defs/quality_case"
+      }
+    },
+    "real_demo": {
+      "$ref": "#/$defs/real_demo"
+    }
+  },
+  "$defs": {
+    "advisor_answers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "simpler_solution_sufficient",
+        "semantic_reasoning_required",
+        "multiple_known_ai_steps_required",
+        "dynamic_orchestration_required"
+      ],
+      "properties": {
+        "simpler_solution_sufficient": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "semantic_reasoning_required": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "multiple_known_ai_steps_required": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        },
+        "dynamic_orchestration_required": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unclear"
+          ]
+        }
+      }
+    },
+    "advisor_expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "reason_codes",
+        "why_no_agent_required",
+        "open_points_expected"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "no_llm_required",
+            "controlled_llm",
+            "llm_workflow",
+            "bounded_agent",
+            "assessment_open"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "contradictory_answers",
+              "insufficient_information",
+              "architecture_boundary_unclear",
+              "simpler_solution_sufficient",
+              "controlled_llm_sufficient",
+              "fixed_llm_workflow_sufficient",
+              "dynamic_orchestration_required"
+            ]
+          }
+        },
+        "why_no_agent_required": {
+          "type": "boolean"
+        },
+        "open_points_expected": {
+          "type": "boolean"
+        }
+      }
+    },
+    "advisor_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "category",
+        "name",
+        "narrative",
+        "complexity_context",
+        "answers",
+        "expected"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^advisor_[a-z0-9_]+$"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "canonical",
+            "adversarial"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "narrative": {
+          "type": "string",
+          "minLength": 1
+        },
+        "complexity_context": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "unknown"
+          ]
+        },
+        "answers": {
+          "$ref": "#/$defs/advisor_answers"
+        },
+        "expected": {
+          "$ref": "#/$defs/advisor_expected"
+        }
+      }
+    },
+    "quality_target": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "option",
+        "field",
+        "source_ids"
+      ],
+      "properties": {
+        "option": {
+          "type": "string",
+          "enum": [
+            "organizational",
+            "rule_automation",
+            "assistant"
+          ]
+        },
+        "field": {
+          "type": "string",
+          "enum": [
+            "name",
+            "description",
+            "expected_value",
+            "bottleneck_coverage",
+            "data_requirements",
+            "application_impact",
+            "integration_impact",
+            "technology_constraints",
+            "risks",
+            "architecture_fit"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "quality_expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion",
+        "finding_expected",
+        "repairable",
+        "target",
+        "preview_policy",
+        "repair_runs_max",
+        "provider_calls_max",
+        "human_review_required"
+      ],
+      "properties": {
+        "criterion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "distinctiveness",
+            "bottleneck_fit",
+            "grounding_consistency",
+            "evidence_discipline",
+            "complexity_proportionality"
+          ]
+        },
+        "finding_expected": {
+          "type": "boolean"
+        },
+        "repairable": {
+          "type": "boolean"
+        },
+        "target": {
+          "$ref": "#/$defs/quality_target"
+        },
+        "preview_policy": {
+          "type": "string",
+          "enum": [
+            "preserve_original",
+            "unchanged_until_repair",
+            "preserve_human_edits",
+            "machine_repair_once",
+            "preserve_repaired_preview"
+          ]
+        },
+        "repair_runs_max": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provider_calls_max": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "human_review_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "quality_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "kind",
+        "description",
+        "expected"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^quality_[a-z0-9_]+$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "semantic",
+            "positive_control",
+            "contract",
+            "failure",
+            "invariant"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "$ref": "#/$defs/quality_expected"
+        }
+      }
+    },
+    "value_stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "trigger",
+        "outcome",
+        "scope_in",
+        "strategic_objective",
+        "constraints"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_in": {
+          "type": "string",
+          "minLength": 1
+        },
+        "strategic_objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "constraints": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "process_analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_name",
+        "stage_description",
+        "actors",
+        "systems",
+        "documents",
+        "pain_points",
+        "baseline_metrics",
+        "name",
+        "scope_start",
+        "scope_end",
+        "trigger",
+        "outcome",
+        "current_flow",
+        "roles",
+        "data_objects",
+        "business_rules",
+        "handoffs",
+        "bottlenecks",
+        "exceptions",
+        "target_state_principles"
+      ],
+      "properties": {
+        "stage_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage_description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actors": {
+          "type": "string",
+          "minLength": 1
+        },
+        "systems": {
+          "type": "string",
+          "minLength": 1
+        },
+        "documents": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pain_points": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseline_metrics": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_end": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_flow": {
+          "type": "string",
+          "minLength": 1
+        },
+        "roles": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data_objects": {
+          "type": "string",
+          "minLength": 1
+        },
+        "business_rules": {
+          "type": "string",
+          "minLength": 1
+        },
+        "handoffs": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bottlenecks": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exceptions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_state_principles": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "solution_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "option_key",
+        "name",
+        "description",
+        "advisor_case_id"
+      ],
+      "properties": {
+        "option_key": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "advisor_case_id": {
+          "type": "string",
+          "pattern": "^advisor_[a-z0-9_]+$"
+        }
+      }
+    },
+    "real_demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synthetic",
+        "contains_personal_data",
+        "scenario_key",
+        "value_stream",
+        "process_analysis",
+        "solution_options"
+      ],
+      "properties": {
+        "synthetic": {
+          "const": true
+        },
+        "contains_personal_data": {
+          "const": false
+        },
+        "scenario_key": {
+          "type": "string",
+          "const": "architecture-real-demo-procurement-v1"
+        },
+        "value_stream": {
+          "$ref": "#/$defs/value_stream"
+        },
+        "process_analysis": {
+          "$ref": "#/$defs/process_analysis"
+        },
+        "solution_options": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "$ref": "#/$defs/solution_option"
+          }
+        }
+      }
+    }
+  }
+}

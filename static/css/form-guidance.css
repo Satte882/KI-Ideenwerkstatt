@@ -1,0 +1,64 @@
+.form-control::placeholder,
+textarea.form-control::placeholder {
+  color: rgba(143, 160, 184, .62);
+  font-style: italic;
+  opacity: 1;
+}
+
+.form-control.field-guidance-required-empty,
+.form-select.field-guidance-required-empty {
+  border-color: rgba(255, 107, 130, .62);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 130, .08);
+}
+
+.form-control.field-guidance-optional-empty,
+.form-select.field-guidance-optional-empty {
+  background-color: rgba(243, 185, 95, .09);
+  border-color: rgba(243, 185, 95, .32);
+}
+
+.form-control.field-guidance-filled,
+.form-select.field-guidance-filled {
+  background-color: #0a111f;
+  border-color: rgba(148, 163, 184, .2);
+  box-shadow: none;
+}
+
+.form-control.field-guidance-required-empty:focus,
+.form-select.field-guidance-required-empty:focus {
+  background-color: #0b1322;
+  border-color: rgba(255, 107, 130, .72);
+  box-shadow: 0 0 0 .2rem rgba(255, 107, 130, .14);
+}
+
+.form-control.field-guidance-optional-empty:focus,
+.form-select.field-guidance-optional-empty:focus {
+  background-color: rgba(243, 185, 95, .12);
+  border-color: rgba(243, 185, 95, .45);
+  box-shadow: 0 0 0 .2rem rgba(243, 185, 95, .13);
+}
+
+.form-control.field-guidance-filled:focus,
+.form-select.field-guidance-filled:focus {
+  background-color: #0b1322;
+  border-color: rgba(124, 92, 255, .75);
+  box-shadow: 0 0 0 .2rem rgba(124, 92, 255, .13);
+}
+
+.field-error .form-control.field-guidance-filled,
+.field-error .form-select.field-guidance-filled {
+  border-color: rgba(255, 107, 130, .7);
+}
+
+.field-error .form-control.field-guidance-filled:focus,
+.field-error .form-select.field-guidance-filled:focus {
+  border-color: rgba(255, 107, 130, .72);
+  box-shadow: 0 0 0 .2rem rgba(255, 107, 130, .14);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .form-control,
+  .form-select {
+    transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+}

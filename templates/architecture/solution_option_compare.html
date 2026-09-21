@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Lösungsoptionen vergleichen – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-solution-compare{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}?v=issue-331-solution-comparison">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.name }}</div>
+    <h1 class="page-title">Lösungsoptionen vergleichen</h1>
+    <p class="page-subtitle">Einheitliche Entscheidungsmatrix für organisatorische, klassische, KI- und hybride Optionen – ohne vorgegebene Technologiereihenfolge.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+</div>
+
+{% for blocker in blockers %}<div class="alert alert-warning">{{ blocker }}</div>{% endfor %}
+
+<div class="app-card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div><strong>Vergleichsmatrix</strong><div class="small text-muted mt-1">Alle aktiven Optionen werden anhand derselben Kriterien gegenübergestellt. Time-to-Value ist ein sichtbarer Trade-off, kein automatischer Sieger-Score. Nicht weiterverfolgte Optionen bleiben auditierbar.</div></div>
+    {% if can_select %}
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>
+        {% if generation_ready %}
+          <form method="post" action="{% url 'accelerator:solution_generation_start' process_analysis.pk %}" class="m-0">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" type="submit">3 Lösungsentwürfe mit KI erstellen</button>
+          </form>
+        {% else %}
+          <button class="btn btn-sm btn-outline-secondary" type="button" disabled>3 Lösungsentwürfe mit KI erstellen</button>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  {% if can_select %}
+    <div class="card-body border-bottom border-secondary-subtle">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <strong>KI-Unterstützung</strong>
+          <div class="small text-muted mt-1">Quellstand: {{ generation_validation_label }}. KI kann Alternativen entwerfen, aber keine bevorzugte Lösung festlegen.</div>
+        </div>
+        {% if latest_generation_run %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:solution_generation_preview' latest_generation_run.pk %}">Letzten KI-Entwurf ansehen</a>
+        {% endif %}
+      </div>
+      {% if not generation_ready %}
+        <div class="alert alert-warning mt-3 mb-0">
+          <strong>KI-Generierung noch nicht möglich.</strong>
+          Es fehlen: {{ generation_missing_labels|join:", " }}.
+        </div>
+      {% elif latest_generation_state.stale %}
+        <div class="alert alert-warning mt-3 mb-0">Der letzte KI-Entwurf basiert auf einem älteren Prozessstand und muss vor einer späteren Übernahme neu generiert werden.</div>
+      {% elif latest_generation_state.expired %}
+        <div class="alert alert-warning mt-3 mb-0">Der letzte KI-Entwurf ist abgelaufen. Eine neue Generierung ist erforderlich.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+  <div class="card-body table-responsive">
+    <table class="table align-middle comparison-matrix comparison-options-{{ options|length }}">
+      <thead><tr><th scope="col">Kriterium</th>{% for option in options %}<th scope="col"><span class="badge badge-soft">{{ option.get_option_type_display }}</span><div class="mt-2">{{ option.name }}</div><div class="small text-muted">{{ option.get_evaluation_status_display }}</div></th>{% endfor %}</tr></thead>
+      <tbody>
+        <tr><th scope="row">Lösungsbeschreibung</th>{% for option in options %}<td class="text-preline">{{ option.description }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Evidenzbasis<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">KI-Komponente</th>{% for option in options %}<td>{% if option.starts_ai_use_case %}Ja – KI-Use-Case-Pfad möglich{% else %}Nein – kein KI-Use-Case erforderlich{% endif %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Bottleneck-Abdeckung und Diagnosebezug<span class="d-block small text-muted mt-1">Problem / bestätigte Ursache</span></th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Machbarkeit</th>{% for option in options %}<td>{{ option.get_feasibility_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Datenanforderungen</th>{% for option in options %}<td class="text-preline">{{ option.data_requirements|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Anwendungsauswirkung</th>{% for option in options %}<td class="text-preline">{{ option.application_impact|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Integrationsaufwand</th>{% for option in options %}<td>{{ option.get_integration_effort_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Integrationen</th>{% for option in options %}<td class="text-preline">{{ option.integration_impact|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Technologieleitplanken</th>{% for option in options %}<td class="text-preline">{{ option.technology_constraints|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Risiken</th>{% for option in options %}<td class="text-preline">{{ option.risks|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Passung zu Zielbild und Leitplanken</th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Architecture Mode</th>{% for option in options %}<td>{% if option.architecture_assessment %}{{ option.architecture_assessment.get_architecture_mode_display }}{% else %}<span class="text-muted">Nicht eingeschätzt</span>{% endif %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Entscheidungsstatus</th>{% for option in options %}<td>{{ option.get_recommendation_display }}</td>{% endfor %}</tr>
+        {% if can_select %}
+        <tr>
+          <th scope="row">Aktion</th>
+          {% for option in options %}
+          <td>
+            <div class="d-grid gap-2">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}">Option bearbeiten</a>
+              {% if option.recommendation == 'preferred' or option.selection_decisions.all or option.use_case_origins.all %}
+                <button class="btn btn-sm btn-outline-secondary" type="button" disabled>Nicht weiterverfolgen</button>
+                <div class="small text-muted">Ausgewählte, bevorzugte oder mit einem Use Case verknüpfte Optionen sind geschützt.</div>
+              {% else %}
+                <form method="post" action="{% url 'architecture:solution_option_retire' option.pk %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger w-100" type="submit">Nicht weiterverfolgen</button>
+                </form>
+              {% endif %}
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if can_select %}
+<form method="post" class="app-card mb-4" id="solution-selection">
+  {% csrf_token %}
+  <div class="card-header">
+    <strong>Bevorzugte Option auswählen</strong>
+    <div class="small text-muted mt-1">Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.</div>
+  </div>
+  <div class="card-body">
+    {% if latest_selection %}
+      <div class="alert alert-success" id="selection-result" tabindex="-1">
+        <strong>Aktuell bevorzugt: {{ latest_selection.selected_option.name }}</strong>
+        <div class="small mt-1">Entschieden am {{ latest_selection.decided_at|date:"d.m.Y H:i" }}. Die Entscheidung ist in der Auswahlhistorie auditierbar.</div>
+        {% if latest_selection.selected_option.starts_ai_use_case %}
+          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Die Lösung enthält eine KI-Komponente; ein KI-Use-Case kann regulär weitergeführt werden.</div>
+        {% else %}
+          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Kein KI-Use-Case erforderlich. Die Analyseentscheidung bleibt als gültiges Ergebnis erhalten.</div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div id="selection-result"></div>
+    {% endif %}
+
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+    {% if blockers %}
+      <div class="alert alert-warning mb-0">
+        <strong>Auswahl noch gesperrt.</strong>
+        Vor einer bevorzugten Option müssen mindestens zwei gespeicherte Lösungsoptionen vorliegen und alle Optionen vollständig bewertet sein. KI-Entwürfe werden absichtlich zunächst als „Noch nicht bewertet“ übernommen.
+
+        {% if needs_more_options %}
+          <div class="mt-3"><a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a></div>
+        {% endif %}
+
+        {% if incomplete_options %}
+          <div class="small text-muted mt-3 mb-2">Noch vollständig zu bewerten:</div>
+          <div class="d-grid gap-2">
+            {% for option in incomplete_options %}
+              <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap border border-secondary-subtle rounded p-2">
+                <span>{{ option.name }}</span>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}">Option vollständig bewerten</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% elif diagnosis_blockers %}
+      <div class="alert alert-warning mb-0">
+        <strong>Auswahl noch gesperrt.</strong>
+        Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache.
+        Es fehlen: {{ diagnosis_blockers|join:", " }}. Lösungsoptionen können weiterhin exploriert und verglichen werden.
+        <div class="mt-3"><a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Diagnose ergänzen</a></div>
+      </div>
+    {% else %}
+      <div class="mb-3"><label class="form-label">{{ form.selected_option.label }}</label>{{ form.selected_option }}{{ form.selected_option.errors }}</div>
+      <div><label class="form-label" for="{{ form.rationale.id_for_label }}">{{ form.rationale.label }}</label>{{ form.rationale }}<div class="form-text">{{ form.rationale.help_text }}</div>{{ form.rationale.errors }}</div>
+    {% endif %}
+  </div>
+  <div class="card-body border-top border-secondary-subtle text-end">
+    {% if blockers or diagnosis_blockers %}
+      <button class="btn btn-primary" type="button" disabled>Auswahl noch gesperrt</button>
+    {% else %}
+      <button class="btn btn-primary" type="submit">Bevorzugte Option auswählen</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+
+<div class="app-card">
+  <div class="card-header"><strong>Auswahlhistorie</strong></div>
+  <div class="card-body">
+    {% for decision in selection_history %}
+      <section class="border-bottom border-secondary-subtle pb-3 mb-3">
+        <div class="d-flex justify-content-between gap-3"><strong>{{ decision.selected_option.name }}</strong><span class="text-muted">{{ decision.decided_at|date:"d.m.Y H:i" }}</span></div>
+        <div class="small text-muted mt-1">Entschieden von {{ decision.decided_by|default:"Gelöschter Nutzer" }} · {{ decision.comparison_snapshot|length }} verglichene Optionen{% if decision.process_version %} · Prozessversion v{{ decision.process_version }}{% endif %}</div>
+        {% if decision.diagnosis_snapshot %}
+          <details class="mt-2">
+            <summary class="small">Diagnose- und Evidenzstand der Entscheidung</summary>
+            <dl class="small mt-2 mb-0">
+              <dt>Beobachtung / Problem</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.diagnostic_observations }}</dd>
+              {% if decision.diagnosis_snapshot.cause_hypotheses %}<dt>Ursachenhypothese</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.cause_hypotheses }}</dd>{% endif %}
+              <dt>Bestätigte Ursache</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.confirmed_causes }}</dd>
+              {% if decision.diagnosis_snapshot.constraints %}<dt>Randbedingung / Constraint</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.constraints }}</dd>{% endif %}
+              {% if decision.diagnosis_snapshot.validation %}
+                <dt>Prozessvalidierung</dt><dd>Version v{{ decision.diagnosis_snapshot.validation.process_version }} · {{ decision.diagnosis_snapshot.validation.validator_role }}{% if decision.diagnosis_snapshot.validation.evidence_url %} · Nachweis gespeichert{% endif %}</dd>
+              {% else %}
+                <dt>Prozessvalidierung</dt><dd>Für diesen Entscheidungsstand kein eigenständiges Validierungsartefakt gespeichert.</dd>
+              {% endif %}
+            </dl>
+          </details>
+        {% endif %}
+        <div class="text-preline mt-2">{{ decision.rationale }}</div>
+      </section>
+    {% empty %}<p class="text-muted mb-0">Noch keine auditierbare Auswahl dokumentiert.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{
+  "benchmark_version": "block9-v2",
+  "fixture_sha256": "d4f7431ac68bb94b05885ae25f323e4147cf68fb20977ecd18c2acdeef74e6d1",
+  "scored_sequence": [
+    "manual-A-1",
+    "accelerator-A-1",
+    "accelerator-A-2",
+    "manual-A-2",
+    "manual-A-3",
+    "accelerator-A-3",
+    "accelerator-B-1"
+  ],
+  "case_a": {
+    "manual": {
+      "completed": 3,
+      "failed": 0,
+      "end_to_end_seconds": {"median": 11.048, "min": 10.087, "max": 80.654},
+      "correct_fields": 63,
+      "possible_fields": 63
+    },
+    "accelerator_primary_slots": {
+      "completed": 2,
+      "failed": 1,
+      "failure_rate": 0.333333,
+      "end_to_end_seconds": {"median": 245.952, "min": 98.522, "max": 306.471},
+      "successful_end_to_end_seconds": {"median": 276.2115, "min": 245.952, "max": 306.471},
+      "correct_fields": 47,
+      "possible_fields": 63,
+      "successful_correct_fields": 42,
+      "successful_possible_fields": 42,
+      "suggestions_adopted": 18,
+      "suggestions_adopted_edited": 8,
+      "llm": {"calls": 3, "prompt_tokens": 5370, "completion_tokens": 19193, "total_tokens": 24563, "cost_usd": "0.038980", "duration_ms": 227272, "errors": 1}
+    },
+    "comparison": {
+      "accelerator_to_manual_primary_median_ratio": 22.262129,
+      "result": "No acceleration claim: the accelerator was slower and one of three primary A slots failed."
+    }
+  },
+  "case_b": {
+    "run_id": "accelerator-B-1",
+    "status": "failed",
+    "error": "invalid_extraction",
+    "required_support_gap_remained_open": true,
+    "invented_values": 0,
+    "stale_source_conflicts_missed": 1
+  },
+  "all_scored_accelerator_slots": {
+    "calls": 4,
+    "completed": 2,
+    "failed": 2,
+    "failure_rate": 0.5,
+    "prompt_tokens": 7274,
+    "completion_tokens": 25366,
+    "total_tokens": 32640,
+    "cost_usd": "0.051802",
+    "duration_ms": 293563,
+    "errors": 2
+  },
+  "technical_controls": {
+    "benchmark_version": "block9-v1",
+    "blueprint": {"runs": 1, "end_to_end_seconds": 0.192325, "checksum": "a910863c3f677eb95b593e8031f48e54f811c5bb55295b4e601ae6f13a0b70d5"},
+    "delivery": {"runs": 3, "end_to_end_seconds": {"median": 0.020315, "min": 0.020126, "max": 0.028886}, "deterministic_fields_per_run": 16, "llm_fields_per_run": 0, "open_gaps_per_run": 1}
+  }
+}

@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load static architecture_focus %}
+{% block title %}{{ value_stream.name }} – KI-Radar{% endblock %}
+{% block body_class %}page-value-stream{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}?v=ap7-lifecycle-unification">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-value-stream.css' %}">
+{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Systematische Discovery" lifecycle_context="Value Stream · Auswahl und Freigabe" %}
+
+<div class="page-header" id="value-stream">
+  <div>
+    <div class="eyebrow mb-2">{{ value_stream.business_unit }} · {{ value_stream.get_status_display }}</div>
+    <h1 class="page-title">{{ value_stream.name }}</h1>
+    <p class="page-subtitle">{{ value_stream.description|default:"End-to-End-Value-Stream" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Übersicht</a>
+    {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_update' value_stream.pk %}">{% if value_stream.focus.is_selected and value_stream.status == 'active' %}Value Stream bearbeiten{% else %}Bearbeiten &amp; priorisieren{% endif %}</a>{% endif %}
+  </div>
+</div>
+
+<div class="cr-next-action" id="next-action">
+  {% include "includes/next_action.html" %}
+</div>
+
+<section class="cr-section" data-testid="value-stream-core">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Wertstromkern</h2>
+      <p>Auslöser und Ergebnis definieren den End-to-End-Wertstrom; Rahmeninformationen folgen nachrangig.</p>
+    </div>
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-6"><div class="section-title">Auslöser</div><div class="text-preline">{{ value_stream.trigger }}</div></div>
+    <div class="col-md-6"><div class="section-title">Ergebnis</div><div class="text-preline">{{ value_stream.outcome }}</div></div>
+  </div>
+</section>
+
+<section class="app-card decision-panel mb-4" id="fokus-priorisierung" data-testid="value-stream-focus-decision">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div><strong>Fokus &amp; Priorisierung</strong><div class="small text-muted mt-1">Entscheidung, ob dieser End-to-End-Bereich eine Prozessdetailanalyse rechtfertigt.</div></div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      {% if value_stream.focus %}<span class="badge {% if value_stream.focus.is_selected %}state-ready{% elif value_stream.focus.is_terminal %}state-blocked{% else %}state-review{% endif %}">{{ value_stream.focus.get_status_display }}</span>{% else %}<span class="badge state-blocked">Screening fehlt</span>{% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    {% if value_stream.focus %}
+    <div class="mb-3">
+      <div class="section-title">Begründung der Fokusentscheidung</div>
+      <div class="text-preline">{{ value_stream.focus.rationale|default:"Die Fokusentscheidung ist noch nicht begründet." }}</div>
+    </div>
+    {% if value_stream.focus.missing_screening_fields %}<div class="alert alert-warning mt-3 mb-0"><strong>Screening unvollständig:</strong> {{ value_stream.focus.missing_screening_fields|join:", " }}</div>{% endif %}
+    <details class="architecture-disclosure" data-testid="value-stream-screening-details">
+      <summary>Screening- und Einordnungsdetails</summary>
+      <div class="pt-3">
+        <div class="row g-4 mb-3">
+          <div class="col-md-6"><div class="section-title">Fachdomäne</div><strong>{{ value_stream.focus.get_business_domain_display }}</strong></div>
+          <div class="col-md-6"><div class="section-title">Business Capability</div><strong>{{ value_stream.focus.capability|default:"Noch offen" }}</strong></div>
+        </div>
+        <div class="kpi-strip kpi-strip-responsive">
+          <div class="kpi-cell"><small>Strategischer Impact</small><strong>{{ value_stream.focus.get_strategic_impact_display|default:"–" }}</strong></div>
+          <div class="kpi-cell"><small>Wirtschaftliches Potenzial</small><strong>{{ value_stream.focus.get_economic_potential_display|default:"–" }}</strong></div>
+          <div class="kpi-cell"><small>Problemintensität</small><strong>{{ value_stream.focus.get_pain_intensity_display|default:"–" }}</strong></div>
+          <div class="kpi-cell"><small>Datenzugänglichkeit</small><strong>{{ value_stream.focus.get_data_accessibility_display|default:"–" }}</strong></div>
+          <div class="kpi-cell"><small>Veränderungsaufwand</small><strong>{{ value_stream.focus.get_change_effort_display|default:"–" }}</strong></div>
+        </div>
+      </div>
+    </details>
+    {% else %}
+    <p class="text-muted mb-0">Der Value Stream ist beschrieben, wurde aber noch nicht anhand einheitlicher Fokus-Kriterien eingeordnet.</p>
+    {% endif %}
+  </div>
+</section>
+
+<details class="architecture-disclosure mb-4" data-testid="value-stream-context">
+  <summary>Rahmen, Scope und Leitplanken</summary>
+  <div class="pt-3">
+    <div class="mb-3">
+      <strong>Zielbild und Leitplanken</strong>
+      <div class="small text-muted mt-1">Methodik: TOGAF-light, Architecture Vision (ADM Phase A).</div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6"><div class="section-title">Im Scope</div><div class="text-preline">{{ value_stream.scope_in }}</div></div>
+      <div class="col-md-6"><div class="section-title">Nicht im Scope</div><div class="text-preline">{{ value_stream.scope_out|default:"Nicht ausdrücklich abgegrenzt" }}</div></div>
+      <div class="col-md-6"><div class="section-title">Strategisches Ziel</div><div class="text-preline">{{ value_stream.strategic_objective|default:"Noch nicht dokumentiert" }}</div></div>
+      <div class="col-md-6"><div class="section-title">Stakeholder</div><div class="text-preline">{{ value_stream.stakeholders|default:"Noch offen" }}</div></div>
+      <div class="col-12"><div class="section-title">Leitplanken und Einschränkungen</div><div class="text-preline">{{ value_stream.constraints|default:"Noch offen" }}</div></div>
+    </div>
+  </div>
+</details>
+
+{% if value_stream.status == 'active' and value_stream.focus.is_selected and value_stream.stages.all %}
+<section class="app-card decision-panel mb-4" id="fokusphase" data-testid="stage-focus-decision">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <strong>Fokusphase für die Prozessdetailanalyse</strong>
+      <div class="small text-muted mt-1">Die ausgewählte Phase und ihre Begründung bleiben sichtbar; Vergleich und Provenance sind nachrangig.</div>
+    </div>
+    {% if can_edit %}<a class="btn btn-sm {% if value_stream.stage_focus_decision %}btn-outline-secondary{% else %}btn-primary{% endif %}" href="{% url 'architecture:stage_focus_select' value_stream.pk %}" data-testid="stage-focus-select-action">{% if value_stream.stage_focus_decision %}Phasenentscheidung prüfen{% else %}Phasen vergleichen und Fokus auswählen{% endif %}</a>{% endif %}
+  </div>
+  <div class="card-body">
+    {% if value_stream.stage_focus_decision %}
+    <div class="row g-3 mb-3">
+      <div class="col-md-5"><div class="section-title">Ausgewählte Phase</div><strong>{{ value_stream.stage_focus_decision.selected_stage.sequence }}. {{ value_stream.stage_focus_decision.selected_stage.name }}</strong></div>
+      <div class="col-md-7"><div class="section-title">Begründung der Phasenentscheidung</div><div class="text-preline">{{ value_stream.stage_focus_decision.rationale }}</div></div>
+    </div>
+    {% if value_stream.stage_focus_decision.is_short_path %}<div class="alert alert-secondary"><strong>Kurzpfad begründet:</strong> {{ value_stream.stage_focus_decision.short_path_reason }}</div>{% endif %}
+    <details class="architecture-disclosure" data-testid="stage-focus-evidence">
+      <summary>Entscheidungsnachweis und Phasenvergleich</summary>
+      <div class="pt-3">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><div class="section-title">Entscheidungsweg</div><strong>{% if value_stream.stage_focus_decision.is_short_path %}Bewusster Kurzpfad{% else %}Vollständiger Phasenvergleich{% endif %}</strong></div>
+          <div class="col-md-6"><div class="section-title">Ausgewählt durch</div><strong>{{ value_stream.stage_focus_decision.selected_by.get_display_name|default:"Nicht mehr verfügbar" }}</strong></div>
+        </div>
+        <div class="table-responsive stage-focus-table-wrap">
+          <table class="table align-middle mb-0 stage-focus-table">
+            <thead><tr><th>Phase</th><th>Impact</th><th>Problemintensität</th><th>Verbesserungspotenzial</th><th>Datenlage</th><th>Veränderungsaufwand</th><th>Time-to-Value</th><th>Evidenzbasis</th><th>Indikatoren</th></tr></thead>
+            <tbody>
+              {% for stage in value_stream.stages.all %}
+              {% stage_focus_item value_stream.stage_focus_decision stage as item %}
+              <tr class="{% if stage|is_selected_focus_stage %}table-active{% endif %}">
+                <td><strong>{{ stage.sequence }}. {{ stage.name }}</strong>{% if stage|is_selected_focus_stage %}<div><span class="badge state-ready mt-1">Fokusphase</span></div>{% endif %}</td>
+                <td>{{ item.impact|screening_label }}</td>
+                <td>{{ item.pain_intensity|screening_label }}</td>
+                <td>{{ item.improvement_potential|screening_label }}</td>
+                <td>{{ item.data_accessibility|screening_label }}</td>
+                <td>{{ item.change_effort|screening_label }}</td>
+                <td>{{ item.time_to_value|time_to_value_label }}</td>
+                <td>{{ item.evidence_basis|evidence_basis_label }}</td>
+                <td><div class="small"><strong>Engpässe:</strong> {{ item.indicators.pain_points|default:"–" }}</div><div class="small"><strong>Baseline:</strong> {{ item.indicators.baseline_metrics|default:"–" }}</div></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+    {% else %}
+    <div class="alert alert-warning mb-0"><strong>Phasenentscheidung fehlt.</strong> Vor der Prozessanalyse müssen Fokusphase, Begründung und zugrunde liegende Indikatoren gespeichert werden. Für eindeutige Fälle steht ein ausdrücklich begründeter Kurzpfad zur Verfügung.</div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<div class="app-card" id="end-to-end-phasen">
+  <div class="card-header d-flex justify-content-between align-items-start gap-3">
+    <div><strong>End-to-End-Phasen</strong><div class="small text-muted mt-1">Wertschöpfung zuerst mit 5–10 groben Phasen strukturieren. Erst danach wird bewusst eine Fokusphase für die Prozessdetailanalyse gewählt.</div></div>
+    {% if can_edit and journey.next_action.key != 'value_stream' %}
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:stage_create' value_stream.pk %}">Weitere Phase ergänzen</a>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if value_stream.status == 'draft' %}
+    <div class="alert alert-secondary"><strong>Phasenerfassung noch offen.</strong> Ergänze die vollständige grobe End-to-End-Struktur und setze den Value Stream anschließend über „Bearbeiten &amp; priorisieren“ auf „Aktiv“.</div>
+    {% elif not value_stream.focus.is_selected %}
+    <div class="alert alert-secondary"><strong>Prozessdetailanalyse noch nicht freigegeben.</strong> Vervollständige das Screening und triff eine positive Fokusentscheidung.</div>
+    {% elif not value_stream.stage_focus_decision %}
+    <div class="alert alert-info"><strong>Fokusphase auswählen.</strong> Vergleiche die Phasen kompakt oder dokumentiere für einen eindeutigen Fall bewusst den Kurzpfad.</div>
+    {% endif %}
+    <div class="value-stream-flow">
+      {% for stage in value_stream.stages.all %}
+      <section class="value-stream-stage{% if stage|is_selected_focus_stage %} border border-success{% endif %}">
+        <div class="d-flex justify-content-between gap-2 align-items-start">
+          <div><span class="stage-number">{{ stage.sequence }}</span><h2 class="h6 mt-2 mb-1">{{ stage.name }}</h2>{% if stage|is_selected_focus_stage %}<span class="badge state-ready">Ausgewählte Fokusphase</span>{% endif %}</div>
+          {% if can_edit %}<a href="{% url 'architecture:stage_update' stage.pk %}" class="small">Bearbeiten</a>{% endif %}
+        </div>
+        <p class="small text-muted">{{ stage.description|default:"Aktivität noch nicht beschrieben" }}</p>
+        <details class="architecture-disclosure artifact-disclosure" data-testid="stage-details">
+          <summary>Phasendetails: Rollen, Systeme, Daten und Kennzahlen</summary>
+          <dl class="stage-facts">
+            <dt>Rollen</dt><dd>{{ stage.actors|default:"–" }}</dd>
+            <dt>Systeme</dt><dd>{{ stage.systems|default:"–" }}</dd>
+            <dt>Daten/Dokumente</dt><dd>{{ stage.documents|default:"–" }}</dd>
+            <dt>Engpässe</dt><dd>{{ stage.pain_points|default:"–" }}</dd>
+            <dt>Baseline</dt><dd>{{ stage.baseline_metrics|default:"–" }}</dd>
+          </dl>
+        </details>
+        <div class="stage-use-cases">
+          <div class="section-title mb-1">Prozessanalysen</div>
+          {% for analysis in stage.process_analyses.all %}
+          <a href="{{ analysis.get_absolute_url }}">{{ analysis.name }} · {{ analysis.solution_options.all|length }} Optionen</a>
+          {% empty %}<span class="small text-muted">Noch keine Detailanalyse</span>{% endfor %}
+        </div>
+        {% if stage.use_case_origins.all %}
+        <div class="stage-use-cases">
+          <div class="section-title mb-1">Abgeleitete Use Cases</div>
+          {% for origin in stage.use_case_origins.all %}<a href="{{ origin.use_case.get_absolute_url }}">{{ origin.use_case.short_id }} · {{ origin.use_case.title }}</a>{% endfor %}
+        </div>
+        {% endif %}
+        {% if can_edit and value_stream.status == 'active' and value_stream.focus.is_selected %}
+          {% if stage|is_selected_focus_stage %}
+          <a class="btn btn-sm btn-outline-secondary w-100 mt-3" href="{% url 'architecture:process_analysis_create' stage.pk %}" data-testid="focus-stage-action">Prozess im Detail analysieren</a>
+          {% elif value_stream.stage_focus_decision %}
+          <div class="small text-muted mt-3" data-testid="focus-stage-status">Nicht als Fokusphase ausgewählt</div>
+          {% else %}
+          <a class="btn btn-sm btn-outline-secondary w-100 mt-3" href="{% url 'architecture:stage_focus_select' value_stream.pk %}">Prozess im Detail analysieren: zuerst Fokus auswählen</a>
+          {% endif %}
+        {% elif can_edit and value_stream.status == 'draft' %}
+        <div class="small text-muted mt-3" data-testid="focus-stage-status">Erst Phasenerfassung abschließen</div>
+        {% elif can_edit %}
+        <div class="small text-muted mt-3" data-testid="focus-stage-status">Erst Fokusentscheidung abschließen</div>
+        {% endif %}
+        {% if can_create_use_case and value_stream.status == 'active' and value_stream.focus.is_selected and stage|is_selected_focus_stage %}
+        <a class="btn btn-sm btn-outline-secondary w-100 mt-2" href="{% url 'architecture:stage_start_use_case' stage.pk %}">Use Case direkt aus Phase ableiten</a>
+        <div class="small text-muted mt-2">Abgekürzter Pfad ohne Prozessanalyse und Lösungsvergleich; die Phasenauswahl bleibt als Herkunft erhalten.</div>
+        {% endif %}
+      </section>
+      {% empty %}
+      <div class="text-muted">Noch keine Phasen erfasst. Beginnen Sie mit 5–10 groben End-to-End-Phasen statt mit Detailprozessen.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

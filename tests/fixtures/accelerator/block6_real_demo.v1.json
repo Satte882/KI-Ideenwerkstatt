@@ -1,0 +1,46 @@
+{
+  "gates": {
+    "process_validation_count": 0,
+    "solution_option_count": 0,
+    "solution_selection_decision_count": 0,
+    "use_case_decision_status": "clarification",
+    "use_case_status": "idea",
+    "value_stream_status": "draft"
+  },
+  "legacy_blueprint_importer_used": false,
+  "marker": "[Real-DEMO]",
+  "metric_merge": {
+    "confirmed_paths": [
+      "use_case.metric.baseline",
+      "use_case.metric.measurement_method"
+    ],
+    "final_baseline": "11",
+    "final_measurement_method": "Zeitmessung über 20 Angebotsvergleiche",
+    "final_target": "8.25",
+    "rejected_paths": [
+      "use_case.metric.target"
+    ]
+  },
+  "path": "structured_adoption",
+  "rollback": {
+    "batch_status": "failed",
+    "error_code": "unexpected_commit_failure",
+    "error_step": "orchestration",
+    "process_count": 0,
+    "stage_count": 0
+  },
+  "schema_version": "1",
+  "value_stream_graph": {
+    "cascade_invalidated": true,
+    "process_count": 1,
+    "process_reconfirmed": true,
+    "process_stage": "Angebote vergleichen",
+    "process_status": "draft",
+    "stage_count": 3,
+    "stage_names": [
+      "Bedarf klären",
+      "Angebote vergleichen",
+      "Bestellung auslösen"
+    ]
+  }
+}

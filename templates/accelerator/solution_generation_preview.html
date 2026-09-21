@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}KI-Lösungsentwürfe prüfen – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-solution-preview{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header" id="solution-generation-result" tabindex="-1">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.name }}</div>
+    <h1 class="page-title">KI-Lösungsentwürfe prüfen</h1>
+    <p class="page-subtitle">Drei lösungsoffene Entwürfe auf demselben Quellstand. Quellen, Annahmen, Evidenzlücken und Unsicherheit bleiben direkt sichtbar.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'architecture:solution_option_compare' process_analysis.pk %}">Zum Lösungsvergleich</a>
+</div>
+
+<div class="alert alert-info">
+  <strong>KI-Generierung erfolgreich – Entwürfe noch nicht fachlich bewertet.</strong>
+  Es wurden weder Machbarkeit noch Integrationsaufwand bewertet und keine bevorzugte Option ausgewählt.
+</div>
+
+{% if state.adopted %}
+  <div class="alert alert-success"><strong>Bereits übernommen.</strong> Die ausgewählten Entwürfe wurden als reguläre Lösungsoptionen angelegt. Eine erneute Übernahme aus dieser Vorschau ist gesperrt.</div>
+{% elif state.stale %}
+  <div class="alert alert-warning"><strong>Veralteter Quellstand.</strong> Die Prozessdaten haben sich seit der Generierung geändert. Bearbeitung ist gesperrt; auch die Übernahme ist nicht mehr möglich. Bitte neu generieren.</div>
+{% elif state.expired %}
+  <div class="alert alert-warning"><strong>Vorschau abgelaufen.</strong> Bearbeitung ist gesperrt; auch die Übernahme ist nicht mehr möglich. Bitte neu generieren.</div>
+{% elif not state.current_ready %}
+  <div class="alert alert-warning"><strong>Prozessanalyse nicht mehr vollständig.</strong> Bearbeitung ist gesperrt; auch die Übernahme ist nicht mehr möglich. Bitte die Prozessanalyse vervollständigen und neu generieren.</div>
+{% endif %}
+
+<div class="app-card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div>
+      <strong>Gemeinsame Ausgangslage</strong>
+      <div class="small text-muted mt-1">Einmal eingefrorene Quellenbasis für alle drei Entwürfe.</div>
+    </div>
+    <div class="small text-muted text-end">
+      <div>Generiert: {{ run.created_at|date:"d.m.Y H:i" }}</div>
+      <div>Quellstand bei Generierung: {{ frozen_validation_label }}</div>
+      {% if state.stale %}<div>Aktueller Quellstand: {{ current_validation_label }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for fact in source_facts %}
+        <div class="col-12 col-md-6">
+          <div class="border border-secondary-subtle rounded p-3 h-100">
+            <div class="small text-muted">{{ fact.label }}</div>
+            <div class="text-preline mt-1">{{ fact.value }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<section class="app-card mb-4" id="solution-generation-quality" aria-labelledby="solution-generation-quality-title">
+  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div>
+      <strong id="solution-generation-quality-title">KI-Qualitätsprüfung</strong>
+      <div class="small text-muted mt-1">Qualitätsprüfung – keine Bewertung oder Lösungsempfehlung.</div>
+    </div>
+    <span class="badge badge-soft">
+      {% if quality_state.status == "initial_pending" %}Initial Critic ausstehend
+      {% elif quality_state.status == "repair_available" %}Einmaliger Repair verfügbar
+      {% elif quality_state.status == "repair_running" %}Repair läuft
+      {% elif quality_state.status == "final_pending" %}Final Critic ausstehend
+      {% else %}Human Review{% endif %}
+    </span>
+  </div>
+  <div class="card-body">
+    {% if quality_state.status == "initial_pending" %}
+      <div class="alert alert-info mb-3">
+        Die automatische Qualitätsprüfung ist noch nicht abgeschlossen. Die valide Preview bleibt für die menschliche Prüfung nutzbar.
+      </div>
+    {% elif quality_state.status == "repair_running" %}
+      <div class="alert alert-info mb-3">
+        Der einmalige Repair wurde reserviert und wird verarbeitet. Ein zweiter Repair ist nicht möglich.
+      </div>
+    {% elif quality_state.status == "final_pending" %}
+      <div class="alert alert-info mb-3">
+        Der Repair wurde angewendet. Die finale Qualitätsprüfung läuft automatisch; danach endet der maschinelle Pfad in Human Review.
+      </div>
+    {% elif quality_state.status == "repair_stale" %}
+      <div class="alert alert-warning mb-3">
+        <strong>Vorschau wurde seit der Prüfung bearbeitet, Reparatur nicht mehr möglich.</strong>
+        Die Findings bleiben als Prüfhinweis sichtbar; bitte fachlich prüfen.
+      </div>
+    {% elif quality_state.human_review %}
+      <div class="alert alert-info mb-3">
+        <strong>Human Review.</strong> Der maschinelle Quality-Control-Pfad ist beendet oder nicht weiter ausführbar. Bestehende Bearbeitungs- und Übernahmeaktionen bleiben unverändert verfügbar.
+        {% if quality_state.repair_consumed %}<div class="small mt-1">Der einmalige Repair-Versuch wurde bereits verbraucht.</div>{% endif %}
+      </div>
+    {% endif %}
+
+    {% if quality_findings %}
+      {% regroup quality_findings by option_label as option_groups %}
+      <div class="d-flex flex-column gap-3">
+        {% for option_group in option_groups %}
+          <section class="border border-secondary-subtle rounded p-3">
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+              <strong>{{ option_group.grouper }}</strong>
+              <span class="small text-muted">{{ option_group.list|length }} Finding{{ option_group.list|length|pluralize:"s" }}</span>
+            </div>
+            {% regroup option_group.list by criterion_label as criterion_groups %}
+            {% for criterion_group in criterion_groups %}
+              <div class="{% if not forloop.last %}pb-3 mb-3 border-bottom border-secondary-subtle{% endif %}">
+                <div class="small text-muted mb-2">{{ criterion_group.grouper }}</div>
+                <div class="d-flex flex-column gap-3">
+                  {% for finding in criterion_group.list %}
+                    <div>
+                      <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        {% if finding.field_label %}<span class="badge badge-soft">{{ finding.field_label }}</span>{% endif %}
+                        {% if finding.repairable %}
+                          <span class="badge badge-soft">Maschinell reparierbar</span>
+                        {% else %}
+                          <span class="badge badge-soft">Manuell prüfen</span>
+                        {% endif %}
+                      </div>
+                      <div class="text-preline">{{ finding.finding }}</div>
+                      <div class="small mt-2">
+                        <span class="text-muted me-1">Sources:</span>
+                        {% for source in finding.sources %}
+                          <span class="badge badge-soft me-1 mb-1">{{ source.label }}</span>
+                        {% empty %}
+                          <span class="text-muted">Keine referenzierte Source</span>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </section>
+        {% endfor %}
+      </div>
+    {% elif quality_state.human_review %}
+      <div class="small text-muted">Keine aktuellen Critic-Findings vorhanden. Die fachliche Prüfung bleibt erforderlich.</div>
+    {% endif %}
+
+    {% if repair_action_available %}
+      <div class="d-flex justify-content-end mt-3">
+        <form method="post" action="{% url 'accelerator:solution_generation_repair' run.pk %}">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit" data-testid="repair-solution-findings">Reparierbare Findings einmalig korrigieren</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<form method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="row g-4 align-items-stretch">
+    {% for option in preview_options %}
+      <div class="col-12 col-xl-4">
+        <section class="app-card h-100" data-generated-option data-lane="{{ option.lane }}">
+          <div class="card-header">
+            <span class="badge badge-soft">{{ option.label }}</span>
+            <div class="small text-muted mt-2">KI-Entwurf – noch nicht fachlich bewertet</div>
+          </div>
+          <div class="card-body">
+            {% for field in option.fields %}
+              <section class="pb-3 mb-3 border-bottom border-secondary-subtle">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                  <strong>{{ field.label }}</strong>
+                  {% if field.edited %}<span class="badge badge-soft">Manuell bearbeitet</span>{% endif %}
+                </div>
+                {% if editable %}
+                  {{ field.form_field }}
+                  {% if field.form_field.errors %}<div class="text-danger small mt-1">{{ field.form_field.errors }}</div>{% endif %}
+                {% else %}
+                  <div class="text-preline">{{ field.text }}</div>
+                {% endif %}
+
+                <div class="small mt-3">
+                  <div class="text-muted mb-1">Quellen</div>
+                  {% for source in field.sources %}
+                    <span class="badge badge-soft me-1 mb-1">{{ source.label }}</span>
+                  {% empty %}
+                    <span class="text-muted">Keine direkte Quelle</span>
+                  {% endfor %}
+                </div>
+
+                {% if field.assumptions %}
+                  <div class="small mt-2">
+                    <div class="text-muted">Annahmen</div>
+                    <ul class="mb-0 ps-3">{% for item in field.assumptions %}<li>{{ item }}</li>{% endfor %}</ul>
+                  </div>
+                {% endif %}
+
+                {% if field.open_evidence %}
+                  <div class="small mt-2">
+                    <div class="text-muted">Offene Evidenz</div>
+                    <ul class="mb-0 ps-3">{% for item in field.open_evidence %}<li>{{ item }}</li>{% endfor %}</ul>
+                  </div>
+                {% endif %}
+
+                <div class="small mt-2">
+                  <div class="text-muted">Unsicherheit</div>
+                  <div>{{ field.uncertainty_label }} · {{ field.uncertainty_reason }}</div>
+                </div>
+              </section>
+            {% endfor %}
+          </div>
+          {% if editable %}
+            <div class="card-body border-top border-secondary-subtle">
+              <div class="form-check mb-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="selected_lanes"
+                  value="{{ option.lane }}"
+                  id="solution-adoption-{{ option.lane }}"
+                  form="solution-generation-adoption-form"
+                  autocomplete="off"
+                  checked
+                >
+                <label class="form-check-label" for="solution-adoption-{{ option.lane }}">
+                  Diesen KI-Vorschlag übernehmen
+                </label>
+              </div>
+              <div class="small text-muted mb-2" data-generated-option-status>Für die Übernahme ausgewählt</div>
+              <button class="btn btn-sm btn-outline-secondary w-100" type="button" data-discard-generated-option aria-pressed="false">Vorschlag verwerfen</button>
+            </div>
+          {% endif %}
+        </section>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if editable %}
+    <div class="d-flex justify-content-end mt-4">
+      <button class="btn btn-primary" type="submit">Bearbeitungen speichern</button>
+    </div>
+  {% endif %}
+</form>
+
+{% if editable %}
+  <div class="app-card mt-4" id="solution-generation-adoption">
+    <div class="card-body d-flex justify-content-between align-items-center gap-3 flex-wrap">
+      <div>
+        <strong>Ausgewählte KI-Lösungsoptionen hinzufügen</strong>
+        <div class="small text-muted mt-1">Jeder Vorschlag wird einzeln ausgewählt. Alle drei sind nur als Ausgangszustand vorausgewählt; übernommen werden ausschließlich die bewusst ausgewählten 1–3 Optionen, gemeinsam oder gar nicht.</div>
+      </div>
+      <form method="post" action="{% url 'accelerator:solution_generation_adopt' run.pk %}" id="solution-generation-adoption-form">
+        {% csrf_token %}
+        <input type="hidden" name="selection_mode" value="explicit">
+        <button class="btn btn-primary" type="submit" data-testid="adopt-selected-solutions">3 ausgewählte KI-Lösungsoptionen hinzufügen</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+  {{ block.super }}
+  <script src="{% static 'js/solution-generation-selection.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Ist-Prozess validieren – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-process-validation-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow mb-2">{{ process_analysis.stage.value_stream.name }} · {{ process_analysis.stage.name }}</div><h1 class="page-title">Ist-Prozess validieren</h1><p class="page-subtitle">Geprüft wird ausschließlich die aktuelle Prozessversion v{{ process_analysis.version }}. Notiz und Nachweis sind optional.</p></div>
+  <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Abbrechen</a>
+</div>
+<form method="post" class="app-card cr-work-form">
+  {% csrf_token %}
+  <div class="card-header"><strong>{{ process_analysis.name }} · Version {{ process_analysis.version }}</strong><div class="small text-muted mt-1">Mit der Bestätigung werden Person, wahrgenommene Rolle und Zeitpunkt automatisch protokolliert.</div></div>
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}<div class="mb-4"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit">Aktuelle Version validieren</button>
+  </div>
+</form>
+{% endblock %}

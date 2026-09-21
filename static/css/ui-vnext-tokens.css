@@ -1,0 +1,155 @@
+/*
+ * KI-Radar UI vNext
+ * Semantische Design-Tokens. Direkte Farbwerte gehören ausschließlich hierher.
+ */
+
+.ui-vnext {
+  --surface-0: #080a0d;
+  --surface-1: #0d1014;
+  --surface-2: #12171c;
+  --surface-3: #182027;
+  --surface-input: #090d11;
+  --surface-overlay: #11171c;
+  --line-soft: rgba(205, 222, 232, .08);
+  --line: rgba(205, 222, 232, .15);
+  --line-strong: rgba(188, 225, 244, .28);
+  --ink: #f2f6f8;
+  --ink-soft: #cbd5da;
+  --muted: #89949d;
+  --muted-strong: #a8b4bb;
+  --ice: #9fddff;
+  --ice-strong: #c7ebff;
+  --ice-deep: #6fc4ef;
+  --silver: #dce7ec;
+  --on-accent: #071016;
+  --success: #73d8ae;
+  --warning: #e7bd73;
+  --danger: #ef8b96;
+  --radius-sm: 7px;
+  --radius-md: 11px;
+  --radius-lg: 16px;
+  --touch-target-min: 42px;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, .035);
+  --shadow-2: 0 16px 40px rgba(0, 0, 0, .25);
+  --shadow-3: 0 28px 80px rgba(0, 0, 0, .42);
+
+  /* Rückwärtskompatibilität für bestehende Komponenten. */
+  --app-bg: var(--surface-0);
+  --panel: var(--surface-1);
+  --panel-soft: var(--surface-2);
+  --panel-hover: var(--surface-3);
+  --border: var(--line);
+  --text: var(--ink);
+  --accent: var(--ice);
+  --accent-2: var(--ice-strong);
+
+  --bs-body-bg: var(--surface-0);
+  --bs-body-color: var(--ink);
+  --bs-secondary-color: var(--muted);
+  --bs-border-color: var(--line);
+  --bs-link-color: var(--ice);
+  --bs-link-hover-color: var(--ice-strong);
+  --bs-focus-ring-color: color-mix(in srgb, var(--ice) 28%, transparent);
+
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 76% -12%, color-mix(in srgb, var(--ice) 13%, transparent), transparent 31rem),
+    radial-gradient(circle at 38% 108%, color-mix(in srgb, var(--ice-deep) 8%, transparent), transparent 38rem),
+    var(--surface-0);
+}
+
+.ui-vnext ::selection {
+  color: var(--on-accent);
+  background: var(--ice-strong);
+}
+
+.ui-vnext {
+  scrollbar-color: color-mix(in srgb, var(--silver) 24%, transparent) var(--surface-1);
+  scrollbar-width: thin;
+}
+
+.ui-vnext a {
+  color: var(--ice);
+}
+
+.ui-vnext a:hover {
+  color: var(--ice-strong);
+}
+
+.ui-vnext details {
+  min-inline-size: 0;
+}
+
+.ui-vnext details > summary {
+  min-block-size: var(--touch-target-min);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.ui-vnext :is(a, button, input, select, textarea, summary, [tabindex="0"]):focus-visible {
+  outline: 2px solid var(--ice-strong);
+  outline-offset: 3px;
+}
+
+/* Sichtbarer Rückweg aus der App zur separat gestalteten RSD-Präsentation. */
+.ui-vnext .app-sidebar > a[aria-label="Zur Startseite"] {
+  width: 100%;
+  min-height: 68px;
+  margin: 0 0 17px;
+  padding: 8px 10px;
+  border-color: var(--line);
+  background: var(--surface-2);
+  font-size: 1rem;
+}
+
+.ui-vnext .app-sidebar > a[aria-label="Zur Startseite"] .nav-icon {
+  display: block;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 34px;
+  border-radius: 6px;
+  font-size: 0;
+  background: var(--ink) url("../img/rsd-logo.svg") center / contain no-repeat;
+}
+
+.ui-vnext .app-sidebar > a[aria-label="Zur Startseite"]::after {
+  content: "RSD Demo";
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 720;
+  letter-spacing: -.01em;
+}
+
+.ui-vnext .app-sidebar > a[aria-label="Zur Startseite"]:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+}
+
+@media (max-width: 1100px) {
+  .ui-vnext .app-sidebar > a[aria-label="Zur Startseite"] {
+    justify-content: center;
+    min-height: 58px;
+    padding-inline: 4px;
+  }
+
+  .ui-vnext .app-sidebar > a[aria-label="Zur Startseite"] .nav-icon {
+    flex-basis: 52px;
+    width: 52px;
+    height: 28px;
+  }
+
+  .ui-vnext .app-sidebar > a[aria-label="Zur Startseite"]::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-vnext *,
+  .ui-vnext *::before,
+  .ui-vnext *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

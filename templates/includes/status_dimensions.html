@@ -1,0 +1,57 @@
+{% if status_dimensions %}
+<div class="app-card mb-4" id="status-dimensions">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <strong>Aktueller Arbeitszustand</strong>
+      <div class="small text-muted mt-1">Arbeitsphase, Assessment, Freigabe, Messung und Lifecycle sind getrennte Dimensionen.</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      {% for dimension in status_dimensions.items %}
+      <div class="col-md-6 col-xl">
+        <div class="section-title">{{ dimension.title }}</div>
+        <div class="mb-2"><span class="badge state-{{ dimension.state }}">{{ dimension.label }}</span></div>
+        <div class="small text-muted">{{ dimension.explanation }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if gate_blocker_details %}
+    <hr>
+    <section aria-labelledby="next-gate-title" data-testid="next-gate-requirements">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div>
+          <div class="section-title">Nächstes Gate</div>
+          <strong id="next-gate-title">Produktiv setzen</strong>
+          <div class="small text-muted mt-1">Der Pilot läuft. Diese Voraussetzungen können bis zur Ergebnisentscheidung vorbereitet werden.</div>
+        </div>
+        <span class="badge state-review">{{ gate_blocker_details|length }} offen</span>
+      </div>
+      <div class="blocker-actions">
+        {% for blocker in gate_blocker_details %}
+        <div class="blocker-action blocker-{{ blocker.category }}">
+          <div>
+            <span class="blocker-icon" aria-hidden="true">{% if blocker.category == 'time' %}◷{% else %}⚠{% endif %}</span>
+            <strong>{{ blocker.label }}</strong>
+            <div class="small text-muted">
+              {% if blocker.category == 'data' %}Angabe ergänzen
+              {% elif blocker.category == 'time' %}Zeitliche Voraussetzung; dokumentierte Ausnahme möglich
+              {% else %}Prozessschritt abschließen{% endif %}
+            </div>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ blocker.target_href }}">{{ blocker.action_label }}</a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <hr>
+    <div class="d-flex flex-wrap gap-2 align-items-start">
+      <strong>Nächste Lifecycle-Entscheidung:</strong>
+      <span>{{ status_dimensions.next_lifecycle_decision }}</span>
+    </div>
+  </div>
+</div>
+{% endif %}

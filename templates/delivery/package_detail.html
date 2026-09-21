@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Delivery {{ package.use_case.short_id }} – KI-Radar{% endblock %}
+{% block body_class %}page-delivery-package{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}?v=issue-417-local-work-status">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Delivery · Übergabereife" %}
+{% include "includes/local_work_status.html" %}
+
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ package.use_case.short_id }} · Delivery v{{ package.version }}</div>
+    <h1 class="cr-page-header__title">{{ package.use_case.title }}</h1>
+    <p class="cr-work-header__summary">{{ delivery_status.label }} · Readiness-Schema {{ package.readiness_schema_version }} · erzeugt aus {{ package.generated_from_decision.get_decision_status_display }}</p>
+  </div>
+  <div class="cr-work-header__actions">
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:package_list' %}">Zur Übersicht</a>
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:methodology_reference' %}">Vorgehensmodell</a>
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:methodology_download' %}">Vorgehensmodell herunterladen</a>
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:package_export_markdown' package.pk %}">Package exportieren</a>
+  </div>
+</header>
+
+<div class="cr-next-action" id="next-action">{% include "includes/next_action.html" %}</div>
+
+<div class="kpi-strip mb-4">
+  <div class="kpi-cell"><small>Status</small><strong>{{ delivery_status.label }}</strong></div>
+  <div class="kpi-cell"><small>Version</small><strong>{{ package.version }}</strong></div>
+  <div class="kpi-cell"><small>Technical Owner · Technik, Daten und KI</small><strong>{% if package.technical_owner %}{{ package.technical_owner.get_display_name }}{% else %}Nicht benannt{% endif %}</strong></div>
+</div>
+
+{% if owner_role_collapse %}
+<div class="alert alert-secondary mb-4">
+  <strong>Zusammengeführte Verantwortung:</strong> {{ package.use_case.business_owner.get_display_name }} ist Business Owner sowie Technical Owner. Die beiden Bestätigungen bleiben getrennte Aktionen. Bestätigt dieselbe Person beide Rollen, ist vor der Übergabe eine unabhängige Kontrolle erforderlich.
+</div>
+{% endif %}
+
+{% if technical_owner_source_change or role_source_decisions %}
+<div class="app-card mb-4" id="technical-owner-source-change">
+  <div class="card-header"><strong>Quellenentscheidung · Technical Owner</strong><div class="small text-muted mt-1">Rollenänderungen am Use Case werden nicht stillschweigend in eine bestehende Package-Version übernommen.</div></div>
+  <div class="card-body">
+    {% if technical_owner_source_change %}
+    <div class="alert alert-warning">
+      <strong>Offene Abweichung:</strong> Package-Wert „{{ technical_owner_source_change.working_value }}“, aktueller Use-Case-Wert „{{ technical_owner_source_change.current_source_value }}“.
+    </div>
+    {% if package.status == 'handed_over' %}
+    <div class="alert alert-secondary">Die übergebene Package-Version bleibt unveränderlich. Die spätere Quellenänderung wird nur angezeigt und nicht übernommen.</div>
+    {% elif can_transition %}
+    <form method="post" action="{% url 'delivery:package_resolve_technical_owner_source' package.pk %}" class="mb-4">
+      {% csrf_token %}
+      <label class="form-label" for="technical-owner-rationale">Begründung der Übernahmeentscheidung</label>
+      <textarea class="form-control mb-3" id="technical-owner-rationale" name="rationale" rows="3" required></textarea>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if package.use_case.technical_owner and package.use_case.technical_owner.is_active %}
+        <button class="btn btn-primary" name="action" value="adopt_source">Neuen Owner übernehmen</button>
+        {% else %}
+        <span class="small text-muted">Die Use-Case-Zuordnung kann nicht übernommen werden, solange dort kein aktiver Technical Owner gesetzt ist.</span>
+        {% endif %}
+        {% if package.technical_owner and package.technical_owner.is_active %}
+        <button class="btn btn-outline-secondary" name="action" value="keep_package">Package-Zuordnung beibehalten</button>
+        {% else %}
+        <span class="small text-muted">Die Package-Zuordnung kann nicht beibehalten werden, weil kein aktiver Technical Owner vorhanden ist.</span>
+        {% endif %}
+      </div>
+    </form>
+    {% else %}
+    <div class="alert alert-secondary">Die KI-Koordination muss diese Abweichung vor der Übergabe entscheiden.</div>
+    {% endif %}
+    {% endif %}
+
+    {% if role_source_decisions %}
+    <div class="section-title mb-2">Entscheidungsverlauf</div>
+    <div class="table-responsive"><table class="table table-sm mb-0">
+      <thead><tr><th>Zeitpunkt</th><th>Alt</th><th>Neue Quelle</th><th>Entscheidung</th><th>Begründung</th><th>Person</th></tr></thead>
+      <tbody>{% for decision in role_source_decisions %}<tr><td>{{ decision.decided_at|date:"d.m.Y H:i" }}</td><td>{{ decision.old_value_label|default:"Nicht benannt" }}</td><td>{{ decision.new_value_label|default:"Nicht benannt" }}</td><td>{{ decision.get_decision_display }}</td><td>{{ decision.rationale }}</td><td>{% if decision.decided_by %}{{ decision.decided_by.get_display_name }}{% else %}Gelöschte Person{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if package.readiness_schema_version == 1 %}
+<div class="alert alert-secondary mb-4"><strong>Legacy Handover:</strong> Diese unveränderliche Version wurde nach Readiness-Schema 1 übergeben und wird nicht rückwirkend neu bewertet.</div>
+{% else %}
+<div class="app-card mb-4">
+  <div class="card-header">
+    <strong>Delivery Readiness</strong>
+    <div class="small text-muted mt-1">Alle aktuell bekannten Findings werden gemeinsam neu bewertet. Der erste Blocker bleibt die einzige primäre Next Action.</div>
+  </div>
+  <div class="card-body">
+    {% if primary_readiness_finding %}
+    <section class="app-card decision-panel mb-4" data-testid="primary-readiness-action">
+      <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div class="flex-grow-1">
+          <div class="eyebrow mb-2">Nächster Schritt · Priorität {{ primary_readiness_finding.priority_class }}</div>
+          <h2 class="h5 mb-2">{{ primary_readiness_finding.title }}</h2>
+          <div class="readiness-explanation-grid mb-2">
+            <div><span>Betroffen</span><strong>{{ primary_readiness_finding.field_label|default:"Sektionsprüfung" }}</strong></div>
+            <div><span>Readiness-Regel</span><strong>{{ primary_readiness_finding.rule }}</strong></div>
+            <div><span>Konkrete Ursache</span><strong>{{ primary_readiness_finding.cause }}</strong></div>
+          </div>
+          <div class="small text-muted">Zuständig: {{ primary_readiness_finding.responsible_role }} · {{ primary_readiness_finding.responsible_person }}</div>
+        </div>
+        {% if primary_readiness_finding.url %}
+        <a class="btn btn-primary" href="{{ primary_readiness_finding.url }}">{{ primary_readiness_finding.action_label }} →</a>
+        {% else %}
+        <span class="badge badge-soft">Mit deiner Rolle nicht bearbeitbar</span>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if readiness_findings %}
+    <div class="section-title mb-2">Alle offenen Punkte nach Sektion</div>
+    <div class="readiness-section-groups mb-4" data-testid="all-readiness-findings">
+      {% for row in section_rows %}
+      {% if row.findings %}
+      <section class="readiness-finding-group" data-section-key="{{ row.key }}">
+        <div class="readiness-finding-group-header">
+          <div><strong>{{ forloop.counter }}. {{ row.label }}</strong><div class="small text-muted">{{ row.finding_count }} Finding{{ row.finding_count|pluralize:"s" }} · {{ row.blocker_count }} blockierend</div></div>
+          <span class="delivery-section-status delivery-section-status-{{ row.state }}">Delivery Readiness: {{ row.state_label }}</span>
+        </div>
+        <div class="blocker-actions">
+          {% for finding in row.findings %}
+          <div class="blocker-action {% if finding.severity == 'blocker' %}blocker-data{% else %}blocker-process{% endif %}" data-finding-code="{{ finding.code }}">
+            <div class="flex-grow-1">
+              <strong>{{ finding.title }}</strong>
+              <dl class="readiness-finding-details small mb-1 mt-2">
+                <dt>Betroffenes Feld</dt><dd>{{ finding.field_label|default:"Sektionsprüfung" }}</dd>
+                <dt>Readiness-Regel</dt><dd>{{ finding.rule }}</dd>
+                <dt>Konkrete Ursache</dt><dd>{{ finding.cause }}</dd>
+                <dt>Zuständig</dt><dd>{{ finding.responsible_role }} · {{ finding.responsible_person }}</dd>
+              </dl>
+              <details class="small text-muted"><summary>Technischer Code</summary>{{ finding.code }}</details>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+              <span class="status-badge">{{ finding.severity }}</span>
+              {% if finding.url %}<a class="btn btn-sm btn-outline-secondary" href="{{ finding.url }}">{{ finding.action_label }}</a>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-success">Keine offenen Readiness-Findings.</div>
+    {% endif %}
+
+    <div class="section-title mb-2">Sektionsfortschritt und Prüfung</div>
+    <div class="delivery-section-stack">
+      {% for row in section_rows %}
+      <details class="app-card delivery-section-card delivery-section-{{ row.state }}" id="section-{{ row.key }}"{% if row.is_primary %} open{% endif %}>
+        <summary class="card-header delivery-section-summary" aria-label="{{ row.label }} · Delivery Readiness: {{ row.state_label }}">
+          <div class="delivery-section-summary-main">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <strong>{{ forloop.counter }}. {{ row.label }}</strong>
+              <span class="delivery-section-status delivery-section-status-{{ row.state }}">Delivery Readiness: {{ row.state_label }}</span>
+              {% if row.is_primary %}<span class="badge badge-soft">Nächster Schritt</span>{% endif %}
+            </div>
+            <div class="small text-muted mt-1">{{ row.responsible_role }} · {{ row.responsible_person }}</div>
+          </div>
+          <div class="delivery-section-summary-meta">
+            <span>{{ row.open_field_count }} offene Felder</span>
+            <span>{{ row.finding_count }} Findings</span>
+            <span>{{ row.source_count }} Quellen</span>
+          </div>
+          <div class="delivery-confirmation-status" aria-label="Prüfstatus">
+            <span class="confirmation-state {% if not row.requires_business %}confirmation-na{% elif row.business_complete %}confirmation-complete{% else %}confirmation-open{% endif %}">Fachliche Prüfung: {% if not row.requires_business %}nicht erforderlich{% elif row.business_complete %}bestätigt{% else %}offen{% endif %}</span>
+            <span class="confirmation-state {% if not row.requires_technical %}confirmation-na{% elif row.technical_complete %}confirmation-complete{% else %}confirmation-open{% endif %}">Technische Prüfung: {% if not row.requires_technical %}nicht erforderlich{% elif row.technical_complete %}bestätigt{% else %}offen{% endif %}</span>
+          </div>
+        </summary>
+        <div class="card-body delivery-section-body">
+          {% if row.can_edit and package.status != 'handed_over' %}<a class="btn btn-outline-secondary mb-3" href="{{ row.edit_url }}">Sektion fokussiert bearbeiten</a>{% endif %}
+          {% if row.review %}
+          <div class="small mb-3">
+            <div>Sektionsprüfung: {{ row.review.get_review_status_display }}</div>
+            {% if row.requires_business %}<div>Fachlich: {% if row.review.business_confirmed_by %}{{ row.review.business_confirmed_by.get_display_name }}{% else %}offen{% endif %}{% if row.review.business_confirmation_role %} · {{ row.review.business_confirmation_role }}{% endif %}{% if row.review.business_confirmed_at %} · {{ row.review.business_confirmed_at|date:"d.m.Y H:i" }}{% endif %}</div>{% endif %}
+            {% if row.requires_technical %}<div>Technisch: {% if row.review.technical_confirmed_by %}{{ row.review.technical_confirmed_by.get_display_name }}{% else %}offen{% endif %}{% if row.review.technical_confirmation_role %} · {{ row.review.technical_confirmation_role }}{% endif %}{% if row.review.technical_confirmed_at %} · {{ row.review.technical_confirmed_at|date:"d.m.Y H:i" }}{% endif %}</div>{% endif %}
+          </div>
+          {% if row.review.admin_override_confirmed %}
+          <div class="alert alert-warning py-2 small mb-2">
+            <strong>Admin-Sonderbestätigung ohne Vier-Augen-Prinzip.</strong> {{ row.review.role_collapse_reason }}
+          </div>
+          {% endif %}
+          {% if row.review.review_note %}<div class="text-preline small mb-3">{{ row.review.review_note }}</div>{% endif %}
+          {% endif %}
+          {% if row.can_review and package.status != 'handed_over' %}
+          <form method="post" action="{% url 'delivery:package_section_review' package.pk row.key %}" class="section-review-form">
+            {% csrf_token %}
+            <label class="form-label" for="review-note-{{ row.key }}">Prüfhinweis oder Begründung <span class="text-muted">(bei Blockierung oder „Nicht relevant“ verpflichtend)</span></label>
+            <textarea class="form-control mb-2" id="review-note-{{ row.key }}" name="review_note" rows="2">{% if row.review %}{{ row.review.review_note }}{% endif %}</textarea>
+            {% if row.show_admin_override_reason and row.can_confirm_business or row.show_admin_override_reason and row.can_confirm_technical %}
+            <label class="form-label small" for="role-collapse-{{ row.key }}">Begründung der Admin-Sonderbestätigung</label>
+            <input class="form-control form-control-sm mb-2" id="role-collapse-{{ row.key }}" name="role_collapse_reason" value="{% if row.review %}{{ row.review.role_collapse_reason }}{% endif %}">
+            <div class="small text-muted mb-2">Nur verwenden, wenn du als Technischer Administrator zu Admin- oder Testzwecken beide Rollen selbst bestätigst.</div>
+            {% endif %}
+            <div class="d-flex gap-2 flex-wrap">
+              {% if row.can_confirm_business %}<button class="btn btn-sm btn-outline-secondary" name="action" value="confirm_business">Fachlich bestätigen</button>{% endif %}
+              {% if row.can_confirm_technical %}<button class="btn btn-sm btn-outline-secondary" name="action" value="confirm_technical">Technisch bestätigen</button>{% endif %}
+              <button class="btn btn-sm btn-outline-secondary" name="action" value="block">Blockieren</button>
+              <button class="btn btn-sm btn-outline-secondary" name="action" value="not_applicable" data-requires-review-note>Nicht relevant</button>
+            </div>
+          </form>
+          {% elif package.status != 'handed_over' %}
+          <div class="small text-muted">Mit deiner aktuellen Rolle kann diese Sektion nicht bestätigt werden.</div>
+          {% endif %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if delivery_source_rows %}
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Quellkontext der Arbeitsfassung</strong><div class="small text-muted mt-1">Das Delivery Package enthält eine eigenständige Arbeitsfassung. Quellen werden getrennt mit dem bei der Erzeugung übernommenen Stand dargestellt.</div></div>
+  <div class="card-body">
+    <div class="list-group list-group-flush">
+      {% for row in delivery_source_rows %}
+      <div class="list-group-item bg-transparent px-0">
+        <div class="d-flex justify-content-between gap-3"><strong>{{ row.package_label }}</strong><span class="badge {% if row.changed %}state-review{% else %}state-ready{% endif %}">{% if row.changed %}Quelle geändert{% else %}Quellenstand unverändert{% endif %}</span></div>
+        <div class="small text-muted mt-1">{{ row.source_label }} · {{ row.source_field }}</div>
+        <div class="text-preline mt-2">{{ row.snapshot|default:"–" }}</div>
+        {% if row.changed %}<div class="alert alert-warning mt-2 mb-0"><strong>Aktueller Quellenwert</strong><div class="text-preline mt-1">{{ row.current|default:"–" }}</div></div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="delivery-artifact-grid mb-4">
+  <section class="app-card card-body"><div class="section-title">Problem und Kontext</div><div class="text-preline">{{ package.problem_context }}</div></section>
+  <section class="app-card card-body"><div class="section-title">Ziel und Ergebnis</div><div class="text-preline">{{ package.target_outcome }}</div></section>
+  <section class="app-card card-body"><div class="section-title">Im Scope</div><div class="text-preline">{{ package.in_scope }}</div></section>
+  <section class="app-card card-body"><div class="section-title">Nicht im Scope</div><div class="text-preline">{{ package.out_of_scope }}</div></section>
+</div>
+
+<div class="app-card mb-4" data-testid="moscow-scope-prioritization">
+  <div class="card-header">
+    <strong>Priorisierung für diese Delivery-Version · MoSCoW</strong>
+    <div class="small text-muted mt-1">Must entspricht dem verbindlichen MVP-Mindestumfang. Should und Could sind nachgelagert. Won't this time ist bewusst für diese Delivery-Version zurückgestellt und nicht identisch mit „Nicht im Scope“.</div>
+  </div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Must / MVP-Scope</div><div class="text-preline">{{ package.mvp_scope }}</div></section>
+    <section><div class="section-title">Should</div><div class="text-preline">{{ package.should_scope|default:"–" }}</div></section>
+    <section><div class="section-title">Could</div><div class="text-preline">{{ package.could_scope|default:"–" }}</div></section>
+    <section><div class="section-title">Won't this time</div><div class="text-preline">{{ package.wont_this_time|default:"–" }}</div></section>
+  </div>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Zielbild und Architekturkontext</strong><div class="small text-muted mt-1">Konsolidierte Artefakte aus Discovery, Prozessanalyse, Lösungsoption, Use Case und Freigabe.</div></div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Nutzer und Szenarien</div><div class="text-preline">{{ package.users_and_scenarios }}</div></section>
+    <section><div class="section-title">Lösungsrahmen</div><div class="text-preline">{{ package.solution_outline }}</div></section>
+    <section><div class="section-title">Systemkontext</div><div class="text-preline">{{ package.system_context }}</div></section>
+    <section><div class="section-title">Datenkontext</div><div class="text-preline">{{ package.data_context }}</div></section>
+    <section><div class="section-title">Integrationen</div><div class="text-preline">{{ package.integrations|default:"–" }}</div></section>
+    <section><div class="section-title">Architekturentscheidungen</div><div class="text-preline">{{ package.architecture_decisions|default:"–" }}</div></section>
+  </div>
+</div>
+
+<div class="app-card decision-panel mb-4">
+  <div class="card-header"><strong>Systemlandschaft und Architekturartefakte</strong><div class="small text-muted mt-1">Umsetzungsrelevante Ist-/Ziel-Sicht, Datenflüsse, Zugriff, Betrieb und technische Verantwortlichkeiten.</div></div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Ist-/Ziel-Systemlandschaft</div><div class="text-preline">{{ package.architecture_artifacts.system_landscape|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Systemverantwortung und Zielkomponenten</div><div class="text-preline">{{ package.architecture_artifacts.system_responsibilities|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Daten- und Informationsflüsse</div><div class="text-preline">{{ package.architecture_artifacts.data_flows|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Datenqualität, Zugriff und Schutzbedarf</div><div class="text-preline">{{ package.architecture_artifacts.data_quality_and_access|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Integrationsverträge und Verantwortlichkeiten</div><div class="text-preline">{{ package.architecture_artifacts.integration_contracts|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Integrationsbetrieb und Fehlerbehandlung</div><div class="text-preline">{{ package.architecture_artifacts.integration_operations|default:"Noch nicht dokumentiert" }}</div></section>
+    <section><div class="section-title">Architekturdiagramme und Nachweise</div>{% if package.architecture_artifacts.artifacts_url %}<a href="{{ package.architecture_artifacts.artifacts_url }}" target="_blank" rel="noopener noreferrer">Externe Architekturartefakte öffnen</a>{% else %}<span class="text-muted">Zielarchitektur/Systemkontext und Daten-/Informationsfluss sind oben im Package dokumentiert; eine externe Referenz ist optional.</span>{% endif %}</section>
+  </div>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Umsetzungsanforderungen</strong></div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Funktionale Anforderungen</div><div class="text-preline">{{ package.functional_requirements }}</div></section>
+    <section><div class="section-title">Nichtfunktionale Anforderungen</div><div class="text-preline">{{ package.non_functional_requirements }}</div></section>
+    <section><div class="section-title">Security, Datenschutz und Recht</div><div class="text-preline">{{ package.security_privacy_requirements }}</div></section>
+    <section><div class="section-title">Menschliche Aufsicht</div><div class="text-preline">{{ package.human_oversight }}</div></section>
+    <section><div class="section-title">Logging und Audit</div><div class="text-preline">{{ package.logging_and_audit }}</div></section>
+    <section><div class="section-title">Betrieb und Support</div><div class="text-preline">{{ package.operations_and_support }}</div></section>
+  </div>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Abnahme und Delivery-Start · ADM Phase F</strong><div class="small text-muted mt-1">Übergangsplanung und Delivery-Start, keine Sprint- oder Ressourcenverwaltung.</div></div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Akzeptanzkriterien</div><div class="text-preline">{{ package.acceptance_criteria }}</div></section>
+    <section><div class="section-title">Testfälle</div><div class="text-preline">{{ package.test_scenarios }}</div></section>
+    <section><div class="section-title">Übernommener Messstand bei Erstellung von Delivery v{{ package.version }}</div><div class="text-preline">{{ package.measurement_plan }}</div></section>
+    <section><div class="section-title">Initiales Backlog</div><div class="text-preline">{{ package.initial_backlog }}</div></section>
+    <section><div class="section-title">Delivery-System</div>{% if package.external_delivery_url %}<a href="{{ package.external_delivery_url }}">Externes Delivery-Artefakt öffnen</a>{% else %}<span class="text-muted">Noch nicht verknüpft</span>{% endif %}</section>
+  </div>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Risiken, Abhängigkeiten und Übergabe</strong></div>
+  <div class="card-body architecture-artifact-grid">
+    <section><div class="section-title">Abhängigkeiten</div><div class="text-preline">{{ package.dependencies|default:"–" }}</div></section>
+    <section><div class="section-title">Risiken</div><div class="text-preline">{{ package.risks|default:"–" }}</div></section>
+    <section><div class="section-title">Annahmen</div><div class="text-preline">{{ package.assumptions|default:"–" }}</div></section>
+    <section><div class="section-title">Übergabehinweise</div><div class="text-preline">{{ package.handover_notes|default:"–" }}</div></section>
+  </div>
+</div>
+
+{% if can_transition and package.readiness_schema_version == 2 %}
+<div class="app-card card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <strong>Verbindlicher Handover</strong>
+    <div class="small text-muted">Readiness wird unmittelbar vor Statuswechsel und Übergabe erneut serverseitig geprüft.</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if package.status == 'draft' and not primary_readiness_finding %}<form method="post" action="{% url 'delivery:package_mark_ready' package.pk %}">{% csrf_token %}<button class="btn btn-primary">Als bereit markieren</button></form>{% endif %}
+    {% if package.status == 'ready' and delivery_status.code == 'ready' %}<form method="post" action="{% url 'delivery:package_handover' package.pk %}">{% csrf_token %}<button class="btn btn-primary">An Delivery übergeben</button></form>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('[data-requires-review-note]').forEach((button) => {
+  button.addEventListener('click', (event) => {
+    const form = event.currentTarget.closest('form');
+    const note = form.querySelector('textarea[name="review_note"]');
+    note.required = true;
+    if (!note.value.trim()) {
+      event.preventDefault();
+      note.setCustomValidity('Bitte begründen Sie, warum diese Sektion nicht relevant ist.');
+      note.reportValidity();
+      note.focus();
+    } else {
+      note.setCustomValidity('');
+    }
+  });
+});
+</script>
+{% endblock %}

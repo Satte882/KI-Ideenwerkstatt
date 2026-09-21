@@ -1,0 +1,608 @@
+{
+  "schema_version": "architecture-real-demo-fixture-schema-v1",
+  "fixture_version": "architecture-real-demo-v1",
+  "data_classification": "synthetic_anonymized",
+  "contract_versions": {
+    "architecture_advisor_ruleset": "architecture-advisor-v1",
+    "generation_schema": "1.0",
+    "generation_prompt": "1.2",
+    "quality_contract": "1.1",
+    "critic_schema": "1.0",
+    "critic_prompt": "1.2",
+    "repair_schema": "1.0",
+    "repair_prompt": "1.0"
+  },
+  "advisor_cases": [
+    {
+      "case_id": "advisor_canonical_no_llm",
+      "category": "canonical",
+      "name": "Stabile regelbasierte Prüfung",
+      "narrative": "Pflichtfelder und Schwellenwerte sind stabil, vollständig explizit und ohne semantische Interpretation prüfbar.",
+      "complexity_context": "low",
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "no_llm_required",
+        "reason_codes": [
+          "simpler_solution_sufficient"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": false
+      }
+    },
+    {
+      "case_id": "advisor_canonical_controlled_llm",
+      "category": "canonical",
+      "name": "Begrenzte semantische Klassifikation",
+      "narrative": "Freitext muss semantisch eingeordnet werden; ein einzelner klar begrenzter LLM-Schritt genügt.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "controlled_llm",
+        "reason_codes": [
+          "controlled_llm_sufficient"
+        ],
+        "why_no_agent_required": true,
+        "open_points_expected": false
+      }
+    },
+    {
+      "case_id": "advisor_canonical_llm_workflow",
+      "category": "canonical",
+      "name": "Fester mehrstufiger KI-Ablauf",
+      "narrative": "Mehrere semantische KI-Schritte sind nötig, ihre Reihenfolge und Übergänge stehen vollständig im Voraus fest.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "llm_workflow",
+        "reason_codes": [
+          "fixed_llm_workflow_sufficient"
+        ],
+        "why_no_agent_required": true,
+        "open_points_expected": false
+      }
+    },
+    {
+      "case_id": "advisor_canonical_bounded_agent",
+      "category": "canonical",
+      "name": "Dynamische freigegebene Toolwahl",
+      "narrative": "Der nächste zulässige Schritt oder das benötigte Tool hängt tatsächlich vom jeweils erreichten Zwischenzustand ab.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "expected": {
+        "mode": "bounded_agent",
+        "reason_codes": [
+          "dynamic_orchestration_required"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": false
+      }
+    },
+    {
+      "case_id": "advisor_canonical_assessment_open",
+      "category": "canonical",
+      "name": "Unklare Zahl benötigter KI-Schritte",
+      "narrative": "Semantische Verarbeitung ist erforderlich, aber es ist noch offen, ob ein einzelner oder mehrere feste KI-Schritte benötigt werden.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "insufficient_information"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_simpler_and_semantic",
+      "category": "adversarial",
+      "name": "Deterministisch ausreichend und LLM zugleich erforderlich",
+      "narrative": "Die Anforderungen behaupten gleichzeitig, dass eine einfachere deterministische Lösung ausreicht und semantisches LLM-Reasoning zwingend erforderlich ist.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "contradictory_answers"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_fixed_steps_and_dynamic",
+      "category": "adversarial",
+      "name": "Fester Mehrschritt und dynamische Orchestrierung zugleich",
+      "narrative": "Mehrere feste KI-Schritte werden vollständig vorgegeben, gleichzeitig wird dynamische Orchestrierung als zwingend bezeichnet.",
+      "complexity_context": "high",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "contradictory_answers"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_taxonomy_boundary",
+      "category": "adversarial",
+      "name": "Keine einfachere Lösung und kein semantisches Reasoning",
+      "narrative": "Eine einfachere Standardlösung reicht nicht aus, semantisches LLM-Reasoning wird für die Aufgabe aber ebenfalls nicht benötigt.",
+      "complexity_context": "medium",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "architecture_boundary_unclear"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_dynamic_claim_fixed_flow",
+      "category": "adversarial",
+      "name": "Dynamische Toolwahl bei vollständig festem Ablauf behauptet",
+      "narrative": "Alle KI-Schritte und Übergänge sind fest definiert; trotzdem wird zusätzlich behauptet, dass die Toolwahl dynamisch erfolgen müsse.",
+      "complexity_context": "high",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "contradictory_answers"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_all_unclear",
+      "category": "adversarial",
+      "name": "Alle entscheidenden Antworten unklar",
+      "narrative": "Für keine der vier Architekturfragen liegt bereits eine belastbare fachliche Antwort vor.",
+      "complexity_context": "unknown",
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "expected": {
+        "mode": "assessment_open",
+        "reason_codes": [
+          "insufficient_information"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": true
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_high_complexity_fixed_workflow",
+      "category": "adversarial",
+      "name": "Hohe Fachkomplexität bei vollständig festem Workflow",
+      "narrative": "Die Domäne ist fachlich sehr komplex und stark reguliert, aber alle benötigten KI-Schritte und ihre Reihenfolge sind vollständig vorab definiert.",
+      "complexity_context": "high",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "expected": {
+        "mode": "llm_workflow",
+        "reason_codes": [
+          "fixed_llm_workflow_sufficient"
+        ],
+        "why_no_agent_required": true,
+        "open_points_expected": false
+      }
+    },
+    {
+      "case_id": "advisor_adversarial_dynamic_countercontrol",
+      "category": "adversarial",
+      "name": "Echte dynamische Gegenkontrolle",
+      "narrative": "Der nächste freigegebene Schritt ist nicht im Voraus festlegbar und muss abhängig von validierten Zwischenzuständen gewählt werden.",
+      "complexity_context": "low",
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "expected": {
+        "mode": "bounded_agent",
+        "reason_codes": [
+          "dynamic_orchestration_required"
+        ],
+        "why_no_agent_required": false,
+        "open_points_expected": false
+      }
+    }
+  ],
+  "quality_cases": [
+    {
+      "case_id": "quality_distinctiveness_near_identical",
+      "kind": "semantic",
+      "description": "Zwei technische Optionen unterscheiden sich fachlich kaum.",
+      "expected": {
+        "criterion": "distinctiveness",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "description",
+          "source_ids": [
+            "process.current_flow"
+          ]
+        },
+        "preview_policy": "unchanged_until_repair",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": false
+      }
+    },
+    {
+      "case_id": "quality_missing_bottleneck_reference",
+      "kind": "semantic",
+      "description": "Eine Option beschreibt Nutzen, adressiert aber den dokumentierten Engpass nicht.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "unchanged_until_repair",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": false
+      }
+    },
+    {
+      "case_id": "quality_unsubstantiated_qualitative_claim",
+      "kind": "semantic",
+      "description": "Eine qualitative Aussage wird als Fakt formuliert, obwohl die Evidenz sie nicht trägt.",
+      "expected": {
+        "criterion": "evidence_discipline",
+        "finding_expected": true,
+        "repairable": false,
+        "target": {
+          "option": "assistant",
+          "field": "expected_value",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 0,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_explicit_assumption_positive_control",
+      "kind": "positive_control",
+      "description": "Unsichere Aussage ist ausdrücklich als Annahme bzw. offene Evidenz gekennzeichnet.",
+      "expected": {
+        "criterion": null,
+        "finding_expected": false,
+        "repairable": false,
+        "target": null,
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 0,
+        "provider_calls_max": 1,
+        "human_review_required": false
+      }
+    },
+    {
+      "case_id": "quality_unnecessary_architecture_complexity",
+      "kind": "semantic",
+      "description": "Die Option führt zusätzliche KI-Orchestrierung ein, obwohl der dokumentierte Bedarf sie nicht rechtfertigt.",
+      "expected": {
+        "criterion": "complexity_proportionality",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "architecture_fit",
+          "source_ids": [
+            "process.target_state_principles"
+          ]
+        },
+        "preview_policy": "unchanged_until_repair",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": false
+      }
+    },
+    {
+      "case_id": "quality_structured_finding_reference",
+      "kind": "contract",
+      "description": "Finding referenziert Option, Feld und vorhandene Evidenz strukturiert.",
+      "expected": {
+        "criterion": "grounding_consistency",
+        "finding_expected": true,
+        "repairable": false,
+        "target": {
+          "option": "organizational",
+          "field": "data_requirements",
+          "source_ids": [
+            "process.data_objects"
+          ]
+        },
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 0,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_initial_critic_provider_failure",
+      "kind": "failure",
+      "description": "Initial Critic fällt nach valider Generation aus.",
+      "expected": {
+        "criterion": null,
+        "finding_expected": false,
+        "repairable": false,
+        "target": null,
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 0,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_repair_provider_failure",
+      "kind": "failure",
+      "description": "Repair-Provider fällt nach einem reparierbaren Initial-Finding aus.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_invalid_repair_contract",
+      "kind": "contract",
+      "description": "Repair erzeugt eine deterministisch ungültige Aussage und muss atomar verworfen werden.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_original",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_human_edit_collision",
+      "kind": "invariant",
+      "description": "Eine menschliche Änderung kollidiert während des Repair-Aufrufs mit dem gebundenen Preview-Snapshot.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_human_edits",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_exactly_one_repair",
+      "kind": "invariant",
+      "description": "Ein reparierbares Finding darf genau einen Repair-Lauf verbrauchen.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "machine_repair_once",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": false
+      }
+    },
+    {
+      "case_id": "quality_no_second_repair_after_final",
+      "kind": "invariant",
+      "description": "Nach Final Critic darf kein zweiter Repair-Lauf gestartet werden.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "machine_repair_once",
+        "repair_runs_max": 1,
+        "provider_calls_max": 0,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_remaining_final_finding_human_review",
+      "kind": "invariant",
+      "description": "Ein nach Final Critic verbleibendes Finding geht in Human Review statt in eine weitere Reparaturschleife.",
+      "expected": {
+        "criterion": "evidence_discipline",
+        "finding_expected": true,
+        "repairable": false,
+        "target": {
+          "option": "organizational",
+          "field": "expected_value",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_repaired_preview",
+        "repair_runs_max": 1,
+        "provider_calls_max": 1,
+        "human_review_required": true
+      }
+    },
+    {
+      "case_id": "quality_full_path_call_cap",
+      "kind": "invariant",
+      "description": "Vollständiger Pfad bleibt bei höchstens vier Provider-Aufrufen inklusive Generation.",
+      "expected": {
+        "criterion": "bottleneck_fit",
+        "finding_expected": true,
+        "repairable": true,
+        "target": {
+          "option": "assistant",
+          "field": "bottleneck_coverage",
+          "source_ids": [
+            "process.bottlenecks"
+          ]
+        },
+        "preview_policy": "preserve_repaired_preview",
+        "repair_runs_max": 1,
+        "provider_calls_max": 4,
+        "human_review_required": true
+      }
+    }
+  ],
+  "real_demo": {
+    "synthetic": true,
+    "contains_personal_data": false,
+    "scenario_key": "architecture-real-demo-procurement-v1",
+    "value_stream": {
+      "name": "Synthetischer Beschaffungsprozess",
+      "trigger": "Freigegebener interner Bedarf",
+      "outcome": "Dokumentierte Bestellentscheidung",
+      "scope_in": "Bedarf bis dokumentierter Bestellentscheidung",
+      "strategic_objective": "Nachvollziehbare und robuste Angebotsbearbeitung",
+      "constraints": "Synthetische Testdaten; menschliche Freigabe bleibt erforderlich"
+    },
+    "process_analysis": {
+      "stage_name": "Angebote strukturiert vergleichen",
+      "stage_description": "Synthetischer Vergleich mehrerer Angebote anhand freigegebener Kriterien.",
+      "actors": "Einkauf und Fachbereich",
+      "systems": "Demo-ERP und Demo-Dateiablage",
+      "documents": "Synthetische Angebote und Kriterienkatalog",
+      "pain_points": "Manuelle Übertragung und uneinheitliche Freitextbewertung",
+      "baseline_metrics": "11 Minuten pro synthetischem Vergleich",
+      "name": "Synthetischer Angebotsvergleich",
+      "scope_start": "Synthetische Angebote liegen vollständig vor",
+      "scope_end": "Vergleich ist nachvollziehbar dokumentiert",
+      "trigger": "Synthetische Angebotsfrist endet",
+      "outcome": "Nachvollziehbarer Vergleich ohne automatische Auswahl",
+      "current_flow": "Angebote werden manuell übertragen und anhand eines festen Kriterienkatalogs verglichen.",
+      "roles": "Einkauf und Fachbereich",
+      "data_objects": "Synthetische Angebote und freigegebener Kriterienkatalog",
+      "business_rules": "Vier-Augen-Prinzip vor jeder fachlichen Freigabe",
+      "handoffs": "Einkauf übergibt den dokumentierten Vergleich an den Fachbereich",
+      "bottlenecks": "Manuelle Übertragung und semantische Freitextprüfung verursachen Wartezeit.",
+      "exceptions": "Fehlende synthetische Pflichtangaben werden vor dem Vergleich nachgefordert.",
+      "target_state_principles": "Assistierend, nachvollziehbar, minimal hinreichend und ohne automatische Auswahlentscheidung"
+    },
+    "solution_options": [
+      {
+        "option_key": "manual_rule_option",
+        "name": "Deterministische Pflichtfeld- und Regelprüfung",
+        "description": "Explizite Regeln prüfen strukturierte Pflichtfelder und freigegebene Schwellenwerte.",
+        "advisor_case_id": "advisor_canonical_no_llm"
+      },
+      {
+        "option_key": "controlled_semantic_option",
+        "name": "Begrenzte semantische Assistenz",
+        "description": "Ein begrenzter LLM-Schritt ordnet Freitext ein; die fachliche Auswahl bleibt menschlich.",
+        "advisor_case_id": "advisor_canonical_controlled_llm"
+      },
+      {
+        "option_key": "open_architecture_option",
+        "name": "Noch offene Orchestrierungsvariante",
+        "description": "Die Zahl der benötigten KI-Schritte ist noch nicht ausreichend geklärt.",
+        "advisor_case_id": "advisor_canonical_assessment_open"
+      }
+    ]
+  }
+}

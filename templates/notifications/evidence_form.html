@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Nachweislink – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-evidence-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Nachweise</div>
+    <h1 class="page-title">Nachweislink hinzufügen</h1>
+    <p class="page-subtitle">{{ use_case.short_id }} – {{ use_case.title }}</p>
+  </div>
+</div>
+<form method="post" class="app-card cr-work-form">
+  {% csrf_token %}
+  <div class="card-body">{{ form.as_p }}</div>
+  <div class="card-footer d-flex flex-wrap gap-2">
+    <button class="btn btn-primary" type="submit">Speichern</button>
+    <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

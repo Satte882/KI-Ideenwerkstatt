@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Zweitprüfung – {{ use_case.short_id }}{% endblock %}
+{% block body_class %}page-detail-workspace page-second-approval{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ use_case.short_id }} · Unabhängige Zweitprüfung</div>
+    <h1 class="page-title">{{ use_case.title }}</h1>
+    <p class="page-subtitle">Die Zuweisung benennt die bevorzugte prüfende Person. Jede andere ebenfalls unabhängige und berechtigte Person kann die Aufgabe übernehmen.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Zum Use Case</a>
+</div>
+
+<div class="kpi-strip mb-4">
+  <div class="kpi-cell"><small>Status</small><strong>{% if decision.is_final %}Bestätigt{% elif decision.is_returned_from_second_approval %}Zurückgegeben{% else %}Ausstehend{% endif %}</strong></div>
+  <div class="kpi-cell"><small>Bevorzugt zugewiesen</small><strong>{{ decision.second_approval_assignee|default:"Nicht dokumentiert" }}</strong></div>
+  <div class="kpi-cell"><small>Prüfauftrag seit</small><strong>{{ decision.second_approval_requested_at|date:"d.m.Y H:i"|default:"–" }}</strong></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <section class="app-card mb-4">
+      <div class="card-header"><strong>Aktuelle Bewertung v{{ assessment.version }}</strong></div>
+      <div class="card-body">
+        <dl class="row small mb-3">
+          <dt class="col-sm-5 text-muted">Bewertende Person</dt><dd class="col-sm-7">{{ assessment.assessed_by|default:"–" }}</dd>
+          <dt class="col-sm-5 text-muted">Confidence</dt><dd class="col-sm-7">{{ assessment.confidence_label }}</dd>
+          <dt class="col-sm-5 text-muted">Empfehlung</dt><dd class="col-sm-7">{{ assessment.get_recommendation_display }}</dd>
+        </dl>
+        <p>{{ assessment.rationale }}</p>
+        {% if assessment.evidence_url %}<a href="{{ assessment.evidence_url }}" target="_blank" rel="noopener noreferrer">Bewertungsnachweis öffnen</a>{% else %}<span class="small text-muted">Kein externer Nachweis verlinkt.</span>{% endif %}
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="app-card mb-4">
+      <div class="card-header"><strong>Erstentscheidung</strong></div>
+      <div class="card-body">
+        <dl class="row small mb-3">
+          <dt class="col-sm-5 text-muted">Entscheidung</dt><dd class="col-sm-7">{{ decision.get_decision_status_display }}</dd>
+          <dt class="col-sm-5 text-muted">Entscheidende Person</dt><dd class="col-sm-7">{{ decision.decided_by|default:"–" }}</dd>
+          <dt class="col-sm-5 text-muted">Zeitpunkt</dt><dd class="col-sm-7">{{ decision.created_at|date:"d.m.Y H:i" }}</dd>
+        </dl>
+        <p>{{ decision.rationale }}</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <section class="app-card mb-4">
+      <div class="card-header"><strong>Auflagen</strong></div>
+      <div class="card-body">
+        <div class="text-preline mb-3">{{ decision.conditions }}</div>
+        <dl class="row small mb-0">
+          <dt class="col-sm-5 text-muted">Verantwortung</dt><dd class="col-sm-7">{{ decision.condition_owner|default:"–" }}</dd>
+          <dt class="col-sm-5 text-muted">Fälligkeit</dt><dd class="col-sm-7">{{ decision.condition_due_date|date:"d.m.Y"|default:"–" }}</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+  <div class="col-xl-6">
+    <section class="app-card mb-4">
+      <div class="card-header"><strong>Governance-Nachweise</strong></div>
+      <div class="card-body">
+        <dl class="row small mb-3">
+          <dt class="col-sm-7 text-muted">Governance-Screening im Assessment</dt><dd class="col-sm-5">{% if assessment.governance_precheck_completed %}Durchgeführt{% else %}Offen{% endif %}</dd>
+          <dt class="col-sm-7 text-muted">Separate Bestätigung der Erstentscheidung</dt><dd class="col-sm-5">{% if decision.governance_confirmed %}Bestätigt{% else %}Offen{% endif %}</dd>
+        </dl>
+        <p class="small text-muted">Das Screening ersetzt keine formale Fachprüfung. Maßgeblich sind die eigenständigen Prüfartefakte:</p>
+        <div class="d-grid gap-2">{% for status in governance_statuses %}<div class="border rounded p-2"><div class="d-flex justify-content-between gap-2"><strong>{{ status.kind.label }}</strong><span class="badge {{ status.badge_class }}">{{ status.label }}</span></div>{% if status.result %}<div class="small mt-1"><strong>Ergebnis:</strong> {{ status.result }}</div>{% endif %}<div class="small text-muted mt-1">{{ status.attribution_note }}{% if status.actor %}: {{ status.actor }}{% endif %}{% if status.changed_at %}, {% if status.changed_at_has_time %}{{ status.changed_at|date:"d.m.Y H:i" }}{% else %}{{ status.changed_at|date:"d.m.Y" }}{% endif %}{% endif %}</div>{% if status.target_url %}<a class="btn btn-sm btn-outline-secondary w-100 mt-2" href="{{ status.target_url }}">Prüfartefakt öffnen</a>{% endif %}</div>{% endfor %}</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% if decision.is_returned_from_second_approval %}
+<div class="alert alert-warning"><strong>Begründet zurückgegeben</strong><div class="mt-1">{{ decision.second_approval_return_reason }}</div><div class="small text-muted mt-1">{{ decision.second_approval_returned_by }} · {{ decision.second_approval_returned_at|date:"d.m.Y H:i" }}</div></div>
+{% elif decision.is_final %}
+<div class="alert alert-success"><strong>Unabhängig bestätigt</strong><div class="small mt-1">{{ decision.second_approved_by }} · {{ decision.finalized_at|date:"d.m.Y H:i" }}</div></div>
+{% elif can_act %}
+<form method="post" class="app-card">
+  {% csrf_token %}
+  <div class="card-header"><strong>Prüfentscheidung</strong><div class="small text-muted mt-1">Bestätigen finalisiert die Entscheidung. Eine Rückgabe verändert die Erstentscheidung nicht und benötigt eine Begründung.</div></div>
+  <div class="card-body">
+    {{ form.non_field_errors }}
+    <label class="form-label" for="{{ form.return_reason.id_for_label }}">{{ form.return_reason.label }}</label>
+    {{ form.return_reason }}
+    <div class="text-danger small">{{ form.return_reason.errors }}</div>
+  </div>
+  <div class="card-footer d-flex justify-content-end gap-2">
+    <button class="btn btn-outline-secondary" name="action" value="return">Begründet zurückgeben</button>
+    <button class="btn btn-primary" name="action" value="confirm">Unabhängig bestätigen</button>
+  </div>
+</form>
+{% else %}
+<div class="alert alert-secondary"><strong>Nur Ansicht</strong><div class="small mt-1">Du kannst die Prüfgrundlage einsehen, bist für diese Entscheidung aber nicht unabhängig berechtigt. Es stehen deshalb keine ausführbaren Aktionen zur Verfügung.</div></div>
+{% endif %}
+{% endblock %}

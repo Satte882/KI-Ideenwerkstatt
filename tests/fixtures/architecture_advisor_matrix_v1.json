@@ -1,0 +1,992 @@
+{
+  "ruleset_version": "architecture-advisor-v1",
+  "answer_values": [
+    "yes",
+    "no",
+    "unclear"
+  ],
+  "reason_code_order": [
+    "contradictory_answers",
+    "insufficient_information",
+    "architecture_boundary_unclear",
+    "simpler_solution_sufficient",
+    "controlled_llm_sufficient",
+    "fixed_llm_workflow_sufficient",
+    "dynamic_orchestration_required"
+  ],
+  "entries": [
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "no_llm_required",
+      "reason_codes": [
+        "simpler_solution_sufficient"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "yes",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "llm_workflow",
+      "reason_codes": [
+        "fixed_llm_workflow_sufficient"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "bounded_agent",
+      "reason_codes": [
+        "dynamic_orchestration_required"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "controlled_llm",
+      "reason_codes": [
+        "controlled_llm_sufficient"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers",
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "architecture_boundary_unclear"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "no",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "yes",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "no",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "contradictory_answers"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "yes",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "no",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "yes"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "no"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    },
+    {
+      "answers": {
+        "simpler_solution_sufficient": "unclear",
+        "semantic_reasoning_required": "unclear",
+        "multiple_known_ai_steps_required": "unclear",
+        "dynamic_orchestration_required": "unclear"
+      },
+      "mode": "assessment_open",
+      "reason_codes": [
+        "insufficient_information"
+      ]
+    }
+  ]
+}

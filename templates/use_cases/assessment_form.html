@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Bewertung – {{ use_case.short_id }}{% endblock %}
+{% block body_class %}page-assessment-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Bewertung · Evidenz und Empfehlung" %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ journey.path_label }} · {{ use_case.short_id }} · Strukturierte Bewertung</div>
+    <h1 class="cr-page-header__title">{{ use_case.title }}</h1>
+    <p class="cr-work-header__summary">Confidence wird aus Evidenzqualität, Aktualität, Abdeckung, unabhängiger Prüfung und geklärten Annahmen hergeleitet.</p>
+  </div>
+</header>
+{% include "includes/status_dimensions.html" %}
+<div class="alert alert-info"><strong>Governance-Screening statt Fachprüfung.</strong> Die Bewertung kann Governance-Themen identifizieren, ersetzt aber keine formalen Datenschutz-, Security- oder Rechtsprüfungen. Diese werden anschließend in separaten Prüfartefakten dokumentiert.</div>
+<form method="post" class="cr-work-form">{% csrf_token %}<input type="hidden" name="return_to" value="{{ return_to }}">
+  <div class="app-card mb-4">
+    <div class="card-header"><strong>Fachliche Bewertung</strong></div>
+    <div class="card-body"><div class="row g-3">
+      {% for field in form %}
+      {% if field.name == 'evidence_quality' %}</div></div></div><div class="app-card mb-4"><div class="card-header"><strong>Belastbarkeit der Evidenz</strong><div class="small text-muted mt-1">Keine freie Confidence-Auswahl: Das System leitet die Stufe deterministisch aus diesen Faktoren ab.</div></div><div class="card-body"><div class="row g-3">{% endif %}
+      {% if field.name == 'evidence_url' %}</div></div></div><div class="app-card mb-4"><div class="card-header"><strong>Nachweis und Empfehlung</strong></div><div class="card-body"><div class="row g-3">{% endif %}
+      <div class="{% if field.name == 'rationale' or field.name == 'evidence_url' or field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %}">
+        {% if field.field.widget.input_type == 'checkbox' %}<div class="form-check mt-3">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+        {% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}<span{% if field.name == 'evidence_url' %} data-evidence-required-marker{% endif %}{% if not field.field.required %} class="d-none"{% endif %}> *</span></label>{{ field }}{% endif %}
+        <div class="text-danger small">{{ field.errors }}</div>{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div></div></div>
+  <div class="d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{{ return_to }}">Abbrechen</a><button class="btn btn-primary">Bewertung speichern und zurückkehren</button></div>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+(() => {
+  "use strict";
+  const quality = document.querySelector("[data-evidence-quality]");
+  const evidence = document.querySelector("[data-evidence-url]");
+  const marker = document.querySelector("[data-evidence-required-marker]");
+  if (!quality || !evidence || !marker) return;
+  const syncEvidenceRequirement = () => {
+    const required = Number(quality.value) > 1;
+    evidence.required = required;
+    evidence.setAttribute("aria-required", required ? "true" : "false");
+    marker.classList.toggle("d-none", !required);
+  };
+  syncEvidenceRequirement();
+  quality.addEventListener("change", syncEvidenceRequirement);
+})();
+</script>
+{% endblock %}

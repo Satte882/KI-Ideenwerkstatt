@@ -1,0 +1,76 @@
+{
+  "adoption": {
+    "created": true,
+    "option_count": 3,
+    "options": [
+      {
+        "evaluation_status": "draft",
+        "feasibility": "not_assessed",
+        "integration_effort": "not_assessed",
+        "lane": "organizational",
+        "name": "Vergleichsprozess standardisieren",
+        "option_type": "organizational",
+        "recommendation": "candidate"
+      },
+      {
+        "evaluation_status": "draft",
+        "feasibility": "not_assessed",
+        "integration_effort": "not_assessed",
+        "lane": "rule_automation",
+        "name": "Regelbasierten Angebotsvergleich automatisieren",
+        "option_type": "rule_automation",
+        "recommendation": "candidate"
+      },
+      {
+        "evaluation_status": "draft",
+        "feasibility": "not_assessed",
+        "integration_effort": "not_assessed",
+        "lane": "assistant",
+        "name": "Assistierten Angebotsvergleich einsetzen",
+        "option_type": "assistant",
+        "recommendation": "candidate"
+      }
+    ]
+  },
+  "gates": {
+    "delivery_package_unchanged": true,
+    "governance_assessment_unchanged": true,
+    "governance_review_unchanged": true,
+    "lifecycle_review_unchanged": true,
+    "process_validation_unchanged": true,
+    "solution_selection_unchanged": true,
+    "use_case_unchanged": true
+  },
+  "generation": {
+    "has_assumptions": true,
+    "has_open_evidence": true,
+    "has_sources": true,
+    "has_uncertainty": true,
+    "lanes": [
+      "organizational",
+      "rule_automation",
+      "assistant"
+    ],
+    "preview_option_count": 3,
+    "prompt_version": "1.2",
+    "provider_calls": 1,
+    "provider_mode": "deterministic_ci_double",
+    "schema_version": "1.0",
+    "status": "success"
+  },
+  "marker": "[Real-DEMO]",
+  "path": "solution_generation",
+  "process": {
+    "name": "Angebotsvergleich",
+    "required_source_gaps": [],
+    "status": "draft",
+    "validation_state": "not_validated"
+  },
+  "rollback": {
+    "adoption_recorded": false,
+    "error": "simulated_persistence_failure",
+    "option_count": 0
+  },
+  "schema_version": "1",
+  "source_setup": "block6_real_demo"
+}

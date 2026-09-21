@@ -1,0 +1,80 @@
+.sidebar-local-active {
+  color: var(--text);
+  background: rgba(124, 92, 255, .18);
+  box-shadow: inset 2px 0 0 var(--accent-2);
+  font-weight: 750;
+}
+
+.sidebar-local-active:hover,
+.sidebar-local-active:focus-visible {
+  color: white;
+  background: rgba(124, 92, 255, .24);
+}
+
+.analysis-step-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.analysis-step-actions > div:last-child {
+  text-align: right;
+}
+
+.analysis-step-actions-current {
+  color: var(--muted);
+  font-size: .78rem;
+  text-align: center;
+}
+
+.analysis-step-actions-current strong {
+  color: var(--text);
+}
+
+@media (min-width: 1101px) {
+  .analysis-step-actions {
+    display: none;
+  }
+}
+
+#value-stream,
+#fokus-priorisierung,
+#prozessanalyse,
+#loesungsoptionen {
+  scroll-margin-top: 96px;
+}
+
+#value-stream:focus,
+#fokus-priorisierung:focus,
+#prozessanalyse:focus,
+#loesungsoptionen:focus {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 4px;
+}
+
+@media (max-width: 800px) {
+  .analysis-step-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-step-actions > div,
+  .analysis-step-actions > div:last-child,
+  .analysis-step-actions-current {
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  #value-stream,
+  #fokus-priorisierung,
+  #prozessanalyse,
+  #loesungsoptionen {
+    scroll-margin-top: 16px;
+  }
+}

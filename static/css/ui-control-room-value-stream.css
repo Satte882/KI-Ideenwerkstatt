@@ -1,0 +1,38 @@
+.ui-control-room.page-value-stream .stage-focus-table-wrap {
+  overflow-x: visible;
+}
+
+.ui-control-room.page-value-stream .stage-focus-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.ui-control-room.page-value-stream .stage-focus-table th,
+.ui-control-room.page-value-stream .stage-focus-table td {
+  min-width: 0;
+  padding-inline: 9px;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+.ui-control-room.page-value-stream .stage-focus-table th:first-child {
+  width: 18%;
+}
+
+.ui-control-room.page-value-stream .stage-focus-table th:nth-child(n + 2):nth-child(-n + 5) {
+  width: 11%;
+}
+
+.ui-control-room.page-value-stream .stage-focus-table th:last-child {
+  width: 38%;
+}
+
+@media (max-width: 760px) {
+  .ui-control-room.page-value-stream .stage-focus-table-wrap {
+    overflow-x: auto;
+  }
+
+  .ui-control-room.page-value-stream .stage-focus-table {
+    min-width: 760px;
+  }
+}

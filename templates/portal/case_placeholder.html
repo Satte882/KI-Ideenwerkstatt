@@ -1,0 +1,17 @@
+{% extends "portal/presentation_base.html" %}
+
+{% block title %}{{ case_title }} – RSD Demo{% endblock %}
+{% block body_class %}presentation-case{% endblock %}
+
+{% block content %}
+<section class="presentation-case-shell" aria-labelledby="case-placeholder-title">
+  <p class="presentation-kicker">{{ case_kind }} · RSD Demo</p>
+  <h1 id="case-placeholder-title">{{ case_title }}</h1>
+  <p class="presentation-lead">Die präsentationsartige HTML-Ausarbeitung wird im zugehörigen Case-Study-Issue ergänzt.</p>
+
+  <div class="presentation-placeholder" role="status">
+    <span class="presentation-placeholder-label">In Vorbereitung</span>
+    <p>Der geschützte Einstieg und das RSD-Präsentationslayout stehen bereits. Der fachliche Inhalt folgt separat.</p>
+  </div>
+</section>
+{% endblock %}

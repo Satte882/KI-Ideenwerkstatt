@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static delivery_markdown %}
+{% block title %}Vorgehensmodell – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-methodology-reference{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Delivery Handover · Methodische Referenz</div>
+    <h1 class="page-title">Vorgehensmodell</h1>
+    <p class="page-subtitle">CRISP-ML(Q) mit integriertem ML Test Score · Version 2.0</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:package_list' %}">Zur Delivery-Übersicht</a>
+    <a class="btn btn-primary" href="{% url 'delivery:methodology_download' %}">Vorgehensmodell herunterladen</a>
+  </div>
+</div>
+
+<div class="alert alert-secondary mb-4">
+  Reines Wissens- und Referenzartefakt: Diese Seite führt keinen zusätzlichen Workflow, keinen Score und keine Zertifizierung in KI-Radar ein.
+</div>
+
+<article class="app-card card-body methodology-document">
+  {{ methodology|render_methodology_markdown }}
+</article>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Governance-Screening – KI-Radar{% endblock %}
+{% block body_class %}page-governance-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Governance · Screening" %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ journey.path_label }} · Governance-Screening</div>
+    <h1 class="cr-page-header__title">Governance-Screening</h1>
+    <p class="cr-work-header__summary">{{ use_case.short_id }} – {{ use_case.title }}</p>
+  </div>
+</header>
+{% include "includes/status_dimensions.html" %}
+<div class="alert alert-warning"><strong>Screening, keine formale Fachprüfung.</strong> Dieses Artefakt identifiziert den Prüfbedarf. Es ersetzt weder eine Datenschutz-, Security- oder Rechtsprüfung noch deren Nachweise.</div>
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Geführter Prüfpfad</strong></div>
+  <div class="card-body small">Screening → begründeter Status je Fachprüfung (<strong>offen</strong> oder <strong>nicht relevant</strong>) → formales Prüfartefakt → Freigabeentscheidung</div>
+</div>
+<form method="post" class="app-card cr-work-form">
+  {% csrf_token %}
+  <div class="card-header"><strong>Screening-Artefakt dokumentieren</strong><div class="small text-muted mt-1">Beim Speichern wird für Datenschutz, Informationssicherheit und Recht jeweils ein nachvollziehbares Statusartefakt erzeugt.</div></div>
+  <div class="card-body">
+    {{ form.non_field_errors }}
+    <div class="section-title">Prüfgrundlage</div>
+    <div class="row g-3 mb-4">
+      {% for field in form %}
+        {% if field.name == "assessment_date" or field.name == "basis_version" or field.name == "result" or field.name == "rationale" or field.name == "evidence_url" or field.name == "next_assessment_date" %}
+        <div class="{% if field.name == 'rationale' %}col-12{% else %}col-md-6{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          <div class="text-danger small">{{ field.errors }}</div>
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="section-title">Screening-Signale</div>
+    <div class="row g-3 mb-4">
+      {% for field in form %}
+        {% if field.name == "personal_data" or field.name == "employee_data" or field.name == "automated_person_assessment" or field.name == "influences_person_decisions" or field.name == "biometric_data" or field.name == "safety_critical" or field.name == "regulated_product" or field.name == "health_safety_rights_impact" or field.name == "external_ai_or_cloud" or field.name == "generated_external_content" or field.name == "human_oversight_planned" %}
+        <div class="col-md-6"><div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div><div class="text-danger small">{{ field.errors }}</div></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="section-title">Prüfbedarf je Fachbereich</div>
+    <div class="row g-3">
+      <div class="col-xl-4">
+        <div class="border rounded p-3 h-100">
+          <div class="form-check mb-3">{{ form.privacy_review_required }}<label class="form-check-label" for="{{ form.privacy_review_required.id_for_label }}"><strong>{{ form.privacy_review_required.label }}</strong></label></div>
+          <label class="form-label" for="{{ form.privacy_review_rationale.id_for_label }}">{{ form.privacy_review_rationale.label }}</label>{{ form.privacy_review_rationale }}
+          <div class="text-danger small">{{ form.privacy_review_rationale.errors }}</div><div class="form-text">{{ form.privacy_review_rationale.help_text }}</div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="border rounded p-3 h-100">
+          <div class="form-check mb-3">{{ form.security_review_required }}<label class="form-check-label" for="{{ form.security_review_required.id_for_label }}"><strong>{{ form.security_review_required.label }}</strong></label></div>
+          <label class="form-label" for="{{ form.security_review_rationale.id_for_label }}">{{ form.security_review_rationale.label }}</label>{{ form.security_review_rationale }}
+          <div class="text-danger small">{{ form.security_review_rationale.errors }}</div><div class="form-text">{{ form.security_review_rationale.help_text }}</div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="border rounded p-3 h-100">
+          <div class="form-check mb-3">{{ form.legal_review_required }}<label class="form-check-label" for="{{ form.legal_review_required.id_for_label }}"><strong>{{ form.legal_review_required.label }}</strong></label></div>
+          <label class="form-label" for="{{ form.legal_review_rationale.id_for_label }}">{{ form.legal_review_rationale.label }}</label>{{ form.legal_review_rationale }}
+          <div class="text-danger small">{{ form.legal_review_rationale.errors }}</div><div class="form-text">{{ form.legal_review_rationale.help_text }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer d-flex flex-wrap gap-2 justify-content-end">
+    <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Abbrechen</a>
+    <button class="btn btn-primary" type="submit">Screening speichern und Prüfartefakte anlegen</button>
+  </div>
+</form>
+{% endblock %}

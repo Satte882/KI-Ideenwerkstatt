@@ -1,0 +1,247 @@
+{
+  "fixture_id": "[Real-DEMO]-einkaufsanforderung-v1",
+  "model": "openai/gpt-5-mini-test",
+  "cases": [
+    {
+      "name": "value_stream",
+      "capture_type": "value_stream",
+      "working_title": "[Real-DEMO] Einkauf externer Dienstleistungen",
+      "answers": {
+        "vs_context": "Der Value Stream Einkauf externer Dienstleistungen stellt sicher, dass Fachbereiche bedarfsgerecht und regelkonform Leistungen von geeigneten Lieferanten beziehen.",
+        "vs_trigger_outcome": "Auslöser ist eine freigegebene Einkaufsanforderung. Ergebnis ist eine sachlich geprüfte, gebuchte und bezahlte Leistung.",
+        "vs_scope_in": "Im Umfang liegen Bedarf klären, LIEFERE anstoßen, Lieferant-Onboarding, Leistungserfassung, RECHNUNGSPRÜFUNG, BUCHEN und BEZAHLEN.",
+        "vs_scope_out": "Nicht im Umfang liegen strategische Warengruppenentscheidungen und die langfristige Lieferantenentwicklung.",
+        "vs_stakeholders_constraints": "Beteiligt sind Bedarfsträger, Einkauf, Lieferant, Leistungsprüfer und Buchhaltung. Vier-Augen-Prinzip und dokumentierte Freigaben sind verbindlich.",
+        "vs_stages": "1 LIEFERE: Bedarf und Anfrage übermitteln. 2 Lieferant-Onboarding: Stammdaten und Nachweise prüfen. 3 Leistungserfassung: erbrachte Leistung dokumentieren. 4 RECHNUNGSPRÜFUNG: Rechnung gegen Bestellung und Leistung prüfen. 5 BUCHEN: geprüften Beleg verbuchen. 6 BEZAHLEN: Zahlung fristgerecht ausführen.",
+        "vs_stage_operations": "Einkauf und Fachbereich arbeiten im ERP und im Lieferantenportal; genutzt werden Anforderung, Angebot, Bestellung, Leistungsnachweis und Rechnung.",
+        "vs_stage_pain_metrics": "Medienbrüche zwischen E-Mail, Portal und ERP führen zu Rückfragen. Die Durchlaufzeit beträgt im Median 11 Tage.",
+        "process_scope_flow": "Der Fokusprozess Leistungserfassung und Rechnungsprüfung startet mit dem Leistungsnachweis und endet mit der freigegebenen Rechnung. Prüfschritte erfolgen heute teilweise manuell.",
+        "process_operating_model": "Fachbereich, Einkauf und Buchhaltung übergeben Leistungsnachweis, Bestellung und Rechnung zwischen Portal und ERP. Abweichungen benötigen eine dokumentierte Freigabe.",
+        "process_findings_target": "Hauptursachen sind unvollständige Leistungsnachweise und uneinheitliche Bestellreferenzen. Ziel ist eine belegbare Prüfung ohne erfundene Angaben.",
+        "solution_candidates": "KI-Assistenz Angebotsvergleich ist ein möglicher Kandidat; außerdem kommen standardisierte Formulare und regelbasierte Prüfungen infrage."
+      },
+      "provider_payload": {
+        "schema_version": "1.0",
+        "prompt_version": "1.0",
+        "suggestions": [
+          {
+            "target_object_type": "value_stream",
+            "target_field": "value_stream.name",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Einkauf externer Dienstleistungen",
+            "source_question": "vs_context",
+            "source_excerpt": "Value Stream Einkauf externer Dienstleistungen",
+            "uncertainty": "low",
+            "uncertainty_reason": "Der Name ist wörtlich in der Antwort enthalten."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "liefere",
+            "field_type": "text",
+            "suggested_value": "LIEFERE",
+            "source_question": "vs_stages",
+            "source_excerpt": "LIEFERE",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "lieferant-onboarding",
+            "field_type": "text",
+            "suggested_value": "Lieferant-Onboarding",
+            "source_question": "vs_stages",
+            "source_excerpt": "Lieferant-Onboarding",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "leistungserfassung",
+            "field_type": "text",
+            "suggested_value": "Leistungserfassung",
+            "source_question": "vs_stages",
+            "source_excerpt": "Leistungserfassung",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "rechnungsprufung",
+            "field_type": "text",
+            "suggested_value": "RECHNUNGSPRÜFUNG",
+            "source_question": "vs_stages",
+            "source_excerpt": "RECHNUNGSPRÜFUNG",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "buchen",
+            "field_type": "text",
+            "suggested_value": "BUCHEN",
+            "source_question": "vs_stages",
+            "source_excerpt": "BUCHEN",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "value_stream_stage",
+            "target_field": "value_stream.stages[].name",
+            "target_group_key": "bezahlen",
+            "field_type": "text",
+            "suggested_value": "BEZAHLEN",
+            "source_question": "vs_stages",
+            "source_excerpt": "BEZAHLEN",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Phase ist wörtlich und nummeriert belegt."
+          },
+          {
+            "target_object_type": "process_analysis",
+            "target_field": "process_analysis.name",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Leistungserfassung und Rechnungsprüfung",
+            "source_question": "process_scope_flow",
+            "source_excerpt": "Fokusprozess Leistungserfassung und Rechnungsprüfung",
+            "uncertainty": "low",
+            "uncertainty_reason": "Der Fokusprozess ist ausdrücklich benannt."
+          },
+          {
+            "target_object_type": "solution_option",
+            "target_field": "solution_options[].name",
+            "target_group_key": "ki-assistenz-angebotsvergleich",
+            "field_type": "text",
+            "suggested_value": "KI-Assistenz Angebotsvergleich",
+            "source_question": "solution_candidates",
+            "source_excerpt": "KI-Assistenz Angebotsvergleich",
+            "uncertainty": "medium",
+            "uncertainty_reason": "Der Kandidat ist benannt, aber noch nicht bewertet."
+          }
+        ],
+        "open_questions": [
+          {
+            "message": "Die technische Machbarkeit der KI-Assistenz ist noch zu bewerten.",
+            "source_questions": [
+              "solution_candidates"
+            ]
+          }
+        ],
+        "contradictions": []
+      }
+    },
+    {
+      "name": "use_case",
+      "capture_type": "use_case",
+      "working_title": "[Real-DEMO] KI-Assistenz Angebotsvergleich",
+      "answers": {
+        "uc_problem_context": "Der Use Case KI-Assistenz Angebotsvergleich unterstützt den Einkauf, weil Angebote heute manuell strukturiert und auf Abweichungen geprüft werden.",
+        "uc_users_purpose": "Einkäufer nutzen die Assistenz ausschließlich zur Vorbereitung eines nachvollziehbaren Vergleichs; die Entscheidung bleibt beim Menschen.",
+        "uc_systems_data": "Quellen sind freigegebene Angebotsdokumente, Bestelldaten und Lieferantenstammdaten aus Dokumentenablage und ERP.",
+        "uc_benefit": "Die strukturierte Vorprüfung soll Rückfragen reduzieren und die Vergleichszeit je Vorgang messbar senken.",
+        "uc_metric": "Primäre Metrik ist die Bearbeitungszeit je Angebotsvergleich; Baseline 11 Minuten, Ziel 8,25 Minuten, gemessen an einer definierten Stichprobe.",
+        "uc_solution_context": "Vorgesehen ist eine KI-Assistenz mit menschlicher Freigabe; Provider, Modell und Hosting sind noch offen.",
+        "uc_cost_assessment": "Kosten und technische Reife werden im Pilot erhoben; Geschäftswert wird als hoch, Datenreife als mittel eingeschätzt.",
+        "uc_oversight_support": "Ein Einkäufer prüft jeden Vorschlag einzeln. Fachlicher Support liegt beim Einkauf, technischer Support bei der IT.",
+        "uc_open_questions": "Offen sind Providerwahl, Datenschutzprüfung und belastbare Betriebskosten."
+      },
+      "provider_payload": {
+        "schema_version": "1.0",
+        "prompt_version": "1.0",
+        "suggestions": [
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.title",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "KI-Assistenz Angebotsvergleich",
+            "source_question": "uc_problem_context",
+            "source_excerpt": "Use Case KI-Assistenz Angebotsvergleich",
+            "uncertainty": "low",
+            "uncertainty_reason": "Der Titel ist wörtlich belegt."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.problem_statement",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Angebote werden heute manuell strukturiert und auf Abweichungen geprüft.",
+            "source_question": "uc_problem_context",
+            "source_excerpt": "Angebote heute manuell strukturiert und auf Abweichungen geprüft",
+            "uncertainty": "low",
+            "uncertainty_reason": "Das Problem ist ausdrücklich beschrieben."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.intended_users",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Einkäufer",
+            "source_question": "uc_users_purpose",
+            "source_excerpt": "Einkäufer nutzen die Assistenz",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Nutzergruppe ist explizit genannt."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.data_sources",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Angebotsdokumente, Bestelldaten und Lieferantenstammdaten",
+            "source_question": "uc_systems_data",
+            "source_excerpt": "Angebotsdokumente, Bestelldaten und Lieferantenstammdaten",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die Datenquellen sind vollständig belegt."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.expected_benefit",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Rückfragen reduzieren und Vergleichszeit senken",
+            "source_question": "uc_benefit",
+            "source_excerpt": "Rückfragen reduzieren und die Vergleichszeit je Vorgang messbar senken",
+            "uncertainty": "low",
+            "uncertainty_reason": "Der erwartete Nutzen ist ausdrücklich beschrieben."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.metric.name",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Bearbeitungszeit je Angebotsvergleich",
+            "source_question": "uc_metric",
+            "source_excerpt": "Bearbeitungszeit je Angebotsvergleich",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die primäre Metrik ist benannt."
+          },
+          {
+            "target_object_type": "use_case",
+            "target_field": "use_case.human_oversight",
+            "target_group_key": null,
+            "field_type": "text",
+            "suggested_value": "Ein Einkäufer prüft jeden Vorschlag einzeln.",
+            "source_question": "uc_oversight_support",
+            "source_excerpt": "Ein Einkäufer prüft jeden Vorschlag einzeln",
+            "uncertainty": "low",
+            "uncertainty_reason": "Die menschliche Aufsicht ist explizit beschrieben."
+          }
+        ],
+        "open_questions": [
+          {
+            "message": "Providerwahl, Datenschutzprüfung und Betriebskosten sind offen.",
+            "source_questions": [
+              "uc_open_questions"
+            ]
+          }
+        ],
+        "contradictions": []
+      }
+    }
+  ]
+}

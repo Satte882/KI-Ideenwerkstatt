@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ section.title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-capture-wizard{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Geführte {{ capture_label }}-Erfassung · Schritt {{ step }} von {{ total_steps }}</div>
+    <h1 class="page-title">{{ section.title }}</h1>
+    <p class="page-subtitle">{{ section.description }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if session.capture_type == 'value_stream' %}
+    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#value-stream-methodology-modal">Methodik &amp; Beispiel</button>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_review' session.pk %}">Entwurf prüfen</a>
+  </div>
+</div>
+
+{% if session.capture_type == 'value_stream' %}{% include "accelerator/_value_stream_methodology_modal.html" %}{% endif %}
+
+<nav class="wizard-stepper mb-3" aria-label="Schritte der geführten {{ capture_label }}-Erfassung">
+  {% for item in step_states %}
+  <a class="wizard-step {% if item.complete %}wizard-step-complete{% else %}wizard-step-pending{% endif %}{% if item.current %} wizard-step-current{% endif %}" href="{% url 'accelerator:capture_step' session.pk item.number %}"{% if item.current %} aria-current="step"{% endif %}>
+    <span class="wizard-step-symbol" aria-hidden="true">{% if item.complete %}✓{% else %}{{ item.number }}{% endif %}</span>
+    <span class="wizard-step-label">{{ item.title }}</span>
+    <span class="visually-hidden">{% if item.complete %}vollständig{% else %}noch offen{% endif %}{% if item.current %}, aktueller Schritt{% endif %}</span>
+  </a>
+  {% endfor %}
+</nav>
+
+<div class="progress mb-4" role="progressbar" aria-label="Fortschritt" aria-valuenow="{{ step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}">
+  <div class="progress-bar" style="width: {% widthratio step total_steps 100 %}%"></div>
+</div>
+
+<div class="app-card mb-4">
+  <form method="post" data-capture-active-time>
+    {% csrf_token %}
+    {{ form.revision }}
+    {{ form.active_entry_seconds }}
+    <div class="card-body">
+      {% if conflict_message %}
+      <div class="alert alert-danger" role="alert">
+        <strong>Zwischenzeitliche Änderung erkannt.</strong> {{ conflict_message }}
+        <a href="{% url 'accelerator:capture_step' session.pk step %}">Aktuellen Stand neu laden</a>.
+      </div>
+      {% endif %}
+      {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="alert alert-secondary">
+        Sie können unvollständige Antworten zwischenspeichern. Pflichtlücken werden erst beim Abschluss blockierend geprüft.
+      </div>
+      <div class="row g-4">
+        {% for field in form.answer_fields %}
+        <div class="col-12{% if field.errors %} field-attention field-error{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.capture_required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.errors %}<div class="field-attention-message" role="alert">{{ field.errors }}</div>{% endif %}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between gap-2 flex-wrap">
+      <div>
+        {% if previous_step %}<a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_step' session.pk previous_step %}">Zurück</a>{% else %}<a class="btn btn-outline-secondary" href="{{ overview_url }}">Zur Übersicht</a>{% endif %}
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="submit" name="action" value="save"{% if conflict_message %} disabled{% endif %}>Zwischenspeichern</button>
+        <button class="btn btn-primary" type="submit" name="action" value="next"{% if conflict_message %} disabled{% endif %}>{% if is_last_step %}Zur Prüfung{% else %}Speichern und weiter{% endif %}</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/capture-active-time.js' %}" defer></script>{% endblock %}

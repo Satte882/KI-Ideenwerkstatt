@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load static architecture_focus %}
+{% block title %}{{ process_analysis.name }} – KI-Radar{% endblock %}
+{% block body_class %}page-process-analysis{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}?v=issue-417-local-work-status">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+<link rel="stylesheet" href="{% static 'css/work-design-entry.css' %}">
+<link rel="stylesheet" href="{% static 'css/process-analysis-detail.css' %}">
+{% endblock %}
+{% block content %}
+{% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Systematische Discovery" lifecycle_context="Prozessanalyse · Auswahl und Freigabe" %}
+
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ process_analysis.stage.value_stream.name }} · {{ process_analysis.stage.name }}</div>
+    <h1 class="cr-page-header__title">{{ process_analysis.name }}</h1>
+    <p class="cr-work-header__summary">{{ process_analysis.get_status_display }} · Ist-Prozess, Architekturkontext und Lösungsoptionen.</p>
+  </div>
+  <div class="cr-work-header__actions">
+    <a class="btn btn-outline-secondary" href="{{ process_analysis.stage.value_stream.get_absolute_url }}">Zum Value Stream</a>
+    {% if can_validate and process_analysis.status != 'validated' %}<a class="btn btn-outline-secondary" href="{% url 'architecture:process_analysis_validate' process_analysis.pk %}">Ist-Prozess validieren</a>{% endif %}
+    {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Bearbeiten</a>{% endif %}
+  </div>
+</header>
+
+{% include "includes/local_work_status.html" %}
+
+<div class="cr-next-action" id="next-action">{% include "includes/next_action.html" %}</div>
+
+{% if not process_analysis.stage.value_stream.focus.is_selected %}<div class="alert alert-warning"><strong>Prozessdetailanalyse nicht freigegeben:</strong> Der übergeordnete Value Stream muss zuerst vollständig bewertet und für die Vertiefung ausgewählt werden.</div>{% endif %}
+
+{% if source_differences %}
+<div class="alert alert-warning mb-4"><strong>Quellenänderungen seit der Übernahme</strong><div class="small mt-1">Die Prozessanalyse bleibt eine eigenständige Arbeitsfassung. Änderungen an der Value-Stream-Phase werden nicht automatisch überschrieben.</div><ul class="mb-0 mt-2">{% for item in source_differences %}<li>{{ item.source_label }} · {{ item.source_field }}: „{{ item.previous|default:"–" }}“ → „{{ item.current|default:"–" }}“</li>{% endfor %}</ul></div>
+{% endif %}
+
+{% if process_analysis.stage.value_stream.stage_focus_decision %}
+{% stage_focus_item process_analysis.stage.value_stream.stage_focus_decision process_analysis.stage as focus_item %}
+<section class="app-card decision-panel mb-4" data-testid="process-focus-rationale">
+  <div class="card-header">
+    <strong>Warum dieser Prozess vertieft wird</strong>
+    <div class="small text-muted mt-1">Die Begründung bleibt sichtbar; Kriterien und Herkunft lassen sich bei Bedarf prüfen.</div>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <div class="section-title">Begründung der Phasenentscheidung</div>
+      <div class="text-preline">{{ process_analysis.stage.value_stream.stage_focus_decision.rationale|default:process_analysis.stage.name }}</div>
+    </div>
+    <details class="architecture-disclosure" data-testid="process-stage-focus-source">
+      <summary>Fokusentscheidung und Kriterien prüfen</summary>
+      <div class="pt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+          <div><strong>Gespeicherte Fokusphase und Kriterien aus dem vorgelagerten Phasenvergleich.</strong></div>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ process_analysis.stage.value_stream.get_absolute_url }}#fokusphase">Phasenentscheidung öffnen</a>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><div class="section-title">Fokusphase</div><strong>{{ process_analysis.stage.sequence }}. {{ process_analysis.stage.name }}</strong></div>
+          <div class="col-md-6"><div class="section-title">Entscheidungsweg</div><strong>{% if process_analysis.stage.value_stream.stage_focus_decision.is_short_path %}Bewusster Kurzpfad{% else %}Vollständiger Phasenvergleich{% endif %}</strong></div>
+        </div>
+        <div class="kpi-strip kpi-strip-responsive">
+          <div class="kpi-cell"><small>Impact</small><strong>{{ focus_item.impact|screening_label }}</strong></div>
+          <div class="kpi-cell"><small>Problemintensität</small><strong>{{ focus_item.pain_intensity|screening_label }}</strong></div>
+          <div class="kpi-cell"><small>Datenlage</small><strong>{{ focus_item.data_accessibility|screening_label }}</strong></div>
+          <div class="kpi-cell"><small>Veränderungsaufwand</small><strong>{{ focus_item.change_effort|screening_label }}</strong></div>
+        </div>
+        {% if process_analysis.stage.value_stream.stage_focus_decision.is_short_path %}<div class="small text-muted mt-3"><strong>Kurzpfad:</strong> {{ process_analysis.stage.value_stream.stage_focus_decision.short_path_reason }}</div>{% endif %}
+      </div>
+    </details>
+  </div>
+</section>
+{% endif %}
+
+<section class="cr-section" data-testid="process-frame">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Prozessrahmen</h2>
+      <p>Auslöser und Ergebnis definieren den fachlichen Kern; Start und Ende grenzen den analysierten Ausschnitt ab.</p>
+    </div>
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-6"><div class="section-title">Auslöser</div><div class="text-preline">{{ process_analysis.trigger }}</div></div>
+    <div class="col-md-6"><div class="section-title">Ergebnis</div><div class="text-preline">{{ process_analysis.outcome }}</div></div>
+    <div class="col-md-6"><div class="section-title">Prozessstart</div><div class="text-preline">{{ process_analysis.scope_start }}</div></div>
+    <div class="col-md-6"><div class="section-title">Prozessende</div><div class="text-preline">{{ process_analysis.scope_end }}</div></div>
+  </div>
+</section>
+
+<section class="app-card decision-panel mb-4" id="prozessanalyse" data-testid="process-core-diagnosis">
+  <header class="card-header">
+    <div>
+      <h2 class="h6 mb-0">Ist-Prozess und Ursachen</h2>
+      <p class="small text-muted mt-1 mb-0">Problem und Größenordnung zuerst; Ablauf, Verantwortung und Ursachen ergänzen den Befund.</p>
+      <p class="small text-muted mt-1 mb-0">Methodik: Business Architecture (ADM Phase B).</p>
+    </div>
+  </header>
+  <div class="card-body">
+    {% process_findings_summary process_analysis %}
+    <div class="row g-4 mt-3">
+      <section class="col-md-6" id="analysis-current-flow"><div class="section-title">Ist-Ablauf</div><div class="text-preline">{{ process_analysis.current_flow }}</div></section>
+      <section class="col-md-6" id="analysis-roles"><div class="section-title">Rollen und Verantwortung</div><div class="text-preline">{{ process_analysis.roles }}</div></section>
+    </div>
+    <details class="architecture-disclosure mt-3" data-testid="process-original-fields">
+      <summary>Dokumentierte Ausgangsangaben</summary>
+      <div class="row g-4 pt-3">
+        {% if process_analysis.diagnostic_observations %}<section class="col-md-6" id="analysis-diagnostic-observations"><div class="section-title">Beobachtung / Problem</div><div class="text-preline">{{ process_analysis.diagnostic_observations }}</div></section>{% endif %}
+        <section class="col-md-6" id="analysis-bottlenecks"><div class="section-title">Bottlenecks und Ursachen</div><div class="text-preline">{{ process_analysis.bottlenecks }}</div></section>
+        <section class="col-md-6" id="analysis-baseline-metrics"><div class="section-title">Baseline und Kennzahlen</div><div class="text-preline">{{ process_analysis.baseline_metrics }}</div></section>
+        <div class="col-12 small text-muted">Der Freitext „Bottlenecks und Ursachen“ wird nicht automatisch als bestätigte Ursache eingeordnet.</div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="cr-section" id="prozessdetails" data-testid="process-secondary-details">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Vertiefende Analyseinformationen</h2>
+      <p>Regeln, Zusammenarbeit, Systeme und Daten ergänzen die Prozessdiagnose.</p>
+      <p class="small text-muted mt-1 mb-0">Methodik: Information Systems &amp; Technology (ADM Phasen C/D).</p>
+    </div>
+  </header>
+  <div class="mt-3">
+    <details class="architecture-disclosure artifact-disclosure" id="process-rules-collaboration">
+      <summary>Regeln und Zusammenarbeit</summary>
+      <div class="row g-4 pt-3 pb-3">
+        <section class="col-md-6" id="analysis-business-rules"><div class="section-title">Geschäftsregeln</div><div class="text-preline">{{ process_analysis.business_rules|default:"Noch nicht dokumentiert" }}</div></section>
+        <section class="col-md-6" id="analysis-handoffs"><div class="section-title">Übergaben und Schnittstellen</div><div class="text-preline">{{ process_analysis.handoffs|default:"Noch nicht dokumentiert" }}</div></section>
+        <section class="col-md-6" id="analysis-exceptions"><div class="section-title">Ausnahmen und Fehlerfälle</div><div class="text-preline">{{ process_analysis.exceptions|default:"Noch nicht dokumentiert" }}</div></section>
+        <section class="col-md-6" id="analysis-target-state-principles"><div class="section-title">Soll-Prinzipien</div><div class="text-preline">{{ process_analysis.target_state_principles|default:"Noch nicht dokumentiert" }}</div></section>
+      </div>
+    </details>
+    <details class="architecture-disclosure artifact-disclosure" id="process-systems-data">
+      <summary>Systeme und Daten</summary>
+      <div class="row g-4 pt-3 pb-3">
+        <section class="col-md-6" id="analysis-systems"><div class="section-title">Anwendungen und Arbeitsmittel</div><div class="text-preline">{{ process_analysis.systems|default:"Noch nicht dokumentiert" }}</div></section>
+        <section class="col-md-6" id="analysis-data-objects"><div class="section-title">Datenobjekte und Dokumente</div><div class="text-preline">{{ process_analysis.data_objects|default:"Noch nicht dokumentiert" }}</div></section>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section class="cr-section" id="process-validation" data-testid="process-validation-summary">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Validierung des Ist-Prozesses</h2>
+      <p>Aktuelle Validierungsreife bleibt sichtbar; Nachweis und Historie sind nachrangige Auditinformationen.</p>
+    </div>
+  </header>
+  <div class="mt-3">
+    {% if latest_validation and latest_validation.process_version == process_analysis.version %}
+    <div class="cr-inline-note mb-0" data-testid="current-process-validation">
+      <strong>Version v{{ process_analysis.version }} eigenständig validiert</strong>
+      <span>Der Validierungsnachweis für die aktuell angezeigte Prozessversion liegt vor.</span>
+    </div>
+    <details class="architecture-disclosure" data-testid="process-validation-evidence">
+      <summary>Validierungsnachweis und Historie</summary>
+      <div class="pt-3">
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted">Geprüfte Version</dt><dd class="col-sm-8">v{{ latest_validation.process_version }}</dd>
+          <dt class="col-sm-4 text-muted">Validiert durch</dt><dd class="col-sm-8">{{ latest_validation.validated_by.get_display_name|default:"Nicht mehr verfügbar" }}</dd>
+          <dt class="col-sm-4 text-muted">Rolle</dt><dd class="col-sm-8">{{ latest_validation.validator_role }}</dd>
+          <dt class="col-sm-4 text-muted">Zeitpunkt</dt><dd class="col-sm-8">{{ latest_validation.validated_at|date:"d.m.Y H:i" }}</dd>
+          <dt class="col-sm-4 text-muted">Notiz</dt><dd class="col-sm-8 text-preline">{{ latest_validation.note|default:"Keine zusätzliche Notiz" }}</dd>
+          <dt class="col-sm-4 text-muted">Nachweis</dt><dd class="col-sm-8">{% if latest_validation.evidence_url %}<a href="{{ latest_validation.evidence_url }}" target="_blank" rel="noopener noreferrer">Validierungsnachweis öffnen</a>{% else %}Kein separater Nachweis hinterlegt{% endif %}</dd>
+        </dl>
+        {% if process_analysis.validations.all %}
+        <hr>
+        <div class="section-title">Historische Validierungen</div>
+        <ul class="mb-0">{% for validation in process_analysis.validations.all %}<li>v{{ validation.process_version }} · {{ validation.validated_at|date:"d.m.Y H:i" }} · {{ validation.validator_role }} · {% if validation.validated_by %}{{ validation.validated_by.get_display_name }}{% else %}Person nicht mehr verfügbar{% endif %}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+    </details>
+    {% else %}
+    <div class="alert alert-warning mb-0"><strong>Keine Validierung für Version v{{ process_analysis.version }}.</strong> Der angezeigte Prozessstatus ist noch nicht durch ein eigenständiges Validierungsartefakt belegt.</div>
+    {% if process_analysis.validations.all %}
+    <details class="architecture-disclosure" data-testid="process-validation-history">
+      <summary>Frühere Validierungen anzeigen</summary>
+      <div class="pt-3">
+        <ul class="mb-0">{% for validation in process_analysis.validations.all %}<li>v{{ validation.process_version }} · {{ validation.validated_at|date:"d.m.Y H:i" }} · {{ validation.validator_role }} · {% if validation.validated_by %}{{ validation.validated_by.get_display_name }}{% else %}Person nicht mehr verfügbar{% endif %}</li>{% endfor %}</ul>
+      </div>
+    </details>
+    {% endif %}
+    {% endif %}
+  </div>
+</section>
+
+<section class="cr-section app-card work-design-entry" id="arbeitsgestaltung" data-testid="work-design-entry">
+  <header class="cr-section-heading">
+    <div>
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-1"><h2 class="mb-0">Arbeitsgestaltung</h2><span class="badge badge-soft">Optional</span></div>
+      <p>Freiwillige Vertiefung der Aufgaben und Rollen. Lösungsoptionen bleiben unabhängig davon nutzbar.</p>
+    </div>
+    {% if can_edit %}
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_assessment_create' process_analysis.pk %}">Rollenbetrachtung starten</a>
+    {% endif %}
+  </header>
+
+  <div class="work-design-entry__list">
+    {% for assessment in process_analysis.work_design_assessments.all %}
+    <div class="work-design-entry__row">
+      <div class="work-design-entry__summary">
+        <div class="work-design-entry__role">
+          <h3>{{ assessment.role_name }}</h3>
+          <span class="badge {% if assessment.status == 'assessed' %}state-ready{% else %}state-review{% endif %}">{{ assessment.get_status_display }}</span>
+          {% if assessment.is_stale %}<span class="badge state-review">Prozesskontext geändert</span>{% endif %}
+        </div>
+        <p>{{ assessment.business_outcome }}</p>
+        <span class="work-design-entry__meta">{{ assessment.tasks.count }} Aufgabe{{ assessment.tasks.count|pluralize:"n" }} · TASKSHIFT v{{ assessment.method_version }}</span>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:work_design_assessment_detail' assessment.pk %}">Öffnen</a>
+    </div>
+    {% empty %}
+    <div class="work-design-entry__empty">
+      <strong>Noch keine Rollenbetrachtung angelegt.</strong>
+      <span>Der bestehende Lösungsraum bleibt auch ohne diesen optionalen Schritt vollständig nutzbar.</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="app-card mb-4 solution-space-card" id="loesungsoptionen">
+  {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}{% solution_generation_entry process_analysis as generation_entry %}{% endif %}
+  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div><strong>Lösungsoptionen vergleichen</strong><div class="small text-muted mt-1">Alternativen anhand identischer Kriterien prüfen und die Auswahl getrennt auditieren. Methodik: Opportunities &amp; Solutions (ADM Phase E).</div></div>
+    {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}
+      <div class="d-flex gap-2 flex-wrap">
+        {% if solution_design_task %}
+          <a class="btn btn-sm btn-primary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}?work_design_task={{ solution_design_task.pk }}">Lösungsoption für diese Aufgabe ergänzen</a>
+        {% elif process_analysis.solution_options.all %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>
+        {% endif %}
+        {% if not solution_design_task %}
+          {% if generation_entry.generation_ready %}
+            <form method="post" action="{% url 'accelerator:solution_generation_start' process_analysis.pk %}" class="m-0">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-secondary" type="submit">3 Lösungsentwürfe mit KI erstellen</button>
+            </form>
+          {% else %}
+            <button class="btn btn-sm btn-outline-secondary" type="button" disabled>3 Lösungsentwürfe mit KI erstellen</button>
+          {% endif %}
+          {% if generation_entry.latest_generation_run %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:solution_generation_preview' generation_entry.latest_generation_run.pk %}">Letzten KI-Entwurf ansehen</a>{% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    {% if solution_design_task %}
+    <div class="cr-inline-note solution-design-context mb-4" data-testid="solution-design-task-context">
+      <div>
+        <strong>Lösungsdesign für Aufgabe „{{ solution_design_task.name }}“</strong>
+        <span>Die Aufgabe bleibt Ergebnis der TASKSHIFT-Arbeitsgestaltung. Hier werden erst konkrete organisatorische, regelbasierte, Software-, KI- oder hybride Lösungsalternativen für diese Aufgabe entwickelt.</span>
+      </div>
+      <a href="{% url 'architecture:work_design_assessment_detail' solution_design_task.assessment.pk %}">Zur Arbeitsgestaltung</a>
+    </div>
+    {% endif %}
+    {% if can_edit and process_analysis.stage.value_stream.focus.is_selected and not solution_design_task %}
+      {% if not generation_entry.generation_ready %}
+      <div class="alert alert-warning"><strong>KI-Generierung noch nicht möglich.</strong> Es fehlen: {{ generation_entry.generation_missing_labels|join:", " }}.</div>
+      {% elif generation_entry.latest_generation_state.stale %}
+      <div class="alert alert-warning">Der letzte KI-Entwurf basiert auf einem älteren Prozessstand und muss vor einer späteren Übernahme neu generiert werden.</div>
+      {% elif generation_entry.latest_generation_state.expired %}
+      <div class="alert alert-warning">Der letzte KI-Entwurf ist abgelaufen. Eine neue Generierung ist erforderlich.</div>
+      {% endif %}
+    {% endif %}
+    {% if not process_analysis.stage.value_stream.focus.is_selected %}<p class="text-muted">Lösungsoptionen können dokumentiert werden, eine bevorzugte Option und die Use-Case-Ableitung setzen jedoch eine positive Fokusentscheidung voraus.</p>{% endif %}
+    {% if journey.next_action.key == 'solution' and journey.next_action.action_label == 'Lösungsoptionen vergleichen' %}
+    <div class="alert alert-info"><strong>Lösungsentscheidung offen.</strong> Bewerten Sie die Optionen vollständig und wählen Sie die bevorzugte Lösung anschließend in der Vergleichsmatrix mit Begründung aus.</div>
+    {% endif %}
+    <div class="solution-option-grid">
+      {% for option in process_analysis.solution_options.all %}
+      <section id="solution-option-{{ option.pk }}" class="solution-option-card solution-option-{{ option.recommendation }}{% if highlighted_solution_option == option %} is-newly-added{% endif %}">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div><span class="badge badge-soft">{{ option.get_option_type_display }}</span><h2 class="h5 mt-2 mb-1">{{ option.name }}</h2></div>
+          <div class="text-end"><span class="badge {% if option.recommendation == 'preferred' %}state-ready{% elif option.recommendation == 'rejected' %}state-blocked{% else %}state-review{% endif %}">{{ option.get_recommendation_display }}</span><div class="mt-1"><span class="badge badge-soft">{{ option.get_evaluation_status_display }}</span></div></div>
+        </div>
+        <p class="text-muted">{{ option.description }}</p>
+        {% if highlighted_solution_option == option %}
+        <div class="cr-inline-note mb-3" data-testid="newly-added-solution-option">
+          <strong>Neue Lösungsoption für eine TASKSHIFT-Aufgabe.</strong>
+          <span>Die Aufgabe selbst bleibt in der Arbeitsgestaltung; nur diese konkrete Lösungsalternative ist Kandidat im bestehenden Vergleich.</span>
+        </div>
+        {% endif %}
+        {% if option.source_work_design_snapshot %}
+        <div class="small text-muted mb-2">
+          Quelle: Arbeitsgestaltung · {{ option.source_work_design_snapshot.role_name }} · {{ option.source_work_design_snapshot.task_name }}
+        </div>
+        {% endif %}
+        <dl class="stage-facts">
+          <dt>Beitrag</dt><dd>{{ option.expected_value }}</dd>
+          <dt>Machbarkeit</dt><dd>{{ option.get_feasibility_display }}</dd>
+          <dt>Bottleneck-Abdeckung</dt><dd>{{ option.bottleneck_coverage|default:"–" }}</dd>
+          <dt>Daten</dt><dd>{{ option.data_requirements|default:"–" }}</dd>
+          <dt>Anwendungen</dt><dd>{{ option.application_impact|default:"–" }}</dd>
+          <dt>Integrationsaufwand</dt><dd>{{ option.get_integration_effort_display }}</dd>
+          <dt>Integrationen</dt><dd>{{ option.integration_impact|default:"–" }}</dd>
+          <dt>Technologie</dt><dd>{{ option.technology_constraints|default:"–" }}</dd>
+          <dt>Risiken</dt><dd>{{ option.risks|default:"–" }}</dd>
+          <dt>Begründung</dt><dd>{{ option.architecture_fit|default:"–" }}</dd>
+        </dl>
+        {% if can_edit %}<a class="btn btn-sm btn-outline-secondary w-100 mt-3" href="{% url 'architecture:solution_option_update' option.pk %}">Option bearbeiten</a>{% endif %}
+        {% if can_create_use_case and process_analysis.stage.value_stream.focus.is_selected and option.recommendation == 'preferred' and option.starts_ai_use_case %}
+        {% if journey.next_action.key != 'use_case' %}<a class="btn btn-sm btn-outline-secondary w-100 mt-2" href="{% url 'architecture:solution_option_start_use_case' option.pk %}">Bevorzugte Option als Use Case prüfen</a>{% endif %}
+        {% endif %}
+      </section>
+      {% empty %}<p class="text-muted mb-0">Noch keine Lösungsoptionen dokumentiert. Prüfen Sie organisatorische und regelbasierte Alternativen ebenso wie KI.</p>{% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if process_analysis.use_case_origins.all %}
+<div class="app-card">
+  <div class="card-header"><strong>Abgeleitete Use Cases</strong></div>
+  <div class="list-group list-group-flush">
+    {% for origin in process_analysis.use_case_origins.all %}<a class="list-group-item list-group-item-action bg-transparent" href="{{ origin.use_case.get_absolute_url }}">{{ origin.use_case.short_id }} · {{ origin.use_case.title }}</a>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-3" data-testid="llm-review-export-notice">
+  <div><strong>LLM Review Export</strong><div class="small">Vor externer Weitergabe Unternehmens-/Kundenrichtlinien, NDA, Datenschutz, Informationssicherheit und freigegebenen Zielkontext prüfen.</div></div>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'review_export:process' process_analysis.pk %}" data-testid="llm-review-export-action">Markdown herunterladen</a>
+</div>
+{% endblock %}

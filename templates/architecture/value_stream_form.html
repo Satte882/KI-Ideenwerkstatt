@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-value-stream-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Discovery &amp; Fokusentscheidung</div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Zuerst den End-to-End-Rahmen dokumentieren, anschließend anhand einheitlicher Kriterien über einen Deep Dive entscheiden.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% if value_stream %}{{ value_stream.get_absolute_url }}{% else %}{% url 'architecture:value_stream_list' %}{% endif %}">Abbrechen</a>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+  {% if form.assignment_warnings %}
+  <div class="alert alert-warning">
+    <strong>Bestehende Zuordnung prüfen</strong>
+    <ul class="mb-0 mt-2">{% for warning in form.assignment_warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  <section class="app-card mb-4">
+    <div class="card-header"><strong>1. Architecture Vision und Value-Stream-Rahmen</strong><div class="small text-muted mt-1">Scope, Ziel, Stakeholder, Phasenrahmen und Leitplanken.</div></div>
+    <div class="card-body"><div class="row g-3">
+      {% for field in form %}
+      {% if field.name == 'business_domain' %}</div>{% include "architecture/_screening_level_anchors.html" with scope="value_stream" %}</div></section><section class="app-card decision-panel mb-4"><div class="card-header"><strong>2. Fokus &amp; Priorisierung</strong><div class="small text-muted mt-1">Impact, wirtschaftliches Potenzial, Problemintensität, Datenzugänglichkeit und Veränderungsaufwand ohne künstlichen Gesamtscore bewerten.</div></div><div class="card-body"><div class="row g-3">{% endif %}
+      <div class="{% if field.name == 'name' or field.name == 'business_unit' or field.name == 'owner' or field.name == 'status' or field.name == 'business_domain' or field.name == 'capability' or field.name == 'strategic_impact' or field.name == 'economic_potential' or field.name == 'pain_intensity' or field.name == 'data_accessibility' or field.name == 'change_effort' or field.name == 'focus_status' %}col-md-6{% else %}col-12{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% if field.errors %}<div class="field-attention-message">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div></div>
+  </section>
+  <div class="d-flex justify-content-end gap-2">
+    <button class="btn btn-primary px-4">Speichern</button>
+  </div>
+</form>
+{% endblock %}

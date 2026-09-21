@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static worklist_tags %}
+{% block title %}Arbeitsvorrat – KI-Radar{% endblock %}
+{% block body_class %}page-dashboard{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-dashboard.css' %}">
+{% endblock %}
+{% block content %}
+{% worklist_rows next_steps as task_rows %}
+<header class="cr-page-header dashboard-header">
+  <div class="cr-page-header__copy">
+    <h1 class="cr-page-header__title">Arbeitsvorrat</h1>
+    <p class="cr-page-header__summary">
+      <strong>{{ task_rows|length }}</strong> ausführbare Aufgaben
+      <span aria-hidden="true">·</span>
+      <strong>{{ decision_queue|length }}</strong> anstehende Entscheidungen
+      <span aria-hidden="true">·</span>
+      Stand <time datetime="{{ today|date:'Y-m-d' }}">{{ today|date:"d.m.Y" }}</time>
+    </p>
+  </div>
+  <div class="dashboard-header__actions">
+    <a class="btn btn-outline-secondary" href="{% url 'use_cases:list' %}">Alle Use Cases</a>
+    {% if nav_is_coordinator %}<a class="btn btn-primary" href="{% url 'reviews:monthly' %}">Monatsreview starten</a>{% endif %}
+  </div>
+</header>
+
+<dl class="cr-stat-strip dashboard-stat-strip" aria-label="Status des Arbeitsvorrats">
+  <div class="cr-stat dashboard-stat--danger">
+    <dt>Überfällig</dt>
+    <dd><strong>{{ overdue_total }}</strong><span>Entscheidungstermin überschritten</span></dd>
+  </div>
+  <div class="cr-stat cr-stat--attention">
+    <dt>Blockiert</dt>
+    <dd><strong>{{ blocked_total }}</strong><span>Pflichtangaben oder Freigaben fehlen</span></dd>
+  </div>
+  <div class="cr-stat">
+    <dt>Aktive Vorhaben</dt>
+    <dd><strong>{{ active_total }}</strong><span>Prüfung, Pilot und Betrieb</span></dd>
+  </div>
+  <div class="cr-stat">
+    <dt>Nutzen gemessen</dt>
+    <dd><strong>{{ measured_total }}</strong><span>Mit strukturiertem Ist-Wert</span></dd>
+  </div>
+  <div class="cr-stat">
+    <dt>Ziel erreicht</dt>
+    <dd><strong>{{ achieved_total }}</strong><span>Primäre Erfolgsmetrik erfüllt</span></dd>
+  </div>
+</dl>
+
+<section class="cr-section dashboard-worklist" aria-labelledby="worklist-title">
+  <header class="cr-section-heading dashboard-worklist__heading">
+    <div>
+      <h2 id="worklist-title">Steuerungsbedarf</h2>
+      <p>Ausführbare Aufgaben zuerst; Entscheidungen bleiben als eigene Sicht verfügbar.</p>
+    </div>
+  </header>
+
+  <div class="dashboard-view-switch" role="tablist" aria-label="Arbeitsvorrat auswählen">
+    <button class="dashboard-view-switch__button active" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks-pane" type="button" role="tab" aria-controls="tasks-pane" aria-selected="true">
+      Meine Aufgaben <span class="dashboard-view-switch__count">{{ task_rows|length }}</span>
+    </button>
+    <button class="dashboard-view-switch__button" id="decisions-tab" data-bs-toggle="tab" data-bs-target="#decisions-pane" type="button" role="tab" aria-controls="decisions-pane" aria-selected="false">
+      Anstehende Entscheidungen <span class="dashboard-view-switch__count">{{ decision_queue|length }}</span>
+    </button>
+  </div>
+
+  <div class="tab-content dashboard-worklist__content">
+    <div class="tab-pane fade show active" id="tasks-pane" role="tabpanel" aria-labelledby="tasks-tab" tabindex="0">
+      <div class="cr-inline-note dashboard-sort-note"><strong>Priorisierung</strong><span>Blocker-Priorität, danach Überfälligkeit/Fälligkeit und stabile Use-Case-ID. Die Reihenfolge ist nicht manuell übersteuerbar.</span></div>
+      <div class="table-responsive dashboard-table-wrap">
+        <table class="table dashboard-table align-middle mb-0">
+          <thead><tr><th scope="col">Vorhaben</th><th scope="col">Phase</th><th scope="col">Aufgabe</th><th scope="col">Grund</th><th scope="col">Fällig</th><th scope="col"><span class="visually-hidden">Aktion</span></th></tr></thead>
+          <tbody>
+          {% for row in task_rows %}
+          <tr class="{% if row.action.state == 'blocked' %}dashboard-row--blocked{% elif row.overdue %}dashboard-row--overdue{% endif %}">
+            <td class="dashboard-table__subject"><a href="{{ row.use_case.get_absolute_url }}"><strong>{{ row.use_case.short_id }}</strong> · {{ row.use_case.title }}</a><div>{{ row.use_case.business_unit }}</div></td>
+            <td><span class="badge badge-soft">{{ row.action.label }}</span><div class="dashboard-table__meta">Priorität {{ row.priority_class }}</div></td>
+            <td class="dashboard-table__task"><strong>{{ row.action.action_label|default:row.action.label }}</strong></td>
+            <td class="dashboard-table__reason">{{ row.action.reason }}</td>
+            <td class="dashboard-table__due">{% if row.due %}<time datetime="{{ row.due|date:'Y-m-d' }}" class="{% if row.overdue %}text-danger fw-semibold{% endif %}">{{ row.due|date:"d.m.Y" }}</time>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="dashboard-table__action"><a class="btn btn-sm {% if row.action.state == 'blocked' %}btn-outline-danger{% else %}btn-primary{% endif %}" href="{{ row.action_url }}">{{ row.action.action_label|default:"Öffnen" }}</a></td>
+          </tr>
+          {% empty %}<tr><td colspan="6"><p class="cr-empty-state">Für deine Rolle sind aktuell keine ausführbaren Aufgaben offen.</p></td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="decisions-pane" role="tabpanel" aria-labelledby="decisions-tab" tabindex="0">
+      <div class="cr-inline-note dashboard-sort-note"><strong>Entscheidungsreife</strong><span>Sortiert nach Überfälligkeit, Blockern und Fälligkeit. Stand <time datetime="{{ today|date:'Y-m-d' }}">{{ today|date:"d.m.Y" }}</time>.</span></div>
+      <div class="table-responsive dashboard-table-wrap">
+        <table class="table dashboard-table align-middle mb-0">
+          <thead><tr><th scope="col">Use Case</th><th scope="col">Phase</th><th scope="col">Anstehende Entscheidung</th><th scope="col">Reife</th><th scope="col">Offene Voraussetzungen</th><th scope="col">Fällig</th><th scope="col">Owner</th></tr></thead>
+          <tbody>
+          {% for item in decision_queue %}
+          <tr class="{% if item.decision_check.state == 'blocked' %}dashboard-row--blocked{% endif %}">
+            <td class="dashboard-table__subject"><a href="{{ item.get_absolute_url }}"><strong>{{ item.short_id }}</strong> · {{ item.title }}</a><div>{{ item.business_unit }}</div></td>
+            <td><span class="badge badge-soft">{{ item.get_status_display }}</span></td>
+            <td class="dashboard-table__task"><strong>{{ item.decision_check.title }}</strong></td>
+            <td><span class="badge state-{{ item.decision_check.state }}">{{ item.decision_check.state_label }}</span></td>
+            <td class="dashboard-table__reason">{% if item.blocker_details %}<strong>{{ item.blocker_details|length }} offen</strong><div class="dashboard-table__meta">{{ item.blocker_details.0.label }}</div><a href="{{ item.blocker_details.0.target_href }}">Ersten Punkt bearbeiten</a>{% elif item.decision_check.warnings %}{{ item.decision_check.warnings.0 }}{% else %}<span class="text-muted">Keine offenen Blocker</span>{% endif %}</td>
+            <td class="dashboard-table__due">{% if item.decision_due %}<time datetime="{{ item.decision_due|date:'Y-m-d' }}">{{ item.decision_due|date:"d.m.Y" }}</time>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td>{{ item.business_owner.get_display_name }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="7"><p class="cr-empty-state">Keine aktiven Entscheidungen vorhanden.</p></td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

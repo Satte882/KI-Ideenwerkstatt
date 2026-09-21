@@ -1,0 +1,69 @@
+{% if review %}
+<div class="border rounded p-3 mt-3" data-adoption-candidate="{{ review.candidate.pk }}">
+  <div class="d-flex justify-content-between gap-2 flex-wrap align-items-center">
+    <strong>Feldprüfung</strong>
+    <span class="badge {% if review.candidate.status == 'open' %}state-review{% elif review.candidate.status == 'adopted' or review.candidate.status == 'adopted_edited' %}state-ready{% elif review.candidate.status == 'conflict' %}state-blocked{% else %}text-bg-secondary{% endif %}">{{ review.status_label }}</span>
+  </div>
+
+  {% if review.target_missing %}
+  <div class="alert alert-warning mt-3 mb-0" role="status">Das gebundene Zielobjekt ist nicht mehr vorhanden. Eine Übernahme ist nicht möglich.</div>
+  {% elif review.is_conflict %}
+  <div class="alert alert-warning mt-3" role="alert">
+    Das Zielfeld wurde zwischenzeitlich geändert. Es wird nichts automatisch überschrieben.
+  </div>
+  <div class="row g-3" aria-label="Konfliktvergleich">
+    <div class="col-12 col-lg-4"><strong>Damals</strong><div class="mt-1 text-break">{{ review.candidate.previous_value|default:"–"|linebreaksbr }}</div></div>
+    <div class="col-12 col-lg-4"><strong>Aktuell</strong><div class="mt-1 text-break">{{ review.current_value|default:"–"|linebreaksbr }}</div></div>
+    <div class="col-12 col-lg-4"><strong>Vorschlag</strong><div class="mt-1 text-break">{{ review.candidate.proposed_value|default:"–"|linebreaksbr }}</div></div>
+  </div>
+  {% if review.can_edit %}
+  <div class="d-flex gap-2 flex-wrap mt-3">
+    <form method="post" action="{% url 'accelerator:capture_analyze' review.session.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit">Neu analysieren</button>
+    </form>
+    <a class="btn btn-outline-primary" href="{{ review.manual_edit_url }}">Regulär bearbeiten</a>
+    <form method="post" action="{% url 'accelerator:candidate_reject' review.analysis.pk review.candidate.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-outline-danger" type="submit">Verwerfen</button>
+    </form>
+  </div>
+  {% endif %}
+  {% elif review.is_open %}
+  <div class="mt-3"><strong>Aktueller Wert</strong><div class="mt-1 text-break">{{ review.current_value|default:"–"|linebreaksbr }}</div></div>
+  {% if not review.can_edit %}
+  <div class="alert alert-warning mt-3 mb-0" role="status">Für dieses Zielfeld fehlt die Bearbeitungsberechtigung.</div>
+  {% else %}
+    {% if review.preview_only %}
+    <div class="alert alert-info mt-3" role="status">Hohe Unsicherheit: Der Vorschlag ist nur zur Prüfung sichtbar und kann nicht übernommen werden.</div>
+    {% endif %}
+    <div class="d-flex gap-2 flex-wrap mt-3">
+      {% if review.allow_direct %}
+      <form method="post" action="{% url 'accelerator:candidate_adopt' review.analysis.pk review.candidate.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="direct">
+        <button class="btn btn-primary" type="submit">Direkt übernehmen</button>
+      </form>
+      {% endif %}
+      {% if review.allow_reject %}
+      <form method="post" action="{% url 'accelerator:candidate_reject' review.analysis.pk review.candidate.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-danger" type="submit">Verwerfen</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if review.allow_edited %}
+    <form class="mt-3" method="post" action="{% url 'accelerator:candidate_adopt' review.analysis.pk review.candidate.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="mode" value="edited">
+      <label class="form-label" for="edited-value-{{ review.candidate.pk }}">Vor Übernahme bearbeiten</label>
+      <textarea class="form-control" id="edited-value-{{ review.candidate.pk }}" name="edited_value" rows="4" required>{{ review.candidate.proposed_value }}</textarea>
+      <button class="btn btn-outline-primary mt-2" type="submit">Bearbeitet übernehmen</button>
+    </form>
+    {% endif %}
+  {% endif %}
+  {% else %}
+  <div class="text-muted mt-3">Dieser Feldvorschlag ist abgeschlossen und kann nicht erneut verarbeitet werden.</div>
+  {% endif %}
+</div>
+{% endif %}

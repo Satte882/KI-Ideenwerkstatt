@@ -1,0 +1,38 @@
+<div class="process-findings" id="entscheidungsrelevante-befunde" data-testid="process-findings-summary">
+  <h3 class="h6">Kernbefund</h3>
+  {% if finding_groups %}
+  <div class="row g-4 mt-1">
+    {% for group in finding_groups %}
+    <section class="col-md-6">
+      <div class="section-title">{{ group.label }}</div>
+      {% for item in group.items %}<div{% if not forloop.first %} class="mt-1"{% endif %}>{{ item.text }}</div>{% endfor %}
+      {% with item=group.items.0 %}<div class="small text-muted mt-2">Quelle: <a href="#{{ item.source_anchor }}">{{ item.source_label }}</a></div>{% endwith %}
+    </section>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted mb-0">Noch keine Angaben zu Problem und Größenordnung vorhanden.</p>
+  {% endif %}
+
+  {% if process_analysis.cause_hypotheses or process_analysis.confirmed_causes or process_analysis.constraints %}
+  <div class="mt-4" data-testid="structured-diagnosis-summary">
+    <div class="section-title mb-3">Ursachen und Randbedingungen</div>
+    <div class="row g-4">
+      <section class="col-md-6" id="analysis-cause-hypotheses">
+        <div class="d-flex align-items-center gap-2 mb-1"><strong>Ursachenhypothese</strong>{% if process_analysis.cause_hypotheses %}<span class="badge state-review">Hypothese / nicht bestätigt</span>{% endif %}</div>
+        <div class="text-preline">{{ process_analysis.cause_hypotheses|default:"Keine offene Hypothese dokumentiert" }}</div>
+      </section>
+      <section class="col-md-6" id="analysis-confirmed-causes">
+        <div class="d-flex align-items-center gap-2 mb-1"><strong>Bestätigte Ursache</strong>{% if process_analysis.confirmed_causes %}<span class="badge state-ready">Bestätigt</span>{% endif %}</div>
+        <div class="text-preline">{{ process_analysis.confirmed_causes|default:"Noch nicht bestätigt" }}</div>
+      </section>
+      {% if process_analysis.constraints %}
+      <section class="col-md-6" id="analysis-constraints">
+        <div class="d-flex align-items-center gap-2 mb-1"><strong>Randbedingung / Constraint</strong><span class="badge badge-soft">Optional</span></div>
+        <div class="text-preline">{{ process_analysis.constraints }}</div>
+      </section>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>

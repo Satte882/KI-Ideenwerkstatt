@@ -1,0 +1,51 @@
+{% load workflow_tags %}
+{% workflow_steps journey request as workflow %}
+{% if workflow or use_case.classification %}
+<section class="cr-lifecycle-rail{% if lifecycle_variant %} cr-lifecycle-rail--{{ lifecycle_variant }}{% endif %}{% if lifecycle_columns %} cr-lifecycle-rail--columns-{{ lifecycle_columns }}{% endif %}" id="lifecycle-orientation" aria-label="Lifecycle-Orientierung">
+  {% if workflow %}
+  <header class="cr-lifecycle-rail__heading">
+    <div>
+      <div class="cr-lifecycle-rail__kicker">{{ lifecycle_kicker|default:"Prozesskontext" }}</div>
+      <h2>{{ lifecycle_title|default:"Lifecycle" }}</h2>
+    </div>
+    {% if lifecycle_context %}<span>{{ lifecycle_context }}</span>{% elif journey.path_label %}<span>{{ journey.path_label }}</span>{% endif %}
+  </header>
+  <nav class="cr-lifecycle-rail__steps" aria-label="Phasen des Arbeitsmodells">
+    {% for step in workflow %}
+    {% if step.local_url %}<a class="cr-lifecycle-step cr-lifecycle-step--{{ step.state }}{% if step.view_active %} cr-lifecycle-step--active{% endif %}" href="{{ step.local_url }}"{% if step.view_active %} aria-current="page"{% elif step.state == 'current' %} aria-current="step"{% endif %}>{% else %}<span class="cr-lifecycle-step cr-lifecycle-step--{{ step.state }} cr-lifecycle-step--static" aria-disabled="true"{% if step.state == 'current' %} aria-current="step"{% endif %}>{% endif %}
+      <span class="cr-lifecycle-step__marker" aria-hidden="true">
+        {% if step.state == 'complete' %}✓{% elif step.state == 'current' %}●{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}
+      </span>
+      <span class="cr-lifecycle-step__label">{{ step.local_label }}</span>
+    {% if step.local_url %}</a>{% else %}</span>{% endif %}
+    {% endfor %}
+  </nav>
+  {% if journey.completion_message %}
+  <div class="cr-lifecycle-rail__completion">
+    <strong>Journey abgeschlossen</strong>
+    <span>{{ journey.completion_message }}</span>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if use_case.classification %}
+  <div class="cr-lifecycle-context" aria-label="Fachliche Einordnung">
+    <span>Fachdomäne: <strong>{{ use_case.classification.get_business_domain_display }}</strong></span>
+    {% if use_case.classification.capability %}<span>Capability: <strong>{{ use_case.classification.capability }}</strong></span>{% endif %}
+    {% if use_case.classification.process_area %}<span>Prozessbereich: <strong>{{ use_case.classification.process_area }}</strong></span>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if request.resolver_match.view_name == 'architecture:value_stream_detail' %}
+<div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-3" data-testid="llm-review-export-notice">
+  <div><strong>LLM Review Export</strong><div class="small">Vor externer Weitergabe Unternehmens-/Kundenrichtlinien, NDA, Datenschutz, Informationssicherheit und freigegebenen Zielkontext prüfen.</div></div>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'review_export:value_stream' value_stream.pk %}" data-testid="llm-review-export-action">Markdown herunterladen</a>
+</div>
+{% elif request.resolver_match.view_name == 'use_cases:detail' %}
+<div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-3" data-testid="llm-review-export-notice">
+  <div><strong>LLM Review Export</strong><div class="small">Vor externer Weitergabe Unternehmens-/Kundenrichtlinien, NDA, Datenschutz, Informationssicherheit und freigegebenen Zielkontext prüfen.</div></div>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'review_export:use_case' use_case.pk %}" data-testid="llm-review-export-action">Markdown herunterladen</a>
+</div>
+{% endif %}

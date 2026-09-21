@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Ideen-Inbox – KI-Radar{% endblock %}
+{% block body_class %}page-idea-inbox{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+  <div>
+    <div class="eyebrow mb-2">Use Case Steering · Eingangskanal</div>
+    <h1 class="page-title">Ideen-Inbox</h1>
+    <p class="page-subtitle mb-0">Frühe Ideen erfassen, schnell triagieren und erst bei Relevanz in den bestehenden Intake übernehmen.</p>
+  </div>
+  {% if can_create_idea %}<a class="btn btn-primary" href="{% url 'use_cases:idea_create' %}">Idee erfassen</a>{% endif %}
+</div>
+
+<div class="row g-3 mb-4" aria-label="Ideenstatus">
+  <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Gesamt</div><div class="h3 mb-0">{{ stats.all }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Offen</div><div class="h3 mb-0">{{ stats.open }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Nicht weiterverfolgt</div><div class="h3 mb-0">{{ stats.dismissed }}</div></div></div></div>
+  <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Übernommen</div><div class="h3 mb-0">{{ stats.promoted }}</div></div></div></div>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end" aria-label="Ideen filtern">
+      <div class="col-12 col-lg-4">
+        <label class="form-label" for="idea-search">Suche</label>
+        <input class="form-control" id="idea-search" type="search" name="q" value="{{ query }}" placeholder="Titel, Beschreibung oder Quelle">
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="idea-state">Status</label>
+        <select class="form-select" id="idea-state" name="state">
+          <option value="open" {% if state_filter == 'open' %}selected{% endif %}>Offen</option>
+          <option value="dismissed" {% if state_filter == 'dismissed' %}selected{% endif %}>Nicht weiterverfolgt</option>
+          <option value="promoted" {% if state_filter == 'promoted' %}selected{% endif %}>Übernommen</option>
+          <option value="all" {% if state_filter == 'all' %}selected{% endif %}>Alle</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-3">
+        <label class="form-label" for="idea-bu">Organisationseinheit</label>
+        <select class="form-select" id="idea-bu" name="business_unit">
+          <option value="">Alle Bereiche</option>
+          {% for unit in business_units %}<option value="{{ unit.pk }}" {% if business_unit_id == unit.pk|stringformat:'s' %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label" for="idea-sort">Sortierung</label>
+        <select class="form-select" id="idea-sort" name="sort">
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Neueste zuerst</option>
+          <option value="score" {% if sort == 'score' %}selected{% endif %}>Quick Score</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-1 d-grid"><button class="btn btn-outline-primary" type="submit">Filtern</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="app-card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Idee</th><th>Bereich</th><th class="text-center">I</th><th class="text-center">C</th><th class="text-center">V</th><th class="text-center">Score</th><th>Alter</th><th>Status / Aktion</th></tr></thead>
+      <tbody>
+      {% for idea in ideas %}
+        <tr>
+          <td>
+            <a class="fw-semibold text-decoration-none" href="{{ idea.get_absolute_url }}">{{ idea.title }}</a>
+            <div class="small text-muted mt-1">{{ idea.description|truncatechars:110 }}</div>
+          </td>
+          <td>{% if idea.business_unit %}{{ idea.business_unit.name }}{% else %}<span class="text-muted">Offen</span>{% endif %}</td>
+          <td class="text-center">{{ idea.impact|default:"–" }}</td>
+          <td class="text-center">{{ idea.confidence|default:"–" }}</td>
+          <td class="text-center">{{ idea.ease|default:"–" }}</td>
+          <td class="text-center">{% if idea.quick_score is not None %}<strong>{{ idea.quick_score }}</strong>{% else %}<span class="badge text-bg-secondary">Triage offen</span>{% endif %}</td>
+          <td>
+            {{ idea.age_days }} T.
+            {% if idea.is_stale %}<span class="badge text-bg-warning ms-1">lange offen</span>{% endif %}
+          </td>
+          <td>
+            {% if idea.state == 'open' %}<span class="badge state-ready">Offen</span>{% elif idea.state == 'dismissed' %}<span class="badge text-bg-secondary">Nicht weiterverfolgt</span>{% else %}<span class="badge text-bg-success">Übernommen</span>{% endif %}
+            <a class="btn btn-sm btn-outline-secondary ms-2" href="{{ idea.get_absolute_url }}">Öffnen</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-5">Keine Ideen für die gewählten Filter.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="small text-muted mt-3 mb-0">Quick-Triage ist an die ICE-Methode angelehnt: klassisch Impact, Confidence, Ease; hier ersetzt Validierbarkeit bewusst „Ease“. Quick Score = (Impact + Confidence + Validierbarkeit) / 3. Er dient nur der Discovery-Sortierung und löst keine Freigabe aus.</p>
+{% endblock %}

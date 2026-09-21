@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static metric_tags origin_consistency_tags %}
+{% block title %}{{ use_case.short_id }} – KI-Radar{% endblock %}
+{% block body_class %}page-use-case{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}?v=issue-417-local-work-status">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-use-case.css' %}">
+{% endblock %}
+{% block content %}
+{% with latest_assessment=use_case.decision_assessments.first %}
+{% metric_set use_case as metric %}
+{% metric_value use_case.one_time_cost 'currency' '€' as one_time_cost %}
+{% metric_value use_case.recurring_cost 'currency' '€' as recurring_cost %}
+
+{% include "includes/lifecycle_rail.html" %}
+{% include "includes/local_work_status.html" %}
+
+<header class="cr-page-header uc-page-header" id="use-case-overview">
+  <div class="cr-page-header__copy">
+    <div class="uc-object-context">{{ use_case.short_id }} · {{ use_case.business_unit }}</div>
+    <h1 class="cr-page-header__title">{{ use_case.title }}</h1>
+    <p class="uc-page-summary">{{ use_case.summary|default:use_case.problem_statement|truncatechars:180 }}</p>
+  </div>
+  {% if nav_is_coordinator and journey.next_action.key != 'pilot_start' %}
+  <div class="dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Weitere Aktionen</button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="{% url 'reviews:create' use_case.pk %}">Entscheidung dokumentieren</a></li>
+    </ul>
+  </div>
+  {% endif %}
+</header>
+
+{% include "includes/decision_state.html" %}
+
+<section class="cr-section uc-assessment decision-panel" id="assessment" aria-labelledby="assessment-title">
+  <header class="cr-section-heading">
+    <div>
+      <h2 id="assessment-title">Belastbare Freigabeentscheidung</h2>
+      <p>Empfehlung und Confidence stehen im Vordergrund; Begründung, Evidenz und Bewertungsmetadaten bleiben nachvollziehbar.</p>
+    </div>
+    {% if nav_is_coordinator %}
+    <div class="d-flex flex-wrap justify-content-end gap-2">
+      {% if use_case.status == 'review' and journey.next_action.key != 'assessment' %}
+      <a class="btn btn-sm btn-outline-secondary" data-testid="assessment-edit-action" href="{% url 'use_cases:assessment_create' use_case.pk %}">{% if latest_assessment %}Neue Bewertungsversion{% else %}Bewertung anlegen{% endif %}</a>
+      {% endif %}
+      {% if journey.next_action.key != 'approval' %}
+        {% if latest_assessment %}
+        <a class="btn btn-sm btn-outline-secondary" data-testid="approval-decision-action" href="{% url 'use_cases:approval_decision_create' use_case.pk %}">Freigabeentscheidung</a>
+        {% elif use_case.status == 'review' %}
+        <a class="btn btn-sm btn-outline-secondary" data-testid="assessment-negative-decision-action" href="{% url 'use_cases:approval_decision_create' use_case.pk %}">Zurückstellen / nicht weiterverfolgen</a>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </header>
+  <div class="uc-assessment__body">
+    {% if latest_assessment %}
+    <div class="uc-assessment-grid">
+      <div>
+        <div class="uc-data-label">Empfehlung</div>
+        <p><strong>{{ latest_assessment.get_recommendation_display }}</strong></p>
+      </div>
+      <div>
+        <div class="uc-data-label">Hergeleitete Confidence</div>
+        <p><span class="badge {% if latest_assessment.confidence_level == 'low' %}state-blocked{% elif latest_assessment.confidence_level == 'medium' %}state-review{% else %}state-ready{% endif %}">{{ latest_assessment.confidence_label }}</span></p>
+        <span>{{ latest_assessment.get_evidence_quality_display }} · {{ latest_assessment.get_evidence_coverage_display }}</span>
+      </div>
+      <div>
+        <div class="uc-data-label">Bewertungsdetails</div>
+        <details id="assessment-evidence">
+          <summary>Begründung, Evidenz und Metadaten anzeigen</summary>
+          <div class="uc-assessment-rationale">
+            <p>{{ latest_assessment.rationale }}</p>
+            <dl class="uc-detail-list">
+              <dt>Version</dt><dd>{{ latest_assessment.version }}</dd>
+              <dt>Bewertungsdatum</dt><dd>{{ latest_assessment.assessment_date|date:"d.m.Y" }}</dd>
+              <dt>Bewertet durch</dt><dd>{% if latest_assessment.assessed_by %}{{ latest_assessment.assessed_by.get_display_name }}{% else %}unbekannt{% endif %}</dd>
+              <dt>Governance-Vorprüfung</dt><dd>{% if latest_assessment.governance_precheck_completed %}durchgeführt{% else %}offen{% endif %}</dd>
+              <dt>Nachweis</dt><dd>{% if latest_assessment.evidence_url %}<a href="{{ latest_assessment.evidence_url }}" target="_blank" rel="noopener noreferrer">Bewertungsnachweis öffnen</a>{% else %}Kein externer Nachweis verlinkt · Bewertung auf Annahmenbasis{% endif %}</dd>
+            </dl>
+          </div>
+        </details>
+      </div>
+    </div>
+    {% else %}
+    <p class="cr-empty-state">Der Use Case ist aufgenommen, aber noch nicht strukturiert bewertet. Ohne Bewertung kann keine positive Freigabeentscheidung erfolgen; Zurückstellen oder Nicht-Weiterverfolgen bleibt möglich.</p>
+    {% endif %}
+  </div>
+</section>
+
+<div class="uc-business-grid">
+  <main class="uc-business-main">
+    <section class="cr-section uc-business-section" aria-labelledby="metric-title">
+      <header class="cr-section-heading">
+        <div><h2 id="metric-title">Primäre Erfolgsmetrik</h2><p>Ziel und Ist sind die führende Ergebnisbetrachtung; Baseline und Messgrundlage bleiben als Kontext erhalten.</p></div>
+        <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+          {% if use_case.metric_name %}<span class="badge {% if use_case.metric_result == 'achieved' %}state-ready{% elif use_case.metric_result == 'not_achieved' %}state-blocked{% else %}state-review{% endif %}">{{ use_case.metric_result_label }}</span>{% endif %}
+          {% if can_edit %}<a class="btn btn-sm btn-outline-secondary" data-testid="metric-edit-action" href="{% url 'use_cases:edit' use_case.pk %}#field-metric_name">Metrik bearbeiten</a>{% endif %}
+        </div>
+      </header>
+      <div class="uc-section-body">
+        {% if use_case.metric_name %}
+        <div class="uc-metric-heading"><div><div class="uc-data-label">Kennzahl</div><h3>{{ use_case.metric_name }}</h3><div class="uc-secondary-copy">{{ use_case.get_metric_type_display }} · {{ use_case.get_metric_direction_display }} · {{ metric.baseline.unit }}</div></div></div>
+        <div class="kpi-strip uc-kpi-strip">
+          <div class="kpi-cell"><small>Ziel</small><strong>{{ metric.target.display }}</strong></div>
+          <div class="kpi-cell"><small>Ist</small><strong>{{ metric.actual.display }}</strong></div>
+          <div class="kpi-cell"><small>Baseline</small><strong>{{ metric.baseline.display }}</strong></div>
+        </div>
+        <details id="metric-evidence">
+          <summary>Messgrundlage und Nachweis anzeigen</summary>
+          <dl class="uc-detail-list mt-3">
+            <dt>Messmethode</dt><dd>{{ use_case.metric_measurement_method|default:"–" }}</dd>
+            <dt>Messzeitraum</dt><dd>{{ use_case.metric_measurement_period|default:"–" }}</dd>
+            <dt>Messdatum</dt><dd>{{ use_case.metric_measured_at|date:"d.m.Y"|default:"–" }}</dd>
+            <dt>Nachweis</dt><dd>{% if use_case.metric_evidence_url %}<a href="{{ use_case.metric_evidence_url }}" target="_blank" rel="noopener noreferrer">Messnachweis öffnen</a>{% else %}–{% endif %}</dd>
+          </dl>
+        </details>
+        {% else %}<p class="cr-empty-state">Noch keine strukturierte Erfolgsmetrik definiert.</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="cr-section uc-business-section" aria-labelledby="business-context-title">
+      <header class="cr-section-heading">
+        <div><h2 id="business-context-title">Fachlicher Kontext</h2><p>Problem und erwarteter Nutzen bleiben als fachliche Begründung direkt sichtbar.</p></div>
+        {% if can_edit %}<a class="btn btn-sm btn-outline-secondary" data-testid="business-context-edit-action" href="{% url 'use_cases:edit' use_case.pk %}#field-problem_statement">Use Case bearbeiten</a>{% endif %}
+      </header>
+      <div class="uc-context-grid uc-section-body">
+        <div><div class="uc-data-label">Problem</div><p>{{ use_case.problem_statement }}</p></div>
+        <div><div class="uc-data-label">Erwarteter Nutzen</div><p>{{ use_case.expected_benefit }}</p></div>
+        <div><div class="uc-data-label">Prozess</div><p>{{ use_case.affected_process }}</p></div>
+        <div><div class="uc-data-label">Zielgruppe</div><p>{{ use_case.target_users|default:"–" }}</p></div>
+      </div>
+    </section>
+
+    {% if architecture_origin %}
+      {% if origin_source_differences %}
+      <div class="uc-source-drift"><strong>Quellenänderungen seit der Übernahme</strong><p>Die aktuelle Use-Case-Arbeitsfassung bleibt unverändert; die Abweichungen müssen bewusst geprüft werden.</p><ul>{% for item in origin_source_differences %}<li>{{ item.target_field }} aus {{ item.source_label }}: „{{ item.previous|default:"–" }}“ → „{{ item.current|default:"–" }}“</li>{% endfor %}</ul></div>
+      {% endif %}
+      <details class="cr-section uc-business-section" id="origin-context">
+        <summary><strong>Ursprung & strategischen Kontext anzeigen</strong></summary>
+        <div class="uc-section-body">
+          <dl class="uc-detail-list">
+            <dt>Value Stream</dt><dd><a href="{{ architecture_origin.stage.value_stream.get_absolute_url }}">{{ architecture_origin.stage.value_stream.name }}</a></dd>
+            <dt>Value-Stream-Verantwortung</dt><dd>{% if architecture_origin.stage.value_stream.owner %}{{ architecture_origin.stage.value_stream.owner.get_display_name }}{% else %}–{% endif %}</dd>
+            <dt>Phase</dt><dd>{{ architecture_origin.stage.name }}</dd>
+            <dt>Prozessanalyse</dt><dd>{% if architecture_origin.process_analysis %}<a href="{{ architecture_origin.process_analysis.get_absolute_url }}">{{ architecture_origin.process_analysis.name }}</a>{% else %}–{% endif %}</dd>
+            <dt>Lösungsoption</dt><dd>{% if architecture_origin.solution_option %}{{ architecture_origin.solution_option.name }}{% else %}–{% endif %}</dd>
+            {% if architecture_origin.stage.value_stream.strategic_objective %}<dt>Strategisches Ziel</dt><dd>{{ architecture_origin.stage.value_stream.strategic_objective }}</dd>{% endif %}
+            {% with focus=architecture_origin.stage.value_stream.focus %}
+              {% if focus %}
+                <dt>Fachdomäne</dt><dd>{{ focus.get_business_domain_display }}</dd>
+                {% if focus.capability %}<dt>Business Capability</dt><dd>{{ focus.capability }}</dd>{% endif %}
+                {% if focus.strategic_impact %}<dt>Strategischer Impact</dt><dd>{{ focus.get_strategic_impact_display }}</dd>{% endif %}
+              {% endif %}
+            {% endwith %}
+          </dl>
+          {% origin_consistency_panel use_case %}
+        </div>
+      </details>
+    {% endif %}
+  </main>
+
+  <aside class="uc-business-aside" aria-label="Steuerung und Governance">
+    <section class="uc-side-panel" aria-labelledby="control-title">
+      <h2 id="control-title">Steuerung</h2>
+      <dl class="uc-side-list">
+        <dt>Nächste Lifecycle-Entscheidung</dt><dd><strong>{{ status_dimensions.next_lifecycle_decision }}</strong><br><span class="uc-secondary-copy">Termin: {{ decision_due|date:"d.m.Y"|default:"Nicht gesetzt" }}</span></dd>
+        <dt>Fachlich verantwortlich</dt><dd>{{ use_case.business_owner.get_display_name }}</dd>
+        <dt>KI-Koordinator</dt><dd>{% if use_case.coordinator %}{{ use_case.coordinator.get_display_name }}{% else %}–{% endif %}</dd>
+        <dt>Technical Owner · Technik, Daten und KI</dt><dd>{% if use_case.technical_owner %}{{ use_case.technical_owner.get_display_name }}{% else %}–{% endif %}</dd>
+        {% if use_case.technical_owner_id and use_case.technical_owner_id == use_case.business_owner_id %}<dt>Rollenkonstellation</dt><dd>Business und Technik/Daten/KI in einer Rolle</dd>{% endif %}
+      </dl>
+    </section>
+
+    <section class="uc-side-panel" id="governance-evidence" aria-labelledby="governance-evidence-title">
+      <h2 id="governance-evidence-title">Governance &amp; Nachweise</h2>
+      <p class="uc-secondary-copy">Aktueller Prüfstatus und offene Prüfwege bleiben sichtbar; Begründungen, Metadaten und Nachweise sind nachrangig.</p>
+      <div class="uc-governance-list" data-testid="governance-status-summary">
+        {% for status in governance_statuses %}
+        <div class="uc-governance-item">
+          <div class="uc-governance-item__heading"><strong>{{ status.kind.label }}</strong><span class="badge {{ status.badge_class }}">{{ status.label }}</span></div>
+          {% if status.state == 'open' or status.state == 'not_assessed' %}
+            {% if status.target_url %}<a class="btn btn-sm btn-outline-secondary" href="{{ status.target_url }}">Prüfartefakt öffnen</a>{% endif %}
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="uc-side-actions">
+        {% if nav_is_coordinator and journey.next_action.key != 'governance' %}<a class="btn btn-outline-secondary" href="{% url 'governance:create' use_case.pk %}">Governance-Screening</a>{% endif %}
+        {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'notifications:evidence_create' use_case.pk %}">Nachweislink hinzufügen</a>{% endif %}
+      </div>
+      <details class="architecture-disclosure mt-3" id="governance-evidence-details">
+        <summary>Begründungen, Prüfmetadaten und Nachweise anzeigen</summary>
+        <div class="pt-3">
+          <div class="uc-governance-list">
+            {% for status in governance_statuses %}
+            <div class="uc-governance-item">
+              <div class="uc-governance-item__heading"><strong>{{ status.kind.label }}</strong><span class="badge {{ status.badge_class }}">{{ status.label }}</span></div>
+              {% if status.result %}<div class="uc-governance-result"><strong>Ergebnis:</strong> {{ status.result }}</div>{% endif %}
+              <div class="uc-secondary-copy">{{ status.attribution_note }}{% if status.actor %}: {{ status.actor }}{% endif %}{% if status.changed_at %}, {% if status.changed_at_has_time %}{{ status.changed_at|date:"d.m.Y H:i" }}{% else %}{{ status.changed_at|date:"d.m.Y" }}{% endif %}{% endif %}</div>
+              {% if status.rationale %}<div class="uc-governance-rationale">{{ status.rationale|truncatechars:140 }}</div>{% endif %}
+              {% if status.target_url and status.state != 'open' and status.state != 'not_assessed' %}<a class="btn btn-sm btn-outline-secondary" href="{{ status.target_url }}">Prüfartefakt öffnen</a>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="uc-evidence-links">{% for evidence in use_case.evidence_links.all %}<a href="{{ evidence.url }}" rel="noopener noreferrer" target="_blank"><strong>{{ evidence.label }}</strong><span>{{ evidence.get_document_type_display }}</span></a>{% endfor %}</div>
+        </div>
+      </details>
+    </section>
+  </aside>
+</div>
+
+<details class="cr-section uc-secondary-section" id="review-copilot">
+  <summary><strong>OpenRouter Review-Copilot anzeigen</strong></summary>
+  <div class="uc-section-body">
+    <p class="uc-secondary-copy">Semantischer Hinweisgeber – keine Freigabeinstanz.</p>
+    {% if nav_is_coordinator %}<form method="post" action="{% url 'use_cases:copilot' use_case.pk %}" class="mb-3">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm" {% if not copilot_enabled %}disabled{% endif %}>Analyse starten</button></form>{% endif %}
+    {% if copilot_analysis %}<div class="copilot-box">{{ copilot_analysis }}</div>
+    {% elif copilot_enabled %}<p class="uc-secondary-copy">Der Copilot prüft die semantische Konsistenz von Problem, Nutzen, Metrik, Ziel, Ergebnis und Kosten. Seine Hinweise sind nicht bindend.</p>
+    {% else %}<p class="uc-secondary-copy">OpenRouter ist nicht konfiguriert. Setze <code>OPENROUTER_API_KEY</code>, um die optionale Analyse zu aktivieren.</p>{% endif %}
+  </div>
+</details>
+
+<details class="cr-section uc-secondary-section" id="decision-history">
+  <summary><strong>Entscheidungs- und Änderungshistorie anzeigen</strong></summary>
+  <div class="uc-history-grid">
+    <div class="uc-history-column">
+      {% include "use_cases/includes/approval_history.html" %}
+      <div class="uc-history-panel">
+        <h3>Entscheidungsverlauf</h3>
+        <div class="uc-history-list">
+          {% for review in use_case.reviews.all %}
+          <div class="uc-history-row">
+            <div>
+              <div class="uc-history-row__title">
+                <strong>{{ review.get_decision_display }}</strong>
+                {% if review.scale_readiness_snapshot.state == "ready" %}<span class="badge state-ready">GO · Scale-ready</span>{% elif review.scale_readiness_snapshot.state == "conditional" %}<span class="badge state-review">CONDITIONAL GO · Auflagen</span>{% elif review.scale_readiness_snapshot.state == "not_ready" %}<span class="badge state-blocked">NO-GO · Nicht bereit</span>{% endif %}
+                {% if review.go_live_exception_confirmed %}<span class="badge state-review">Ausnahme ausdrücklich bestätigt</span>{% endif %}
+              </div>
+              <div class="uc-secondary-copy">{{ review.rationale }}</div>
+              {% if review.scale_readiness_snapshot %}<details class="uc-scale-snapshot"><summary>Scale-Readiness-Snapshot anzeigen</summary><div class="uc-secondary-copy">ML Test Score {{ review.scale_readiness_snapshot.ml_test_score.final|default:"–" }} · Produktivversion {{ review.scale_readiness_snapshot.delivery.production_version|default:"–" }}{% if review.open_actions %}<br>Maßnahme: {{ review.open_actions }} · Owner: {% if review.action_owner %}{{ review.action_owner.get_display_name }}{% else %}–{% endif %} · Frist: {{ review.action_due_date|date:"d.m.Y"|default:"–" }}{% endif %}</div></details>{% endif %}
+            </div>
+            <span>{{ review.review_date|date:"d.m.Y" }}</span>
+          </div>
+          {% empty %}<p class="cr-empty-state">Noch keine Reviews dokumentiert.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="uc-history-panel">
+      <h3>Änderungshistorie</h3>
+      <div class="uc-history-list history-list">{% for h in history %}<div class="uc-history-row"><div><strong>{{ h.history_date|date:"d.m.Y H:i" }}</strong><div class="uc-secondary-copy">{{ h.get_history_type_display }} durch {% if h.history_user %}{{ h.history_user.get_display_name }}{% else %}System{% endif %}</div></div></div>{% empty %}<p class="cr-empty-state">Keine Historie.</p>{% endfor %}</div>
+    </div>
+  </div>
+</details>
+{% endwith %}
+{% endblock %}

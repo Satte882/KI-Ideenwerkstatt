@@ -1,0 +1,72 @@
+name: ki-radar-local
+services:
+  db:
+    image: postgres:17.5-bookworm
+    environment:
+      POSTGRES_DB: ki_radar
+      POSTGRES_USER: ki_radar
+      POSTGRES_PASSWORD_FILE: /run/secrets/local_postgres_password
+    secrets:
+      - local_postgres_password
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - local_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ki_radar -d ki_radar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ki_radar
+      POSTGRES_USER: ki_radar
+      POSTGRES_PASSWORD_FILE: /run/secrets/local_postgres_password
+      DJANGO_SECRET_KEY_FILE: /run/secrets/local_django_secret_key
+      ANONYMIZATION_LEDGER_PATH: /app/var/anonymization-ledger.jsonl
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      OPENROUTER_API_URL: ${OPENROUTER_API_URL:-https://openrouter.ai/api/v1/chat/completions}
+      OPENROUTER_TIMEOUT_SECONDS: ${OPENROUTER_TIMEOUT_SECONDS:-30}
+      OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-KI-Radar}
+      OPENROUTER_SITE_URL: ${OPENROUTER_SITE_URL:-http://localhost:8000}
+      OPENROUTER_MAX_RESPONSE_BYTES: ${OPENROUTER_MAX_RESPONSE_BYTES:-8000000}
+      OPENROUTER_REASONING_EXCLUDE: ${OPENROUTER_REASONING_EXCLUDE:-true}
+      ACCELERATOR_LLM_TIMEOUT_SECONDS: ${ACCELERATOR_LLM_TIMEOUT_SECONDS:-60}
+      ACCELERATOR_LLM_MAX_INPUT_CHARS: ${ACCELERATOR_LLM_MAX_INPUT_CHARS:-12000}
+      ACCELERATOR_SOLUTION_CRITIC_MAX_INPUT_CHARS: ${ACCELERATOR_SOLUTION_CRITIC_MAX_INPUT_CHARS:-100000}
+      ACCELERATOR_LLM_MAX_OUTPUT_TOKENS: ${ACCELERATOR_LLM_MAX_OUTPUT_TOKENS:-4096}
+      ACCELERATOR_CAPTURE_MAX_OUTPUT_TOKENS: ${ACCELERATOR_CAPTURE_MAX_OUTPUT_TOKENS:-32768}
+      ACCELERATOR_CAPTURE_TEMPERATURE: ${ACCELERATOR_CAPTURE_TEMPERATURE:-}
+      ACCELERATOR_LLM_MAX_CALLS_PER_CONTEXT: ${ACCELERATOR_LLM_MAX_CALLS_PER_CONTEXT:-3}
+      ACCELERATOR_LLM_MAX_CALLS_PER_USER_DAY: ${ACCELERATOR_LLM_MAX_CALLS_PER_USER_DAY:-20}
+      ACCELERATOR_LLM_MAX_CALLS_GLOBAL_DAY: ${ACCELERATOR_LLM_MAX_CALLS_GLOBAL_DAY:-100}
+      ACCELERATOR_SOLUTION_GENERATION_MAX_OUTPUT_TOKENS: ${ACCELERATOR_SOLUTION_GENERATION_MAX_OUTPUT_TOKENS:-16384}
+      ACCELERATOR_SOLUTION_GENERATION_MAX_CALLS_PER_CONTEXT: ${ACCELERATOR_SOLUTION_GENERATION_MAX_CALLS_PER_CONTEXT:-20}
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
+      - local_venv:/app/.venv
+      - local_var:/app/var
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - local_postgres_password
+      - local_django_secret_key
+volumes:
+  local_db:
+  local_venv:
+  local_var:
+secrets:
+  local_postgres_password:
+    environment: POSTGRES_PASSWORD
+  local_django_secret_key:
+    environment: DJANGO_SECRET_KEY

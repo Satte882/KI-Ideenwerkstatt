@@ -1,0 +1,134 @@
+{% extends "portal/presentation_base.html" %}
+{% load static %}
+
+{% block title %}Gesprächsmuster &amp; Vertriebswirkung – RSD Demo{% endblock %}
+{% block body_class %}presentation-case presentation-case-sales{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/sales-conversation-case.css' %}">
+<link rel="stylesheet" href="{% static 'css/sales-conversation-viewer.css' %}">
+<script defer src="{% static 'js/sales-conversation-viewer.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<a class="sci-back-link" href="{% url 'demo-portal' %}">Zur Übersicht</a>
+<section class="sci-deck" aria-label="Gesprächsmuster und Vertriebswirkung für RSD">
+
+  <div class="sci-slide-shell">
+    <article class="sci-slide" id="sci-slide-1" aria-labelledby="sci-slide-1-title">
+      <header class="sci-header"><span>01 / 04 · Business-Frage</span><span>Gesprächsmuster &amp; Vertriebswirkung · RSD</span></header>
+      <h1 class="sci-title" id="sci-slide-1-title">Welche Merkmale eines Beratungsgesprächs stehen mit einer Buchung in Zusammenhang?</h1>
+      <p class="sci-subtitle">Nicht Sentiment messen, sondern beeinflussbare Conversion-Treiber finden.</p>
+
+      <div class="sci-flow" aria-label="Vom Gespräch zum kontrollierten Test">
+        <section class="sci-flow-step"><span class="sci-flow-node">1</span><div class="sci-flow-label">Gespräch</div><div class="sci-flow-desc">Kundenberatung wird aufgezeichnet.</div></section>
+        <section class="sci-flow-step"><span class="sci-flow-node">2</span><div class="sci-flow-label">Transkript</div><div class="sci-flow-desc">Sprache wird in Text umgewandelt.</div></section>
+        <section class="sci-flow-step"><span class="sci-flow-node">3</span><div class="sci-flow-label">Gesprächsmerkmale</div><div class="sci-flow-desc">Relevante Inhalte und Muster werden extrahiert.</div></section>
+        <section class="sci-flow-step outcome"><span class="sci-flow-node">4</span><div class="sci-flow-label">Buchung / Nichtbuchung</div><div class="sci-flow-desc">Gespräch wird mit dem tatsächlichen Outcome verknüpft.</div></section>
+        <section class="sci-flow-step"><span class="sci-flow-node">5</span><div class="sci-flow-label">Muster</div><div class="sci-flow-desc">Statistisch relevante und beeinflussbare Gesprächsmuster werden identifiziert.</div></section>
+        <section class="sci-flow-step"><span class="sci-flow-node">6</span><div class="sci-flow-label">gezielte Änderung</div><div class="sci-flow-desc">Erkenntnisse werden in konkrete Maßnahmen überführt.</div></section>
+        <section class="sci-flow-step test"><span class="sci-flow-node">7</span><div class="sci-flow-label">kontrollierter Test</div><div class="sci-flow-desc">Im kontrollierten Test wird der Effekt auf die Conversion gemessen.</div></section>
+      </div>
+
+      <footer class="sci-footer"><span>Von Gesprächen zu Wirkung.</span><span>Daten. Erkenntnisse. Bessere Entscheidungen.</span></footer>
+    </article>
+  </div>
+
+  <div class="sci-slide-shell">
+    <article class="sci-slide" id="sci-slide-2" aria-labelledby="sci-slide-2-title">
+      <header class="sci-header"><span>02 / 04 · Datenbasis</span><span>Gesprächsmuster &amp; Vertriebswirkung · RSD</span></header>
+      <h2 class="sci-title" id="sci-slide-2-title">Der Case steht und fällt mit der Datenbasis.</h2>
+      <p class="sci-subtitle">Ohne diese Verknüpfung entstehen interessante KI-Auswertungen, aber keine belastbare Analyse von Gesprächsmustern und Vertriebswirkung.</p>
+
+      <div class="sci-data-graph" aria-label="Datenquellen werden mit dem wirtschaftlichen Ergebnis verknüpft">
+        <div class="sci-source-grid">
+          <div class="sci-source">
+            <span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.7 3.5 9.2 8 7.7 9.8c1.6 3.1 3.9 5.4 7 7l1.8-1.5 4.1 2.5c.5.3.7.9.4 1.4l-.7 1.2c-.5.8-1.4 1.2-2.3.9C9.3 18.7 5.3 14.7 2.7 6c-.3-.9.1-1.8.9-2.3l1.2-.7c.7-.4 1.5-.2 1.9.5Z"/></svg></span>
+            <div><strong>Call</strong><p>Gesprächsinhalt,<br>Zeitpunkt, Gesprächs-ID</p></div>
+          </div>
+          <div class="sci-source">
+            <span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11h4l8-4v10l-8-4H4z"/><path d="M8 13v5"/><path d="M18 9c1 1 1 5 0 6"/></svg></span>
+            <div><strong>Kampagne</strong><p>Marketing-Touchpoint,<br>Kanal, Zeitraum</p></div>
+          </div>
+          <div class="sci-source">
+            <span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2.5 19c.7-3.2 2.7-5 5.5-5s4.8 1.8 5.5 5"/><path d="M10.5 19c.7-2.7 2.5-4.2 5.5-4.2 2.7 0 4.6 1.4 5.5 4.2"/></svg></span>
+            <div><strong>Kunde</strong><p>Kundendaten,<br>Segmente, Historie</p></div>
+          </div>
+          <div class="sci-source">
+            <span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="13" rx="1.5"/><path d="M9 7V4h6v3"/><path d="M9 7v13M15 7v13"/></svg></span>
+            <div><strong>Reise</strong><p>Produkt, Reisetermin,<br>Ziel, Preis</p></div>
+          </div>
+        </div>
+
+        <div class="sci-join-wrap">
+          <span class="sci-icon-circle join" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+          <div class="sci-join-title">VERKNÜPFEN</div>
+          <div class="sci-join-note">Daten zusammenführen,<br>identifizieren, zuordnen</div>
+        </div>
+
+        <div class="sci-outcome">
+          <span class="sci-icon-circle amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V11M12 20V6M19 20V3"/></svg></span>
+          <div><small>Outcome</small><strong>Buchung /<br>Nichtbuchung</strong><p>Wirtschaftlicher Erfolg<br>messbar machen</p></div>
+        </div>
+      </div>
+
+      <div class="sci-two-cols">
+        <section class="sci-col"><span class="sci-kicker">Gate 1 · Datenfähigkeit</span><h3>Zwei Fragen vor jedem KI-Pilot</h3><ul><li>Können Calls eindeutig mit einer späteren Buchung oder Nichtbuchung verknüpft werden?</li><li>Existieren ausreichend rechtmäßig nutzbare Gesprächsdaten – historisch oder über einen Pilotkanal?</li></ul></section>
+        <section class="sci-col"><span class="sci-kicker">Leitplanken Phase 1</span><h3>Inhalte und Muster statt Personenbewertung</h3><ul><li>Aufzeichnung und Analysezweck vorab rechtlich klären</li><li>keine Voice-Emotion-Erkennung</li><li>kein individuelles Mitarbeiter-Scoring im Pilot</li></ul><p class="sci-legal">§ 201 StGB · AI Act Art. 5 Abs. 1(f) · BetrVG § 87 Abs. 1 Nr. 6 / § 90</p></section>
+      </div>
+      <p class="sci-fallback">Gate 1 negativ? Dann kein Analyse-Pilot: zuerst einen rechtlich und technisch sauberen Pilotkanal schaffen.</p>
+      <footer class="sci-footer"><span>Von Gesprächen zu Wirkung.</span><span>Daten. Erkenntnisse. Bessere Entscheidungen.</span></footer>
+    </article>
+  </div>
+
+  <div class="sci-slide-shell">
+    <article class="sci-slide" id="sci-slide-3" aria-labelledby="sci-slide-3-title">
+      <header class="sci-header"><span>03 / 04 · Pilot-Architektur</span><span>Gesprächsmuster &amp; Vertriebswirkung · RSD</span></header>
+      <h2 class="sci-title" id="sci-slide-3-title">Schlanker Pilot statt KI-Plattform.</h2>
+      <p class="sci-subtitle">Das LLM ist eine Komponente der Datenpipeline, nicht das Gesamtsystem.</p>
+
+      <div class="sci-architecture" aria-label="Technische Pilot-Architektur">
+        <section class="sci-zone"><div class="sci-zone-title">Input</div><div class="sci-zone-sub">Gesprächsdaten erfassen</div><div class="sci-zone-flow">
+          <div class="sci-arch-step"><span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.7 3.5 9.2 8 7.7 9.8c1.6 3.1 3.9 5.4 7 7l1.8-1.5 4.1 2.5c.5.3.7.9.4 1.4l-.7 1.2c-.5.8-1.4 1.2-2.3.9C9.3 18.7 5.3 14.7 2.7 6c-.3-.9.1-1.8.9-2.3l1.2-.7c.7-.4 1.5-.2 1.9.5Z"/></svg></span><strong>Call Recording</strong><p>Kundengespräche werden aufgezeichnet.</p></div>
+          <div class="sci-arch-step"><span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h8"/></svg></span><strong>Speech-to-Text</strong><p>Sprache wird automatisch in Text transkribiert.</p></div>
+        </div></section>
+
+        <section class="sci-zone"><div class="sci-zone-title">Verarbeitung</div><div class="sci-zone-sub">Inhalte aufbereiten und Merkmale extrahieren</div><div class="sci-zone-flow">
+          <div class="sci-arch-step"><span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 5 6v5c0 4.7 2.7 8.4 7 10 4.3-1.6 7-5.3 7-10V6z"/></svg></span><strong>Pseudonymisierung / Redaction</strong><p>Personenbezogene Daten werden entfernt oder anonymisiert.</p></div>
+          <div class="sci-arch-step"><span class="sci-icon-circle blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4a3 3 0 0 0-3 3v1a3 3 0 0 0 0 6v1a3 3 0 0 0 3 3"/><path d="M15 4a3 3 0 0 1 3 3v1a3 3 0 0 1 0 6v1a3 3 0 0 1-3 3"/><path d="M9 4v16M15 4v16M9 8h6M9 12h6M9 16h6"/></svg></span><strong style="color:#0769a5">LLM Extraction</strong><p>Relevante Merkmale werden aus dem Gespräch strukturiert extrahiert.</p><pre class="sci-code">destination: ägypten
+objection: preis
+next_action: katalog_versenden</pre></div>
+        </div></section>
+
+        <section class="sci-zone"><div class="sci-zone-title">Enterprise Data</div><div class="sci-zone-sub">In bestehende Systeme integrieren und nutzen</div><div class="sci-zone-flow">
+          <div class="sci-arch-step"><span class="sci-icon-circle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></span><strong>DWH / Buchungssystem</strong><p>Strukturierte Merkmale werden in bestehende Systeme überführt.</p></div>
+          <div class="sci-arch-step"><span class="sci-icon-circle amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V11M12 20V6M19 20V3"/></svg></span><strong style="color:#b97d00">Analytics / BI</strong><p>Merkmale werden für Reporting und analytische Use Cases genutzt.</p><div class="sci-output-note">Strukturierte Merkmale statt freier Zusammenfassungen.</div></div>
+        </div></section>
+      </div>
+
+      <div class="sci-architecture-notes"><div class="sci-architecture-note"><span class="sci-kicker">Startpunkt</span><strong>Baseline-Modell · strukturierter Prompt · Gold Dataset</strong></div><div class="sci-architecture-note"><span class="sci-kicker">Bewusst später</span><strong>Fine-Tuning · Agentenplattform · komplexes MLOps</strong></div></div>
+      <footer class="sci-footer"><span>Von Gesprächen zu Wirkung.</span><span>Daten. Erkenntnisse. Bessere Entscheidungen.</span></footer>
+    </article>
+  </div>
+
+  <div class="sci-slide-shell">
+    <article class="sci-slide" id="sci-slide-4" aria-labelledby="sci-slide-4-title">
+      <header class="sci-header"><span>04 / 04 · Investitionsentscheidung</span><span>Gesprächsmuster &amp; Vertriebswirkung · RSD</span></header>
+      <h2 class="sci-title" id="sci-slide-4-title">Investieren erst nach drei Belegen.</h2>
+      <p class="sci-subtitle">Der Analyse-Pilot beweist noch keinen Conversion-Uplift. Er klärt, ob sich ein kontrolliertes Sales-Experiment lohnt.</p>
+
+      <div class="sci-gates" aria-label="Stage-Gate-Entscheidungsmodell">
+        <section class="sci-gate-stage"><div class="sci-gate-stage-head"><span class="sci-gate-num">1</span><span class="sci-kicker">Datenfähigkeit</span></div><p class="sci-gate-q">Können Call, Kunde und Buchung zuverlässig verbunden werden?</p><p class="sci-gate-note">Wir prüfen, ob die relevanten Datenquellen technisch und datenschutzkonform verknüpft werden können.</p></section>
+        <div class="sci-decision"><div class="sci-diamond"><span>Go?</span></div><div class="sci-go">Ja</div><div class="sci-no">Nein</div><div class="sci-stop">↓ Stop</div></div>
+        <section class="sci-gate-stage"><div class="sci-gate-stage-head"><span class="sci-gate-num">2</span><span class="sci-kicker">Erkenntnisfähigkeit</span></div><p class="sci-gate-q">Finden wir statistisch relevante und beeinflussbare Gesprächsmuster?</p><p class="sci-gate-note">Wir analysieren Gespräche und identifizieren Muster, die einen messbaren Einfluss auf die Conversion haben können.</p></section>
+        <div class="sci-decision"><div class="sci-diamond"><span>Go?</span></div><div class="sci-go">Ja</div><div class="sci-no">Nein</div><div class="sci-stop">↓ Stop</div></div>
+        <section class="sci-gate-stage"><div class="sci-gate-stage-head"><span class="sci-gate-num">3</span><span class="sci-kicker">Business Value</span></div><p class="sci-gate-q">Verbessert eine gezielte Intervention im kontrollierten Test tatsächlich die Conversion?</p><p class="sci-gate-note">Wir messen den kausalen Effekt der Maßnahme und prüfen die wirtschaftliche Relevanz.</p></section>
+        <div class="sci-final"><span class="sci-icon-circle amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V11M12 20V6M19 20V3"/></svg></span><strong>Investitions-<br>entscheidung</strong></div>
+      </div>
+
+      <div class="sci-start-band"><div class="sci-start-main"><span class="sci-kicker">Vorschlag für den Start</span><strong>2-wöchiger Data-&amp;-Legal-Feasibility-Check</strong></div><div class="sci-start-mid">IT / Telefonie · Datenschutz / Legal · Sales</div><div class="sci-start-end">Gate 1: ja → Analyse-Pilot<br>Gate 1: nein → Pilotkanal mit ausdrücklicher Einwilligung</div></div>
+      <footer class="sci-footer"><span>Von Gesprächen zu Wirkung.</span><span>Daten. Erkenntnisse. Bessere Entscheidungen.</span></footer>
+    </article>
+  </div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,507 @@
+/* Presentation viewer for the Sales Conversation Intelligence case.
+   Keeps the approved 16:9 slide design intact while removing free page scrolling. */
+
+.presentation-page.presentation-case-sales {
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.presentation-case-sales .presentation-main {
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.sci-deck {
+  --sci-nav-width: 9.75rem;
+  display: grid;
+  grid-template-columns: var(--sci-nav-width) minmax(0, 1fr);
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--sci-page);
+}
+
+.sci-stage {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  height: 100svh;
+  place-items: center;
+  overflow: hidden;
+}
+
+.sci-slide-shell {
+  display: none;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 0;
+}
+
+.sci-slide-shell.is-active {
+  display: grid;
+}
+
+.sci-slide {
+  width: min(calc(100vw - var(--sci-nav-width)), calc(100svh * 16 / 9));
+  max-width: 100%;
+  max-height: 100svh;
+}
+
+.sci-back-link {
+  display: none !important;
+}
+
+/* Left presentation rail */
+.sci-slide-nav {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  padding: 1.4rem .8rem 1rem;
+  border-right: 1px solid #cad5dc;
+  background: #f2f5f6;
+  color: var(--sci-navy);
+  font-family: "Segoe UI", Aptos, Arial, sans-serif;
+}
+
+.sci-nav-eyebrow {
+  margin: 0 .55rem .35rem;
+  color: #728696;
+  font-size: .68rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.sci-nav-title {
+  margin: 0 .55rem 1.55rem;
+  color: #18354d;
+  font-size: .82rem;
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.sci-nav-list {
+  display: grid;
+  gap: .28rem;
+}
+
+.sci-nav-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  align-items: center;
+  width: 100%;
+  min-height: 3.35rem;
+  padding: .55rem .5rem .55rem .65rem;
+  border: 0;
+  color: #617586;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sci-nav-button::before {
+  position: absolute;
+  top: .45rem;
+  bottom: .45rem;
+  left: -.8rem;
+  width: 3px;
+  content: "";
+  background: transparent;
+}
+
+.sci-nav-number {
+  color: #708595;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.sci-nav-label {
+  font-size: .78rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.sci-nav-button:hover,
+.sci-nav-button:focus-visible {
+  color: var(--sci-navy);
+  background: #e8eef1;
+  outline: none;
+}
+
+.sci-nav-button.is-active {
+  color: var(--sci-navy);
+  background: #e4edf2;
+}
+
+.sci-nav-button.is-active::before {
+  background: var(--sci-blue);
+}
+
+.sci-nav-button.is-active .sci-nav-number {
+  color: var(--sci-blue);
+}
+
+.sci-nav-meta {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #d1dbe1;
+}
+
+.sci-nav-home {
+  display: block;
+  padding: .55rem .6rem;
+  color: #516b7d;
+  font-size: .75rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.sci-nav-home:hover,
+.sci-nav-home:focus-visible {
+  color: var(--sci-blue-dark);
+  outline: none;
+}
+
+.sci-nav-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  margin-top: .5rem;
+}
+
+.sci-nav-control {
+  display: grid;
+  height: 2.15rem;
+  place-items: center;
+  border: 1px solid #c5d1d9;
+  color: #365269;
+  background: #f8fafb;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.sci-nav-control:hover,
+.sci-nav-control:focus-visible {
+  border-color: #8fa7b8;
+  color: var(--sci-blue-dark);
+  background: #fff;
+  outline: none;
+}
+
+.sci-nav-control:disabled {
+  opacity: .32;
+  cursor: default;
+}
+
+.sci-nav-progress {
+  margin-top: .65rem;
+  color: #7c8f9d;
+  font-size: .67rem;
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Connector layers: actual vectors are drawn from live DOM geometry in JS. */
+.sci-flow,
+.sci-data-graph,
+.sci-architecture,
+.sci-gates {
+  position: relative;
+}
+
+.sci-connector-layer {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sci-flow-step,
+.sci-arch-step,
+.sci-join-wrap,
+.sci-outcome,
+.sci-gate-stage,
+.sci-decision,
+.sci-final {
+  position: relative;
+  z-index: 5;
+}
+
+/* Replace the old CSS chevrons on the business-effect chain. */
+.sci-flow-step:not(:last-child)::before,
+.sci-flow-step:not(:last-child)::after {
+  display: none;
+}
+
+.sci-flow-node {
+  position: relative;
+  z-index: 6;
+  margin-inline: auto;
+}
+
+.sci-flow-label {
+  text-align: center;
+}
+
+#sci-slide-1 .sci-flow {
+  margin-top: 8.2cqw;
+}
+
+/* Data model: all reference-style merge lines are rendered as SVG paths. */
+.sci-source::after {
+  display: none;
+}
+
+/* Replace text-like arrows inside the architecture with vector flow. */
+.sci-arch-step + .sci-arch-step::before,
+.sci-arch-step + .sci-arch-step::after {
+  display: none;
+}
+
+.sci-architecture {
+  gap: 1.45cqw;
+}
+
+.sci-zone {
+  position: relative;
+  z-index: 2;
+}
+
+.sci-arch-step .sci-icon-circle {
+  position: relative;
+  z-index: 6;
+  background: #f0f3f4;
+}
+
+.sci-arch-step .sci-icon-circle.blue {
+  background: var(--sci-blue);
+}
+
+.sci-arch-step .sci-icon-circle.amber {
+  background: var(--sci-amber);
+}
+
+/* Slide 4: reference-aligned stage-gate geometry. The SVG layer draws
+   the horizontal Ja-paths, vertical Stop-paths and the final investment arrow. */
+#sci-slide-4 .sci-title {
+  font-size: 5.5cqw;
+}
+
+.sci-gates {
+  grid-template-columns:
+    minmax(0, 1fr) 10.5cqw
+    minmax(0, 1fr) 10.5cqw
+    minmax(0, 1fr) 10.5cqw;
+  align-items: start;
+  margin-top: 7.2cqw;
+}
+
+.sci-gate-stage {
+  display: grid;
+  grid-template-columns: 4.8cqw minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 1.35cqw;
+  align-items: start;
+  min-width: 0;
+}
+
+.sci-gate-stage-head {
+  display: contents;
+}
+
+.sci-gate-stage .sci-gate-num {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
+  width: 4.8cqw;
+  height: 4.8cqw;
+  margin-top: 1.15cqw;
+  font-size: 1.75cqw;
+}
+
+.sci-gate-stage .sci-kicker {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  min-height: 1.15cqw;
+  font-size: 1.02cqw;
+}
+
+.sci-gate-q {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 7.02cqw;
+  margin: .78cqw 0 0;
+  font-size: 1.35cqw;
+  line-height: 1.3;
+}
+
+.sci-gate-note {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 4.5cqw 0 0;
+  font-size: 1.02cqw;
+  line-height: 1.35;
+}
+
+.sci-decision {
+  position: relative;
+  display: block;
+  align-self: start;
+  min-height: 17.2cqw;
+  padding-top: 1.325cqw;
+}
+
+.sci-diamond {
+  position: relative;
+  z-index: 7;
+  margin-inline: auto;
+  font-size: 1.3cqw;
+}
+
+.sci-go {
+  position: absolute;
+  z-index: 7;
+  top: 1.02cqw;
+  left: calc(50% + 2.65cqw);
+  width: auto;
+  padding: .06cqw .25cqw;
+  color: #647d91;
+  background: var(--sci-bg);
+  font-size: 1.02cqw;
+  white-space: nowrap;
+}
+
+.sci-go::before,
+.sci-go::after {
+  display: none !important;
+  content: none !important;
+}
+
+.sci-no {
+  position: absolute;
+  z-index: 7;
+  top: 8.15cqw;
+  left: calc(50% + .65cqw);
+  padding: .04cqw .18cqw;
+  color: #647d91;
+  background: var(--sci-bg);
+  font-size: 1.02cqw;
+  white-space: nowrap;
+}
+
+.sci-stop {
+  position: absolute;
+  z-index: 7;
+  top: 12cqw;
+  left: 50%;
+  color: transparent;
+  background: var(--sci-bg);
+  font-size: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.sci-stop::after {
+  color: #647d91;
+  content: "Stop";
+  font-size: 1.08cqw;
+}
+
+.sci-final {
+  align-self: start;
+  padding-top: .8cqw;
+}
+
+.sci-final .sci-icon-circle {
+  width: 5.85cqw;
+  height: 5.85cqw;
+}
+
+.sci-final strong {
+  font-size: 1.12cqw;
+}
+
+#sci-slide-4 .sci-start-band {
+  margin-top: 3.5cqw;
+}
+
+#sci-slide-4 .sci-start-main .sci-kicker {
+  font-size: 1.02cqw;
+}
+
+#sci-slide-4 .sci-start-main strong {
+  font-size: 2cqw;
+}
+
+#sci-slide-4 .sci-start-mid,
+#sci-slide-4 .sci-start-end {
+  font-size: 1.05cqw;
+}
+
+@media (max-width: 1180px) {
+  .sci-deck { --sci-nav-width: 7.4rem; }
+  .sci-slide-nav { padding-inline: .55rem; }
+  .sci-nav-eyebrow {
+    margin-inline: 0;
+    font-size: .6rem;
+    letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .sci-nav-title {
+    margin-inline: 0;
+    font-size: .68rem;
+  }
+  .sci-nav-button { grid-template-columns: 1.65rem 1fr; padding-inline: .4rem; }
+  .sci-nav-label { font-size: .7rem; }
+}
+
+@media (max-width: 820px) {
+  .sci-deck { --sci-nav-width: 4rem; }
+  .sci-slide-nav { padding-inline: .35rem; }
+  .sci-nav-eyebrow,
+  .sci-nav-title,
+  .sci-nav-label,
+  .sci-nav-home { display: none; }
+  .sci-nav-button {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: .45rem;
+  }
+  .sci-nav-button::before { left: -.35rem; }
+  .sci-nav-controls { grid-template-columns: 1fr; }
+}
+
+@media print {
+  .presentation-page.presentation-case-sales,
+  .presentation-case-sales .presentation-main,
+  .sci-deck,
+  .sci-stage {
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+  .sci-deck { display: block; }
+  .sci-slide-nav { display: none; }
+  .sci-slide-shell,
+  .sci-slide-shell.is-active {
+    display: grid;
+    height: auto;
+    break-after: page;
+  }
+  .sci-slide { width: 100%; }
+}

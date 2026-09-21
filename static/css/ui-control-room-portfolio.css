@@ -1,0 +1,245 @@
+/*
+ * Portfolio-specific Control-Room styles.
+ * Shared Gate-A patterns live in ui-control-room-primitives.css.
+ */
+
+.ui-control-room.page-portfolio .app-topbar {
+  display: none;
+}
+
+.ui-control-room.page-portfolio .app-content {
+  max-width: 1680px;
+  padding-top: 30px;
+}
+
+.ui-control-room.page-portfolio .portfolio-domain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 2px;
+}
+
+.ui-control-room.page-portfolio .portfolio-domain-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  padding: 15px 16px 13px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-portfolio .portfolio-domain-item:not(:last-child) {
+  margin-right: 16px;
+}
+
+.ui-control-room.page-portfolio .portfolio-domain-item strong {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: .84rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-control-room.page-portfolio .portfolio-domain-count {
+  color: var(--muted);
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-control-room.page-portfolio .portfolio-decision-section {
+  margin-top: 38px;
+}
+
+.ui-control-room.page-portfolio .portfolio-matrix-heading {
+  align-items: flex-start;
+}
+
+.ui-control-room.page-portfolio .portfolio-decision-surface {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-1) 93%, transparent);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-control-room.page-portfolio :is(.matrix-corner, .matrix-axis, .matrix-cell) {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.ui-control-room.page-portfolio .matrix-cell {
+  background: color-mix(in srgb, var(--surface-0) 44%, var(--surface-1));
+}
+
+.ui-control-room.page-portfolio .portfolio-chip {
+  box-shadow: none;
+}
+
+.ui-control-room.page-portfolio .portfolio-status-legend {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view {
+  margin-top: 28px;
+  border-block: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 2px;
+  color: var(--muted-strong);
+  cursor: pointer;
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view > summary::marker {
+  color: var(--ice);
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view > summary span {
+  color: var(--ink-soft);
+  font-size: .8rem;
+  font-weight: 650;
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view > summary small {
+  color: var(--muted);
+  font-size: .68rem;
+}
+
+.ui-control-room.page-portfolio .portfolio-secondary-view .table-responsive {
+  max-height: 420px;
+  border-top: 1px solid var(--line-soft);
+  overflow: auto;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-heading {
+  align-items: center;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-flat {
+  margin-top: 1px;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-flat .landscape-card {
+  padding: 15px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-group-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-group-heading span {
+  color: var(--muted);
+  font-size: .64rem;
+  font-weight: 720;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-group-heading h3 {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-size: .9rem;
+  font-weight: 660;
+}
+
+.ui-control-room.page-portfolio .portfolio-landscape-group-heading > strong {
+  color: var(--muted-strong);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-list {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row:last-child {
+  border-bottom: 0;
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row:hover,
+.ui-control-room.page-portfolio .portfolio-unclassified-row:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ice) 4%, transparent);
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row > div strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-control-room.page-portfolio .portfolio-unclassified-row > div span {
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+@media (max-width: 1000px) {
+  .ui-control-room.page-portfolio .portfolio-matrix-heading,
+  .ui-control-room.page-portfolio .portfolio-landscape-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .ui-control-room.page-portfolio .app-content {
+    padding-top: 22px;
+  }
+
+  .ui-control-room.page-portfolio .portfolio-secondary-view > summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .ui-control-room.page-portfolio .portfolio-unclassified-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ui-control-room.page-portfolio .portfolio-unclassified-row > div {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .ui-control-room.page-portfolio .portfolio-domain-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-control-room.page-portfolio .portfolio-domain-item:not(:last-child) {
+    margin-right: 0;
+  }
+}

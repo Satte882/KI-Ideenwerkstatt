@@ -1,0 +1,38 @@
+{% extends "portal/presentation_base.html" %}
+
+{% block title %}RSD Demo – KI-Ideenwerkstatt{% endblock %}
+{% block body_class %}presentation-home{% endblock %}
+
+{% block content %}
+<section class="presentation-hero" aria-labelledby="presentation-title">
+  <p class="presentation-kicker">RSD Reise Service Deutschland · KI-Praxisbeispiele</p>
+  <h1 id="presentation-title">KI in der Praxis</h1>
+  <p class="presentation-lead">Zwei konkrete Projekt- und Use-Case-Beispiele sowie die KI-Ideenwerkstatt.</p>
+</section>
+
+<nav class="presentation-card-grid" aria-label="Bereiche der RSD Demo">
+  <a class="presentation-card" href="{% url 'case-procurement' %}">
+    <span class="presentation-card-number" aria-hidden="true">01</span>
+    <span class="presentation-card-type">Projektbeispiel</span>
+    <h2>Projektbeispiel: Angebotsvergleich im Einkauf</h2>
+    <p>HTML-Präsentation eines konkreten KI- und Automatisierungsprojekts aus dem Einkauf.</p>
+    <span class="presentation-card-action">Präsentation öffnen <span aria-hidden="true">→</span></span>
+  </a>
+
+  <a class="presentation-card" href="{% url 'case-sales-conversation' %}">
+    <span class="presentation-card-number" aria-hidden="true">02</span>
+    <span class="presentation-card-type">Use Case für RSD</span>
+    <h2>Use Case: Gesprächsmuster &amp; Vertriebswirkung</h2>
+    <p>Konzept zur KI-gestützten Erkennung übergreifender Gesprächsmuster und ihrer Wirkung auf Buchungen – ohne individuelle Personenbewertung.</p>
+    <span class="presentation-card-action">Präsentation öffnen <span aria-hidden="true">→</span></span>
+  </a>
+
+  <a class="presentation-card" href="{% url 'reporting:dashboard' %}">
+    <span class="presentation-card-number" aria-hidden="true">03</span>
+    <span class="presentation-card-type">Anwendung</span>
+    <h2>Anwendung: KI-Use-Case-Radar</h2>
+    <p>Die eigentliche KI-Ideenwerkstatt mit Arbeitsvorrat, Portfolio und durchgängiger Use-Case-Journey.</p>
+    <span class="presentation-card-action">Anwendung öffnen <span aria-hidden="true">→</span></span>
+  </a>
+</nav>
+{% endblock %}

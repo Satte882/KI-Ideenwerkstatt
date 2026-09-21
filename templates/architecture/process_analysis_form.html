@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-process-analysis-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ stage.value_stream.name }} · {{ stage.name }}</div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Ist-Prozess, Bottlenecks und Soll-Prinzipien strukturiert erfassen. Kein BPMN-Editor.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% if process_analysis %}{{ process_analysis.get_absolute_url }}{% else %}{{ stage.value_stream.get_absolute_url }}{% endif %}">Abbrechen</a>
+</div>
+
+<div class="app-card mb-4">
+  <div class="card-header"><strong>Quellkontext aus dem Value Stream</strong><div class="small text-muted mt-1">Die Werte wurden bei der Anlage einmalig als Arbeitsfassung übernommen. Der aktuelle Quellkontext bleibt getrennt sichtbar.</div></div>
+  <div class="card-body"><div class="row g-4">
+    <div class="col-md-6"><div class="section-title">Im Scope</div><div class="text-preline">{{ stage.value_stream.scope_in }}</div></div>
+    <div class="col-md-6"><div class="section-title">Nicht im Scope</div><div class="text-preline">{{ stage.value_stream.scope_out|default:"Nicht ausdrücklich abgegrenzt" }}</div></div>
+    <div class="col-md-6"><div class="section-title">Auslöser des Value Streams</div><div class="text-preline">{{ stage.value_stream.trigger }}</div></div>
+    <div class="col-md-6"><div class="section-title">Ergebnis des Value Streams</div><div class="text-preline">{{ stage.value_stream.outcome }}</div></div>
+    <div class="col-12"><div class="section-title">Beschreibung der Fokusphase</div><div class="text-preline">{{ stage.description|default:"Noch nicht beschrieben" }}</div></div>
+  </div>
+  {% if source_differences %}
+  <div class="alert alert-warning mt-3 mb-0"><strong>Quellenänderungen prüfen</strong><div class="small mt-1">Die Arbeitsfassung wird nicht automatisch überschrieben.</div><ul class="mb-0 mt-2">{% for item in source_differences %}<li>{{ item.source_label }} · {{ item.source_field }}: „{{ item.previous|default:"–" }}“ → „{{ item.current|default:"–" }}“</li>{% endfor %}</ul></div>
+  {% endif %}
+</div>
+</div>
+
+<form method="post" class="app-card" novalidate>
+  {% csrf_token %}
+  <div class="card-header"><strong>Prozessanalyse · ADM Phase B</strong><div class="small text-muted mt-1">Der Fokus liegt auf dem fachlichen Ablauf und den Ursachen, nicht auf einer vorgezogenen Technologiewahl.</div></div>
+  <div class="card-body">
+    <div class="mb-4" data-testid="sipoc-guidance">
+      <div class="section-title">SIPOC – Prozesskontext prüfen</div>
+      <div><strong>Supplier → Input → Process → Output → Customer</strong></div>
+      <div class="small text-muted mt-1">SIPOC dient hier nur als Denk- und Scopingrahmen. Die Angaben bleiben in den vorhandenen Feldern der Prozessanalyse: Inputs unter „Datenobjekte und Dokumente“, das Prozessergebnis unter „Ergebnis“ sowie Quellen und Empfänger unter „Übergaben und Schnittstellen“. Es entsteht kein separates SIPOC-Artefakt.</div>
+    </div>
+    <div class="small text-muted mb-3">Mit * gekennzeichnete Felder sind erforderlich. Unbekannte Werte bitte ausdrücklich als „noch offen“ beschreiben; keine Zahlen oder Fakten erfinden.</div>
+    {% if form.errors %}<div class="alert alert-danger"><strong>Speichern nicht möglich.</strong> Bitte prüfe die markierten Pflichtfelder.</div>{% endif %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="{% if field.name == 'name' or field.name == 'status' or field.name == 'scope_start' or field.name == 'scope_end' or field.name == 'trigger' or field.name == 'outcome' %}col-md-6{% else %}col-12{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% if field.name == 'data_objects' %}<div class="form-text">Welche fachlichen Inputs, Daten oder Dokumente gelangen in den Prozess?</div>{% endif %}
+        {% if field.name == 'outcome' %}<div class="form-text">Welches fachliche Ergebnis verlässt den Prozess?</div>{% endif %}
+        {% if field.name == 'handoffs' %}<div class="form-text">Von wem bzw. aus welcher Quelle kommen relevante Inputs, und wer übernimmt, verwendet oder erhält das Prozessergebnis?</div>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-body border-top border-secondary-subtle text-end"><button class="btn btn-primary">Speichern</button></div>
+</form>
+{% endblock %}

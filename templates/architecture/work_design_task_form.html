@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-work-design-task-form{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.name }} · {{ assessment.role_name }}</div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Bewerte einen konkreten Arbeitsschritt auf der TASKSHIFT-Skala 0–4. Jeder Regler startet als „Nicht bewertet“ und zählt erst nach bewusster Eingabe.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'architecture:work_design_assessment_detail' assessment.pk %}">Abbrechen</a>
+</div>
+
+<section class="cr-section mb-4" data-testid="work-design-task-context">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Arbeitskontext</h2>
+      <p>Die Rolle ist bestätigt; Prozesskontext und Geschäftsergebnis werden nicht erneut erfasst.</p>
+    </div>
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-4"><div class="section-title">Rolle</div><strong>{{ assessment.role_name }}</strong></div>
+    <div class="col-md-8"><div class="section-title">Geschäftsergebnis</div><div class="text-preline">{{ assessment.business_outcome }}</div></div>
+    <div class="col-md-6"><div class="section-title">Rollen im Prozess</div><div class="text-preline">{{ process_analysis.roles }}</div></div>
+    <div class="col-md-6"><div class="section-title">Handoffs</div><div class="text-preline">{{ process_analysis.handoffs|default:"Noch nicht dokumentiert" }}</div></div>
+  </div>
+</section>
+
+<form method="post" class="cr-work-form" novalidate>
+  <noscript>
+    <div class="alert alert-warning">
+      <strong>Aufgabenbewertung benötigt JavaScript.</strong>
+      Die acht Regler bleiben ohne JavaScript bewusst deaktiviert, damit die neutrale Mittelstellung nicht versehentlich als Bewertung gespeichert wird.
+    </div>
+  </noscript>
+  {% csrf_token %}
+  {{ form.business_value_touched }}
+  {{ form.handoff_friction_touched }}
+  {{ form.recurrence_touched }}
+  {{ form.context_proximity_touched }}
+  {{ form.ai_leverage_touched }}
+  {{ form.data_readiness_touched }}
+  {{ form.judgment_stakes_touched }}
+  {{ form.specialist_accountability_touched }}
+
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="form-section">
+    <div class="section-title mb-3">Aufgabe und Ziel-Aufgabenteilung</div>
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }} *</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="{{ form.source_area.id_for_label }}">{{ form.source_area.label }}</label>
+        {{ form.source_area }}
+        {{ form.source_area.errors }}
+      </div>
+      <div class="col-md-7">
+        <label class="form-label" for="{{ form.target_work_split.id_for_label }}">{{ form.target_work_split.label }} <span class="text-muted">(optional)</span></label>
+        {{ form.target_work_split }}
+        {% if form.target_work_split.help_text %}<div class="form-text">{{ form.target_work_split.help_text }}</div>{% endif %}
+        {{ form.target_work_split.errors }}
+      </div>
+      <div class="col-md-5">
+        <label class="form-label" for="{{ form.approval_role.id_for_label }}">{{ form.approval_role.label }} <span class="text-muted">(falls erforderlich)</span></label>
+        {{ form.approval_role }}
+        {% if form.approval_role.help_text %}<div class="form-text">{{ form.approval_role.help_text }}</div>{% endif %}
+        {{ form.approval_role.errors }}
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="section-title mb-3">Nutzen &amp; Prozesshebel</div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.business_value.id_for_label }}">{{ form.business_value.label }} *</label>
+          <output id="id_business_value_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.business_value }}
+        <div class="form-text">{{ form.business_value.help_text }}</div>
+        {{ form.business_value.errors }}
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.handoff_friction.id_for_label }}">{{ form.handoff_friction.label }} *</label>
+          <output id="id_handoff_friction_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.handoff_friction }}
+        <div class="form-text">{{ form.handoff_friction.help_text }}</div>
+        {{ form.handoff_friction.errors }}
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.recurrence.id_for_label }}">{{ form.recurrence.label }} *</label>
+          <output id="id_recurrence_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.recurrence }}
+        <div class="form-text">{{ form.recurrence.help_text }}</div>
+        {{ form.recurrence.errors }}
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="section-title mb-3">Eignung</div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.context_proximity.id_for_label }}">{{ form.context_proximity.label }} *</label>
+          <output id="id_context_proximity_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.context_proximity }}
+        <div class="form-text">{{ form.context_proximity.help_text }}</div>
+        {{ form.context_proximity.errors }}
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.ai_leverage.id_for_label }}">{{ form.ai_leverage.label }} *</label>
+          <output id="id_ai_leverage_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.ai_leverage }}
+        <div class="form-text">{{ form.ai_leverage.help_text }}</div>
+        {{ form.ai_leverage.errors }}
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.data_readiness.id_for_label }}">{{ form.data_readiness.label }} *</label>
+          <output id="id_data_readiness_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.data_readiness }}
+        <div class="form-text">{{ form.data_readiness.help_text }}</div>
+        {{ form.data_readiness.errors }}
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="section-title mb-3">Verantwortung</div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.judgment_stakes.id_for_label }}">{{ form.judgment_stakes.label }} *</label>
+          <output id="id_judgment_stakes_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.judgment_stakes }}
+        <div class="form-text">{{ form.judgment_stakes.help_text }}</div>
+        {{ form.judgment_stakes.errors }}
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <label class="form-label mb-0" for="{{ form.specialist_accountability.id_for_label }}">{{ form.specialist_accountability.label }} *</label>
+          <output id="id_specialist_accountability_output" class="badge badge-soft" data-assessed="false">Nicht bewertet</output>
+        </div>
+        {{ form.specialist_accountability }}
+        <div class="form-text">{{ form.specialist_accountability.help_text }}</div>
+        {{ form.specialist_accountability.errors }}
+      </div>
+    </div>
+  </section>
+
+  <div class="d-flex justify-content-end gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'architecture:work_design_assessment_detail' assessment.pk %}">Abbrechen</a>
+    <button class="btn btn-primary" type="submit">Bewertung speichern</button>
+  </div>
+</form>
+<script src="{% static 'js/work-design.js' %}" defer></script>
+{% endblock %}

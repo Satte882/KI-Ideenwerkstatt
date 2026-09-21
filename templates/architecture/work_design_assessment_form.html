@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-work-design-form{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.stage.value_stream.name }} · {{ process_analysis.name }}</div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Optionale Arbeitsgestaltung zwischen Prozessdiagnose und Lösungsraum. Die konkrete Rolle wird bewusst bestätigt; der Prozessrollen-Freitext wird nicht automatisch interpretiert.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% if assessment %}{% url 'architecture:work_design_assessment_detail' assessment.pk %}{% else %}{{ process_analysis.get_absolute_url }}{% endif %}">Abbrechen</a>
+</div>
+
+<section class="cr-section mb-4" data-testid="work-design-source-context">
+  <header class="cr-section-heading">
+    <div>
+      <h2>Kontext aus der Prozessanalyse</h2>
+      <p>Der vorhandene Prozesskontext dient als Ausgangspunkt; Rolle und Arbeitsgestaltung bleiben eine eigene bewusste Entscheidung.</p>
+    </div>
+  </header>
+  <div class="row g-4 mt-1">
+    <div class="col-md-6"><div class="section-title">Prozessergebnis</div><div class="text-preline">{{ process_analysis.outcome }}</div></div>
+    <div class="col-md-6"><div class="section-title">Rollen im Prozess <span class="text-muted">(nur Kontext)</span></div><div class="text-preline">{{ process_analysis.roles }}</div></div>
+    <div class="col-12"><div class="section-title">Übergaben und Schnittstellen</div><div class="text-preline">{{ process_analysis.handoffs|default:"Noch nicht dokumentiert" }}</div></div>
+  </div>
+</section>
+
+<form method="post" class="app-card cr-work-form" novalidate>
+  {% csrf_token %}
+  <div class="card-header">
+    <strong>Rollenbetrachtung festlegen</strong>
+    <div class="small text-muted mt-1">Eine Prozessanalyse kann mehrere Arbeitsgestaltungen für unterschiedliche Rollen enthalten.</div>
+  </div>
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="{% if field.name == 'role_name' %}col-md-5{% else %}col-md-7{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }} *</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {{ field.errors }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-footer d-flex justify-content-end">
+    <button class="btn btn-primary" type="submit">{% if assessment %}Änderungen speichern{% else %}Rollenbetrachtung anlegen{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% if journey.next_action %}
+{% if request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'detail' or request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'value_stream_detail' or request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'process_analysis_detail' or request.resolver_match.namespace == 'delivery' and request.resolver_match.url_name == 'package_detail' %}
+{% with action=journey.next_action %}
+<section class="app-card decision-panel mb-4" data-testid="primary-next-action">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div class="flex-grow-1">
+      <div class="eyebrow mb-2">Nächster Schritt</div>
+      <h2 class="h5 mb-2">{{ action.label }}</h2>
+      {% if action.reason %}<p class="mb-2">{{ action.reason }}</p>{% endif %}
+      {% if action.details %}
+      <ul class="small text-muted mb-0">
+        {% for detail in action.details %}<li>{{ detail }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if action.key == 'pilot_start' %}
+      <p class="small text-muted mt-2 mb-0">Die Entscheidung wird im bestehenden Review dokumentiert; nach erfolgreichem Speichern öffnet sich der Pilot-Arbeitsraum.</p>
+      {% elif action.key == 'outcome_decision' %}
+      <p class="small text-muted mt-2 mb-0">Der Ergebnis-Arbeitsraum führt zur bestehenden Review-Entscheidung. Statusänderungen erfolgen weiterhin ausschließlich über das Review.</p>
+      {% endif %}
+      {% if action.key == 'assessment' %}
+      <div class="border rounded p-3 mt-3" data-testid="assessment-handover-status">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="section-title">Übergabestatus</div>
+            <strong>Zur Bewertung bereitgestellt</strong>
+          </div>
+          <div class="col-md-4">
+            <div class="section-title">Nächste Bearbeitung</div>
+            <strong>KI-Koordination</strong>
+          </div>
+          <div class="col-md-4">
+            <div class="section-title">Rollenbasierter Arbeitsvorrat</div>
+            <a href="{% url 'reporting:dashboard' %}">Arbeitsvorrat → Meine Aufgaben</a>
+          </div>
+        </div>
+        <div class="small text-muted mt-3">
+          Es wird keine einzelne Person zugewiesen. Berechtigte KI-Koordinatoren sehen den Use Case
+          als ausführbare Bewertungsaufgabe in ihrem Arbeitsvorrat.
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% if action.url %}
+      {% if action.action_method == 'post' %}
+      <form method="post" action="{{ action.url }}">
+        {% csrf_token %}
+        <button class="btn {% if action.state == 'blocked' %}btn-outline-danger{% else %}btn-primary{% endif %}" type="submit" data-testid="primary-next-action-control">
+          {{ action.action_label|default:"Öffnen" }} →
+        </button>
+      </form>
+      {% else %}
+      <a class="btn {% if action.state == 'blocked' %}btn-outline-danger{% else %}btn-primary{% endif %}" href="{{ action.url }}" data-testid="primary-next-action-control">
+        {{ action.action_label|default:"Öffnen" }} →
+      </a>
+      {% endif %}
+    {% else %}
+    <span class="badge badge-soft">Mit deiner Rolle nicht ausführbar</span>
+    {% endif %}
+  </div>
+</section>
+{% endwith %}
+{% endif %}
+{% endif %}
+{% if request.resolver_match.namespace == 'architecture' and request.resolver_match.url_name == 'value_stream_detail' and value_stream.status == 'active' and value_stream.focus.is_selected and not value_stream.stage_focus_decision %}
+<div class="small text-muted mb-4">
+  Abgekürzter Pfad ohne Prozessanalyse und Lösungsvergleich: Nach dokumentierter Auswahl der Fokusphase kann ein Use Case weiterhin direkt aus der Phase abgeleitet werden.
+</div>
+{% endif %}
+{% if request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name == 'detail' %}
+{% else %}
+{% include "includes/status_dimensions.html" %}
+{% endif %}
+{% if request.resolver_match.namespace == 'delivery' and request.resolver_match.url_name == 'package_detail' %}
+{% load block8_mapping %}
+{% block8_mapping_status package request.user as mapping_status %}
+{% include "delivery/includes/mapping_status.html" with mapping_status=mapping_status package=package only %}
+{% endif %}

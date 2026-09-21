@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static metric_tags %}
+{% block title %}{% if pilot_start_only %}Pilot starten{% else %}Entscheidung{% endif %} – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-review-form{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+{% metric_set use_case as metric %}
+<div class="page-header">
+  <div><div class="eyebrow mb-2">{{ use_case.short_id }} · {{ use_case.get_status_display }}</div><h1 class="page-title">{% if pilot_start_only %}Pilot starten{% elif form.scale_readiness_result %}Scale Readiness &amp; Entscheidung{% else %}Entscheidung dokumentieren{% endif %}</h1><p class="page-subtitle">{{ use_case.title }}</p></div>
+  <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Zurück zum Use Case</a>
+</div>
+<div class="row g-4">
+  <div class="col-xl-4">
+    <div class="app-card decision-panel mb-4">
+      <div class="card-header d-flex justify-content-between"><strong>{{ decision_check.title }}</strong><span class="badge state-{{ decision_check.state }}">{{ decision_check.state_label }}</span></div>
+      <div class="card-body">
+        {% if decision_check.blockers %}<div class="section-title">Bestehende Go-live-Blocker</div><ul class="decision-list">{% for blocker in decision_check.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>{% endif %}
+        {% if decision_check.warnings %}<div class="section-title mt-3">Hinweise</div><ul class="decision-list">{% for warning in decision_check.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>{% endif %}
+        {% if not decision_check.blockers and not decision_check.warnings %}<p class="text-muted mb-0">Die bestehende Go-live-Grundlage ist vollständig.</p>{% endif %}
+      </div>
+    </div>
+
+    {% if form.scale_readiness_result %}
+    {% include "reviews/includes/scale_readiness_summary.html" with scale_result=form.scale_readiness_result %}
+    {% endif %}
+
+    <div class="app-card">
+      <div class="card-header"><strong>Ziel gegen Ergebnis</strong></div>
+      <div class="card-body">
+        <div class="section-title">{{ use_case.metric_name|default:"Keine Metrik definiert" }}</div>
+        <dl class="row mb-0 small"><dt class="col-5 text-muted">Baseline</dt><dd class="col-7">{{ metric.baseline.display }}</dd><dt class="col-5 text-muted">Ziel</dt><dd class="col-7">{{ metric.target.display }}</dd><dt class="col-5 text-muted">Ist</dt><dd class="col-7">{{ metric.actual.display }}</dd><dt class="col-5 text-muted">Bewertung</dt><dd class="col-7">{{ use_case.metric_result_label }}</dd></dl>
+        <div class="small mt-3"><a href="{{ use_case.get_absolute_url }}#use-case-overview">Vollständige Metrikdetails am Use Case öffnen</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-8">
+    <form method="post" class="app-card" id="review-form" data-initially-dirty="{% if form.is_bound %}true{% else %}false{% endif %}">{% csrf_token %}
+      <div class="card-header"><strong>{% if pilot_start_only %}Pilotbeginn bestätigen{% elif form.scale_readiness_result %}Scale Readiness prüfen und Beschluss dokumentieren{% else %}Review und Beschluss{% endif %}</strong><div class="small text-muted mt-1">{% if pilot_start_only %}Der tatsächliche Pilotbeginn muss am oder nach dem verbindlichen Übergabedatum liegen und darf nicht in der Zukunft liegen.{% elif form.scale_readiness_result %}Hard Blocker sind nicht überstimmbar. Ein Conditional Go benötigt Maßnahme, Owner und Frist. Die verbindliche Lifecycle-Entscheidung bleibt das bestehende Review.{% else %}Die Entscheidung bleibt menschlich verantwortlich und wird revisionsfähig dokumentiert.{% endif %}</div></div>
+      <div class="card-body">{{ form.non_field_errors }}<div class="row g-3">
+        {% for field in form %}
+          {% if field.name == "scale_tailoring_level" %}<div class="col-12 border-top pt-3 mt-4"><div class="section-title">Scale-Readiness-Nachweise</div><p class="form-text mb-0">Die ML-Test-Score-Erhebung und operativen Detailnachweise bleiben im führenden Delivery-/Betriebssystem. Hier wird nur die für diese Entscheidung verwendete Version bzw. Referenz bestätigt.</p></div>{% endif %}
+          {% if field.name == "scale_pilot_validation_confirmed" %}<div class="col-12 scale-evidence-heading"><strong>1 · Pilot-Evidenz / Wirkung</strong><span>Der gemessene Piloterfolg wird für den geplanten Produktivscope bestätigt.</span></div>{% endif %}
+          {% if field.name == "ml_score_data" %}<div class="col-12 scale-evidence-heading"><strong>2 · Daten &amp; Wissen</strong><span>Produktive Daten- und Wissensversorgung anhand der aktuellen ML-Test-Score-Erhebung.</span></div>{% endif %}
+          {% if field.name == "ml_score_model" %}<div class="col-12 scale-evidence-heading"><strong>3 · AI-/Systemqualität</strong><span>Qualität, Mindestwert, Kernprüfungen und zwingende Einzelprüfungen.</span></div>{% endif %}
+          {% if field.name == "scale_production_version" %}<div class="col-12 scale-evidence-heading"><strong>4 · Deployment &amp; technische Robustheit</strong><span>Produktivversion, Infrastruktur, Release-Nachweis und praktisch getesteter Rückweg.</span></div>{% endif %}
+          {% if field.name == "scale_technical_monitoring_ready" %}<div class="col-12 scale-evidence-heading"><strong>5 · Monitoring &amp; Betrieb</strong><span>Technische und fachliche Qualität sowie Incident- und Eskalationsfähigkeit.</span></div>{% endif %}
+          {% if field.name == "scale_extended_controls_completed" %}<div class="col-12 scale-evidence-heading"><strong>6 · Verantwortung, Governance &amp; Restrisiko</strong><span>Business Owner: {{ use_case.business_owner.get_display_name }} · Technical Owner: {% if use_case.technical_owner %}{{ use_case.technical_owner.get_display_name }}{% else %}nicht zugeordnet{% endif %}. Formale Governance-Prüfungen werden automatisch einbezogen.</span></div>{% endif %}
+          {% if field.is_hidden %}{{ field }}{% else %}
+          <div class="{% if field.name == 'rationale' or field.name == 'open_actions' or field.name == 'ending_reason' or field.name == 'data_and_access_handling' or field.name == 'replacement_solution' or field.name == 'final_assessment' or field.name == 'lessons_learned' or field.name == 'go_live_exception_confirmed' or field.name == 'early_go_live_exception_confirmed' or field.name == 'early_go_live_evidence_basis' or field.name == 'early_go_live_unobserved_risks' or field.name == 'early_go_live_mitigation_measures' or field.name == 'scale_pilot_validation_confirmed' or field.name == 'scale_rollback_tested' or field.name == 'scale_technical_monitoring_ready' or field.name == 'scale_ai_quality_monitoring_ready' or field.name == 'scale_incident_process_ready' or field.name == 'scale_extended_controls_completed' or field.name == 'ml_score_open_core_checks' or field.name == 'ml_score_failed_mandatory_checks' %}col-12{% else %}col-md-6{% endif %}">
+            {% if field.field.widget.input_type == 'checkbox' %}<div class="form-check mt-3">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>{% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% endif %}
+            <div class="text-danger small">{{ field.errors }}</div>{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div></div>
+      <div class="card-body border-top d-flex flex-wrap justify-content-end align-items-center gap-2"><span class="small text-muted me-auto">Bei ungespeicherten Änderungen warnt der Browser vor dem Verlassen der Seite.</span><a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Abbrechen</a><button class="btn btn-primary px-4">{% if pilot_start_only %}Pilot starten{% else %}Entscheidung speichern{% endif %}</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/review-form-dirty-guard.js' %}" defer></script>
+{% if form.scale_readiness_result %}<script src="{% static 'js/scale-readiness-preview.js' %}" defer></script>{% endif %}
+{% endblock %}

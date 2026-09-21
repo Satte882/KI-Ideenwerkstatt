@@ -1,0 +1,9 @@
+[Unit]
+Description=KI-Radar due review scan
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/ki-radar
+ExecStart=/usr/bin/docker compose -f compose.prod.yml exec -T app python manage.py scan_due_reviews
