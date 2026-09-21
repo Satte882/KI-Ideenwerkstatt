@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -376,6 +378,17 @@ def process_analysis_detail(request, pk):
     if solution_design_task and not validate_task(solution_design_task.criteria).complete:
         solution_design_task = None
 
+    latest_investigation_run = process_analysis.investigation_runs.first()
+    current_investigation_snapshot = (
+        process_analysis.investigation_source_snapshots.select_related("folder")
+        .filter(
+            process_version=process_analysis.version,
+            folder__is_active=True,
+        )
+        .order_by("-revision")
+        .first()
+    )
+
     return render(
         request,
         "architecture/process_analysis_detail.html",
@@ -392,6 +405,9 @@ def process_analysis_detail(request, pk):
             "can_create_use_case": can_create_use_case(request.user),
             "highlighted_solution_option": highlighted_solution_option,
             "solution_design_task": solution_design_task,
+            "latest_investigation_run": latest_investigation_run,
+            "current_investigation_snapshot": current_investigation_snapshot,
+            "investigation_start_key": f"ui-{uuid.uuid4().hex[:40]}",
         },
     )
 
