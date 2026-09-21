@@ -10,6 +10,21 @@ from django.utils import timezone
 from ki_radar.core.models import TimeStampedModel
 
 
+class ImmutableEvidenceQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        raise ValidationError("Eingefrorene Evidenz ist unveränderlich.")
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        raise ValidationError("Eingefrorene Evidenz ist unveränderlich.")
+
+    def delete(self):
+        raise ValidationError("Eingefrorene Evidenz ist unveränderlich.")
+
+
+class ImmutableEvidenceManager(models.Manager.from_queryset(ImmutableEvidenceQuerySet)):
+    pass
+
+
 class InvestigationSourceFolder(TimeStampedModel):
     """Administratively registered, case-bound source folder."""
 
@@ -63,6 +78,8 @@ class InvestigationSourceFolder(TimeStampedModel):
 class InvestigationSourceSnapshot(TimeStampedModel):
     """Immutable authorization, process-context and source-manifest revision."""
 
+    objects = ImmutableEvidenceManager()
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     folder = models.ForeignKey(
         InvestigationSourceFolder,
@@ -103,11 +120,16 @@ class InvestigationSourceSnapshot(TimeStampedModel):
             raise ValidationError("Quellen-Snapshots sind nach der Erzeugung unveränderlich.")
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Quellen-Snapshots sind unveränderlich und nicht direkt löschbar.")
+
     def __str__(self) -> str:
         return f"{self.process_analysis_id}: Quellenrevision {self.revision}"
 
 
 class InvestigationSource(TimeStampedModel):
+    objects = ImmutableEvidenceManager()
+
     class SourceType(models.TextChoices):
         TEXT = "txt", "TXT"
         MARKDOWN = "md", "Markdown"
@@ -150,11 +172,16 @@ class InvestigationSource(TimeStampedModel):
             raise ValidationError("Eingefrorene Quellen sind nach der Erzeugung unveränderlich.")
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Eingefrorene Quellen sind unveränderlich und nicht direkt löschbar.")
+
     def __str__(self) -> str:
         return f"{self.filename}@{self.snapshot_id}"
 
 
 class InvestigationToolResult(TimeStampedModel):
+    objects = ImmutableEvidenceManager()
+
     class ToolName(models.TextChoices):
         PROFILE_CSV = "profile_csv", "CSV profilieren"
         COMPARE_GROUPS = "compare_groups", "Gruppen vergleichen"
@@ -201,6 +228,9 @@ class InvestigationToolResult(TimeStampedModel):
         if not self._state.adding:
             raise ValidationError("Werkzeugresultate sind nach der Erzeugung unveränderlich.")
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Werkzeugresultate sind unveränderlich und nicht direkt löschbar.")
 
     def __str__(self) -> str:
         return f"{self.tool_name}:{self.id}"
