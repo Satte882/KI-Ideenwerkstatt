@@ -712,6 +712,124 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
     return False
 
 
+def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
+    if not bool(run.execution_snapshot.get("decision_brief_required")):
+        return ()
+
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    blockers: list[str] = []
+
+    question_scope = payload.get("question_scope")
+    if not isinstance(question_scope, Mapping):
+        blockers.append("decision_brief_question_scope_missing")
+    else:
+        question = str(question_scope.get("question") or "").strip()
+        scope = str(question_scope.get("scope") or "").strip()
+        if not question or question != run.decision_question.strip():
+            blockers.append("decision_brief_question_mismatch")
+        if not scope:
+            blockers.append("decision_brief_scope_missing")
+
+    problem = payload.get("problem")
+    if not isinstance(problem, Mapping) or not str(problem.get("statement") or "").strip():
+        blockers.append("decision_brief_problem_missing")
+    else:
+        references = [
+            item for item in problem.get("references", []) if isinstance(item, Mapping)
+        ]
+        if not references or not all(reference_valid(run, item) for item in references):
+            blockers.append("decision_brief_problem_reference_invalid")
+
+    hypotheses = [
+        item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)
+    ]
+    if len(hypotheses) < 2:
+        blockers.append("decision_brief_competing_hypotheses_missing")
+    for index, hypothesis in enumerate(hypotheses):
+        statement = str(hypothesis.get("statement") or "").strip()
+        status = str(hypothesis.get("status") or "").strip()
+        if not statement or status not in {"open", "supported", "refuted", "conflicting"}:
+            blockers.append(f"decision_brief_hypothesis_invalid:{index}")
+            continue
+        evidence_refs = [
+            item for item in hypothesis.get("references", []) if isinstance(item, Mapping)
+        ]
+        counter_refs = [
+            item
+            for item in hypothesis.get("counterevidence_refs", [])
+            if isinstance(item, Mapping)
+        ]
+        required_refs = evidence_refs + counter_refs
+        if status in {"supported", "refuted", "conflicting"} and (
+            not required_refs or not all(reference_valid(run, item) for item in required_refs)
+        ):
+            blockers.append(f"decision_brief_hypothesis_reference_invalid:{index}")
+
+    calculations = [
+        item for item in payload.get("calculations", []) if isinstance(item, Mapping)
+    ]
+    if not calculations:
+        blockers.append("decision_brief_calculation_missing")
+    for index, calculation in enumerate(calculations):
+        reference = calculation.get("reference")
+        if (
+            not str(calculation.get("summary") or "").strip()
+            or not isinstance(reference, Mapping)
+            or not reference.get("tool_result_id")
+            or not reference_valid(run, reference)
+        ):
+            blockers.append(f"decision_brief_calculation_reference_invalid:{index}")
+        if not isinstance(calculation.get("population"), Mapping):
+            blockers.append(f"decision_brief_calculation_population_missing:{index}")
+        if not str(calculation.get("limits") or "").strip():
+            blockers.append(f"decision_brief_calculation_limits_missing:{index}")
+
+    options = [item for item in payload.get("options", []) if isinstance(item, Mapping)]
+    if len(options) < 2:
+        blockers.append("decision_brief_options_missing")
+    if options and not any(bool(item.get("non_ai")) for item in options):
+        blockers.append("decision_brief_non_ai_option_missing")
+    if options and not any(bool(item.get("status_quo")) for item in options):
+        blockers.append("decision_brief_status_quo_missing")
+    allowed_option_types = {choice for choice, _label in SolutionOption.OptionType.choices}
+    for index, option in enumerate(options):
+        if (
+            not str(option.get("name") or "").strip()
+            or not str(option.get("description") or "").strip()
+            or not str(option.get("expected_value") or "").strip()
+            or str(option.get("option_type") or "") not in allowed_option_types
+        ):
+            blockers.append(f"decision_brief_option_invalid:{index}")
+
+    recommendation = payload.get("recommendation")
+    if not isinstance(recommendation, Mapping):
+        blockers.append("decision_brief_recommendation_missing")
+    else:
+        refs = [
+            item for item in recommendation.get("references", []) if isinstance(item, Mapping)
+        ]
+        if (
+            not str(recommendation.get("summary") or "").strip()
+            or not str(recommendation.get("rationale") or "").strip()
+            or not refs
+            or not all(reference_valid(run, item) for item in refs)
+        ):
+            blockers.append("decision_brief_recommendation_invalid")
+
+    if not isinstance(payload.get("risks_unknowns"), list):
+        blockers.append("decision_brief_risks_unknowns_missing")
+
+    validation = payload.get("validation_step")
+    if (
+        not isinstance(validation, Mapping)
+        or not str(validation.get("step") or "").strip()
+        or not str(validation.get("measurement") or "").strip()
+    ):
+        blockers.append("decision_brief_validation_step_missing")
+
+    return tuple(sorted(set(blockers)))
+
+
 def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, Any]:
     claim_id = str(raw.get("claim_id") or "").strip()
     area = str(raw.get("area") or "").strip()
@@ -1244,6 +1362,7 @@ def policy_state_for_run(
         manifest_hash=run.manifest_hash,
         register_hash=run.register_hash,
         brief_hash=run.brief_hash,
+        brief_blockers=decision_brief_blockers(run),
         verifier=latest_verifier_state(run),
         allowed_action_available=allowed_action_available,
         external_critical_gap=external_critical_gap,
