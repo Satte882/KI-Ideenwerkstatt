@@ -47,7 +47,12 @@ from .investigation_runtime import (
     execute_tool_step,
     locked_run,
 )
-from .investigation_tools import TOOL_VERSION, list_sources
+from .investigation_tools import (
+    TOOL_VERSION,
+    InvestigationToolError,
+    list_sources,
+    replay_tool_result,
+)
 
 
 @dataclass(frozen=True)
@@ -190,13 +195,99 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     }
 
 
-def _verifier_context(run: InvestigationRun) -> dict[str, Any]:
+def _deterministic_analysis_replays(actor, run: InvestigationRun) -> list[dict[str, Any]]:
+    replays: list[dict[str, Any]] = []
+    for step in run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS,
+        tool_name__in=["profile_csv", "compare_groups"],
+    ).order_by("sequence"):
+        result_id = step.result_ref.get("tool_result_id")
+        if not result_id:
+            replays.append(
+                {
+                    "step_sequence": step.sequence,
+                    "tool_name": step.tool_name,
+                    "result_id": "",
+                    "matches": False,
+                    "stored_hash": "",
+                    "replay_hash": "",
+                    "mismatch_fields": ["missing_result_ref"],
+                }
+            )
+            continue
+        try:
+            replay = replay_tool_result(actor=actor, result_id=result_id)
+            replays.append(
+                {
+                    "step_sequence": step.sequence,
+                    "tool_name": replay.tool_name,
+                    "result_id": str(replay.result_id),
+                    "source_id": str(replay.source_id),
+                    "source_hash": replay.source_hash,
+                    "matches": replay.matches,
+                    "stored_hash": replay.stored_hash,
+                    "replay_hash": replay.replay_hash,
+                    "mismatch_fields": list(replay.mismatch_fields),
+                }
+            )
+        except InvestigationToolError as exc:
+            replays.append(
+                {
+                    "step_sequence": step.sequence,
+                    "tool_name": step.tool_name,
+                    "result_id": str(result_id),
+                    "matches": False,
+                    "stored_hash": "",
+                    "replay_hash": "",
+                    "mismatch_fields": [exc.code],
+                }
+            )
+    return replays
+
+
+def _apply_replay_findings(
+    payload: Mapping[str, Any],
+    analysis_replays: list[dict[str, Any]],
+) -> dict[str, Any]:
+    normalized = dict(payload)
+    findings = [
+        dict(item)
+        for item in normalized.get("findings", [])
+        if isinstance(item, Mapping)
+    ]
+    for replay in analysis_replays:
+        if replay.get("matches"):
+            continue
+        findings.append(
+            {
+                "severity": "critical",
+                "code": "deterministic_analysis_replay_mismatch",
+                "claim_id": "",
+                "message": (
+                    "Eine gespeicherte deterministische Analyse konnte aus ihren "
+                    "eingefrorenen Eingaben nicht identisch reproduziert werden."
+                ),
+                "result_id": replay.get("result_id", ""),
+                "tool_name": replay.get("tool_name", ""),
+                "mismatch_fields": replay.get("mismatch_fields", []),
+            }
+        )
+    normalized["findings"] = findings
+    return normalized
+
+
+def _verifier_context(
+    run: InvestigationRun,
+    *,
+    analysis_replays: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     return {
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
         "claim_register": run.claim_register,
         "source_relevance": run.source_relevance,
         "brief_payload": run.brief_payload,
+        "analysis_replays": list(analysis_replays or []),
         "tool_trace": [
             {
                 "sequence": step.sequence,
@@ -502,6 +593,7 @@ def request_verifier_report(
     executor_token,
 ) -> InvestigationVerifierReport:
     assert_actor_can_edit_run(actor, run)
+    analysis_replays = _deterministic_analysis_replays(actor, run)
     first_payload, first_call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -510,7 +602,7 @@ def request_verifier_report(
         instruction=VERIFIER_INSTRUCTION,
         prompt_version=VERIFIER_PROMPT_VERSION,
         schema_version=VERIFIER_SCHEMA_VERSION,
-        context=_verifier_context(run),
+        context=_verifier_context(run, analysis_replays=analysis_replays),
         response_format=verifier_response_format(),
     )
 
@@ -521,7 +613,7 @@ def request_verifier_report(
         return _record_verifier_report(
             run_id=run.pk,
             call=first_call,
-            payload=first_payload,
+            payload=_apply_replay_findings(first_payload, analysis_replays),
         )
 
     verifier_reads: list[dict[str, Any]] = []
@@ -551,7 +643,7 @@ def request_verifier_report(
         )
 
     run.refresh_from_db()
-    second_context = _verifier_context(run)
+    second_context = _verifier_context(run, analysis_replays=analysis_replays)
     second_context["verifier_reads"] = verifier_reads
     final_payload, final_call = _structured_provider_call(
         actor=actor,
@@ -584,5 +676,5 @@ def request_verifier_report(
     return _record_verifier_report(
         run_id=run.pk,
         call=final_call,
-        payload=final_payload,
+        payload=_apply_replay_findings(final_payload, analysis_replays),
     )
