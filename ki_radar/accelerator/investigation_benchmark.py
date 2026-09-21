@@ -568,9 +568,9 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
                     (variant, run.execution_mode, normalized_attempt),
                     [],
                 ).append(run)
-            if _scored_run_reached_expected_boundary(run, variant=variant):
-                scored_key = f"{run.execution_mode}_real_scored"
-                matrix[variant][scored_key] += 1
+                if _scored_run_reached_expected_boundary(run, variant=variant):
+                    scored_key = f"{run.execution_mode}_real_scored"
+                    matrix[variant][scored_key] += 1
 
         run_reservations = reservations_by_run.get(str(run.pk), [])
         provider_calls = len(run_reservations)
