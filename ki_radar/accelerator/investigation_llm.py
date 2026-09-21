@@ -43,8 +43,8 @@ from .investigation_runtime import (
     budget_exhausted,
     canonical_json,
     content_hash,
-    execute_tool_step,
     evaluate_run_policy,
+    execute_tool_step,
     locked_run,
 )
 from .investigation_tools import TOOL_VERSION, list_sources
@@ -598,7 +598,7 @@ def request_verifier_report(
                 "code": "verification_reads_incomplete",
                 "claim_id": "",
                 "message": (
-                    "Der Verifier benötigt nach dem zweiten Aufruf " 
+                    "Der Verifier benötigt nach dem zweiten Aufruf "
                     "weitere Fundstellenprüfung."
                 ),
             }
