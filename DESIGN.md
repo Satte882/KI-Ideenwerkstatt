@@ -152,11 +152,11 @@ Es beschreibt Produktqualität, nicht eine austauschbare Landingpage-Ästhetik.
 
 ## Arbeitsregel für UI-Änderungen
 
-Für KI-Ideenwerkstatt gilt keine historische Pflicht mehr, UI-Arbeiten über
-`agent/ui-control-room-integration` zu führen. Änderungen erfolgen im aktuellen
-Arbeitskontext des Repositories. Das Design-System bleibt für produktive Oberflächen
-verbindlich; eine bewusste Änderung dieser Regeln im Rahmen von Issue #1 muss
-explizit, nachvollziehbar und konsistent erfolgen statt sie stillschweigend zu umgehen.
+Für KI-Ideenwerkstatt gibt es keine branch-spezifische UI-Regel. Änderungen erfolgen
+im aktuellen Arbeitskontext des Repositories. Das Design-System bleibt für produktive
+Oberflächen verbindlich; eine bewusste Änderung dieser Regeln im Rahmen von GitHub
+Issue #1 „10x: Autonomes Evidence-to-Decision-System“ muss explizit, nachvollziehbar
+und konsistent erfolgen statt sie stillschweigend zu umgehen.
 
 ## Abgeschlossene UI-Migration
 
