@@ -103,11 +103,7 @@ def test_profile_csv_reports_types_missing_values_and_duplicates(
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     (tmp_path / "profile.csv").write_text(
-        "group,value,note\n"
-        "A,10,ok\n"
-        "A,,missing\n"
-        "B,oops,text\n"
-        "A,10,ok\n",
+        "group,value,note\nA,10,ok\nA,,missing\nB,oops,text\nA,10,ok\n",
         encoding="utf-8",
     )
     _folder, snapshot = snapshot_for_root(
@@ -200,11 +196,12 @@ def test_compare_groups_matches_manual_values_and_null_is_not_zero(
     assert first.missing_values["value"] == 1
     assert first.units == {"column": "unit", "values": ["h"], "missing_rows": []}
     assert any(item["delta"] == "25" for item in first.differences)
-    assert any("nicht automatisch Kausalität" in value for value in [
-        InvestigationToolResult.objects.get(pk=first.result_id).result_payload[
-            "causality_note"
+    assert any(
+        "nicht automatisch Kausalität" in value
+        for value in [
+            InvestigationToolResult.objects.get(pk=first.result_id).result_payload["causality_note"]
         ]
-    ])
+    )
 
     assert first.groups == second.groups
     assert first.differences == second.differences
@@ -221,10 +218,7 @@ def test_units_conflict_missing_units_empty_groups_and_missing_columns_are_findi
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     (tmp_path / "units.csv").write_text(
-        "group,value,unit\n"
-        "A,10,h\n"
-        "B,20,min\n"
-        "C,30,\n",
+        "group,value,unit\nA,10,h\nB,20,min\nC,30,\n",
         encoding="utf-8",
     )
     _folder, snapshot = snapshot_for_root(
@@ -288,10 +282,7 @@ def test_numeric_filter_type_errors_are_excluded_not_coerced(
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     (tmp_path / "filters.csv").write_text(
-        "group,value,threshold\n"
-        "A,10,5\n"
-        "A,20,unknown\n"
-        "B,30,15\n",
+        "group,value,threshold\nA,10,5\nA,20,unknown\nB,30,15\n",
         encoding="utf-8",
     )
     _folder, snapshot = snapshot_for_root(
