@@ -45,6 +45,8 @@ Für einen gültigen Vergleich müssen gemäß assert_comparable_runs() identisc
 
 Der Unterschied zwischen den Armen ist damit die Ablaufsteuerung, nicht ein absichtlich schwächeres Modell oder ein älterer Prompt.
 
+Der Abschlussreport zählt einen Fixed-vs-Adaptive-Vergleich nur dann als vorhanden, wenn die vorab fixierten Runs derselben Variante den Vergleichsvertrag tatsächlich erfüllen. Ein bloß vorhandener Fixed-Run reicht nicht.
+
 ## Reale Nachweis-Matrix
 
 Noch nicht ausgeführt:
@@ -56,6 +58,25 @@ Noch nicht ausgeführt:
 | C | 0 / 3 | 0 / mindestens 1 | andere gestützte Ursache als A → evidenzabhängige andere Empfehlung |
 
 Alle Versuche einschließlich Kalibrierung, Warm-up, Fehler, Retry, Repair und Verifier müssen im selben persistenten Nachweisbudget erfasst werden. Es werden keine zusätzlichen realen Läufe allein zum Erzwingen eines grünen Ergebnisses durchgeführt.
+
+### Vorab fixierte Stichprobe und Snapshot-Bindung
+
+Eine Evidence-Campaign bleibt der gemeinsame Budget- und Nachweiscontainer für A/B/C. Die drei Varianten werden jedoch an getrennte, unveränderliche Source-Snapshots derselben ProcessAnalysis gebunden:
+
+- der erste Kalibrierungslauf einer Variante benötigt einen expliziten `--snapshot`;
+- der Runner prüft die eingefrorene Dateisignatur des A/B/C-Packs und verhindert Vertauschungen;
+- alle späteren Kalibrierungs-, Fixed- und Adaptive-Läufe derselben Variante verwenden genau diese Snapshot-/Manifest-Bindung;
+- eine spätere Snapshot-Revision darf eine bestehende Bindung nicht still ersetzen;
+- nach Beginn der gewerteten Phase sind keine neuen Kalibrierungsläufe erlaubt.
+
+Die gewertete Stichprobe ist **vor** den Ergebnissen festgelegt:
+
+- Adaptive: genau Attempts 1, 2 und 3 je Variante;
+- Fixed: genau Attempt 1 je Variante.
+
+Fehlgeschlagene oder fachlich nicht bestandene Runs bleiben Bestandteil dieser Stichprobe. Spätere Attempts dürfen sie nicht ersetzen und dürfen für den menschlichen Review nicht anstelle ungünstiger Ergebnisse ausgewählt werden. Der Evidence-Report gibt die kanonischen Run-IDs dieser Stichprobe explizit aus.
+
+`nine_real_adaptive_runs_complete` bedeutet deshalb nur, dass alle neun vorab fixierten adaptiven Runs vorhanden sind. Ob sie den fachlichen/agentischen Prüfpunkt bestehen, wird separat als `nine_real_adaptive_runs_passed` berichtet.
 
 ## Gesamtbudget der realen Providerphase
 
