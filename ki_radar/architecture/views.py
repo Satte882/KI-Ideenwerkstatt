@@ -379,6 +379,9 @@ def process_analysis_detail(request, pk):
         solution_design_task = None
 
     latest_investigation_run = process_analysis.investigation_runs.first()
+    active_investigation_folders = list(
+        process_analysis.investigation_source_folders.filter(is_active=True).order_by("name")
+    )
     current_investigation_snapshot = (
         process_analysis.investigation_source_snapshots.select_related("folder")
         .filter(
@@ -388,6 +391,13 @@ def process_analysis_detail(request, pk):
         .order_by("-revision")
         .first()
     )
+    investigation_effective_budget = None
+    if current_investigation_snapshot is not None:
+        from ki_radar.accelerator.investigation_runtime import budget_from_snapshot
+
+        investigation_effective_budget = budget_from_snapshot(
+            current_investigation_snapshot.run_limits
+        )
 
     return render(
         request,
@@ -407,6 +417,8 @@ def process_analysis_detail(request, pk):
             "solution_design_task": solution_design_task,
             "latest_investigation_run": latest_investigation_run,
             "current_investigation_snapshot": current_investigation_snapshot,
+            "active_investigation_folders": active_investigation_folders,
+            "investigation_effective_budget": investigation_effective_budget,
             "investigation_start_key": f"ui-{uuid.uuid4().hex[:40]}",
         },
     )
