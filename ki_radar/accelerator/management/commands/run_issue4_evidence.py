@@ -56,9 +56,15 @@ class Command(BaseCommand):
         variant = options["variant"]
         mode = options["mode"]
         phase = options["phase"]
-        idempotency_key = (
-            f"i4-{campaign.pk.hex[:12]}-{variant.lower()}-"
-            f"{mode[0]}-{phase[0]}-{attempt}"
+        idempotency_key = "-".join(
+            (
+                "i4",
+                campaign.pk.hex[:12],
+                variant.lower(),
+                mode[0],
+                phase[0],
+                str(attempt),
+            )
         )
 
         try:
