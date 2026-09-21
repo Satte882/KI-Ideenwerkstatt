@@ -42,7 +42,11 @@ SNAPSHOT_PATH = pathlib.Path(__file__).with_name("legacy-usecases.snapshot.json"
 def _scalar_defaults(model, data: dict) -> dict:
     defaults = {}
     for field in model._meta.concrete_fields:
-        if field.primary_key or field.is_relation or field.name in {"created_at", "updated_at"}:
+        if (
+            field.primary_key
+            or field.is_relation
+            or field.name in {"created_at", "updated_at"}
+        ):
             continue
         if field.name not in data:
             continue
@@ -77,7 +81,9 @@ def _business_unit(value):
 def _upsert_business_units(snapshot: dict) -> None:
     for data in snapshot.get("business_units", []):
         defaults = _scalar_defaults(BusinessUnit, data)
-        unit, _ = BusinessUnit.objects.update_or_create(name=data["name"], defaults=defaults)
+        unit, _ = BusinessUnit.objects.update_or_create(
+            name=data["name"], defaults=defaults
+        )
         _restore_timestamps(unit, data)
 
 
@@ -123,7 +129,9 @@ def _advance_use_case_counter(snapshot: dict) -> None:
     if not targets:
         return
     target = max(targets)
-    latest = UseCaseCounter.objects.order_by("-pk").values_list("pk", flat=True).first() or 0
+    latest = (
+        UseCaseCounter.objects.order_by("-pk").values_list("pk", flat=True).first() or 0
+    )
     while latest < target:
         latest = UseCaseCounter.objects.create().pk
 
@@ -192,7 +200,8 @@ def _upsert_architecture(use_case: UseCase, data: dict | None) -> None:
         selected_payload = None
         for payload in criteria.values():
             if isinstance(payload, dict) and (
-                payload.get("name") == stage.name or payload.get("sequence") == stage.sequence
+                payload.get("name") == stage.name
+                or payload.get("sequence") == stage.sequence
             ):
                 selected_payload = payload
                 break
@@ -295,7 +304,9 @@ def _upsert_classifications(use_case: UseCase, items: list[dict]) -> None:
     _restore_timestamps(classification, data)
 
 
-def _upsert_decision_data(use_case: UseCase, item: dict) -> dict[int, DecisionAssessment]:
+def _upsert_decision_data(
+    use_case: UseCase, item: dict
+) -> dict[int, DecisionAssessment]:
     assessments = {}
     for data in item.get("decision_assessments", []):
         defaults = _scalar_defaults(DecisionAssessment, data)
@@ -316,7 +327,9 @@ def _upsert_decision_data(use_case: UseCase, item: dict) -> dict[int, DecisionAs
                 "condition_owner": _username(data.get("condition_owner")),
                 "decided_by": _username(data.get("decided_by")),
                 "second_approved_by": _username(data.get("second_approved_by")),
-                "second_approval_assignee": _username(data.get("second_approval_assignee")),
+                "second_approval_assignee": _username(
+                    data.get("second_approval_assignee")
+                ),
                 "second_approval_returned_by": _username(
                     data.get("second_approval_returned_by")
                 ),
@@ -378,7 +391,9 @@ def _upsert_reviews(use_case: UseCase, item: dict) -> None:
         )
         review, created = Review.objects.get_or_create(
             use_case=use_case,
-            review_date=Review._meta.get_field("review_date").to_python(data["review_date"]),
+            review_date=Review._meta.get_field("review_date").to_python(
+                data["review_date"]
+            ),
             decision=data["decision"],
             defaults=defaults,
         )
