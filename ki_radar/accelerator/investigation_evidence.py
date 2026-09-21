@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
-from typing import Any, Mapping
+from typing import Any
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Max
 from django.utils import timezone
 
 from ki_radar.architecture.models import ProcessAnalysis
@@ -14,7 +14,6 @@ from ki_radar.architecture.permissions import can_edit_value_stream
 from .investigation_models import (
     InvestigationEvidenceBudgetRevision,
     InvestigationEvidenceCampaign,
-    InvestigationModelCall,
     InvestigationProviderReservation,
     InvestigationRun,
 )
