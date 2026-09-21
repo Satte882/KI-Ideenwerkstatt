@@ -250,11 +250,7 @@ def _apply_replay_findings(
     analysis_replays: list[dict[str, Any]],
 ) -> dict[str, Any]:
     normalized = dict(payload)
-    findings = [
-        dict(item)
-        for item in normalized.get("findings", [])
-        if isinstance(item, Mapping)
-    ]
+    findings = [dict(item) for item in normalized.get("findings", []) if isinstance(item, Mapping)]
     for replay in analysis_replays:
         if replay.get("matches"):
             continue
