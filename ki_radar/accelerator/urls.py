@@ -1,6 +1,13 @@
 from django.urls import path
 
-from . import (\n    adoption_views,\n    investigation_views,\n    methodology_views,\n    solution_generation_views,\n    structured_views,\n    views,\n)
+from . import (
+    adoption_views,
+    investigation_views,
+    methodology_views,
+    solution_generation_views,
+    structured_views,
+    views,
+)
 from .models import CaptureSession
 
 app_name = "accelerator"
