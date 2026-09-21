@@ -68,10 +68,7 @@ class PlannerAction:
 
 
 def _requested_model() -> str:
-    return str(
-        getattr(settings, "OPENROUTER_MODEL", os.getenv("OPENROUTER_MODEL", ""))
-        or ""
-    )
+    return str(getattr(settings, "OPENROUTER_MODEL", os.getenv("OPENROUTER_MODEL", "")) or "")
 
 
 def _instruction_hash(value: str) -> str:
@@ -94,10 +91,9 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         )
 
     tools = frozen.get("tools") or {}
-    if (
-        tools.get("implementation_version") != TOOL_VERSION
-        or set(tools.get("allowlist") or []) != set(ALLOWED_TOOLS)
-    ):
+    if tools.get("implementation_version") != TOOL_VERSION or set(
+        tools.get("allowlist") or []
+    ) != set(ALLOWED_TOOLS):
         raise InvestigationRunError(
             "Der fixierte Werkzeugvertrag hat sich geändert.",
             code="execution_version_unavailable",
@@ -134,16 +130,16 @@ def _usage_tokens(result, messages: list[dict[str, str]]) -> tuple[int, int, int
     prompt = result.usage.get("prompt_tokens")
     completion = result.usage.get("completion_tokens")
     try:
-        prompt_tokens = int(prompt) if prompt is not None else _estimate_tokens(
-            "".join(message["content"] for message in messages)
+        prompt_tokens = (
+            int(prompt)
+            if prompt is not None
+            else _estimate_tokens("".join(message["content"] for message in messages))
         )
     except (TypeError, ValueError):
         prompt_tokens = _estimate_tokens("".join(message["content"] for message in messages))
     try:
         completion_tokens = (
-            int(completion)
-            if completion is not None
-            else _estimate_tokens(result.content)
+            int(completion) if completion is not None else _estimate_tokens(result.content)
         )
     except (TypeError, ValueError):
         completion_tokens = _estimate_tokens(result.content)
@@ -209,9 +205,9 @@ def _verifier_context(run: InvestigationRun) -> dict[str, Any]:
                 "result_ref": step.result_ref,
                 "result_hash": step.result_hash,
             }
-            for step in run.steps.filter(
-                status=InvestigationStep.Status.SUCCESS
-            ).order_by("sequence")
+            for step in run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by(
+                "sequence"
+            )
         ],
         "bound_hashes": {
             "contract": run.contract_hash,
@@ -296,9 +292,7 @@ def _mark_model_failure(call_id, code: str) -> None:
             call.status = InvestigationModelCall.Status.FAILED
             call.error_code = str(code or "provider_error")[:50]
             call.finished_at = timezone.now()
-            call.save(
-                update_fields=["status", "error_code", "finished_at", "updated_at"]
-            )
+            call.save(update_fields=["status", "error_code", "finished_at", "updated_at"])
 
 
 def _structured_provider_call(
@@ -437,9 +431,7 @@ def request_planner_action(
     return PlannerAction(
         action=str(payload.get("action") or ""),
         target_claim_id=str(payload.get("target_claim_id") or ""),
-        expected_discriminating_finding=str(
-            payload.get("expected_discriminating_finding") or ""
-        ),
+        expected_discriminating_finding=str(payload.get("expected_discriminating_finding") or ""),
         rationale=str(payload.get("rationale") or ""),
         tool_name=str(payload.get("tool_name") or ""),
         parameters=dict(payload.get("parameters") or {}),
@@ -458,11 +450,7 @@ def request_planner_action(
 
 
 def _critical_claim_ids(run: InvestigationRun) -> set[str]:
-    return {
-        str(item["claim_id"])
-        for item in run.claim_register
-        if bool(item.get("critical"))
-    }
+    return {str(item["claim_id"]) for item in run.claim_register if bool(item.get("critical"))}
 
 
 def _record_verifier_report(
@@ -473,19 +461,9 @@ def _record_verifier_report(
 ) -> InvestigationVerifierReport:
     with transaction.atomic():
         run = InvestigationRun.objects.select_for_update().get(pk=run_id)
-        findings = [
-            dict(item)
-            for item in payload.get("findings", [])
-            if isinstance(item, Mapping)
-        ]
-        critical_findings = sum(
-            1 for item in findings if item.get("severity") == "critical"
-        )
-        checked = [
-            str(item)
-            for item in payload.get("checked_critical_claims", [])
-            if str(item)
-        ]
+        findings = [dict(item) for item in payload.get("findings", []) if isinstance(item, Mapping)]
+        critical_findings = sum(1 for item in findings if item.get("severity") == "critical")
+        checked = [str(item) for item in payload.get("checked_critical_claims", []) if str(item)]
         refs_valid = bool(payload.get("source_references_valid")) and all(
             bool(item.get("references_valid", False))
             for item in run.claim_register
@@ -496,9 +474,7 @@ def _record_verifier_report(
             and refs_valid
             and _critical_claim_ids(run).issubset(set(checked))
         )
-        revision = (
-            run.verifier_reports.aggregate(value=Max("revision"))["value"] or 0
-        ) + 1
+        revision = (run.verifier_reports.aggregate(value=Max("revision"))["value"] or 0) + 1
         return InvestigationVerifierReport.objects.create(
             run=run,
             revision=revision,
@@ -538,9 +514,7 @@ def request_verifier_report(
     )
 
     read_requests = [
-        dict(item)
-        for item in first_payload.get("read_requests", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in first_payload.get("read_requests", []) if isinstance(item, Mapping)
     ]
     if not read_requests:
         return _record_verifier_report(
@@ -598,8 +572,7 @@ def request_verifier_report(
                 "code": "verification_reads_incomplete",
                 "claim_id": "",
                 "message": (
-                    "Der Verifier benötigt nach dem zweiten Aufruf "
-                    "weitere Fundstellenprüfung."
+                    "Der Verifier benötigt nach dem zweiten Aufruf weitere Fundstellenprüfung."
                 ),
             }
         )
