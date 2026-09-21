@@ -297,14 +297,10 @@ def _scored_run_reached_expected_boundary(
     variant: str,
 ) -> bool:
     if variant == "B":
-        return (
-            run.clarification_reason == ReasonCode.MISSING_EVIDENCE.value
-            and run.status
-            in {
-                InvestigationRun.Status.WAITING_HUMAN,
-                InvestigationRun.Status.ABORTED,
-            }
-        )
+        return run.clarification_reason == ReasonCode.MISSING_EVIDENCE.value and run.status in {
+            InvestigationRun.Status.WAITING_HUMAN,
+            InvestigationRun.Status.ABORTED,
+        }
     return run.status == InvestigationRun.Status.READY
 
 
