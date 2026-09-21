@@ -428,7 +428,7 @@ def test_versioned_expected_fixture_matches_a_b_c_results(
         assert groups_a[group]["value"] == contract["value"]
         assert groups_a[group]["population"] == contract["population"]
     assert list(result_a.excluded_rows) == expected_a["excluded_rows"]
-    assert any(item["delta"] == expected_a["expected_delta"] for item in result_a.differences)
+    assert expected_a["expected_difference"] in result_a.differences
 
     process_b = make_process(owner=owner, business_unit=business_unit, name="Expected B")
     _folder_b, snapshot_b = register_and_snapshot(
