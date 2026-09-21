@@ -7,6 +7,7 @@ from threading import Barrier
 
 import pytest
 from django.db import close_old_connections, connection
+from django.urls import reverse
 from django.utils import timezone
 
 from ki_radar.accelerator.investigation_benchmark import (
@@ -29,6 +30,7 @@ from ki_radar.accelerator.investigation_models import (
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
+    DEFAULT_BUDGET,
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
@@ -682,3 +684,75 @@ def test_incomplete_campaign_report_never_claims_effectiveness_or_ten_x(
     assert report["human_active_time_seconds"] is None
     assert report["independent_human_review"] == "not_recorded"
     assert any("A:" in item for item in report["outstanding_requirements"])
+
+
+@pytest.mark.django_db
+def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="UI Start")
+    (tmp_path / "notes.txt").write_text("Beleg für den Fall.", encoding="utf-8")
+    folder = InvestigationSourceFolder.objects.create(
+        process_analysis=process,
+        name="Registrierter Fallordner",
+        root_path=str(tmp_path),
+        registered_by=owner,
+    )
+    client.force_login(owner)
+
+    authorize_url = reverse(
+        "accelerator:investigation_authorize",
+        args=[process.pk],
+    )
+    response = client.get(authorize_url)
+    assert response.status_code == 200
+    assert "Feste Run-Limits" in response.content.decode()
+    assert "max_model_calls" in response.content.decode()
+    assert "Einzeldateien oder Werkzeuge werden nicht manuell ausgewählt" in (
+        response.content.decode()
+    )
+
+    question = "Welche Ursache und Lösungsrichtung ist durch die Evidenz gestützt?"
+    response = client.post(
+        authorize_url,
+        {
+            "folder_id": str(folder.pk),
+            "decision_question": question,
+        },
+    )
+    assert response.status_code == 302
+
+    snapshot = process.investigation_source_snapshots.get()
+    assert snapshot.folder_id == folder.pk
+    assert snapshot.decision_question == question
+    assert snapshot.run_limits == DEFAULT_BUDGET
+    assert snapshot.sources.count() == 1
+
+    detail = client.get(process.get_absolute_url())
+    body = detail.content.decode()
+    assert detail.status_code == 200
+    assert "Autorisierter Quellenstand" in body
+    assert "max_model_calls" in body
+    assert "Untersuchung starten" in body
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.run_until_boundary",
+        lambda **_kwargs: None,
+    )
+    start_url = reverse(
+        "accelerator:investigation_start",
+        args=[process.pk],
+    )
+    response = client.post(
+        start_url,
+        {"idempotency_key": "ui-no-file-selection"},
+    )
+    assert response.status_code == 302
+    run = process.investigation_runs.get()
+    assert run.source_snapshot_id == snapshot.pk
+    assert run.execution_snapshot["decision_brief_required"] is True
+    assert run.status == InvestigationRun.Status.RUNNING
