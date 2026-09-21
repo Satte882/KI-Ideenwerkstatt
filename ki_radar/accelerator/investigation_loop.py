@@ -35,7 +35,6 @@ from .investigation_runtime import (
     set_source_relevance,
 )
 
-
 TRANSIENT_PROVIDER_CODES = frozenset({"timeout", "provider_unavailable", "rate_limit"})
 
 
