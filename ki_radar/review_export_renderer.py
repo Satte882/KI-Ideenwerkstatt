@@ -66,7 +66,7 @@ def render_review_markdown(context: ReviewContext) -> str:
         "",
         (
             "Pruefe den dokumentierten Stand auf Vollstaendigkeit, Widersprueche, schwache "
-            "Annahmen, fehlende Evidenz und gezielte Rueckfragen. Der KI-UseCase-Radar bleibt "
+            "Annahmen, fehlende Evidenz und gezielte Rueckfragen. Die KI-Ideenwerkstatt bleibt "
             "Source of Truth fuer Methodik, Pflichtlogik, Antworten, Gates und Status."
         ),
         "",
