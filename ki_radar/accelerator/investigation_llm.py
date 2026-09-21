@@ -3,8 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from django.conf import settings
 from django.db import transaction
@@ -44,7 +45,6 @@ from .investigation_runtime import (
     content_hash,
     execute_tool_step,
     evaluate_run_policy,
-    jsonable,
     locked_run,
 )
 from .investigation_tools import TOOL_VERSION, list_sources
@@ -597,7 +597,10 @@ def request_verifier_report(
                 "severity": "critical",
                 "code": "verification_reads_incomplete",
                 "claim_id": "",
-                "message": (\n                    "Der Verifier benötigt nach dem zweiten Aufruf " \n                    "weitere Fundstellenprüfung."\n                ),
+                "message": (
+                    "Der Verifier benötigt nach dem zweiten Aufruf " 
+                    "weitere Fundstellenprüfung."
+                ),
             }
         )
         final_payload = dict(final_payload)
