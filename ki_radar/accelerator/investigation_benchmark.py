@@ -13,14 +13,14 @@ from .investigation_models import (
     InvestigationSource,
 )
 from .investigation_runtime import (
+    FIXED_ROUTE_VERSION,
     InvestigationRunError,
     execute_tool_step,
     mark_counterevidence_processed,
     set_source_relevance,
 )
 
-FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
-FIXED_COUNTEREVIDENCE_QUERY = "gegenbeleg widerlegt alternative nicht"
+FIXED_COUNTEREVIDENCE_QUERY = "nicht"
 FIXED_READ_LIMIT = 100
 FIXED_MAX_GROUP_CHECKS = 3
 _OUTCOME_MARKERS = ("hour", "duration", "time", "lead", "cycle", "latency", "day", "minute")
@@ -112,7 +112,7 @@ def prepare_fixed_route(*, actor, run_id, executor_token) -> InvestigationRun:
             "Die feste Analysestrecke darf nur auf einem fixed-Run ausgeführt werden.",
             code="invalid_execution_mode",
         )
-    if run.execution_snapshot.get("fixed_route_version") not in {None, FIXED_ROUTE_VERSION}:
+    if run.execution_snapshot.get("fixed_route_version") != FIXED_ROUTE_VERSION:
         raise InvestigationRunError(
             "Die fixierte Kontrollstrecke ist nicht verfügbar.",
             code="execution_version_unavailable",
