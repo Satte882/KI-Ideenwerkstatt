@@ -22,6 +22,7 @@ from ki_radar.accelerator.investigation_evidence import (
     mark_provider_attempt_uncertain,
     reserve_provider_attempt,
 )
+from ki_radar.accelerator.investigation_llm import _estimate_tokens, _reserve_model_call
 from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
     InvestigationProviderReservation,
@@ -34,6 +35,7 @@ from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
+    canonical_json,
     content_hash,
     evaluate_run_policy,
     execute_tool_step,
@@ -760,3 +762,113 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
     assert run.source_snapshot_id == snapshot.pk
     assert run.execution_snapshot["decision_brief_required"] is True
     assert run.status == InvestigationRun.Status.RUNNING
+
+
+@pytest.mark.django_db
+def test_model_call_reserves_estimated_tokens_not_utf8_bytes(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Token reservation")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="token-reservation",
+            evidence_campaign_id=campaign.pk,
+            evidence_metadata={
+                "provider_mode": "real",
+                "phase": "calibration",
+                "variant": "A",
+            },
+            decision_brief_required=True,
+        ),
+    )
+    instruction = "Prüfe die Evidenz einschließlich Ä, Ö und Ü."
+    context = {"text": "äöüß" * 100}
+    payload = {"instruction": instruction, "context": context}
+
+    call = _reserve_model_call(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.PLANNER,
+        instruction=instruction,
+        prompt_version="test-token-reservation-v1",
+        schema_version="test-token-reservation-schema-v1",
+        context=context,
+    )
+
+    reservation = InvestigationProviderReservation.objects.get(model_call=call)
+    serialized = canonical_json(payload)
+    expected_tokens = _estimate_tokens(serialized)
+    utf8_bytes = len(serialized.encode("utf-8"))
+
+    assert reservation.reserved_input_tokens == expected_tokens
+    assert reservation.reserved_input_tokens < utf8_bytes
+
+
+@pytest.mark.django_db
+def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Scored outcomes")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    def start_scored(key, variant):
+        handle = start_investigation(
+            actor=owner,
+            request=StartInvestigationRequest(
+                snapshot_id=snapshot.snapshot_id,
+                idempotency_key=key,
+                evidence_campaign_id=campaign.pk,
+                execution_mode="adaptive",
+                evidence_metadata={
+                    "provider_mode": "real",
+                    "phase": "scored",
+                    "variant": variant,
+                },
+                decision_brief_required=True,
+            ),
+        )
+        return InvestigationRun.objects.get(pk=handle.run_id)
+
+    a_ready = start_scored("a-ready", "A")
+    InvestigationRun.objects.filter(pk=a_ready.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+    )
+
+    a_failed = start_scored("a-failed", "A")
+    InvestigationRun.objects.filter(pk=a_failed.pk).update(
+        status=InvestigationRun.Status.FAILED,
+        finished_at=timezone.now(),
+    )
+
+    b_expected = start_scored("b-missing-evidence", "B")
+    InvestigationRun.objects.filter(pk=b_expected.pk).update(
+        status=InvestigationRun.Status.WAITING_HUMAN,
+        clarification_reason=ReasonCode.MISSING_EVIDENCE.value,
+        clarification_payload={"required_action": "Fehlende Bezugsgröße bereitstellen."},
+    )
+    abort_investigation(actor=owner, run_id=b_expected.pk)
+
+    b_aborted_without_expected_boundary = start_scored("b-aborted", "B")
+    abort_investigation(actor=owner, run_id=b_aborted_without_expected_boundary.pk)
+
+    report = evidence_campaign_report(campaign)
+
+    assert report["matrix"]["A"]["adaptive_real_attempted"] == 2
+    assert report["matrix"]["A"]["adaptive_real_scored"] == 1
+    assert report["matrix"]["B"]["adaptive_real_attempted"] == 2
+    assert report["matrix"]["B"]["adaptive_real_scored"] == 1
+    assert report["nine_real_adaptive_runs_complete"] is False
+    assert len(report["attempts"]) == 4
