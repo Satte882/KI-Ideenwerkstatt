@@ -516,7 +516,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             evidence_campaign is None
         ):
             raise InvestigationRunError(
-                "Die reale Nachweisphase darf ohne explizites persistentes Gesamtbudget nicht starten.",
+                "Die reale Nachweisphase darf ohne explizites persistentes "\n                "Gesamtbudget nicht starten.",
                 code="evidence_budget_required",
             )
 
