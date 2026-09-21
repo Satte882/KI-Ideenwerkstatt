@@ -108,6 +108,7 @@ class StartInvestigationRequest:
     evidence_campaign_id: uuid.UUID | str | None = None
     execution_mode: str = "adaptive"
     evidence_metadata: Mapping[str, Any] | None = None
+    decision_brief_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -274,6 +275,7 @@ def base_execution_snapshot(
     execution_mode: str = "adaptive",
     evidence_campaign: InvestigationEvidenceCampaign | None = None,
     evidence_metadata: Mapping[str, Any] | None = None,
+    decision_brief_required: bool = False,
 ) -> dict[str, object]:
     return {
         "runtime": runtime_version_snapshot(),
@@ -283,6 +285,7 @@ def base_execution_snapshot(
         "budget_limits": dict(budget),
         "execution_mode": execution_mode,
         "evidence_metadata": dict(evidence_metadata or {}),
+        "decision_brief_required": bool(decision_brief_required),
         "evidence_campaign": (
             {
                 "id": str(evidence_campaign.pk),
@@ -524,6 +527,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             execution_mode=execution_mode,
             evidence_campaign=evidence_campaign,
             evidence_metadata=evidence_metadata,
+            decision_brief_required=bool(request.decision_brief_required),
         )
         try:
             with transaction.atomic():
