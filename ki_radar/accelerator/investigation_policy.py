@@ -71,6 +71,7 @@ class PolicyState:
     manifest_hash: str
     register_hash: str
     brief_hash: str
+    brief_blockers: tuple[str, ...] = ()
     verifier: VerifierState | None = None
     allowed_action_available: bool = False
     external_critical_gap: bool = False
@@ -150,6 +151,7 @@ def _semantic_contract_blockers(checks: tuple[PolicyCheck, ...]) -> list[str]:
 
 def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
     blockers = _semantic_contract_blockers(state.checks)
+    blockers.extend(state.brief_blockers)
 
     critical_ids: set[str] = set()
     for check in state.checks:
