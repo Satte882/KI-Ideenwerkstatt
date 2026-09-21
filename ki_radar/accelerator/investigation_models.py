@@ -56,10 +56,15 @@ class InvestigationSourceFolder(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if not self._state.adding:
-            current = type(self).objects.filter(pk=self.pk).values(
-                "process_analysis_id",
-                "root_path",
-            ).first()
+            current = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values(
+                    "process_analysis_id",
+                    "root_path",
+                )
+                .first()
+            )
             if current and self.snapshots.exists():
                 if current["process_analysis_id"] != self.process_analysis_id:
                     raise ValidationError(
