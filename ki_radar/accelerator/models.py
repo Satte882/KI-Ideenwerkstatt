@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from ki_radar.core.models import TimeStampedModel
 
-from . import investigation_models as _investigation_models
+from . import investigation_models as _investigation_models  # noqa: F401
 
 
 class CaptureSession(TimeStampedModel):
