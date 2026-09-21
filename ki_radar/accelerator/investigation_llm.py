@@ -41,6 +41,7 @@ from .investigation_prompts import (
 from .investigation_runtime import (
     ALLOWED_TOOLS,
     BUDGET_VERSION,
+    FIXED_ROUTE_VERSION,
     LOOP_VERSION,
     InvestigationRunError,
     assert_active,
@@ -98,6 +99,15 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     ):
         raise InvestigationRunError(
             "Die fixierte Ausführungsversion ist nicht mehr verfügbar.",
+            code="execution_version_unavailable",
+        )
+
+    if (
+        run.execution_mode == "fixed"
+        and frozen.get("fixed_route_version") != FIXED_ROUTE_VERSION
+    ):
+        raise InvestigationRunError(
+            "Die fixierte Kontrollstrecke ist nicht mehr verfügbar.",
             code="execution_version_unavailable",
         )
 
@@ -335,7 +345,26 @@ def _reserve_model_call(
         )
     _assert_frozen_execution_contract(run)
 
+    prompt_payload = {"instruction": instruction, "context": dict(context)}
+    prompt_token_reservation = max(
+        1,
+        len(canonical_json(prompt_payload).encode("utf-8")),
+    )
+
     usage = dict(run.usage)
+    remaining_input = run.budget_limits["max_input_tokens"] - int(
+        usage.get("input_tokens", 0)
+    )
+    remaining_output = run.budget_limits["max_output_tokens"] - int(
+        usage.get("output_tokens", 0)
+    )
+    if prompt_token_reservation > remaining_input or remaining_output <= 0:
+        raise InvestigationRunError(
+            "Das verbleibende Tokenbudget reicht für keinen weiteren Modellaufruf.",
+            code="budget_exhausted",
+        )
+    call_max_tokens = min(4096, remaining_output)
+
     if usage["model_calls"] >= run.budget_limits["max_model_calls"]:
         raise InvestigationRunError("Modellbudget ist erschöpft.", code="budget_exhausted")
 
@@ -354,7 +383,6 @@ def _reserve_model_call(
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
 
-    prompt_payload = {"instruction": instruction, "context": dict(context)}
     call = InvestigationModelCall.objects.create(
         run=run,
         role=role,
@@ -364,7 +392,7 @@ def _reserve_model_call(
         effective_parameters={
             "temperature": 0.1,
             "reasoning_effort": "medium",
-            "max_tokens": 4096,
+            "max_tokens": call_max_tokens,
             "provider_policy": dict(FIRST_WAVE_PROVIDER_POLICY),
         },
         prompt_version=prompt_version,
@@ -379,17 +407,11 @@ def _reserve_model_call(
         },
     )
     if run.evidence_campaign_id is not None:
-        remaining_input = run.budget_limits["max_input_tokens"] - int(
-            run.usage.get("input_tokens", 0)
-        )
-        remaining_output = run.budget_limits["max_output_tokens"] - int(
-            run.usage.get("output_tokens", 0)
-        )
         reserve_provider_attempt(
             run_id=run.pk,
             model_call_id=call.pk,
-            max_input_tokens=max(0, remaining_input),
-            max_output_tokens=max(0, min(4096, remaining_output)),
+            max_input_tokens=prompt_token_reservation,
+            max_output_tokens=call_max_tokens,
         )
     return call
 
@@ -435,7 +457,7 @@ def _structured_provider_call(
     try:
         result = request_openrouter(
             messages=messages,
-            max_tokens=4096,
+            max_tokens=int(call.effective_parameters["max_tokens"]),
             timeout_seconds=60,
             temperature=0.1,
             response_format=response_format,
