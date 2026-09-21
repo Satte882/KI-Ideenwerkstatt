@@ -1,0 +1,5 @@
+case_id,team,approval_hours,queue_retries,approver_available,unit
+C-01,Nord,23,4,yes,h
+C-02,Nord,5,0,yes,h
+C-03,Sued,27,5,yes,h
+C-04,Sued,6,0,yes,h
