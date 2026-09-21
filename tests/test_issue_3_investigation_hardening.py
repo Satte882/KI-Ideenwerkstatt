@@ -115,11 +115,7 @@ def snapshot_for_root(*, owner, process, root: Path, run_limits=None):
 def start_csv_run(*, owner, business_unit, tmp_path, run_limits=None, key="hardening"):
     process = make_process(owner=owner, business_unit=business_unit, name=f"Fall {key}")
     (tmp_path / "cases.csv").write_text(
-        "group,value,available,unit\n"
-        "A,10,yes,h\n"
-        "A,20,yes,h\n"
-        "B,30,no,h\n"
-        "B,40,no,h\n",
+        "group,value,available,unit\nA,10,yes,h\nA,20,yes,h\nB,30,no,h\nB,40,no,h\n",
         encoding="utf-8",
     )
     _folder, snapshot = snapshot_for_root(
