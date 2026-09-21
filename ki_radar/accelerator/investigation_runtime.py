@@ -28,14 +28,6 @@ from .investigation_models import (
     InvestigationStep,
     InvestigationToolResult,
 )
-from .investigation_prompts import (
-    PLANNER_INSTRUCTION,
-    PLANNER_PROMPT_VERSION,
-    PLANNER_SCHEMA_VERSION,
-    VERIFIER_INSTRUCTION,
-    VERIFIER_PROMPT_VERSION,
-    VERIFIER_SCHEMA_VERSION,
-)
 from .investigation_policy import (
     POLICY_VERSION,
     PolicyCheck,
@@ -43,6 +35,14 @@ from .investigation_policy import (
     PolicyState,
     VerifierState,
     evaluate_policy,
+)
+from .investigation_prompts import (
+    PLANNER_INSTRUCTION,
+    PLANNER_PROMPT_VERSION,
+    PLANNER_SCHEMA_VERSION,
+    VERIFIER_INSTRUCTION,
+    VERIFIER_PROMPT_VERSION,
+    VERIFIER_SCHEMA_VERSION,
 )
 from .investigation_tools import (
     TOOL_VERSION,
@@ -193,7 +193,7 @@ def budget_from_snapshot(run_limits: Mapping[str, int]) -> dict[str, int]:
             )
         budget[key] = value
     if budget["max_verifier_calls"] > budget["max_model_calls"]:
-        raise InvestigationRunError("Verifier-Limit überschreitet Modell-Limit.", code="invalid_budget")
+        raise InvestigationRunError(\n            "Verifier-Limit überschreitet Modell-Limit.",\n            code="invalid_budget",\n        )
     return budget
 
 
@@ -237,7 +237,7 @@ def base_execution_snapshot(
         "manifest_hash": snapshot.manifest_hash,
         "model_transport": {
             "provider": "openrouter",
-            "requested_model": str(getattr(settings, "OPENROUTER_MODEL", os.getenv("OPENROUTER_MODEL", "")) or ""),
+            "requested_model": str(\n                getattr(\n                    settings,\n                    "OPENROUTER_MODEL",\n                    os.getenv("OPENROUTER_MODEL", ""),\n                )\n                or ""\n            ),
             "temperature": 0.1,
             "reasoning_effort": "medium",
             "max_output_tokens_per_call": 4096,
@@ -326,7 +326,7 @@ def assert_executor(run: InvestigationRun, executor_token) -> None:
 
 def assert_active(run: InvestigationRun) -> None:
     if run.status not in InvestigationRun.ACTIVE_STATUSES:
-        raise InvestigationRunError("Der Investigation-Run ist bereits beendet.", code="run_terminal")
+        raise InvestigationRunError(\n            "Der Investigation-Run ist bereits beendet.",\n            code="run_terminal",\n        )
 
 
 def elapsed_seconds(run: InvestigationRun) -> int:
@@ -704,7 +704,7 @@ def apply_planner_state(
     if claim_register is not None:
         normalized = [normalize_claim(run, item) for item in claim_register]
         if len({item["claim_id"] for item in normalized}) != len(normalized):
-            raise InvestigationRunError("Claim-IDs müssen eindeutig sein.", code="duplicate_claim_id")
+            raise InvestigationRunError(\n                "Claim-IDs müssen eindeutig sein.",\n                code="duplicate_claim_id",\n            )
         enforce_claim_guard(before, normalized)
         register_changed = content_hash(before) != content_hash(normalized)
         if register_changed:
