@@ -31,13 +31,10 @@ class Command(BaseCommand):
             raise CommandError("--attempt must be a positive integer.")
 
         try:
-            campaign = (
-                InvestigationEvidenceCampaign.objects.select_related(
-                    "process_analysis__stage__value_stream",
-                    "authorized_by",
-                )
-                .get(pk=options["campaign"])
-            )
+            campaign = InvestigationEvidenceCampaign.objects.select_related(
+                "process_analysis__stage__value_stream",
+                "authorized_by",
+            ).get(pk=options["campaign"])
         except (InvestigationEvidenceCampaign.DoesNotExist, ValueError) as exc:
             raise CommandError("Evidence campaign not found.") from exc
 
@@ -99,7 +96,9 @@ class Command(BaseCommand):
             )
             return
 
-        runner = run_fixed_route_until_boundary if mode == "fixed" else run_until_boundary
+        runner = (
+            run_fixed_route_until_boundary if mode == "fixed" else run_until_boundary
+        )
         try:
             result = runner(
                 actor=campaign.authorized_by,
