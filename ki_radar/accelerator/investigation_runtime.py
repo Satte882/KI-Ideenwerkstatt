@@ -28,6 +28,14 @@ from .investigation_models import (
     InvestigationStep,
     InvestigationToolResult,
 )
+from .investigation_prompts import (
+    PLANNER_INSTRUCTION,
+    PLANNER_PROMPT_VERSION,
+    PLANNER_SCHEMA_VERSION,
+    VERIFIER_INSTRUCTION,
+    VERIFIER_PROMPT_VERSION,
+    VERIFIER_SCHEMA_VERSION,
+)
 from .investigation_policy import (
     POLICY_VERSION,
     PolicyCheck,
@@ -228,6 +236,18 @@ def base_execution_snapshot(
         "source_snapshot_id": str(snapshot.pk),
         "manifest_hash": snapshot.manifest_hash,
         "process_version": snapshot.process_version,
+        "planner": {
+            "prompt_version": PLANNER_PROMPT_VERSION,
+            "instruction_hash": hashlib.sha256(PLANNER_INSTRUCTION.encode("utf-8")).hexdigest(),
+            "instruction_template": PLANNER_INSTRUCTION,
+            "schema_version": PLANNER_SCHEMA_VERSION,
+        },
+        "verifier": {
+            "prompt_version": VERIFIER_PROMPT_VERSION,
+            "instruction_hash": hashlib.sha256(VERIFIER_INSTRUCTION.encode("utf-8")).hexdigest(),
+            "instruction_template": VERIFIER_INSTRUCTION,
+            "schema_version": VERIFIER_SCHEMA_VERSION,
+        },
         "tools": {
             "allowlist": sorted(ALLOWED_TOOLS),
             "schema_version": TOOL_SCHEMA_VERSION,
