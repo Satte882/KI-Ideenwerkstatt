@@ -29,7 +29,7 @@ from ki_radar.use_cases.models import (
 )
 
 
-SNAPSHOT_PATH = Path(__file__).with_name("legacy-usecases.snapshot.json")
+SNAPSHOT_PATH = pathlib.Path(__file__).with_name("legacy-usecases.snapshot.json")
 
 
 def _scalar_defaults(model, data: dict) -> dict:
