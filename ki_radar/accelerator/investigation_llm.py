@@ -597,7 +597,7 @@ def request_verifier_report(
                 "severity": "critical",
                 "code": "verification_reads_incomplete",
                 "claim_id": "",
-                "message": "Der Verifier benötigt nach dem zweiten Aufruf weitere Fundstellenprüfung.",
+                "message": (\n                    "Der Verifier benötigt nach dem zweiten Aufruf " \n                    "weitere Fundstellenprüfung."\n                ),
             }
         )
         final_payload = dict(final_payload)
