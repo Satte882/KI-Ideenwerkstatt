@@ -122,8 +122,7 @@ def test_a_b_c_measurement_harness_distinguishes_evidence_gap_and_supported_sign
         target_claim_id="hyp-approver-availability",
     )
     assert (
-        expected["A"]["analysis"]["expected_difference"]
-        in result_a.result_payload["differences"]
+        expected["A"]["analysis"]["expected_difference"] in result_a.result_payload["differences"]
     )
 
     _process_b, _snapshot_b, handle_b, source_b = start_pack(
