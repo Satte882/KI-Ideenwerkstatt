@@ -11,5 +11,7 @@
   "diagnostic_observations": "Durchlaufzeiten schwanken",
   "cause_hypotheses": "",
   "confirmed_causes": "",
-  "baseline_metrics": "Noch nicht belastbar bestimmt"
+  "baseline_metrics": "Noch nicht belastbar bestimmt",
+  "owner_role": "Business Owner",
+  "status": "draft"
 }
