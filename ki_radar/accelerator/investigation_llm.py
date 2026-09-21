@@ -15,6 +15,12 @@ from django.utils import timezone
 from ki_radar.core.llm_tasks import FIRST_WAVE_PROVIDER_POLICY
 from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
 
+from .investigation_evidence import (
+    cost_to_microunits,
+    mark_provider_attempt_uncertain,
+    reserve_provider_attempt,
+    settle_provider_attempt,
+)
 from .investigation_models import (
     InvestigationModelCall,
     InvestigationRun,
@@ -347,7 +353,7 @@ def _reserve_model_call(
     run.save(update_fields=["usage", "updated_at"])
 
     prompt_payload = {"instruction": instruction, "context": dict(context)}
-    return InvestigationModelCall.objects.create(
+    call = InvestigationModelCall.objects.create(
         run=run,
         role=role,
         executor_generation=run.executor_generation,
@@ -370,6 +376,20 @@ def _reserve_model_call(
             "brief_hash": run.brief_hash,
         },
     )
+    if run.evidence_campaign_id is not None:
+        remaining_input = run.budget_limits["max_input_tokens"] - int(
+            run.usage.get("input_tokens", 0)
+        )
+        remaining_output = run.budget_limits["max_output_tokens"] - int(
+            run.usage.get("output_tokens", 0)
+        )
+        reserve_provider_attempt(
+            run_id=run.pk,
+            model_call_id=call.pk,
+            max_input_tokens=max(0, remaining_input),
+            max_output_tokens=max(0, min(4096, remaining_output)),
+        )
+    return call
 
 
 def _mark_model_failure(call_id, code: str) -> None:
@@ -409,6 +429,7 @@ def _structured_provider_call(
         {"role": "user", "content": canonical_json(context)},
     ]
 
+    reservation = getattr(call, "evidence_reservation", None)
     try:
         result = request_openrouter(
             messages=messages,
@@ -423,9 +444,19 @@ def _structured_provider_call(
         if not isinstance(payload, dict):
             raise ValueError("structured response must be an object")
     except OpenRouterUnavailable as exc:
+        if reservation is not None:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason=exc.code,
+            )
         _mark_model_failure(call.pk, exc.code)
         raise InvestigationRunError(str(exc), code=exc.code) from exc
     except (json.JSONDecodeError, ValueError) as exc:
+        if reservation is not None:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason="invalid_response",
+            )
         _mark_model_failure(call.pk, "invalid_response")
         raise InvestigationRunError(
             "Das Modell lieferte kein gültiges strukturiertes Ergebnis.",
@@ -433,6 +464,23 @@ def _structured_provider_call(
         ) from exc
 
     prompt_tokens, completion_tokens, total_tokens = _usage_tokens(result, messages)
+    if reservation is not None:
+        raw_prompt = result.usage.get("prompt_tokens")
+        raw_completion = result.usage.get("completion_tokens")
+        actual_cost = cost_to_microunits(result.usage.get("cost"))
+        cost_required = "max_cost_microunits" in reservation.campaign.limits
+        if raw_prompt is None or raw_completion is None or (cost_required and actual_cost is None):
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason="provider_usage_metadata_incomplete",
+            )
+        else:
+            settle_provider_attempt(
+                reservation_id=reservation.pk,
+                actual_input_tokens=int(raw_prompt),
+                actual_output_tokens=int(raw_completion),
+                actual_cost_microunits=actual_cost,
+            )
 
     with transaction.atomic():
         run = InvestigationRun.objects.select_for_update().get(pk=run_id)
