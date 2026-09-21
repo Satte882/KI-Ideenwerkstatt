@@ -90,10 +90,7 @@ def resolve_benchmark_snapshot(
 ) -> InvestigationSourceSnapshot:
     variant = variant.upper()
     existing = _variant_runs(campaign, variant=variant)
-    bindings = {
-        (str(run.source_snapshot_id), str(run.manifest_hash))
-        for run in existing
-    }
+    bindings = {(str(run.source_snapshot_id), str(run.manifest_hash)) for run in existing}
     if len(bindings) > 1:
         raise InvestigationRunError(
             "Die Variante besitzt widersprüchliche Snapshot-Bindungen.",
