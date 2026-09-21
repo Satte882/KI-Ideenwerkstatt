@@ -121,7 +121,10 @@ def test_a_b_c_measurement_harness_distinguishes_evidence_gap_and_supported_sign
         },
         target_claim_id="hyp-approver-availability",
     )
-    assert (\n        expected["A"]["analysis"]["expected_difference"]\n        in result_a.result_payload["differences"]\n    )
+    assert (
+        expected["A"]["analysis"]["expected_difference"]
+        in result_a.result_payload["differences"]
+    )
 
     _process_b, _snapshot_b, handle_b, source_b = start_pack(
         owner=owner, business_unit=business_unit, pack="B"
@@ -185,7 +188,9 @@ def test_controlled_adaptive_trace_uses_result_before_choosing_next_tool(
             return PlannerAction(
                 action="tool",
                 target_claim_id="data-shape",
-                expected_discriminating_finding=(\n                    "Prüfen, welche Spalten belastbar analysierbar sind."\n                ),
+                expected_discriminating_finding=(
+                    "Prüfen, welche Spalten belastbar analysierbar sind."
+                ),
                 rationale="Erst Datenstruktur prüfen.",
                 tool_name="profile_csv",
                 parameters={"source_id": str(source.source_id)},
@@ -231,7 +236,9 @@ def test_controlled_adaptive_trace_uses_result_before_choosing_next_tool(
         return PlannerAction(
             action="tool",
             target_claim_id="counter-hyp-availability",
-            expected_discriminating_finding=(\n                "Gezielt Gegenbelege zur Verfügbarkeitshypothese suchen."\n            ),
+            expected_discriminating_finding=(
+                "Gezielt Gegenbelege zur Verfügbarkeitshypothese suchen."
+            ),
             rationale="Nach unterscheidender Analyse folgt Gegenbelegsuche.",
             tool_name="search_sources",
             parameters={"query": "Gegen", "cursor": 0, "limit": 20},
