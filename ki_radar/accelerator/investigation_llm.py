@@ -343,10 +343,7 @@ def _reserve_model_call(
     _assert_frozen_execution_contract(run)
 
     prompt_payload = {"instruction": instruction, "context": dict(context)}
-    prompt_token_reservation = max(
-        1,
-        len(canonical_json(prompt_payload).encode("utf-8")),
-    )
+    prompt_token_reservation = _estimate_tokens(canonical_json(prompt_payload))
 
     usage = dict(run.usage)
     remaining_input = run.budget_limits["max_input_tokens"] - int(usage.get("input_tokens", 0))
