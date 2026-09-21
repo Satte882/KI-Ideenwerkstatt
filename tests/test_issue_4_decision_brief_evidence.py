@@ -7,6 +7,7 @@ from threading import Barrier
 
 import pytest
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import close_old_connections, connection
 from django.urls import reverse
 from django.utils import timezone
@@ -34,6 +35,7 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationProviderReservation,
     InvestigationRun,
     InvestigationSource,
+    InvestigationStep,
     InvestigationSourceFolder,
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
@@ -124,6 +126,47 @@ def snapshot_for_root(*, owner, process, root: Path, run_limits=None):
         ),
     )
     return folder, snapshot
+
+
+def write_variant_pack(root: Path, variant: str):
+    root.mkdir(parents=True, exist_ok=True)
+    if variant == "A":
+        (root / "01_case_note.md").write_text("Hypothese Wissenslücke.", encoding="utf-8")
+        (root / "02_counterevidence.md").write_text(
+            "Gegenbeleg: Freigeberverfügbarkeit beeinflusst Laufzeit.",
+            encoding="utf-8",
+        )
+        (root / "cases.csv").write_text(
+            "approver_available,approval_hours,unit\n"
+            "yes,5,h\n"
+            "yes,5,h\n"
+            "no,29,h\n"
+            "no,30,h\n",
+            encoding="utf-8",
+        )
+    elif variant == "B":
+        (root / "01_case_note.md").write_text("Bezugsgröße unklar.", encoding="utf-8")
+        (root / "02_report.md").write_text("18 Eskalationen, Grundgesamtheit fehlt.", encoding="utf-8")
+        (root / "cases.csv").write_text(
+            "period,escalations,total_eligible,unit\n"
+            "2026-06,5,,cases\n"
+            "2026-07,7,,cases\n"
+            "2026-08,6,,cases\n",
+            encoding="utf-8",
+        )
+    elif variant == "C":
+        (root / "01_case_note.md").write_text("Queue-Fehler als alternative Ursache.", encoding="utf-8")
+        (root / "02_system_note.md").write_text("Queue-Retries bei langsamen Fällen.", encoding="utf-8")
+        (root / "cases.csv").write_text(
+            "queue_retries,approval_hours,unit\n"
+            "0,5,h\n"
+            "0,6,h\n"
+            "4,23,h\n"
+            "5,27,h\n",
+            encoding="utf-8",
+        )
+    else:
+        raise AssertionError(f"unknown test variant: {variant}")
 
 
 def evidence_campaign(*, owner, process, max_calls=20, input_tokens=200_000, output_tokens=50_000):
@@ -884,7 +927,7 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     campaign = evidence_campaign(owner=owner, process=process)
 
-    def start_scored(key, variant, execution_mode="adaptive"):
+    def start_scored(key, variant, attempt, execution_mode="adaptive"):
         handle = start_investigation(
             actor=owner,
             request=StartInvestigationRequest(
@@ -896,25 +939,26 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
                     "provider_mode": "real",
                     "phase": "scored",
                     "variant": variant,
+                    "attempt": attempt,
                 },
                 decision_brief_required=True,
             ),
         )
         return InvestigationRun.objects.get(pk=handle.run_id)
 
-    a_ready = start_scored("a-ready", "A")
+    a_ready = start_scored("a-ready", "A", 1)
     InvestigationRun.objects.filter(pk=a_ready.pk).update(
         status=InvestigationRun.Status.READY,
         finished_at=timezone.now(),
     )
 
-    a_failed = start_scored("a-failed", "A")
+    a_failed = start_scored("a-failed", "A", 2)
     InvestigationRun.objects.filter(pk=a_failed.pk).update(
         status=InvestigationRun.Status.FAILED,
         finished_at=timezone.now(),
     )
 
-    b_expected = start_scored("b-missing-evidence", "B")
+    b_expected = start_scored("b-missing-evidence", "B", 1)
     InvestigationRun.objects.filter(pk=b_expected.pk).update(
         status=InvestigationRun.Status.WAITING_HUMAN,
         clarification_reason=ReasonCode.MISSING_EVIDENCE.value,
@@ -922,10 +966,10 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
     )
     abort_investigation(actor=owner, run_id=b_expected.pk)
 
-    b_aborted_without_expected_boundary = start_scored("b-aborted", "B")
+    b_aborted_without_expected_boundary = start_scored("b-aborted", "B", 2)
     abort_investigation(actor=owner, run_id=b_aborted_without_expected_boundary.pk)
 
-    b_fixed_boundary = start_scored("b-fixed-boundary", "B", execution_mode="fixed")
+    b_fixed_boundary = start_scored("b-fixed-boundary", "B", 1, execution_mode="fixed")
     InvestigationRun.objects.filter(pk=b_fixed_boundary.pk).update(
         status=InvestigationRun.Status.WAITING_HUMAN,
         clarification_reason=ReasonCode.FIXED_ROUTE_BOUNDARY.value,
@@ -936,12 +980,17 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
     report = evidence_campaign_report(campaign)
 
     assert report["matrix"]["A"]["adaptive_real_attempted"] == 2
-    assert report["matrix"]["A"]["adaptive_real_scored"] == 1
+    assert report["matrix"]["A"]["adaptive_real_sampled"] == 2
+    assert report["matrix"]["A"]["adaptive_real_scored"] == 0
     assert report["matrix"]["B"]["adaptive_real_attempted"] == 2
+    assert report["matrix"]["B"]["adaptive_real_sampled"] == 2
     assert report["matrix"]["B"]["adaptive_real_scored"] == 1
     assert report["matrix"]["B"]["fixed_real_attempted"] == 1
+    assert report["matrix"]["B"]["fixed_real_sampled"] == 1
     assert report["matrix"]["B"]["fixed_real_scored"] == 0
     assert report["nine_real_adaptive_runs_complete"] is False
+    assert report["nine_real_adaptive_runs_passed"] is False
+    assert report["scored_sample_run_ids"]["A"] == [str(a_ready.pk), str(a_failed.pk)]
     assert len(report["attempts"]) == 5
 
 
@@ -962,7 +1011,7 @@ def test_issue4_runner_builds_controlled_real_attempt_without_manual_metadata(
     runner_name,
 ):
     process = make_process(owner=owner, business_unit=business_unit, name=f"Runner {mode}")
-    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    write_variant_pack(tmp_path, "C")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     campaign = evidence_campaign(owner=owner, process=process)
     captured = {}
@@ -987,8 +1036,9 @@ def test_issue4_runner_builds_controlled_real_attempt_without_manual_metadata(
         campaign=str(campaign.pk),
         variant="C",
         mode=mode,
-        phase="scored",
-        attempt=2,
+        phase="calibration",
+        attempt=1,
+        snapshot=str(snapshot.pk),
     )
 
     run = InvestigationRun.objects.get(evidence_campaign=campaign)
@@ -996,11 +1046,238 @@ def test_issue4_runner_builds_controlled_real_attempt_without_manual_metadata(
     assert run.execution_mode == mode
     assert run.evidence_metadata == {
         "provider_mode": "real",
-        "phase": "scored",
+        "phase": "calibration",
         "variant": "C",
-        "attempt": 2,
+        "attempt": 1,
     }
     assert run.execution_snapshot["decision_brief_required"] is True
     assert captured["run_id"] == run.pk
     assert captured["actor"] == owner
     assert run.model_calls.count() == 0
+
+
+@pytest.mark.django_db
+def test_issue4_runner_binds_variant_to_calibrated_snapshot_and_freezes_scored_sample(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Frozen sample")
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    write_variant_pack(first_root, "A")
+    write_variant_pack(second_root, "A")
+    _folder1, snapshot1 = snapshot_for_root(owner=owner, process=process, root=first_root)
+    _folder2, snapshot2 = snapshot_for_root(owner=owner, process=process, root=second_root)
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    def fake_runner(**kwargs):
+        return type(
+            "Result",
+            (),
+            {"run_id": kwargs["run_id"], "status": InvestigationRun.Status.RUNNING},
+        )()
+
+    monkeypatch.setattr(issue4_evidence_command, "run_until_boundary", fake_runner)
+
+    call_command(
+        "run_issue4_evidence",
+        campaign=str(campaign.pk),
+        variant="A",
+        mode="adaptive",
+        phase="calibration",
+        attempt=1,
+        snapshot=str(snapshot1.pk),
+    )
+    calibration = InvestigationRun.objects.get(evidence_campaign=campaign)
+    abort_investigation(actor=owner, run_id=calibration.pk)
+
+    call_command(
+        "run_issue4_evidence",
+        campaign=str(campaign.pk),
+        variant="A",
+        mode="adaptive",
+        phase="scored",
+        attempt=1,
+    )
+    scored = InvestigationRun.objects.exclude(pk=calibration.pk).get(evidence_campaign=campaign)
+    assert scored.source_snapshot_id == snapshot1.snapshot_id
+    assert scored.source_snapshot_id != snapshot2.snapshot_id
+    abort_investigation(actor=owner, run_id=scored.pk)
+
+    with pytest.raises(CommandError):
+        call_command(
+            "run_issue4_evidence",
+            campaign=str(campaign.pk),
+            variant="A",
+            mode="adaptive",
+            phase="scored",
+            attempt=4,
+        )
+
+    with pytest.raises(CommandError):
+        call_command(
+            "run_issue4_evidence",
+            campaign=str(campaign.pk),
+            variant="A",
+            mode="adaptive",
+            phase="calibration",
+            attempt=2,
+            snapshot=str(snapshot1.pk),
+        )
+
+
+@pytest.mark.django_db
+def test_issue4_runner_rejects_variant_snapshot_mismatch(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Variant mismatch")
+    write_variant_pack(tmp_path, "B")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    monkeypatch.setattr(
+        issue4_evidence_command,
+        "run_until_boundary",
+        lambda **_kwargs: None,
+    )
+
+    with pytest.raises(CommandError):
+        call_command(
+            "run_issue4_evidence",
+            campaign=str(campaign.pk),
+            variant="A",
+            mode="adaptive",
+            phase="calibration",
+            attempt=1,
+            snapshot=str(snapshot.pk),
+        )
+    assert not campaign.investigation_runs.exists()
+
+
+@pytest.mark.django_db
+def test_adaptive_a_requires_agentic_effect_not_ready_status_only(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Agentic A")
+    write_variant_pack(tmp_path, "A")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="agentic-a",
+            evidence_campaign_id=campaign.pk,
+            execution_mode="adaptive",
+            evidence_metadata={
+                "provider_mode": "real",
+                "phase": "scored",
+                "variant": "A",
+                "attempt": 1,
+            },
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    csv_source = InvestigationSource.objects.get(snapshot=snapshot, filename="cases.csv")
+    step = execute_tool_step(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(csv_source.pk),
+            "group_by": "approver_available",
+            "aggregation": "mean",
+            "value_column": "approval_hours",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="cause",
+    )
+    step.progress_kind = InvestigationStep.ProgressKind.REFUTATION
+    step.save(update_fields=["progress_kind", "updated_at"])
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        counterevidence_search_executed=True,
+        counterevidence_hits_processed=True,
+        data_check_executed=True,
+    )
+
+    report = evidence_campaign_report(campaign)
+    assert report["matrix"]["A"]["adaptive_real_scored"] == 1
+
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        counterevidence_hits_processed=False,
+    )
+    report = evidence_campaign_report(campaign)
+    assert report["matrix"]["A"]["adaptive_real_scored"] == 0
+
+
+@pytest.mark.django_db
+def test_evidence_report_rejects_noncomparable_fixed_pair(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Report comparison")
+    write_variant_pack(tmp_path, "C")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    adaptive_handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="report-adaptive-c1",
+            evidence_campaign_id=campaign.pk,
+            execution_mode="adaptive",
+            evidence_metadata={
+                "provider_mode": "real",
+                "phase": "scored",
+                "variant": "C",
+                "attempt": 1,
+            },
+            decision_brief_required=True,
+        ),
+    )
+    adaptive = InvestigationRun.objects.get(pk=adaptive_handle.run_id)
+    abort_investigation(actor=owner, run_id=adaptive.pk)
+
+    fixed_handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="report-fixed-c1",
+            evidence_campaign_id=campaign.pk,
+            execution_mode="fixed",
+            evidence_metadata={
+                "provider_mode": "real",
+                "phase": "scored",
+                "variant": "C",
+                "attempt": 1,
+            },
+            decision_brief_required=True,
+        ),
+    )
+    fixed = InvestigationRun.objects.get(pk=fixed_handle.run_id)
+    abort_investigation(actor=owner, run_id=fixed.pk)
+
+    changed = dict(fixed.execution_snapshot)
+    transport = dict(changed["model_transport"])
+    transport["requested_model"] = "different-model"
+    changed["model_transport"] = transport
+    InvestigationRun.objects.filter(pk=fixed.pk).update(execution_snapshot=changed)
+
+    report = evidence_campaign_report(campaign)
+    assert report["fixed_comparison_present"] is False
+    assert report["comparison_issues"]
+    assert any("C:" in item for item in report["comparison_issues"])
