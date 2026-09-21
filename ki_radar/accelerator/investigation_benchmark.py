@@ -12,6 +12,7 @@ from .investigation_models import (
     InvestigationRun,
     InvestigationSource,
 )
+from .investigation_policy import ReasonCode
 from .investigation_runtime import (
     FIXED_ROUTE_VERSION,
     InvestigationRunError,
@@ -290,6 +291,23 @@ def assert_comparable_runs(*, fixed: InvestigationRun, adaptive: InvestigationRu
         )
 
 
+def _scored_run_reached_expected_boundary(
+    run: InvestigationRun,
+    *,
+    variant: str,
+) -> bool:
+    if variant == "B":
+        return (
+            run.clarification_reason == ReasonCode.MISSING_EVIDENCE.value
+            and run.status
+            in {
+                InvestigationRun.Status.WAITING_HUMAN,
+                InvestigationRun.Status.ABORTED,
+            }
+        )
+    return run.status == InvestigationRun.Status.READY
+
+
 def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[str, Any]:
     runs = list(campaign.investigation_runs.order_by("created_at"))
     reservations = list(
@@ -300,7 +318,13 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         reservations_by_run.setdefault(str(reservation.run_id), []).append(reservation)
 
     matrix: dict[str, dict[str, int]] = {
-        variant: {"adaptive_real_scored": 0, "fixed_real_scored": 0} for variant in ("A", "B", "C")
+        variant: {
+            "adaptive_real_attempted": 0,
+            "adaptive_real_scored": 0,
+            "fixed_real_attempted": 0,
+            "fixed_real_scored": 0,
+        }
+        for variant in ("A", "B", "C")
     }
     usage_by_arm: dict[str, dict[str, int]] = {}
     usage_by_variant: dict[str, dict[str, int]] = {}
@@ -332,8 +356,11 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
             and provider_mode == "real"
             and run.execution_mode in {"adaptive", "fixed"}
         ):
-            key = f"{run.execution_mode}_real_scored"
-            matrix[variant][key] += 1
+            attempted_key = f"{run.execution_mode}_real_attempted"
+            matrix[variant][attempted_key] += 1
+            if _scored_run_reached_expected_boundary(run, variant=variant):
+                scored_key = f"{run.execution_mode}_real_scored"
+                matrix[variant][scored_key] += 1
 
         run_reservations = reservations_by_run.get(str(run.pk), [])
         provider_calls = len(run_reservations)
