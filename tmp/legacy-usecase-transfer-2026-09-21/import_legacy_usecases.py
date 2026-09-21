@@ -1,33 +1,39 @@
-from __future__ import annotations
-
 import json
-from pathlib import Path
+import pathlib
 
-from django.db import transaction
+import django.db.transaction
 
-from ki_radar.accounts.models import BusinessUnit, User
-from ki_radar.architecture.focus import ValueStreamFocus
-from ki_radar.architecture.models import (
-    ProcessAnalysis,
-    ProcessValidation,
-    SolutionOption,
-    SolutionSelectionDecision,
-    UseCaseOrigin,
-    ValueStream,
-    ValueStreamStage,
-)
-from ki_radar.architecture.stage_focus import StageFocusDecision
-from ki_radar.delivery.models import DeliveryPackage
-from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
-from ki_radar.reviews.models import Review
-from ki_radar.use_cases.classification import UseCaseClassification
-from ki_radar.use_cases.models import (
-    ApprovalDecision,
-    DecisionAssessment,
-    UseCase,
-    UseCaseCounter,
-)
+import ki_radar.accounts.models
+import ki_radar.architecture.focus
+import ki_radar.architecture.models
+import ki_radar.architecture.stage_focus
+import ki_radar.delivery.models
+import ki_radar.governance.models
+import ki_radar.reviews.models
+import ki_radar.use_cases.classification
+import ki_radar.use_cases.models
 
+
+BusinessUnit = ki_radar.accounts.models.BusinessUnit
+User = ki_radar.accounts.models.User
+ValueStreamFocus = ki_radar.architecture.focus.ValueStreamFocus
+ProcessAnalysis = ki_radar.architecture.models.ProcessAnalysis
+ProcessValidation = ki_radar.architecture.models.ProcessValidation
+SolutionOption = ki_radar.architecture.models.SolutionOption
+SolutionSelectionDecision = ki_radar.architecture.models.SolutionSelectionDecision
+UseCaseOrigin = ki_radar.architecture.models.UseCaseOrigin
+ValueStream = ki_radar.architecture.models.ValueStream
+ValueStreamStage = ki_radar.architecture.models.ValueStreamStage
+StageFocusDecision = ki_radar.architecture.stage_focus.StageFocusDecision
+DeliveryPackage = ki_radar.delivery.models.DeliveryPackage
+GovernanceAssessment = ki_radar.governance.models.GovernanceAssessment
+GovernanceReview = ki_radar.governance.models.GovernanceReview
+Review = ki_radar.reviews.models.Review
+UseCaseClassification = ki_radar.use_cases.classification.UseCaseClassification
+ApprovalDecision = ki_radar.use_cases.models.ApprovalDecision
+DecisionAssessment = ki_radar.use_cases.models.DecisionAssessment
+UseCase = ki_radar.use_cases.models.UseCase
+UseCaseCounter = ki_radar.use_cases.models.UseCaseCounter
 
 SNAPSHOT_PATH = pathlib.Path(__file__).with_name("legacy-usecases.snapshot.json")
 
@@ -408,7 +414,7 @@ def _upsert_delivery(use_case: UseCase, item: dict) -> None:
             _restore_timestamps(package, data)
 
 
-@transaction.atomic
+@django.db.transaction.atomic
 def import_legacy_usecases() -> dict:
     snapshot = json.loads(SNAPSHOT_PATH.read_text(encoding="utf-8"))
     if snapshot.get("metadata", {}).get("contains_secrets") is not False:
