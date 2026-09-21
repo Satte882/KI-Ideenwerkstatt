@@ -239,3 +239,348 @@ class InvestigationToolResult(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.tool_name}:{self.id}"
+
+
+class InvestigationRun(TimeStampedModel):
+    """Persistent technical VS1/2 run; not a fachlicher lifecycle status."""
+
+    class Status(models.TextChoices):
+        RUNNING = "running", "Läuft"
+        WAITING_HUMAN = "waiting_human", "Wartet auf Klärung"
+        READY = "ready", "Entscheidungsgrundlage bereit"
+        ABORTED = "aborted", "Abgebrochen"
+        FAILED = "failed", "Technisch fehlgeschlagen"
+
+    ACTIVE_STATUSES = ("running", "waiting_human")
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    process_analysis = models.ForeignKey(
+        "architecture.ProcessAnalysis",
+        on_delete=models.PROTECT,
+        related_name="investigation_runs",
+    )
+    source_snapshot = models.ForeignKey(
+        InvestigationSourceSnapshot,
+        on_delete=models.PROTECT,
+        related_name="investigation_runs",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="investigation_runs",
+    )
+    idempotency_key = models.CharField(max_length=64)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.RUNNING,
+        db_index=True,
+    )
+    process_version = models.PositiveIntegerField()
+    decision_question = models.TextField()
+    contract_hash = models.CharField(max_length=64)
+    manifest_hash = models.CharField(max_length=64)
+    policy_version = models.CharField(max_length=40)
+    budget_version = models.CharField(max_length=40)
+    loop_version = models.CharField(max_length=40)
+    budget_limits = models.JSONField(default=dict)
+    usage = models.JSONField(default=dict)
+    execution_snapshot = models.JSONField(default=dict)
+    claim_register = models.JSONField(default=list)
+    source_relevance = models.JSONField(default=dict)
+    register_revision = models.PositiveIntegerField(default=1)
+    register_hash = models.CharField(max_length=64)
+    brief_payload = models.JSONField(default=dict)
+    brief_revision = models.PositiveIntegerField(default=1)
+    brief_hash = models.CharField(max_length=64)
+    data_check_executed = models.BooleanField(default=False)
+    counterevidence_search_executed = models.BooleanField(default=False)
+    counterevidence_hits_processed = models.BooleanField(default=False)
+    source_relevance_complete = models.BooleanField(default=False)
+    no_progress_streak = models.PositiveSmallIntegerField(default=0)
+    repair_cycles = models.PositiveSmallIntegerField(default=0)
+    executor_token = models.UUIDField(default=uuid.uuid4, editable=False)
+    executor_generation = models.PositiveIntegerField(default=1)
+    clarification_reason = models.CharField(max_length=40, blank=True)
+    clarification_payload = models.JSONField(default=dict)
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    last_progress_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["process_analysis", "status", "-created_at"],
+                name="invrun_process_status_idx",
+            ),
+            models.Index(
+                fields=["source_snapshot", "-created_at"],
+                name="invrun_snapshot_created_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["process_analysis"],
+                condition=models.Q(status__in=["running", "waiting_human"]),
+                name="uniq_active_investigation_run",
+            ),
+            models.UniqueConstraint(
+                fields=["process_analysis", "idempotency_key"],
+                name="uniq_investigation_start_key",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status__in=["running", "waiting_human"], finished_at__isnull=True)
+                    | models.Q(status__in=["ready", "aborted", "failed"], finished_at__isnull=False)
+                ),
+                name="investigation_run_finished_valid",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            immutable_fields = (
+                "process_analysis_id",
+                "source_snapshot_id",
+                "idempotency_key",
+                "process_version",
+                "decision_question",
+                "contract_hash",
+                "manifest_hash",
+                "policy_version",
+                "budget_version",
+                "loop_version",
+                "budget_limits",
+                "execution_snapshot",
+            )
+            current = type(self).objects.filter(pk=self.pk).values(*immutable_fields).first()
+            if current and any(current[name] != getattr(self, name) for name in immutable_fields):
+                raise ValidationError(
+                    "Der Ausführungssnapshot eines Investigation-Runs ist unveränderlich."
+                )
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.process_analysis_id}:{self.status}:{self.id}"
+
+
+class InvestigationStep(TimeStampedModel):
+    class Status(models.TextChoices):
+        RUNNING = "running", "Läuft"
+        SUCCESS = "success", "Erfolgreich"
+        FAILED = "failed", "Fehlgeschlagen"
+        DISCARDED = "discarded", "Verworfen"
+
+    class ProgressKind(models.TextChoices):
+        NONE = "none", "Kein Erkenntnisfortschritt"
+        EVIDENCE = "evidence", "Neuer Beleg"
+        REFUTATION = "refutation", "Begründeter Ausschluss"
+        CONTRADICTION = "contradiction", "Neuer Widerspruch"
+        COVERAGE = "coverage", "Neue begründete Abdeckung"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.CASCADE,
+        related_name="steps",
+    )
+    sequence = models.PositiveIntegerField()
+    step_key = models.CharField(max_length=64)
+    target_claim_id = models.CharField(max_length=100, blank=True)
+    expected_discriminating_finding = models.TextField(blank=True)
+    tool_name = models.CharField(max_length=40)
+    parameters = models.JSONField(default=dict)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.RUNNING,
+        db_index=True,
+    )
+    attempts = models.PositiveSmallIntegerField(default=1)
+    executor_generation = models.PositiveIntegerField()
+    result_payload = models.JSONField(default=dict)
+    result_hash = models.CharField(max_length=64, blank=True)
+    result_ref = models.JSONField(default=dict)
+    progress_kind = models.CharField(
+        max_length=20,
+        choices=ProgressKind.choices,
+        default=ProgressKind.NONE,
+    )
+    progress_payload = models.JSONField(default=dict)
+    error_code = models.CharField(max_length=50, blank=True)
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["run", "sequence"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "sequence"],
+                name="uniq_investigation_step_sequence",
+            ),
+            models.UniqueConstraint(
+                fields=["run", "step_key"],
+                name="uniq_investigation_step_key",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.run_id}:{self.sequence}:{self.tool_name}"
+
+
+class InvestigationModelCall(TimeStampedModel):
+    class Role(models.TextChoices):
+        PLANNER = "planner", "Planner"
+        VERIFIER = "verifier", "Verifier"
+
+    class Status(models.TextChoices):
+        RUNNING = "running", "Läuft"
+        SUCCESS = "success", "Erfolgreich"
+        FAILED = "failed", "Fehlgeschlagen"
+        DISCARDED = "discarded", "Verworfen"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.CASCADE,
+        related_name="model_calls",
+    )
+    step = models.ForeignKey(
+        InvestigationStep,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="model_calls",
+    )
+    role = models.CharField(max_length=20, choices=Role.choices)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.RUNNING)
+    attempt = models.PositiveSmallIntegerField(default=1)
+    executor_generation = models.PositiveIntegerField()
+    requested_provider = models.CharField(max_length=50, default="openrouter")
+    requested_model = models.CharField(max_length=200, blank=True)
+    returned_model = models.CharField(max_length=200, blank=True)
+    model_revision = models.CharField(max_length=200, blank=True)
+    effective_parameters = models.JSONField(default=dict)
+    provider_attempt_id = models.CharField(max_length=200, blank=True)
+    prompt_version = models.CharField(max_length=40)
+    prompt_hash = models.CharField(max_length=64)
+    instruction_template = models.TextField()
+    schema_version = models.CharField(max_length=40)
+    context_refs = models.JSONField(default=dict)
+    accepted_payload = models.JSONField(default=dict)
+    accepted_payload_hash = models.CharField(max_length=64, blank=True)
+    prompt_tokens = models.PositiveIntegerField(null=True, blank=True)
+    completion_tokens = models.PositiveIntegerField(null=True, blank=True)
+    total_tokens = models.PositiveIntegerField(null=True, blank=True)
+    error_code = models.CharField(max_length=50, blank=True)
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["run", "created_at"]
+        indexes = [
+            models.Index(
+                fields=["run", "role", "created_at"],
+                name="invmodel_run_role_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.run_id}:{self.role}:{self.id}"
+
+
+class InvestigationVerifierReport(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.CASCADE,
+        related_name="verifier_reports",
+    )
+    revision = models.PositiveIntegerField()
+    model_call = models.OneToOneField(
+        InvestigationModelCall,
+        on_delete=models.PROTECT,
+        related_name="verifier_report",
+    )
+    success = models.BooleanField(default=False)
+    findings = models.JSONField(default=list)
+    critical_findings = models.PositiveIntegerField(default=0)
+    source_references_valid = models.BooleanField(default=False)
+    checked_critical_claims = models.JSONField(default=list)
+    bound_hashes = models.JSONField(default=dict)
+    created_for_executor_generation = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["run", "-revision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "revision"],
+                name="uniq_investigation_verifier_revision",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.run_id}:verifier:{self.revision}"
+
+
+class InvestigationInputRevision(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.CASCADE,
+        related_name="input_revisions",
+    )
+    revision = models.PositiveIntegerField()
+    supplied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="investigation_input_revisions",
+    )
+    payload = models.JSONField(default=dict)
+    payload_hash = models.CharField(max_length=64)
+
+    class Meta:
+        ordering = ["run", "revision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "revision"],
+                name="uniq_investigation_input_revision",
+            )
+        ]
+
+
+class InvestigationBriefRevision(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.CASCADE,
+        related_name="brief_revisions",
+    )
+    revision = models.PositiveIntegerField()
+    payload = models.JSONField(default=dict)
+    content_hash = models.CharField(max_length=64)
+    operation_key = models.CharField(max_length=64)
+    process_version = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["run", "revision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "revision"],
+                name="uniq_investigation_brief_revision",
+            ),
+            models.UniqueConstraint(
+                fields=["run", "operation_key"],
+                name="uniq_investigation_brief_operation",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Materialisierte Briefrevisionen sind unveränderlich.")
+        super().save(*args, **kwargs)
