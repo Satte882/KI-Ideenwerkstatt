@@ -35,8 +35,8 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationProviderReservation,
     InvestigationRun,
     InvestigationSource,
-    InvestigationStep,
     InvestigationSourceFolder,
+    InvestigationStep,
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
@@ -146,7 +146,10 @@ def write_variant_pack(root: Path, variant: str):
         )
     elif variant == "B":
         (root / "01_case_note.md").write_text("Bezugsgröße unklar.", encoding="utf-8")
-        (root / "02_report.md").write_text("18 Eskalationen, Grundgesamtheit fehlt.", encoding="utf-8")
+        (root / "02_report.md").write_text(
+            "18 Eskalationen, Grundgesamtheit fehlt.",
+            encoding="utf-8",
+        )
         (root / "cases.csv").write_text(
             "period,escalations,total_eligible,unit\n"
             "2026-06,5,,cases\n"
@@ -155,8 +158,14 @@ def write_variant_pack(root: Path, variant: str):
             encoding="utf-8",
         )
     elif variant == "C":
-        (root / "01_case_note.md").write_text("Queue-Fehler als alternative Ursache.", encoding="utf-8")
-        (root / "02_system_note.md").write_text("Queue-Retries bei langsamen Fällen.", encoding="utf-8")
+        (root / "01_case_note.md").write_text(
+            "Queue-Fehler als alternative Ursache.",
+            encoding="utf-8",
+        )
+        (root / "02_system_note.md").write_text(
+            "Queue-Retries bei langsamen Fällen.",
+            encoding="utf-8",
+        )
         (root / "cases.csv").write_text(
             "queue_retries,approval_hours,unit\n"
             "0,5,h\n"
