@@ -70,7 +70,10 @@ def assert_variant_snapshot(
 ) -> None:
     expected = BENCHMARK_VARIANT_FILENAMES.get(variant)
     if expected is None:
-        raise InvestigationRunError("Unbekannte Benchmark-Variante.", code="invalid_benchmark_variant")
+        raise InvestigationRunError(
+            "Unbekannte Benchmark-Variante.",
+            code="invalid_benchmark_variant",
+        )
     if _snapshot_signature(snapshot) != expected:
         raise InvestigationRunError(
             "Der Source-Snapshot entspricht nicht dem eingefrorenen A/B/C-Quellenpaket.",
@@ -659,7 +662,8 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         adaptive_sample_missing = max(0, 3 - matrix[variant]["adaptive_real_sampled"])
         if adaptive_sample_missing:
             outstanding.append(
-                f"{variant}: {adaptive_sample_missing} vorab fixierte adaptive gewertete Läufe fehlen."
+                f"{variant}: {adaptive_sample_missing} vorab fixierte adaptive gewertete "
+                "Läufe fehlen."
             )
         adaptive_failed = max(
             0,
