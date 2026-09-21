@@ -126,6 +126,23 @@ Lösch- und Aufbewahrungsregeln müssen vor einem realen Produktivbetrieb organi
 
 Für Accelerator-Capture-Sessions, strukturierte LLM-Vorschläge und bereinigte LLM-Betriebsmetadaten gelten zusätzlich die verbindlichen Zielregeln aus [`accelerator/BLOCK_1_FOUNDATION.md`](accelerator/BLOCK_1_FOUNDATION.md). Die automatische technische Umsetzung erfolgt erst in den Blocks, die diese persistenten Objekte einführen.
 
+## Begrenzter VS1-Quellenraum
+
+Für den ersten agentischen Vertical Slice können administrativ registrierte, fallgebundene
+TXT-/MD-/CSV-Quellen als geschützte Evidence-Snapshots in PostgreSQL eingefroren werden.
+Gespeichert werden Manifest-Metadaten, vollständige zugelassene Quellbytes als unveränderliche
+Textkopie, der freigegebene ProcessAnalysis-Kontext sowie reproduzierbare
+CSV-Werkzeugresultate.
+
+Diese Evidenz ist nicht allgemeiner Dokumentenspeicher und wird nicht durch die technische
+LLM-Run-Retention automatisch gelöscht. Berechtigungsentzug am registrierten Quellenraum
+sperrt weitere Werkzeugzugriffe und den Abruf abgeleiteter Resultate. Eine spätere
+Lösch-/Retention-Funktion muss Quelle, Snapshot und abgeleitete Resultate gemeinsam behandeln;
+direkte Einzel-Löschung der verwendeten Evidenz ist blockiert.
+
+Der ausführbare Vertrag steht in
+[`docs/planning/VS1_SOURCE_TOOLS.md`](planning/VS1_SOURCE_TOOLS.md).
+
 ## Optionale externe Übertragungen
 
 ### OpenRouter
