@@ -1,4 +1,4 @@
-name: KI-Radar CI
+name: KI-Ideenwerkstatt CI
 
 on:
   pull_request:
