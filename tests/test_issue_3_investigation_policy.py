@@ -216,27 +216,15 @@ def test_06_value_tradeoff_requires_human_instead_of_autonomous_weighting():
     [
         ({"verifier": None}, "verifier_missing"),
         (
-            {
-                "verifier": valid_verifier(
-                    base_checks(), success=False, critical_findings=1
-                )
-            },
+            {"verifier": valid_verifier(base_checks(), success=False, critical_findings=1)},
             "verifier_critical",
         ),
         (
-            {
-                "checks": replace_check(
-                    base_checks(), "problem", references_valid=False
-                )
-            },
+            {"checks": replace_check(base_checks(), "problem", references_valid=False)},
             "invalid_reference:problem",
         ),
         (
-            {
-                "verifier": valid_verifier(
-                    base_checks(), source_references_valid=False
-                )
-            },
+            {"verifier": valid_verifier(base_checks(), source_references_valid=False)},
             "verifier_source_reference_invalid",
         ),
         (
@@ -319,20 +307,12 @@ def test_10_relevant_revision_change_invalidates_old_verifier(changed_field):
     ("state", "blocker"),
     [
         (
-            ready_state(
-                checks=replace_check(
-                    base_checks(), "problem", change_guard_valid=False
-                )
-            ),
+            ready_state(checks=replace_check(base_checks(), "problem", change_guard_valid=False)),
             "invalid_claim_revision:problem",
         ),
         (ready_state(question_narrowed=True), "decision_question_changed"),
         (
-            ready_state(
-                checks=replace_check(
-                    base_checks(), "hyp-b", used_as_premise=True
-                )
-            ),
+            ready_state(checks=replace_check(base_checks(), "hyp-b", used_as_premise=True)),
             "refuted_premise_used:hyp-b",
         ),
     ],
