@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from django.db import transaction
 from django.utils import timezone
@@ -12,7 +13,11 @@ from .investigation_llm import (
     request_planner_action,
     request_verifier_report,
 )
-from .investigation_models import InvestigationRun, InvestigationStep, InvestigationVerifierReport
+from .investigation_models import (
+    InvestigationRun,
+    InvestigationStep,
+    InvestigationVerifierReport,
+)
 from .investigation_policy import PolicyDecision, PolicyOutcome, ReasonCode
 from .investigation_runtime import (
     InvestigationRunError,
