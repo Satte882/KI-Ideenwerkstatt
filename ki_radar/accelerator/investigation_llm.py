@@ -384,29 +384,30 @@ def _structured_provider_call(
                     "updated_at",
                 ]
             )
-            raise InvestigationRunError(
-                "Verspätetes Modellergebnis wurde verworfen.",
-                code="stale_executor",
+        else:
+            current.status = InvestigationModelCall.Status.SUCCESS
+            current.accepted_payload = payload
+            current.accepted_payload_hash = content_hash(payload)
+            current.save(
+                update_fields=[
+                    "status",
+                    "returned_model",
+                    "model_revision",
+                    "accepted_payload",
+                    "accepted_payload_hash",
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "total_tokens",
+                    "finished_at",
+                    "updated_at",
+                ]
             )
 
-        current.status = InvestigationModelCall.Status.SUCCESS
-        current.accepted_payload = payload
-        current.accepted_payload_hash = content_hash(payload)
-        current.save(
-            update_fields=[
-                "status",
-                "returned_model",
-                "model_revision",
-                "accepted_payload",
-                "accepted_payload_hash",
-                "prompt_tokens",
-                "completion_tokens",
-                "total_tokens",
-                "finished_at",
-                "updated_at",
-            ]
+    if stale:
+        raise InvestigationRunError(
+            "Verspätetes Modellergebnis wurde verworfen.",
+            code="stale_executor",
         )
-
     return payload, current
 
 
