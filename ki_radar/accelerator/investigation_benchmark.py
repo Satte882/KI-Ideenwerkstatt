@@ -11,6 +11,8 @@ from .investigation_models import (
     InvestigationProviderReservation,
     InvestigationRun,
     InvestigationSource,
+    InvestigationSourceSnapshot,
+    InvestigationStep,
 )
 from .investigation_policy import ReasonCode
 from .investigation_runtime import (
@@ -25,6 +27,172 @@ FIXED_COUNTEREVIDENCE_QUERY = "nicht"
 FIXED_READ_LIMIT = 100
 FIXED_MAX_GROUP_CHECKS = 3
 _OUTCOME_MARKERS = ("hour", "duration", "time", "lead", "cycle", "latency", "day", "minute")
+
+BENCHMARK_VARIANT_FILENAMES = {
+    "A": ("01_case_note.md", "02_counterevidence.md", "cases.csv"),
+    "B": ("01_case_note.md", "02_report.md", "cases.csv"),
+    "C": ("01_case_note.md", "02_system_note.md", "cases.csv"),
+}
+SCORED_ATTEMPTS = {
+    "adaptive": frozenset({1, 2, 3}),
+    "fixed": frozenset({1}),
+}
+EXPECTED_ANALYSIS_GROUP = {
+    "A": "approver_available",
+    "C": "queue_retries",
+}
+
+
+def _variant_runs(
+    campaign: InvestigationEvidenceCampaign,
+    *,
+    variant: str,
+) -> list[InvestigationRun]:
+    result: list[InvestigationRun] = []
+    for run in campaign.investigation_runs.select_related("source_snapshot").order_by("created_at"):
+        metadata = dict(run.evidence_metadata or {})
+        if (
+            str(metadata.get("provider_mode") or "") == "real"
+            and str(metadata.get("variant") or "").upper() == variant
+        ):
+            result.append(run)
+    return result
+
+
+def _snapshot_signature(snapshot: InvestigationSourceSnapshot) -> tuple[str, ...]:
+    return tuple(snapshot.sources.order_by("filename").values_list("filename", flat=True))
+
+
+def assert_variant_snapshot(
+    *,
+    snapshot: InvestigationSourceSnapshot,
+    variant: str,
+) -> None:
+    expected = BENCHMARK_VARIANT_FILENAMES.get(variant)
+    if expected is None:
+        raise InvestigationRunError("Unbekannte Benchmark-Variante.", code="invalid_benchmark_variant")
+    if _snapshot_signature(snapshot) != expected:
+        raise InvestigationRunError(
+            "Der Source-Snapshot entspricht nicht dem eingefrorenen A/B/C-Quellenpaket.",
+            code="benchmark_variant_snapshot_mismatch",
+        )
+
+
+def resolve_benchmark_snapshot(
+    *,
+    campaign: InvestigationEvidenceCampaign,
+    variant: str,
+    phase: str,
+    requested_snapshot_id=None,
+) -> InvestigationSourceSnapshot:
+    variant = variant.upper()
+    existing = _variant_runs(campaign, variant=variant)
+    bindings = {
+        (str(run.source_snapshot_id), str(run.manifest_hash))
+        for run in existing
+    }
+    if len(bindings) > 1:
+        raise InvestigationRunError(
+            "Die Variante besitzt widersprüchliche Snapshot-Bindungen.",
+            code="benchmark_snapshot_binding_conflict",
+        )
+
+    if bindings:
+        snapshot_id, manifest_hash = next(iter(bindings))
+        if requested_snapshot_id is not None and str(requested_snapshot_id) != snapshot_id:
+            raise InvestigationRunError(
+                "Die Variante ist bereits an einen anderen Source-Snapshot gebunden.",
+                code="benchmark_snapshot_binding_conflict",
+            )
+        snapshot = InvestigationSourceSnapshot.objects.select_related("folder").get(pk=snapshot_id)
+        if snapshot.manifest_hash != manifest_hash:
+            raise InvestigationRunError(
+                "Die eingefrorene Manifest-Bindung der Variante stimmt nicht mehr.",
+                code="benchmark_snapshot_binding_conflict",
+            )
+    else:
+        if phase == "scored":
+            raise InvestigationRunError(
+                "Vor einem gewerteten Lauf muss die Variante in der Kalibrierung an einen "
+                "Source-Snapshot gebunden werden.",
+                code="benchmark_calibration_required",
+            )
+        if requested_snapshot_id is None:
+            raise InvestigationRunError(
+                "Der erste Kalibrierungslauf einer Variante benötigt einen expliziten Snapshot.",
+                code="benchmark_snapshot_required",
+            )
+        try:
+            snapshot = InvestigationSourceSnapshot.objects.select_related("folder").get(
+                pk=requested_snapshot_id,
+                process_analysis=campaign.process_analysis,
+            )
+        except (InvestigationSourceSnapshot.DoesNotExist, ValueError) as exc:
+            raise InvestigationRunError(
+                "Der angegebene Benchmark-Snapshot ist für diese Campaign nicht verfügbar.",
+                code="benchmark_snapshot_invalid",
+            ) from exc
+
+        other_bindings = {
+            (str(run.source_snapshot_id), str(run.manifest_hash))
+            for run in campaign.investigation_runs.select_related("source_snapshot").all()
+            if str((run.evidence_metadata or {}).get("provider_mode") or "") == "real"
+            and str((run.evidence_metadata or {}).get("variant") or "").upper() != variant
+        }
+        if (str(snapshot.pk), str(snapshot.manifest_hash)) in other_bindings:
+            raise InvestigationRunError(
+                "Ein Benchmark-Snapshot darf nicht mehreren A/B/C-Varianten zugeordnet werden.",
+                code="benchmark_snapshot_reused_across_variants",
+            )
+
+    if snapshot.process_analysis_id != campaign.process_analysis_id:
+        raise InvestigationRunError(
+            "Der Benchmark-Snapshot gehört nicht zur Campaign.",
+            code="benchmark_snapshot_invalid",
+        )
+    if snapshot.process_version != campaign.process_analysis.version:
+        raise InvestigationRunError(
+            "Der Benchmark-Snapshot gehört nicht zur aktuellen ProcessAnalysis-Version.",
+            code="benchmark_snapshot_stale",
+        )
+    if not snapshot.folder.is_active:
+        raise InvestigationRunError(
+            "Der gebundene Benchmark-Quellenraum ist nicht mehr autorisiert.",
+            code="benchmark_snapshot_inactive",
+        )
+    assert_variant_snapshot(snapshot=snapshot, variant=variant)
+    return snapshot
+
+
+def validate_evidence_attempt(
+    *,
+    campaign: InvestigationEvidenceCampaign,
+    variant: str,
+    mode: str,
+    phase: str,
+    attempt: int,
+) -> None:
+    if phase == "calibration":
+        scored_started = any(
+            str((run.evidence_metadata or {}).get("provider_mode") or "") == "real"
+            and str((run.evidence_metadata or {}).get("phase") or "") == "scored"
+            for run in campaign.investigation_runs.all()
+        )
+        if scored_started:
+            raise InvestigationRunError(
+                "Nach Beginn der gewerteten Phase sind keine neuen Kalibrierungsläufe erlaubt.",
+                code="benchmark_scoring_already_started",
+            )
+        return
+
+    allowed = SCORED_ATTEMPTS.get(mode)
+    if allowed is None or attempt not in allowed:
+        expected = ", ".join(str(value) for value in sorted(allowed or ()))
+        raise InvestigationRunError(
+            f"Gewertete {mode}-Versuche sind vorab auf Attempts {expected} fixiert.",
+            code="benchmark_attempt_out_of_sample",
+        )
+
 
 
 def _fixed_reference(source: InvestigationSource) -> dict[str, Any]:
@@ -291,6 +459,27 @@ def assert_comparable_runs(*, fixed: InvestigationRun, adaptive: InvestigationRu
         )
 
 
+def _expected_analysis_observed(run: InvestigationRun, *, variant: str) -> bool:
+    group_by = EXPECTED_ANALYSIS_GROUP.get(variant)
+    if group_by is None:
+        return True
+    return run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS,
+        tool_name="compare_groups",
+        parameters__group_by=group_by,
+    ).exists()
+
+
+def _agentic_course_change_observed(run: InvestigationRun) -> bool:
+    return run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS,
+        progress_kind__in=[
+            InvestigationStep.ProgressKind.REFUTATION,
+            InvestigationStep.ProgressKind.CONTRADICTION,
+        ],
+    ).exists()
+
+
 def _scored_run_reached_expected_boundary(
     run: InvestigationRun,
     *,
@@ -301,7 +490,19 @@ def _scored_run_reached_expected_boundary(
             InvestigationRun.Status.WAITING_HUMAN,
             InvestigationRun.Status.ABORTED,
         }
-    return run.status == InvestigationRun.Status.READY
+    if run.status != InvestigationRun.Status.READY or not _expected_analysis_observed(
+        run,
+        variant=variant,
+    ):
+        return False
+    if run.execution_mode == "fixed":
+        return True
+    return (
+        run.data_check_executed
+        and run.counterevidence_search_executed
+        and run.counterevidence_hits_processed
+        and _agentic_course_change_observed(run)
+    )
 
 
 def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[str, Any]:
@@ -317,14 +518,17 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         variant: {
             "adaptive_real_attempted": 0,
             "adaptive_real_scored": 0,
+            "adaptive_real_sampled": 0,
             "fixed_real_attempted": 0,
             "fixed_real_scored": 0,
+            "fixed_real_sampled": 0,
         }
         for variant in ("A", "B", "C")
     }
     usage_by_arm: dict[str, dict[str, int]] = {}
     usage_by_variant: dict[str, dict[str, int]] = {}
     attempts: list[dict[str, Any]] = []
+    sample_runs: dict[tuple[str, str, int], list[InvestigationRun]] = {}
 
     def add_usage(bucket: dict[str, dict[str, int]], key: str, values: dict[str, int]) -> None:
         target = bucket.setdefault(
@@ -346,6 +550,7 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         variant = str(metadata.get("variant") or "").upper()
         phase = str(metadata.get("phase") or "")
         provider_mode = str(metadata.get("provider_mode") or "unspecified")
+        attempt_number = metadata.get("attempt")
         if (
             variant in matrix
             and phase == "scored"
@@ -354,6 +559,15 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
         ):
             attempted_key = f"{run.execution_mode}_real_attempted"
             matrix[variant][attempted_key] += 1
+            try:
+                normalized_attempt = int(attempt_number)
+            except (TypeError, ValueError):
+                normalized_attempt = 0
+            if normalized_attempt in SCORED_ATTEMPTS[run.execution_mode]:
+                sample_runs.setdefault(
+                    (variant, run.execution_mode, normalized_attempt),
+                    [],
+                ).append(run)
             if _scored_run_reached_expected_boundary(run, variant=variant):
                 scored_key = f"{run.execution_mode}_real_scored"
                 matrix[variant][scored_key] += 1
@@ -386,12 +600,51 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
                 "phase": phase,
                 "provider_mode": provider_mode,
                 "arm": run.execution_mode,
+                "attempt": attempt_number,
                 "status": run.status,
                 "clarification_reason": run.clarification_reason,
                 "runtime_seconds": runtime_seconds,
                 **usage,
             }
         )
+
+    sample_issues: list[str] = []
+    review_run_ids: dict[str, list[str]] = {variant: [] for variant in ("A", "B", "C")}
+    fixed_runs: dict[str, InvestigationRun] = {}
+    adaptive_runs: dict[str, list[InvestigationRun]] = {variant: [] for variant in ("A", "B", "C")}
+
+    for variant in ("A", "B", "C"):
+        for mode, required_attempts in SCORED_ATTEMPTS.items():
+            for attempt_number in sorted(required_attempts):
+                key = (variant, mode, attempt_number)
+                matched = sample_runs.get(key, [])
+                if len(matched) != 1:
+                    sample_issues.append(
+                        f"{variant}/{mode}/attempt-{attempt_number}: erwartet genau ein "
+                        f"gewerteter Run, gefunden {len(matched)}."
+                    )
+                    continue
+                run = matched[0]
+                matrix[variant][f"{mode}_real_sampled"] += 1
+                if mode == "adaptive":
+                    adaptive_runs[variant].append(run)
+                    review_run_ids[variant].append(str(run.pk))
+                else:
+                    fixed_runs[variant] = run
+
+    comparison_issues: list[str] = []
+    for variant in ("A", "B", "C"):
+        fixed = fixed_runs.get(variant)
+        if fixed is None:
+            continue
+        for adaptive in adaptive_runs[variant]:
+            try:
+                assert_comparable_runs(fixed=fixed, adaptive=adaptive)
+            except InvestigationRunError as exc:
+                comparison_issues.append(
+                    f"{variant}: Fixed {fixed.pk} und Adaptive {adaptive.pk} sind nicht "
+                    f"vergleichbar ({exc.code})."
+                )
 
     reservation_summary = {
         status: sum(1 for item in reservations if item.status == status)
@@ -403,13 +656,24 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
     }
     outstanding: list[str] = []
     for variant in ("A", "B", "C"):
-        adaptive_missing = max(0, 3 - matrix[variant]["adaptive_real_scored"])
-        if adaptive_missing:
+        adaptive_sample_missing = max(0, 3 - matrix[variant]["adaptive_real_sampled"])
+        if adaptive_sample_missing:
             outstanding.append(
-                f"{variant}: {adaptive_missing} reale adaptive gewertete Läufe fehlen."
+                f"{variant}: {adaptive_sample_missing} vorab fixierte adaptive gewertete Läufe fehlen."
             )
-        if matrix[variant]["fixed_real_scored"] < 1:
-            outstanding.append(f"{variant}: realer Fixed-Route-Vergleich fehlt.")
+        adaptive_failed = max(
+            0,
+            matrix[variant]["adaptive_real_sampled"] - matrix[variant]["adaptive_real_scored"],
+        )
+        if adaptive_failed:
+            outstanding.append(
+                f"{variant}: {adaptive_failed} gewertete adaptive Läufe erfüllen den "
+                "fachlichen/agentischen Prüfpunkt nicht."
+            )
+        if matrix[variant]["fixed_real_sampled"] < 1:
+            outstanding.append(f"{variant}: vorab fixierter Fixed-Route-Vergleich fehlt.")
+    outstanding.extend(sample_issues)
+    outstanding.extend(comparison_issues)
     outstanding.extend(
         [
             "Unabhängiger verblindeter menschlicher Fachreview ist noch nicht dokumentiert.",
@@ -418,19 +682,27 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
     )
 
     nine_real_adaptive_complete = all(
-        matrix[variant]["adaptive_real_scored"] >= 3 for variant in ("A", "B", "C")
+        matrix[variant]["adaptive_real_sampled"] == 3 for variant in ("A", "B", "C")
+    ) and not any("/adaptive/" in item for item in sample_issues)
+    nine_real_adaptive_passed = all(
+        matrix[variant]["adaptive_real_scored"] == 3 for variant in ("A", "B", "C")
     )
-    fixed_comparison_present = all(
-        matrix[variant]["fixed_real_scored"] >= 1 for variant in ("A", "B", "C")
-    )
+    fixed_sample_complete = all(
+        matrix[variant]["fixed_real_sampled"] == 1 for variant in ("A", "B", "C")
+    ) and not any("/fixed/" in item for item in sample_issues)
+    fixed_comparison_present = fixed_sample_complete and not comparison_issues
     return {
         "budget": campaign_budget_snapshot(campaign),
         "fixed_route_version": FIXED_ROUTE_VERSION,
         "matrix": matrix,
         "nine_real_adaptive_runs_complete": nine_real_adaptive_complete,
+        "nine_real_adaptive_runs_passed": nine_real_adaptive_passed,
         "fixed_comparison_present": fixed_comparison_present,
         "effectiveness_proof_complete": False,
         "attempts": attempts,
+        "scored_sample_run_ids": review_run_ids,
+        "sample_issues": sample_issues,
+        "comparison_issues": comparison_issues,
         "usage_by_arm": usage_by_arm,
         "usage_by_variant": usage_by_variant,
         "provider_reservations": reservation_summary,
