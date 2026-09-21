@@ -185,7 +185,9 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
                 "progress_kind": step.progress_kind,
                 "progress_payload": step.progress_payload,
             }
-            for step in run.steps.order_by("-sequence")[:5]
+            for step in run.steps.order_by("-sequence")[
+                : (12 if run.execution_mode == "fixed" else 5)
+            ]
         ],
         "input_revisions": [
             {
