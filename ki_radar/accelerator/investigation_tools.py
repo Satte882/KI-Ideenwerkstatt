@@ -203,6 +203,18 @@ class StoredToolResult:
 
 
 @dataclass(frozen=True)
+class ReplayedToolResult:
+    result_id: UUID
+    tool_name: str
+    source_id: UUID
+    source_hash: str
+    matches: bool
+    stored_hash: str
+    replay_hash: str
+    mismatch_fields: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class _ScannedSource:
     filename: str
     source_type: str
@@ -1182,6 +1194,124 @@ def compare_groups(
         missing_values=missing_values,
         units=units,
         findings=tuple(findings),
+    )
+
+
+def _tool_result_fingerprint(result: InvestigationToolResult) -> dict[str, Any]:
+    return {
+        "tool_name": result.tool_name,
+        "tool_version": result.tool_version,
+        "source_id": str(result.source_id),
+        "source_hash": result.source_hash,
+        "parameters": result.parameters,
+        "result_payload": result.result_payload,
+        "population": result.population,
+        "excluded_rows": result.excluded_rows,
+        "group_sizes": result.group_sizes,
+        "missing_values": result.missing_values,
+        "units": result.units,
+    }
+
+
+def _fingerprint_hash(payload: Mapping[str, Any]) -> str:
+    raw = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def replay_tool_result(*, actor, result_id) -> ReplayedToolResult:
+    """Re-run a stored deterministic analysis without persisting a second result."""
+    try:
+        stored = InvestigationToolResult.objects.select_related(
+            "snapshot__folder",
+            "snapshot__process_analysis__stage__value_stream",
+            "source",
+        ).get(pk=result_id)
+    except (InvestigationToolResult.DoesNotExist, ValueError) as exc:
+        raise PermissionDenied("Das Werkzeugresultat ist nicht zugänglich.") from exc
+
+    _authorized_snapshot(actor=actor, snapshot_id=stored.snapshot_id)
+    expected = _tool_result_fingerprint(stored)
+    mismatch_fields: list[str] = []
+    if stored.tool_version != TOOL_VERSION:
+        mismatch_fields.append("tool_version")
+    if stored.source_hash != stored.source.content_sha256:
+        mismatch_fields.append("source_hash")
+
+    if mismatch_fields:
+        stored_hash = _fingerprint_hash(expected)
+        return ReplayedToolResult(
+            result_id=stored.pk,
+            tool_name=stored.tool_name,
+            source_id=stored.source_id,
+            source_hash=stored.source_hash,
+            matches=False,
+            stored_hash=stored_hash,
+            replay_hash="",
+            mismatch_fields=tuple(mismatch_fields),
+        )
+
+    with transaction.atomic():
+        if stored.tool_name == InvestigationToolResult.ToolName.PROFILE_CSV:
+            replayed = profile_csv(
+                actor=actor,
+                snapshot_id=stored.snapshot_id,
+                request=CsvProfileRequest(source_id=stored.source_id),
+            )
+        elif stored.tool_name == InvestigationToolResult.ToolName.COMPARE_GROUPS:
+            parameters = dict(stored.parameters)
+            replayed = compare_groups(
+                actor=actor,
+                snapshot_id=stored.snapshot_id,
+                request=CompareGroupsRequest(
+                    source_id=stored.source_id,
+                    group_by=str(parameters.get("group_by") or ""),
+                    aggregation=str(parameters.get("aggregation") or ""),
+                    value_column=parameters.get("value_column"),
+                    filters=tuple(
+                        FilterSpec(
+                            column=str(item.get("column") or ""),
+                            operator=str(item.get("operator") or ""),
+                            value=item.get("value"),
+                        )
+                        for item in parameters.get("filters", [])
+                        if isinstance(item, Mapping)
+                    ),
+                    unit_column=parameters.get("unit_column"),
+                ),
+            )
+        else:
+            raise _error(
+                "Nur persistierte deterministische Analysen können reproduziert werden.",
+                "tool_not_replayable",
+            )
+
+        replay_row = InvestigationToolResult.objects.get(pk=replayed.result_id)
+        actual = _tool_result_fingerprint(replay_row)
+        transaction.set_rollback(True)
+
+    for field_name in expected:
+        if _fingerprint_hash({"value": expected[field_name]}) != _fingerprint_hash(
+            {"value": actual[field_name]}
+        ):
+            mismatch_fields.append(field_name)
+
+    stored_hash = _fingerprint_hash(expected)
+    replay_hash = _fingerprint_hash(actual)
+    return ReplayedToolResult(
+        result_id=stored.pk,
+        tool_name=stored.tool_name,
+        source_id=stored.source_id,
+        source_hash=stored.source_hash,
+        matches=not mismatch_fields and stored_hash == replay_hash,
+        stored_hash=stored_hash,
+        replay_hash=replay_hash,
+        mismatch_fields=tuple(sorted(set(mismatch_fields))),
     )
 
 
