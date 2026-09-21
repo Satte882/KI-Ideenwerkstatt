@@ -1038,7 +1038,7 @@ def test_issue4_runner_builds_controlled_real_attempt_without_manual_metadata(
         mode=mode,
         phase="calibration",
         attempt=1,
-        snapshot=str(snapshot.pk),
+        snapshot=str(snapshot.snapshot_id),
     )
 
     run = InvestigationRun.objects.get(evidence_campaign=campaign)
@@ -1088,7 +1088,7 @@ def test_issue4_runner_binds_variant_to_calibrated_snapshot_and_freezes_scored_s
         mode="adaptive",
         phase="calibration",
         attempt=1,
-        snapshot=str(snapshot1.pk),
+        snapshot=str(snapshot1.snapshot_id),
     )
     calibration = InvestigationRun.objects.get(evidence_campaign=campaign)
     abort_investigation(actor=owner, run_id=calibration.pk)
@@ -1124,7 +1124,7 @@ def test_issue4_runner_binds_variant_to_calibrated_snapshot_and_freezes_scored_s
             mode="adaptive",
             phase="calibration",
             attempt=2,
-            snapshot=str(snapshot1.pk),
+            snapshot=str(snapshot1.snapshot_id),
         )
 
 
@@ -1154,7 +1154,7 @@ def test_issue4_runner_rejects_variant_snapshot_mismatch(
             mode="adaptive",
             phase="calibration",
             attempt=1,
-            snapshot=str(snapshot.pk),
+            snapshot=str(snapshot.snapshot_id),
         )
     assert not campaign.investigation_runs.exists()
 
@@ -1186,7 +1186,10 @@ def test_adaptive_a_requires_agentic_effect_not_ready_status_only(
         ),
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    csv_source = InvestigationSource.objects.get(snapshot=snapshot, filename="cases.csv")
+    csv_source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
     step = execute_tool_step(
         actor=owner,
         run_id=run.pk,
