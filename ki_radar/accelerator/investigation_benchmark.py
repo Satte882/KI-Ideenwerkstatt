@@ -133,8 +133,10 @@ def prepare_fixed_route(*, actor, run_id, executor_token) -> InvestigationRun:
 
     sources = list(run.source_snapshot.sources.order_by("filename"))
     for source in sources:
-        size = source.row_count if source.source_type == InvestigationSource.SourceType.CSV else len(
-            source.content.splitlines()
+        size = (
+            source.row_count
+            if source.source_type == InvestigationSource.SourceType.CSV
+            else len(source.content.splitlines())
         )
         if size and size > FIXED_READ_LIMIT:
             raise InvestigationRunError(
