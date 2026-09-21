@@ -64,7 +64,7 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Ruff lint
-        run: uv run ruff check --fix --diff .
+        run: uv run ruff check .
 
       - name: Ruff format
         run: uv run ruff format --check .
