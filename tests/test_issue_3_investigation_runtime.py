@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import Barrier
 
 import pytest
+from django.core.exceptions import PermissionDenied
 from django.db import close_old_connections, connection
 from django.db.models import F
 from django.test import override_settings
@@ -362,7 +363,7 @@ def test_process_version_conflict_and_permission_revocation_fail_closed(
     ProcessAnalysis.objects.filter(pk=process.pk).update(version=process.version)
     folder.is_active = False
     folder.save(update_fields=["is_active", "updated_at"])
-    with pytest.raises(Exception):
+    with pytest.raises(PermissionDenied):
         execute_tool_step(
             actor=owner,
             run_id=handle.run_id,
@@ -611,12 +612,14 @@ def test_resume_does_not_silently_switch_model_alias(
         )
 
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    with override_settings(OPENROUTER_MODEL="changed-model"):
-        with pytest.raises(InvestigationRunError) as exc_info:
-            request_planner_action(
-                actor=owner,
-                run=run,
-                executor_token=handle.executor_token,
-            )
+    with (
+        override_settings(OPENROUTER_MODEL="changed-model"),
+        pytest.raises(InvestigationRunError) as exc_info,
+    ):
+        request_planner_action(
+            actor=owner,
+            run=run,
+            executor_token=handle.executor_token,
+        )
     assert exc_info.value.code == "execution_version_unavailable"
     assert run.model_calls.count() == 0
