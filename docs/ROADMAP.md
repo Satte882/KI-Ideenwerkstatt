@@ -213,6 +213,14 @@ Erfolg wird nicht an Codeumfang oder sichtbaren KI-Features gemessen, sondern in
 
 Die detaillierte Definition of Done und Verifikation stehen in Issue #1.
 
+**VS1-Stand am 21.09.2026:** Der begrenzte Evidence-to-Decision-Slice verfügt technisch
+über den fallgebundenen Quellenraum, reproduzierbare Tools, adaptiven Planner/Verifier,
+Stopppolicy, Decision Brief, konfliktgeschützte Materialisierung und eine vorab festgelegte
+Fixed-Route-Vergleichsstrecke. Die reale Wirksamkeitsprüfung aus Issue #4 ist noch nicht
+abgeschlossen; insbesondere fehlen die vollständigen realen A/B/C-Läufe, der reale
+Fixed-vs-Adaptive-Vergleich, unabhängiger menschlicher Review und menschliche Zeitmessung.
+Issue #1 bleibt deshalb unverändert offen.
+
 ---
 
 # Next – priorisierte nächste Probleme
