@@ -328,11 +328,7 @@ def reserve_provider_attempt(
     max_input_tokens: int,
     max_output_tokens: int,
 ) -> InvestigationProviderReservation | None:
-    run = (
-        InvestigationRun.objects.select_for_update()
-        .select_related("evidence_campaign")
-        .get(pk=run_id)
-    )
+    run = InvestigationRun.objects.select_for_update().get(pk=run_id)
     if run.evidence_campaign_id is None:
         return None
     if max_input_tokens <= 0 or max_output_tokens <= 0:
