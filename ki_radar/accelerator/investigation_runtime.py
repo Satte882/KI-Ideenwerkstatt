@@ -626,14 +626,10 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
     if status not in {"open", "supported", "refuted", "conflicting"}:
         raise InvestigationRunError("Claim-Status ist ungültig.", code="invalid_claim")
     evidence_refs = [
-        dict(item)
-        for item in raw.get("evidence_refs", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in raw.get("evidence_refs", []) if isinstance(item, Mapping)
     ]
     counter_refs = [
-        dict(item)
-        for item in raw.get("counterevidence_refs", [])
-        if isinstance(item, Mapping)
+        dict(item) for item in raw.get("counterevidence_refs", []) if isinstance(item, Mapping)
     ]
     return {
         "claim_id": claim_id,
@@ -753,17 +749,15 @@ def apply_planner_state(
     elif register_changed or brief_changed or progress_kind == InvestigationStep.ProgressKind.NONE:
         run.no_progress_streak += 1
 
-    latest_step = run.steps.filter(
-        status=InvestigationStep.Status.SUCCESS
-    ).order_by("-sequence").first()
+    latest_step = (
+        run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("-sequence").first()
+    )
     if latest_step is not None and progress_kind in {
         item.value for item in InvestigationStep.ProgressKind
     }:
         latest_step.progress_kind = progress_kind
         latest_step.progress_payload = dict(progress_payload or {})
-        latest_step.save(
-            update_fields=["progress_kind", "progress_payload", "updated_at"]
-        )
+        latest_step.save(update_fields=["progress_kind", "progress_payload", "updated_at"])
 
     run.save(
         update_fields=[
@@ -826,9 +820,7 @@ def normalize_tool_parameters(
             "group_by": str(params.get("group_by") or ""),
             "aggregation": str(params.get("aggregation") or ""),
             "value_column": (
-                str(params.get("value_column"))
-                if params.get("value_column") is not None
-                else None
+                str(params.get("value_column")) if params.get("value_column") is not None else None
             ),
             "filters": [
                 {
@@ -840,9 +832,7 @@ def normalize_tool_parameters(
                 if isinstance(item, Mapping)
             ],
             "unit_column": (
-                str(params.get("unit_column"))
-                if params.get("unit_column") is not None
-                else None
+                str(params.get("unit_column")) if params.get("unit_column") is not None else None
             ),
         }
     raise InvestigationRunError("Werkzeug ist nicht erlaubt.", code="tool_not_allowed")
@@ -970,9 +960,7 @@ def execute_tool_step(
                 sequence=sequence,
                 step_key=step_key,
                 target_claim_id=str(target_claim_id or "")[:100],
-                expected_discriminating_finding=str(
-                    expected_discriminating_finding or ""
-                ),
+                expected_discriminating_finding=str(expected_discriminating_finding or ""),
                 tool_name=tool_name,
                 parameters=params,
                 executor_generation=run.executor_generation,
@@ -1014,9 +1002,8 @@ def execute_tool_step(
         with transaction.atomic():
             current = InvestigationStep.objects.select_for_update().get(pk=step.pk)
             locked = locked_run(actor=actor, run_id=run_id)
-            if (
-                locked.executor_generation == generation
-                and str(locked.executor_token) == str(executor_token)
+            if locked.executor_generation == generation and str(locked.executor_token) == str(
+                executor_token
             ):
                 current.status = InvestigationStep.Status.FAILED
                 current.finished_at = timezone.now()
@@ -1076,8 +1063,7 @@ def execute_tool_step(
         if tool_name == "search_sources":
             query = str(params.get("query") or "").casefold()
             if any(
-                marker in query
-                for marker in ("gegen", "counter", "wider", "alternative", "nicht")
+                marker in query for marker in ("gegen", "counter", "wider", "alternative", "nicht")
             ):
                 locked.counterevidence_search_executed = True
                 locked.counterevidence_hits_processed = not bool(payload.get("hits"))
@@ -1107,9 +1093,7 @@ def policy_checks(run: InvestigationRun) -> tuple[PolicyCheck, ...]:
             references_valid=bool(item.get("references_valid", False)),
             change_guard_valid=bool(item.get("change_guard_valid", True)),
             used_as_premise=bool(item.get("used_as_premise")),
-            optional_unknown_justified=bool(
-                item.get("optional_unknown_justified")
-            ),
+            optional_unknown_justified=bool(item.get("optional_unknown_justified")),
             optional_unknown_verified=bool(item.get("optional_unknown_verified")),
             metadata=dict(item.get("metadata") or {}),
         )
@@ -1161,8 +1145,7 @@ def policy_state_for_run(
         retry_available=retry_available,
         no_progress_streak=run.no_progress_streak,
         replan_available=replan_available,
-        repair_available=run.repair_cycles
-        < run.budget_limits["max_repair_cycles"],
+        repair_available=run.repair_cycles < run.budget_limits["max_repair_cycles"],
         aborted=run.status == InvestigationRun.Status.ABORTED,
     )
 
@@ -1216,10 +1199,7 @@ def mark_counterevidence_processed(
                     continue
                 cursor = int(read.parameters.get("cursor", 0))
                 limit = int(read.parameters.get("limit", 100))
-                if (
-                    isinstance(line_or_row, int)
-                    and cursor < line_or_row <= cursor + limit
-                ):
+                if isinstance(line_or_row, int) and cursor < line_or_row <= cursor + limit:
                     matched = True
                     break
             if not matched:
@@ -1248,10 +1228,7 @@ def set_source_relevance(
     assert_executor(run, executor_token)
     listed = list_sources(actor=actor, snapshot_id=run.source_snapshot_id)
     source_ids = {str(item.source_id) for item in listed.sources}
-    supplied = {
-        str(key): dict(value)
-        for key, value in dict(relevance or {}).items()
-    }
+    supplied = {str(key): dict(value) for key, value in dict(relevance or {}).items()}
     if set(supplied) != source_ids:
         raise InvestigationRunError(
             "Für jede Manifestquelle ist genau eine Relevanzbegründung erforderlich.",
@@ -1263,11 +1240,7 @@ def set_source_relevance(
         reason = str(item.get("reason") or "").strip()
         relevant = item.get("relevant")
         reference = item.get("reference")
-        if (
-            not reason
-            or not isinstance(relevant, bool)
-            or not isinstance(reference, Mapping)
-        ):
+        if not reason or not isinstance(relevant, bool) or not isinstance(reference, Mapping):
             raise InvestigationRunError(
                 "Relevanzbegründung benötigt relevant, reason und eine reale Fundstelle/Analyse.",
                 code="invalid_source_relevance",
@@ -1325,9 +1298,7 @@ def materialize_brief_revision(
             "Nur ein technisch READY-geprüfter Brief kann materialisiert werden.",
             code="ready_required",
         )
-    revision = (
-        run.brief_revisions.aggregate(value=Max("revision"))["value"] or 0
-    ) + 1
+    revision = (run.brief_revisions.aggregate(value=Max("revision"))["value"] or 0) + 1
     try:
         with transaction.atomic():
             return InvestigationBriefRevision.objects.create(
