@@ -42,3 +42,27 @@ Diese Baseline hält den bestehenden Weg fest, bevor der begrenzte Quellenraum u
 ## Vergleichsregel für VS1
 
 Der Vergleich darf diese Baseline nicht nach Kenntnis der Ergebnisse von VS1/1–VS1/3 verengen. Der neue Pfad muss insbesondere zusätzlichen Quellen-/Tooling-Aufwand, Korrekturen, fachliche Qualität, Laufzeit und Providerkosten getrennt ausweisen.
+
+
+## Erreichter Ergebnisstand nach VS1/3
+
+Die ursprünglichen Ausgangsbedingungen oben bleiben unverändert. Der technische VS1-Pfad
+kann inzwischen einen autorisierten Quellen-Snapshot selbstständig mit begrenzten Werkzeugen
+untersuchen, Gegenbelege und reproduzierbare CSV-Prüfungen verarbeiten, nach der Stopppolicy
+READY oder präzise HUMAN_CLARIFICATION liefern und einen versionierten Decision Brief erzeugen.
+
+Der Decision Brief kann belegte Beobachtungen, unbestätigte Hypothesen, referenzierte
+Berechnungen und SolutionOption-Entwürfe konfliktgeschützt in die bestehenden Fachobjekte
+überführen. Er erzeugt keine bestätigte Ursache, Preferred-Option, ProcessValidation,
+Governance-Entscheidung oder Lifecycle-Änderung.
+
+Noch nicht gemessen bzw. noch offen sind:
+
+- aktive menschliche Bearbeitungszeit der neuen Strecke;
+- neun reale adaptive A/B/C-Providerläufe;
+- der reale vorab festgelegte Fixed-vs-Adaptive-Vergleich;
+- unabhängiger verblindeter menschlicher Fachreview;
+- belastbare 10x-Aussage gegen diese Baseline.
+
+Automatisierte Laufzeiten, Stub-Provider und Tokenwerte aus Tests ersetzen diese offenen
+Messungen nicht. Der aktuelle Nachweisstatus steht in VS1_EVIDENCE_REPORT.md.
