@@ -102,10 +102,7 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
             code="execution_version_unavailable",
         )
 
-    if (
-        run.execution_mode == "fixed"
-        and frozen.get("fixed_route_version") != FIXED_ROUTE_VERSION
-    ):
+    if run.execution_mode == "fixed" and frozen.get("fixed_route_version") != FIXED_ROUTE_VERSION:
         raise InvestigationRunError(
             "Die fixierte Kontrollstrecke ist nicht mehr verfügbar.",
             code="execution_version_unavailable",
@@ -352,12 +349,8 @@ def _reserve_model_call(
     )
 
     usage = dict(run.usage)
-    remaining_input = run.budget_limits["max_input_tokens"] - int(
-        usage.get("input_tokens", 0)
-    )
-    remaining_output = run.budget_limits["max_output_tokens"] - int(
-        usage.get("output_tokens", 0)
-    )
+    remaining_input = run.budget_limits["max_input_tokens"] - int(usage.get("input_tokens", 0))
+    remaining_output = run.budget_limits["max_output_tokens"] - int(usage.get("output_tokens", 0))
     if prompt_token_reservation > remaining_input or remaining_output <= 0:
         raise InvestigationRunError(
             "Das verbleibende Tokenbudget reicht für keinen weiteren Modellaufruf.",
