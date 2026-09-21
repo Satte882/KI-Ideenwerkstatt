@@ -1,0 +1,6 @@
+case_id,team,approval_hours,missing_info,approver_available,unit
+A-01,Nord,4,0,yes,h
+A-02,Nord,28,0,no,h
+A-03,Sued,6,1,yes,h
+A-04,Sued,31,0,no,h
+A-05,Nord,,0,yes,h
