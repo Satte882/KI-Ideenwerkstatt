@@ -411,13 +411,14 @@ def test_replay_detects_real_persisted_result_payload_tamper(
     ]
     field = InvestigationToolResult._meta.get_field("result_payload")
     db_value = field.get_db_prep_value(tampered_payload, connection)
-    table = connection.ops.quote_name(InvestigationToolResult._meta.db_table)
-    column = connection.ops.quote_name(field.column)
-    pk_column = connection.ops.quote_name(InvestigationToolResult._meta.pk.column)
+    assert InvestigationToolResult._meta.db_table == "accelerator_investigationtoolresult"
 
     with connection.cursor() as cursor:
         cursor.execute(
-            f"UPDATE {table} SET {column} = %s WHERE {pk_column} = %s",
+            (
+                'UPDATE "accelerator_investigationtoolresult" '
+                'SET "result_payload" = %s WHERE "id" = %s'
+            ),
             [db_value, result_id],
         )
 
