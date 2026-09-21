@@ -1018,14 +1018,16 @@ def execute_tool_step(
                 )
         raise
 
+    stale_result = False
     with transaction.atomic():
         locked = locked_run(actor=actor, run_id=run_id)
         current = InvestigationStep.objects.select_for_update().get(pk=step.pk)
-        if (
+        stale_result = (
             locked.executor_generation != generation
             or str(locked.executor_token) != str(executor_token)
             or locked.status != InvestigationRun.Status.RUNNING
-        ):
+        )
+        if stale_result:
             current.status = InvestigationStep.Status.DISCARDED
             current.finished_at = timezone.now()
             current.error_code = "stale_executor"
@@ -1037,46 +1039,49 @@ def execute_tool_step(
                     "updated_at",
                 ]
             )
-            raise InvestigationRunError(
-                "Das Werkzeugresultat stammt von einem abgelösten Executor und wurde verworfen.",
-                code="stale_executor",
+        else:
+            current.status = InvestigationStep.Status.SUCCESS
+            current.result_payload = payload
+            current.result_hash = content_hash(payload)
+            if tool_name in {"profile_csv", "compare_groups"}:
+                current.result_ref = {"tool_result_id": payload.get("result_id")}
+                locked.data_check_executed = True
+            current.finished_at = timezone.now()
+            current.save(
+                update_fields=[
+                    "status",
+                    "result_payload",
+                    "result_hash",
+                    "result_ref",
+                    "finished_at",
+                    "updated_at",
+                ]
             )
 
-        current.status = InvestigationStep.Status.SUCCESS
-        current.result_payload = payload
-        current.result_hash = content_hash(payload)
-        if tool_name in {"profile_csv", "compare_groups"}:
-            current.result_ref = {"tool_result_id": payload.get("result_id")}
-            locked.data_check_executed = True
-        current.finished_at = timezone.now()
-        current.save(
-            update_fields=[
-                "status",
-                "result_payload",
-                "result_hash",
-                "result_ref",
-                "finished_at",
-                "updated_at",
-            ]
-        )
+            if tool_name == "search_sources":
+                query = str(params.get("query") or "").casefold()
+                if any(
+                    marker in query
+                    for marker in ("gegen", "counter", "wider", "alternative", "nicht")
+                ):
+                    locked.counterevidence_search_executed = True
+                    locked.counterevidence_hits_processed = not bool(payload.get("hits"))
 
-        if tool_name == "search_sources":
-            query = str(params.get("query") or "").casefold()
-            if any(
-                marker in query for marker in ("gegen", "counter", "wider", "alternative", "nicht")
-            ):
-                locked.counterevidence_search_executed = True
-                locked.counterevidence_hits_processed = not bool(payload.get("hits"))
+            locked.save(
+                update_fields=[
+                    "data_check_executed",
+                    "counterevidence_search_executed",
+                    "counterevidence_hits_processed",
+                    "updated_at",
+                ]
+            )
 
-        locked.save(
-            update_fields=[
-                "data_check_executed",
-                "counterevidence_search_executed",
-                "counterevidence_hits_processed",
-                "updated_at",
-            ]
+    if stale_result:
+        raise InvestigationRunError(
+            "Das Werkzeugresultat stammt von einem abgelösten Executor und wurde verworfen.",
+            code="stale_executor",
         )
-        return current
+    return current
 
 
 def policy_checks(run: InvestigationRun) -> tuple[PolicyCheck, ...]:
