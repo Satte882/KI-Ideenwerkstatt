@@ -159,11 +159,11 @@ def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
     )
     if any(step.step_key == proposed_key for step in recent):
         return False
-    if recent and action.target_claim_id and any(
-        step.target_claim_id == action.target_claim_id for step in recent
-    ):
-        return False
-    return True
+    return not (
+        recent
+        and action.target_claim_id
+        and any(step.target_claim_id == action.target_claim_id for step in recent)
+    )
 
 
 def _try_mark_counterevidence_processed(
