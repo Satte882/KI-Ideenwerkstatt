@@ -49,6 +49,7 @@ class Migration(migrations.Migration):
                 ("usage", models.JSONField(default=dict)),
                 ("execution_snapshot", models.JSONField(default=dict)),
                 ("claim_register", models.JSONField(default=list)),
+                ("source_relevance", models.JSONField(default=dict)),
                 ("register_revision", models.PositiveIntegerField(default=1)),
                 ("register_hash", models.CharField(max_length=64)),
                 ("brief_payload", models.JSONField(default=dict)),
