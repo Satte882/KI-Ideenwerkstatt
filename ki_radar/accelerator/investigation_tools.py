@@ -255,13 +255,10 @@ def _authorized_process(*, actor, process_analysis_id, for_update: bool = False)
 
 def _authorized_snapshot(*, actor, snapshot_id) -> InvestigationSourceSnapshot:
     try:
-        snapshot = (
-            InvestigationSourceSnapshot.objects.select_related(
-                "folder",
-                "process_analysis__stage__value_stream",
-            )
-            .get(pk=snapshot_id)
-        )
+        snapshot = InvestigationSourceSnapshot.objects.select_related(
+            "folder",
+            "process_analysis__stage__value_stream",
+        ).get(pk=snapshot_id)
     except (InvestigationSourceSnapshot.DoesNotExist, ValueError) as exc:
         raise PermissionDenied("Der Quellen-Snapshot ist nicht zugänglich.") from exc
     process = snapshot.process_analysis
@@ -656,9 +653,7 @@ def search_sources(*, actor, snapshot_id, request: SearchRequest) -> SearchResul
     index = request.cursor
     while index < len(all_hits) and len(selected) < request.limit:
         hit = all_hits[index]
-        hit_bytes = len(
-            json.dumps(asdict(hit), ensure_ascii=False, default=str).encode("utf-8")
-        )
+        hit_bytes = len(json.dumps(asdict(hit), ensure_ascii=False, default=str).encode("utf-8"))
         if selected and bytes_used + hit_bytes > MAX_SEARCH_BYTES:
             break
         if not selected and hit_bytes > MAX_SEARCH_BYTES:
@@ -1120,9 +1115,7 @@ def compare_groups(
     group_sizes = {item["group"]: int(item["population"]) for item in groups}
     if not groups:
         findings.append("Leere Vergleichspopulation nach Filtern und Ausschlüssen.")
-    non_numeric_count = sum(
-        1 for item in excluded_rows if item["reason"] == "non_numeric_value"
-    )
+    non_numeric_count = sum(1 for item in excluded_rows if item["reason"] == "non_numeric_value")
     if non_numeric_count:
         findings.append(f"{non_numeric_count} nichtnumerische Werte ausgeschlossen.")
 
