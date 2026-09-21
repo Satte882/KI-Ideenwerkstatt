@@ -137,11 +137,7 @@ def write_variant_pack(root: Path, variant: str):
             encoding="utf-8",
         )
         (root / "cases.csv").write_text(
-            "approver_available,approval_hours,unit\n"
-            "yes,5,h\n"
-            "yes,5,h\n"
-            "no,29,h\n"
-            "no,30,h\n",
+            "approver_available,approval_hours,unit\nyes,5,h\nyes,5,h\nno,29,h\nno,30,h\n",
             encoding="utf-8",
         )
     elif variant == "B":
@@ -167,11 +163,7 @@ def write_variant_pack(root: Path, variant: str):
             encoding="utf-8",
         )
         (root / "cases.csv").write_text(
-            "queue_retries,approval_hours,unit\n"
-            "0,5,h\n"
-            "0,6,h\n"
-            "4,23,h\n"
-            "5,27,h\n",
+            "queue_retries,approval_hours,unit\n0,5,h\n0,6,h\n4,23,h\n5,27,h\n",
             encoding="utf-8",
         )
     else:
