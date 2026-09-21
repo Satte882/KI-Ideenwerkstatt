@@ -276,10 +276,9 @@ def _max_cost_for_tokens(
             "Die versionierte Preisbasis ist nicht verfügbar.",
             code="invalid_evidence_budget",
         ) from exc
-    currency_units = (
-        Decimal(input_tokens) * input_rate / Decimal(1_000_000)
-        + Decimal(output_tokens) * output_rate / Decimal(1_000_000)
-    )
+    currency_units = Decimal(input_tokens) * input_rate / Decimal(1_000_000) + Decimal(
+        output_tokens
+    ) * output_rate / Decimal(1_000_000)
     return int((currency_units * Decimal(1_000_000)).to_integral_value(rounding="ROUND_CEILING"))
 
 
@@ -424,8 +423,7 @@ def settle_provider_attempt(
     if reservation.reserved_cost_microunits is not None:
         usage["reserved_cost_microunits"] = max(
             0,
-            int(usage.get("reserved_cost_microunits", 0))
-            - reservation.reserved_cost_microunits,
+            int(usage.get("reserved_cost_microunits", 0)) - reservation.reserved_cost_microunits,
         )
 
     limits = campaign.limits
@@ -456,13 +454,9 @@ def settle_provider_attempt(
                 "Der gemeldete Kostenverbrauch überschreitet das Gesamtbudget.",
                 code="provider_usage_exceeds_reservation",
             )
-        usage["cost_microunits"] = (
-            int(usage.get("cost_microunits", 0)) + actual_cost_microunits
-        )
+        usage["cost_microunits"] = int(usage.get("cost_microunits", 0)) + actual_cost_microunits
     elif actual_cost_microunits is not None:
-        usage["cost_microunits"] = (
-            int(usage.get("cost_microunits", 0)) + actual_cost_microunits
-        )
+        usage["cost_microunits"] = int(usage.get("cost_microunits", 0)) + actual_cost_microunits
 
     campaign.usage = usage
     campaign.save(update_fields=["usage", "updated_at"])
