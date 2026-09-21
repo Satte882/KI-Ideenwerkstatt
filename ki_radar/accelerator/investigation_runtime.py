@@ -235,6 +235,13 @@ def base_execution_snapshot(
         "budget_limits": dict(budget),
         "source_snapshot_id": str(snapshot.pk),
         "manifest_hash": snapshot.manifest_hash,
+        "model_transport": {
+            "provider": "openrouter",
+            "requested_model": str(getattr(settings, "OPENROUTER_MODEL", os.getenv("OPENROUTER_MODEL", "")) or ""),
+            "temperature": 0.1,
+            "reasoning_effort": "medium",
+            "max_output_tokens_per_call": 4096,
+        },
         "process_version": snapshot.process_version,
         "planner": {
             "prompt_version": PLANNER_PROMPT_VERSION,
