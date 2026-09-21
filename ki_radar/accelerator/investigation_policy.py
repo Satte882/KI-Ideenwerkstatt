@@ -25,6 +25,7 @@ class PolicyOutcome(StrEnum):
 
 class ReasonCode(StrEnum):
     MISSING_EVIDENCE = "missing_evidence"
+    FIXED_ROUTE_BOUNDARY = "fixed_route_boundary"
     PERMISSION_OR_SCOPE = "permission_or_scope"
     VALUE_TRADEOFF = "value_tradeoff"
     BUDGET_EXHAUSTED = "budget_exhausted"

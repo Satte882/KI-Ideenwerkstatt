@@ -223,7 +223,7 @@ def request_fixed_route_synthesis(
         action="clarify",
         tool_name="",
         parameters={},
-        clarification_reason="missing_evidence",
+        clarification_reason=ReasonCode.FIXED_ROUTE_BOUNDARY.value,
         clarification_payload={
             "impact": (
                 "Die vor den gewerteten Läufen festgelegte Kontrollstrecke hat ihre "

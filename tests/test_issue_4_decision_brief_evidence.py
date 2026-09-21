@@ -6,6 +6,7 @@ from pathlib import Path
 from threading import Barrier
 
 import pytest
+from django.core.management import call_command
 from django.db import close_old_connections, connection
 from django.urls import reverse
 from django.utils import timezone
@@ -14,6 +15,7 @@ from ki_radar.accelerator.investigation_benchmark import (
     assert_comparable_runs,
     evidence_campaign_report,
     prepare_fixed_route,
+    request_fixed_route_synthesis,
 )
 from ki_radar.accelerator.investigation_brief import materialize_decision_brief
 from ki_radar.accelerator.investigation_evidence import (
@@ -22,7 +24,11 @@ from ki_radar.accelerator.investigation_evidence import (
     mark_provider_attempt_uncertain,
     reserve_provider_attempt,
 )
-from ki_radar.accelerator.investigation_llm import _estimate_tokens, _reserve_model_call
+from ki_radar.accelerator.investigation_llm import (
+    PlannerAction,
+    _estimate_tokens,
+    _reserve_model_call,
+)
 from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
     InvestigationProviderReservation,
@@ -45,6 +51,7 @@ from ki_radar.accelerator.investigation_tools import (
     SnapshotRequest,
     create_source_snapshot,
 )
+from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
 from ki_radar.architecture.models import (
     ProcessAnalysis,
     SolutionOption,
@@ -621,6 +628,60 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
 
 
 @pytest.mark.django_db
+def test_fixed_route_boundary_is_not_reported_as_missing_evidence(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Fixed boundary")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="fixed-boundary-reason",
+            evidence_campaign_id=campaign.pk,
+            execution_mode="fixed",
+            evidence_metadata={"provider_mode": "stub", "phase": "comparison", "variant": "B"},
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    tool_action = PlannerAction(
+        action="tool",
+        target_claim_id="claim-1",
+        expected_discriminating_finding="Weitere adaptive Prüfung.",
+        rationale="Noch ein Werkzeug wäre hilfreich.",
+        tool_name="search_sources",
+        parameters={"query": "weitere Evidenz", "cursor": 0, "limit": 20},
+        claim_register=(),
+        brief_payload={},
+        source_relevance={},
+        progress_kind="",
+        progress_payload={},
+        clarification_reason="",
+        clarification_payload={},
+    )
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_benchmark.request_planner_action",
+        lambda **_kwargs: tool_action,
+    )
+
+    action = request_fixed_route_synthesis(
+        actor=owner,
+        run=run,
+        executor_token=handle.executor_token,
+    )
+
+    assert action.action == "clarify"
+    assert action.clarification_reason == ReasonCode.FIXED_ROUTE_BOUNDARY.value
+    assert action.clarification_reason != ReasonCode.MISSING_EVIDENCE.value
+
+
+@pytest.mark.django_db
 def test_fixed_route_reads_full_small_pack_and_profiles_missing_denominator(
     owner,
     business_unit,
@@ -823,14 +884,14 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     campaign = evidence_campaign(owner=owner, process=process)
 
-    def start_scored(key, variant):
+    def start_scored(key, variant, execution_mode="adaptive"):
         handle = start_investigation(
             actor=owner,
             request=StartInvestigationRequest(
                 snapshot_id=snapshot.snapshot_id,
                 idempotency_key=key,
                 evidence_campaign_id=campaign.pk,
-                execution_mode="adaptive",
+                execution_mode=execution_mode,
                 evidence_metadata={
                     "provider_mode": "real",
                     "phase": "scored",
@@ -864,11 +925,82 @@ def test_evidence_report_counts_attempts_but_only_expected_scored_boundaries(
     b_aborted_without_expected_boundary = start_scored("b-aborted", "B")
     abort_investigation(actor=owner, run_id=b_aborted_without_expected_boundary.pk)
 
+    b_fixed_boundary = start_scored("b-fixed-boundary", "B", execution_mode="fixed")
+    InvestigationRun.objects.filter(pk=b_fixed_boundary.pk).update(
+        status=InvestigationRun.Status.WAITING_HUMAN,
+        clarification_reason=ReasonCode.FIXED_ROUTE_BOUNDARY.value,
+        clarification_payload={"required_action": "Fixed-Route-Grenze dokumentieren."},
+    )
+    abort_investigation(actor=owner, run_id=b_fixed_boundary.pk)
+
     report = evidence_campaign_report(campaign)
 
     assert report["matrix"]["A"]["adaptive_real_attempted"] == 2
     assert report["matrix"]["A"]["adaptive_real_scored"] == 1
     assert report["matrix"]["B"]["adaptive_real_attempted"] == 2
     assert report["matrix"]["B"]["adaptive_real_scored"] == 1
+    assert report["matrix"]["B"]["fixed_real_attempted"] == 1
+    assert report["matrix"]["B"]["fixed_real_scored"] == 0
     assert report["nine_real_adaptive_runs_complete"] is False
-    assert len(report["attempts"]) == 4
+    assert len(report["attempts"]) == 5
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("mode", "runner_name"),
+    (
+        ("adaptive", "run_until_boundary"),
+        ("fixed", "run_fixed_route_until_boundary"),
+    ),
+)
+def test_issue4_runner_builds_controlled_real_attempt_without_manual_metadata(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+    mode,
+    runner_name,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name=f"Runner {mode}")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    captured = {}
+
+    def fake_runner(**kwargs):
+        captured.update(kwargs)
+        return type(
+            "Result",
+            (),
+            {"run_id": kwargs["run_id"], "status": InvestigationRun.Status.RUNNING},
+        )()
+
+    def wrong_runner(**_kwargs):
+        raise AssertionError("Wrong Issue #4 execution arm used.")
+
+    monkeypatch.setattr(issue4_evidence_command, "run_until_boundary", wrong_runner)
+    monkeypatch.setattr(issue4_evidence_command, "run_fixed_route_until_boundary", wrong_runner)
+    monkeypatch.setattr(issue4_evidence_command, runner_name, fake_runner)
+
+    call_command(
+        "run_issue4_evidence",
+        campaign=str(campaign.pk),
+        variant="C",
+        mode=mode,
+        phase="scored",
+        attempt=2,
+    )
+
+    run = InvestigationRun.objects.get(evidence_campaign=campaign)
+    assert run.source_snapshot_id == snapshot.snapshot_id
+    assert run.execution_mode == mode
+    assert run.evidence_metadata == {
+        "provider_mode": "real",
+        "phase": "scored",
+        "variant": "C",
+        "attempt": 2,
+    }
+    assert run.execution_snapshot["decision_brief_required"] is True
+    assert captured["run_id"] == run.pk
+    assert captured["actor"] == owner
+    assert run.model_calls.count() == 0
