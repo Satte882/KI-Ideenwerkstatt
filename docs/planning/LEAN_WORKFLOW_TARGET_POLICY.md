@@ -5,7 +5,7 @@ Geprüfter Ausgangsstand: `main` @ `7458d7df5e14d7da759056ef8e6aa2f3f0387457`
 
 ## 1. Leitprinzip
 
-Der KI-UseCase-Radar ist ein pragmatisches KMU-Werkzeug, keine GRC- oder Workflow-Engine.
+Der KI-Ideenwerkstatt ist ein pragmatisches KMU-Werkzeug, keine GRC- oder Workflow-Engine.
 
 > **Arbeit darf weitergehen. Nur eine konkrete verbindliche Aktion wird serverseitig blockiert, wenn sie sonst eine fachlich falsche, unzulässige oder nicht verantwortbare Zustandsaussage erzeugen würde.**
 

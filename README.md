@@ -1,10 +1,10 @@
-# KI-Radar
+# KI-Ideenwerkstatt
 
-[![KI-Radar CI](https://github.com/Satte882/KI-UseCase-Radar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Satte882/KI-UseCase-Radar/actions/workflows/ci.yml)
+[![KI-Ideenwerkstatt CI](https://github.com/Satte882/KI-Ideenwerkstatt/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Satte882/KI-Ideenwerkstatt/actions/workflows/ci.yml)
 
 > AI Business Architecture, Portfolio- und Decision-Governance-Cockpit für kleine und mittlere Unternehmen
 
-KI-Radar verbindet Business Architecture, Prozessdiagnose, lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung in einem nachvollziehbaren Arbeitsmodell.
+KI-Ideenwerkstatt verbindet Business Architecture, Prozessdiagnose, lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung in einem nachvollziehbaren Arbeitsmodell.
 
 Das System beantwortet nicht nur, **welche KI-Ideen existieren**, sondern vor allem:
 
@@ -41,7 +41,7 @@ Der systematische Pfad beginnt bei Geschäftsarchitektur und Problemverständnis
 
 Bereits bekannte Vorhaben können weiterhin direkt über den Use-Case-Intake erfasst werden. Systematisch abgeleitete Vorhaben erhalten zusätzlich eine nachvollziehbare Herkunftskette vom Value Stream über Fokus, Prozessanalyse und Lösungsoption bis zum Use Case.
 
-Die operative Umsetzung verbleibt in Jira, Azure DevOps, GitHub oder einem anderen Delivery-System. KI-Radar hält den entscheidungsrelevanten Kontext, die Governance, die Übergabereife und die späteren Review-Snapshots.
+Die operative Umsetzung verbleibt in Jira, Azure DevOps, GitHub oder einem anderen Delivery-System. KI-Ideenwerkstatt hält den entscheidungsrelevanten Kontext, die Governance, die Übergabereife und die späteren Review-Snapshots.
 
 Die Gesamtstrecke wird in der Oberfläche kontextbezogen dargestellt. Auf konkreten Arbeitsobjekten zeigt eine kompakte Lifecycle-Orientierung den tatsächlichen Zustand und die nächste relevante Entscheidung; Querschnitts- und Listensichten wie Portfolio verzichten bewusst auf eine pseudo-lineare Journey.
 
@@ -51,7 +51,7 @@ Die Gesamtstrecke wird in der Oberfläche kontextbezogen dargestellt. Auf konkre
 
 ### 1. Business Architecture, Discovery und Fokus
 
-KI-Radar unterstützt die strukturierte Analyse eines Geschäftsbereichs durch:
+KI-Ideenwerkstatt unterstützt die strukturierte Analyse eines Geschäftsbereichs durch:
 
 - kontrollierte Fachdomänen und Business Capabilities;
 - End-to-End-Value-Streams;
@@ -102,7 +102,7 @@ Vertiefende Nachweise liegen unter [`docs/accelerator/`](docs/accelerator/).
 
 ### 4. Architecture Advisor und Solution Quality Control
 
-Für vorhandene Lösungsoptionen kann KI-Radar die minimal hinreichende Architekturklasse deterministisch einordnen:
+Für vorhandene Lösungsoptionen kann KI-Ideenwerkstatt die minimal hinreichende Architekturklasse deterministisch einordnen:
 
 - `No LLM required`;
 - `Controlled LLM`;
@@ -187,7 +187,7 @@ Die vollständige methodische Grundlage ist im [Vorgehensmodell für produktions
 
 Die Journey endet nicht mit dem Handover.
 
-KI-Radar führt den Lifecycle:
+KI-Ideenwerkstatt führt den Lifecycle:
 
 ```text
 Idee → Prüfung → Pilot → Betrieb → Beendet
@@ -250,9 +250,9 @@ Damit wird nicht nur ein KI-Use-Case dokumentiert, sondern seine fachliche Herku
 
 ## TOGAF-light
 
-KI-Radar nutzt TOGAF ADM als pragmatischen Ordnungsrahmen. Es ist kein vollständiges Enterprise-Architecture-Repository und bildet kein umfassendes TOGAF-Metamodell ab.
+KI-Ideenwerkstatt nutzt TOGAF ADM als pragmatischen Ordnungsrahmen. Es ist kein vollständiges Enterprise-Architecture-Repository und bildet kein umfassendes TOGAF-Metamodell ab.
 
-| Bereich | Umsetzung in KI-Radar |
+| Bereich | Umsetzung in KI-Ideenwerkstatt |
 | --- | --- |
 | Architecture Vision | Scope, Ziel, Stakeholder und Leitplanken |
 | Business Architecture | Fachdomäne, Capability, Value Streams, Prozesse, Rollen und Diagnose |
@@ -294,7 +294,7 @@ OpenRouter · Sentry · Jira · Azure DevOps · GitHub · Confluence
 
 Grundsätze:
 
-- Analyse und verbindliche Entscheidung verbleiben in KI-Radar.
+- Analyse und verbindliche Entscheidung verbleiben in KI-Ideenwerkstatt.
 - Operative Delivery-Steuerung verbleibt in spezialisierten Werkzeugen.
 - Verbindliche Prüfungen werden serverseitig ausgeführt.
 - LLM-Funktionen sind optional und nicht entscheidungsbefugt.
@@ -344,7 +344,7 @@ Berechtigungen, Rollentrennung und fachliche Gates werden serverseitig geprüft.
 
 ## Bewusste Nicht-Ziele
 
-KI-Radar ist kein:
+KI-Ideenwerkstatt ist kein:
 
 - Projektmanagement- oder Ressourcenplanungssystem;
 - BPMN- oder Process-Mining-Werkzeug;
@@ -395,7 +395,7 @@ Die Regression deckt unter anderem Business Architecture, Prozessanalyse, Accele
 
 ## Reifegrad und Einsatzgrenzen
 
-KI-Radar ist eine funktionsfähige Single-Tenant-Referenzimplementierung für den internen Einsatz in einer Organisation.
+KI-Ideenwerkstatt ist eine funktionsfähige Single-Tenant-Referenzimplementierung für den internen Einsatz in einer Organisation.
 
 Vor einer extern erreichbaren Produktivinstallation müssen abhängig vom konkreten Unternehmen insbesondere SSO/MFA, Domain/TLS, Monitoring, Offsite-Backups, Datenschutz, Aufbewahrung sowie Betriebs- und Lizenzmodell geklärt werden.
 
@@ -443,5 +443,5 @@ Die vollständige lokale Installation, Demo-Daten und der fachliche Testablauf s
 
 ## Grundprinzip
 
-> KI-Radar bewertet nicht, ob eine Idee modern klingt.  
+> KI-Ideenwerkstatt bewertet nicht, ob eine Idee modern klingt.  
 > Es macht sichtbar, ob ein Vorhaben aus einem relevanten Geschäftsproblem entsteht, diagnostisch verstanden, lösungsoffen bewertet, messbar, technisch angemessen, ausreichend belegt, verantwortbar entscheidbar und für Delivery konkret genug ist.

@@ -1,4 +1,4 @@
-# KI-Radar lokal starten
+# KI-Ideenwerkstatt lokal starten
 
 ## 1. Voraussetzungen
 
@@ -11,7 +11,7 @@ Optional für native Entwicklung: Python 3.13 und uv 0.10.x.
 ## 2. Repository aktualisieren
 
 ```powershell
-cd C:\Users\user\Documents\GitHub\KI-UseCase-Radar
+cd C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt
 git fetch origin
 git pull --ff-only origin main
 ```
@@ -20,8 +20,8 @@ Bei einer Erstinstallation:
 
 ```powershell
 cd C:\Users\user\Documents\GitHub
-git clone https://github.com/Satte882/KI-UseCase-Radar.git
-cd KI-UseCase-Radar
+git clone https://github.com/Satte882/KI-Ideenwerkstatt.git
+cd KI-Ideenwerkstatt
 code .
 ```
 

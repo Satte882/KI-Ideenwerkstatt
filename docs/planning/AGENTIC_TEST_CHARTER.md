@@ -5,7 +5,7 @@ Grundlage: `main` @ `9fa0cc156a3c49b4d623afbbea9322714a3c1b8e`
 
 ## 1. Ziel
 
-Dieses Dokument definiert ein reproduzierbares Testdesign für zehn agentische, explorative Browser-Runs durch den Discovery-Pfad des KI-UseCase-Radars.
+Dieses Dokument definiert ein reproduzierbares Testdesign für zehn agentische, explorative Browser-Runs durch den Discovery-Pfad des KI-Ideenwerkstatts.
 
 Die Runs sollen prüfen, ob ein fachlich nur grob instruierter Nutzer mit wenigen Eckdaten durch das bestehende Vorgehensmodell zu einer belastbaren Problem- und Lösungsentscheidung gelangt. Der Agent erhält **keinen vorgegebenen Value Stream, keine vorgefertigte Prozessanalyse, keine gewünschte Technologie und keinen erwarteten Use Case**.
 
@@ -164,7 +164,7 @@ Jeder Run verwendet zusätzlich die Kennung `AET-R01` bis `AET-R10` in Screensho
 Der folgende Charter ist je Run verbindlich. Nur der Abschnitt `Ausgangsrahmen` wird anhand der Stichprobenmatrix ersetzt.
 
 ```text
-Du testest den KI-UseCase-Radar als fachlicher Business Owner.
+Du testest den KI-Ideenwerkstatt als fachlicher Business Owner.
 
 Ziel:
 Arbeite aus dem gegebenen fachlichen Ausgangsrahmen selbständig durch den sichtbaren Discovery-Pfad. Entwickle die fachlichen Inhalte selbst. Prüfe, ob das Vorgehensmodell dich von einem noch unscharfen Geschäftsproblem zu einer nachvollziehbaren Lösungsentscheidung führt.
@@ -644,7 +644,7 @@ Kein numerischer Gesamtscore erforderlich.
 
 ### 16.3 Pflichtprüfung: Szenario-Framing als Confounder
 
-Eine beobachtete Lösungskonvergenz darf **nicht automatisch** als Methodik-Bias des KI-UseCase-Radars gewertet werden.
+Eine beobachtete Lösungskonvergenz darf **nicht automatisch** als Methodik-Bias des KI-Ideenwerkstatts gewertet werden.
 
 Vor einer solchen Aussage ist mindestens zu prüfen:
 

@@ -1,6 +1,6 @@
 # Datenspeicherung und Datenfluss
 
-Diese Dokumentation beantwortet die Frage, was mit Daten geschieht, die Benutzer in der KI-Radar-Oberfläche eingeben.
+Diese Dokumentation beantwortet die Frage, was mit Daten geschieht, die Benutzer in der KI-Ideenwerkstatt-Oberfläche eingeben.
 
 ## Kurzfassung
 
@@ -35,9 +35,9 @@ Delivery Packages werden in der Datenbank gespeichert. Ein Markdown-Export ist n
 
 ## Nachweise und Dokumente
 
-KI-Radar speichert bei Nachweisen derzeit Metadaten und URLs, beispielsweise Bezeichnung, Dokumenttyp, Version, Kommentar und Ersteller. Das verlinkte Dokument selbst verbleibt im jeweiligen externen Dokumenten- oder Delivery-System, etwa SharePoint, Confluence, Jira, Azure DevOps oder GitHub.
+KI-Ideenwerkstatt speichert bei Nachweisen derzeit Metadaten und URLs, beispielsweise Bezeichnung, Dokumenttyp, Version, Kommentar und Ersteller. Das verlinkte Dokument selbst verbleibt im jeweiligen externen Dokumenten- oder Delivery-System, etwa SharePoint, Confluence, Jira, Azure DevOps oder GitHub.
 
-Es findet über diese Funktion kein allgemeiner Datei-Upload in die KI-Radar-Datenbank statt.
+Es findet über diese Funktion kein allgemeiner Datei-Upload in die KI-Ideenwerkstatt-Datenbank statt.
 
 ## Änderungshistorie und Attribution
 
@@ -152,7 +152,7 @@ Sentry ist optional. Bei konfiguriertem `SENTRY_DSN` können technische Fehler- 
 
 ### Externe Nachweis- und Delivery-Systeme
 
-Nachweislinks und Delivery-URLs verweisen auf externe Systeme. Welche Daten dort gespeichert, übertragen oder aufbewahrt werden, richtet sich nach dem jeweiligen Zielsystem und liegt außerhalb der KI-Radar-Datenbank.
+Nachweislinks und Delivery-URLs verweisen auf externe Systeme. Welche Daten dort gespeichert, übertragen oder aufbewahrt werden, richtet sich nach dem jeweiligen Zielsystem und liegt außerhalb der KI-Ideenwerkstatt-Datenbank.
 
 ## Verantwortungsgrenzen
 

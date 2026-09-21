@@ -4,7 +4,7 @@
 Akzeptiert
 
 ## Kontext
-KI-Radar ist eine kleine formular- und workfloworientierte interne Anwendung. Eine API-first-Architektur mit separatem Frontend würde zusätzliche Authentifizierungs-, Berechtigungs- und Deploymentkomplexität erzeugen.
+KI-Ideenwerkstatt ist eine kleine formular- und workfloworientierte interne Anwendung. Eine API-first-Architektur mit separatem Frontend würde zusätzliche Authentifizierungs-, Berechtigungs- und Deploymentkomplexität erzeugen.
 
 ## Entscheidung
 Django 5.2 LTS, serverseitige Templates und PostgreSQL werden als einzelnes deploybares System verwendet.

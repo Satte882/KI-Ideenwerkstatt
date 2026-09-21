@@ -1,8 +1,8 @@
 # Methodische Referenz des Delivery-Handover
 
-Diese Seite dokumentiert die methodische Herkunft der Delivery-Package-Struktur in KI-Radar. Sie dient dem Delivery-Team zur Einordnung der übergebenen Inhalte und dem KI-Koordinator als dauerhafte Referenz bei methodischen Rückfragen.
+Diese Seite dokumentiert die methodische Herkunft der Delivery-Package-Struktur in KI-Ideenwerkstatt. Sie dient dem Delivery-Team zur Einordnung der übergebenen Inhalte und dem KI-Koordinator als dauerhafte Referenz bei methodischen Rückfragen.
 
-KI-Radar verwendet **CRISP-ML(Q)** als Lebenszyklus- und Qualitätssicherungsrahmen sowie den **Google ML Test Score** als Referenz für produktionsrelevante Prüfbereiche. Daraus entsteht innerhalb von KI-Radar kein zusätzlicher Workflow, keine automatische Score-Berechnung und keine Zertifizierung. Die operative Umsetzung, technische Detailplanung und Erfüllung der Produktionsreifeprüfungen verbleiben beim Delivery-Team.
+KI-Ideenwerkstatt verwendet **CRISP-ML(Q)** als Lebenszyklus- und Qualitätssicherungsrahmen sowie den **Google ML Test Score** als Referenz für produktionsrelevante Prüfbereiche. Daraus entsteht innerhalb von KI-Ideenwerkstatt kein zusätzlicher Workflow, keine automatische Score-Berechnung und keine Zertifizierung. Die operative Umsetzung, technische Detailplanung und Erfüllung der Produktionsreifeprüfungen verbleiben beim Delivery-Team.
 
 ## Mapping der sieben Delivery-Sektionen
 
@@ -27,11 +27,11 @@ Die Delivery-Sektion **„Scope, Nutzer und MVP“** verwendet für die Priorisi
 
 `in_scope` und `out_of_scope` bleiben davon getrennte Scope-Grenzen. Insbesondere ist **Won't this time nicht dasselbe wie `out_of_scope`**: `out_of_scope` liegt außerhalb der fachlich gesetzten Grenze, während Won't this time innerhalb des grundsätzlich möglichen Lösungsrahmens liegt, aber für das aktuelle Inkrement bewusst nicht umgesetzt wird.
 
-Die in MoSCoW-/DSDM-Kontexten häufig verwendete Leitlinie, den Must-Anteil bewusst zu begrenzen (beispielsweise auf ungefähr 60 % der erwarteten Umsetzungskapazität), dient hier nur als methodischer Denkanstoß gegen einen überladenen MVP-Scope. KI-Radar berechnet oder erzwingt keinen 60-%-Wert, solange keine belastbaren Aufwandsschätzungen auf Ebene einzelner Scope-, Requirement- oder Backlog-Items vorliegen.
+Die in MoSCoW-/DSDM-Kontexten häufig verwendete Leitlinie, den Must-Anteil bewusst zu begrenzen (beispielsweise auf ungefähr 60 % der erwarteten Umsetzungskapazität), dient hier nur als methodischer Denkanstoß gegen einen überladenen MVP-Scope. KI-Ideenwerkstatt berechnet oder erzwingt keinen 60-%-Wert, solange keine belastbaren Aufwandsschätzungen auf Ebene einzelner Scope-, Requirement- oder Backlog-Items vorliegen.
 
 ## Einordnung für Delivery
 
-Das Delivery Package bildet nicht den vollständigen CRISP-ML(Q)-Lebenszyklus innerhalb von KI-Radar ab. Es übergibt den freigegebenen Problem-, Scope-, Lösungs-, Architektur- und Qualitätsrahmen. Deployment, Rollback, laufendes Monitoring und die eigentliche ML-Test-Score-Erhebung werden während der Umsetzung und im Betrieb durch die zuständigen Delivery- und Betriebsteams durchgeführt.
+Das Delivery Package bildet nicht den vollständigen CRISP-ML(Q)-Lebenszyklus innerhalb von KI-Ideenwerkstatt ab. Es übergibt den freigegebenen Problem-, Scope-, Lösungs-, Architektur- und Qualitätsrahmen. Deployment, Rollback, laufendes Monitoring und die eigentliche ML-Test-Score-Erhebung werden während der Umsetzung und im Betrieb durch die zuständigen Delivery- und Betriebsteams durchgeführt.
 
 ## Verbindliche Präzisierungen für ein übergabefähiges Package
 

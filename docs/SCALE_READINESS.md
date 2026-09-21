@@ -33,7 +33,7 @@ Die bestehende Architektur bleibt führend:
 | Release, Rollback, Monitoring, Incident | externe Delivery-/Betriebsnachweise |
 | Rollen | bestehender Business Owner und Technical Owner |
 
-KI-Radar wird damit nicht zum zweiten Delivery-, Observability-, Incident- oder GRC-System. Externe technische Evidenz wird nur in der Version beziehungsweise Referenz erfasst, die der konkreten Managemententscheidung zugrunde lag.
+KI-Ideenwerkstatt wird damit nicht zum zweiten Delivery-, Observability-, Incident- oder GRC-System. Externe technische Evidenz wird nur in der Version beziehungsweise Referenz erfasst, die der konkreten Managemententscheidung zugrunde lag.
 
 ## Die sechs Prüffelder
 
@@ -147,4 +147,4 @@ Ein später geänderter Quellstand setzt einen bereits produktiven Use Case nich
 
 Die eigentliche ML-Test-Score-Erhebung, technische Detailtests, Release-/Rollback-Ausführung, Telemetrie, Incident- und Change-Steuerung verbleiben beim Delivery-/Betriebsteam.
 
-KI-Radar speichert nur den verdichteten, entscheidungsrelevanten Review-Snapshot. Dadurch bleibt die Produktgrenze aus `ROADMAP.md` erhalten.
+KI-Ideenwerkstatt speichert nur den verdichteten, entscheidungsrelevanten Review-Snapshot. Dadurch bleibt die Produktgrenze aus `ROADMAP.md` erhalten.

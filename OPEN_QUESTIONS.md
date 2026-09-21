@@ -28,7 +28,7 @@ Vor der Nachrüstung zu entscheiden:
 
 **Status:** offen und sicherheitsrelevant
 
-Die Spezifikation nennt ein privates GitHub-Repository. Das bereitgestellte Repository `Satte882/KI-UseCase-Radar` ist zum Zeitpunkt der Umsetzung öffentlich.
+Die Spezifikation nennt ein privates GitHub-Repository. Das bereitgestellte Repository `Satte882/KI-Ideenwerkstatt` ist zum Zeitpunkt der Umsetzung öffentlich.
 
 Im Repository befinden sich keine Secrets oder produktiven Daten. Für einen späteren produktiven Betrieb sollte entschieden werden, ob das Repository privat geschaltet wird. Ein öffentliches Repository ist technisch möglich, erfordert aber weiterhin strikte Trennung von Code, Secrets und Betriebsdaten.
 
@@ -189,4 +189,4 @@ Bei deutlich größeren Datenmengen kann ein PostgreSQL-Suchvektor ergänzt werd
 
 **Entscheidung:** keine Berechtigungsprüfung externer Links
 
-KI-Radar speichert ausschließlich URLs. Berechtigungen und Verfügbarkeit des Zielsystems werden nicht synchronisiert. Nutzer können daher Links sehen, deren Ziel sie nicht öffnen dürfen.
+KI-Ideenwerkstatt speichert ausschließlich URLs. Berechtigungen und Verfügbarkeit des Zielsystems werden nicht synchronisiert. Nutzer können daher Links sehen, deren Ziel sie nicht öffnen dürfen.

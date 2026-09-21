@@ -456,7 +456,7 @@ Der Radar entscheidet **nicht**, ob ein konkreter Anbieter zulässig ist. Maßge
 
 Der spätere Export muss prominent enthalten:
 
-> **External Sharing Notice:** Diese Datei wurde aus dem KI-UseCase-Radar erzeugt. Ihre Erzeugung ist **keine Freigabe zur Weitergabe an einen externen LLM-Dienst**. Vor Übermittlung sind geltende Kunden-/Unternehmensvorgaben, NDA-/Vertragsbedingungen, Datenschutz- und Security-Regeln sowie die Freigabe des konkreten Zielkontexts zu prüfen. Der Radar trifft keine Aussage darüber, ob ein bestimmter Anbieter oder Dienst zulässig ist.
+> **External Sharing Notice:** Diese Datei wurde aus dem KI-Ideenwerkstatt erzeugt. Ihre Erzeugung ist **keine Freigabe zur Weitergabe an einen externen LLM-Dienst**. Vor Übermittlung sind geltende Kunden-/Unternehmensvorgaben, NDA-/Vertragsbedingungen, Datenschutz- und Security-Regeln sowie die Freigabe des konkreten Zielkontexts zu prüfen. Der Radar trifft keine Aussage darüber, ob ein bestimmter Anbieter oder Dienst zulässig ist.
 
 ### 10.2 Pseudonymisierung darf keine Requirement-Engine werden
 

@@ -1,4 +1,4 @@
-# KI-Radar Design System
+# KI-Ideenwerkstatt Design System
 
 Dieses Dokument ist die verbindliche UI-Zwangsjacke für neue oder geänderte Oberflächen.
 Es beschreibt Produktqualität, nicht eine austauschbare Landingpage-Ästhetik.

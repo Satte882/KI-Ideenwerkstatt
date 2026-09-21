@@ -1,10 +1,10 @@
-# Umsetzungsauftrag: KI-Radar
+# Umsetzungsauftrag: KI-Ideenwerkstatt
 
 > **Status:** Dieses Dokument beschreibt die ursprüngliche Basisspezifikation des ersten Umsetzungsschritts. Der aktuelle Produktstand umfasst zusätzlich geführten Intake, evidenzbasierte Freigaben, Portfolio-Matrix, optionale Value-Stream- und Prozessanalyse, explizite Lösungsoptionen sowie versionierte Delivery Packages. Maßgeblich für den aktuellen Funktionsumfang sind [README.md](README.md) und [docs/DISCOVERY_ARCHITECTURE.md](docs/DISCOVERY_ARCHITECTURE.md).
 
 ## 1. Zweck
 
-KI-Radar ist eine branchenneutrale, interne und codebasierte Webanwendung zur Erfassung und Steuerung von KI-Use-Cases in kleinen und mittleren Unternehmen. Das System verwaltet Ideen, Prüfungen, Piloten, produktive Anwendungen und beendete Vorhaben. Es ersetzt weder Projektmanagement noch rechtliche, datenschutzrechtliche oder sicherheitstechnische Fachprüfungen.
+KI-Ideenwerkstatt ist eine branchenneutrale, interne und codebasierte Webanwendung zur Erfassung und Steuerung von KI-Use-Cases in kleinen und mittleren Unternehmen. Das System verwaltet Ideen, Prüfungen, Piloten, produktive Anwendungen und beendete Vorhaben. Es ersetzt weder Projektmanagement noch rechtliche, datenschutzrechtliche oder sicherheitstechnische Fachprüfungen.
 
 Zielgröße:
 

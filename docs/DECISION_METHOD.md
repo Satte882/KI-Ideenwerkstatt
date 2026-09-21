@@ -2,7 +2,7 @@
 
 ## Ziel
 
-KI-Radar trennt mehrere fachlich unterschiedliche Entscheidungen bewusst voneinander:
+KI-Ideenwerkstatt trennt mehrere fachlich unterschiedliche Entscheidungen bewusst voneinander:
 
 1. **Discovery-Lösungsentscheidung:** Welche Intervention ist für das analysierte Problem die beste ausreichende Lösung – organisatorisch, klassische Automation, KI oder Hybrid?
 2. **Use-Case-Bewertung:** Ist ein tatsächlich angelegter KI-Use-Case fachlich und technisch ausreichend belastbar bewertet?

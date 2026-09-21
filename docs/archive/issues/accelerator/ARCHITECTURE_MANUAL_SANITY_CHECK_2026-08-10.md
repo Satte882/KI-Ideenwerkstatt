@@ -66,7 +66,7 @@ Beobachtungen:
 - Es wurde genau ein Repair ausgeführt; ein zweiter Repair ist anschließend nicht verfügbar.
 - Die drei gespeicherten Patches betreffen ausschließlich die drei adressierten Felder.
 - Keine bevorzugte Option und keine Recommendation wurden erzeugt.
-- Zum Zeitpunkt der Sichtung enthielt die Persistenz die reparierten Texte und der Final Critic bewertete diese, während die bearbeitbaren Vorschaufelder noch die ursprünglichen Texte zeigten. `TECH-001` wurde anschließend mit [PR #277](https://github.com/Satte882/KI-UseCase-Radar/pull/277) behoben.
+- Zum Zeitpunkt der Sichtung enthielt die Persistenz die reparierten Texte und der Final Critic bewertete diese, während die bearbeitbaren Vorschaufelder noch die ursprünglichen Texte zeigten. `TECH-001` wurde anschließend mit [PR #277](https://github.com/Satte882/KI-Ideenwerkstatt/pull/277) behoben.
 
 ### 3.4 Final Critic
 
@@ -84,7 +84,7 @@ Beobachtungen:
 - Der erwartete Beitrag der organisatorischen Option wurde manuell um die Notwendigkeit einer Pilotmessung ergänzt.
 - Die manuelle Änderung blieb nach Speichern und erneutem Öffnen erhalten.
 - Die Oberfläche bleibt in `Human Review`; es wird keine Freigabe oder Auswahlentscheidung abgeleitet.
-- KI-Entwurf, Repair-Metadaten und menschliche Bearbeitung bleiben als getrennte Zustände erhalten. Seit [PR #277](https://github.com/Satte882/KI-UseCase-Radar/pull/277) rendert die Preview daraus den effektiven Stand in der Reihenfolge Generator, Machine Repair und Human Edit.
+- KI-Entwurf, Repair-Metadaten und menschliche Bearbeitung bleiben als getrennte Zustände erhalten. Seit [PR #277](https://github.com/Satte882/KI-Ideenwerkstatt/pull/277) rendert die Preview daraus den effektiven Stand in der Reihenfolge Generator, Machine Repair und Human Edit.
 
 ## 4. Gate-Invarianten
 
@@ -117,14 +117,14 @@ Zusätzliche Invarianz der manuellen Referenzoption:
 
 ## 7. Technische Auffälligkeiten
 
-- [x] TECH-001: Erledigt mit [PR #277](https://github.com/Satte882/KI-UseCase-Radar/pull/277). Die Preview rendert den validierten effektiven Stand nach Machine Repair und optionalen Human Edits; die strukturierte Finding-Bindung an Option, Feld und Quelle ist durch Regressionstests abgesichert.
+- [x] TECH-001: Erledigt mit [PR #277](https://github.com/Satte882/KI-Ideenwerkstatt/pull/277). Die Preview rendert den validierten effektiven Stand nach Machine Repair und optionalen Human Edits; die strukturierte Finding-Bindung an Option, Feld und Quelle ist durch Regressionstests abgesichert.
 - [ ] TECH-002: Der im Arbeitsauftrag genannte Befehl `python manage.py create_bootstrap_data` ist auf `main` nicht vorhanden. Der dokumentierte lokale Compose-Start führt stattdessen Migrationen, `seed_roles` und `collectstatic` automatisch aus.
 
 ## 8. Mögliche Follow-ups
 
 | ID | Beobachtung | Auswirkung | Erste Einordnung | Entscheidung |
 | --- | --- | --- | --- | --- |
-| TECH-001 | Reparierte Werte wurden nicht in den bearbeitbaren Preview-Feldern angezeigt. | Human Review konnte unbeabsichtigt auf veraltetem Text aufsetzen; das Repair-Ergebnis war in der UI nicht zuverlässig prüfbar. | Behobener Defekt | Erledigt mit [PR #277](https://github.com/Satte882/KI-UseCase-Radar/pull/277); effektiver Stand und Finding-Bindung sind regressionsgetestet. |
+| TECH-001 | Reparierte Werte wurden nicht in den bearbeitbaren Preview-Feldern angezeigt. | Human Review konnte unbeabsichtigt auf veraltetem Text aufsetzen; das Repair-Ergebnis war in der UI nicht zuverlässig prüfbar. | Behobener Defekt | Erledigt mit [PR #277](https://github.com/Satte882/KI-Ideenwerkstatt/pull/277); effektiver Stand und Finding-Bindung sind regressionsgetestet. |
 | UX-001 | Englische Mode-Bezeichnungen in deutscher Oberfläche. | Kleine Verständlichkeits- und Konsistenzhürde. | UX/Dokumentation | Produktentscheidung zur Lokalisierung treffen. |
 | FACH-001 | Final Findings tragen teils weiter „Maschinell reparierbar“, obwohl der One-Shot verbraucht ist. | Kann die Erwartung eines zweiten Repairs wecken. | Fachlich/UX | Begriff oder erläuternden Hinweis prüfen. |
 
@@ -144,4 +144,4 @@ Zusätzliche Invarianz der manuellen Referenzoption:
 
 ### Was ich vor weiterer Nutzung ändern würde
 
-- Keine weitere Änderung aus `TECH-001` erforderlich; die Abweichung zwischen sichtbarem Text und dem vom Final Critic bewerteten Repair-Stand ist mit [PR #277](https://github.com/Satte882/KI-UseCase-Radar/pull/277) behoben.
+- Keine weitere Änderung aus `TECH-001` erforderlich; die Abweichung zwischen sichtbarem Text und dem vom Final Critic bewerteten Repair-Stand ist mit [PR #277](https://github.com/Satte882/KI-Ideenwerkstatt/pull/277) behoben.

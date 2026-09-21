@@ -1,4 +1,4 @@
-# Domain Context Map – KI-UseCase-Radar
+# Domain Context Map – KI-Ideenwerkstatt
 
 Issue: #419  
 Analysierter Stand: `main` @ `f8c639481c90965a571314d87f182ecf8e2e2db6`  

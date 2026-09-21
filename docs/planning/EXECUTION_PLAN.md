@@ -1,4 +1,4 @@
-# KI-Radar Execution Plan
+# KI-Ideenwerkstatt Execution Plan
 
 **Stand:** 19.09.2026
 

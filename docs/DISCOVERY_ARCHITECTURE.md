@@ -1,4 +1,4 @@
-# Discovery & Architecture in KI-Radar
+# Discovery & Architecture in KI-Ideenwerkstatt
 
 ## Ziel
 
@@ -24,7 +24,7 @@ Ein Use Case muss nicht aus einem Value Stream entstehen. Der direkte Intake ble
 
 ## Methodische Trennung
 
-KI-Radar behandelt fünf unterschiedliche Ebenen getrennt:
+KI-Ideenwerkstatt behandelt fünf unterschiedliche Ebenen getrennt:
 
 1. **Value-Stream-Analyse:** End-to-End-Wertschöpfung, Empfänger, Phasen, Stakeholder und Ergebnis.
 2. **Fokus & Priorisierung:** Auswahl der zu vertiefenden Value Streams und Phasen anhand transparenter Kriterien und sichtbarer Evidenzbasis ohne künstlichen Gesamtscore.
@@ -108,15 +108,15 @@ Zusätzlich wird je Phase die **Evidenzbasis** sichtbar eingeordnet:
 
 Eine frühe Fokuswahl darf ausdrücklich auf Hypothesenbasis erfolgen. Fehlende Messwerte blockieren die Discovery nicht. Die Einordnung muss aber sichtbar bleiben; Hypothesen werden nicht als validierte Erkenntnisse dargestellt und es werden keine künstlichen Baselines erzeugt.
 
-Time-to-Value bleibt ein qualitativer Trade-off (`unbekannt`, `kurz`, `mittel`, `lang`) und erzeugt keine automatische Rangfolge. Die Kriterien bleiben einzeln sichtbar; KI-Radar berechnet bewusst keinen scheinpräzisen Gesamtscore.
+Time-to-Value bleibt ein qualitativer Trade-off (`unbekannt`, `kurz`, `mittel`, `lang`) und erzeugt keine automatische Rangfolge. Die Kriterien bleiben einzeln sichtbar; KI-Ideenwerkstatt berechnet bewusst keinen scheinpräzisen Gesamtscore.
 
 Nur ein ausreichend dokumentierter und ausgewählter Fokus darf neue Prozessanalysen oder daraus abgeleitete Lösungsentscheidungen starten. Bestehende serverseitige Fokus- und Journey-Regeln bleiben maßgeblich.
 
 ## TOGAF-light
 
-KI-Radar ist kein Enterprise-Architecture-Repository und implementiert nicht das vollständige TOGAF-Metamodell. Die ADM-Bezüge sind nur dort sichtbar, wo konkrete Artefakte erfasst werden:
+KI-Ideenwerkstatt ist kein Enterprise-Architecture-Repository und implementiert nicht das vollständige TOGAF-Metamodell. Die ADM-Bezüge sind nur dort sichtbar, wo konkrete Artefakte erfasst werden:
 
-| ADM-Phase | KI-Radar-Artefakt |
+| ADM-Phase | KI-Ideenwerkstatt-Artefakt |
 |---|---|
 | A – Architecture Vision | Scope, strategisches Ziel, Stakeholder, Leitplanken, Auslöser und Ergebnis |
 | B – Business Architecture | Fachdomäne, Capability, Value Stream, Phasen, Rollen, Ist-Prozess, Regeln, Bottlenecks und Kennzahlen |
@@ -130,7 +130,7 @@ KI-Radar ist kein Enterprise-Architecture-Repository und implementiert nicht das
 
 Der bestehende Use-Case-Intake bleibt ein vollwertiger Einstieg. Ein Use Case benötigt weiterhin **keinen** Value-Stream- oder Prozessbezug.
 
-Wenn der Use Case jedoch aus einem bekannten Prozess entsteht, verwendet KI-Radar seit #322 die bereits vorhandene `UseCaseOrigin`-Relation als kanonische Herkunft:
+Wenn der Use Case jedoch aus einem bekannten Prozess entsteht, verwendet KI-Ideenwerkstatt seit #322 die bereits vorhandene `UseCaseOrigin`-Relation als kanonische Herkunft:
 
 ```text
 Use Case
@@ -186,7 +186,7 @@ Beim Anlegen aus einer Fokusphase bleibt deren Value-Stream-Kontext sichtbar, wi
 
 Beobachtung beziehungsweise Problem, Ursachenhypothese und bestätigte Ursache werden semantisch getrennt. `ProcessValidation`, Provenance und Versions-/Stale-Mechanismen bleiben die kanonischen Nachweise für fachliche Validierung und Herkunft.
 
-KI-Radar erzeugt kein BPMN-Modell. Vorhandene Prozessmodelle können weiterhin in spezialisierten Werkzeugen gepflegt werden.
+KI-Ideenwerkstatt erzeugt kein BPMN-Modell. Vorhandene Prozessmodelle können weiterhin in spezialisierten Werkzeugen gepflegt werden.
 
 ## Lösungsoptionen
 
@@ -265,7 +265,7 @@ Die methodische Herkunft der Struktur ist vollständig in [Delivery Methodology]
 
 ## Bewusste Systemgrenze
 
-KI-Radar verwaltet keine:
+KI-Ideenwerkstatt verwaltet keine:
 
 - Sprints oder Arbeitspakete während der Umsetzung
 - Ressourcen oder Kapazitäten
@@ -274,7 +274,7 @@ KI-Radar verwaltet keine:
 - frei konfigurierbaren Workflows
 - vollständigen Enterprise-Architecture-Katalog
 
-Die Systemlandschaft im Delivery Package ist eine umsetzungsbezogene Ist-/Ziel-Sicht, kein vollständiges Applikationsportfolio. KI-Radar sorgt dafür, dass ein fachlich begründetes und freigegebenes Vorhaben mit belastbarem Scope und den relevanten Architekturartefakten an Delivery übergeben wird. Die operative Umsetzung bleibt im spezialisierten Delivery-System.
+Die Systemlandschaft im Delivery Package ist eine umsetzungsbezogene Ist-/Ziel-Sicht, kein vollständiges Applikationsportfolio. KI-Ideenwerkstatt sorgt dafür, dass ein fachlich begründetes und freigegebenes Vorhaben mit belastbarem Scope und den relevanten Architekturartefakten an Delivery übergeben wird. Die operative Umsetzung bleibt im spezialisierten Delivery-System.
 
 ## Umgesetzte Inkremente
 

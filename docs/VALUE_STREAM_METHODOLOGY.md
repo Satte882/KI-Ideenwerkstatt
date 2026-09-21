@@ -2,7 +2,7 @@
 
 **Version:** 1.2  
 **Stand:** 22.08.2026  
-**Gültig für:** Value-Stream-Erfassung und Fokus-/Prozessanalyse im KI-Radar  
+**Gültig für:** Value-Stream-Erfassung und Fokus-/Prozessanalyse im KI-Ideenwerkstatt  
 **Zweck:** kompakte fachliche Leitplanke; keine zusätzliche Business-Architecture-Schicht
 
 ## 1. Begriffe sauber trennen
@@ -185,7 +185,7 @@ Dafür werden **keine zusätzlichen SIPOC-Felder oder ein separates Artefakt** g
 
 Der Quellkontext beziehungsweise `source_snapshot` dokumentiert dagegen die Herkunft übernommener Radar-Inhalte und ist **nicht** mit einem fachlichen SIPOC-Supplier gleichzusetzen.
 
-Der KI-Radar folgt bewusst dieser Logik:
+Der KI-Ideenwerkstatt folgt bewusst dieser Logik:
 
 1. Value Stream erfassen und sauber abgrenzen.
 2. Phasen vergleichen.

@@ -72,7 +72,7 @@ Ein Entwurf darf nicht automatisch:
 
 ### 3.2 Messstart und Messende
 
-**Messstart:** Der Bearbeiter besitzt die vorbereiteten fachlichen Ausgangsinformationen und beginnt die Erfassung im KI-Radar.
+**Messstart:** Der Bearbeiter besitzt die vorbereiteten fachlichen Ausgangsinformationen und beginnt die Erfassung im KI-Ideenwerkstatt.
 
 **Messende:** Der für den jeweiligen Vergleich vorab definierte strukturierte Entwurfszustand ist gespeichert und prüfbar.
 

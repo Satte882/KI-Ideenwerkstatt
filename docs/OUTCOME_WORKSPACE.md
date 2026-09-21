@@ -31,9 +31,9 @@ Jira, Azure DevOps, GitHub oder ein vergleichbares Werkzeug bleiben führend fü
 - Release-/Rollback-Ausführung,
 - Telemetrie sowie Incident-, Change- und Service-Management.
 
-### KI-Radar
+### KI-Ideenwerkstatt
 
-KI-Radar bleibt führend für:
+KI-Ideenwerkstatt bleibt führend für:
 
 - Baseline, Ziel und gemessenen Ist-Wert,
 - Messzeitraum, Messmethode und Nachweislink,

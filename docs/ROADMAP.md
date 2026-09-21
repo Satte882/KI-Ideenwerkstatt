@@ -1,4 +1,4 @@
-# KI-Radar Produkt-Roadmap
+# KI-Ideenwerkstatt Produkt-Roadmap
 
 **Stand:** 19.09.2026
 
@@ -6,7 +6,7 @@
 
 ## Zweck dieser Roadmap
 
-Diese Datei beschreibt **was KI-Radar als Produkt bereits kann und welche größeren Produktprobleme als Nächstes oder später adressiert werden könnten**.
+Diese Datei beschreibt **was KI-Ideenwerkstatt als Produkt bereits kann und welche größeren Produktprobleme als Nächstes oder später adressiert werden könnten**.
 
 Sie beschreibt bewusst **nicht**, wie einzelne Funktionen technisch umgesetzt wurden. Dafür sind die jeweiligen GitHub-Issues, Pull Requests, Gap-Analysen, Completion-Dokumente und – bei architekturrelevanten Entscheidungen – die ADRs maßgeblich.
 
@@ -25,7 +25,7 @@ Je weiter ein Thema vom aktuellen Produktstand entfernt ist, desto geringer ist 
 
 ## Produktgrenze
 
-KI-Radar ist ein **AI-Business-Architecture-, Portfolio-, Governance- und Entscheidungs-Cockpit** für KI-Vorhaben. Es ersetzt kein operatives Projektmanagement- oder Delivery-System.
+KI-Ideenwerkstatt ist ein **AI-Business-Architecture-, Portfolio-, Governance- und Entscheidungs-Cockpit** für KI-Vorhaben. Es ersetzt kein operatives Projektmanagement- oder Delivery-System.
 
 **Externes Delivery-System bleibt führend für:**
 
@@ -33,7 +33,7 @@ KI-Radar ist ein **AI-Business-Architecture-, Portfolio-, Governance- und Entsch
 - tägliche Maßnahmen, Ressourcen und operativen Fortschritt;
 - Release-, Incident-, Change- und Service-Steuerung.
 
-**KI-Radar bleibt führend für:**
+**KI-Ideenwerkstatt bleibt führend für:**
 
 - fachliche Herkunft, Problemverständnis und Nutzenhypothese;
 - Value-Stream-, Prozess- und Lösungsanalyse;
@@ -43,7 +43,7 @@ KI-Radar ist ein **AI-Business-Architecture-, Portfolio-, Governance- und Entsch
 - entscheidungsrelevante Review-Snapshots;
 - Lifecycle, Ownership, Wirkung und Abschluss.
 
-Der Rückfluss aus Jira, Azure DevOps, GitHub oder einem anderen Delivery-System erfolgt weiterhin bewusst als **verdichteter Review-Snapshot**. KI-Radar wird nicht zum zweiten operativen Delivery-System.
+Der Rückfluss aus Jira, Azure DevOps, GitHub oder einem anderen Delivery-System erfolgt weiterhin bewusst als **verdichteter Review-Snapshot**. KI-Ideenwerkstatt wird nicht zum zweiten operativen Delivery-System.
 
 ---
 
@@ -51,7 +51,7 @@ Der Rückfluss aus Jira, Azure DevOps, GitHub oder einem anderen Delivery-System
 
 ## 1. Business Architecture, Discovery und methodische Führung
 
-KI-Radar kann fachlichen Kontext vom Geschäftsbereich bis zum konkreten Analysegegenstand strukturiert führen:
+KI-Ideenwerkstatt kann fachlichen Kontext vom Geschäftsbereich bis zum konkreten Analysegegenstand strukturiert führen:
 
 - Fachdomänen und Business Capabilities;
 - End-to-End-Value-Streams mit Trigger, Outcome, Scope und Stakeholdern;
@@ -106,7 +106,7 @@ Zentrale Nachweise: #116–#125, #328 sowie #349–#351; ergänzend die Completi
 
 ## 4. Architecture Advisor und Solution Quality Control
 
-Für vorhandene Lösungsoptionen kann KI-Radar die minimal hinreichende technische Autonomie transparent einordnen:
+Für vorhandene Lösungsoptionen kann KI-Ideenwerkstatt die minimal hinreichende technische Autonomie transparent einordnen:
 
 - deterministische Architekturklassen `No LLM required`, `Controlled LLM`, `LLM Workflow`, `Bounded Agent` und `Assessment open`;
 - erklärbare Reason Codes und sichtbares „Warum / Warum kein Agent?“;
@@ -230,7 +230,7 @@ Die Umsetzung benötigt eine neue explizite Produktpriorisierung.
 
 ## Wirkungsreviews und Ergebnisentscheidungen
 
-Auf Basis belastbarer wiederkehrender Messungen könnte KI-Radar später:
+Auf Basis belastbarer wiederkehrender Messungen könnte KI-Ideenwerkstatt später:
 
 - quantitative und qualitative Ergebnisse zu einem Review bündeln;
 - Nebenwirkungen, Nutzerfeedback und offene Governance-Auflagen einbeziehen;

@@ -157,7 +157,7 @@ Er erzeugt ein JSON-Manifest, Server- und Verifikationslogs sowie vier vollstän
 
 - AP 7: PR #172, vollständige unveränderte Repository-CI grün.
 - AP 8: PR #173, vollständige unveränderte Repository-CI grün.
-- AP 9: PR #174, CI-Lauf `31086843900` (`KI-Radar CI`, Run 1033) grün.
+- AP 9: PR #174, CI-Lauf `31086843900` (`KI-Ideenwerkstatt CI`, Run 1033) grün.
 - AP 10: vollständige Repository-CI und eigener Block-5-Abschlussworkflow müssen vor Merge grün sein.
 
 Die Haupt-CI bleibt unverändert und prüft weiterhin repository-weit:

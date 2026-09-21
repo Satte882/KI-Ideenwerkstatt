@@ -6,7 +6,7 @@
 
 ## Zweck
 
-Version 1 beschreibt ausschließlich den vorhandenen KI-Radar-Entwurfspfad:
+Version 1 beschreibt ausschließlich den vorhandenen KI-Ideenwerkstatt-Entwurfspfad:
 
 - Value Stream,
 - Value-Stream-Phasen,

@@ -5,7 +5,7 @@ Akzeptiert
 
 ## Kontext
 
-KI-Radar unterstützt die Auswahl eines relevanten Value Streams, den Prozess-Deep-Dive, die Dokumentation von Bottlenecks und Baseline-Kennzahlen sowie den Vergleich organisatorischer, klassischer und KI-gestützter Lösungsoptionen.
+KI-Ideenwerkstatt unterstützt die Auswahl eines relevanten Value Streams, den Prozess-Deep-Dive, die Dokumentation von Bottlenecks und Baseline-Kennzahlen sowie den Vergleich organisatorischer, klassischer und KI-gestützter Lösungsoptionen.
 
 Es wurde geprüft, Process Mining als zusätzliche Produktfunktion zu ergänzen. Ein minimaler Ansatz hätte im Wesentlichen nur dokumentiert, ob Process Mining für einen Prozess geeignet sein könnte. Ein weitergehender Ansatz mit Event-Log-Import, Konnektoren, Process Discovery, Variantenanalyse oder Conformance Checking würde dagegen einen eigenständigen großen Produktbereich eröffnen.
 
@@ -13,7 +13,7 @@ Die bestehende Prozessanalyse kann Ergebnisse externer datenbasierter Analysen b
 
 ## Entscheidung
 
-Process Mining wird nicht als eigene Funktion in KI-Radar umgesetzt.
+Process Mining wird nicht als eigene Funktion in KI-Ideenwerkstatt umgesetzt.
 
 Insbesondere werden nicht eingeführt:
 
@@ -41,7 +41,7 @@ Ergebnisse aus Celonis, SAP Signavio, UiPath, Apromore, PM4Py, SQL, BI oder verg
 
 - Es werden keine GitHub-Issues oder Roadmap-Blöcke für Process-Mining-Funktionen angelegt.
 - Externe Process-Mining-Aktivitäten verbleiben in spezialisierten Werkzeugen und Projekten.
-- KI-Radar speichert nur die daraus abgeleiteten fachlichen Prozessinformationen und Evidenzverweise innerhalb der vorhandenen Strukturen.
+- KI-Ideenwerkstatt speichert nur die daraus abgeleiteten fachlichen Prozessinformationen und Evidenzverweise innerhalb der vorhandenen Strukturen.
 - Der bestehende Golden Path und die Accelerator-Roadmap bleiben unverändert.
 
 ## Neubewertung
