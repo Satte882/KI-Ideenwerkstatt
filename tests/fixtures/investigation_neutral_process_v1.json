@@ -1,0 +1,17 @@
+{
+  "version": "vs1-neutral-process-v1",
+  "name": "Freigabeprozess untersuchen",
+  "scope_start": "Vorgang ist freigabebereit",
+  "scope_end": "Freigabeentscheidung ist dokumentiert",
+  "trigger": "Vorgang benötigt Freigabe",
+  "outcome": "Nachvollziehbare Freigabeentscheidung",
+  "current_flow": "Vorgang einreichen, prüfen, freigeben oder zurückgeben",
+  "roles": "Antragsteller und Freigeber",
+  "systems": "Workflow-System",
+  "diagnostic_observations": "Durchlaufzeiten schwanken",
+  "cause_hypotheses": "",
+  "confirmed_causes": "",
+  "baseline_metrics": "Noch nicht belastbar bestimmt",
+  "owner_role": "Business Owner",
+  "status": "draft"
+}

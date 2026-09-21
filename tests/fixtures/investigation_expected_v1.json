@@ -1,0 +1,14 @@
+{
+  "version": "vs1-source-packs-v1",
+  "A": {
+    "supported_signal": "approver availability is associated with longer approval time",
+    "counterevidence": "missing information is not sufficient as sole explanation"
+  },
+  "B": {
+    "critical_gap": "total_eligible is missing; escalation rate cannot be established"
+  },
+  "C": {
+    "supported_signal": "queue retries are associated with longer approval time",
+    "contrast_to_A": "the supported cause differs from case A"
+  }
+}

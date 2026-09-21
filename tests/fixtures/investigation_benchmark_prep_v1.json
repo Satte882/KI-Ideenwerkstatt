@@ -1,0 +1,8 @@
+{
+  "version": "vs1-benchmark-prep-v1",
+  "baseline_commit": "3dc648111087956fe8f6a3c2da6a17876b0685dd",
+  "human_baseline_seconds": null,
+  "source_pack_preparation_seconds": null,
+  "prepared_context_seconds": null,
+  "note": "Nicht gemessene Zeiten bleiben null und dürfen nicht als Messwerte interpretiert werden."
+}
