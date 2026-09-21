@@ -1,11 +1,51 @@
 from django.urls import path
 
-from . import adoption_views, methodology_views, solution_generation_views, structured_views, views
+from . import (\n    adoption_views,\n    investigation_views,\n    methodology_views,\n    solution_generation_views,\n    structured_views,\n    views,\n)
 from .models import CaptureSession
 
 app_name = "accelerator"
 
 urlpatterns = [
+    path(
+        "processes/<uuid:process_pk>/investigation/start/",
+        investigation_views.investigation_start,
+        name="investigation_start",
+    ),
+    path(
+        "investigations/<uuid:run_id>/",
+        investigation_views.investigation_detail,
+        name="investigation_detail",
+    ),
+    path(
+        "investigations/<uuid:run_id>/abort/",
+        investigation_views.investigation_abort,
+        name="investigation_abort",
+    ),
+    path(
+        "investigations/<uuid:run_id>/continue/",
+        investigation_views.investigation_continue,
+        name="investigation_continue",
+    ),
+    path(
+        "investigations/<uuid:run_id>/materialize/",
+        investigation_views.investigation_materialize,
+        name="investigation_materialize",
+    ),
+    path(
+        "investigations/<uuid:run_id>/export.md",
+        investigation_views.investigation_export,
+        name="investigation_export",
+    ),
+    path(
+        "investigations/<uuid:run_id>/sources/<uuid:source_id>/",
+        investigation_views.investigation_source,
+        name="investigation_source",
+    ),
+    path(
+        "investigations/<uuid:run_id>/tool-results/<uuid:result_id>/",
+        investigation_views.investigation_tool_result,
+        name="investigation_tool_result",
+    ),
     path("my-captures/", views.capture_session_list, name="capture_list"),
     path(
         "value-stream/start/",
