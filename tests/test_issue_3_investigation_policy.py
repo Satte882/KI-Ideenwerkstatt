@@ -131,7 +131,7 @@ def replace_check(checks, claim_id, **changes):
 
 def test_01_critical_gap_with_unused_allowed_action_continues():
     checks = replace_check(base_checks(), "problem", status="open", evidence_refs=())
-    result = evaluate_policy(ready_state(checks=checks, verifier=None, allowed_action_available=True))
+    result = evaluate_policy(\n        ready_state(checks=checks, verifier=None, allowed_action_available=True)\n    )
     assert result.outcome == PolicyOutcome.CONTINUE
     assert "critical_unresolved:problem" in result.blockers
 
@@ -198,7 +198,7 @@ def test_05_external_critical_unknown_requires_human_optional_unknown_can_still_
         optional_unknown_justified=True,
         optional_unknown_verified=True,
     )
-    checks = base_checks() + (optional,)
+    checks = (*base_checks(), optional)
     result = evaluate_policy(ready_state(checks=checks))
     assert result.outcome == PolicyOutcome.READY_FOR_DECISION
 
