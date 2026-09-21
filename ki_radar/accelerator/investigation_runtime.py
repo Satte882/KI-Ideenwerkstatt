@@ -285,9 +285,7 @@ def base_execution_snapshot(
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
         "execution_mode": execution_mode,
-        "fixed_route_version": (
-            FIXED_ROUTE_VERSION if execution_mode == "fixed" else None
-        ),
+        "fixed_route_version": (FIXED_ROUTE_VERSION if execution_mode == "fixed" else None),
         "evidence_metadata": dict(evidence_metadata or {}),
         "decision_brief_required": bool(decision_brief_required),
         "evidence_campaign": (
@@ -516,14 +514,14 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     "Das Gesamtnachweisbudget gehört nicht zu diesem Fall.",
                     code="invalid_evidence_budget",
                 )
-        evidence_provider_mode = str(
-            evidence_metadata.get("provider_mode") or ""
-        ).strip().casefold()
-        evidence_phase = str(
-            evidence_metadata.get("phase")
-            or evidence_metadata.get("evidence_phase")
-            or ""
-        ).strip().casefold()
+        evidence_provider_mode = (
+            str(evidence_metadata.get("provider_mode") or "").strip().casefold()
+        )
+        evidence_phase = (
+            str(evidence_metadata.get("phase") or evidence_metadata.get("evidence_phase") or "")
+            .strip()
+            .casefold()
+        )
         real_evidence_run = evidence_provider_mode == "real" and bool(evidence_phase)
         if (execution_mode == "fixed" or real_evidence_run) and evidence_campaign is None:
             raise InvestigationRunError(
@@ -746,15 +744,11 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     if not isinstance(problem, Mapping) or not str(problem.get("statement") or "").strip():
         blockers.append("decision_brief_problem_missing")
     else:
-        references = [
-            item for item in problem.get("references", []) if isinstance(item, Mapping)
-        ]
+        references = [item for item in problem.get("references", []) if isinstance(item, Mapping)]
         if not references or not all(reference_valid(run, item) for item in references):
             blockers.append("decision_brief_problem_reference_invalid")
 
-    hypotheses = [
-        item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)
-    ]
+    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
     if len(hypotheses) < 2:
         blockers.append("decision_brief_competing_hypotheses_missing")
     for index, hypothesis in enumerate(hypotheses):
@@ -767,9 +761,7 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
             item for item in hypothesis.get("references", []) if isinstance(item, Mapping)
         ]
         counter_refs = [
-            item
-            for item in hypothesis.get("counterevidence_refs", [])
-            if isinstance(item, Mapping)
+            item for item in hypothesis.get("counterevidence_refs", []) if isinstance(item, Mapping)
         ]
         required_refs = evidence_refs + counter_refs
         if status in {"supported", "refuted", "conflicting"} and (
@@ -777,9 +769,7 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         ):
             blockers.append(f"decision_brief_hypothesis_reference_invalid:{index}")
 
-    calculations = [
-        item for item in payload.get("calculations", []) if isinstance(item, Mapping)
-    ]
+    calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
     if not calculations:
         blockers.append("decision_brief_calculation_missing")
     for index, calculation in enumerate(calculations):
@@ -817,9 +807,7 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     if not isinstance(recommendation, Mapping):
         blockers.append("decision_brief_recommendation_missing")
     else:
-        refs = [
-            item for item in recommendation.get("references", []) if isinstance(item, Mapping)
-        ]
+        refs = [item for item in recommendation.get("references", []) if isinstance(item, Mapping)]
         if (
             not str(recommendation.get("summary") or "").strip()
             or not str(recommendation.get("rationale") or "").strip()
