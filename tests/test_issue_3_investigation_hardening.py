@@ -37,7 +37,6 @@ from ki_radar.accelerator.investigation_runtime import (
     start_investigation,
 )
 from ki_radar.accelerator.investigation_tools import (
-    ReplayedToolResult,
     SnapshotRequest,
     create_source_snapshot,
     list_sources,
