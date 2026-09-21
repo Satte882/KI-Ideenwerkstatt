@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:ki-usecase-radar:architecture-real-demo-fixture:v1",
-  "title": "KI-UseCase-Radar Architecture Real-DEMO Fixture v1",
+  "title": "KI-Ideenwerkstatt Architecture Real-DEMO Fixture v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
