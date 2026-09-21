@@ -56,9 +56,7 @@ class Command(BaseCommand):
         variant = options["variant"]
         mode = options["mode"]
         phase = options["phase"]
-        idempotency_key = (
-            f"i4-{campaign.pk.hex[:12]}-{variant.lower()}-{mode[0]}-{phase[0]}-{attempt}"
-        )
+        idempotency_key = f"i4-{campaign.pk.hex[:12]}-{variant.lower()}-{mode[0]}-{phase[0]}-{attempt}"
 
         try:
             handle = start_investigation(
@@ -96,9 +94,7 @@ class Command(BaseCommand):
             )
             return
 
-        runner = (
-            run_fixed_route_until_boundary if mode == "fixed" else run_until_boundary
-        )
+        runner = run_fixed_route_until_boundary if mode == "fixed" else run_until_boundary
         try:
             result = runner(
                 actor=campaign.authorized_by,
