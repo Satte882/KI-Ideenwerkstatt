@@ -112,7 +112,10 @@ def _target_process_fields(payload: Mapping[str, Any]) -> dict[str, str]:
         item for item in payload.get("calculations", []) if isinstance(item, Mapping)
     ]
     hypothesis_lines = [
-        "[" + str(item.get("status") or "open") + "] " + str(item.get("statement") or "").strip()
+        (
+            "[" + str(item.get("status") or "open") + "] "
+            + str(item.get("statement") or "").strip()
+        )
         for item in hypotheses
         if str(item.get("statement") or "").strip()
     ]
@@ -397,8 +400,10 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
         if not isinstance(hypothesis, Mapping):
             continue
         lines.append(
-            f"- **{hypothesis.get('status') or 'open'!s}** — "
-            f"{hypothesis.get('statement') or ''!s}"
+            "- **"
+            + str(hypothesis.get("status") or "open")
+            + "** — "
+            + str(hypothesis.get("statement") or "")
         )
         for reference in hypothesis.get("references", []):
             if isinstance(reference, Mapping):
@@ -411,9 +416,9 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
     for calculation in payload.get("calculations", []):
         if not isinstance(calculation, Mapping):
             continue
-        lines.append(f"- {calculation.get('summary') or ''!s}")
+        lines.append("- " + str(calculation.get("summary") or ""))
         lines.append(f"  - Population: {_list_text(calculation.get('population'))}")
-        lines.append(f"  - Grenzen: {calculation.get('limits') or ''!s}")
+        lines.append("  - Grenzen: " + str(calculation.get("limits") or ""))
         reference = calculation.get("reference")
         if isinstance(reference, Mapping):
             lines.append(f"  - Analyse: {_reference_label(reference)}")
@@ -430,12 +435,12 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
         marker = f" ({', '.join(markers)})" if markers else ""
         lines.extend(
             [
-                f"### {option.get('name') or 'Option'!s}{marker}",
+                "### " + str(option.get("name") or "Option") + marker,
                 "",
                 str(option.get("description") or ""),
                 "",
-                f"Erwarteter Beitrag: {option.get('expected_value') or ''!s}",
-                f"Risiken: {option.get('risks') or ''!s}",
+                "Erwarteter Beitrag: " + str(option.get("expected_value") or ""),
+                "Risiken: " + str(option.get("risks") or ""),
                 "",
             ]
         )
@@ -466,7 +471,7 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
             "",
             str(validation.get("step") or ""),
             "",
-            f"Messansatz: {validation.get('measurement') or ''!s}",
+            "Messansatz: " + str(validation.get("measurement") or ""),
             "",
             "## Untersuchungsspur",
             "",
