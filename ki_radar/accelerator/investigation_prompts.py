@@ -1,20 +1,31 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v1"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v1"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v1"
-VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v1"
+PLANNER_PROMPT_VERSION = "vs1-planner-v2"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v2"
+VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v2"
 
 PLANNER_INSTRUCTION = """Du planst genau den nächsten prüfbaren Untersuchungsschritt.
 Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quellenraum.
 Begründe knapp Ziel-Prüfpunkt und unterscheidenden erwarteten Befund; liefere keine
 verborgene Gedankenkette. Erfinde keine Fakten, erweitere weder Scope noch Budget und
-triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen Rückfrage."""
+triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen Rückfrage.
+
+Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
+Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
+references, mindestens zwei competing hypotheses mit Evidenz/Gegenbelegen, calculations mit
+Tool-Resultat/Population/Grenzen, mindestens zwei options einschließlich Non-AI und Status quo,
+recommendation mit Evidenz, risks_unknowns sowie validation_step. Vorschläge sind keine
+bestätigten Tatsachen. Eine fehlende entscheidungskritische Größe bleibt unbekannt und führt
+zu einer präzisen clarification statt zu einer erfundenen Zahl oder READY."""
 
 VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe Entscheidungsfrage,
 fünf Pflichtbereiche, Claims, reale Quellen-/Analysefundstellen, Gegenbelege, Empfehlung
-und Brief. Liefere strukturierte Findings statt einer bloßen Freigabe. Erfinde keine
-Evidenz und triff keine fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
+und denselben versionierten Decision-Brief-Stand. Prüfe insbesondere, ob Aussagen als
+bestätigte Daten, berichtete Meinung, Hypothese oder unbekannt korrekt getrennt sind und ob
+Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen tragen. Liefere
+strukturierte Findings statt einer bloßen Freigabe. Erfinde keine Evidenz und triff keine
+fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
 def planner_response_format() -> dict:

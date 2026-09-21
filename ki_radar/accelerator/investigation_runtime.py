@@ -17,11 +17,12 @@ from django.db import IntegrityError, connection, transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from ki_radar.architecture.models import ProcessAnalysis
+from ki_radar.architecture.models import ProcessAnalysis, SolutionOption
 from ki_radar.architecture.permissions import can_edit_value_stream
 
 from .investigation_models import (
     InvestigationBriefRevision,
+    InvestigationEvidenceCampaign,
     InvestigationInputRevision,
     InvestigationRun,
     InvestigationSource,
@@ -62,6 +63,7 @@ from .investigation_tools import (
 
 LOOP_VERSION = "vs1-agent-loop-v1"
 BUDGET_VERSION = "vs1-budget-v1"
+FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 
 DEFAULT_BUDGET = {
@@ -104,6 +106,10 @@ class InvestigationRunError(RuntimeError):
 class StartInvestigationRequest:
     snapshot_id: uuid.UUID | str
     idempotency_key: str
+    evidence_campaign_id: uuid.UUID | str | None = None
+    execution_mode: str = "adaptive"
+    evidence_metadata: Mapping[str, Any] | None = None
+    decision_brief_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -227,9 +233,50 @@ def contract_payload(
     }
 
 
+def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, object]:
+    options = [
+        {
+            "id": str(option.pk),
+            "updated_at": option.updated_at.isoformat(),
+            "name": option.name,
+            "option_type": option.option_type,
+            "recommendation": option.recommendation,
+            "evaluation_status": option.evaluation_status,
+            "evidence_basis": option.evidence_basis,
+            "description": option.description,
+            "expected_value": option.expected_value,
+            "bottleneck_coverage": option.bottleneck_coverage,
+            "data_requirements": option.data_requirements,
+            "application_impact": option.application_impact,
+            "integration_impact": option.integration_impact,
+            "risks": option.risks,
+            "architecture_fit": option.architecture_fit,
+        }
+        for option in process.solution_options.order_by("id")
+    ]
+    payload = {
+        "process": {
+            "id": str(process.pk),
+            "version": process.version,
+            "updated_at": process.updated_at.isoformat(),
+            "diagnostic_observations": process.diagnostic_observations,
+            "cause_hypotheses": process.cause_hypotheses,
+            "baseline_metrics": process.baseline_metrics,
+        },
+        "solution_options": options,
+    }
+    return {**payload, "content_hash": content_hash(payload)}
+
+
 def base_execution_snapshot(
     snapshot: InvestigationSourceSnapshot,
     budget: Mapping[str, int],
+    *,
+    process: ProcessAnalysis,
+    execution_mode: str = "adaptive",
+    evidence_campaign: InvestigationEvidenceCampaign | None = None,
+    evidence_metadata: Mapping[str, Any] | None = None,
+    decision_brief_required: bool = False,
 ) -> dict[str, object]:
     return {
         "runtime": runtime_version_snapshot(),
@@ -237,6 +284,23 @@ def base_execution_snapshot(
         "policy_version": POLICY_VERSION,
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
+        "execution_mode": execution_mode,
+        "fixed_route_version": (FIXED_ROUTE_VERSION if execution_mode == "fixed" else None),
+        "evidence_metadata": dict(evidence_metadata or {}),
+        "decision_brief_required": bool(decision_brief_required),
+        "evidence_campaign": (
+            {
+                "id": str(evidence_campaign.pk),
+                "key": evidence_campaign.campaign_key,
+                "revision": evidence_campaign.revision,
+                "limits": dict(evidence_campaign.limits),
+                "pricing_version": evidence_campaign.pricing_version,
+                "currency": evidence_campaign.currency,
+            }
+            if evidence_campaign is not None
+            else None
+        ),
+        "domain_materialization_base": domain_materialization_snapshot(process),
         "source_snapshot_id": str(snapshot.pk),
         "manifest_hash": snapshot.manifest_hash,
         "model_transport": {
@@ -427,12 +491,62 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 existing_run_id=active.pk,
             )
 
-        execution_snapshot = base_execution_snapshot(snapshot, budget)
+        execution_mode = str(request.execution_mode or "adaptive").strip().casefold()
+        if execution_mode not in {"adaptive", "fixed"}:
+            raise InvestigationRunError(
+                "Unbekannte Vergleichsstrecke.",
+                code="invalid_execution_mode",
+            )
+        evidence_metadata = dict(request.evidence_metadata or {})
+        evidence_campaign = None
+        if request.evidence_campaign_id is not None:
+            try:
+                evidence_campaign = InvestigationEvidenceCampaign.objects.select_for_update().get(
+                    pk=request.evidence_campaign_id
+                )
+            except (InvestigationEvidenceCampaign.DoesNotExist, ValueError) as exc:
+                raise InvestigationRunError(
+                    "Das konfigurierte Gesamtnachweisbudget ist nicht verfügbar.",
+                    code="evidence_budget_required",
+                ) from exc
+            if evidence_campaign.process_analysis_id != process.pk:
+                raise InvestigationRunError(
+                    "Das Gesamtnachweisbudget gehört nicht zu diesem Fall.",
+                    code="invalid_evidence_budget",
+                )
+        evidence_provider_mode = (
+            str(evidence_metadata.get("provider_mode") or "").strip().casefold()
+        )
+        evidence_phase = (
+            str(evidence_metadata.get("phase") or evidence_metadata.get("evidence_phase") or "")
+            .strip()
+            .casefold()
+        )
+        real_evidence_run = evidence_provider_mode == "real" and bool(evidence_phase)
+        if (execution_mode == "fixed" or real_evidence_run) and evidence_campaign is None:
+            raise InvestigationRunError(
+                "Die reale Nachweisphase darf ohne explizites persistentes "
+                "Gesamtbudget nicht starten.",
+                code="evidence_budget_required",
+            )
+
+        execution_snapshot = base_execution_snapshot(
+            snapshot,
+            budget,
+            process=process,
+            execution_mode=execution_mode,
+            evidence_campaign=evidence_campaign,
+            evidence_metadata=evidence_metadata,
+            decision_brief_required=bool(request.decision_brief_required),
+        )
         try:
             with transaction.atomic():
                 run = InvestigationRun.objects.create(
                     process_analysis=process,
                     source_snapshot=snapshot,
+                    evidence_campaign=evidence_campaign,
+                    execution_mode=execution_mode,
+                    evidence_metadata=evidence_metadata,
                     requested_by=actor,
                     idempotency_key=key,
                     process_version=process.version,
@@ -606,6 +720,114 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
             return False
         return str(reference.get("revision_hash") or "") == stored.source_hash
     return False
+
+
+def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
+    if not bool(run.execution_snapshot.get("decision_brief_required")):
+        return ()
+
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    blockers: list[str] = []
+
+    question_scope = payload.get("question_scope")
+    if not isinstance(question_scope, Mapping):
+        blockers.append("decision_brief_question_scope_missing")
+    else:
+        question = str(question_scope.get("question") or "").strip()
+        scope = str(question_scope.get("scope") or "").strip()
+        if not question or question != run.decision_question.strip():
+            blockers.append("decision_brief_question_mismatch")
+        if not scope:
+            blockers.append("decision_brief_scope_missing")
+
+    problem = payload.get("problem")
+    if not isinstance(problem, Mapping) or not str(problem.get("statement") or "").strip():
+        blockers.append("decision_brief_problem_missing")
+    else:
+        references = [item for item in problem.get("references", []) if isinstance(item, Mapping)]
+        if not references or not all(reference_valid(run, item) for item in references):
+            blockers.append("decision_brief_problem_reference_invalid")
+
+    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
+    if len(hypotheses) < 2:
+        blockers.append("decision_brief_competing_hypotheses_missing")
+    for index, hypothesis in enumerate(hypotheses):
+        statement = str(hypothesis.get("statement") or "").strip()
+        status = str(hypothesis.get("status") or "").strip()
+        if not statement or status not in {"open", "supported", "refuted", "conflicting"}:
+            blockers.append(f"decision_brief_hypothesis_invalid:{index}")
+            continue
+        evidence_refs = [
+            item for item in hypothesis.get("references", []) if isinstance(item, Mapping)
+        ]
+        counter_refs = [
+            item for item in hypothesis.get("counterevidence_refs", []) if isinstance(item, Mapping)
+        ]
+        required_refs = evidence_refs + counter_refs
+        if status in {"supported", "refuted", "conflicting"} and (
+            not required_refs or not all(reference_valid(run, item) for item in required_refs)
+        ):
+            blockers.append(f"decision_brief_hypothesis_reference_invalid:{index}")
+
+    calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
+    if not calculations:
+        blockers.append("decision_brief_calculation_missing")
+    for index, calculation in enumerate(calculations):
+        reference = calculation.get("reference")
+        if (
+            not str(calculation.get("summary") or "").strip()
+            or not isinstance(reference, Mapping)
+            or not reference.get("tool_result_id")
+            or not reference_valid(run, reference)
+        ):
+            blockers.append(f"decision_brief_calculation_reference_invalid:{index}")
+        if not isinstance(calculation.get("population"), Mapping):
+            blockers.append(f"decision_brief_calculation_population_missing:{index}")
+        if not str(calculation.get("limits") or "").strip():
+            blockers.append(f"decision_brief_calculation_limits_missing:{index}")
+
+    options = [item for item in payload.get("options", []) if isinstance(item, Mapping)]
+    if len(options) < 2:
+        blockers.append("decision_brief_options_missing")
+    if options and not any(bool(item.get("non_ai")) for item in options):
+        blockers.append("decision_brief_non_ai_option_missing")
+    if options and not any(bool(item.get("status_quo")) for item in options):
+        blockers.append("decision_brief_status_quo_missing")
+    allowed_option_types = {choice for choice, _label in SolutionOption.OptionType.choices}
+    for index, option in enumerate(options):
+        if (
+            not str(option.get("name") or "").strip()
+            or not str(option.get("description") or "").strip()
+            or not str(option.get("expected_value") or "").strip()
+            or str(option.get("option_type") or "") not in allowed_option_types
+        ):
+            blockers.append(f"decision_brief_option_invalid:{index}")
+
+    recommendation = payload.get("recommendation")
+    if not isinstance(recommendation, Mapping):
+        blockers.append("decision_brief_recommendation_missing")
+    else:
+        refs = [item for item in recommendation.get("references", []) if isinstance(item, Mapping)]
+        if (
+            not str(recommendation.get("summary") or "").strip()
+            or not str(recommendation.get("rationale") or "").strip()
+            or not refs
+            or not all(reference_valid(run, item) for item in refs)
+        ):
+            blockers.append("decision_brief_recommendation_invalid")
+
+    if not isinstance(payload.get("risks_unknowns"), list):
+        blockers.append("decision_brief_risks_unknowns_missing")
+
+    validation = payload.get("validation_step")
+    if (
+        not isinstance(validation, Mapping)
+        or not str(validation.get("step") or "").strip()
+        or not str(validation.get("measurement") or "").strip()
+    ):
+        blockers.append("decision_brief_validation_step_missing")
+
+    return tuple(sorted(set(blockers)))
 
 
 def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -1140,6 +1362,7 @@ def policy_state_for_run(
         manifest_hash=run.manifest_hash,
         register_hash=run.register_hash,
         brief_hash=run.brief_hash,
+        brief_blockers=decision_brief_blockers(run),
         verifier=latest_verifier_state(run),
         allowed_action_available=allowed_action_available,
         external_critical_gap=external_critical_gap,

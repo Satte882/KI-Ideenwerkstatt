@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Untersuchung autorisieren – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-investigation-authorize{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">{{ process_analysis.name }}</div>
+    <h1 class="page-title">Quellenraum und Run-Budget autorisieren</h1>
+    <p class="page-subtitle">Ein registrierter Fallordner und feste technische Limits werden als unveränderlicher Quellen-Snapshot eingefroren. Einzeldateien oder Werkzeuge werden nicht manuell ausgewählt.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+</div>
+
+<form method="post" class="app-card">
+  {% csrf_token %}
+  <div class="card-body">
+    <div class="mb-4">
+      <label class="form-label" for="decision-question">Richtungsfrage</label>
+      <textarea class="form-control" id="decision-question" name="decision_question" rows="3" required>{{ decision_question }}</textarea>
+      <div class="form-text">Die Untersuchung darf diese Frage nicht still erweitern oder verengen.</div>
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label" for="source-folder">Registrierter Quellenraum</label>
+      <select class="form-select" id="source-folder" name="folder_id" required>
+        {% if folders|length > 1 %}<option value="">Bitte auswählen</option>{% endif %}
+        {% for folder in folders %}
+          <option value="{{ folder.pk }}" {% if selected_folder_id == folder.pk|stringformat:"s" %}selected{% endif %}>{{ folder.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="form-text">Der Agent erhält ausschließlich den später eingefrorenen Inhalt dieses Fallordners.</div>
+    </div>
+
+    <section aria-labelledby="run-budget-title">
+      <div class="section-title" id="run-budget-title">Feste Run-Limits</div>
+      <div class="small text-muted mb-3">Diese Grenzen gelten für den einzelnen Investigation-Run und werden im Execution-Snapshot versioniert.</div>
+      <dl class="row mb-0">
+        {% for key, value in budget.items %}
+          <dt class="col-sm-7">{{ key }}</dt>
+          <dd class="col-sm-5">{{ value }}</dd>
+        {% endfor %}
+      </dl>
+    </section>
+  </div>
+  <div class="card-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
+    <div class="small text-muted">Eine spätere neue Quellenrevision benötigt erneut eine ausdrückliche Autorisierung.</div>
+    <button class="btn btn-primary" type="submit">Quellenstand und Budget autorisieren</button>
+  </div>
+</form>
+{% endblock %}

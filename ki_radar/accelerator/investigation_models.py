@@ -264,6 +264,15 @@ class InvestigationRun(TimeStampedModel):
         on_delete=models.PROTECT,
         related_name="investigation_runs",
     )
+    evidence_campaign = models.ForeignKey(
+        "accelerator.InvestigationEvidenceCampaign",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="investigation_runs",
+    )
+    execution_mode = models.CharField(max_length=20, default="adaptive")
+    evidence_metadata = models.JSONField(default=dict, blank=True)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -345,6 +354,9 @@ class InvestigationRun(TimeStampedModel):
             immutable_fields = (
                 "process_analysis_id",
                 "source_snapshot_id",
+                "evidence_campaign_id",
+                "execution_mode",
+                "evidence_metadata",
                 "idempotency_key",
                 "process_version",
                 "decision_question",
@@ -584,3 +596,157 @@ class InvestigationBriefRevision(TimeStampedModel):
         if not self._state.adding:
             raise ValidationError("Materialisierte Briefrevisionen sind unveränderlich.")
         super().save(*args, **kwargs)
+
+
+class InvestigationEvidenceCampaign(TimeStampedModel):
+    """Technical VS1/3 evidence budget shared across all benchmark attempts."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    process_analysis = models.ForeignKey(
+        "architecture.ProcessAnalysis",
+        on_delete=models.PROTECT,
+        related_name="investigation_evidence_campaigns",
+    )
+    campaign_key = models.CharField(max_length=64, unique=True)
+    revision = models.PositiveIntegerField(default=1)
+    limits = models.JSONField(default=dict)
+    usage = models.JSONField(default=dict)
+    pricing = models.JSONField(default=dict, blank=True)
+    currency = models.CharField(max_length=8, blank=True)
+    pricing_version = models.CharField(max_length=80, blank=True)
+    authorized_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="authorized_investigation_evidence_campaigns",
+    )
+    authorized_at = models.DateTimeField(default=timezone.now)
+    continuation_reason = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.campaign_key}:v{self.revision}"
+
+
+class InvestigationEvidenceBudgetRevision(TimeStampedModel):
+    """Immutable authorization history for evidence-budget changes."""
+
+    objects = ImmutableEvidenceManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campaign = models.ForeignKey(
+        InvestigationEvidenceCampaign,
+        on_delete=models.PROTECT,
+        related_name="budget_revisions",
+    )
+    revision = models.PositiveIntegerField()
+    limits = models.JSONField(default=dict)
+    pricing = models.JSONField(default=dict, blank=True)
+    currency = models.CharField(max_length=8, blank=True)
+    pricing_version = models.CharField(max_length=80, blank=True)
+    usage_at_authorization = models.JSONField(default=dict)
+    reason = models.TextField()
+    authorized_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="investigation_evidence_budget_revisions",
+    )
+    authorized_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["campaign", "revision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["campaign", "revision"],
+                name="uniq_investigation_budget_revision",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Budgetrevisionen sind nach der Autorisierung unveränderlich.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Budgetrevisionen sind unveränderlich.")
+
+
+class InvestigationProviderReservation(TimeStampedModel):
+    """Atomic campaign reservation for one real provider attempt."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Reserviert"
+        SETTLED = "settled", "Abgerechnet"
+        UNCERTAIN = "uncertain", "Verbrauch unklar"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campaign = models.ForeignKey(
+        InvestigationEvidenceCampaign,
+        on_delete=models.PROTECT,
+        related_name="provider_reservations",
+    )
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.PROTECT,
+        related_name="provider_reservations",
+    )
+    model_call = models.OneToOneField(
+        InvestigationModelCall,
+        on_delete=models.PROTECT,
+        related_name="evidence_reservation",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    reserved_input_tokens = models.PositiveIntegerField()
+    reserved_output_tokens = models.PositiveIntegerField()
+    reserved_cost_microunits = models.PositiveBigIntegerField(null=True, blank=True)
+    actual_input_tokens = models.PositiveIntegerField(null=True, blank=True)
+    actual_output_tokens = models.PositiveIntegerField(null=True, blank=True)
+    actual_cost_microunits = models.PositiveBigIntegerField(null=True, blank=True)
+    uncertainty_reason = models.CharField(max_length=80, blank=True)
+    settled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["campaign", "created_at"]
+
+
+class InvestigationMaterialization(TimeStampedModel):
+    """Audit record for conflict-safe materialization into existing domain objects."""
+
+    class Outcome(models.TextChoices):
+        APPLIED = "applied", "Übernommen"
+        CONFLICT = "conflict", "Differenz erkannt"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        InvestigationRun,
+        on_delete=models.PROTECT,
+        related_name="materializations",
+    )
+    brief_revision = models.OneToOneField(
+        InvestigationBriefRevision,
+        on_delete=models.PROTECT,
+        related_name="materialization",
+    )
+    operation_key = models.CharField(max_length=64)
+    outcome = models.CharField(max_length=20, choices=Outcome.choices)
+    base_domain_hash = models.CharField(max_length=64)
+    resulting_domain_hash = models.CharField(max_length=64, blank=True)
+    applied_fields = models.JSONField(default=dict)
+    created_solution_option_ids = models.JSONField(default=list)
+    updated_solution_option_ids = models.JSONField(default=list)
+    conflicts = models.JSONField(default=list)
+    materialized_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="investigation_materializations",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "operation_key"],
+                name="uniq_investigation_materialization_operation",
+            )
+        ]

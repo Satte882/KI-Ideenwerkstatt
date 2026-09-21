@@ -15,6 +15,12 @@ from django.utils import timezone
 from ki_radar.core.llm_tasks import FIRST_WAVE_PROVIDER_POLICY
 from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
 
+from .investigation_evidence import (
+    cost_to_microunits,
+    mark_provider_attempt_uncertain,
+    reserve_provider_attempt,
+    settle_provider_attempt,
+)
 from .investigation_models import (
     InvestigationModelCall,
     InvestigationRun,
@@ -35,6 +41,7 @@ from .investigation_prompts import (
 from .investigation_runtime import (
     ALLOWED_TOOLS,
     BUDGET_VERSION,
+    FIXED_ROUTE_VERSION,
     LOOP_VERSION,
     InvestigationRunError,
     assert_active,
@@ -92,6 +99,12 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     ):
         raise InvestigationRunError(
             "Die fixierte Ausführungsversion ist nicht mehr verfügbar.",
+            code="execution_version_unavailable",
+        )
+
+    if run.execution_mode == "fixed" and frozen.get("fixed_route_version") != FIXED_ROUTE_VERSION:
+        raise InvestigationRunError(
+            "Die fixierte Kontrollstrecke ist nicht mehr verfügbar.",
             code="execution_version_unavailable",
         )
 
@@ -179,7 +192,9 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
                 "progress_kind": step.progress_kind,
                 "progress_payload": step.progress_payload,
             }
-            for step in run.steps.order_by("-sequence")[:5]
+            for step in run.steps.order_by("-sequence")[
+                : (12 if run.execution_mode == "fixed" else 5)
+            ]
         ],
         "input_revisions": [
             {
@@ -327,7 +342,19 @@ def _reserve_model_call(
         )
     _assert_frozen_execution_contract(run)
 
+    prompt_payload = {"instruction": instruction, "context": dict(context)}
+    prompt_token_reservation = _estimate_tokens(canonical_json(prompt_payload))
+
     usage = dict(run.usage)
+    remaining_input = run.budget_limits["max_input_tokens"] - int(usage.get("input_tokens", 0))
+    remaining_output = run.budget_limits["max_output_tokens"] - int(usage.get("output_tokens", 0))
+    if prompt_token_reservation > remaining_input or remaining_output <= 0:
+        raise InvestigationRunError(
+            "Das verbleibende Tokenbudget reicht für keinen weiteren Modellaufruf.",
+            code="budget_exhausted",
+        )
+    call_max_tokens = min(4096, remaining_output)
+
     if usage["model_calls"] >= run.budget_limits["max_model_calls"]:
         raise InvestigationRunError("Modellbudget ist erschöpft.", code="budget_exhausted")
 
@@ -346,8 +373,7 @@ def _reserve_model_call(
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
 
-    prompt_payload = {"instruction": instruction, "context": dict(context)}
-    return InvestigationModelCall.objects.create(
+    call = InvestigationModelCall.objects.create(
         run=run,
         role=role,
         executor_generation=run.executor_generation,
@@ -356,7 +382,7 @@ def _reserve_model_call(
         effective_parameters={
             "temperature": 0.1,
             "reasoning_effort": "medium",
-            "max_tokens": 4096,
+            "max_tokens": call_max_tokens,
             "provider_policy": dict(FIRST_WAVE_PROVIDER_POLICY),
         },
         prompt_version=prompt_version,
@@ -370,6 +396,14 @@ def _reserve_model_call(
             "brief_hash": run.brief_hash,
         },
     )
+    if run.evidence_campaign_id is not None:
+        reserve_provider_attempt(
+            run_id=run.pk,
+            model_call_id=call.pk,
+            max_input_tokens=prompt_token_reservation,
+            max_output_tokens=call_max_tokens,
+        )
+    return call
 
 
 def _mark_model_failure(call_id, code: str) -> None:
@@ -409,10 +443,11 @@ def _structured_provider_call(
         {"role": "user", "content": canonical_json(context)},
     ]
 
+    reservation = getattr(call, "evidence_reservation", None)
     try:
         result = request_openrouter(
             messages=messages,
-            max_tokens=4096,
+            max_tokens=int(call.effective_parameters["max_tokens"]),
             timeout_seconds=60,
             temperature=0.1,
             response_format=response_format,
@@ -423,9 +458,19 @@ def _structured_provider_call(
         if not isinstance(payload, dict):
             raise ValueError("structured response must be an object")
     except OpenRouterUnavailable as exc:
+        if reservation is not None:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason=exc.code,
+            )
         _mark_model_failure(call.pk, exc.code)
         raise InvestigationRunError(str(exc), code=exc.code) from exc
     except (json.JSONDecodeError, ValueError) as exc:
+        if reservation is not None:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason="invalid_response",
+            )
         _mark_model_failure(call.pk, "invalid_response")
         raise InvestigationRunError(
             "Das Modell lieferte kein gültiges strukturiertes Ergebnis.",
@@ -433,6 +478,23 @@ def _structured_provider_call(
         ) from exc
 
     prompt_tokens, completion_tokens, total_tokens = _usage_tokens(result, messages)
+    if reservation is not None:
+        raw_prompt = result.usage.get("prompt_tokens")
+        raw_completion = result.usage.get("completion_tokens")
+        actual_cost = cost_to_microunits(result.usage.get("cost"))
+        cost_required = "max_cost_microunits" in reservation.campaign.limits
+        if raw_prompt is None or raw_completion is None or (cost_required and actual_cost is None):
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason="provider_usage_metadata_incomplete",
+            )
+        else:
+            settle_provider_attempt(
+                reservation_id=reservation.pk,
+                actual_input_tokens=int(raw_prompt),
+                actual_output_tokens=int(raw_completion),
+                actual_cost_microunits=actual_cost,
+            )
 
     with transaction.atomic():
         run = InvestigationRun.objects.select_for_update().get(pk=run_id)

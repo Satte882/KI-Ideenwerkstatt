@@ -15,6 +15,14 @@ Endziel der Transformation. Ziel ist, die fachliche Arbeit zwischen Geschäftspr
 Evidenz, Diagnose, Lösungsraum, Entscheidung, Governance, Pilot und Delivery weitgehend
 autonom auszuführen, während verbindliche Entscheidungen beim Menschen bleiben.
 
+Der erste begrenzte agentische Vertical Slice (VS1) umfasst inzwischen einen autorisierten
+Quellenraum, reproduzierbare Untersuchungswerkzeuge, einen persistenten adaptiven
+Planner-/Verifier-Loop, eine testbare Stopppolicy sowie einen versionierten Decision Brief
+mit konfliktgeschützter Übernahme in bestehende Fachobjekte. Der externe Wirksamkeitsnachweis
+ist davon getrennt: reale A/B/C-Providerläufe, der vorab festgelegte Fixed-vs-Adaptive-
+Vergleich, unabhängiger menschlicher Fachreview und aktive menschliche Zeitmessung bleiben
+bis zur tatsächlichen Durchführung offen. Daraus wird derzeit keine 10x-Fertigmeldung abgeleitet.
+
 KI-Ideenwerkstatt verbindet Business Architecture, Prozessdiagnose, lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung in einem nachvollziehbaren Arbeitsmodell.
 
 Das System beantwortet nicht nur, **welche KI-Ideen existieren**, sondern vor allem:

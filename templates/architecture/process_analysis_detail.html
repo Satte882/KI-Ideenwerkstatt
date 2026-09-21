@@ -139,6 +139,74 @@
   </div>
 </section>
 
+<section class="cr-section" id="evidence-investigation" data-testid="evidence-investigation">
+  <header class="cr-section-heading">
+    <div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="mb-0">Evidenzgestützte Vertiefung</h2>
+        <span class="badge badge-soft">Optional</span>
+      </div>
+      <p>Quellen selbstständig prüfen, Gegenbelege suchen und einen nachvollziehbaren Decision Brief vorbereiten. Fachliche Entscheidungen bleiben außerhalb des Agentenlaufs.</p>
+    </div>
+  </header>
+  <div class="app-card mt-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          {% if latest_investigation_run %}
+            <div><strong>Letzter Untersuchungsstand:</strong> {{ latest_investigation_run.get_status_display }}</div>
+            <div class="small text-muted mt-1">Frage: {{ latest_investigation_run.decision_question }}</div>
+            <a class="btn btn-outline-secondary btn-sm mt-3" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Decision Brief / Untersuchung öffnen</a>
+          {% elif current_investigation_snapshot %}
+            <div><strong>Autorisierter Quellenstand liegt vor.</strong></div>
+            <div class="small text-muted mt-1">Der Agent wählt Such-, Lese- und Analysewerkzeuge selbst innerhalb dieses eingefrorenen Quellenraums.</div>
+          {% elif active_investigation_folders %}
+            <div><strong>Registrierter Quellenraum vorhanden, Autorisierung noch offen.</strong></div>
+            <div class="small text-muted mt-1">Richtungsfrage, Quellenraum und feste Run-Limits müssen einmal sichtbar autorisiert werden.</div>
+          {% else %}
+            <div><strong>Noch kein registrierter Quellenraum.</strong></div>
+            <div class="small text-muted mt-1">Ein Fallordner muss administrativ registriert sein; Einzeldateien werden hier nicht ausgewählt.</div>
+          {% endif %}
+        </div>
+        {% if can_edit %}
+          <div class="d-flex gap-2 flex-wrap">
+            {% if active_investigation_folders %}
+              <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_authorize' process_analysis.pk %}">
+                {% if current_investigation_snapshot %}Neue Quellenrevision autorisieren{% else %}Quellenraum und Budget autorisieren{% endif %}
+              </a>
+            {% endif %}
+            {% if current_investigation_snapshot %}
+              {% if not latest_investigation_run or latest_investigation_run.status == "ready" or latest_investigation_run.status == "aborted" or latest_investigation_run.status == "failed" %}
+                <form method="post" action="{% url 'accelerator:investigation_start' process_analysis.pk %}" class="m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="idempotency_key" value="{{ investigation_start_key }}">
+                  <button class="btn btn-primary" type="submit">Untersuchung starten</button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if current_investigation_snapshot %}
+        <details class="architecture-disclosure mt-3">
+          <summary>Autorisierte Frage, Quellenrevision und Run-Limits anzeigen</summary>
+          <div class="pt-3">
+            <dl class="row mb-0">
+              <dt class="col-sm-4 text-muted">Quellenraum</dt><dd class="col-sm-8">{{ current_investigation_snapshot.folder.name }}</dd>
+              <dt class="col-sm-4 text-muted">Revision</dt><dd class="col-sm-8">{{ current_investigation_snapshot.revision }}</dd>
+              <dt class="col-sm-4 text-muted">Richtungsfrage</dt><dd class="col-sm-8">{{ current_investigation_snapshot.decision_question }}</dd>
+              {% for key, value in investigation_effective_budget.items %}
+                <dt class="col-sm-4 text-muted">{{ key }}</dt><dd class="col-sm-8">{{ value }}</dd>
+              {% endfor %}
+            </dl>
+          </div>
+        </details>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
 <section class="cr-section" id="process-validation" data-testid="process-validation-summary">
   <header class="cr-section-heading">
     <div>
