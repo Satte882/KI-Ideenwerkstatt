@@ -211,7 +211,7 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
         return PolicyDecision(
             PolicyOutcome.HUMAN_CLARIFICATION,
             ReasonCode.TECHNICAL_FAILURE,
-            blockers + ("run_aborted",),
+            (*blockers, "run_aborted"),
         )
     if state.permission_or_scope_block:
         return PolicyDecision(
