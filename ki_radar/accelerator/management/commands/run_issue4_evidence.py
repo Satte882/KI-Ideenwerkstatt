@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ki_radar.accelerator.investigation_benchmark import run_fixed_route_until_boundary
+from ki_radar.accelerator.investigation_benchmark import (
+    resolve_benchmark_snapshot,
+    run_fixed_route_until_boundary,
+    validate_evidence_attempt,
+)
 from ki_radar.accelerator.investigation_loop import run_until_boundary
 from ki_radar.accelerator.investigation_models import (
     InvestigationEvidenceCampaign,
@@ -24,6 +28,14 @@ class Command(BaseCommand):
         parser.add_argument("--mode", required=True, choices=("adaptive", "fixed"))
         parser.add_argument("--phase", required=True, choices=("calibration", "scored"))
         parser.add_argument("--attempt", required=True, type=int)
+        parser.add_argument(
+            "--snapshot",
+            required=False,
+            help=(
+                "Explicit Source-Snapshot UUID. Required only for the first calibration "
+                "run of each A/B/C variant; later runs reuse the frozen binding."
+            ),
+        )
 
     def handle(self, *args, **options):
         attempt = int(options["attempt"])
@@ -38,24 +50,25 @@ class Command(BaseCommand):
         except (InvestigationEvidenceCampaign.DoesNotExist, ValueError) as exc:
             raise CommandError("Evidence campaign not found.") from exc
 
-        process = campaign.process_analysis
-        snapshot = (
-            process.investigation_source_snapshots.select_related("folder")
-            .filter(
-                process_version=process.version,
-                folder__is_active=True,
-            )
-            .order_by("-revision")
-            .first()
-        )
-        if snapshot is None:
-            raise CommandError(
-                "No active source snapshot exists for the current ProcessAnalysis version."
-            )
-
         variant = options["variant"]
         mode = options["mode"]
         phase = options["phase"]
+        try:
+            validate_evidence_attempt(
+                campaign=campaign,
+                variant=variant,
+                mode=mode,
+                phase=phase,
+                attempt=attempt,
+            )
+            snapshot = resolve_benchmark_snapshot(
+                campaign=campaign,
+                variant=variant,
+                phase=phase,
+                requested_snapshot_id=options.get("snapshot"),
+            )
+        except InvestigationRunError as exc:
+            raise CommandError(f"Evidence attempt contract invalid: {exc}") from exc
         idempotency_key = "-".join(
             (
                 "i4",
