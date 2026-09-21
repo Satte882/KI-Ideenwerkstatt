@@ -29,7 +29,6 @@ from ki_radar.accelerator.investigation_llm import (
     _estimate_tokens,
     _reserve_model_call,
 )
-from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
 from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
     InvestigationProviderReservation,
@@ -52,6 +51,7 @@ from ki_radar.accelerator.investigation_tools import (
     SnapshotRequest,
     create_source_snapshot,
 )
+from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
 from ki_radar.architecture.models import (
     ProcessAnalysis,
     SolutionOption,
