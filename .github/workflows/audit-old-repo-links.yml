@@ -1,0 +1,39 @@
+name: Audit old repository references
+
+on:
+  push:
+    paths:
+      - ".github/workflows/audit-old-repo-links.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Search tracked files for old repository references
+        run: |
+          set -euo pipefail
+          patterns=(
+            'Satte882/KI-UseCase-Radar'
+            'github.com/Satte882/KI-UseCase-Radar'
+            'raw.githubusercontent.com/Satte882/KI-UseCase-Radar'
+            'api.github.com/repos/Satte882/KI-UseCase-Radar'
+            'KI-UseCase-Radar'
+          )
+          found=0
+          for p in "${patterns[@]}"; do
+            echo "=== pattern: $p ==="
+            if git grep -n -I -F "$p" -- . ':(exclude).github/workflows/audit-old-repo-links.yml'; then
+              found=1
+            else
+              echo "no matches"
+            fi
+          done
+          if [ "$found" -ne 0 ]; then
+            echo "OLD_REPO_REFERENCES_FOUND=1"
+            exit 1
+          fi
+          echo "OLD_REPO_REFERENCES_FOUND=0"
