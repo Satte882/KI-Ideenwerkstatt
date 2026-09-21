@@ -384,9 +384,7 @@ def test_path_type_size_and_csv_shape_limits_are_rejected(
 
     row_root = tmp_path / "rows"
     row_root.mkdir()
-    row_payload = "id,value\n" + "\n".join(
-        f"{index},1" for index in range(MAX_CSV_ROWS + 1)
-    )
+    row_payload = "id,value\n" + "\n".join(f"{index},1" for index in range(MAX_CSV_ROWS + 1))
     (row_root / "rows.csv").write_text(row_payload, encoding="utf-8")
     row_folder = register_folder(
         process=process,
@@ -488,14 +486,10 @@ def test_fixture_contract_keeps_expected_answers_outside_source_rooms():
         (fixture_root / "investigation_expected_v1.json").read_text(encoding="utf-8")
     )
     neutral = json.loads(
-        (fixture_root / "investigation_neutral_process_v1.json").read_text(
-            encoding="utf-8"
-        )
+        (fixture_root / "investigation_neutral_process_v1.json").read_text(encoding="utf-8")
     )
     benchmark = json.loads(
-        (fixture_root / "investigation_benchmark_prep_v1.json").read_text(
-            encoding="utf-8"
-        )
+        (fixture_root / "investigation_benchmark_prep_v1.json").read_text(encoding="utf-8")
     )
 
     assert set(expected) == {"version", "A", "B", "C"}
