@@ -139,6 +139,44 @@
   </div>
 </section>
 
+<section class="cr-section" id="evidence-investigation" data-testid="evidence-investigation">
+  <header class="cr-section-heading">
+    <div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="mb-0">Evidenzgestützte Vertiefung</h2>
+        <span class="badge badge-soft">Optional</span>
+      </div>
+      <p>Quellen selbstständig prüfen, Gegenbelege suchen und einen nachvollziehbaren Decision Brief vorbereiten. Fachliche Entscheidungen bleiben außerhalb des Agentenlaufs.</p>
+    </div>
+  </header>
+  <div class="app-card mt-3">
+    <div class="card-body d-flex justify-content-between align-items-start gap-3 flex-wrap">
+      <div>
+        {% if latest_investigation_run %}
+          <div><strong>Letzter Untersuchungsstand:</strong> {{ latest_investigation_run.get_status_display }}</div>
+          <div class="small text-muted mt-1">Frage: {{ latest_investigation_run.decision_question }}</div>
+          <a class="btn btn-outline-secondary btn-sm mt-3" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Decision Brief / Untersuchung öffnen</a>
+        {% elif current_investigation_snapshot %}
+          <div><strong>Autorisierter Quellenstand liegt vor.</strong></div>
+          <div class="small text-muted mt-1">Der Agent wählt Such-, Lese- und Analysewerkzeuge selbst innerhalb dieses eingefrorenen Quellenraums.</div>
+        {% else %}
+          <div><strong>Noch kein aktueller autorisierter Quellen-Snapshot.</strong></div>
+          <div class="small text-muted mt-1">Die Untersuchung startet erst, wenn ein Quellenraum für genau diese ProcessAnalysis-Version freigegeben wurde.</div>
+        {% endif %}
+      </div>
+      {% if can_edit and current_investigation_snapshot %}
+        {% if not latest_investigation_run or latest_investigation_run.status == "ready" or latest_investigation_run.status == "aborted" or latest_investigation_run.status == "failed" %}
+          <form method="post" action="{% url 'accelerator:investigation_start' process_analysis.pk %}" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="idempotency_key" value="{{ investigation_start_key }}">
+            <button class="btn btn-primary" type="submit">Untersuchung starten</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
 <section class="cr-section" id="process-validation" data-testid="process-validation-summary">
   <header class="cr-section-heading">
     <div>
