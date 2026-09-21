@@ -1,0 +1,131 @@
+name: KI-Radar CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ki-radar-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17.5-bookworm
+        env:
+          POSTGRES_DB: ki_radar_test
+          POSTGRES_USER: ki_radar
+          POSTGRES_PASSWORD: ki_radar_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ki_radar -d ki_radar_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
+      POSTGRES_DB: ki_radar_test
+      POSTGRES_USER: ki_radar
+      POSTGRES_PASSWORD: ki_radar_test_password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      DATABASE_URL: postgresql://ki_radar:ki_radar_test_password@localhost:5432/ki_radar_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+          enable-cache: true
+
+      - name: Verify lockfile
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --frozen --dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Django system check
+        run: uv run python manage.py check
+
+      - name: Verify migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Apply migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run Architecture Real-DEMO E2E
+        timeout-minutes: 3
+        run: uv run pytest -q tests/test_architecture_real_demo_ap6_e2e.py
+
+      - name: Run tests
+        run: uv run pytest -q
+
+      - name: Bandit
+        run: uv run bandit -q -r ki_radar config
+
+      # Temporary, explicit waivers for advisories reported on 2026-08-19.
+      # pip-audit names sqlparse 0.6.0 as the fix, but that release is not yet
+      # available from the official PyPI simple index. Keep the IDs visible so
+      # the waiver is narrow and removable instead of disabling the audit gate.
+      # Run the project audit with a fixed pip release so pip-audit's own
+      # transitive tooling dependency is not audited from the dev environment.
+      - name: Dependency audit
+        run: >-
+          uv run --with "pip==26.2" pip-audit .
+          --ignore-vuln PYSEC-2026-3717
+          --ignore-vuln PYSEC-2026-3698
+          --ignore-vuln PYSEC-2026-3697
+          --ignore-vuln PYSEC-2026-3699
+          --ignore-vuln PYSEC-2026-3696
+
+      - name: Prepare Compose validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-secrets/prod .ci-secrets/staging deploy/certs
+          for secret in django_secret_key db_password sentry_dsn monitoring_token; do
+            printf 'ci-placeholder\n' > ".ci-secrets/prod/${secret}"
+          done
+          for secret in django_secret_key db_password; do
+            printf 'ci-placeholder\n' > ".ci-secrets/staging/${secret}"
+          done
+
+      - name: Validate local Compose
+        run: docker compose -f compose.local.yml config --quiet
+
+      - name: Validate production Compose
+        run: SECRETS_DIR="$PWD/.ci-secrets/prod" docker compose --env-file .env.production.example -f compose.prod.yml config --quiet
+
+      - name: Validate staging Compose
+        run: STAGING_SECRETS_DIR="$PWD/.ci-secrets/staging" docker compose --env-file .env.staging.example -f compose.staging.yml config --quiet
+
+      - name: Build production image
+        run: docker build -t ki-radar:ci .
+
+      - name: Build development image
+        run: docker build -f Dockerfile.dev -t ki-radar-dev:ci .

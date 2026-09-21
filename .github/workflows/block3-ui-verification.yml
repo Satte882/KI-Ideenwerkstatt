@@ -1,0 +1,71 @@
+name: Block 3 UI verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/block3-ui-verification.yml"
+      - "scripts/block3_ui_verification.py"
+      - "docs/accelerator/BLOCK_3_COMPLETION.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-ui:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: block3-ui-verification-only
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      USE_SQLITE_FOR_TESTS: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --frozen --dev
+
+      - name: Format one-time verification script
+        run: uv run ruff format scripts/block3_ui_verification.py
+
+      - name: Install Playwright for one-time UI verification
+        run: |
+          uv pip install playwright==1.54.0
+          uv run playwright install --with-deps chromium
+
+      - name: Apply migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Capture desktop and mobile evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/block3-ui-verification
+          cp scripts/block3_ui_verification.py artifacts/block3-ui-verification/formatted-script.py
+          set +e
+          uv run python scripts/block3_ui_verification.py > artifacts/block3-ui-verification/verification.log 2>&1
+          status=$?
+          cat artifacts/block3-ui-verification/verification.log
+          exit "$status"
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: block3-ui-verification
+          path: artifacts/block3-ui-verification
+          if-no-files-found: error
+          retention-days: 30

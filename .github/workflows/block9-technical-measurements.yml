@@ -1,0 +1,80 @@
+name: Block 9 Technical Measurements
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/block9-technical-measurements.yml"
+      - "ki_radar/accelerator/management/commands/run_block9_technical_measurements.py"
+      - "tests/test_block9_technical_measurements.py"
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17.5-bookworm
+        env:
+          POSTGRES_DB: ki_radar_test
+          POSTGRES_USER: ki_radar
+          POSTGRES_PASSWORD: ki_radar_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ki_radar -d ki_radar_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
+      POSTGRES_DB: ki_radar_test
+      POSTGRES_USER: ki_radar
+      POSTGRES_PASSWORD: ki_radar_test_password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      DATABASE_URL: postgresql://ki_radar:ki_radar_test_password@localhost:5432/ki_radar_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+          enable-cache: true
+
+      - name: Verify lockfile
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --frozen --dev
+
+      - name: Apply migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run technical controls
+        run: >-
+          uv run python manage.py run_block9_technical_measurements
+          --output artifacts/block9/raw-technical.jsonl
+          --interactive-manifest artifacts/block9/interactive-status.json
+
+      - name: Upload raw measurement artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: block9-ap9-raw-${{ github.run_id }}
+          path: artifacts/block9/
+          if-no-files-found: error
+          retention-days: 30

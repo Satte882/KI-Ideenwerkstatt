@@ -1,0 +1,120 @@
+name: Block 5 completion verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/block5-completion-verification.yml"
+      - "config/settings/test.py"
+      - "ki_radar/accelerator/block5_demo.py"
+      - "ki_radar/accelerator/management/commands/run_block5_real_demo.py"
+      - "scripts/block5_ui_verification.py"
+      - "tests/test_block5_completion.py"
+      - "docs/accelerator/BLOCK_5_COMPLETION.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-block5:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17.5-bookworm
+        env:
+          POSTGRES_DB: ki_radar_test
+          POSTGRES_USER: ki_radar
+          POSTGRES_PASSWORD: ki_radar_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ki_radar -d ki_radar_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: block5-completion-verification-only
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: ki_radar_test
+      POSTGRES_USER: ki_radar
+      POSTGRES_PASSWORD: ki_radar_test_password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      DATABASE_URL: postgresql://ki_radar:ki_radar_test_password@localhost:5432/ki_radar_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --frozen --dev
+
+      - name: Verify AP 10 formatting and lint
+        run: |
+          uv run ruff check ki_radar/accelerator/block5_demo.py ki_radar/accelerator/management/commands/run_block5_real_demo.py scripts/block5_ui_verification.py tests/test_block5_completion.py
+          uv run ruff format --check ki_radar/accelerator/block5_demo.py ki_radar/accelerator/management/commands/run_block5_real_demo.py scripts/block5_ui_verification.py tests/test_block5_completion.py
+
+      - name: Install Playwright for UI verification
+        run: |
+          uv pip install playwright==1.54.0
+          uv run playwright install --with-deps chromium
+
+      - name: Apply PostgreSQL migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run Block 5 completion regressions
+        run: >-
+          uv run pytest -q
+          tests/test_block5_completion.py
+          tests/test_block5_adoption_audit.py
+          tests/test_block5_adoption_review.py
+          tests/test_block5_security_concurrency.py
+
+      - name: Run reproducible Real-DEMO
+        run: >-
+          uv run python manage.py run_block5_real_demo
+          --output artifacts/block5-completion/block5-real-demo.json
+
+      - name: Prepare SQLite UI database
+        env:
+          USE_SQLITE_FOR_TESTS: "1"
+          ACCELERATOR_FIELD_ADOPTION_ENABLED: "1"
+        run: |
+          rm -f test.sqlite3
+          uv run python manage.py migrate --noinput
+
+      - name: Capture desktop and mobile evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/block5-ui-verification
+          set +e
+          uv run python scripts/block5_ui_verification.py > artifacts/block5-ui-verification/verification.log 2>&1
+          status=$?
+          cat artifacts/block5-ui-verification/verification.log
+          exit "$status"
+
+      - name: Upload completion evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: block5-completion-verification
+          path: |
+            artifacts/block5-completion
+            artifacts/block5-ui-verification
+          if-no-files-found: error
+          retention-days: 30

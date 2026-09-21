@@ -1,0 +1,80 @@
+name: Block 4 UI verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/block4-ui-verification.yml"
+      - "scripts/block4_ui_verification.py"
+      - "tests/test_block4_completion.py"
+      - "docs/accelerator/BLOCK_4_COMPLETION.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-ui:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: block4-ui-verification-only
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      USE_SQLITE_FOR_TESTS: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --frozen --dev
+
+      - name: Verify AP 10 formatting and lint
+        run: |
+          uv run ruff check scripts/block4_ui_verification.py tests/test_block4_completion.py
+          uv run ruff format --check scripts/block4_ui_verification.py tests/test_block4_completion.py
+
+      - name: Install Playwright for UI verification
+        run: |
+          uv pip install playwright==1.54.0
+          uv run playwright install --with-deps chromium
+
+      - name: Apply migrations
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run Block 4 completion regressions
+        run: >-
+          uv run pytest -q
+          tests/test_block4_completion.py
+          tests/test_capture_analysis_views.py
+          tests/test_capture_analysis_golden.py
+
+      - name: Capture desktop and mobile evidence
+        shell: bash
+        run: |
+          mkdir -p artifacts/block4-ui-verification
+          set +e
+          uv run python scripts/block4_ui_verification.py > artifacts/block4-ui-verification/verification.log 2>&1
+          status=$?
+          cat artifacts/block4-ui-verification/verification.log
+          exit "$status"
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: block4-ui-verification
+          path: artifacts/block4-ui-verification
+          if-no-files-found: error
+          retention-days: 30
