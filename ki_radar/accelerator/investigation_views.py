@@ -43,9 +43,8 @@ from .investigation_tools import (
 
 
 def _editable_process(user, process: ProcessAnalysis) -> bool:
-    return (
-        process.status == ProcessAnalysis.Status.DRAFT
-        and can_edit_value_stream(user, process.stage.value_stream)
+    return process.status == ProcessAnalysis.Status.DRAFT and can_edit_value_stream(
+        user, process.stage.value_stream
     )
 
 
@@ -62,9 +61,7 @@ def investigation_authorize(request, process_pk):
     if not _editable_process(request.user, process):
         raise PermissionDenied
 
-    folders = list(
-        process.investigation_source_folders.filter(is_active=True).order_by("name")
-    )
+    folders = list(process.investigation_source_folders.filter(is_active=True).order_by("name"))
     if not folders:
         messages.warning(
             request,
