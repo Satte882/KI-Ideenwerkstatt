@@ -101,10 +101,7 @@ def test_revocation_between_read_pages_blocks_read_search_and_analysis(
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     (tmp_path / "data.csv").write_text(
-        "group,value,unit,note\n"
-        "A,1,h,needle\n"
-        "A,2,h,needle\n"
-        "B,3,h,needle\n",
+        "group,value,unit,note\nA,1,h,needle\nA,2,h,needle\nB,3,h,needle\n",
         encoding="utf-8",
     )
     folder, snapshot = register_and_snapshot(
@@ -431,10 +428,7 @@ def test_versioned_expected_fixture_matches_a_b_c_results(
         assert groups_a[group]["value"] == contract["value"]
         assert groups_a[group]["population"] == contract["population"]
     assert list(result_a.excluded_rows) == expected_a["excluded_rows"]
-    assert any(
-        item["delta"] == expected_a["expected_delta"]
-        for item in result_a.differences
-    )
+    assert any(item["delta"] == expected_a["expected_delta"] for item in result_a.differences)
 
     process_b = make_process(owner=owner, business_unit=business_unit, name="Expected B")
     _folder_b, snapshot_b = register_and_snapshot(
