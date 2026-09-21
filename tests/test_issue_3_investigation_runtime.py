@@ -197,10 +197,13 @@ def test_parallel_starts_create_exactly_one_active_run(
 
     assert sum(result[0] == "created" for result in results) == 1
     assert sum(result[0] == "active_run_exists" for result in results) == 1
-    assert InvestigationRun.objects.filter(
-        process_analysis=process,
-        status__in=InvestigationRun.ACTIVE_STATUSES,
-    ).count() == 1
+    assert (
+        InvestigationRun.objects.filter(
+            process_analysis=process,
+            status__in=InvestigationRun.ACTIVE_STATUSES,
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
