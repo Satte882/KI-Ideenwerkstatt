@@ -158,8 +158,7 @@ def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
         }
     )
     recent = list(
-        run.steps.filter(status=InvestigationStep.Status.SUCCESS)
-        .order_by("-sequence")[:2]
+        run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("-sequence")[:2]
     )
     if any(step.step_key == proposed_key for step in recent):
         return False
@@ -197,13 +196,10 @@ def advance_investigation(
     planner: Callable[..., PlannerAction] = request_planner_action,
     verifier: Callable[..., InvestigationVerifierReport] = request_verifier_report,
 ) -> AdvanceResult:
-    run = (
-        InvestigationRun.objects.select_related(
-            "process_analysis__stage__value_stream",
-            "source_snapshot__folder",
-        )
-        .get(pk=run_id)
-    )
+    run = InvestigationRun.objects.select_related(
+        "process_analysis__stage__value_stream",
+        "source_snapshot__folder",
+    ).get(pk=run_id)
     assert_actor_can_edit_run(actor, run)
     assert_active(run)
     assert_executor(run, executor_token)
@@ -338,9 +334,7 @@ def advance_investigation(
     if action.action == "verify":
         pre = evaluate_run_policy(run)
         non_verifier_blockers = [
-            blocker
-            for blocker in pre.blockers
-            if not blocker.startswith("verifier_")
+            blocker for blocker in pre.blockers if not blocker.startswith("verifier_")
         ]
         if non_verifier_blockers:
             raise InvestigationRunError(
