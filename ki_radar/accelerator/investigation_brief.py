@@ -38,9 +38,7 @@ def _list_text(value: object) -> str:
     if isinstance(value, str):
         return value.strip()
     if isinstance(value, Mapping):
-        return "; ".join(
-            f"{key}: {item}" for key, item in value.items() if str(item).strip()
-        )
+        return "; ".join(f"{key}: {item}" for key, item in value.items() if str(item).strip())
     return str(value or "").strip()
 
 
@@ -105,17 +103,10 @@ def _process_base(run: InvestigationRun) -> dict[str, Any]:
 
 def _target_process_fields(payload: Mapping[str, Any]) -> dict[str, str]:
     problem = payload.get("problem")
-    hypotheses = [
-        item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)
-    ]
-    calculations = [
-        item for item in payload.get("calculations", []) if isinstance(item, Mapping)
-    ]
+    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
+    calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
     hypothesis_lines = [
-        (
-            "[" + str(item.get("status") or "open") + "] "
-            + str(item.get("statement") or "").strip()
-        )
+        ("[" + str(item.get("status") or "open") + "] " + str(item.get("statement") or "").strip())
         for item in hypotheses
         if str(item.get("statement") or "").strip()
     ]
@@ -133,9 +124,7 @@ def _target_process_fields(payload: Mapping[str, Any]) -> dict[str, str]:
         )
     return {
         "diagnostic_observations": (
-            str(problem.get("statement") or "").strip()
-            if isinstance(problem, Mapping)
-            else ""
+            str(problem.get("statement") or "").strip() if isinstance(problem, Mapping) else ""
         ),
         "cause_hypotheses": "\n".join(hypothesis_lines),
         "baseline_metrics": "\n".join(calculation_lines),
@@ -226,10 +215,7 @@ def materialize_decision_brief(
     payload = revision.payload if isinstance(revision.payload, Mapping) else {}
     target_fields = _target_process_fields(payload)
     base_domain_hash = str(
-        (run.execution_snapshot.get("domain_materialization_base") or {}).get(
-            "content_hash"
-        )
-        or ""
+        (run.execution_snapshot.get("domain_materialization_base") or {}).get("content_hash") or ""
     )
 
     conflicts: list[dict[str, Any]] = []
