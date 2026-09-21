@@ -26,6 +26,7 @@ from .investigation_models import (
     InvestigationToolResult,
 )
 from .investigation_runtime import (
+    DEFAULT_BUDGET,
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
@@ -33,6 +34,11 @@ from .investigation_runtime import (
     evaluate_run_policy,
     locked_run,
     start_investigation,
+)
+from .investigation_tools import (
+    InvestigationToolError,
+    SnapshotRequest,
+    create_source_snapshot,
 )
 
 
@@ -45,6 +51,81 @@ def _editable_process(user, process: ProcessAnalysis) -> bool:
 
 def _run_redirect(run_id):
     return redirect("accelerator:investigation_detail", run_id=run_id)
+
+
+@login_required
+def investigation_authorize(request, process_pk):
+    process = get_object_or_404(
+        ProcessAnalysis.objects.select_related("stage__value_stream"),
+        pk=process_pk,
+    )
+    if not _editable_process(request.user, process):
+        raise PermissionDenied
+
+    folders = list(
+        process.investigation_source_folders.filter(is_active=True).order_by("name")
+    )
+    if not folders:
+        messages.warning(
+            request,
+            "Für diese Prozessanalyse ist noch kein aktiver Fallordner administrativ registriert.",
+        )
+        return redirect(process)
+
+    default_question = (
+        f"Welche Lösungsrichtung ist für „{process.name}“ durch die Evidenz gestützt?"
+    )
+    question = str(request.POST.get("decision_question") or default_question).strip()
+    selected_folder_id = str(
+        request.POST.get("folder_id") or (folders[0].pk if len(folders) == 1 else "")
+    )
+
+    if request.method == "POST":
+        folder = next(
+            (item for item in folders if str(item.pk) == selected_folder_id),
+            None,
+        )
+        if folder is None:
+            messages.error(request, "Bitte einen registrierten Quellenraum auswählen.")
+        elif not question:
+            messages.error(request, "Die Richtungsfrage darf nicht leer sein.")
+        else:
+            try:
+                snapshot = create_source_snapshot(
+                    actor=request.user,
+                    request=SnapshotRequest(
+                        process_analysis_id=process.pk,
+                        folder_id=folder.pk,
+                        decision_question=question,
+                        run_limits=dict(DEFAULT_BUDGET),
+                    ),
+                )
+            except InvestigationToolError as exc:
+                messages.error(
+                    request,
+                    f"Quellenraum konnte nicht autorisiert werden: {exc}",
+                )
+            else:
+                messages.success(
+                    request,
+                    (
+                        f"Quellenrevision {snapshot.revision} und Run-Budget wurden "
+                        "unveränderlich autorisiert."
+                    ),
+                )
+                return redirect(process)
+
+    return render(
+        request,
+        "accelerator/investigation_authorize.html",
+        {
+            "process_analysis": process,
+            "folders": folders,
+            "selected_folder_id": selected_folder_id,
+            "decision_question": question,
+            "budget": DEFAULT_BUDGET,
+        },
+    )
 
 
 @login_required
