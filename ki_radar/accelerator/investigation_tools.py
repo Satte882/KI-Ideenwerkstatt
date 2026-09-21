@@ -5,12 +5,13 @@ import hashlib
 import io
 import json
 import stat
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from statistics import median
-from typing import Any, Mapping
+from typing import Any
 from uuid import UUID
 
 from django.core.exceptions import PermissionDenied
@@ -220,7 +221,10 @@ def _error(message: str, code: str) -> InvestigationToolError:
 
 def _validate_run_limits(run_limits: Mapping[str, int]) -> dict[str, int]:
     if not isinstance(run_limits, Mapping):
-        raise _error("Run-Limits müssen als Schlüssel/Wert-Objekt angegeben werden.", "invalid_limits")
+        raise _error(
+            "Run-Limits müssen als Schlüssel/Wert-Objekt angegeben werden.",
+            "invalid_limits",
+        )
     normalized: dict[str, int] = {}
     for key, value in run_limits.items():
         if not isinstance(key, str) or not key.strip():
@@ -280,14 +284,20 @@ def _source_for_snapshot(
     try:
         return snapshot.sources.get(pk=source_id)
     except (InvestigationSource.DoesNotExist, ValueError) as exc:
-        raise _error("Die Source-ID gehört nicht zu diesem Quellen-Snapshot.", "source_not_found") from exc
+        raise _error(
+            "Die Source-ID gehört nicht zu diesem Quellen-Snapshot.",
+            "source_not_found",
+        ) from exc
 
 
 def _is_reparse_or_symlink(path: Path) -> bool:
     try:
         info = path.lstat()
     except OSError as exc:
-        raise _error("Der Quellenpfad kann nicht sicher geprüft werden.", "source_path_unreadable") from exc
+        raise _error(
+            "Der Quellenpfad kann nicht sicher geprüft werden.",
+            "source_path_unreadable",
+        ) from exc
     if stat.S_ISLNK(info.st_mode):
         return True
     file_attributes = getattr(info, "st_file_attributes", 0)
@@ -304,7 +314,10 @@ def _root_path(raw_path: str) -> Path:
     try:
         resolved = raw.resolve(strict=True)
     except OSError as exc:
-        raise _error("Der registrierte Quellenordner ist nicht lesbar.", "source_path_unreadable") from exc
+        raise _error(
+            "Der registrierte Quellenordner ist nicht lesbar.",
+            "source_path_unreadable",
+        ) from exc
     if not resolved.is_dir():
         raise _error("Der registrierte Quellenpfad ist kein Ordner.", "source_path_invalid")
     return resolved
@@ -341,7 +354,10 @@ def _scan_folder(root_path: str) -> tuple[_ScannedSource, ...]:
     try:
         entries = sorted(root.iterdir(), key=lambda item: item.name.casefold())
     except OSError as exc:
-        raise _error("Der Quellenordner kann nicht gelesen werden.", "source_path_unreadable") from exc
+        raise _error(
+            "Der Quellenordner kann nicht gelesen werden.",
+            "source_path_unreadable",
+        ) from exc
     if len(entries) > MAX_FILES:
         raise _error("Der Quellenordner überschreitet das Dateilimit.", "file_count_limit")
 
@@ -360,7 +376,10 @@ def _scan_folder(root_path: str) -> tuple[_ScannedSource, ...]:
             before = candidate.stat()
             resolved = candidate.resolve(strict=True)
         except OSError as exc:
-            raise _error("Eine Quelldatei kann nicht sicher gelesen werden.", "source_unreadable") from exc
+            raise _error(
+                "Eine Quelldatei kann nicht sicher gelesen werden.",
+                "source_unreadable",
+            ) from exc
         if resolved.parent != root:
             raise _error("Ein Quellenpfad verlässt den registrierten Ordner.", "path_escape")
         if before.st_size > MAX_FILE_BYTES:
@@ -643,7 +662,10 @@ def search_sources(*, actor, snapshot_id, request: SearchRequest) -> SearchResul
         if selected and bytes_used + hit_bytes > MAX_SEARCH_BYTES:
             break
         if not selected and hit_bytes > MAX_SEARCH_BYTES:
-            raise _error("Ein einzelner Suchtreffer überschreitet das Ergebnislimit.", "hit_too_large")
+            raise _error(
+                "Ein einzelner Suchtreffer überschreitet das Ergebnislimit.",
+                "hit_too_large",
+            )
         selected.append(hit)
         bytes_used += hit_bytes
         index += 1
@@ -680,12 +702,18 @@ def read_source(*, actor, snapshot_id, request: ReadRequest) -> ReadResult:
         columns = list(request.columns) if request.columns else header
         unknown = sorted(set(columns) - set(header))
         if unknown:
-            raise _error("Mindestens eine angeforderte CSV-Spalte existiert nicht.", "missing_column")
+            raise _error(
+                "Mindestens eine angeforderte CSV-Spalte existiert nicht.",
+                "missing_column",
+            )
         positions = [header.index(column) for column in columns]
         available = [
             {
                 "row": row_number,
-                "values": {column: row[position] for column, position in zip(columns, positions)},
+                "values": {
+                    column: row[position]
+                    for column, position in zip(columns, positions, strict=True)
+                },
             }
             for row_number, row in enumerate(rows, start=1)
         ]
@@ -698,7 +726,10 @@ def read_source(*, actor, snapshot_id, request: ReadRequest) -> ReadResult:
         if items and bytes_used + item_bytes > MAX_READ_BYTES:
             break
         if not items and item_bytes > MAX_READ_BYTES:
-            raise _error("Ein einzelnes Leseelement überschreitet das Byte-Limit.", "item_too_large")
+            raise _error(
+                "Ein einzelnes Leseelement überschreitet das Byte-Limit.",
+                "item_too_large",
+            )
         items.append(item)
         bytes_used += item_bytes
         index += 1
@@ -864,7 +895,10 @@ def _passes_filter(value: str, spec: FilterSpec) -> tuple[bool, bool]:
     try:
         right = Decimal(str(spec.value))
     except (InvalidOperation, ValueError) as exc:
-        raise _error("Numerische Filter benötigen einen numerischen Vergleichswert.", "invalid_filter_value") from exc
+        raise _error(
+            "Numerische Filter benötigen einen numerischen Vergleichswert.",
+            "invalid_filter_value",
+        ) from exc
     if left is None:
         return False, True
     comparisons = {
@@ -979,7 +1013,8 @@ def compare_groups(
         }
         if missing_unit_rows:
             findings.append(
-                f"{len(missing_unit_rows)} Zeilen haben für die Wertespalte keine eindeutige Einheit."
+                f"{len(missing_unit_rows)} Zeilen haben für die Wertespalte "
+                "keine eindeutige Einheit."
             )
         if not unit_values and relevant_for_units:
             findings.append("Einheit für die Wertespalte ist im Vergleichsbestand unklar.")
@@ -1040,7 +1075,11 @@ def compare_groups(
             continue
 
         value_column = request.value_column
-        assert value_column is not None
+        if value_column is None:
+            raise _error(
+                "Diese Aggregation benötigt eine Wertespalte.",
+                "missing_value_column",
+            )
         raw_value = row[positions[value_column]]
         if not raw_value.strip():
             excluded_rows.append({"row": row_number, "reason": "missing_value"})
@@ -1115,7 +1154,8 @@ def compare_groups(
         "differences": differences,
         "findings": findings,
         "causality_note": (
-            "Aggregationen belegen Unterschiede im freigegebenen Bestand, nicht automatisch Kausalität."
+            "Aggregationen belegen Unterschiede im freigegebenen Bestand, "
+            "nicht automatisch Kausalität."
         ),
     }
     parameters = {
