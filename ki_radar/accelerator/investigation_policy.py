@@ -164,9 +164,7 @@ def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
 
         if check.status == "supported" and not check.evidence_refs:
             blockers.append(f"supported_without_evidence:{check.claim_id}")
-        if check.status == "refuted" and not (
-            check.counterevidence_refs or check.evidence_refs
-        ):
+        if check.status == "refuted" and not (check.counterevidence_refs or check.evidence_refs):
             blockers.append(f"refuted_without_evidence:{check.claim_id}")
         if not check.references_valid:
             blockers.append(f"invalid_reference:{check.claim_id}")
@@ -260,8 +258,10 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
             blockers,
         )
 
-    if state.allowed_action_available or state.replan_available or (
-        state.technical_failure and state.retry_available
+    if (
+        state.allowed_action_available
+        or state.replan_available
+        or (state.technical_failure and state.retry_available)
     ):
         return PolicyDecision(PolicyOutcome.CONTINUE, None, blockers)
 
