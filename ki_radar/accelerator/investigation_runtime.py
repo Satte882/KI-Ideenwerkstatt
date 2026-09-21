@@ -17,11 +17,12 @@ from django.db import IntegrityError, connection, transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from ki_radar.architecture.models import ProcessAnalysis
+from ki_radar.architecture.models import ProcessAnalysis, SolutionOption
 from ki_radar.architecture.permissions import can_edit_value_stream
 
 from .investigation_models import (
     InvestigationBriefRevision,
+    InvestigationEvidenceCampaign,
     InvestigationInputRevision,
     InvestigationRun,
     InvestigationSource,
@@ -104,6 +105,9 @@ class InvestigationRunError(RuntimeError):
 class StartInvestigationRequest:
     snapshot_id: uuid.UUID | str
     idempotency_key: str
+    evidence_campaign_id: uuid.UUID | str | None = None
+    execution_mode: str = "adaptive"
+    evidence_metadata: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -227,9 +231,49 @@ def contract_payload(
     }
 
 
+def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, object]:
+    options = [
+        {
+            "id": str(option.pk),
+            "updated_at": option.updated_at.isoformat(),
+            "name": option.name,
+            "option_type": option.option_type,
+            "recommendation": option.recommendation,
+            "evaluation_status": option.evaluation_status,
+            "evidence_basis": option.evidence_basis,
+            "description": option.description,
+            "expected_value": option.expected_value,
+            "bottleneck_coverage": option.bottleneck_coverage,
+            "data_requirements": option.data_requirements,
+            "application_impact": option.application_impact,
+            "integration_impact": option.integration_impact,
+            "risks": option.risks,
+            "architecture_fit": option.architecture_fit,
+        }
+        for option in process.solution_options.order_by("id")
+    ]
+    payload = {
+        "process": {
+            "id": str(process.pk),
+            "version": process.version,
+            "updated_at": process.updated_at.isoformat(),
+            "diagnostic_observations": process.diagnostic_observations,
+            "cause_hypotheses": process.cause_hypotheses,
+            "baseline_metrics": process.baseline_metrics,
+        },
+        "solution_options": options,
+    }
+    return {**payload, "content_hash": content_hash(payload)}
+
+
 def base_execution_snapshot(
     snapshot: InvestigationSourceSnapshot,
     budget: Mapping[str, int],
+    *,
+    process: ProcessAnalysis,
+    execution_mode: str = "adaptive",
+    evidence_campaign: InvestigationEvidenceCampaign | None = None,
+    evidence_metadata: Mapping[str, Any] | None = None,
 ) -> dict[str, object]:
     return {
         "runtime": runtime_version_snapshot(),
@@ -237,6 +281,21 @@ def base_execution_snapshot(
         "policy_version": POLICY_VERSION,
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
+        "execution_mode": execution_mode,
+        "evidence_metadata": dict(evidence_metadata or {}),
+        "evidence_campaign": (
+            {
+                "id": str(evidence_campaign.pk),
+                "key": evidence_campaign.campaign_key,
+                "revision": evidence_campaign.revision,
+                "limits": dict(evidence_campaign.limits),
+                "pricing_version": evidence_campaign.pricing_version,
+                "currency": evidence_campaign.currency,
+            }
+            if evidence_campaign is not None
+            else None
+        ),
+        "domain_materialization_base": domain_materialization_snapshot(process),
         "source_snapshot_id": str(snapshot.pk),
         "manifest_hash": snapshot.manifest_hash,
         "model_transport": {
@@ -427,12 +486,53 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 existing_run_id=active.pk,
             )
 
-        execution_snapshot = base_execution_snapshot(snapshot, budget)
+        execution_mode = str(request.execution_mode or "adaptive").strip().casefold()
+        if execution_mode not in {"adaptive", "fixed"}:
+            raise InvestigationRunError(
+                "Unbekannte Vergleichsstrecke.",
+                code="invalid_execution_mode",
+            )
+        evidence_metadata = dict(request.evidence_metadata or {})
+        evidence_campaign = None
+        if request.evidence_campaign_id is not None:
+            try:
+                evidence_campaign = InvestigationEvidenceCampaign.objects.select_for_update().get(
+                    pk=request.evidence_campaign_id
+                )
+            except (InvestigationEvidenceCampaign.DoesNotExist, ValueError) as exc:
+                raise InvestigationRunError(
+                    "Das konfigurierte Gesamtnachweisbudget ist nicht verfügbar.",
+                    code="evidence_budget_required",
+                ) from exc
+            if evidence_campaign.process_analysis_id != process.pk:
+                raise InvestigationRunError(
+                    "Das Gesamtnachweisbudget gehört nicht zu diesem Fall.",
+                    code="invalid_evidence_budget",
+                )
+        if (execution_mode == "fixed" or evidence_metadata.get("evidence_phase")) and (
+            evidence_campaign is None
+        ):
+            raise InvestigationRunError(
+                "Die reale Nachweisphase darf ohne explizites persistentes Gesamtbudget nicht starten.",
+                code="evidence_budget_required",
+            )
+
+        execution_snapshot = base_execution_snapshot(
+            snapshot,
+            budget,
+            process=process,
+            execution_mode=execution_mode,
+            evidence_campaign=evidence_campaign,
+            evidence_metadata=evidence_metadata,
+        )
         try:
             with transaction.atomic():
                 run = InvestigationRun.objects.create(
                     process_analysis=process,
                     source_snapshot=snapshot,
+                    evidence_campaign=evidence_campaign,
+                    execution_mode=execution_mode,
+                    evidence_metadata=evidence_metadata,
                     requested_by=actor,
                     idempotency_key=key,
                     process_version=process.version,
