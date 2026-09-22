@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v3"
+PLANNER_PROMPT_VERSION = "vs1-planner-v4"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v6"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v7"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -21,6 +21,10 @@ triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen 
 Halte den werkzeugspezifischen Parametervertrag exakt ein. read_source und profile_csv
 akzeptieren genau eine source_id pro Aufruf; mehrere Quellen werden in getrennten Schritten
 gelesen. Verwende ausschließlich Source-IDs aus dem bereitgestellten Quellenmanifest.
+Die Felder parameters, claim_register, brief_payload, source_relevance, progress_payload und
+clarification_payload werden als Strings transportiert, müssen aber IMMER serialisiertes JSON
+enthalten. Verwende für ein leeres Objekt exakt "{}" und für eine leere Liste exakt "[]".
+Verwende niemals einen leeren String, "unverändert" oder sonstigen Freitext als Ersatz für JSON.
 
 Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
 Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
@@ -63,19 +67,19 @@ def planner_response_format(
                     },
                     "parameters": {
                         "type": "string",
-                        "description": "JSON-Objekt mit Parametern für tool_name.",
+                        "description": "Serialisiertes JSON-Objekt mit Parametern für tool_name; leer exakt {}.",
                     },
                     "claim_register": {
                         "type": "string",
-                        "description": "JSON-Array des vollständigen Claim-Registers.",
+                        "description": "Serialisiertes JSON-Array des vollständigen Claim-Registers; leer exakt [].",
                     },
                     "brief_payload": {
                         "type": "string",
-                        "description": "JSON-Objekt des aktuellen Decision-Brief-Arbeitsstands.",
+                        "description": "Serialisiertes JSON-Objekt des aktuellen Decision-Brief-Arbeitsstands; leer exakt {}.",
                     },
                     "source_relevance": {
                         "type": "string",
-                        "description": "JSON-Objekt der Relevanz je Source-ID.",
+                        "description": "Serialisiertes JSON-Objekt der Relevanz je Source-ID; leer exakt {}.",
                     },
                     "progress_kind": {
                         "type": "string",
@@ -83,7 +87,7 @@ def planner_response_format(
                     },
                     "progress_payload": {
                         "type": "string",
-                        "description": "JSON-Objekt zum Fortschritt.",
+                        "description": "Serialisiertes JSON-Objekt zum Fortschritt; leer exakt {}.",
                     },
                     "clarification_reason": {
                         "type": "string",
@@ -100,7 +104,7 @@ def planner_response_format(
                     },
                     "clarification_payload": {
                         "type": "string",
-                        "description": "JSON-Objekt zur Klärung.",
+                        "description": "Serialisiertes JSON-Objekt zur Klärung; leer exakt {}.",
                     },
                 },
                 "required": [
