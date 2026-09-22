@@ -69,7 +69,7 @@ TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
     "zdr": True,
     "data_collection": "deny",
-    "order": ["deepseek"],
+    "order": ["deepinfra/fp8"],
     "allow_fallbacks": False,
     "require_parameters": True,
 }
