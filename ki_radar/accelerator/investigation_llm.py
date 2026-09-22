@@ -50,11 +50,10 @@ from .investigation_runtime import (
     budget_exhausted,
     canonical_json,
     content_hash,
-    enforce_claim_guard,
     evaluate_run_policy,
     execute_tool_step,
     locked_run,
-    normalize_claim,
+    normalize_claim_register,
 )
 from .investigation_tools import (
     TOOL_VERSION,
