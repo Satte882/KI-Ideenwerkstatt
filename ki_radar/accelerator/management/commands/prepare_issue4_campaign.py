@@ -321,9 +321,7 @@ class Command(BaseCommand):
 
     def _assert_campaign(self, *, campaign, process, pricing, currency, pricing_version):
         if campaign.process_analysis_id != process.pk:
-            raise CommandError(
-                "Existing Issue #4 campaign belongs to a different ProcessAnalysis."
-            )
+            raise CommandError("Existing Issue #4 campaign belongs to a different ProcessAnalysis.")
         if campaign.limits != CAMPAIGN_LIMITS:
             raise CommandError("Existing Issue #4 campaign limits differ; refusing overwrite.")
         if campaign.pricing != pricing or campaign.currency != currency:
