@@ -44,6 +44,7 @@ from ki_radar.accelerator.investigation_runtime import (
     content_hash,
     execute_tool_step,
     materialize_brief_revision,
+    normalize_claim_register,
     set_source_relevance,
     start_investigation,
 )
@@ -871,6 +872,35 @@ def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
         == "invalid_claim"
         for call in calls
     )
+
+
+@pytest.mark.django_db
+def test_claim_register_requires_nonempty_claim_kind(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="claim-kind-required",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        normalize_claim_register(
+            run,
+            [
+                {
+                    "claim_id": "hyp-a",
+                    "area": "competing_hypotheses",
+                    "status": "open",
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "invalid_claim"
 
 
 @pytest.mark.django_db
