@@ -16,9 +16,16 @@ MAX_OPENROUTER_RESPONSE_BYTES = 16_000_000
 
 
 class OpenRouterUnavailable(RuntimeError):
-    def __init__(self, message: str, *, code: str = "unavailable") -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "unavailable",
+        diagnostics: dict[str, object] | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
+        self.diagnostics = dict(diagnostics or {})
 
 
 @dataclass(frozen=True)
@@ -128,6 +135,75 @@ def _schema_provider_unavailable(payload: dict[str, Any]) -> bool:
         "no_available_provider",
         "provider_routing_error",
     } or any(marker in f"{message}\n{raw_error}" for marker in markers)
+
+
+def _diagnostic_value(value: object) -> str | int | float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (str, int, float)):
+        return value if not isinstance(value, str) else value[:120]
+    return None
+
+
+def _response_diagnostics(payload: object) -> dict[str, object]:
+    diagnostics: dict[str, object] = {"response_type": type(payload).__name__}
+    if not isinstance(payload, dict):
+        return diagnostics
+
+    choices = payload.get("choices")
+    diagnostics.update(
+        {
+            "has_error": "error" in payload,
+            "has_model": bool(payload.get("model")),
+            "has_usage": isinstance(payload.get("usage"), dict),
+            "choices_type": type(choices).__name__,
+            "choices_count": len(choices) if isinstance(choices, list) else 0,
+        }
+    )
+    error = payload.get("error")
+    if not isinstance(error, dict):
+        diagnostics["error_type"] = type(error).__name__ if error is not None else ""
+        return diagnostics
+
+    diagnostics["error_type"] = "object"
+    for key in ("code", "type"):
+        value = _diagnostic_value(error.get(key))
+        if value is not None:
+            diagnostics[f"error_{key}"] = value
+    metadata = error.get("metadata")
+    if isinstance(metadata, dict):
+        for key in ("error_type", "provider_error_code"):
+            value = _diagnostic_value(metadata.get(key))
+            if value is not None:
+                diagnostics[key] = value
+    return diagnostics
+
+
+def _error_envelope_code(
+    payload: dict[str, Any],
+    *,
+    response_format: dict[str, Any] | None,
+    provider: dict[str, Any] | None,
+) -> tuple[str, str]:
+    error = payload.get("error")
+    status = error.get("code") if isinstance(error, dict) else None
+    try:
+        status_code = int(status)
+    except (TypeError, ValueError):
+        status_code = 0
+
+    if _requires_json_schema(response_format, provider) and _schema_provider_unavailable(payload):
+        return (
+            "provider_schema_unsupported",
+            "OpenRouter meldete, dass kein Provider das erforderliche Ausgabeschema unterstützt.",
+        )
+    if status_code == 429:
+        return "rate_limit", "OpenRouter meldete ein Aufruflimit."
+    if status_code in {401, 403}:
+        return "unauthorized", "OpenRouter meldete einen Autorisierungsfehler."
+    if 500 <= status_code <= 599:
+        return "provider_unavailable", "OpenRouter meldete eine vorübergehende Nichtverfügbarkeit."
+    return "provider_error", "OpenRouter lieferte einen Fehler-Envelope statt einer Completion."
 
 
 def _message_content(message: object) -> str:
@@ -273,6 +349,21 @@ def request_openrouter(
             code="invalid_response",
         ) from exc
 
+    diagnostics = _response_diagnostics(payload)
+    if not isinstance(payload, dict):
+        raise OpenRouterUnavailable(
+            "OpenRouter hat eine unerwartete Erfolgsantwort zurückgegeben.",
+            code="provider_response_malformed",
+            diagnostics=diagnostics,
+        )
+    if "error" in payload:
+        code, message = _error_envelope_code(
+            payload,
+            response_format=response_format,
+            provider=provider,
+        )
+        raise OpenRouterUnavailable(message, code=code, diagnostics=diagnostics)
+
     usage = _usage_metadata(payload)
     try:
         choice = payload["choices"][0]
@@ -281,7 +372,8 @@ def request_openrouter(
     except (KeyError, IndexError, TypeError, AttributeError) as exc:
         raise OpenRouterUnavailable(
             "OpenRouter hat ein unerwartetes Antwortformat zurückgegeben.",
-            code="invalid_response",
+            code="provider_response_malformed",
+            diagnostics=diagnostics,
         ) from exc
     if not content:
         raise OpenRouterUnavailable(

@@ -591,6 +591,51 @@ def test_provider_timeout_retries_once_then_fails_closed(
 
 
 @pytest.mark.django_db
+def test_provider_response_shape_diagnostics_are_persisted_for_retry(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Response shape")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "response-shape"),
+    )
+    diagnostics = {
+        "response_type": "dict",
+        "has_error": False,
+        "choices_type": "NoneType",
+        "choices_count": 0,
+    }
+
+    def malformed_provider(**_kwargs):
+        raise OpenRouterUnavailable(
+            "Unerwartete OpenRouter-Antwort.",
+            code="provider_response_malformed",
+            diagnostics=diagnostics,
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        malformed_provider,
+    )
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    call = InvestigationRun.objects.get(pk=handle.run_id).model_calls.get()
+
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert call.status == InvestigationModelCall.Status.FAILED
+    assert call.error_code == "provider_response_malformed"
+    assert call.effective_parameters["response_diagnostics"] == diagnostics
+
+
+@pytest.mark.django_db
 def test_invalid_provider_response_retries_once_then_fails_closed(
     owner,
     business_unit,
