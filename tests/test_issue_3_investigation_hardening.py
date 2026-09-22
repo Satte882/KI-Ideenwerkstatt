@@ -814,8 +814,7 @@ def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
                 [
                     {
                         "claim": (
-                            "Fehlendes Wissen über Freigaberegeln ist "
-                            "Hauptursache der Verzögerung."
+                            "Fehlendes Wissen über Freigaberegeln ist Hauptursache der Verzögerung."
                         ),
                         "status": "hypothesis_unverified",
                     }
@@ -868,9 +867,7 @@ def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
     ]
     assert all(call.accepted_payload == {} for call in calls)
     assert all(
-        call.effective_parameters["response_diagnostics"][
-            "structured_contract_error_code"
-        ]
+        call.effective_parameters["response_diagnostics"]["structured_contract_error_code"]
         == "invalid_claim"
         for call in calls
     )
