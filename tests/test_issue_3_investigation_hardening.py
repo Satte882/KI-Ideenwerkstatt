@@ -660,9 +660,7 @@ def test_empty_provider_response_retries_once_then_fails_closed(
         (InvestigationModelCall.Status.FAILED, "empty_response"),
         (InvestigationModelCall.Status.FAILED, "empty_response"),
     ]
-    assert all(
-        call.effective_parameters["response_diagnostics"] == diagnostics for call in calls
-    )
+    assert all(call.effective_parameters["response_diagnostics"] == diagnostics for call in calls)
 
 
 @pytest.mark.django_db
