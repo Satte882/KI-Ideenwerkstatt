@@ -67,19 +67,31 @@ def planner_response_format(
                     },
                     "parameters": {
                         "type": "string",
-                        "description": "Serialisiertes JSON-Objekt mit Parametern für tool_name; leer exakt {}.",
+                        "description": (
+                            "Serialisiertes JSON-Objekt mit Parametern für tool_name; "
+                            "leer exakt {}."
+                        ),
                     },
                     "claim_register": {
                         "type": "string",
-                        "description": "Serialisiertes JSON-Array des vollständigen Claim-Registers; leer exakt [].",
+                        "description": (
+                            "Serialisiertes JSON-Array des vollständigen Claim-Registers; "
+                            "leer exakt []."
+                        ),
                     },
                     "brief_payload": {
                         "type": "string",
-                        "description": "Serialisiertes JSON-Objekt des aktuellen Decision-Brief-Arbeitsstands; leer exakt {}.",
+                        "description": (
+                            "Serialisiertes JSON-Objekt des aktuellen Decision-Brief-"
+                            "Arbeitsstands; leer exakt {}."
+                        ),
                     },
                     "source_relevance": {
                         "type": "string",
-                        "description": "Serialisiertes JSON-Objekt der Relevanz je Source-ID; leer exakt {}.",
+                        "description": (
+                            "Serialisiertes JSON-Objekt der Relevanz je Source-ID; "
+                            "leer exakt {}."
+                        ),
                     },
                     "progress_kind": {
                         "type": "string",
