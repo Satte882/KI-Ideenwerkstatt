@@ -600,7 +600,11 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     tmp_path,
     monkeypatch,
 ):
-    process = make_process(owner=owner, business_unit=business_unit, name="Empty response")
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="Empty response",
+    )
     (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     handle = start_investigation(
@@ -657,7 +661,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
         (InvestigationModelCall.Status.FAILED, "empty_response"),
     ]
     assert all(
-        call.effective_parameters["response_diagnostics"] == diagnostics for call in calls
+        call.effective_parameters["response_diagnostics"] == diagnostics
+        for call in calls
     )
 
 
