@@ -885,6 +885,8 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
         "recommendation_validation",
     }:
         raise InvestigationRunError("Claim-Bereich ist ungültig.", code="invalid_claim")
+    if not claim_kind:
+        raise InvestigationRunError("Claim-Art ist ungültig.", code="invalid_claim")
     if status not in {"open", "supported", "refuted", "conflicting"}:
         raise InvestigationRunError("Claim-Status ist ungültig.", code="invalid_claim")
     evidence_refs = [
