@@ -89,8 +89,7 @@ def planner_response_format(
                     "source_relevance": {
                         "type": "string",
                         "description": (
-                            "Serialisiertes JSON-Objekt der Relevanz je Source-ID; "
-                            "leer exakt {}."
+                            "Serialisiertes JSON-Objekt der Relevanz je Source-ID; leer exakt {}."
                         ),
                     },
                     "progress_kind": {
