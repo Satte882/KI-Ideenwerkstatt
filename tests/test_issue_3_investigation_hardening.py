@@ -35,10 +35,12 @@ from ki_radar.accelerator.investigation_prompts import (
     verifier_response_format,
 )
 from ki_radar.accelerator.investigation_runtime import (
+    BUDGET_VERSION,
     ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     InvestigationRunError,
     StartInvestigationRequest,
     apply_planner_state,
+    budget_exhausted,
     content_hash,
     execute_tool_step,
     materialize_brief_revision,
@@ -729,6 +731,96 @@ def test_budget_exhaustion_before_work_never_becomes_ready(
     assert run.clarification_reason == "budget_exhausted"
     assert run.status != InvestigationRun.Status.READY
     assert run.model_calls.count() == 0
+
+
+@pytest.mark.django_db
+def test_default_budget_version_allows_real_provider_headroom(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="budget-v2",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    assert BUDGET_VERSION == "vs1-budget-v2"
+    assert run.budget_limits["max_model_calls"] == 12
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v2"
+
+
+@pytest.mark.django_db
+def test_verifier_reserve_tracks_only_remaining_verifier_calls(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        run_limits={"max_model_calls": 8},
+        key="dynamic-verifier-reserve",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    usage = dict(run.usage)
+    usage["model_calls"] = 6
+    usage["verifier_calls"] = 0
+    run.usage = usage
+    run.save(update_fields=["usage", "updated_at"])
+
+    assert budget_exhausted(run, reserve_verifier=True) is True
+
+    usage["verifier_calls"] = 1
+    run.usage = usage
+    run.save(update_fields=["usage", "updated_at"])
+    run.refresh_from_db()
+
+    assert budget_exhausted(run, reserve_verifier=True) is False
+
+    usage = dict(run.usage)
+    usage["model_calls"] = 7
+    run.usage = usage
+    run.save(update_fields=["usage", "updated_at"])
+    run.refresh_from_db()
+
+    assert budget_exhausted(run, reserve_verifier=True) is True
+
+
+@pytest.mark.django_db
+def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Reserved budget")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(
+        owner=owner,
+        process=process,
+        root=tmp_path,
+        run_limits={"max_model_calls": 2},
+    )
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "reserved-budget-boundary"),
+    )
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == "budget_exhausted"
+    assert run.usage["model_calls"] == 0
+    assert run.usage["provider_attempts"] == 0
 
 
 @pytest.mark.django_db
