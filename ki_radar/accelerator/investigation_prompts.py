@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v4"
+PLANNER_PROMPT_VERSION = "vs1-planner-v5"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v7"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v8"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -25,6 +25,12 @@ Die Felder parameters, claim_register, brief_payload, source_relevance, progress
 clarification_payload werden als Strings transportiert, müssen aber IMMER serialisiertes JSON
 enthalten. Verwende für ein leeres Objekt exakt "{}" und für eine leere Liste exakt "[]".
 Verwende niemals einen leeren String, "unverändert" oder sonstigen Freitext als Ersatz für JSON.
+Jeder Eintrag in claim_register ist ein Objekt mit einer nichtleeren claim_id (maximal 100
+Zeichen), area aus problem_context|competing_hypotheses|solution_options|constraints_risks|
+recommendation_validation, einem nichtleeren claim_kind und status aus
+open|supported|refuted|conflicting. Nutze evidence_refs/counterevidence_refs nur als Arrays
+reproduzierbarer Referenzobjekte; kritische bestehende Claims dürfen nicht gelöscht,
+umbenannt oder herabgestuft werden.
 
 Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
 Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
@@ -76,7 +82,8 @@ def planner_response_format(
                         "type": "string",
                         "description": (
                             "Serialisiertes JSON-Array des vollständigen Claim-Registers; "
-                            "leer exakt []."
+                            "leer exakt []. Jeder Eintrag benötigt claim_id, area, "
+                            "claim_kind und status gemäß Planner-Vertrag."
                         ),
                     },
                     "brief_payload": {

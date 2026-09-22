@@ -53,6 +53,7 @@ from .investigation_runtime import (
     evaluate_run_policy,
     execute_tool_step,
     locked_run,
+    normalize_claim_register,
 )
 from .investigation_tools import (
     TOOL_VERSION,
@@ -112,6 +113,21 @@ def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
     _decode_structured_field(payload, "source_relevance", expected_type=Mapping, default={})
     _decode_structured_field(payload, "progress_payload", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
+
+
+def _validate_planner_semantic_payload(
+    run: InvestigationRun,
+    payload: Mapping[str, Any],
+) -> None:
+    """Validate the persisted planner state contract before accepting a model response."""
+    _validate_planner_transport_payload(payload)
+    raw_claims = _decode_structured_field(
+        payload,
+        "claim_register",
+        expected_type=list,
+        default=[],
+    )
+    normalize_claim_register(run, raw_claims)
 
 
 def _requested_model() -> str:
@@ -538,11 +554,16 @@ def _structured_provider_call(
         ) from exc
 
     validation_error: InvestigationRunError | None = None
+    validation_source_code = ""
     if payload_validator is not None:
         try:
             payload_validator(payload)
         except InvestigationRunError as exc:
-            validation_error = exc
+            validation_source_code = exc.code
+            validation_error = InvestigationRunError(
+                str(exc),
+                code="invalid_response",
+            )
 
     prompt_tokens, completion_tokens, total_tokens = _usage_tokens(result, messages)
     if reservation is not None:
@@ -604,6 +625,7 @@ def _structured_provider_call(
             parameters = dict(current.effective_parameters)
             parameters["response_diagnostics"] = {
                 "structured_contract_error": str(validation_error),
+                "structured_contract_error_code": validation_source_code,
             }
             current.effective_parameters = parameters
             update_fields = [
@@ -663,7 +685,7 @@ def request_planner_action(
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
         response_format=planner_response_format(),
-        payload_validator=_validate_planner_transport_payload,
+        payload_validator=lambda payload: _validate_planner_semantic_payload(run, payload),
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     claim_register = _decode_structured_field(
