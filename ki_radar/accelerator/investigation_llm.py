@@ -568,9 +568,7 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
-    source_rows = list(
-        run.source_snapshot.sources.order_by("id").values_list("id", "source_type")
-    )
+    source_rows = list(run.source_snapshot.sources.order_by("id").values_list("id", "source_type"))
     allowed_source_ids = tuple(str(source_id) for source_id, _source_type in source_rows)
     csv_source_ids = tuple(
         str(source_id)

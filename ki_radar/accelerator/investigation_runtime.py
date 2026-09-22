@@ -1105,7 +1105,16 @@ def normalize_tool_parameters(
             )
         normalized_filters = []
         allowed_operators = {
-            "eq", "neq", "gt", "gte", "lt", "lte", "in", "not_in", "is_null", "not_null"
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "not_in",
+            "is_null",
+            "not_null",
         }
         for item in filters:
             if not isinstance(item, Mapping) or set(item) != {"column", "operator", "value"}:

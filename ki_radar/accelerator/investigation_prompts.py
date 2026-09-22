@@ -40,8 +40,7 @@ fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
 _UUID_PATTERN = (
-    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-"
-    "[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
 )
 
 
@@ -114,8 +113,16 @@ def _parameter_schemas(
                             "operator": {
                                 "type": "string",
                                 "enum": [
-                                    "eq", "neq", "gt", "gte", "lt", "lte",
-                                    "in", "not_in", "is_null", "not_null",
+                                    "eq",
+                                    "neq",
+                                    "gt",
+                                    "gte",
+                                    "lt",
+                                    "lte",
+                                    "in",
+                                    "not_in",
+                                    "is_null",
+                                    "not_null",
                                 ],
                             },
                             "value": {},
