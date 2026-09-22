@@ -661,6 +661,13 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
     adaptive = InvestigationRun.objects.get(pk=adaptive_handle.run_id)
     fixed.refresh_from_db()
     assert_comparable_runs(fixed=fixed, adaptive=adaptive)
+    assert ISSUE4_INVESTIGATION_PROVIDER_POLICY == {
+        "zdr": True,
+        "data_collection": "deny",
+        "order": ["deepinfra/fp8"],
+        "allow_fallbacks": False,
+        "require_parameters": True,
+    }
     assert fixed.execution_snapshot["model_transport"]["provider_policy"] == (
         ISSUE4_INVESTIGATION_PROVIDER_POLICY
     )
