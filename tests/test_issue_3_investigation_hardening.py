@@ -858,12 +858,11 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        run_limits={"max_model_calls": 8},
         key="dynamic-verifier-reserve",
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     usage = dict(run.usage)
-    usage["model_calls"] = 6
+    usage["model_calls"] = 10
     usage["verifier_calls"] = 0
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
@@ -878,7 +877,7 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
     assert budget_exhausted(run, reserve_verifier=True) is False
 
     usage = dict(run.usage)
-    usage["model_calls"] = 7
+    usage["model_calls"] = 11
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
     run.refresh_from_db()
@@ -898,7 +897,11 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
         owner=owner,
         process=process,
         root=tmp_path,
-        run_limits={"max_model_calls": 2},
+        run_limits={
+            "max_model_calls": 2,
+            "max_verifier_calls": 2,
+            "verifier_reserved_model_calls": 2,
+        },
     )
     handle = start_investigation(
         actor=owner,
