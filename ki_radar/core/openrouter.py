@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -145,6 +146,20 @@ def _diagnostic_value(value: object) -> str | int | float | None:
     return None
 
 
+def _diagnostic_error_message(value: object) -> str | None:
+    """Keep a short actionable provider error without retaining credentials or payloads."""
+    if not isinstance(value, str):
+        return None
+    message = " ".join(value.split())
+    message = re.sub(r"(?i)(bearer\s+)[^\s,;]+", r"\1[redacted]", message)
+    message = re.sub(
+        r"(?i)((?:api[_-]?key|token|authorization)\s*[=:]\s*)[^\s,;]+",
+        r"\1[redacted]",
+        message,
+    )
+    return message[:240] or None
+
+
 def _response_diagnostics(payload: object) -> dict[str, object]:
     diagnostics: dict[str, object] = {"response_type": type(payload).__name__}
     if not isinstance(payload, dict):
@@ -166,6 +181,9 @@ def _response_diagnostics(payload: object) -> dict[str, object]:
         return diagnostics
 
     diagnostics["error_type"] = "object"
+    error_message = _diagnostic_error_message(error.get("message"))
+    if error_message is not None:
+        diagnostics["provider_error_message"] = error_message
     for key in ("code", "type"):
         value = _diagnostic_value(error.get(key))
         if value is not None:
@@ -310,6 +328,7 @@ def request_openrouter(
             payload = json.loads(_read_bounded(response).decode("utf-8"))
     except urllib.error.HTTPError as exc:
         error_payload = _http_error_payload(exc)
+        diagnostics = _response_diagnostics(error_payload)
         if exc.code == 429:
             code = "rate_limit"
             message = "OpenRouter hat das Aufruflimit erreicht. Bitte später erneut versuchen."
@@ -332,7 +351,7 @@ def request_openrouter(
         else:
             code = "provider_error"
             message = "Die OpenRouter-Anfrage wurde abgelehnt."
-        raise OpenRouterUnavailable(message, code=code) from exc
+        raise OpenRouterUnavailable(message, code=code, diagnostics=diagnostics) from exc
     except TimeoutError as exc:
         raise OpenRouterUnavailable(
             "Die OpenRouter-Anfrage hat das Zeitlimit überschritten.",

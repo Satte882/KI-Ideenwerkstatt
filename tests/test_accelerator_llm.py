@@ -455,6 +455,31 @@ def test_transport_accepts_text_content_blocks(monkeypatch):
             },
         ),
         (
+            {
+                "error": {
+                    "code": 400,
+                    "type": "invalid_request",
+                    "message": (
+                        "Invalid response schema: oneOf is unsupported; Authorization=secret"
+                    ),
+                }
+            },
+            "provider_error",
+            {
+                "response_type": "dict",
+                "has_error": True,
+                "has_model": False,
+                "has_usage": False,
+                "choices_type": "NoneType",
+                "choices_count": 0,
+                "error_type": "invalid_request",
+                "provider_error_message": (
+                    "Invalid response schema: oneOf is unsupported; Authorization=[redacted]"
+                ),
+                "error_code": 400,
+            },
+        ),
+        (
             {"model": "provider/model", "usage": {}},
             "provider_response_malformed",
             {

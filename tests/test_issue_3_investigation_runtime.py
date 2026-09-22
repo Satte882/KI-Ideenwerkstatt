@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Barrier
@@ -36,6 +37,7 @@ from ki_radar.accelerator.investigation_tools import (
     list_sources,
 )
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
+from ki_radar.core.openrouter import OpenRouterResult
 
 
 def make_process(*, owner, business_unit, name="VS1/2 Fall"):
@@ -626,3 +628,61 @@ def test_resume_does_not_silently_switch_model_alias(
         )
     assert exc_info.value.code == "execution_version_unavailable"
     assert run.model_calls.count() == 0
+
+
+@pytest.mark.django_db
+def test_planner_decodes_closed_schema_json_fields_without_changing_action_semantics(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "closed-schema"),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = {
+        "action": "tool",
+        "target_claim_id": "manifest",
+        "expected_discriminating_finding": "Quelle erfassen.",
+        "rationale": "Der Quellenraum wird zuerst gelesen.",
+        "tool_name": "list_sources",
+        "parameters": "{}",
+        "claim_register": "[]",
+        "brief_payload": "{}",
+        "source_relevance": "{}",
+        "progress_kind": "none",
+        "progress_payload": '{"coverage_change": false}',
+        "clarification_reason": "",
+        "clarification_payload": "{}",
+    }
+
+    def fake_provider(**kwargs):
+        schema = kwargs["response_format"]["json_schema"]["schema"]
+        assert schema["additionalProperties"] is False
+        assert schema["properties"]["parameters"]["type"] == "string"
+        content = json.dumps(payload)
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={"prompt_tokens": 10, "completion_tokens": 5},
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", fake_provider)
+
+    action = request_planner_action(
+        actor=owner,
+        run=run,
+        executor_token=handle.executor_token,
+    )
+
+    assert action.parameters == {}
+    assert action.claim_register == ()
+    assert action.brief_payload == {}
+    assert action.source_relevance == {}
+    assert action.progress_payload == {"coverage_change": False}
