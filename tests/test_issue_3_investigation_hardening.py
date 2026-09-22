@@ -785,6 +785,98 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
 
 
 @pytest.mark.django_db
+def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Invalid claim")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "invalid-claim-contract"),
+    )
+    provider_calls = 0
+
+    def invalid_claim_provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        payload = {
+            "action": "tool",
+            "target_claim_id": "claim_register",
+            "expected_discriminating_finding": "CSV profilieren.",
+            "rationale": "Quantitativen Befund vorbereiten.",
+            "tool_name": "list_sources",
+            "parameters": "{}",
+            "claim_register": json.dumps(
+                [
+                    {
+                        "claim": (
+                            "Fehlendes Wissen über Freigaberegeln ist "
+                            "Hauptursache der Verzögerung."
+                        ),
+                        "status": "hypothesis_unverified",
+                    }
+                ]
+            ),
+            "brief_payload": "{}",
+            "source_relevance": "{}",
+            "progress_kind": "none",
+            "progress_payload": "{}",
+            "clarification_reason": "",
+            "clarification_payload": "{}",
+        }
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        invalid_claim_provider,
+    )
+
+    first = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    second = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    calls = list(run.model_calls.order_by("created_at"))
+
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert provider_calls == 2
+    assert run.claim_register == []
+    assert run.steps.count() == 0
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "invalid_response"
+    assert run.clarification_payload["attempts"] == 2
+    assert [(call.status, call.error_code) for call in calls] == [
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+    ]
+    assert all(call.accepted_payload == {} for call in calls)
+    assert all(
+        call.effective_parameters["response_diagnostics"][
+            "structured_contract_error_code"
+        ]
+        == "invalid_claim"
+        for call in calls
+    )
+
+
+@pytest.mark.django_db
 def test_budget_exhaustion_before_work_never_becomes_ready(
     owner,
     business_unit,
@@ -1116,7 +1208,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v7"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v8"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
