@@ -1,7 +1,17 @@
 import os
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
+
+
+def maybe_prepare_issue4() -> None:
+    mode = os.getenv("ISSUE4_PREPARE_CAMPAIGN", "").strip().casefold()
+    if not mode:
+        return
+    if mode not in {"inspect", "apply"}:
+        raise CommandError("ISSUE4_PREPARE_CAMPAIGN must be empty, 'inspect', or 'apply'.")
+    call_command("prepare_issue4_campaign", inspect_only=(mode == "inspect"))
 
 
 class Command(BaseCommand):
@@ -13,6 +23,7 @@ class Command(BaseCommand):
         email = os.getenv("DJANGO_SUPERUSER_EMAIL", "").strip()
 
         if not username and not password:
+            maybe_prepare_issue4()
             return
         if not username or not password:
             raise CommandError(
@@ -31,3 +42,4 @@ class Command(BaseCommand):
 
         action = "created" if created else "updated"
         self.stdout.write(self.style.SUCCESS(f"Superuser {username!r} {action}."))
+        maybe_prepare_issue4()
