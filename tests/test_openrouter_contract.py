@@ -36,6 +36,7 @@ def test_empty_response_keeps_content_free_provider_diagnostics(monkeypatch):
             "prompt_tokens": 2376,
             "completion_tokens": 4096,
             "total_tokens": 6472,
+            "cost": 0.00042,
         },
         "choices": [
             {
@@ -106,4 +107,5 @@ def test_empty_response_keeps_content_free_provider_diagnostics(monkeypatch):
     assert diagnostics["usage_prompt_tokens"] == 2376
     assert diagnostics["usage_completion_tokens"] == 4096
     assert diagnostics["usage_total_tokens"] == 6472
+    assert diagnostics["usage_cost"] == 0.00042
     assert "internal reasoning omitted from diagnostics" not in json.dumps(diagnostics)
