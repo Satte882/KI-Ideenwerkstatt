@@ -929,6 +929,32 @@ def enforce_claim_guard(
             )
 
 
+def normalize_claim_register(
+    run: InvestigationRun,
+    raw_claims: list[Any] | tuple[Any, ...],
+) -> list[dict[str, Any]]:
+    """Normalize one complete proposed claim register against the current run."""
+    if not all(isinstance(item, Mapping) for item in raw_claims):
+        raise InvestigationRunError(
+            "Claim Register enthält einen ungültigen Eintrag.",
+            code="invalid_claim",
+        )
+    try:
+        normalized = [normalize_claim(run, item) for item in raw_claims]
+    except (TypeError, ValueError) as exc:
+        raise InvestigationRunError(
+            "Claim Register enthält einen ungültigen Eintrag.",
+            code="invalid_claim",
+        ) from exc
+    if len({item["claim_id"] for item in normalized}) != len(normalized):
+        raise InvestigationRunError(
+            "Claim-IDs müssen eindeutig sein.",
+            code="duplicate_claim_id",
+        )
+    enforce_claim_guard(list(run.claim_register), normalized)
+    return normalized
+
+
 def meaningful_register_change(
     before: list[dict[str, Any]],
     after: list[dict[str, Any]],
@@ -974,13 +1000,7 @@ def apply_planner_state(
     brief_changed = False
 
     if claim_register is not None:
-        normalized = [normalize_claim(run, item) for item in claim_register]
-        if len({item["claim_id"] for item in normalized}) != len(normalized):
-            raise InvestigationRunError(
-                "Claim-IDs müssen eindeutig sein.",
-                code="duplicate_claim_id",
-            )
-        enforce_claim_guard(before, normalized)
+        normalized = normalize_claim_register(run, claim_register)
         register_changed = content_hash(before) != content_hash(normalized)
         if register_changed:
             run.claim_register = normalized
