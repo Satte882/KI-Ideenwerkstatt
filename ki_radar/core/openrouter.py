@@ -180,7 +180,7 @@ def _response_diagnostics(payload: object) -> dict[str, object]:
     if returned_model is not None:
         diagnostics["returned_model"] = returned_model
     if isinstance(usage, dict):
-        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens", "cost"):
             value = _diagnostic_value(usage.get(key))
             if value is not None:
                 diagnostics[f"usage_{key}"] = value
