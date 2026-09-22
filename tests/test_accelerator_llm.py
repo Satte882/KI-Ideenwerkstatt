@@ -489,6 +489,7 @@ def test_transport_accepts_text_content_blocks(monkeypatch):
                 "has_usage": True,
                 "choices_type": "NoneType",
                 "choices_count": 0,
+                "returned_model": "provider/model",
                 "error_type": "",
             },
         ),
