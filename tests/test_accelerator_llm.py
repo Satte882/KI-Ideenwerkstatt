@@ -431,6 +431,72 @@ def test_transport_accepts_text_content_blocks(monkeypatch):
     assert result.content == '{"schema_version":"1.0"}'
 
 
+@pytest.mark.parametrize(
+    ("payload", "expected_code", "expected_diagnostics"),
+    [
+        (
+            {
+                "error": {
+                    "code": 503,
+                    "metadata": {"provider_error_code": "upstream_unavailable"},
+                }
+            },
+            "provider_unavailable",
+            {
+                "response_type": "dict",
+                "has_error": True,
+                "has_model": False,
+                "has_usage": False,
+                "choices_type": "NoneType",
+                "choices_count": 0,
+                "error_type": "object",
+                "error_code": 503,
+                "provider_error_code": "upstream_unavailable",
+            },
+        ),
+        (
+            {"model": "provider/model", "usage": {}},
+            "provider_response_malformed",
+            {
+                "response_type": "dict",
+                "has_error": False,
+                "has_model": True,
+                "has_usage": True,
+                "choices_type": "NoneType",
+                "choices_count": 0,
+                "error_type": "",
+            },
+        ),
+    ],
+)
+@override_settings(
+    OPENROUTER_API_KEY="test-key",
+    OPENROUTER_API_URL="https://openrouter.example/v1/chat/completions",
+    **VALID_LIMITS,
+)
+def test_transport_classifies_200_error_envelopes_and_malformed_success_shapes(
+    monkeypatch,
+    payload,
+    expected_code,
+    expected_diagnostics,
+):
+    monkeypatch.setattr(
+        openrouter.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: FakeResponse(payload),
+    )
+
+    with pytest.raises(openrouter.OpenRouterUnavailable) as exc_info:
+        openrouter.request_openrouter(
+            messages=[{"role": "user", "content": "test"}],
+            max_tokens=100,
+            timeout_seconds=5,
+        )
+
+    assert exc_info.value.code == expected_code
+    assert exc_info.value.diagnostics == expected_diagnostics
+
+
 @override_settings(
     OPENROUTER_API_KEY="test-key",
     OPENROUTER_API_URL="https://openrouter.example/v1/chat/completions",

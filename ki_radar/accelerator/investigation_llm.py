@@ -410,14 +410,31 @@ def _reserve_model_call(
     return call
 
 
-def _mark_model_failure(call_id, code: str) -> None:
+def _mark_model_failure(
+    call_id,
+    code: str,
+    *,
+    response_diagnostics: Mapping[str, Any] | None = None,
+) -> None:
     with transaction.atomic():
         call = InvestigationModelCall.objects.select_for_update().get(pk=call_id)
         if call.status == InvestigationModelCall.Status.RUNNING:
             call.status = InvestigationModelCall.Status.FAILED
             call.error_code = str(code or "provider_error")[:50]
             call.finished_at = timezone.now()
-            call.save(update_fields=["status", "error_code", "finished_at", "updated_at"])
+            if response_diagnostics:
+                parameters = dict(call.effective_parameters)
+                parameters["response_diagnostics"] = dict(response_diagnostics)
+                call.effective_parameters = parameters
+            call.save(
+                update_fields=[
+                    "status",
+                    "error_code",
+                    "effective_parameters",
+                    "finished_at",
+                    "updated_at",
+                ]
+            )
 
 
 def _structured_provider_call(
@@ -467,7 +484,11 @@ def _structured_provider_call(
                 reservation_id=reservation.pk,
                 reason=exc.code,
             )
-        _mark_model_failure(call.pk, exc.code)
+        _mark_model_failure(
+            call.pk,
+            exc.code,
+            response_diagnostics=exc.diagnostics,
+        )
         raise InvestigationRunError(str(exc), code=exc.code) from exc
     except (json.JSONDecodeError, ValueError) as exc:
         if reservation is not None:

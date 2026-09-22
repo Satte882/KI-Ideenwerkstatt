@@ -37,7 +37,13 @@ from .investigation_runtime import (
 )
 
 TRANSIENT_PROVIDER_CODES = frozenset(
-    {"timeout", "provider_unavailable", "rate_limit", "invalid_response"}
+    {
+        "timeout",
+        "provider_unavailable",
+        "rate_limit",
+        "invalid_response",
+        "provider_response_malformed",
+    }
 )
 PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)
 
