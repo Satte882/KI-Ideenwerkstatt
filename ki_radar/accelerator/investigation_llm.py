@@ -645,6 +645,7 @@ def _structured_provider_call(
         raise validation_error
     return payload, current
 
+
 def request_planner_action(
     *,
     actor,
