@@ -30,7 +30,9 @@ from ki_radar.accelerator.investigation_policy import PolicyOutcome
 from ki_radar.accelerator.investigation_prompts import (
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
+    VERIFIER_SCHEMA_VERSION,
     planner_response_format,
+    verifier_response_format,
 )
 from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
@@ -875,9 +877,12 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
 
 
 def test_planner_schema_allows_only_executable_tools():
-    schema = planner_response_format()["json_schema"]["schema"]
+    response_format = planner_response_format()
+    schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v4"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v5"
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
     assert set(schema["properties"]["tool_name"]["enum"]) == {
         "list_sources",
@@ -908,6 +913,14 @@ def test_planner_schema_binds_read_source_to_one_snapshot_source_id():
         "enum": list(source_ids),
     }
     assert "source_ids" not in parameters["properties"]
+
+
+def test_verifier_schema_uses_strict_structured_outputs():
+    response_format = verifier_response_format()
+
+    assert VERIFIER_SCHEMA_VERSION == "vs1-verifier-schema-v3"
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["strict"] is True
 
 
 @pytest.mark.django_db

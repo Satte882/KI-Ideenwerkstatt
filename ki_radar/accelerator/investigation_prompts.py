@@ -2,8 +2,8 @@ from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v3"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v4"
-VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v2"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v5"
+VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v3"
 
 PLANNER_TOOL_NAMES = (
     "list_sources",
@@ -152,7 +152,7 @@ def planner_response_format(
         "type": "json_schema",
         "json_schema": {
             "name": "vs1_planner_action",
-            "strict": False,
+            "strict": True,
             "schema": {
                 "type": "object",
                 "properties": {
@@ -223,7 +223,7 @@ def verifier_response_format() -> dict:
         "type": "json_schema",
         "json_schema": {
             "name": "vs1_verifier_report",
-            "strict": False,
+            "strict": True,
             "schema": {
                 "type": "object",
                 "properties": {
