@@ -776,8 +776,7 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
     assert all(call.prompt_tokens == 50 for call in calls)
     assert all(call.completion_tokens == 25 for call in calls)
     assert all(
-        "structured_contract_error"
-        in call.effective_parameters["response_diagnostics"]
+        "structured_contract_error" in call.effective_parameters["response_diagnostics"]
         for call in calls
     )
     assert run.usage["input_tokens"] == 100
