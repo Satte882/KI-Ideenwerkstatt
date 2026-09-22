@@ -10,13 +10,13 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from ki_radar.accounts.models import BusinessUnit
 from ki_radar.accelerator.investigation_evidence import create_evidence_campaign
 from ki_radar.accelerator.investigation_models import (
     InvestigationEvidenceCampaign,
     InvestigationSourceFolder,
 )
 from ki_radar.accelerator.investigation_tools import SnapshotRequest, create_source_snapshot
+from ki_radar.accounts.models import BusinessUnit
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
 
 PROCESS_NAME = "VS1/#4 Neutral Evidence Case"
@@ -115,7 +115,8 @@ class Command(BaseCommand):
             process = self._ensure_neutral_process(owner)
             if process.investigation_runs.exists():
                 raise CommandError(
-                    "Neutral Issue #4 ProcessAnalysis already has InvestigationRuns; refusing setup."
+                    "Neutral Issue #4 ProcessAnalysis already has InvestigationRuns; "
+                    "refusing setup."
                 )
             snapshot_ids: dict[str, str] = {}
             for variant, filenames in VARIANT_FILES.items():
@@ -216,7 +217,8 @@ class Command(BaseCommand):
             for field, expected in NEUTRAL_PROCESS_FIELDS.items():
                 if getattr(process, field) != expected:
                     raise CommandError(
-                        f"Existing neutral ProcessAnalysis differs in field {field}; refusing overwrite."
+                        f"Existing neutral ProcessAnalysis differs in field {field}; "
+                        "refusing overwrite."
                     )
             if process.solution_options.exists() or process.validations.exists():
                 raise CommandError(
