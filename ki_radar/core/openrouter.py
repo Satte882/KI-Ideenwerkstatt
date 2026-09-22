@@ -194,7 +194,7 @@ def _response_diagnostics(payload: object) -> dict[str, object]:
         message = choice.get("message")
         diagnostics["message_type"] = type(message).__name__
         if isinstance(message, dict):
-            diagnostics["message_keys"] = sorted(str(key) for key in message.keys())[:20]
+            diagnostics["message_keys"] = sorted(str(key) for key in message)[:20]
             content = message.get("content")
             diagnostics["content_type"] = type(content).__name__
             if isinstance(content, str):
