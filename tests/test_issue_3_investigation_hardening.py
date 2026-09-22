@@ -588,6 +588,71 @@ def test_provider_timeout_retries_once_then_fails_closed(
 
 
 @pytest.mark.django_db
+def test_invalid_provider_response_retries_once_then_fails_closed(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Invalid response")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "invalid-response"),
+    )
+    provider_calls = 0
+
+    def invalid_provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        return OpenRouterResult(
+            content="{invalid-json",
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=13,
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        invalid_provider,
+    )
+
+    first = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    second = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert first.policy.outcome == PolicyOutcome.CONTINUE
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert provider_calls == 2
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "invalid_response"
+    assert run.clarification_payload["attempts"] == 2
+    assert run.usage == {
+        "tool_calls": 0,
+        "model_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verifier_calls": 0,
+        "verifier_reads": 0,
+        "provider_attempts": 2,
+    }
+    assert list(run.model_calls.values_list("status", "error_code")) == [
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+    ]
+
+
+@pytest.mark.django_db
 def test_budget_exhaustion_before_work_never_becomes_ready(
     owner,
     business_unit,
