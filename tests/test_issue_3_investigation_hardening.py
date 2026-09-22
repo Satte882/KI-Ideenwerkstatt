@@ -703,6 +703,88 @@ def test_invalid_provider_response_retries_once_then_fails_closed(
 
 
 @pytest.mark.django_db
+def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Opaque field failure")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "opaque-field-failure"),
+    )
+    provider_calls = 0
+
+    def invalid_opaque_field_provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        payload = {
+            "action": "tool",
+            "target_claim_id": "problem",
+            "expected_discriminating_finding": "Quelle lesen.",
+            "rationale": "Beleg prüfen.",
+            "tool_name": "list_sources",
+            "parameters": "",
+            "claim_register": "[]",
+            "brief_payload": "{}",
+            "source_relevance": "{}",
+            "progress_kind": "none",
+            "progress_payload": "{}",
+            "clarification_reason": "",
+            "clarification_payload": "{}",
+        }
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        invalid_opaque_field_provider,
+    )
+
+    first = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    second = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    calls = list(run.model_calls.order_by("created_at"))
+
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert provider_calls == 2
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "invalid_response"
+    assert run.clarification_payload["attempts"] == 2
+    assert [(call.status, call.error_code) for call in calls] == [
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+    ]
+    assert all(call.returned_model == "test-model" for call in calls)
+    assert all(call.prompt_tokens == 50 for call in calls)
+    assert all(call.completion_tokens == 25 for call in calls)
+    assert all(
+        "structured_contract_error" in call.effective_parameters["response_diagnostics"]
+        for call in calls
+    )
+    assert run.usage["input_tokens"] == 100
+    assert run.usage["output_tokens"] == 50
+    assert run.steps.count() == 0
+
+
+@pytest.mark.django_db
 def test_budget_exhaustion_before_work_never_becomes_ready(
     owner,
     business_unit,
@@ -734,7 +816,7 @@ def test_budget_exhaustion_before_work_never_becomes_ready(
 
 
 @pytest.mark.django_db
-def test_default_budget_version_allows_real_provider_headroom(
+def test_default_budget_version_covers_benchmark_and_repair_envelope(
     owner,
     business_unit,
     tmp_path,
@@ -743,13 +825,26 @@ def test_default_budget_version_allows_real_provider_headroom(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        key="budget-v2",
+        key="budget-v3",
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
+    limits = run.budget_limits
 
-    assert BUDGET_VERSION == "vs1-budget-v2"
-    assert run.budget_limits["max_model_calls"] == 12
-    assert run.execution_snapshot["budget_version"] == "vs1-budget-v2"
+    assert BUDGET_VERSION == "vs1-budget-v3"
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v3"
+    assert limits["max_model_calls"] == 14
+    assert limits["max_verifier_calls"] == 4
+    assert limits["verifier_reserved_model_calls"] == 4
+    assert limits["max_repair_cycles"] == 1
+
+    # Four verifier calls cover two possible two-call verifier rounds:
+    # initial verification and the one allowed post-repair verification.
+    assert limits["max_verifier_calls"] == 2 * (1 + limits["max_repair_cycles"])
+
+    # Every possible model call retains the frozen 4096-token transport ceiling;
+    # the verifier reserve covers all four possible verifier calls at that ceiling.
+    assert limits["max_output_tokens"] == limits["max_model_calls"] * 4096
+    assert limits["verifier_reserved_output_tokens"] == limits["max_verifier_calls"] * 4096
 
 
 @pytest.mark.django_db
@@ -762,12 +857,11 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        run_limits={"max_model_calls": 8},
         key="dynamic-verifier-reserve",
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     usage = dict(run.usage)
-    usage["model_calls"] = 6
+    usage["model_calls"] = 10
     usage["verifier_calls"] = 0
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
@@ -782,7 +876,7 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
     assert budget_exhausted(run, reserve_verifier=True) is False
 
     usage = dict(run.usage)
-    usage["model_calls"] = 7
+    usage["model_calls"] = 11
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
     run.refresh_from_db()
@@ -802,7 +896,11 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
         owner=owner,
         process=process,
         root=tmp_path,
-        run_limits={"max_model_calls": 2},
+        run_limits={
+            "max_model_calls": 2,
+            "max_verifier_calls": 2,
+            "verifier_reserved_model_calls": 2,
+        },
     )
     handle = start_investigation(
         actor=owner,
@@ -1018,7 +1116,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v6"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v7"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
@@ -1061,6 +1159,9 @@ def test_planner_schema_uses_portable_closed_strict_subset():
         "clarification_payload",
     ):
         assert schema["properties"][name]["type"] == "string"
+
+    assert "{}" in schema["properties"]["parameters"]["description"]
+    assert "[]" in schema["properties"]["claim_register"]["description"]
 
 
 def test_verifier_schema_uses_strict_structured_outputs():

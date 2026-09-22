@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -102,6 +102,16 @@ def _decode_structured_field(
             code="invalid_response",
         )
     return value
+
+
+def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
+    """Validate opaque JSON-string fields before a provider response becomes SUCCESS."""
+    _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
+    _decode_structured_field(payload, "claim_register", expected_type=list, default=[])
+    _decode_structured_field(payload, "brief_payload", expected_type=Mapping, default={})
+    _decode_structured_field(payload, "source_relevance", expected_type=Mapping, default={})
+    _decode_structured_field(payload, "progress_payload", expected_type=Mapping, default={})
+    _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
 
 
 def _requested_model() -> str:
@@ -472,6 +482,7 @@ def _structured_provider_call(
     schema_version: str,
     context: Mapping[str, Any],
     response_format: dict[str, Any],
+    payload_validator: Callable[[Mapping[str, Any]], None] | None = None,
 ) -> tuple[dict[str, Any], InvestigationModelCall]:
     call = _reserve_model_call(
         actor=actor,
@@ -526,6 +537,13 @@ def _structured_provider_call(
             code="invalid_response",
         ) from exc
 
+    validation_error: InvestigationRunError | None = None
+    if payload_validator is not None:
+        try:
+            payload_validator(payload)
+        except InvestigationRunError as exc:
+            validation_error = exc
+
     prompt_tokens, completion_tokens, total_tokens = _usage_tokens(result, messages)
     if reservation is not None:
         raw_prompt = result.usage.get("prompt_tokens")
@@ -569,43 +587,62 @@ def _structured_provider_call(
         if stale:
             current.status = InvestigationModelCall.Status.DISCARDED
             current.error_code = "stale_executor"
-            current.save(
-                update_fields=[
-                    "status",
-                    "error_code",
-                    "returned_model",
-                    "model_revision",
-                    "prompt_tokens",
-                    "completion_tokens",
-                    "total_tokens",
-                    "finished_at",
-                    "updated_at",
-                ]
-            )
+            update_fields = [
+                "status",
+                "error_code",
+                "returned_model",
+                "model_revision",
+                "prompt_tokens",
+                "completion_tokens",
+                "total_tokens",
+                "finished_at",
+                "updated_at",
+            ]
+        elif validation_error is not None:
+            current.status = InvestigationModelCall.Status.FAILED
+            current.error_code = validation_error.code
+            parameters = dict(current.effective_parameters)
+            parameters["response_diagnostics"] = {
+                "structured_contract_error": str(validation_error),
+            }
+            current.effective_parameters = parameters
+            update_fields = [
+                "status",
+                "error_code",
+                "effective_parameters",
+                "returned_model",
+                "model_revision",
+                "prompt_tokens",
+                "completion_tokens",
+                "total_tokens",
+                "finished_at",
+                "updated_at",
+            ]
         else:
             current.status = InvestigationModelCall.Status.SUCCESS
             current.accepted_payload = payload
             current.accepted_payload_hash = content_hash(payload)
-            current.save(
-                update_fields=[
-                    "status",
-                    "returned_model",
-                    "model_revision",
-                    "accepted_payload",
-                    "accepted_payload_hash",
-                    "prompt_tokens",
-                    "completion_tokens",
-                    "total_tokens",
-                    "finished_at",
-                    "updated_at",
-                ]
-            )
+            update_fields = [
+                "status",
+                "returned_model",
+                "model_revision",
+                "accepted_payload",
+                "accepted_payload_hash",
+                "prompt_tokens",
+                "completion_tokens",
+                "total_tokens",
+                "finished_at",
+                "updated_at",
+            ]
+        current.save(update_fields=update_fields)
 
     if stale:
         raise InvestigationRunError(
             "Verspätetes Modellergebnis wurde verworfen.",
             code="stale_executor",
         )
+    if validation_error is not None:
+        raise validation_error
     return payload, current
 
 
@@ -626,6 +663,7 @@ def request_planner_action(
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
         response_format=planner_response_format(),
+        payload_validator=_validate_planner_transport_payload,
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     claim_register = _decode_structured_field(

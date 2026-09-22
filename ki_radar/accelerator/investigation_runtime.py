@@ -63,7 +63,7 @@ from .investigation_tools import (
 )
 
 LOOP_VERSION = "vs1-agent-loop-v1"
-BUDGET_VERSION = "vs1-budget-v2"
+BUDGET_VERSION = "vs1-budget-v3"
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
@@ -76,15 +76,22 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 
 DEFAULT_BUDGET = {
     "max_tool_calls": 12,
-    "max_model_calls": 12,
-    "max_verifier_calls": 2,
-    "max_runtime_seconds": 600,
-    "max_input_tokens": 60_000,
-    "max_output_tokens": 12_000,
-    "verifier_reserved_model_calls": 2,
-    "verifier_reserved_input_tokens": 10_000,
-    "verifier_reserved_output_tokens": 3_000,
-    "verifier_reserved_seconds": 120,
+    # Benchmark envelope: up to 10 planner attempts plus two verifier rounds
+    # (initial verification + one repair cycle), each verifier round allowing
+    # the existing two-call read-and-recheck path.
+    "max_model_calls": 14,
+    "max_verifier_calls": 4,
+    # Restore the original v1 per-call input/runtime headroom (60k/8 and
+    # 600s/8), which budget v2 did not scale when model calls increased.
+    # Output is derived from the frozen 4096-token transport cap for all
+    # 14 possible model calls.
+    "max_runtime_seconds": 1_050,
+    "max_input_tokens": 105_000,
+    "max_output_tokens": 57_344,
+    "verifier_reserved_model_calls": 4,
+    "verifier_reserved_input_tokens": 20_000,
+    "verifier_reserved_output_tokens": 16_384,
+    "verifier_reserved_seconds": 300,
     "max_verifier_reads": 12,
     "max_repair_cycles": 1,
 }
