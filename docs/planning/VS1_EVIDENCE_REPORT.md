@@ -93,6 +93,23 @@ Unbekannte Kosten werden nicht als 0 behandelt. Ohne belastbare Preisbasis sind 
 
 Timeout oder fehlende Usage-Metadaten halten die konservative Reservierung. Ein Neustart oder neuer Run setzt den Verbrauch nicht zurück. Eine Fortsetzung benötigt eine explizite versionierte Autorisierung und übernimmt den bisherigen Verbrauch.
 
+### Kalibrierungsfehler A/1 und A/2 vom 22.09.2026
+
+Die autorisierte Campaign `9a59cbf5-f017-46b8-9a26-c53ad73a5d46` enthält zwei reale
+Calibration-Aufrufe für Variante A. Beide bleiben als technische Fehlversuche und mit ihrem
+tatsächlichen Verbrauch erhalten; sie werden weder gelöscht noch durch Ersatzläufe verdeckt.
+
+| Run | Ergebnis | Provideraufrufe | Inputtokens | Outputtokens | `cost_microunits` |
+| --- | --- | ---: | ---: | ---: | ---: |
+| A/1 `e2fb21f2-b4e7-4431-94ae-95ced5f20da5` | technisch fehlgeschlagen: nicht erlaubtes Tool `read_file` | 1 | 1.262 | 514 | 169 |
+| A/2 `057d3c09-be1a-4635-9229-2238abaf1675` | technisch fehlgeschlagen: ungültige `read_source`-Parameter (`source_ids` statt genau einer `source_id`) | 1 | 1.262 | 613 | 187 |
+| **Campaign gesamt nach A/2** |  | **2** | **2.524** | **1.127** | **356** |
+
+Bei A/2 wurde außerdem ein Toolversuch im Runbudget gezählt; der Aufruf erreichte wegen der
+ungültigen UUID jedoch kein Quellenwerkzeug. Der Run wurde nachträglich korrekt mit
+`technical_failure` / `invalid_tool_parameters` terminalisiert. Im Zuge der Fehlerbehebung
+wurden keine weiteren Provideraufrufe oder Kalibrierungen gestartet.
+
 ## Automatisierte Nachweise
 
 Automatisierte #4-Tests decken insbesondere ab:

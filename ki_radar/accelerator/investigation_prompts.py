@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v2"
+PLANNER_PROMPT_VERSION = "vs1-planner-v3"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v3"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v2"
 
 PLANNER_TOOL_NAMES = (
@@ -18,6 +18,9 @@ Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quel
 Begründe knapp Ziel-Prüfpunkt und unterscheidenden erwarteten Befund; liefere keine
 verborgene Gedankenkette. Erfinde keine Fakten, erweitere weder Scope noch Budget und
 triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen Rückfrage.
+Halte den werkzeugspezifischen Parametervertrag exakt ein. read_source und profile_csv
+akzeptieren genau eine source_id pro Aufruf; mehrere Quellen werden in getrennten Schritten
+gelesen. Verwende ausschließlich Source-IDs aus dem bereitgestellten Quellenmanifest.
 
 Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
 Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
@@ -36,7 +39,115 @@ strukturierte Findings statt einer bloßen Freigabe. Erfinde keine Evidenz und t
 fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
-def planner_response_format() -> dict:
+_UUID_PATTERN = (
+    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+)
+
+
+def _source_id_schema(allowed_source_ids: tuple[str, ...]) -> dict:
+    if allowed_source_ids:
+        return {"type": "string", "enum": list(allowed_source_ids)}
+    return {"type": "string", "pattern": _UUID_PATTERN}
+
+
+def _parameter_schemas(
+    *,
+    allowed_source_ids: tuple[str, ...],
+    csv_source_ids: tuple[str, ...],
+) -> dict[str, dict]:
+    source_id = _source_id_schema(allowed_source_ids)
+    csv_source_id = _source_id_schema(csv_source_ids or allowed_source_ids)
+    return {
+        "list_sources": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": False,
+        },
+        "search_sources": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "minLength": 1},
+                "cursor": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+        "read_source": {
+            "type": "object",
+            "properties": {
+                "source_id": source_id,
+                "cursor": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 200},
+                "columns": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
+                    "uniqueItems": True,
+                },
+            },
+            "required": ["source_id"],
+            "additionalProperties": False,
+        },
+        "profile_csv": {
+            "type": "object",
+            "properties": {"source_id": csv_source_id},
+            "required": ["source_id"],
+            "additionalProperties": False,
+        },
+        "compare_groups": {
+            "type": "object",
+            "properties": {
+                "source_id": csv_source_id,
+                "group_by": {"type": "string", "minLength": 1},
+                "aggregation": {
+                    "type": "string",
+                    "enum": ["count", "sum", "mean", "median", "min", "max"],
+                },
+                "value_column": {"type": ["string", "null"]},
+                "filters": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "column": {"type": "string", "minLength": 1},
+                            "operator": {
+                                "type": "string",
+                                "enum": [
+                                    "eq",
+                                    "neq",
+                                    "gt",
+                                    "gte",
+                                    "lt",
+                                    "lte",
+                                    "in",
+                                    "not_in",
+                                    "is_null",
+                                    "not_null",
+                                ],
+                            },
+                            "value": {},
+                        },
+                        "required": ["column", "operator", "value"],
+                        "additionalProperties": False,
+                    },
+                },
+                "unit_column": {"type": ["string", "null"]},
+            },
+            "required": ["source_id", "group_by", "aggregation"],
+            "additionalProperties": False,
+        },
+    }
+
+
+def planner_response_format(
+    *,
+    allowed_source_ids: tuple[str, ...] = (),
+    csv_source_ids: tuple[str, ...] = (),
+) -> dict:
+    parameter_schemas = _parameter_schemas(
+        allowed_source_ids=allowed_source_ids,
+        csv_source_ids=csv_source_ids,
+    )
     return {
         "type": "json_schema",
         "json_schema": {
@@ -53,7 +164,7 @@ def planner_response_format() -> dict:
                         "type": "string",
                         "enum": list(PLANNER_TOOL_NAMES),
                     },
-                    "parameters": {"type": "object"},
+                    "parameters": {"oneOf": list(parameter_schemas.values())},
                     "claim_register": {"type": "array", "items": {"type": "object"}},
                     "brief_payload": {"type": "object"},
                     "source_relevance": {"type": "object"},
@@ -91,6 +202,16 @@ def planner_response_format() -> dict:
                     "progress_payload",
                     "clarification_reason",
                     "clarification_payload",
+                ],
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {"tool_name": {"const": tool_name}},
+                            "required": ["tool_name"],
+                        },
+                        "then": {"properties": {"parameters": parameter_schema}},
+                    }
+                    for tool_name, parameter_schema in parameter_schemas.items()
                 ],
             },
         },

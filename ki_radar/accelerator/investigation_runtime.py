@@ -999,8 +999,62 @@ def apply_planner_state(
 def normalize_tool_parameters(
     tool_name: str,
     raw: Mapping[str, Any],
+    *,
+    allowed_source_ids: frozenset[str] | None = None,
 ) -> dict[str, Any]:
-    params = dict(raw or {})
+    if not isinstance(raw, Mapping):
+        raise InvestigationRunError(
+            "Werkzeugparameter müssen ein Objekt sein.",
+            code="invalid_tool_parameters",
+        )
+    params = dict(raw)
+
+    def reject_unknown(allowed: set[str]) -> None:
+        if unknown := sorted(set(params) - allowed):
+            raise InvestigationRunError(
+                f"Unbekannte Werkzeugparameter: {', '.join(unknown)}.",
+                code="invalid_tool_parameters",
+            )
+
+    def integer(name: str, default: int, *, minimum: int, maximum: int | None = None) -> int:
+        value = params.get(name, default)
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise InvestigationRunError(
+                f"{name} muss eine Ganzzahl sein.",
+                code="invalid_tool_parameters",
+            )
+        if value < minimum or (maximum is not None and value > maximum):
+            raise InvestigationRunError(
+                f"{name} liegt außerhalb des zulässigen Bereichs.",
+                code="invalid_tool_parameters",
+            )
+        return value
+
+    def nonempty_text(name: str) -> str:
+        value = params.get(name)
+        if not isinstance(value, str) or not value.strip():
+            raise InvestigationRunError(
+                f"{name} muss eine nichtleere Zeichenfolge sein.",
+                code="invalid_tool_parameters",
+            )
+        return value.strip()
+
+    def source_id() -> str:
+        raw_source_id = nonempty_text("source_id")
+        try:
+            normalized = str(uuid.UUID(raw_source_id))
+        except (ValueError, AttributeError) as exc:
+            raise InvestigationRunError(
+                "source_id muss eine gültige UUID sein.",
+                code="invalid_tool_parameters",
+            ) from exc
+        if allowed_source_ids is not None and normalized not in allowed_source_ids:
+            raise InvestigationRunError(
+                "source_id gehört nicht zum gebundenen Quellen-Snapshot.",
+                code="invalid_tool_parameters",
+            )
+        return normalized
+
     if tool_name == "list_sources":
         if params:
             raise InvestigationRunError(
@@ -1009,52 +1063,111 @@ def normalize_tool_parameters(
             )
         return {}
     if tool_name == "search_sources":
+        reject_unknown({"query", "cursor", "limit"})
         return {
-            "query": str(params.get("query") or "").strip(),
-            "cursor": int(params.get("cursor", 0)),
-            "limit": int(params.get("limit", 20)),
+            "query": nonempty_text("query"),
+            "cursor": integer("cursor", 0, minimum=0),
+            "limit": integer("limit", 20, minimum=1, maximum=50),
         }
     if tool_name == "read_source":
-        columns = params.get("columns") or []
-        if not isinstance(columns, (list, tuple)):
+        reject_unknown({"source_id", "cursor", "limit", "columns"})
+        columns = params.get("columns", [])
+        if not isinstance(columns, list) or any(
+            not isinstance(item, str) or not item for item in columns
+        ):
             raise InvestigationRunError(
-                "columns muss eine Liste sein.",
+                "columns muss eine Liste nichtleerer Zeichenfolgen sein.",
+                code="invalid_tool_parameters",
+            )
+        if len(columns) != len(set(columns)):
+            raise InvestigationRunError(
+                "columns darf keine Duplikate enthalten.",
                 code="invalid_tool_parameters",
             )
         return {
-            "source_id": str(params.get("source_id") or ""),
-            "cursor": int(params.get("cursor", 0)),
-            "limit": int(params.get("limit", 100)),
-            "columns": [str(item) for item in columns],
+            "source_id": source_id(),
+            "cursor": integer("cursor", 0, minimum=0),
+            "limit": integer("limit", 100, minimum=1, maximum=200),
+            "columns": list(columns),
         }
     if tool_name == "profile_csv":
-        return {"source_id": str(params.get("source_id") or "")}
+        reject_unknown({"source_id"})
+        return {"source_id": source_id()}
     if tool_name == "compare_groups":
-        filters = params.get("filters") or []
+        reject_unknown(
+            {"source_id", "group_by", "aggregation", "value_column", "filters", "unit_column"}
+        )
+        filters = params.get("filters", [])
         if not isinstance(filters, list):
             raise InvestigationRunError(
                 "filters muss eine Liste sein.",
                 code="invalid_tool_parameters",
             )
+        normalized_filters = []
+        allowed_operators = {
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "not_in",
+            "is_null",
+            "not_null",
+        }
+        for item in filters:
+            if not isinstance(item, Mapping) or set(item) != {"column", "operator", "value"}:
+                raise InvestigationRunError(
+                    "Jeder Filter benötigt genau column, operator und value.",
+                    code="invalid_tool_parameters",
+                )
+            column = item.get("column")
+            operator = item.get("operator")
+            if (
+                not isinstance(column, str)
+                or not column.strip()
+                or operator not in allowed_operators
+            ):
+                raise InvestigationRunError(
+                    "Filterspalte oder -operator ist ungültig.",
+                    code="invalid_tool_parameters",
+                )
+            value = item.get("value")
+            if operator in {"in", "not_in"} and not isinstance(value, list):
+                raise InvestigationRunError(
+                    "in/not_in benötigen eine Werteliste.",
+                    code="invalid_tool_parameters",
+                )
+            normalized_filters.append(
+                {"column": column.strip(), "operator": operator, "value": value}
+            )
+        aggregation = nonempty_text("aggregation")
+        if aggregation not in {"count", "sum", "mean", "median", "min", "max"}:
+            raise InvestigationRunError(
+                "aggregation ist ungültig.",
+                code="invalid_tool_parameters",
+            )
+        value_column = params.get("value_column")
+        unit_column = params.get("unit_column")
+        for name, value in (("value_column", value_column), ("unit_column", unit_column)):
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise InvestigationRunError(
+                    f"{name} muss null oder eine nichtleere Zeichenfolge sein.",
+                    code="invalid_tool_parameters",
+                )
+        if aggregation != "count" and value_column is None:
+            raise InvestigationRunError(
+                "Diese Aggregation benötigt value_column.",
+                code="invalid_tool_parameters",
+            )
         return {
-            "source_id": str(params.get("source_id") or ""),
-            "group_by": str(params.get("group_by") or ""),
-            "aggregation": str(params.get("aggregation") or ""),
-            "value_column": (
-                str(params.get("value_column")) if params.get("value_column") is not None else None
-            ),
-            "filters": [
-                {
-                    "column": str(item.get("column") or ""),
-                    "operator": str(item.get("operator") or ""),
-                    "value": item.get("value"),
-                }
-                for item in filters
-                if isinstance(item, Mapping)
-            ],
-            "unit_column": (
-                str(params.get("unit_column")) if params.get("unit_column") is not None else None
-            ),
+            "source_id": source_id(),
+            "group_by": nonempty_text("group_by"),
+            "aggregation": aggregation,
+            "value_column": value_column.strip() if value_column is not None else None,
+            "filters": normalized_filters,
+            "unit_column": unit_column.strip() if unit_column is not None else None,
         }
     raise InvestigationRunError("Werkzeug ist nicht erlaubt.", code="tool_not_allowed")
 
@@ -1107,6 +1220,44 @@ def run_tool(
     raise InvestigationRunError("Werkzeug ist nicht erlaubt.", code="tool_not_allowed")
 
 
+@transaction.atomic
+def fail_run_technical(
+    *,
+    actor,
+    run_id,
+    executor_token,
+    error: InvestigationRunError,
+    impact: str,
+) -> InvestigationRun:
+    run = locked_run(actor=actor, run_id=run_id)
+    assert_active(run)
+    assert_executor(run, executor_token)
+    run.status = InvestigationRun.Status.FAILED
+    run.clarification_reason = "technical_failure"
+    run.clarification_payload = {
+        "error_code": error.code,
+        "impact": impact,
+        "required_action": (
+            "Tool-/Schema-Vertrag technisch prüfen; keinen fachlichen Schluss ableiten."
+        ),
+    }
+    run.finished_at = timezone.now()
+    run.executor_generation += 1
+    run.executor_token = uuid.uuid4()
+    run.save(
+        update_fields=[
+            "status",
+            "clarification_reason",
+            "clarification_payload",
+            "finished_at",
+            "executor_generation",
+            "executor_token",
+            "updated_at",
+        ]
+    )
+    return run
+
+
 def execute_tool_step(
     *,
     actor,
@@ -1120,7 +1271,28 @@ def execute_tool_step(
 ) -> InvestigationStep:
     if tool_name not in ALLOWED_TOOLS:
         raise InvestigationRunError("Werkzeug ist nicht erlaubt.", code="tool_not_allowed")
-    params = normalize_tool_parameters(tool_name, parameters)
+    allowed_source_ids = frozenset(
+        str(source_id)
+        for source_id in InvestigationSource.objects.filter(
+            snapshot__investigation_runs__pk=run_id
+        ).values_list("pk", flat=True)
+    )
+    try:
+        params = normalize_tool_parameters(
+            tool_name,
+            parameters,
+            allowed_source_ids=allowed_source_ids,
+        )
+    except InvestigationRunError as exc:
+        if exc.code == "invalid_tool_parameters":
+            fail_run_technical(
+                actor=actor,
+                run_id=run_id,
+                executor_token=executor_token,
+                error=exc,
+                impact="Die Untersuchung wurde wegen ungültiger Werkzeugparameter beendet.",
+            )
+        raise
 
     with transaction.atomic():
         run = locked_run(actor=actor, run_id=run_id)
