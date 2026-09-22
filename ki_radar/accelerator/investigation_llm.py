@@ -24,6 +24,7 @@ from .investigation_evidence import (
 from .investigation_models import (
     InvestigationModelCall,
     InvestigationRun,
+    InvestigationSource,
     InvestigationStep,
     InvestigationVerifierReport,
 )
@@ -567,6 +568,15 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
+    source_rows = list(
+        run.source_snapshot.sources.order_by("id").values_list("id", "source_type")
+    )
+    allowed_source_ids = tuple(str(source_id) for source_id, _source_type in source_rows)
+    csv_source_ids = tuple(
+        str(source_id)
+        for source_id, source_type in source_rows
+        if source_type == InvestigationSource.SourceType.CSV
+    )
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -576,7 +586,10 @@ def request_planner_action(
         prompt_version=PLANNER_PROMPT_VERSION,
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
-        response_format=planner_response_format(),
+        response_format=planner_response_format(
+            allowed_source_ids=allowed_source_ids,
+            csv_source_ids=csv_source_ids,
+        ),
     )
     return PlannerAction(
         action=str(payload.get("action") or ""),

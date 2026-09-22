@@ -812,7 +812,7 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
 def test_planner_schema_allows_only_executable_tools():
     schema = planner_response_format()["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v3"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v4"
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
     assert set(schema["properties"]["tool_name"]["enum"]) == {
         "list_sources",
@@ -821,6 +821,28 @@ def test_planner_schema_allows_only_executable_tools():
         "profile_csv",
         "compare_groups",
     }
+
+
+def test_planner_schema_binds_read_source_to_one_snapshot_source_id():
+    source_ids = (
+        "6a62ed0a-dc71-4817-80a1-e2571126900d",
+        "b3f3f899-0381-45c2-bea1-001931ad2ed5",
+    )
+    schema = planner_response_format(allowed_source_ids=source_ids)["json_schema"]["schema"]
+    read_condition = next(
+        item
+        for item in schema["allOf"]
+        if item["if"]["properties"]["tool_name"].get("const") == "read_source"
+    )
+    parameters = read_condition["then"]["properties"]["parameters"]
+
+    assert parameters["required"] == ["source_id"]
+    assert parameters["additionalProperties"] is False
+    assert parameters["properties"]["source_id"] == {
+        "type": "string",
+        "enum": list(source_ids),
+    }
+    assert "source_ids" not in parameters["properties"]
 
 
 @pytest.mark.django_db
@@ -832,6 +854,13 @@ def test_planner_schema_allows_only_executable_tools():
         (
             {"action": "clarify", "clarification_reason": "ask_anything"},
             "invalid_reason_code",
+        ),
+        (
+            {
+                "tool_name": "read_source",
+                "parameters": {"source_ids": ["6a62ed0a-dc71-4817-80a1-e2571126900d"]},
+            },
+            "invalid_tool_parameters",
         ),
     ],
 )
@@ -875,6 +904,39 @@ def test_invalid_planner_contract_is_persisted_as_terminal_technical_failure(
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == expected_code
     assert run.steps.count() == 0
+
+
+@pytest.mark.django_db
+def test_direct_invalid_tool_parameters_terminalize_run_without_consuming_tool_budget(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Invalid tool input")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "invalid-tool-input"),
+    )
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name="read_source",
+            parameters={"source_id": ""},
+        )
+
+    assert exc_info.value.code == "invalid_tool_parameters"
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.status == InvestigationRun.Status.FAILED
+    assert run.finished_at is not None
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "invalid_tool_parameters"
+    assert run.steps.count() == 0
+    assert run.usage["tool_calls"] == 0
 
 
 @pytest.mark.django_db

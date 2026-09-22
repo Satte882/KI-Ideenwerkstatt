@@ -141,7 +141,10 @@ def _set_failed_planner_contract(
     return run
 
 
-def _planner_contract_error(action: PlannerAction) -> InvestigationRunError | None:
+def _planner_contract_error(
+    run: InvestigationRun,
+    action: PlannerAction,
+) -> InvestigationRunError | None:
     if action.action not in {"tool", "verify", "clarify"}:
         return InvestigationRunError(
             "Planner-Aktion ist ungültig.",
@@ -152,6 +155,18 @@ def _planner_contract_error(action: PlannerAction) -> InvestigationRunError | No
             "Planner forderte ein nicht erlaubtes Werkzeug an.",
             code="tool_not_allowed",
         )
+    if action.action == "tool":
+        try:
+            normalize_tool_parameters(
+                action.tool_name,
+                action.parameters,
+                allowed_source_ids=frozenset(
+                    str(source_id)
+                    for source_id in run.source_snapshot.sources.values_list("pk", flat=True)
+                ),
+            )
+        except InvestigationRunError as exc:
+            return exc
     if action.progress_kind not in PLANNER_PROGRESS_KINDS:
         return InvestigationRunError(
             "Planner lieferte eine ungültige Fortschrittsart.",
@@ -314,7 +329,7 @@ def advance_investigation(
             )
         raise
 
-    contract_error = _planner_contract_error(action)
+    contract_error = _planner_contract_error(run, action)
     if contract_error is not None:
         _set_failed_planner_contract(
             actor=actor,
