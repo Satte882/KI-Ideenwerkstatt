@@ -128,19 +128,7 @@ def _validate_planner_semantic_payload(
         expected_type=list,
         default=[],
     )
-    if not all(isinstance(item, Mapping) for item in raw_claims):
-        raise InvestigationRunError(
-            "Claim Register enthält einen ungültigen Eintrag.",
-            code="invalid_claim",
-        )
-
-    normalized = [normalize_claim(run, item) for item in raw_claims]
-    if len({item["claim_id"] for item in normalized}) != len(normalized):
-        raise InvestigationRunError(
-            "Claim-IDs müssen eindeutig sein.",
-            code="duplicate_claim_id",
-        )
-    enforce_claim_guard(list(run.claim_register), normalized)
+    normalize_claim_register(run, raw_claims)
 
 
 def _requested_model() -> str:
