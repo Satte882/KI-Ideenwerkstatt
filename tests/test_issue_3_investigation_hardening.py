@@ -27,6 +27,11 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationVerifierReport,
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome
+from ki_radar.accelerator.investigation_prompts import (
+    PLANNER_SCHEMA_VERSION,
+    PLANNER_TOOL_NAMES,
+    planner_response_format,
+)
 from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
     StartInvestigationRequest,
@@ -779,6 +784,10 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
         )
     assert exc_info.value.code == "tool_not_allowed"
     run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.status == InvestigationRun.Status.FAILED
+    assert run.finished_at is not None
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "tool_not_allowed"
     assert run.steps.count() == 0
     assert run.usage["tool_calls"] == 0
 
@@ -798,6 +807,74 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
             request=StartInvestigationRequest(snapshot_2.snapshot_id, "expanded-budget"),
         )
     assert budget_exc.value.code == "budget_expansion_forbidden"
+
+
+def test_planner_schema_allows_only_executable_tools():
+    schema = planner_response_format()["json_schema"]["schema"]
+
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v3"
+    assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
+    assert set(schema["properties"]["tool_name"]["enum"]) == {
+        "list_sources",
+        "search_sources",
+        "read_source",
+        "profile_csv",
+        "compare_groups",
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("planner_overrides", "expected_code"),
+    [
+        ({"action": "invent"}, "invalid_planner_action"),
+        ({"progress_kind": "guess"}, "invalid_progress_kind"),
+        (
+            {"action": "clarify", "clarification_reason": "ask_anything"},
+            "invalid_reason_code",
+        ),
+    ],
+)
+def test_invalid_planner_contract_is_persisted_as_terminal_technical_failure(
+    owner,
+    business_unit,
+    tmp_path,
+    planner_overrides,
+    expected_code,
+):
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name=f"Invalid contract {expected_code}",
+    )
+    source_root = tmp_path / expected_code
+    source_root.mkdir()
+    (source_root / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(
+        owner=owner,
+        process=process,
+        root=source_root,
+    )
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, expected_code),
+    )
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=lambda **_kwargs: planner_action(**planner_overrides),
+        )
+
+    assert exc_info.value.code == expected_code
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.status == InvestigationRun.Status.FAILED
+    assert run.finished_at is not None
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == expected_code
+    assert run.steps.count() == 0
 
 
 @pytest.mark.django_db

@@ -20,6 +20,7 @@ from .investigation_models import (
 )
 from .investigation_policy import PolicyDecision, PolicyOutcome, ReasonCode
 from .investigation_runtime import (
+    ALLOWED_TOOLS,
     InvestigationRunError,
     apply_planner_state,
     assert_active,
@@ -36,6 +37,7 @@ from .investigation_runtime import (
 )
 
 TRANSIENT_PROVIDER_CODES = frozenset({"timeout", "provider_unavailable", "rate_limit"})
+PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)
 
 
 @dataclass(frozen=True)
@@ -100,6 +102,69 @@ def _set_ready(*, actor, run_id, executor_token) -> InvestigationRun:
         ]
     )
     return run
+
+
+@transaction.atomic
+def _set_failed_planner_contract(
+    *,
+    actor,
+    run_id,
+    executor_token,
+    error: InvestigationRunError,
+) -> InvestigationRun:
+    run = locked_run(actor=actor, run_id=run_id)
+    assert_active(run)
+    assert_executor(run, executor_token)
+    run.status = InvestigationRun.Status.FAILED
+    run.clarification_reason = ReasonCode.TECHNICAL_FAILURE.value
+    run.clarification_payload = {
+        "error_code": error.code,
+        "impact": "Die Untersuchung wurde wegen eines ungültigen Planner-Vertrags beendet.",
+        "required_action": (
+            "Planner-/Schema-Vertrag technisch prüfen; keinen fachlichen Schluss ableiten."
+        ),
+    }
+    run.finished_at = timezone.now()
+    run.executor_generation += 1
+    run.executor_token = uuid.uuid4()
+    run.save(
+        update_fields=[
+            "status",
+            "clarification_reason",
+            "clarification_payload",
+            "finished_at",
+            "executor_generation",
+            "executor_token",
+            "updated_at",
+        ]
+    )
+    return run
+
+
+def _planner_contract_error(action: PlannerAction) -> InvestigationRunError | None:
+    if action.action not in {"tool", "verify", "clarify"}:
+        return InvestigationRunError(
+            "Planner-Aktion ist ungültig.",
+            code="invalid_planner_action",
+        )
+    if action.action == "tool" and action.tool_name not in ALLOWED_TOOLS:
+        return InvestigationRunError(
+            "Planner forderte ein nicht erlaubtes Werkzeug an.",
+            code="tool_not_allowed",
+        )
+    if action.progress_kind not in PLANNER_PROGRESS_KINDS:
+        return InvestigationRunError(
+            "Planner lieferte eine ungültige Fortschrittsart.",
+            code="invalid_progress_kind",
+        )
+    if action.action == "clarify" and action.clarification_reason not in {
+        item.value for item in ReasonCode
+    }:
+        return InvestigationRunError(
+            "Planner lieferte einen ungültigen Klärungsgrund.",
+            code="invalid_reason_code",
+        )
+    return None
 
 
 def _provider_failures(run: InvestigationRun, code: str) -> int:
@@ -249,6 +314,16 @@ def advance_investigation(
             )
         raise
 
+    contract_error = _planner_contract_error(action)
+    if contract_error is not None:
+        _set_failed_planner_contract(
+            actor=actor,
+            run_id=run.pk,
+            executor_token=executor_token,
+            error=contract_error,
+        )
+        raise contract_error
+
     apply_planner_state(
         actor=actor,
         run_id=run.pk,
@@ -291,18 +366,6 @@ def advance_investigation(
         return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
 
     if action.action == "tool":
-        if action.tool_name not in {
-            "list_sources",
-            "search_sources",
-            "read_source",
-            "profile_csv",
-            "compare_groups",
-        }:
-            raise InvestigationRunError(
-                "Planner forderte ein nicht erlaubtes Werkzeug an.",
-                code="tool_not_allowed",
-            )
-
         step = execute_tool_step(
             actor=actor,
             run_id=run.pk,
@@ -419,10 +482,7 @@ def advance_investigation(
         )
         return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
 
-    raise InvestigationRunError(
-        "Planner-Aktion ist ungültig.",
-        code="invalid_planner_action",
-    )
+    raise AssertionError("validated planner action was not handled")
 
 
 def run_until_boundary(

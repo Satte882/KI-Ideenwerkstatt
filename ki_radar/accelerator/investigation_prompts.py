@@ -2,8 +2,16 @@ from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v2"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v2"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v3"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v2"
+
+PLANNER_TOOL_NAMES = (
+    "list_sources",
+    "search_sources",
+    "read_source",
+    "profile_csv",
+    "compare_groups",
+)
 
 PLANNER_INSTRUCTION = """Du planst genau den nächsten prüfbaren Untersuchungsschritt.
 Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quellenraum.
@@ -41,7 +49,10 @@ def planner_response_format() -> dict:
                     "target_claim_id": {"type": "string"},
                     "expected_discriminating_finding": {"type": "string"},
                     "rationale": {"type": "string"},
-                    "tool_name": {"type": "string"},
+                    "tool_name": {
+                        "type": "string",
+                        "enum": list(PLANNER_TOOL_NAMES),
+                    },
                     "parameters": {"type": "object"},
                     "claim_register": {"type": "array", "items": {"type": "object"}},
                     "brief_payload": {"type": "object"},
