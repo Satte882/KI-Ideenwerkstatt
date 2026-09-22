@@ -63,7 +63,7 @@ from .investigation_tools import (
 )
 
 LOOP_VERSION = "vs1-agent-loop-v1"
-BUDGET_VERSION = "vs1-budget-v1"
+BUDGET_VERSION = "vs1-budget-v2"
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
@@ -76,7 +76,7 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 
 DEFAULT_BUDGET = {
     "max_tool_calls": 12,
-    "max_model_calls": 8,
+    "max_model_calls": 12,
     "max_verifier_calls": 2,
     "max_runtime_seconds": 600,
     "max_input_tokens": 60_000,
@@ -418,6 +418,35 @@ def elapsed_seconds(run: InvestigationRun) -> int:
     return max(0, int((timezone.now() - run.started_at).total_seconds()))
 
 
+def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
+    limits = run.budget_limits
+    usage = run.usage
+    max_verifier_calls = int(limits["max_verifier_calls"])
+    remaining_verifier_calls = max(
+        0,
+        max_verifier_calls - int(usage.get("verifier_calls", 0)),
+    )
+    if max_verifier_calls <= 0 or remaining_verifier_calls <= 0:
+        return {
+            "model_calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "seconds": 0,
+        }
+
+    def proportional_reserve(total: int) -> int:
+        return (
+            int(total) * remaining_verifier_calls + max_verifier_calls - 1
+        ) // max_verifier_calls
+
+    return {
+        "model_calls": proportional_reserve(limits["verifier_reserved_model_calls"]),
+        "input_tokens": proportional_reserve(limits["verifier_reserved_input_tokens"]),
+        "output_tokens": proportional_reserve(limits["verifier_reserved_output_tokens"]),
+        "seconds": proportional_reserve(limits["verifier_reserved_seconds"]),
+    }
+
+
 def budget_exhausted(run: InvestigationRun, *, reserve_verifier: bool = False) -> bool:
     limits = run.budget_limits
     usage = run.usage
@@ -432,15 +461,12 @@ def budget_exhausted(run: InvestigationRun, *, reserve_verifier: bool = False) -
     if usage["output_tokens"] >= limits["max_output_tokens"]:
         return True
     if reserve_verifier:
+        reserve = _remaining_verifier_reserve(run)
         return (
-            limits["max_model_calls"] - usage["model_calls"]
-            <= limits["verifier_reserved_model_calls"]
-            or limits["max_input_tokens"] - usage["input_tokens"]
-            <= limits["verifier_reserved_input_tokens"]
-            or limits["max_output_tokens"] - usage["output_tokens"]
-            <= limits["verifier_reserved_output_tokens"]
-            or limits["max_runtime_seconds"] - elapsed_seconds(run)
-            <= limits["verifier_reserved_seconds"]
+            limits["max_model_calls"] - usage["model_calls"] <= reserve["model_calls"]
+            or limits["max_input_tokens"] - usage["input_tokens"] <= reserve["input_tokens"]
+            or limits["max_output_tokens"] - usage["output_tokens"] <= reserve["output_tokens"]
+            or limits["max_runtime_seconds"] - elapsed_seconds(run) <= reserve["seconds"]
         )
     return False
 

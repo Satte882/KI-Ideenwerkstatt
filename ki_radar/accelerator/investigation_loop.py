@@ -230,6 +230,25 @@ def _handle_provider_failure(
     return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
 
 
+def _handle_budget_exhaustion(
+    *,
+    actor,
+    run: InvestigationRun,
+    executor_token,
+) -> AdvanceResult:
+    waiting = _set_waiting_human(
+        actor=actor,
+        run_id=run.pk,
+        executor_token=executor_token,
+        reason=ReasonCode.BUDGET_EXHAUSTED.value,
+        payload={
+            "impact": "Die Untersuchung ist vor erfolgreicher Verifikation unvollständig.",
+            "required_action": "Budget-/Betriebsentscheidung durch einen Menschen.",
+        },
+    )
+    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+
+
 def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
     if action.action != "tool":
         return action.action == "verify"
@@ -305,25 +324,22 @@ def advance_investigation(
         return AdvanceResult(ready.pk, ready.status, decision)
 
     if budget_exhausted(run):
-        waiting = _set_waiting_human(
+        return _handle_budget_exhaustion(
             actor=actor,
-            run_id=run.pk,
+            run=run,
             executor_token=executor_token,
-            reason=ReasonCode.BUDGET_EXHAUSTED.value,
-            payload={
-                "impact": "Die Untersuchung ist vor erfolgreicher Verifikation unvollständig.",
-                "required_action": "Budget-/Betriebsentscheidung durch einen Menschen.",
-            },
-        )
-        return AdvanceResult(
-            waiting.pk,
-            waiting.status,
-            evaluate_run_policy(waiting),
         )
 
     try:
         action = planner(actor=actor, run=run, executor_token=executor_token)
     except InvestigationRunError as exc:
+        if exc.code == "budget_exhausted":
+            run.refresh_from_db()
+            return _handle_budget_exhaustion(
+                actor=actor,
+                run=run,
+                executor_token=executor_token,
+            )
         if exc.code in TRANSIENT_PROVIDER_CODES | {
             "invalid_response",
             "provider_error",
@@ -435,6 +451,13 @@ def advance_investigation(
                 executor_token=executor_token,
             )
         except InvestigationRunError as exc:
+            if exc.code == "budget_exhausted":
+                run.refresh_from_db()
+                return _handle_budget_exhaustion(
+                    actor=actor,
+                    run=run,
+                    executor_token=executor_token,
+                )
             if exc.code in TRANSIENT_PROVIDER_CODES | {
                 "invalid_response",
                 "provider_error",
