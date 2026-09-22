@@ -51,8 +51,10 @@ from .investigation_runtime import (
     canonical_json,
     content_hash,
     evaluate_run_policy,
+    enforce_claim_guard,
     execute_tool_step,
     locked_run,
+    normalize_claim,
 )
 from .investigation_tools import (
     TOOL_VERSION,
@@ -112,6 +114,33 @@ def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
     _decode_structured_field(payload, "source_relevance", expected_type=Mapping, default={})
     _decode_structured_field(payload, "progress_payload", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
+
+
+def _validate_planner_semantic_payload(
+    run: InvestigationRun,
+    payload: Mapping[str, Any],
+) -> None:
+    """Validate the persisted planner state contract before accepting a model response."""
+    _validate_planner_transport_payload(payload)
+    raw_claims = _decode_structured_field(
+        payload,
+        "claim_register",
+        expected_type=list,
+        default=[],
+    )
+    if not all(isinstance(item, Mapping) for item in raw_claims):
+        raise InvestigationRunError(
+            "Claim Register enthält einen ungültigen Eintrag.",
+            code="invalid_claim",
+        )
+
+    normalized = [normalize_claim(run, item) for item in raw_claims]
+    if len({item["claim_id"] for item in normalized}) != len(normalized):
+        raise InvestigationRunError(
+            "Claim-IDs müssen eindeutig sein.",
+            code="duplicate_claim_id",
+        )
+    enforce_claim_guard(list(run.claim_register), normalized)
 
 
 def _requested_model() -> str:
@@ -538,11 +567,16 @@ def _structured_provider_call(
         ) from exc
 
     validation_error: InvestigationRunError | None = None
+    validation_source_code = ""
     if payload_validator is not None:
         try:
             payload_validator(payload)
         except InvestigationRunError as exc:
-            validation_error = exc
+            validation_source_code = exc.code
+            validation_error = InvestigationRunError(
+                str(exc),
+                code="invalid_response",
+            )
 
     prompt_tokens, completion_tokens, total_tokens = _usage_tokens(result, messages)
     if reservation is not None:
@@ -604,6 +638,7 @@ def _structured_provider_call(
             parameters = dict(current.effective_parameters)
             parameters["response_diagnostics"] = {
                 "structured_contract_error": str(validation_error),
+                "structured_contract_error_code": validation_source_code,
             }
             current.effective_parameters = parameters
             update_fields = [
@@ -663,7 +698,7 @@ def request_planner_action(
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
         response_format=planner_response_format(),
-        payload_validator=_validate_planner_transport_payload,
+        payload_validator=lambda payload: _validate_planner_semantic_payload(run, payload),
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     claim_register = _decode_structured_field(
