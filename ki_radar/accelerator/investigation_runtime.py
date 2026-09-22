@@ -42,6 +42,7 @@ from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
+    PLANNER_TOOL_NAMES,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
     VERIFIER_SCHEMA_VERSION,
@@ -89,9 +90,7 @@ USAGE_KEYS = (
     "verifier_reads",
     "provider_attempts",
 )
-ALLOWED_TOOLS = frozenset(
-    {"list_sources", "search_sources", "read_source", "profile_csv", "compare_groups"}
-)
+ALLOWED_TOOLS = frozenset(PLANNER_TOOL_NAMES)
 TRANSIENT_TOOL_CODES = frozenset({"source_path_unreadable"})
 
 
