@@ -23,7 +23,6 @@ from .investigation_evidence import (
 from .investigation_models import (
     InvestigationModelCall,
     InvestigationRun,
-    InvestigationSource,
     InvestigationStep,
     InvestigationVerifierReport,
 )
@@ -78,6 +77,31 @@ class PlannerAction:
     progress_payload: Mapping[str, Any]
     clarification_reason: str
     clarification_payload: Mapping[str, Any]
+
+
+def _decode_structured_field(
+    payload: Mapping[str, Any],
+    field: str,
+    *,
+    expected_type: type | tuple[type, ...],
+    default: Any,
+) -> Any:
+    """Decode an opaque strict-schema field while retaining the domain payload shape."""
+    value = payload.get(field, default)
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise InvestigationRunError(
+                f"Das strukturierte Feld '{field}' enthält kein gültiges JSON.",
+                code="invalid_response",
+            ) from exc
+    if not isinstance(value, expected_type):
+        raise InvestigationRunError(
+            f"Das strukturierte Feld '{field}' hat den falschen Typ.",
+            code="invalid_response",
+        )
+    return value
 
 
 def _requested_model() -> str:
@@ -592,13 +616,6 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
-    source_rows = list(run.source_snapshot.sources.order_by("id").values_list("id", "source_type"))
-    allowed_source_ids = tuple(str(source_id) for source_id, _source_type in source_rows)
-    csv_source_ids = tuple(
-        str(source_id)
-        for source_id, source_type in source_rows
-        if source_type == InvestigationSource.SourceType.CSV
-    )
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -608,10 +625,23 @@ def request_planner_action(
         prompt_version=PLANNER_PROMPT_VERSION,
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
-        response_format=planner_response_format(
-            allowed_source_ids=allowed_source_ids,
-            csv_source_ids=csv_source_ids,
-        ),
+        response_format=planner_response_format(),
+    )
+    parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
+    claim_register = _decode_structured_field(
+        payload, "claim_register", expected_type=list, default=[]
+    )
+    brief_payload = _decode_structured_field(
+        payload, "brief_payload", expected_type=Mapping, default={}
+    )
+    source_relevance = _decode_structured_field(
+        payload, "source_relevance", expected_type=Mapping, default={}
+    )
+    progress_payload = _decode_structured_field(
+        payload, "progress_payload", expected_type=Mapping, default={}
+    )
+    clarification_payload = _decode_structured_field(
+        payload, "clarification_payload", expected_type=Mapping, default={}
     )
     return PlannerAction(
         action=str(payload.get("action") or ""),
@@ -619,18 +649,18 @@ def request_planner_action(
         expected_discriminating_finding=str(payload.get("expected_discriminating_finding") or ""),
         rationale=str(payload.get("rationale") or ""),
         tool_name=str(payload.get("tool_name") or ""),
-        parameters=dict(payload.get("parameters") or {}),
-        claim_register=tuple(payload.get("claim_register") or []),
-        brief_payload=dict(payload.get("brief_payload") or {}),
+        parameters=dict(parameters),
+        claim_register=tuple(claim_register),
+        brief_payload=dict(brief_payload),
         source_relevance={
             str(key): dict(value)
-            for key, value in dict(payload.get("source_relevance") or {}).items()
+            for key, value in dict(source_relevance).items()
             if isinstance(value, Mapping)
         },
         progress_kind=str(payload.get("progress_kind") or "none"),
-        progress_payload=dict(payload.get("progress_payload") or {}),
+        progress_payload=dict(progress_payload),
         clarification_reason=str(payload.get("clarification_reason") or ""),
-        clarification_payload=dict(payload.get("clarification_payload") or {}),
+        clarification_payload=dict(clarification_payload),
     )
 
 

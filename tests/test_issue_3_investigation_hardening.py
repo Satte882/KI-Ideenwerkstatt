@@ -926,7 +926,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v5"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v6"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
@@ -939,34 +939,45 @@ def test_planner_schema_allows_only_executable_tools():
     }
 
 
-def test_planner_schema_binds_read_source_to_one_snapshot_source_id():
-    source_ids = (
-        "6a62ed0a-dc71-4817-80a1-e2571126900d",
-        "b3f3f899-0381-45c2-bea1-001931ad2ed5",
-    )
-    schema = planner_response_format(allowed_source_ids=source_ids)["json_schema"]["schema"]
-    read_condition = next(
-        item
-        for item in schema["allOf"]
-        if item["if"]["properties"]["tool_name"].get("const") == "read_source"
-    )
-    parameters = read_condition["then"]["properties"]["parameters"]
+def _assert_portable_strict_schema(schema):
+    forbidden = {"oneOf", "allOf", "if", "then", "else"}
 
-    assert parameters["required"] == ["source_id"]
-    assert parameters["additionalProperties"] is False
-    assert parameters["properties"]["source_id"] == {
-        "type": "string",
-        "enum": list(source_ids),
-    }
-    assert "source_ids" not in parameters["properties"]
+    def visit(node):
+        assert not (set(node) & forbidden)
+        if node.get("type") == "object":
+            properties = node.get("properties", {})
+            assert node.get("additionalProperties") is False
+            assert set(node.get("required", [])) == set(properties)
+            for property_schema in properties.values():
+                visit(property_schema)
+        if "items" in node:
+            visit(node["items"])
+
+    visit(schema)
+
+
+def test_planner_schema_uses_portable_closed_strict_subset():
+    schema = planner_response_format()["json_schema"]["schema"]
+
+    _assert_portable_strict_schema(schema)
+    for name in (
+        "parameters",
+        "claim_register",
+        "brief_payload",
+        "source_relevance",
+        "progress_payload",
+        "clarification_payload",
+    ):
+        assert schema["properties"][name]["type"] == "string"
 
 
 def test_verifier_schema_uses_strict_structured_outputs():
     response_format = verifier_response_format()
 
-    assert VERIFIER_SCHEMA_VERSION == "vs1-verifier-schema-v3"
+    assert VERIFIER_SCHEMA_VERSION == "vs1-verifier-schema-v4"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
+    _assert_portable_strict_schema(response_format["json_schema"]["schema"])
 
 
 @pytest.mark.django_db
