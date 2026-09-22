@@ -166,15 +166,53 @@ def _response_diagnostics(payload: object) -> dict[str, object]:
         return diagnostics
 
     choices = payload.get("choices")
+    usage = payload.get("usage")
     diagnostics.update(
         {
             "has_error": "error" in payload,
             "has_model": bool(payload.get("model")),
-            "has_usage": isinstance(payload.get("usage"), dict),
+            "has_usage": isinstance(usage, dict),
             "choices_type": type(choices).__name__,
             "choices_count": len(choices) if isinstance(choices, list) else 0,
         }
     )
+    returned_model = _diagnostic_value(payload.get("model"))
+    if returned_model is not None:
+        diagnostics["returned_model"] = returned_model
+    if isinstance(usage, dict):
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+            value = _diagnostic_value(usage.get(key))
+            if value is not None:
+                diagnostics[f"usage_{key}"] = value
+
+    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+        choice = choices[0]
+        finish_reason = _diagnostic_value(choice.get("finish_reason"))
+        if finish_reason is not None:
+            diagnostics["finish_reason"] = finish_reason
+
+        message = choice.get("message")
+        diagnostics["message_type"] = type(message).__name__
+        if isinstance(message, dict):
+            diagnostics["message_keys"] = sorted(str(key) for key in message.keys())[:20]
+            content = message.get("content")
+            diagnostics["content_type"] = type(content).__name__
+            if isinstance(content, str):
+                diagnostics["content_length"] = len(content)
+            elif isinstance(content, list):
+                diagnostics["content_items"] = len(content)
+
+            reasoning = message.get("reasoning")
+            diagnostics["has_reasoning"] = "reasoning" in message
+            diagnostics["reasoning_type"] = type(reasoning).__name__
+            if isinstance(reasoning, (str, list)):
+                diagnostics["reasoning_length"] = len(reasoning)
+
+            reasoning_details = message.get("reasoning_details")
+            diagnostics["has_reasoning_details"] = "reasoning_details" in message
+            if isinstance(reasoning_details, list):
+                diagnostics["reasoning_details_count"] = len(reasoning_details)
+
     error = payload.get("error")
     if not isinstance(error, dict):
         diagnostics["error_type"] = type(error).__name__ if error is not None else ""
@@ -398,6 +436,7 @@ def request_openrouter(
         raise OpenRouterUnavailable(
             "OpenRouter hat keine Analyse zurückgegeben.",
             code="empty_response",
+            diagnostics=diagnostics,
         )
     returned_model = payload.get("model") if isinstance(payload, dict) else ""
     return OpenRouterResult(
