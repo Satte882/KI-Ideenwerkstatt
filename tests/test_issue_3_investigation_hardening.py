@@ -35,6 +35,7 @@ from ki_radar.accelerator.investigation_prompts import (
     verifier_response_format,
 )
 from ki_radar.accelerator.investigation_runtime import (
+    ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     InvestigationRunError,
     StartInvestigationRequest,
     apply_planner_state,
@@ -1043,6 +1044,7 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
 
     def fake_openrouter(**kwargs):
         nonlocal planner_calls, saw_compare_result, saw_counter_result
+        assert kwargs["provider"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY
         system = kwargs["messages"][0]["content"]
         context = json.loads(kwargs["messages"][1]["content"])
 

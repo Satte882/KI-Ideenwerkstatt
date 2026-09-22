@@ -66,6 +66,13 @@ LOOP_VERSION = "vs1-agent-loop-v1"
 BUDGET_VERSION = "vs1-budget-v1"
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
+ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
+    "zdr": True,
+    "data_collection": "deny",
+    "order": ["deepseek"],
+    "allow_fallbacks": False,
+    "require_parameters": True,
+}
 
 DEFAULT_BUDGET = {
     "max_tool_calls": 12,
@@ -304,6 +311,7 @@ def base_execution_snapshot(
         "manifest_hash": snapshot.manifest_hash,
         "model_transport": {
             "provider": "openrouter",
+            "provider_policy": dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
             "requested_model": str(
                 getattr(
                     settings,

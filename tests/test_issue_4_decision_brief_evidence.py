@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from ki_radar.accelerator.investigation_benchmark import (
     assert_comparable_runs,
+    comparison_contract,
     evidence_campaign_report,
     prepare_fixed_route,
     request_fixed_route_synthesis,
@@ -40,6 +41,7 @@ from ki_radar.accelerator.investigation_models import (
 )
 from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
+    ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
@@ -659,10 +661,18 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
     adaptive = InvestigationRun.objects.get(pk=adaptive_handle.run_id)
     fixed.refresh_from_db()
     assert_comparable_runs(fixed=fixed, adaptive=adaptive)
+    assert fixed.execution_snapshot["model_transport"]["provider_policy"] == (
+        ISSUE4_INVESTIGATION_PROVIDER_POLICY
+    )
+    assert comparison_contract(fixed)["model_transport"]["provider_policy"] == (
+        ISSUE4_INVESTIGATION_PROVIDER_POLICY
+    )
 
     changed = dict(adaptive.execution_snapshot)
     transport = dict(changed["model_transport"])
-    transport["requested_model"] = "different-model"
+    provider_policy = dict(transport["provider_policy"])
+    provider_policy["allow_fallbacks"] = True
+    transport["provider_policy"] = provider_policy
     changed["model_transport"] = transport
     InvestigationRun.objects.filter(pk=adaptive.pk).update(execution_snapshot=changed)
     adaptive.refresh_from_db()

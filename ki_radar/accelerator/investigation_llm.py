@@ -12,7 +12,6 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from ki_radar.core.llm_tasks import FIRST_WAVE_PROVIDER_POLICY
 from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
 
 from .investigation_evidence import (
@@ -43,6 +42,7 @@ from .investigation_runtime import (
     ALLOWED_TOOLS,
     BUDGET_VERSION,
     FIXED_ROUTE_VERSION,
+    ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     LOOP_VERSION,
     InvestigationRunError,
     assert_active,
@@ -134,9 +134,12 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         )
 
     transport = frozen.get("model_transport") or {}
-    if transport.get("requested_model", "") != _requested_model():
+    if (
+        transport.get("requested_model", "") != _requested_model()
+        or transport.get("provider_policy") != ISSUE4_INVESTIGATION_PROVIDER_POLICY
+    ):
         raise InvestigationRunError(
-            "Der für den Run fixierte Modell-Alias ist nicht mehr aktiv.",
+            "Der für den Run fixierte Modell-/Providervertrag ist nicht mehr aktiv.",
             code="execution_version_unavailable",
         )
 
@@ -384,7 +387,7 @@ def _reserve_model_call(
             "temperature": 0.1,
             "reasoning_effort": "medium",
             "max_tokens": call_max_tokens,
-            "provider_policy": dict(FIRST_WAVE_PROVIDER_POLICY),
+            "provider_policy": dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
         },
         prompt_version=prompt_version,
         prompt_hash=content_hash(prompt_payload),
@@ -452,7 +455,7 @@ def _structured_provider_call(
             timeout_seconds=60,
             temperature=0.1,
             response_format=response_format,
-            provider=dict(FIRST_WAVE_PROVIDER_POLICY),
+            provider=dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
             reasoning_effort="medium",
         )
         payload = json.loads(result.content)
