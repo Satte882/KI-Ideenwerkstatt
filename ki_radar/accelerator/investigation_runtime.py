@@ -81,9 +81,10 @@ DEFAULT_BUDGET = {
     # the existing two-call read-and-recheck path.
     "max_model_calls": 14,
     "max_verifier_calls": 4,
-    # Preserve the prior per-call input/runtime headroom while scaling to the
-    # model-call envelope. Output is derived from the frozen 4096-token
-    # transport cap for all 14 possible model calls.
+    # Restore the original v1 per-call input/runtime headroom (60k/8 and
+    # 600s/8), which budget v2 did not scale when model calls increased.
+    # Output is derived from the frozen 4096-token transport cap for all
+    # 14 possible model calls.
     "max_runtime_seconds": 1_050,
     "max_input_tokens": 105_000,
     "max_output_tokens": 57_344,
