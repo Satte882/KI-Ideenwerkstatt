@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v6"
+PLANNER_PROMPT_VERSION = "vs1-planner-v7"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v8"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v9"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -13,6 +13,37 @@ PLANNER_TOOL_NAMES = (
     "compare_groups",
 )
 
+# The parameter names and enums are also used by runtime validation. Keep this
+# small, portable contract in the frozen run snapshot and planner context.
+TOOL_PARAMETER_CONTRACTS = {
+    "list_sources": {"required": [], "optional": []},
+    "search_sources": {"required": ["query"], "optional": ["cursor", "limit"]},
+    "read_source": {
+        "required": ["source_id"],
+        "optional": ["cursor", "limit", "columns"],
+    },
+    "profile_csv": {"required": ["source_id"], "optional": []},
+    "compare_groups": {
+        "required": ["source_id", "group_by", "aggregation"],
+        "optional": ["value_column", "filters", "unit_column"],
+        "aggregations": ["count", "sum", "mean", "median", "min", "max"],
+        "value_column_required_except": ["count"],
+        "filter_fields": ["column", "operator", "value"],
+        "filter_operators": [
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "not_in",
+            "is_null",
+            "not_null",
+        ],
+    },
+}
+
 PLANNER_INSTRUCTION = """Du planst genau den nächsten prüfbaren Untersuchungsschritt.
 Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quellenraum.
 Begründe knapp Ziel-Prüfpunkt und unterscheidenden erwarteten Befund; liefere keine
@@ -21,6 +52,10 @@ triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen 
 Halte den werkzeugspezifischen Parametervertrag exakt ein. read_source und profile_csv
 akzeptieren genau eine source_id pro Aufruf; mehrere Quellen werden in getrennten Schritten
 gelesen. Verwende ausschließlich Source-IDs aus dem bereitgestellten Quellenmanifest.
+Die vollständigen erlaubten Parameternamen stehen in tool_parameter_contracts des Kontexts.
+Für compare_groups heißen die Pflichtfelder source_id, group_by und aggregation;
+value_column ist außer bei aggregation=count ebenfalls nötig. Verwende nur dort genannte
+Parameternamen und Aggregationen; erfinde keine Synonyme.
 Die Felder parameters, claim_register, brief_payload, source_relevance, progress_payload und
 clarification_payload werden als Strings transportiert, müssen aber IMMER serialisiertes JSON
 enthalten. Verwende für ein leeres Objekt exakt "{}" und für eine leere Liste exakt "[]".
@@ -103,8 +138,8 @@ def planner_response_format(
                     "parameters": {
                         "type": "string",
                         "description": (
-                            "Serialisiertes JSON-Objekt mit Parametern für tool_name; "
-                            "leer exakt {}."
+                            "Serialisiertes JSON-Objekt mit Parametern für tool_name "
+                            "gemäß tool_parameter_contracts im Kontext; leer exakt {}."
                         ),
                     },
                     "claim_register": {

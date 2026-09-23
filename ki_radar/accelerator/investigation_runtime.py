@@ -43,6 +43,7 @@ from .investigation_prompts import (
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
+    TOOL_PARAMETER_CONTRACTS,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
     VERIFIER_SCHEMA_VERSION,
@@ -62,7 +63,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v5"
+LOOP_VERSION = "vs1-agent-loop-v6"
 BUDGET_VERSION = "vs1-budget-v5"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -83,7 +84,7 @@ MIN_VERIFIER_COMPLETION_TOKENS = 8_192
 MIN_PLANNER_TIMEOUT_SECONDS = 60
 MIN_VERIFIER_TIMEOUT_SECONDS = 75
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
-TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
+TOOL_SCHEMA_VERSION = "vs1-tool-schema-v2"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
     "zdr": True,
     "data_collection": "deny",
@@ -366,6 +367,7 @@ def base_execution_snapshot(
             "allowlist": sorted(ALLOWED_TOOLS),
             "schema_version": TOOL_SCHEMA_VERSION,
             "implementation_version": TOOL_VERSION,
+            "parameter_contracts": TOOL_PARAMETER_CONTRACTS,
         },
     }
 
@@ -1098,7 +1100,9 @@ def normalize_tool_parameters(
         )
     params = dict(raw)
 
-    def reject_unknown(allowed: set[str]) -> None:
+    def reject_unknown(name: str) -> None:
+        contract = TOOL_PARAMETER_CONTRACTS[name]
+        allowed = set(contract["required"]) | set(contract["optional"])
         if unknown := sorted(set(params) - allowed):
             raise InvestigationRunError(
                 f"Unbekannte Werkzeugparameter: {', '.join(unknown)}.",
@@ -1152,14 +1156,14 @@ def normalize_tool_parameters(
             )
         return {}
     if tool_name == "search_sources":
-        reject_unknown({"query", "cursor", "limit"})
+        reject_unknown(tool_name)
         return {
             "query": nonempty_text("query"),
             "cursor": integer("cursor", 0, minimum=0),
             "limit": integer("limit", 20, minimum=1, maximum=50),
         }
     if tool_name == "read_source":
-        reject_unknown({"source_id", "cursor", "limit", "columns"})
+        reject_unknown(tool_name)
         columns = params.get("columns", [])
         if not isinstance(columns, list) or any(
             not isinstance(item, str) or not item for item in columns
@@ -1180,12 +1184,10 @@ def normalize_tool_parameters(
             "columns": list(columns),
         }
     if tool_name == "profile_csv":
-        reject_unknown({"source_id"})
+        reject_unknown(tool_name)
         return {"source_id": source_id()}
     if tool_name == "compare_groups":
-        reject_unknown(
-            {"source_id", "group_by", "aggregation", "value_column", "filters", "unit_column"}
-        )
+        reject_unknown(tool_name)
         filters = params.get("filters", [])
         if not isinstance(filters, list):
             raise InvestigationRunError(
@@ -1193,18 +1195,7 @@ def normalize_tool_parameters(
                 code="invalid_tool_parameters",
             )
         normalized_filters = []
-        allowed_operators = {
-            "eq",
-            "neq",
-            "gt",
-            "gte",
-            "lt",
-            "lte",
-            "in",
-            "not_in",
-            "is_null",
-            "not_null",
-        }
+        allowed_operators = set(TOOL_PARAMETER_CONTRACTS[tool_name]["filter_operators"])
         for item in filters:
             if not isinstance(item, Mapping) or set(item) != {"column", "operator", "value"}:
                 raise InvestigationRunError(
@@ -1232,7 +1223,7 @@ def normalize_tool_parameters(
                 {"column": column.strip(), "operator": operator, "value": value}
             )
         aggregation = nonempty_text("aggregation")
-        if aggregation not in {"count", "sum", "mean", "median", "min", "max"}:
+        if aggregation not in TOOL_PARAMETER_CONTRACTS[tool_name]["aggregations"]:
             raise InvestigationRunError(
                 "aggregation ist ungültig.",
                 code="invalid_tool_parameters",

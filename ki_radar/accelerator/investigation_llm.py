@@ -33,6 +33,7 @@ from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
+    TOOL_PARAMETER_CONTRACTS,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
     VERIFIER_SCHEMA_VERSION,
@@ -50,6 +51,7 @@ from .investigation_runtime import (
     MIN_PLANNER_TIMEOUT_SECONDS,
     MIN_VERIFIER_COMPLETION_TOKENS,
     MIN_VERIFIER_TIMEOUT_SECONDS,
+    TOOL_SCHEMA_VERSION,
     InvestigationRunError,
     _remaining_verifier_reserve,
     assert_active,
@@ -63,6 +65,7 @@ from .investigation_runtime import (
     execute_tool_step,
     locked_run,
     normalize_claim_register,
+    normalize_tool_parameters,
 )
 from .investigation_tools import (
     TOOL_VERSION,
@@ -141,6 +144,23 @@ def _validate_planner_semantic_payload(
         default=[],
     )
     normalize_claim_register(run, raw_claims)
+    if payload.get("action") == "tool":
+        tool_name = str(payload.get("tool_name") or "")
+        if tool_name not in ALLOWED_TOOLS:
+            raise InvestigationRunError(
+                "Planner forderte ein nicht erlaubtes Werkzeug an.", code="tool_not_allowed"
+            )
+        parameters = _decode_structured_field(
+            payload, "parameters", expected_type=Mapping, default={}
+        )
+        normalize_tool_parameters(
+            tool_name,
+            parameters,
+            allowed_source_ids=frozenset(
+                str(source_id)
+                for source_id in run.source_snapshot.sources.values_list("pk", flat=True)
+            ),
+        )
 
 
 def _requested_model() -> str:
@@ -173,9 +193,12 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         )
 
     tools = frozen.get("tools") or {}
-    if tools.get("implementation_version") != TOOL_VERSION or set(
-        tools.get("allowlist") or []
-    ) != set(ALLOWED_TOOLS):
+    if (
+        tools.get("implementation_version") != TOOL_VERSION
+        or set(tools.get("allowlist") or []) != set(ALLOWED_TOOLS)
+        or tools.get("schema_version") != TOOL_SCHEMA_VERSION
+        or tools.get("parameter_contracts") != TOOL_PARAMETER_CONTRACTS
+    ):
         raise InvestigationRunError(
             "Der fixierte Werkzeugvertrag hat sich geändert.",
             code="execution_version_unavailable",
@@ -238,6 +261,19 @@ def _usage_tokens(result, messages: list[dict[str, str]]) -> tuple[int, int, int
 
 def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     sources = list_sources(actor=actor, snapshot_id=run.source_snapshot_id)
+    previous_call = run.model_calls.order_by("-created_at").first()
+    last_planner_error: dict[str, str] = {}
+    if (
+        previous_call is not None
+        and previous_call.role == InvestigationModelCall.Role.PLANNER
+        and previous_call.status == InvestigationModelCall.Status.FAILED
+        and previous_call.error_code == "invalid_response"
+    ):
+        diagnostics = previous_call.effective_parameters.get("response_diagnostics") or {}
+        last_planner_error = {
+            "code": previous_call.error_code,
+            "detail": str(diagnostics.get("structured_contract_error") or "")[:250],
+        }
     return {
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
@@ -252,6 +288,8 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             }
             for item in sources.sources
         ],
+        "tool_parameter_contracts": run.execution_snapshot["tools"]["parameter_contracts"],
+        "last_planner_error": last_planner_error,
         "claim_register": run.claim_register,
         "source_relevance": run.source_relevance,
         "brief_payload": run.brief_payload,
