@@ -19,6 +19,7 @@ from ki_radar.accelerator.investigation_llm import (
     _decode_structured_field,
     _reserve_model_call,
     _structured_provider_call,
+    request_planner_action,
     request_verifier_report,
 )
 from ki_radar.accelerator.investigation_loop import (
@@ -37,6 +38,7 @@ from ki_radar.accelerator.investigation_policy import PolicyOutcome
 from ki_radar.accelerator.investigation_prompts import (
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
+    TOOL_PARAMETER_CONTRACTS,
     VERIFIER_SCHEMA_VERSION,
     planner_response_format,
     verifier_response_format,
@@ -859,8 +861,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v5"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v5"
+    assert run.loop_version == "vs1-agent-loop-v6"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v6"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1061,6 +1063,89 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
     assert run.usage["input_tokens"] == 100
     assert run.usage["output_tokens"] == 50
     assert run.steps.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("invalid_parameters", "error_fragment"),
+    [
+        ({"group_column": "available", "value_column": "value"}, "group_column"),
+        ({"group_by": "missing", "aggregation": "mean", "value_column": "value"}, "missing"),
+    ],
+)
+def test_invalid_model_tool_parameters_get_one_informed_retry_before_execution(
+    owner, business_unit, tmp_path, monkeypatch, invalid_parameters, error_fragment
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="tool-contract-retry"
+    )
+    provider_calls = 0
+
+    def provider(**kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        context = json.loads(kwargs["messages"][1]["content"])
+        contract = context["tool_parameter_contracts"]["compare_groups"]
+        assert contract["required"] == ["source_id", "group_by", "aggregation"]
+        if provider_calls == 1:
+            assert context["last_planner_error"] == {}
+            parameters = {"source_id": str(source.source_id), **invalid_parameters}
+        else:
+            assert error_fragment in context["last_planner_error"]["detail"]
+            parameters = {
+                "source_id": str(source.source_id),
+                "group_by": "available",
+                "aggregation": "mean",
+                "value_column": "value",
+                "unit_column": "unit",
+            }
+        payload = {
+            "action": "tool",
+            "target_claim_id": "hypothesis",
+            "expected_discriminating_finding": "Gruppen vergleichen.",
+            "rationale": "Quantitative Evidenz prüfen.",
+            "tool_name": "compare_groups",
+            "parameters": json.dumps(parameters),
+            "claim_register": "[]",
+            "brief_payload": "{}",
+            "source_relevance": "{}",
+            "progress_kind": "none",
+            "progress_payload": "{}",
+            "clarification_reason": "",
+            "clarification_payload": "{}",
+        }
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 100, "completion_tokens": 200},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    first = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    failed_call = run.model_calls.get()
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert run.steps.count() == 0
+    assert failed_call.status == InvestigationModelCall.Status.FAILED
+    assert failed_call.error_code == "invalid_response"
+    assert (
+        failed_call.effective_parameters["response_diagnostics"]["structured_contract_error_code"]
+        == "invalid_tool_parameters"
+    )
+
+    second = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert second.status == InvestigationRun.Status.RUNNING
+    assert provider_calls == 2
+    assert run.model_calls.filter(status=InvestigationModelCall.Status.SUCCESS).count() == 1
+    assert list(run.steps.values_list("tool_name", "status")) == [("compare_groups", "success")]
+    assert run.data_check_executed is True
 
 
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
@@ -1533,7 +1618,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v8"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v9"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
@@ -1544,6 +1629,7 @@ def test_planner_schema_allows_only_executable_tools():
         "profile_csv",
         "compare_groups",
     }
+    assert set(TOOL_PARAMETER_CONTRACTS) == set(PLANNER_TOOL_NAMES)
 
 
 def _assert_portable_strict_schema(schema):
@@ -2117,4 +2203,42 @@ def test_frozen_endpoint_capability_cannot_change_after_run_start(owner, busines
             context={},
         )
     assert exc_info.value.code == "execution_version_unavailable"
+    assert run.model_calls.count() == 0
+
+
+@pytest.mark.django_db
+def test_frozen_tool_parameter_contract_cannot_change_after_run_start(
+    owner, business_unit, tmp_path
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="frozen-tool-contract"
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.execution_snapshot["tools"]["schema_version"] == "vs1-tool-schema-v2"
+    assert run.execution_snapshot["tools"]["parameter_contracts"] == TOOL_PARAMETER_CONTRACTS
+    frozen = json.loads(json.dumps(run.execution_snapshot))
+    frozen["tools"]["parameter_contracts"]["compare_groups"]["required"] = ["source_id"]
+    InvestigationRun.objects.filter(pk=run.pk).update(execution_snapshot=frozen)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        _reserve_model_call(
+            actor=owner,
+            run_id=run.pk,
+            executor_token=handle.executor_token,
+            role=InvestigationModelCall.Role.PLANNER,
+            instruction="Structured investigation",
+            prompt_version="frozen-tool-test",
+            schema_version="frozen-tool-test",
+            context={},
+        )
+    assert exc_info.value.code == "execution_version_unavailable"
+    assert run.model_calls.count() == 0
+
+    old_snapshot = json.loads(json.dumps(run.execution_snapshot))
+    del old_snapshot["tools"]["parameter_contracts"]
+    InvestigationRun.objects.filter(pk=run.pk).update(execution_snapshot=old_snapshot)
+    run.refresh_from_db()
+    with pytest.raises(InvestigationRunError) as old_exc:
+        request_planner_action(actor=owner, run=run, executor_token=handle.executor_token)
+    assert old_exc.value.code == "execution_version_unavailable"
     assert run.model_calls.count() == 0
