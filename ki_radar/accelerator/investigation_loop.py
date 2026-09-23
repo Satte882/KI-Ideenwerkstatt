@@ -236,6 +236,7 @@ def _handle_budget_exhaustion(
     actor,
     run: InvestigationRun,
     executor_token,
+    error_code: str = "budget_exhausted",
 ) -> AdvanceResult:
     waiting = _set_waiting_human(
         actor=actor,
@@ -243,6 +244,7 @@ def _handle_budget_exhaustion(
         executor_token=executor_token,
         reason=ReasonCode.BUDGET_EXHAUSTED.value,
         payload={
+            "error_code": error_code,
             "impact": "Die Untersuchung ist vor erfolgreicher Verifikation unvollständig.",
             "required_action": "Budget-/Betriebsentscheidung durch einen Menschen.",
         },
@@ -334,17 +336,26 @@ def advance_investigation(
     try:
         action = planner(actor=actor, run=run, executor_token=executor_token)
     except InvestigationRunError as exc:
-        if exc.code == "budget_exhausted":
+        if exc.code in {
+            "budget_exhausted",
+            "completion_budget_exhausted",
+            "input_budget_exhausted",
+            "context_capacity_exhausted",
+            "runtime_capacity_exhausted",
+            "evidence_budget_exhausted",
+        }:
             run.refresh_from_db()
             return _handle_budget_exhaustion(
                 actor=actor,
                 run=run,
                 executor_token=executor_token,
+                error_code=exc.code,
             )
         if exc.code in TRANSIENT_PROVIDER_CODES | {
             "invalid_response",
             "provider_error",
             "provider_schema_unsupported",
+            "output_truncated",
         }:
             return _handle_provider_failure(
                 actor=actor,
@@ -452,17 +463,26 @@ def advance_investigation(
                 executor_token=executor_token,
             )
         except InvestigationRunError as exc:
-            if exc.code == "budget_exhausted":
+            if exc.code in {
+                "budget_exhausted",
+                "completion_budget_exhausted",
+                "input_budget_exhausted",
+                "context_capacity_exhausted",
+                "runtime_capacity_exhausted",
+                "evidence_budget_exhausted",
+            }:
                 run.refresh_from_db()
                 return _handle_budget_exhaustion(
                     actor=actor,
                     run=run,
                     executor_token=executor_token,
+                    error_code=exc.code,
                 )
             if exc.code in TRANSIENT_PROVIDER_CODES | {
                 "invalid_response",
                 "provider_error",
                 "provider_schema_unsupported",
+                "output_truncated",
             }:
                 return _handle_provider_failure(
                     actor=actor,

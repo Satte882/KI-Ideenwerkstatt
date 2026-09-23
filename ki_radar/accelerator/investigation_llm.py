@@ -17,10 +17,12 @@ from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
 from .investigation_evidence import (
     cost_to_microunits,
     mark_provider_attempt_uncertain,
+    max_reservable_output_tokens,
     reserve_provider_attempt,
     settle_provider_attempt,
 )
 from .investigation_models import (
+    InvestigationEvidenceCampaign,
     InvestigationModelCall,
     InvestigationRun,
     InvestigationStep,
@@ -40,16 +42,23 @@ from .investigation_prompts import (
 from .investigation_runtime import (
     ALLOWED_TOOLS,
     BUDGET_VERSION,
+    ENDPOINT_CAPABILITY,
     FIXED_ROUTE_VERSION,
     ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     LOOP_VERSION,
+    MIN_PLANNER_COMPLETION_TOKENS,
+    MIN_PLANNER_TIMEOUT_SECONDS,
+    MIN_VERIFIER_COMPLETION_TOKENS,
+    MIN_VERIFIER_TIMEOUT_SECONDS,
     InvestigationRunError,
+    _remaining_verifier_reserve,
     assert_active,
     assert_actor_can_edit_run,
     assert_executor,
     budget_exhausted,
     canonical_json,
     content_hash,
+    elapsed_seconds,
     evaluate_run_policy,
     execute_tool_step,
     locked_run,
@@ -187,6 +196,11 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     if (
         transport.get("requested_model", "") != _requested_model()
         or transport.get("provider_policy") != ISSUE4_INVESTIGATION_PROVIDER_POLICY
+        or transport.get("endpoint_capability") != ENDPOINT_CAPABILITY
+        or (
+            transport.get("requested_model")
+            and transport.get("requested_model") != ENDPOINT_CAPABILITY["model"]
+        )
     ):
         raise InvestigationRunError(
             "Der für den Run fixierte Modell-/Providervertrag ist nicht mehr aktiv.",
@@ -398,6 +412,22 @@ def _reserve_model_call(
 
     prompt_payload = {"instruction": instruction, "context": dict(context)}
     prompt_token_reservation = _estimate_tokens(canonical_json(prompt_payload))
+    # UTF-8 bytes (including the response schema) conservatively bound context
+    # tokens without adding a tokenizer or changing the historical cost estimator.
+    response_schema = (
+        planner_response_format()
+        if role == InvestigationModelCall.Role.PLANNER
+        else verifier_response_format()
+    )
+    context_token_bound = (
+        len(
+            (instruction + canonical_json(context) + canonical_json(response_schema)).encode(
+                "utf-8"
+            )
+        )
+        + 32
+    )
+    context_room = ENDPOINT_CAPABILITY["context_tokens"] - context_token_bound
 
     usage = dict(run.usage)
     remaining_input = run.budget_limits["max_input_tokens"] - int(usage.get("input_tokens", 0))
@@ -407,7 +437,81 @@ def _reserve_model_call(
             "Das verbleibende Tokenbudget reicht für keinen weiteren Modellaufruf.",
             code="budget_exhausted",
         )
-    call_max_tokens = min(4096, remaining_output)
+    completion_floor = (
+        MIN_PLANNER_COMPLETION_TOKENS
+        if role == InvestigationModelCall.Role.PLANNER
+        else MIN_VERIFIER_COMPLETION_TOKENS
+    )
+    timeout_floor = (
+        MIN_PLANNER_TIMEOUT_SECONDS
+        if role == InvestigationModelCall.Role.PLANNER
+        else MIN_VERIFIER_TIMEOUT_SECONDS
+    )
+    verifier_reserve = _remaining_verifier_reserve(run)
+    if role == InvestigationModelCall.Role.VERIFIER:
+        # The current verifier call may use its own floor; keep the remaining
+        # read/recheck and repair calls viable within the frozen run envelope.
+        remaining_verifier_calls = max(
+            1, run.budget_limits["max_verifier_calls"] - usage["verifier_calls"]
+        )
+        current_input_share = (
+            verifier_reserve["input_tokens"] + remaining_verifier_calls - 1
+        ) // remaining_verifier_calls
+        verifier_reserve = {
+            **verifier_reserve,
+            "input_tokens": max(0, verifier_reserve["input_tokens"] - current_input_share),
+            "output_tokens": max(0, verifier_reserve["output_tokens"] - completion_floor),
+            "seconds": max(0, verifier_reserve["seconds"] - timeout_floor),
+        }
+    if prompt_token_reservation > remaining_input - verifier_reserve["input_tokens"]:
+        raise InvestigationRunError(
+            "Das Run-Inputbudget reicht nicht für den Call samt Verifier-Reserve.",
+            code="input_budget_exhausted",
+        )
+    remaining_output -= verifier_reserve["output_tokens"]
+    remaining_seconds = (
+        run.budget_limits["max_runtime_seconds"]
+        - elapsed_seconds(run)
+        - verifier_reserve["seconds"]
+    )
+    if remaining_seconds < timeout_floor:
+        raise InvestigationRunError(
+            "Die Run-Zeit reicht nicht für einen sinnvollen Modellaufruf samt Verifier-Reserve.",
+            code="runtime_capacity_exhausted",
+        )
+    call_max_tokens = min(ENDPOINT_CAPABILITY["completion_tokens"], context_room, remaining_output)
+    campaign = None
+    if run.evidence_campaign_id is not None:
+        campaign = InvestigationEvidenceCampaign.objects.select_for_update().get(
+            pk=run.evidence_campaign_id
+        )
+        call_max_tokens = max_reservable_output_tokens(
+            campaign,
+            input_tokens=prompt_token_reservation,
+            upper_bound=call_max_tokens,
+            protected_input_tokens=verifier_reserve["input_tokens"],
+            protected_output_tokens=verifier_reserve["output_tokens"],
+        )
+    if call_max_tokens < completion_floor:
+        code = (
+            "context_capacity_exhausted"
+            if context_room < completion_floor
+            else "evidence_budget_exhausted"
+            if campaign is not None
+            and max_reservable_output_tokens(
+                campaign,
+                input_tokens=prompt_token_reservation,
+                upper_bound=completion_floor,
+                protected_input_tokens=verifier_reserve["input_tokens"],
+                protected_output_tokens=verifier_reserve["output_tokens"],
+            )
+            < completion_floor
+            else "completion_budget_exhausted"
+        )
+        raise InvestigationRunError(
+            "Der Completion-Spielraum liegt unter dem Mindestwert für strukturiertes Arbeiten.",
+            code=code,
+        )
 
     if usage["model_calls"] >= run.budget_limits["max_model_calls"]:
         raise InvestigationRunError("Modellbudget ist erschöpft.", code="budget_exhausted")
@@ -437,6 +541,7 @@ def _reserve_model_call(
             "temperature": 0.1,
             "reasoning_effort": "medium",
             "max_tokens": call_max_tokens,
+            "timeout_seconds": remaining_seconds,
             "provider_policy": dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
         },
         prompt_version=prompt_version,
@@ -487,6 +592,57 @@ def _mark_model_failure(
             )
 
 
+def _record_truncated_usage(run_id, call_id, reservation, diagnostics: Mapping[str, Any]) -> None:
+    """Settle complete provider usage; retain the reservation if any field is uncertain."""
+    try:
+        prompt = int(diagnostics["usage_prompt_tokens"])
+        completion = int(diagnostics["usage_completion_tokens"])
+        if prompt < 0 or completion < 0:
+            raise ValueError("negative usage")
+    except (KeyError, TypeError, ValueError):
+        prompt = completion = None
+    cost = cost_to_microunits(diagnostics.get("usage_cost"))
+    cost_required = reservation is not None and "max_cost_microunits" in reservation.campaign.limits
+    complete = (
+        prompt is not None and completion is not None and (not cost_required or cost is not None)
+    )
+    if reservation is not None:
+        if complete:
+            settle_provider_attempt(
+                reservation_id=reservation.pk,
+                actual_input_tokens=prompt,
+                actual_output_tokens=completion,
+                actual_cost_microunits=cost,
+            )
+        else:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation.pk,
+                reason="output_truncated_usage_incomplete",
+            )
+    if complete:
+        with transaction.atomic():
+            run = InvestigationRun.objects.select_for_update().get(pk=run_id)
+            call = InvestigationModelCall.objects.select_for_update().get(pk=call_id)
+            usage = dict(run.usage)
+            usage["input_tokens"] += prompt
+            usage["output_tokens"] += completion
+            run.usage = usage
+            run.save(update_fields=["usage", "updated_at"])
+            call.prompt_tokens = prompt
+            call.completion_tokens = completion
+            call.total_tokens = prompt + completion
+            call.returned_model = str(diagnostics.get("returned_model") or "")
+            call.save(
+                update_fields=[
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "total_tokens",
+                    "returned_model",
+                    "updated_at",
+                ]
+            )
+
+
 def _structured_provider_call(
     *,
     actor,
@@ -520,17 +676,33 @@ def _structured_provider_call(
         result = request_openrouter(
             messages=messages,
             max_tokens=int(call.effective_parameters["max_tokens"]),
-            timeout_seconds=60,
+            timeout_seconds=int(call.effective_parameters["timeout_seconds"]),
             temperature=0.1,
             response_format=response_format,
             provider=dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
             reasoning_effort="medium",
         )
+        if result.finish_reason == "length":
+            raise OpenRouterUnavailable(
+                "OpenRouter hat das Completion-Limit vor einem vollständigen Ergebnis erreicht.",
+                code="output_truncated",
+                diagnostics={
+                    "finish_reason": result.finish_reason,
+                    "content_length": len(result.content),
+                    "returned_model": result.model,
+                    "usage_prompt_tokens": result.usage.get("prompt_tokens"),
+                    "usage_completion_tokens": result.usage.get("completion_tokens"),
+                    "usage_total_tokens": result.usage.get("total_tokens"),
+                    "usage_cost": result.usage.get("cost"),
+                },
+            )
         payload = json.loads(result.content)
         if not isinstance(payload, dict):
             raise ValueError("structured response must be an object")
     except OpenRouterUnavailable as exc:
-        if reservation is not None:
+        if exc.code == "output_truncated":
+            _record_truncated_usage(run_id, call.pk, reservation, exc.diagnostics)
+        elif reservation is not None:
             mark_provider_attempt_uncertain(
                 reservation_id=reservation.pk,
                 reason=exc.code,

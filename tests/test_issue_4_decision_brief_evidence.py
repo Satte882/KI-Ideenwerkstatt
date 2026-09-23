@@ -30,6 +30,7 @@ from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
     _estimate_tokens,
     _reserve_model_call,
+    _structured_provider_call,
 )
 from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
@@ -62,6 +63,7 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
+from ki_radar.core.openrouter import OpenRouterUnavailable
 
 
 def make_process(*, owner, business_unit, name="VS1/3 Fall"):
@@ -674,6 +676,13 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
     assert comparison_contract(fixed)["model_transport"]["provider_policy"] == (
         ISSUE4_INVESTIGATION_PROVIDER_POLICY
     )
+    assert fixed.execution_snapshot["model_transport"]["endpoint_capability"] == {
+        "version": "vs1-openrouter-deepinfra-fp8-v2",
+        "model": "deepseek/deepseek-v4.1-flash",
+        "provider": "deepinfra/fp8",
+        "context_tokens": 1_048_576,
+        "completion_tokens": 131_072,
+    }
 
     changed = dict(adaptive.execution_snapshot)
     transport = dict(changed["model_transport"])
@@ -1302,3 +1311,112 @@ def test_evidence_report_rejects_noncomparable_fixed_pair(
     assert report["fixed_comparison_present"] is False
     assert report["comparison_issues"]
     assert any("C:" in item for item in report["comparison_issues"])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("campaign_output", [40_000, 200_000])
+def test_campaign_headroom_protects_verification_without_allocating_entire_campaign(
+    owner, business_unit, tmp_path, campaign_output
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Campaign headroom")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process, output_tokens=campaign_output)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key=f"campaign-headroom-{campaign_output}",
+            evidence_campaign_id=campaign.pk,
+            evidence_metadata={"provider_mode": "real", "phase": "calibration"},
+            decision_brief_required=True,
+        ),
+    )
+    args = {
+        "actor": owner,
+        "run_id": handle.run_id,
+        "executor_token": handle.executor_token,
+        "role": InvestigationModelCall.Role.PLANNER,
+        "instruction": "Produce a structured decision",
+        "prompt_version": "headroom-test",
+        "schema_version": "headroom-test",
+        "context": {},
+    }
+    if campaign_output == 40_000:
+        with pytest.raises(InvestigationRunError) as exc_info:
+            _reserve_model_call(**args)
+        assert exc_info.value.code == "evidence_budget_exhausted"
+        assert InvestigationRun.objects.get(pk=handle.run_id).model_calls.count() == 0
+        campaign.refresh_from_db()
+        assert campaign.usage["provider_calls"] == 0
+    else:
+        call = _reserve_model_call(**args)
+        assert call.effective_parameters["max_tokens"] == 131_072 - 32_768
+        campaign.refresh_from_db()
+        assert campaign.usage["reserved_output_tokens"] == 131_072 - 32_768
+        assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("complete_usage", [False, True])
+def test_truncated_campaign_attempt_settles_known_usage_or_retains_reservation(
+    owner, business_unit, tmp_path, monkeypatch, complete_usage
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Truncation accounting")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key=f"truncation-accounting-{complete_usage}",
+            evidence_campaign_id=campaign.pk,
+            evidence_metadata={"provider_mode": "real", "phase": "calibration"},
+            decision_brief_required=True,
+        ),
+    )
+
+    def truncated_provider(**_kwargs):
+        diagnostics = {"finish_reason": "length"}
+        if complete_usage:
+            diagnostics.update(
+                usage_prompt_tokens=120,
+                usage_completion_tokens=8192,
+                returned_model="test-model",
+            )
+        raise OpenRouterUnavailable(
+            "Completion limit", code="output_truncated", diagnostics=diagnostics
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter", truncated_provider
+    )
+    with pytest.raises(InvestigationRunError) as exc_info:
+        _structured_provider_call(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            role=InvestigationModelCall.Role.PLANNER,
+            instruction="Produce a structured decision",
+            prompt_version="truncation-test",
+            schema_version="truncation-test",
+            context={},
+            response_format={"type": "json_schema"},
+        )
+    assert exc_info.value.code == "output_truncated"
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    call = run.model_calls.get()
+    reservation = call.evidence_reservation
+    campaign.refresh_from_db()
+    if complete_usage:
+        assert reservation.status == InvestigationProviderReservation.Status.SETTLED
+        assert campaign.usage["output_tokens"] == 8192
+        assert campaign.usage["reserved_output_tokens"] == 0
+        assert run.usage["output_tokens"] == 8192
+        assert call.completion_tokens == 8192
+    else:
+        assert reservation.status == InvestigationProviderReservation.Status.UNCERTAIN
+        assert campaign.usage["output_tokens"] == 0
+        assert campaign.usage["reserved_output_tokens"] > 0
+        assert run.usage["output_tokens"] == 0
