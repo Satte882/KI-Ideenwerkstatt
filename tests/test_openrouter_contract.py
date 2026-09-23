@@ -85,7 +85,7 @@ def test_empty_response_keeps_content_free_provider_diagnostics(monkeypatch):
     error = exc_info.value
     diagnostics = error.diagnostics
 
-    assert error.code == "empty_response"
+    assert error.code == "output_truncated"
     assert diagnostics["returned_model"] == "deepseek/deepseek-v4.1-flash"
     assert diagnostics["choices_count"] == 1
     assert diagnostics["finish_reason"] == "length"
@@ -109,3 +109,22 @@ def test_empty_response_keeps_content_free_provider_diagnostics(monkeypatch):
     assert diagnostics["usage_total_tokens"] == 6472
     assert diagnostics["usage_cost"] == 0.00042
     assert "internal reasoning omitted from diagnostics" not in json.dumps(diagnostics)
+
+
+def test_productive_reasoning_effort_excludes_reasoning_from_response(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-key", raising=False)
+    monkeypatch.setattr(settings, "OPENROUTER_REASONING_EXCLUDE", True, raising=False)
+    captured = {}
+
+    def fake_urlopen(request, **_kwargs):
+        captured["body"] = json.loads(request.data)
+        return _FakeResponse({"choices": [{"finish_reason": "stop", "message": {"content": "{}"}}]})
+
+    monkeypatch.setattr("ki_radar.core.openrouter.urllib.request.urlopen", fake_urlopen)
+    request_openrouter(
+        messages=[{"role": "system", "content": "structured"}],
+        max_tokens=8192,
+        timeout_seconds=90,
+        reasoning_effort="medium",
+    )
+    assert captured["body"]["reasoning"] == {"effort": "medium", "exclude": True}

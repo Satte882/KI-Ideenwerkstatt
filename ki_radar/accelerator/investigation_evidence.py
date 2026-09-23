@@ -320,6 +320,39 @@ def _would_exceed(
     return False
 
 
+def max_reservable_output_tokens(
+    campaign: InvestigationEvidenceCampaign,
+    *,
+    input_tokens: int,
+    upper_bound: int,
+    protected_input_tokens: int = 0,
+    protected_output_tokens: int = 0,
+) -> int:
+    """Find campaign output headroom including concurrent and uncertain reservations.
+
+    The caller holds a row lock on campaign until reserve_provider_attempt commits.
+    Cost uses the same frozen pricing and ceiling rule as the actual reservation.
+    """
+    low, high = 0, max(0, upper_bound)
+    while low < high:
+        candidate = (low + high + 1) // 2
+        cost = _max_cost_for_tokens(
+            campaign,
+            input_tokens=input_tokens + protected_input_tokens,
+            output_tokens=candidate + protected_output_tokens,
+        )
+        if _would_exceed(
+            campaign,
+            input_tokens=input_tokens + protected_input_tokens,
+            output_tokens=candidate + protected_output_tokens,
+            reserved_cost_microunits=cost,
+        ):
+            high = candidate - 1
+        else:
+            low = candidate
+    return low
+
+
 @transaction.atomic
 def reserve_provider_attempt(
     *,

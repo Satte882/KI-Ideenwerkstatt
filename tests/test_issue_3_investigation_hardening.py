@@ -3,19 +3,24 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from datetime import timedelta
 from pathlib import Path
 from threading import Barrier
 
 import pytest
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import close_old_connections, connection
 from django.utils import timezone
 
 from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
+    _reserve_model_call,
+    _structured_provider_call,
     request_verifier_report,
 )
 from ki_radar.accelerator.investigation_loop import (
+    TRANSIENT_PROVIDER_CODES,
     advance_investigation,
     run_until_boundary,
 )
@@ -614,7 +619,7 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     diagnostics = {
         "response_type": "dict",
         "choices_count": 1,
-        "finish_reason": "length",
+        "finish_reason": "stop",
         "content_type": "str",
         "content_length": 0,
         "has_reasoning": False,
@@ -651,8 +656,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v2"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v2"
+    assert run.loop_version == "vs1-agent-loop-v3"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v3"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1019,8 +1024,8 @@ def test_default_budget_version_covers_benchmark_and_repair_envelope(
     run = InvestigationRun.objects.get(pk=handle.run_id)
     limits = run.budget_limits
 
-    assert BUDGET_VERSION == "vs1-budget-v3"
-    assert run.execution_snapshot["budget_version"] == "vs1-budget-v3"
+    assert BUDGET_VERSION == "vs1-budget-v4"
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v4"
     assert limits["max_model_calls"] == 14
     assert limits["max_verifier_calls"] == 4
     assert limits["verifier_reserved_model_calls"] == 4
@@ -1030,10 +1035,10 @@ def test_default_budget_version_covers_benchmark_and_repair_envelope(
     # initial verification and the one allowed post-repair verification.
     assert limits["max_verifier_calls"] == 2 * (1 + limits["max_repair_cycles"])
 
-    # Every possible model call retains the frozen 4096-token transport ceiling;
-    # the verifier reserve covers all four possible verifier calls at that ceiling.
-    assert limits["max_output_tokens"] == limits["max_model_calls"] * 4096
-    assert limits["verifier_reserved_output_tokens"] == limits["max_verifier_calls"] * 4096
+    # The run has its own generous envelope. Four viable verifier responses
+    # stay protected without imposing a per-call completion ceiling.
+    assert limits["max_output_tokens"] == 131_072
+    assert limits["verifier_reserved_output_tokens"] == limits["max_verifier_calls"] * 8_192
 
 
 @pytest.mark.django_db
@@ -1633,3 +1638,207 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
     assert run.status == InvestigationRun.Status.READY
     assert run.usage["tool_calls"] == 4
     assert run.usage["model_calls"] == 6
+    calls = list(run.model_calls.order_by("created_at"))
+    assert all(call.effective_parameters["max_tokens"] > 4096 for call in calls)
+    assert all(call.effective_parameters["timeout_seconds"] > 60 for call in calls)
+    assert all(call.effective_parameters["reasoning_effort"] == "medium" for call in calls)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("role", ["planner", "verifier"])
+@pytest.mark.parametrize("partial", [False, True])
+def test_truncated_structured_response_is_accounted_and_never_retried(
+    owner, business_unit, tmp_path, monkeypatch, role, partial
+):
+    process = make_process(owner=owner, business_unit=business_unit, name=f"Truncated {role}")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, f"truncated-{role}-{partial}"),
+    )
+    provider_calls = 0
+
+    def truncated_provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        if not partial:
+            raise OpenRouterUnavailable(
+                "Completion limit",
+                code="output_truncated",
+                diagnostics={
+                    "finish_reason": "length",
+                    "usage_prompt_tokens": 20,
+                    "usage_completion_tokens": 8192,
+                    "returned_model": "test-model",
+                },
+            )
+        return OpenRouterResult(
+            content='{"action":"verify"}',
+            model="test-model",
+            usage={"prompt_tokens": 20, "completion_tokens": 8192},
+            output_chars=19,
+            finish_reason="length",
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter", truncated_provider
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    if role == "planner":
+        result = advance_investigation(
+            actor=owner, run_id=run.pk, executor_token=handle.executor_token
+        )
+        assert result.status == InvestigationRun.Status.WAITING_HUMAN
+        run.refresh_from_db()
+        assert run.clarification_payload["error_code"] == "output_truncated"
+        assert run.clarification_payload["attempts"] == 1
+    else:
+        with pytest.raises(InvestigationRunError, match="Completion") as exc_info:
+            request_verifier_report(actor=owner, run=run, executor_token=handle.executor_token)
+        assert exc_info.value.code == "output_truncated"
+    call = run.model_calls.get()
+    assert provider_calls == 1
+    assert "output_truncated" not in TRANSIENT_PROVIDER_CODES
+    assert call.status == InvestigationModelCall.Status.FAILED
+    assert call.error_code == "output_truncated"
+    assert call.accepted_payload == {}
+    assert call.prompt_tokens == 20
+    assert call.completion_tokens == 8192
+    assert call.effective_parameters["response_diagnostics"]["finish_reason"] == "length"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("role", "capacity_kind", "expected_code"),
+    [
+        ("planner", "completion", "completion_budget_exhausted"),
+        ("verifier", "completion", "completion_budget_exhausted"),
+        ("planner", "timeout", "runtime_capacity_exhausted"),
+        ("verifier", "timeout", "runtime_capacity_exhausted"),
+    ],
+)
+def test_completion_and_timeout_floors_prevent_provider_attempt(
+    owner, business_unit, tmp_path, role, capacity_kind, expected_code
+):
+    process = make_process(owner=owner, business_unit=business_unit, name=f"Floor {role}")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, f"floor-{role}-{expected_code}"),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    if capacity_kind == "completion":
+        protected = 32_768 if role == "planner" else 0
+        usage = dict(run.usage)
+        usage["output_tokens"] = run.budget_limits["max_output_tokens"] - protected - 8_191
+        run.usage = usage
+        run.save(update_fields=["usage", "updated_at"])
+    else:
+        protected = 300 if role == "planner" else 0
+        floor = 60 if role == "planner" else 75
+        elapsed = run.budget_limits["max_runtime_seconds"] - protected - floor + 1
+        InvestigationRun.objects.filter(pk=run.pk).update(
+            started_at=timezone.now() - timedelta(seconds=elapsed)
+        )
+    with pytest.raises(InvestigationRunError) as exc_info:
+        _reserve_model_call(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            role=role,
+            instruction="Structured investigation",
+            prompt_version="floor-test",
+            schema_version="floor-test",
+            context={},
+        )
+    assert exc_info.value.code == expected_code
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.model_calls.count() == 0
+    assert run.usage["provider_attempts"] == 0
+
+
+@pytest.mark.django_db
+def test_structured_planner_request_sends_productive_reasoning_parameters(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-key", raising=False)
+    monkeypatch.setattr(settings, "OPENROUTER_MODEL", "deepseek/deepseek-v4.1-flash", raising=False)
+    monkeypatch.setattr(settings, "OPENROUTER_REASONING_EXCLUDE", True, raising=False)
+    process = make_process(owner=owner, business_unit=business_unit, name="Reasoning transport")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "reasoning-transport"),
+    )
+    captured = {}
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self, _limit):
+            return json.dumps(
+                {
+                    "model": "deepseek/deepseek-v4.1-flash",
+                    "choices": [{"finish_reason": "stop", "message": {"content": "{}"}}],
+                    "usage": {"prompt_tokens": 20, "completion_tokens": 2},
+                }
+            ).encode()
+
+    def fake_urlopen(request, **_kwargs):
+        captured["body"] = json.loads(request.data)
+        return Response()
+
+    monkeypatch.setattr("ki_radar.core.openrouter.urllib.request.urlopen", fake_urlopen)
+    _structured_provider_call(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.PLANNER,
+        instruction="Produce a structured decision",
+        prompt_version="reasoning-test",
+        schema_version="reasoning-test",
+        context={},
+        response_format=planner_response_format(),
+    )
+    assert captured["body"]["reasoning"] == {"effort": "medium", "exclude": True}
+    assert captured["body"]["max_tokens"] > 4096
+
+
+@pytest.mark.django_db
+def test_frozen_endpoint_capability_cannot_change_after_run_start(owner, business_unit, tmp_path):
+    process = make_process(owner=owner, business_unit=business_unit, name="Frozen capability")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "frozen-capability"),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    frozen = dict(run.execution_snapshot)
+    transport = dict(frozen["model_transport"])
+    capability = dict(transport["endpoint_capability"])
+    capability["completion_tokens"] -= 1
+    transport["endpoint_capability"] = capability
+    frozen["model_transport"] = transport
+    InvestigationRun.objects.filter(pk=run.pk).update(execution_snapshot=frozen)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        _reserve_model_call(
+            actor=owner,
+            run_id=run.pk,
+            executor_token=handle.executor_token,
+            role=InvestigationModelCall.Role.PLANNER,
+            instruction="Produce a structured decision",
+            prompt_version="frozen-test",
+            schema_version="frozen-test",
+            context={},
+        )
+    assert exc_info.value.code == "execution_version_unavailable"
+    assert run.model_calls.count() == 0

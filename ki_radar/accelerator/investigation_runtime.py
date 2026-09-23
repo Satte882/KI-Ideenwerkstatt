@@ -62,8 +62,26 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v2"
-BUDGET_VERSION = "vs1-budget-v3"
+LOOP_VERSION = "vs1-agent-loop-v3"
+BUDGET_VERSION = "vs1-budget-v4"
+TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v2"
+# Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
+# not live provider metadata: changes require a deliberate transport revision.
+ENDPOINT_CAPABILITY = {
+    "version": TRANSPORT_VERSION,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider": "deepinfra/fp8",
+    "context_tokens": 1_048_576,
+    "completion_tokens": 131_072,
+}
+# Strict planner JSON carries complete claims/brief; the verifier returns findings
+# and references. Hidden medium reasoning also consumes completion tokens. A
+# 4096-token completion yielded no visible content, so 8192 is the minimum
+# viable window for reasoning plus structured output, never a per-call ceiling.
+MIN_PLANNER_COMPLETION_TOKENS = 8_192
+MIN_VERIFIER_COMPLETION_TOKENS = 8_192
+MIN_PLANNER_TIMEOUT_SECONDS = 60
+MIN_VERIFIER_TIMEOUT_SECONDS = 75
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
@@ -76,21 +94,21 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 
 DEFAULT_BUDGET = {
     "max_tool_calls": 12,
-    # Benchmark envelope: up to 10 planner attempts plus two verifier rounds
+    # Up to 10 planner attempts plus two verifier rounds
     # (initial verification + one repair cycle), each verifier round allowing
     # the existing two-call read-and-recheck path.
     "max_model_calls": 14,
     "max_verifier_calls": 4,
     # Restore the original v1 per-call input/runtime headroom (60k/8 and
     # 600s/8), which budget v2 did not scale when model calls increased.
-    # Output is derived from the frozen 4096-token transport cap for all
-    # 14 possible model calls.
+    # One run can use one endpoint-sized output window, but cannot claim an
+    # entire campaign. Four verifier calls retain one viable response each.
     "max_runtime_seconds": 1_050,
     "max_input_tokens": 105_000,
-    "max_output_tokens": 57_344,
+    "max_output_tokens": 131_072,
     "verifier_reserved_model_calls": 4,
     "verifier_reserved_input_tokens": 20_000,
-    "verifier_reserved_output_tokens": 16_384,
+    "verifier_reserved_output_tokens": 4 * MIN_VERIFIER_COMPLETION_TOKENS,
     "verifier_reserved_seconds": 300,
     "max_verifier_reads": 12,
     "max_repair_cycles": 1,
@@ -329,7 +347,7 @@ def base_execution_snapshot(
             ),
             "temperature": 0.1,
             "reasoning_effort": "medium",
-            "max_output_tokens_per_call": 4096,
+            "endpoint_capability": dict(ENDPOINT_CAPABILITY),
         },
         "process_version": snapshot.process_version,
         "planner": {

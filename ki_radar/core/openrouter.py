@@ -432,6 +432,12 @@ def request_openrouter(
             code="provider_response_malformed",
             diagnostics=diagnostics,
         ) from exc
+    if finish_reason == "length" and not content:
+        raise OpenRouterUnavailable(
+            "OpenRouter hat das Completion-Limit ohne vollständige Antwort erreicht.",
+            code="output_truncated",
+            diagnostics=diagnostics,
+        )
     if not content:
         raise OpenRouterUnavailable(
             "OpenRouter hat keine Analyse zurückgegeben.",
