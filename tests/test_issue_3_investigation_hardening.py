@@ -861,8 +861,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v6"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v6"
+    assert run.loop_version == "vs1-agent-loop-v7"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v7"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1146,6 +1146,129 @@ def test_invalid_model_tool_parameters_get_one_informed_retry_before_execution(
     assert run.model_calls.filter(status=InvestigationModelCall.Status.SUCCESS).count() == 1
     assert list(run.steps.values_list("tool_name", "status")) == [("compare_groups", "success")]
     assert run.data_check_executed is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("first_claims", "first_brief", "expected_code"),
+    [
+        ("[]", "{}", "invalid_claim"),
+        ('[{"claim_id":"replacement"}]', "null", "invalid_claim"),
+        ("null", "{}", "invalid_brief"),
+    ],
+)
+def test_unchanged_planner_state_cannot_erase_claims_or_brief(
+    owner, business_unit, tmp_path, monkeypatch, first_claims, first_brief, expected_code
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="state-preservation"
+    )
+    claim = {
+        "claim_id": "observed",
+        "area": "problem_context",
+        "claim_kind": "observation",
+        "status": "supported",
+        "evidence_refs": [source_ref(source)],
+    }
+    apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        claim_register=(claim,),
+        brief_payload={"draft": "Evidenzgestützter Arbeitsstand"},
+    )
+    provider_calls = 0
+
+    def provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        payload = {
+            "action": "tool",
+            "target_claim_id": "observed",
+            "expected_discriminating_finding": "Quellen prüfen.",
+            "rationale": "Evidenzarbeit fortsetzen.",
+            "tool_name": "list_sources",
+            "parameters": "{}",
+            "claim_register": first_claims if provider_calls == 1 else "null",
+            "brief_payload": first_brief if provider_calls == 1 else "null",
+            "source_relevance": "{}",
+            "progress_kind": "none",
+            "progress_payload": "{}",
+            "clarification_reason": "",
+            "clarification_payload": "{}",
+        }
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    first = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert run.model_calls.get().error_code == "invalid_response"
+    assert (
+        run.model_calls.get().effective_parameters["response_diagnostics"][
+            "structured_contract_error_code"
+        ]
+        == expected_code
+    )
+    assert run.claim_register[0]["claim_id"] == "observed"
+    assert run.brief_payload == {"draft": "Evidenzgestützter Arbeitsstand"}
+    assert run.steps.count() == 0
+
+    second = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert second.status == InvestigationRun.Status.RUNNING
+    assert provider_calls == 2
+    assert run.claim_register[0]["claim_id"] == "observed"
+    assert run.brief_payload == {"draft": "Evidenzgestützter Arbeitsstand"}
+    assert list(run.steps.values_list("tool_name", "status")) == [("list_sources", "success")]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("read_first", [False, True])
+def test_counterevidence_search_reuses_previously_read_hit(
+    owner, business_unit, tmp_path, read_first
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Counterevidence order")
+    (tmp_path / "evidence.md").write_text(
+        "# Beobachtung\nGegenbeleg: alternative Ursache im Prozess.\n", encoding="utf-8"
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, f"counter-order-{read_first}"),
+    )
+    source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
+    if read_first:
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name="read_source",
+            parameters={"source_id": str(source.source_id)},
+        )
+
+    action = planner_action(tool_name="search_sources", parameters={"query": "Gegenbeleg"})
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: action,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert run.counterevidence_search_executed is True
+    assert run.steps.get(tool_name="search_sources").result_payload["hits"]
+    assert run.counterevidence_hits_processed is read_first
 
 
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
@@ -1618,7 +1741,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v9"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v10"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)

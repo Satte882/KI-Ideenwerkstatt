@@ -84,8 +84,8 @@ class PlannerAction:
     rationale: str
     tool_name: str
     parameters: Mapping[str, Any]
-    claim_register: tuple[Mapping[str, Any], ...]
-    brief_payload: Mapping[str, Any]
+    claim_register: tuple[Mapping[str, Any], ...] | None
+    brief_payload: Mapping[str, Any] | None
     source_relevance: Mapping[str, Mapping[str, Any]]
     progress_kind: str
     progress_payload: Mapping[str, Any]
@@ -125,8 +125,12 @@ def _decode_structured_field(
 def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
     """Validate opaque JSON-string fields before a provider response becomes SUCCESS."""
     _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
-    _decode_structured_field(payload, "claim_register", expected_type=list, default=[])
-    _decode_structured_field(payload, "brief_payload", expected_type=Mapping, default={})
+    _decode_structured_field(
+        payload, "claim_register", expected_type=(list, type(None)), default=None
+    )
+    _decode_structured_field(
+        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
+    )
     _decode_structured_field(payload, "source_relevance", expected_type=Mapping, default={})
     _decode_structured_field(payload, "progress_payload", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
@@ -141,10 +145,30 @@ def _validate_planner_semantic_payload(
     raw_claims = _decode_structured_field(
         payload,
         "claim_register",
-        expected_type=list,
-        default=[],
+        expected_type=(list, type(None)),
+        default=None,
     )
-    normalize_claim_register(run, raw_claims)
+    if raw_claims is not None:
+        previous_claim_ids = {item["claim_id"] for item in run.claim_register}
+        proposed_claim_ids = {
+            str(item.get("claim_id")) for item in raw_claims if isinstance(item, Mapping)
+        }
+        if missing_claim_ids := sorted(previous_claim_ids - proposed_claim_ids):
+            raise InvestigationRunError(
+                "Bestehende Claims dürfen nicht verschwinden; unverändert ist null: "
+                + ", ".join(missing_claim_ids),
+                code="invalid_claim",
+            )
+        normalize_claim_register(run, raw_claims)
+    brief = _decode_structured_field(
+        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
+    )
+    if brief is not None and (missing_sections := sorted(set(run.brief_payload) - set(brief))):
+        raise InvestigationRunError(
+            "Bestehende Brief-Abschnitte dürfen nicht verschwinden; unverändert ist null: "
+            + ", ".join(missing_sections),
+            code="invalid_brief",
+        )
     if payload.get("action") == "tool":
         tool_name = str(payload.get("tool_name") or "")
         if tool_name not in ALLOWED_TOOLS:
@@ -945,10 +969,10 @@ def request_planner_action(
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     claim_register = _decode_structured_field(
-        payload, "claim_register", expected_type=list, default=[]
+        payload, "claim_register", expected_type=(list, type(None)), default=None
     )
     brief_payload = _decode_structured_field(
-        payload, "brief_payload", expected_type=Mapping, default={}
+        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
     )
     source_relevance = _decode_structured_field(
         payload, "source_relevance", expected_type=Mapping, default={}
@@ -966,8 +990,8 @@ def request_planner_action(
         rationale=str(payload.get("rationale") or ""),
         tool_name=str(payload.get("tool_name") or ""),
         parameters=dict(parameters),
-        claim_register=tuple(claim_register),
-        brief_payload=dict(brief_payload),
+        claim_register=tuple(claim_register) if claim_register is not None else None,
+        brief_payload=dict(brief_payload) if brief_payload is not None else None,
         source_relevance={
             str(key): dict(value)
             for key, value in dict(source_relevance).items()
