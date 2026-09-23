@@ -62,9 +62,9 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v4"
-BUDGET_VERSION = "vs1-budget-v4"
-TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v2"
+LOOP_VERSION = "vs1-agent-loop-v5"
+BUDGET_VERSION = "vs1-budget-v5"
+TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
 # not live provider metadata: changes require a deliberate transport revision.
 ENDPOINT_CAPABILITY = {
@@ -99,17 +99,17 @@ DEFAULT_BUDGET = {
     # the existing two-call read-and-recheck path.
     "max_model_calls": 14,
     "max_verifier_calls": 4,
-    # Restore the original v1 per-call input/runtime headroom (60k/8 and
-    # 600s/8), which budget v2 did not scale when model calls increased.
-    # One run can use one endpoint-sized output window, but cannot claim an
-    # entire campaign. Four verifier calls retain one viable response each.
-    "max_runtime_seconds": 1_050,
+    # The pinned endpoint took over five minutes for a 15k-token structured
+    # answer. Give each of 14 possible calls five minutes on average, with four such
+    # shares protected for verification. Calls still use the remaining-time
+    # calculation and the run/campaign safety limits remain independent.
+    "max_runtime_seconds": 14 * 300,
     "max_input_tokens": 105_000,
     "max_output_tokens": 131_072,
     "verifier_reserved_model_calls": 4,
     "verifier_reserved_input_tokens": 20_000,
     "verifier_reserved_output_tokens": 4 * MIN_VERIFIER_COMPLETION_TOKENS,
-    "verifier_reserved_seconds": 300,
+    "verifier_reserved_seconds": 4 * 300,
     "max_verifier_reads": 12,
     "max_repair_cycles": 1,
 }

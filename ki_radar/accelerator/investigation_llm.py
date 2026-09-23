@@ -106,9 +106,13 @@ def _decode_structured_field(
                 f"Das strukturierte Feld '{field}' enthält kein gültiges JSON.",
                 code="invalid_response",
             ) from exc
+    # An empty relevance list carries no decisions and is safely equivalent to
+    # an empty mapping. Nonempty lists still fail the contract.
+    if field == "source_relevance" and value == []:
+        value = {}
     if not isinstance(value, expected_type):
         raise InvestigationRunError(
-            f"Das strukturierte Feld '{field}' hat den falschen Typ.",
+            f"Das strukturierte Feld '{field}' hat den falschen Typ ({type(value).__name__}).",
             code="invalid_response",
         )
     return value
@@ -449,19 +453,22 @@ def _reserve_model_call(
     )
     verifier_reserve = _remaining_verifier_reserve(run)
     if role == InvestigationModelCall.Role.VERIFIER:
-        # The current verifier call may use its own floor; keep the remaining
-        # read/recheck and repair calls viable within the frozen run envelope.
+        # Allocate one equal share of the reserved verifier time to this call;
+        # protect the remaining shares for reads, rechecks and repair.
         remaining_verifier_calls = max(
             1, run.budget_limits["max_verifier_calls"] - usage["verifier_calls"]
         )
         current_input_share = (
             verifier_reserve["input_tokens"] + remaining_verifier_calls - 1
         ) // remaining_verifier_calls
+        current_time_share = (
+            verifier_reserve["seconds"] + remaining_verifier_calls - 1
+        ) // remaining_verifier_calls
         verifier_reserve = {
             **verifier_reserve,
             "input_tokens": max(0, verifier_reserve["input_tokens"] - current_input_share),
             "output_tokens": max(0, verifier_reserve["output_tokens"] - completion_floor),
-            "seconds": max(0, verifier_reserve["seconds"] - timeout_floor),
+            "seconds": max(0, verifier_reserve["seconds"] - current_time_share),
         }
     if prompt_token_reservation > remaining_input - verifier_reserve["input_tokens"]:
         raise InvestigationRunError(
@@ -479,6 +486,16 @@ def _reserve_model_call(
             "Die Run-Zeit reicht nicht für einen sinnvollen Modellaufruf samt Verifier-Reserve.",
             code="runtime_capacity_exhausted",
         )
+    if role == InvestigationModelCall.Role.PLANNER:
+        remaining_planner_calls = max(
+            1,
+            run.budget_limits["max_model_calls"]
+            - usage["model_calls"]
+            - verifier_reserve["model_calls"],
+        )
+        call_timeout = max(timeout_floor, remaining_seconds // remaining_planner_calls)
+    else:
+        call_timeout = remaining_seconds
     call_max_tokens = min(ENDPOINT_CAPABILITY["completion_tokens"], context_room, remaining_output)
     campaign = None
     if run.evidence_campaign_id is not None:
@@ -541,7 +558,7 @@ def _reserve_model_call(
             "temperature": 0.1,
             "reasoning_effort": "medium",
             "max_tokens": call_max_tokens,
-            "timeout_seconds": remaining_seconds,
+            "timeout_seconds": call_timeout,
             "provider_policy": dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
         },
         prompt_version=prompt_version,

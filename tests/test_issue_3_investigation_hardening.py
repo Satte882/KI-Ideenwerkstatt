@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import timedelta
@@ -15,6 +16,7 @@ from django.utils import timezone
 
 from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
+    _decode_structured_field,
     _reserve_model_call,
     _structured_provider_call,
     request_verifier_report,
@@ -857,8 +859,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v4"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v4"
+    assert run.loop_version == "vs1-agent-loop-v5"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v5"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1061,6 +1063,26 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
     assert run.steps.count() == 0
 
 
+def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
+    assert (
+        _decode_structured_field(
+            {"source_relevance": "[]"},
+            "source_relevance",
+            expected_type=Mapping,
+            default={},
+        )
+        == {}
+    )
+    with pytest.raises(InvestigationRunError, match="list") as exc_info:
+        _decode_structured_field(
+            {"source_relevance": '[{"relevant": true}]'},
+            "source_relevance",
+            expected_type=Mapping,
+            default={},
+        )
+    assert exc_info.value.code == "invalid_response"
+
+
 @pytest.mark.django_db
 def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
     owner,
@@ -1225,8 +1247,8 @@ def test_default_budget_version_covers_benchmark_and_repair_envelope(
     run = InvestigationRun.objects.get(pk=handle.run_id)
     limits = run.budget_limits
 
-    assert BUDGET_VERSION == "vs1-budget-v4"
-    assert run.execution_snapshot["budget_version"] == "vs1-budget-v4"
+    assert BUDGET_VERSION == "vs1-budget-v5"
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v5"
     assert limits["max_model_calls"] == 14
     assert limits["max_verifier_calls"] == 4
     assert limits["verifier_reserved_model_calls"] == 4
@@ -1937,7 +1959,7 @@ def test_completion_and_timeout_floors_prevent_provider_attempt(
         run.usage = usage
         run.save(update_fields=["usage", "updated_at"])
     else:
-        protected = 300 if role == "planner" else 0
+        protected = 1_200 if role == "planner" else 0
         floor = 60 if role == "planner" else 75
         elapsed = run.budget_limits["max_runtime_seconds"] - protected - floor + 1
         InvestigationRun.objects.filter(pk=run.pk).update(
@@ -1958,6 +1980,59 @@ def test_completion_and_timeout_floors_prevent_provider_attempt(
     run = InvestigationRun.objects.get(pk=handle.run_id)
     assert run.model_calls.count() == 0
     assert run.usage["provider_attempts"] == 0
+
+
+@pytest.mark.django_db
+def test_later_planner_gets_time_without_consuming_verifier_reserve(owner, business_unit, tmp_path):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="runtime-share"
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    usage = dict(run.usage)
+    usage["model_calls"] = 5
+    usage["provider_attempts"] = 5
+    run.usage = usage
+    run.save(update_fields=["usage", "updated_at"])
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        started_at=timezone.now() - timedelta(seconds=690)
+    )
+
+    call = _reserve_model_call(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.PLANNER,
+        instruction="Structured investigation",
+        prompt_version="runtime-share-test",
+        schema_version="runtime-share-test",
+        context={},
+    )
+    assert run.budget_limits["max_runtime_seconds"] == 4_200
+    assert run.budget_limits["verifier_reserved_seconds"] == 1_200
+    assert 460 <= call.effective_parameters["timeout_seconds"] <= 463
+
+
+@pytest.mark.django_db
+def test_verifier_receives_its_reserved_time_share(owner, business_unit, tmp_path):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="verifier-time-share"
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        started_at=timezone.now() - timedelta(seconds=3_000)
+    )
+
+    call = _reserve_model_call(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.VERIFIER,
+        instruction="Verify the structured investigation",
+        prompt_version="verifier-time-test",
+        schema_version="verifier-time-test",
+        context={},
+    )
+    assert 300 <= call.effective_parameters["timeout_seconds"] <= 302
 
 
 @pytest.mark.django_db

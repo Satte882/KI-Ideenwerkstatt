@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -306,9 +307,34 @@ def _headers(api_key: str) -> dict[str, str]:
     return headers
 
 
-def _read_bounded(response) -> bytes:
+def _read_bounded(response, *, deadline: float | None = None) -> bytes:
     response_limit = max_response_bytes()
-    payload = response.read(response_limit + 1)
+    read_chunk = getattr(response, "read1", None)
+    if deadline is None or not callable(read_chunk):
+        payload = response.read(response_limit + 1)
+        if deadline is not None and time.monotonic() >= deadline:
+            raise TimeoutError("OpenRouter response exceeded its wall-clock deadline")
+    else:
+        chunks: list[bytes] = []
+        size = 0
+        while size <= response_limit:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("OpenRouter response exceeded its wall-clock deadline")
+            # urllib's timeout applies to each socket wait. Refresh it for each
+            # body chunk so a slowly streamed answer cannot consume the entire
+            # run while continuously resetting that idle timeout.
+            socket = getattr(getattr(getattr(response, "fp", None), "raw", None), "_sock", None)
+            if socket is not None:
+                socket.settimeout(remaining)
+            chunk = read_chunk(min(64 * 1024, response_limit + 1 - size))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
+        if time.monotonic() >= deadline:
+            raise TimeoutError("OpenRouter response exceeded its wall-clock deadline")
+        payload = b"".join(chunks)
     if len(payload) > response_limit:
         raise OpenRouterUnavailable(
             "OpenRouter hat eine zu große Antwort zurückgegeben.",
@@ -358,12 +384,13 @@ def request_openrouter(
         headers=_headers(api_key),
         method="POST",
     )
+    deadline = time.monotonic() + timeout_seconds
     try:
         with urllib.request.urlopen(  # nosec B310  # noqa: S310
             request,
             timeout=timeout_seconds,
         ) as response:
-            payload = json.loads(_read_bounded(response).decode("utf-8"))
+            payload = json.loads(_read_bounded(response, deadline=deadline).decode("utf-8"))
     except urllib.error.HTTPError as exc:
         error_payload = _http_error_payload(exc)
         diagnostics = _response_diagnostics(error_payload)
