@@ -417,7 +417,9 @@ def advance_investigation(
             expected_discriminating_finding=action.expected_discriminating_finding,
         )
         run.refresh_from_db()
-        if action.tool_name == "read_source":
+        # A search hit may already have been read before the search. The
+        # server-side locator check decides whether every hit is covered.
+        if action.tool_name in {"read_source", "search_sources"}:
             _try_mark_counterevidence_processed(
                 actor=actor,
                 run=run,

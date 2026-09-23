@@ -1233,6 +1233,44 @@ def test_unchanged_planner_state_cannot_erase_claims_or_brief(
     assert list(run.steps.values_list("tool_name", "status")) == [("list_sources", "success")]
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("read_first", [False, True])
+def test_counterevidence_search_reuses_previously_read_hit(
+    owner, business_unit, tmp_path, read_first
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Counterevidence order")
+    (tmp_path / "evidence.md").write_text(
+        "# Beobachtung\nGegenbeleg: alternative Ursache im Prozess.\n", encoding="utf-8"
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, f"counter-order-{read_first}"),
+    )
+    source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
+    if read_first:
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name="read_source",
+            parameters={"source_id": str(source.source_id)},
+        )
+
+    action = planner_action(tool_name="search_sources", parameters={"query": "Gegenbeleg"})
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: action,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert run.counterevidence_search_executed is True
+    assert run.steps.get(tool_name="search_sources").result_payload["hits"]
+    assert run.counterevidence_hits_processed is read_first
+
+
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
     assert (
         _decode_structured_field(
