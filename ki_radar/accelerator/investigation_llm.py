@@ -110,6 +110,12 @@ def _decode_structured_field(
                 f"Das strukturierte Feld '{field}' enthält kein gültiges JSON.",
                 code="invalid_response",
             ) from exc
+    # Strict schemas require every transport field, including fields unused by
+    # this action. Providers may encode their empty value as JSON null (inside
+    # the string or as a native value). Keep null's "unchanged" meaning for
+    # claim_register/brief_payload; only empty object fields use their default.
+    if value is None and isinstance(default, Mapping):
+        value = default
     # An empty relevance list carries no decisions and is safely equivalent to
     # an empty mapping. Nonempty lists still fail the contract.
     if field == "source_relevance" and value == []:
@@ -508,7 +514,7 @@ def _reserve_model_call(
     prompt_payload = {"instruction": instruction, "context": dict(context)}
     prompt_token_reservation = _estimate_tokens(canonical_json(prompt_payload))
     # UTF-8 bytes (including the response schema) conservatively bound context
-    # tokens without adding a tokenizer or changing the historical cost estimator.
+    # tokens without changing the existing usage reservation and safety limits.
     response_schema = (
         planner_response_format()
         if role == InvestigationModelCall.Role.PLANNER

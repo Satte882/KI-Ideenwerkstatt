@@ -211,6 +211,11 @@ Erfolg wird nicht an Codeumfang oder sichtbaren KI-Features gemessen, sondern in
 - automatisch geprüfter Konsistenz von Discovery bis Delivery;
 - mindestens gleichwertiger oder besserer Ergebnisqualität gegenüber der manuellen Referenz.
 
+Bis der autonome Consultant den Decision Brief samt unabhängiger Verifikation
+zuverlässig erzeugt, hat diese Funktionsfähigkeit Vorrang vor Token- und
+Kostenoptimierung. Harte Run- und Campaign-Grenzen, persistente Abrechnung und
+Safety-Gates bleiben bestehen; Verbrauch wird weiterhin transparent gemessen.
+
 Die detaillierte Definition of Done und Verifikation stehen in Issue #1.
 
 **VS1-Stand am 21.09.2026:** Der begrenzte Evidence-to-Decision-Slice verfügt technisch

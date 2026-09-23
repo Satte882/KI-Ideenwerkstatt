@@ -190,11 +190,15 @@ def _planner_contract_error(
     return None
 
 
-def _provider_failures(run: InvestigationRun, code: str) -> int:
-    return run.model_calls.filter(
-        status="failed",
-        error_code=code,
-    ).count()
+def _provider_failures(run: InvestigationRun) -> int:
+    """Count consecutive failed calls; a successful response restores retry capacity."""
+    failures = 0
+    for status in run.model_calls.order_by("-created_at").values_list("status", flat=True):
+        if status == "success":
+            break
+        if status == "failed":
+            failures += 1
+    return failures
 
 
 def _handle_provider_failure(
@@ -205,7 +209,7 @@ def _handle_provider_failure(
     error: InvestigationRunError,
 ) -> AdvanceResult:
     run.refresh_from_db()
-    failures = _provider_failures(run, error.code)
+    failures = _provider_failures(run)
     if error.code in TRANSIENT_PROVIDER_CODES and failures <= 1:
         decision = evaluate_run_policy(
             run,
