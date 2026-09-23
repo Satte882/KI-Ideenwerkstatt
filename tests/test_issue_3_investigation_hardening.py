@@ -557,6 +557,207 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
 
 
 @pytest.mark.django_db
+def test_distinct_source_reads_and_csv_profile_on_same_claim_are_progress(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Source Coverage")
+    (tmp_path / "01_note.md").write_text("Initiale Hypothese.\n", encoding="utf-8")
+    (tmp_path / "02_counter.md").write_text("Gegenbeleg zur Hypothese.\n", encoding="utf-8")
+    (tmp_path / "cases.csv").write_text("group,hours\nA,5\nB,29\n", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "source-coverage"),
+    )
+    sources = {
+        source.filename: source
+        for source in list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources
+    }
+    note = sources["01_note.md"]
+    counter = sources["02_counter.md"]
+    csv = sources["cases.csv"]
+    claim = {
+        "claim_id": "C1",
+        "area": "competing_hypotheses",
+        "claim_kind": "hypothesis",
+        "critical": True,
+        "status": "open",
+        "evidence_refs": [
+            {
+                "source_id": str(note.source_id),
+                "locator": {"line": 1},
+                "revision_hash": note.content_sha256,
+            }
+        ],
+    }
+    actions = iter(
+        [
+            planner_action(
+                target_claim_id="claim_register",
+                tool_name="read_source",
+                parameters={"source_id": str(note.source_id)},
+            ),
+            planner_action(
+                target_claim_id="C1",
+                tool_name="read_source",
+                parameters={"source_id": str(counter.source_id)},
+                claim_register=(claim,),
+            ),
+            planner_action(
+                target_claim_id="C1",
+                tool_name="profile_csv",
+                parameters={"source_id": str(csv.source_id)},
+                claim_register=(claim,),
+            ),
+        ]
+    )
+
+    def planner(**_kwargs):
+        return next(actions)
+
+    for expected_tool in ("read_source", "read_source", "profile_csv"):
+        result = advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=planner,
+        )
+        run = InvestigationRun.objects.get(pk=handle.run_id)
+        assert result.status == InvestigationRun.Status.RUNNING
+        assert run.no_progress_streak == 0
+        assert run.steps.order_by("-sequence").first().tool_name == expected_tool
+    assert run.usage["tool_calls"] == 3
+    assert run.data_check_executed is True
+
+
+@pytest.mark.django_db
+def test_repeated_read_with_changed_claim_id_does_not_reset_progress(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Repeated Read")
+    (tmp_path / "note.md").write_text("Ein Befund.\n", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "repeated-read"),
+    )
+    source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
+    targets = iter(("C1", "C2", "C3"))
+
+    def planner(**_kwargs):
+        return planner_action(
+            target_claim_id=next(targets),
+            tool_name="read_source",
+            parameters={"source_id": str(source.source_id)},
+        )
+
+    statuses = [
+        advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=planner,
+        ).status
+        for _ in range(3)
+    ]
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert statuses == [
+        InvestigationRun.Status.RUNNING,
+        InvestigationRun.Status.RUNNING,
+        InvestigationRun.Status.WAITING_HUMAN,
+    ]
+    assert run.clarification_reason == "no_progress"
+    assert run.usage["tool_calls"] == 2
+
+
+@pytest.mark.django_db
+def test_distinct_data_check_is_allowed_after_two_unproductive_steps(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="distinct-replan",
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="list_sources",
+        parameters={},
+        target_claim_id="C1",
+    )
+    apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    action = planner_action(
+        target_claim_id="C1",
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.source_id)},
+    )
+
+    def planner(**_kwargs):
+        return action
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=planner,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert run.usage["tool_calls"] == 2
+    assert run.data_check_executed is True
+    assert run.no_progress_streak == 0
+
+
+@pytest.mark.django_db
+def test_evidence_linked_claim_counts_even_with_planner_progress_none(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="claim-progress",
+    )
+    apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    claim = {
+        "claim_id": "C1",
+        "area": "competing_hypotheses",
+        "claim_kind": "hypothesis",
+        "critical": True,
+        "status": "open",
+        "evidence_refs": [source_ref(source)],
+    }
+    run = apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        claim_register=(claim,),
+        progress_kind="none",
+    )
+    assert run.no_progress_streak == 0
+    assert run.last_progress_at is not None
+
+
+@pytest.mark.django_db
 def test_provider_timeout_retries_once_then_fails_closed(
     owner,
     business_unit,
@@ -656,8 +857,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v3"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v3"
+    assert run.loop_version == "vs1-agent-loop-v4"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v4"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
