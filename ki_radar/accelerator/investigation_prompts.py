@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v7"
+PLANNER_PROMPT_VERSION = "vs1-planner-v8"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v9"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v10"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -58,7 +58,12 @@ value_column ist außer bei aggregation=count ebenfalls nötig. Verwende nur dor
 Parameternamen und Aggregationen; erfinde keine Synonyme.
 Die Felder parameters, claim_register, brief_payload, source_relevance, progress_payload und
 clarification_payload werden als Strings transportiert, müssen aber IMMER serialisiertes JSON
-enthalten. Verwende für ein leeres Objekt exakt "{}" und für eine leere Liste exakt "[]".
+enthalten. Verwende für ein unverändertes Claim Register oder einen unveränderten Brief exakt
+"null". Nur ein tatsächlicher Ersatz enthält die vollständige Liste bzw. das vollständige
+Objekt. Ein bestehender Arbeitsstand darf nie mit [] oder {} gelöscht werden. Bei einem
+Ersatz bleiben alle vorhandenen Claim-IDs und Brief-Abschnitte erhalten; korrigiere
+Inhalte innerhalb der Einträge und kennzeichne widerlegte Aussagen entsprechend.
+Für sonstige leere Objekte verwende exakt "{}" und für leere Listen exakt "[]".
 Verwende niemals einen leeren String, "unverändert" oder sonstigen Freitext als Ersatz für JSON.
 Jeder Eintrag in claim_register ist ein Objekt mit einer nichtleeren claim_id (maximal 100
 Zeichen), area aus problem_context|competing_hypotheses|solution_options|constraints_risks|
@@ -145,16 +150,17 @@ def planner_response_format(
                     "claim_register": {
                         "type": "string",
                         "description": (
-                            "Serialisiertes JSON-Array des vollständigen Claim-Registers; "
-                            "leer exakt []. Jeder Eintrag benötigt claim_id, area, "
+                            "Unverändert exakt null; sonst serialisiertes JSON-Array des "
+                            "vollständigen Claim-Registers. Bestehende Claims nicht mit [] "
+                            "löschen. Jeder Eintrag benötigt claim_id, area, "
                             "claim_kind und status gemäß Planner-Vertrag."
                         ),
                     },
                     "brief_payload": {
                         "type": "string",
                         "description": (
-                            "Serialisiertes JSON-Objekt des aktuellen Decision-Brief-"
-                            "Arbeitsstands; leer exakt {}."
+                            "Unverändert exakt null; sonst serialisiertes JSON-Objekt "
+                            "des aktuellen Decision Briefs. Bestehenden Brief nicht mit {} löschen."
                         ),
                     },
                     "source_relevance": {
