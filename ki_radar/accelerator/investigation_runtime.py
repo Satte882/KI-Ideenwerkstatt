@@ -62,7 +62,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v1"
+LOOP_VERSION = "vs1-agent-loop-v2"
 BUDGET_VERSION = "vs1-budget-v3"
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v1"

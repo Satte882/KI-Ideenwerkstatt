@@ -43,6 +43,7 @@ TRANSIENT_PROVIDER_CODES = frozenset(
         "rate_limit",
         "invalid_response",
         "provider_response_malformed",
+        "empty_response",
     }
 )
 PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)

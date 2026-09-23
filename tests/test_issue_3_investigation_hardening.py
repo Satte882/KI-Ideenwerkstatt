@@ -594,6 +594,76 @@ def test_provider_timeout_retries_once_then_fails_closed(
 
 
 @pytest.mark.django_db
+def test_empty_provider_response_retries_once_then_fails_closed(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="Empty response",
+    )
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "empty-response"),
+    )
+    diagnostics = {
+        "response_type": "dict",
+        "choices_count": 1,
+        "finish_reason": "length",
+        "content_type": "str",
+        "content_length": 0,
+        "has_reasoning": False,
+        "usage_prompt_tokens": 100,
+        "usage_completion_tokens": 200,
+        "usage_total_tokens": 300,
+    }
+
+    def empty_provider(**_kwargs):
+        raise OpenRouterUnavailable(
+            "OpenRouter hat keine Analyse zurückgegeben.",
+            code="empty_response",
+            diagnostics=diagnostics,
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        empty_provider,
+    )
+
+    first = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    second = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    calls = list(run.model_calls.order_by("created_at"))
+
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert first.policy.outcome == PolicyOutcome.CONTINUE
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.loop_version == "vs1-agent-loop-v2"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v2"
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "empty_response"
+    assert run.clarification_payload["attempts"] == 2
+    assert [(call.status, call.error_code) for call in calls] == [
+        (InvestigationModelCall.Status.FAILED, "empty_response"),
+        (InvestigationModelCall.Status.FAILED, "empty_response"),
+    ]
+    assert all(call.effective_parameters["response_diagnostics"] == diagnostics for call in calls)
+
+
+@pytest.mark.django_db
 def test_provider_response_shape_diagnostics_are_persisted_for_retry(
     owner,
     business_unit,
