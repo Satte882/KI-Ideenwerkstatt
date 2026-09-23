@@ -110,6 +110,19 @@ ungültigen UUID jedoch kein Quellenwerkzeug. Der Run wurde nachträglich korrek
 `technical_failure` / `invalid_tool_parameters` terminalisiert. Im Zuge der Fehlerbehebung
 wurden keine weiteren Provideraufrufe oder Kalibrierungen gestartet.
 
+### Technischer Folgefall A/18 vom 23.09.2026
+
+Run `aca7ca7a-7387-4724-b760-68dae80c6e47` stoppte nach drei erfolgreichen
+Werkzeugschritten mit `technical_failure` / `invalid_response`, bevor Decision Brief
+und Verifier erreicht wurden. Die übergebenen Diagnosen zeigen für zwei Planner-Antworten
+`clarification_payload=None`, dazwischen liegt ein erfolgreicher Planner-Aufruf.
+Der Response-Decoder behandelt JSON-`null` nun für alle leeren Objektfelder einheitlich;
+Claim Register und Brief behalten dabei ihre Bedeutung „unverändert“. Die Retry-Zählung
+beginnt nach einem erfolgreichen Modellaufruf neu. Diese Reparatur wurde mit simulierten
+Providerantworten geprüft; A/18 bleibt als technischer Fehlversuch in der Campaign-Historie.
+Für diese Reparatur wurde kein weiterer realer Providerlauf gestartet. Token- und
+Kostenwerte bleiben Nachweis- und Safety-Metadaten, kein Optimierungsziel für Issue #1.
+
 ## Automatisierte Nachweise
 
 Automatisierte #4-Tests decken insbesondere ab:

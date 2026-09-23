@@ -51,6 +51,9 @@ Diese Grenzen dürfen durch die 10x-Transformation nicht stillschweigend aufgeho
 - Keine neuen Agenten, Formulare, Scores, Statusmodelle, Prompts oder Dokumentation
   ohne messbaren Beitrag zu weniger Human Work, kürzerer Time-to-Decision oder besserer
   Outputqualität.
+- Funktionsfähigkeit und fachliche Ergebnisqualität des autonomen Consultants vor
+  Token- oder Kostenoptimierung priorisieren. Harte Budgets, persistente Abrechnung
+  und Safety-Grenzen bleiben verbindlich.
 - `docs/ROADMAP.md` aktualisieren, wenn sich Produktziel, erreichte Capability oder
   Priorisierung tatsächlich ändert.
 - `OPEN_QUESTIONS.md` enthält Betriebs- und Konfigurationsfragen; es steuert nicht die

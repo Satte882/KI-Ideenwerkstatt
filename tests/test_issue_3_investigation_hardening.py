@@ -984,6 +984,68 @@ def test_invalid_provider_response_retries_once_then_fails_closed(
 
 
 @pytest.mark.django_db
+def test_successful_planner_call_resets_transient_response_retry(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Retry after success")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "retry-after-success"),
+    )
+    provider_calls = 0
+
+    def provider(**_kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        if provider_calls != 2:
+            content = "{invalid-json"
+        else:
+            content = json.dumps(
+                {
+                    "action": "tool",
+                    "target_claim_id": "manifest",
+                    "expected_discriminating_finding": "Quellen erfassen.",
+                    "rationale": "Vorhandene Quellen prüfen.",
+                    "tool_name": "list_sources",
+                    "parameters": "{}",
+                    "claim_register": "null",
+                    "brief_payload": "null",
+                    "source_relevance": "{}",
+                    "progress_kind": "none",
+                    "progress_payload": "{}",
+                    "clarification_reason": "",
+                    "clarification_payload": "{}",
+                }
+            )
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    results = [
+        advance_investigation(
+            actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+        )
+        for _ in range(3)
+    ]
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    assert [result.status for result in results] == [InvestigationRun.Status.RUNNING] * 3
+    assert [result.policy.outcome for result in results[::2]] == [PolicyOutcome.CONTINUE] * 2
+    assert list(run.model_calls.order_by("created_at").values_list("status", flat=True)) == [
+        InvestigationModelCall.Status.FAILED,
+        InvestigationModelCall.Status.SUCCESS,
+        InvestigationModelCall.Status.FAILED,
+    ]
+    assert run.steps.count() == 1
+
+
+@pytest.mark.django_db
 def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy(
     owner,
     business_unit,
@@ -1289,6 +1351,90 @@ def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails()
             default={},
         )
     assert exc_info.value.code == "invalid_response"
+
+
+@pytest.mark.parametrize("empty_value", [None, "null"])
+@pytest.mark.parametrize(
+    "field", ["parameters", "source_relevance", "progress_payload", "clarification_payload"]
+)
+def test_empty_planner_object_fields_accept_json_null(field, empty_value):
+    assert (
+        _decode_structured_field({field: empty_value}, field, expected_type=Mapping, default={})
+        == {}
+    )
+
+
+@pytest.mark.parametrize("field", ["claim_register", "brief_payload"])
+@pytest.mark.parametrize("empty_value", [None, "null"])
+def test_null_planner_state_still_means_unchanged(field, empty_value):
+    assert (
+        _decode_structured_field(
+            {field: empty_value}, field, expected_type=(list, type(None)), default=None
+        )
+        is None
+    )
+
+
+@pytest.mark.django_db
+def test_null_inactive_planner_fields_do_not_block_tool_or_erase_state(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Null transport fields")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "null transport fields"),
+    )
+    claim = {
+        "claim_id": "observation",
+        "area": "problem_context",
+        "claim_kind": "observation",
+        "status": "open",
+    }
+    apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        claim_register=(claim,),
+        brief_payload={"draft": "Bestehender Arbeitsstand"},
+    )
+
+    def provider(**_kwargs):
+        payload = {
+            "action": "tool",
+            "target_claim_id": "observation",
+            "expected_discriminating_finding": "Quellenmanifest lesen.",
+            "rationale": "Vorhandene Evidenz prüfen.",
+            "tool_name": "list_sources",
+            "parameters": "null",
+            "claim_register": "null",
+            "brief_payload": None,
+            "source_relevance": None,
+            "progress_kind": "none",
+            "progress_payload": "null",
+            "clarification_reason": "",
+            "clarification_payload": "null",
+        }
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    result = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert run.model_calls.get().status == InvestigationModelCall.Status.SUCCESS
+    assert list(run.steps.values_list("tool_name", "status")) == [("list_sources", "success")]
+    assert run.claim_register[0]["claim_id"] == "observation"
+    assert run.brief_payload == {"draft": "Bestehender Arbeitsstand"}
 
 
 @pytest.mark.django_db
