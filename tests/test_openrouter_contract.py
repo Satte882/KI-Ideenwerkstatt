@@ -128,3 +128,52 @@ def test_productive_reasoning_effort_excludes_reasoning_from_response(monkeypatc
         reasoning_effort="medium",
     )
     assert captured["body"]["reasoning"] == {"effort": "medium", "exclude": True}
+
+
+def test_streamed_response_obeys_total_wall_clock_deadline(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-key", raising=False)
+    clock = {"now": 0.0}
+    socket_timeouts = []
+
+    class Socket:
+        def settimeout(self, seconds):
+            socket_timeouts.append(seconds)
+
+    class Raw:
+        _sock = Socket()
+
+    class FP:
+        raw = Raw()
+
+    class SlowResponse:
+        fp = FP()
+        reads = 0
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read1(self, _limit):
+            self.reads += 1
+            clock["now"] += 2.0
+            return b" "
+
+    response = SlowResponse()
+    monkeypatch.setattr(
+        "ki_radar.core.openrouter.urllib.request.urlopen",
+        lambda *_args, **_kwargs: response,
+    )
+    monkeypatch.setattr("ki_radar.core.openrouter.time.monotonic", lambda: clock["now"])
+
+    with pytest.raises(OpenRouterUnavailable) as exc_info:
+        request_openrouter(
+            messages=[{"role": "user", "content": "test"}],
+            max_tokens=8192,
+            timeout_seconds=5,
+        )
+
+    assert exc_info.value.code == "timeout"
+    assert response.reads == 3
+    assert socket_timeouts == [5.0, 3.0, 1.0]

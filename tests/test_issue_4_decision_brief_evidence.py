@@ -677,7 +677,7 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
         ISSUE4_INVESTIGATION_PROVIDER_POLICY
     )
     assert fixed.execution_snapshot["model_transport"]["endpoint_capability"] == {
-        "version": "vs1-openrouter-deepinfra-fp8-v2",
+        "version": "vs1-openrouter-deepinfra-fp8-v3",
         "model": "deepseek/deepseek-v4.1-flash",
         "provider": "deepinfra/fp8",
         "context_tokens": 1_048_576,

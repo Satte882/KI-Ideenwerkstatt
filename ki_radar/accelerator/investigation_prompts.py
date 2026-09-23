@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v5"
+PLANNER_PROMPT_VERSION = "vs1-planner-v6"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v8"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
@@ -38,7 +38,28 @@ references, mindestens zwei competing hypotheses mit Evidenz/Gegenbelegen, calcu
 Tool-Resultat/Population/Grenzen, mindestens zwei options einschließlich Non-AI und Status quo,
 recommendation mit Evidenz, risks_unknowns sowie validation_step. Vorschläge sind keine
 bestätigten Tatsachen. Eine fehlende entscheidungskritische Größe bleibt unbekannt und führt
-zu einer präzisen clarification statt zu einer erfundenen Zahl oder READY."""
+zu einer präzisen clarification statt zu einer erfundenen Zahl oder READY.
+
+Verwende exakt die folgenden Feldnamen des Decision-Brief-Vertrags:
+question_scope={question,scope}, problem={statement,references}, hypotheses als Liste
+mit {statement,status,references,counterevidence_refs}, calculations als Liste mit
+{summary,reference,population,limits}, options als Liste mit
+{name,description,expected_value,option_type,non_ai,status_quo},
+recommendation={summary,rationale,references}, risks_unknowns als Liste und
+validation_step={step,measurement}. population ist ein Objekt, kein Freitext.
+option_type ist ein gültiger Produkttyp wie no_tech, organizational oder generative_ai;
+non_ai und status_quo sind separate boolesche Felder. Gib die aktuelle Entscheidungsfrage
+im Feld question exakt wieder.
+
+Eine Quellenreferenz hat {source_id,locator,revision_hash}; locator verwendet bei Text
+{line} und bei CSV {row} mit optionaler column. Ein Analyseergebnis hat
+{tool_result_id,revision_hash}. Verwende nur IDs und Hashes aus Manifest oder
+Werkzeugresultaten. Für quantitative Vergleiche verwende compare_groups und referenziere
+das Ergebnis; berechne keine prüfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.
+source_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;
+jeder Wert hat {relevant:boolean,reason:string,reference:Referenzobjekt}.
+Suche vor dem Abschluss ausdrücklich nach Gegenbelegen und verarbeite Treffer.
+Ein unveränderter Arbeitsstand braucht keine erneute identische Werkzeuganfrage."""
 
 VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe Entscheidungsfrage,
 fünf Pflichtbereiche, Claims, reale Quellen-/Analysefundstellen, Gegenbelege, Empfehlung
