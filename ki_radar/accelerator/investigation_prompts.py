@@ -31,6 +31,13 @@ recommendation_validation, einem nichtleeren claim_kind und status aus
 open|supported|refuted|conflicting. Nutze evidence_refs/counterevidence_refs nur als Arrays
 reproduzierbarer Referenzobjekte; kritische bestehende Claims dürfen nicht gelöscht,
 umbenannt oder herabgestuft werden.
+Führe mindestens zwei konkurrierende Hypothesen als eigene Claims mit
+area=competing_hypotheses und claim_kind=hypothesis. Options-Claims verwenden
+area=solution_options, claim_kind=option und metadata.non_ai bzw.
+metadata.status_quo als boolesche Kennzeichen. Empfehlung und Validierung sind
+eigene Claims mit area=recommendation_validation und claim_kind=recommendation
+bzw. validation. Ein unbelegter Vorschlag bleibt offen und darf nicht als
+bestätigte Tatsache verwendet werden.
 
 Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
 Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
@@ -58,6 +65,7 @@ Werkzeugresultaten. Für quantitative Vergleiche verwende compare_groups und ref
 das Ergebnis; berechne keine prüfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.
 source_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;
 jeder Wert hat {relevant:boolean,reason:string,reference:Referenzobjekt}.
+Solange noch nicht jede Quelle eine gültige Referenz hat, verwende hierfür "{}".
 Suche vor dem Abschluss ausdrücklich nach Gegenbelegen und verarbeite Treffer.
 Ein unveränderter Arbeitsstand braucht keine erneute identische Werkzeuganfrage."""
 
