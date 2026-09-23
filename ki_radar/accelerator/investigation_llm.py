@@ -25,6 +25,7 @@ from .investigation_models import (
     InvestigationEvidenceCampaign,
     InvestigationModelCall,
     InvestigationRun,
+    InvestigationSource,
     InvestigationStep,
     InvestigationVerifierReport,
 )
@@ -153,7 +154,7 @@ def _validate_planner_semantic_payload(
         parameters = _decode_structured_field(
             payload, "parameters", expected_type=Mapping, default={}
         )
-        normalize_tool_parameters(
+        normalized = normalize_tool_parameters(
             tool_name,
             parameters,
             allowed_source_ids=frozenset(
@@ -161,6 +162,32 @@ def _validate_planner_semantic_payload(
                 for source_id in run.source_snapshot.sources.values_list("pk", flat=True)
             ),
         )
+        if tool_name in {"read_source", "profile_csv", "compare_groups"}:
+            source = run.source_snapshot.sources.get(pk=normalized["source_id"])
+            if (
+                tool_name in {"profile_csv", "compare_groups"}
+                and source.source_type != InvestigationSource.SourceType.CSV
+            ):
+                raise InvestigationRunError(
+                    f"{tool_name} benötigt eine CSV-Quelle.", code="invalid_tool_parameters"
+                )
+            if source.source_type == InvestigationSource.SourceType.CSV:
+                requested_columns: set[str] = set()
+                if tool_name == "read_source":
+                    requested_columns.update(normalized["columns"])
+                elif tool_name == "compare_groups":
+                    requested_columns.add(normalized["group_by"])
+                    requested_columns.update(item["column"] for item in normalized["filters"])
+                    requested_columns.update(
+                        column
+                        for column in (normalized["value_column"], normalized["unit_column"])
+                        if column is not None
+                    )
+                if missing := sorted(requested_columns - set(source.columns)):
+                    raise InvestigationRunError(
+                        f"Unbekannte CSV-Spalten: {', '.join(missing)}.",
+                        code="invalid_tool_parameters",
+                    )
 
 
 def _requested_model() -> str:

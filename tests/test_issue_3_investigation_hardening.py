@@ -1066,8 +1066,15 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("invalid_parameters", "error_fragment"),
+    [
+        ({"group_column": "available", "value_column": "value"}, "group_column"),
+        ({"group_by": "missing", "aggregation": "mean", "value_column": "value"}, "missing"),
+    ],
+)
 def test_invalid_model_tool_parameters_get_one_informed_retry_before_execution(
-    owner, business_unit, tmp_path, monkeypatch
+    owner, business_unit, tmp_path, monkeypatch, invalid_parameters, error_fragment
 ):
     _process, _snapshot, handle, source = start_csv_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="tool-contract-retry"
@@ -1082,13 +1089,9 @@ def test_invalid_model_tool_parameters_get_one_informed_retry_before_execution(
         assert contract["required"] == ["source_id", "group_by", "aggregation"]
         if provider_calls == 1:
             assert context["last_planner_error"] == {}
-            parameters = {
-                "source_id": str(source.source_id),
-                "group_column": "available",
-                "value_column": "value",
-            }
+            parameters = {"source_id": str(source.source_id), **invalid_parameters}
         else:
-            assert "group_column" in context["last_planner_error"]["detail"]
+            assert error_fragment in context["last_planner_error"]["detail"]
             parameters = {
                 "source_id": str(source.source_id),
                 "group_by": "available",
