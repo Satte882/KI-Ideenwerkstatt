@@ -19,6 +19,7 @@ from ki_radar.accelerator.investigation_llm import (
     _decode_structured_field,
     _reserve_model_call,
     _structured_provider_call,
+    request_planner_action,
     request_verifier_report,
 )
 from ki_radar.accelerator.investigation_loop import (
@@ -2228,4 +2229,13 @@ def test_frozen_tool_parameter_contract_cannot_change_after_run_start(
             context={},
         )
     assert exc_info.value.code == "execution_version_unavailable"
+    assert run.model_calls.count() == 0
+
+    old_snapshot = json.loads(json.dumps(run.execution_snapshot))
+    del old_snapshot["tools"]["parameter_contracts"]
+    InvestigationRun.objects.filter(pk=run.pk).update(execution_snapshot=old_snapshot)
+    run.refresh_from_db()
+    with pytest.raises(InvestigationRunError) as old_exc:
+        request_planner_action(actor=owner, run=run, executor_token=handle.executor_token)
+    assert old_exc.value.code == "execution_version_unavailable"
     assert run.model_calls.count() == 0

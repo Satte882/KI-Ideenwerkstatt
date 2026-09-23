@@ -288,7 +288,9 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             }
             for item in sources.sources
         ],
-        "tool_parameter_contracts": run.execution_snapshot["tools"]["parameter_contracts"],
+        "tool_parameter_contracts": (run.execution_snapshot.get("tools") or {}).get(
+            "parameter_contracts", {}
+        ),
         "last_planner_error": last_planner_error,
         "claim_register": run.claim_register,
         "source_relevance": run.source_relevance,
