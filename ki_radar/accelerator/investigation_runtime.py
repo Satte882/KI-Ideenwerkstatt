@@ -62,7 +62,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v3"
+LOOP_VERSION = "vs1-agent-loop-v4"
 BUDGET_VERSION = "vs1-budget-v4"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v2"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -1036,14 +1036,17 @@ def apply_planner_state(
             run.brief_hash = new_hash
             brief_changed = True
 
-    legitimate_progress = progress_kind in {
-        InvestigationStep.ProgressKind.EVIDENCE,
-        InvestigationStep.ProgressKind.REFUTATION,
-        InvestigationStep.ProgressKind.CONTRADICTION,
-        InvestigationStep.ProgressKind.COVERAGE,
-    } and (
-        meaningful_register_change(before, list(run.claim_register))
-        or bool(dict(progress_payload or {}).get("coverage_change"))
+    # Evidence-linked claim changes are observable progress even when the planner
+    # labels its own action as "none" (for example while planning the next tool).
+    legitimate_progress = meaningful_register_change(before, list(run.claim_register)) or (
+        progress_kind
+        in {
+            InvestigationStep.ProgressKind.EVIDENCE,
+            InvestigationStep.ProgressKind.REFUTATION,
+            InvestigationStep.ProgressKind.CONTRADICTION,
+            InvestigationStep.ProgressKind.COVERAGE,
+        }
+        and bool(dict(progress_payload or {}).get("coverage_change"))
     )
     if legitimate_progress:
         run.no_progress_streak = 0
@@ -1054,9 +1057,14 @@ def apply_planner_state(
     latest_step = (
         run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("-sequence").first()
     )
-    if latest_step is not None and progress_kind in {
-        item.value for item in InvestigationStep.ProgressKind
-    }:
+    if (
+        latest_step is not None
+        and progress_kind in {item.value for item in InvestigationStep.ProgressKind}
+        and (
+            progress_kind != InvestigationStep.ProgressKind.NONE
+            or latest_step.progress_kind == InvestigationStep.ProgressKind.NONE
+        )
+    ):
         latest_step.progress_kind = progress_kind
         latest_step.progress_payload = dict(progress_payload or {})
         latest_step.save(update_fields=["progress_kind", "progress_payload", "updated_at"])
@@ -1339,6 +1347,40 @@ def fail_run_technical(
     return run
 
 
+def _new_tool_coverage(
+    run: InvestigationRun, step: InvestigationStep, payload: dict[str, Any]
+) -> bool:
+    """Count only new source content or a new analytical result as tool progress."""
+    if step.tool_name not in {"read_source", "search_sources", "profile_csv", "compare_groups"}:
+        return False
+    earlier = run.steps.filter(status=InvestigationStep.Status.SUCCESS).exclude(pk=step.pk)
+    if step.tool_name == "read_source":
+        items = payload.get("items") or []
+        if not items:
+            return False
+        seen = {
+            content_hash(item)
+            for previous in earlier.filter(tool_name="read_source")
+            if previous.parameters.get("source_id") == step.parameters.get("source_id")
+            for item in (previous.result_payload.get("items") or [])
+        }
+        return any(content_hash(item) not in seen for item in items)
+    if step.tool_name == "search_sources":
+        hits = payload.get("hits") or []
+        if not hits:
+            return False
+        seen = {
+            content_hash(hit)
+            for previous in earlier.filter(tool_name="search_sources")
+            for hit in (previous.result_payload.get("hits") or [])
+        }
+        return any(content_hash(hit) not in seen for hit in hits)
+    return bool(payload) and not any(
+        previous.parameters == step.parameters
+        for previous in earlier.filter(tool_name=step.tool_name)
+    )
+
+
 def execute_tool_step(
     *,
     actor,
@@ -1514,9 +1556,15 @@ def execute_tool_step(
                 ]
             )
         else:
+            new_coverage = not verifier_read and _new_tool_coverage(locked, current, payload)
             current.status = InvestigationStep.Status.SUCCESS
             current.result_payload = payload
             current.result_hash = content_hash(payload)
+            if new_coverage:
+                current.progress_kind = InvestigationStep.ProgressKind.COVERAGE
+                current.progress_payload = {"coverage_change": True}
+                locked.no_progress_streak = 0
+                locked.last_progress_at = timezone.now()
             if tool_name in {"profile_csv", "compare_groups"}:
                 current.result_ref = {"tool_result_id": payload.get("result_id")}
                 locked.data_check_executed = True
@@ -1527,6 +1575,8 @@ def execute_tool_step(
                     "result_payload",
                     "result_hash",
                     "result_ref",
+                    "progress_kind",
+                    "progress_payload",
                     "finished_at",
                     "updated_at",
                 ]
@@ -1546,6 +1596,8 @@ def execute_tool_step(
                     "data_check_executed",
                     "counterevidence_search_executed",
                     "counterevidence_hits_processed",
+                    "no_progress_streak",
+                    "last_progress_at",
                     "updated_at",
                 ]
             )

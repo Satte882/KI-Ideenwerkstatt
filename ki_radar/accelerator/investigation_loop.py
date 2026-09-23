@@ -27,7 +27,6 @@ from .investigation_runtime import (
     assert_actor_can_edit_run,
     assert_executor,
     budget_exhausted,
-    content_hash,
     evaluate_run_policy,
     execute_tool_step,
     locked_run,
@@ -254,28 +253,19 @@ def _handle_budget_exhaustion(
 
 def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
     if action.action != "tool":
-        return action.action == "verify"
+        return action.action in {"verify", "clarify"}
     try:
         params = normalize_tool_parameters(action.tool_name, action.parameters)
     except InvestigationRunError:
         return False
-    proposed_key = content_hash(
-        {
-            "tool": action.tool_name,
-            "parameters": params,
-            "manifest_hash": run.manifest_hash,
-            "target_claim_id": action.target_claim_id,
-        }
-    )
-    recent = list(
-        run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("-sequence")[:2]
-    )
-    if any(step.step_key == proposed_key for step in recent):
-        return False
-    return not (
-        recent
-        and action.target_claim_id
-        and any(step.target_claim_id == action.target_claim_id for step in recent)
+    # A different tool or request may investigate the same claim. Conversely,
+    # changing only the claim ID must not make a repeated request distinct.
+    return not any(
+        step.parameters == params
+        for step in run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            tool_name=action.tool_name,
+        )
     )
 
 
