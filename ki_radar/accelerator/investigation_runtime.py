@@ -816,6 +816,12 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
 
 
 def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
+    """Hard integrity contract for a reviewable Decision Package.
+
+    Method completeness (for example two hypotheses, a status-quo option or a
+    validation plan) is measured by the benchmark, not used as a universal
+    runtime READY gate.
+    """
     if not bool(run.execution_snapshot.get("decision_brief_required")):
         return ()
 
@@ -841,9 +847,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         if not references or not all(reference_valid(run, item) for item in references):
             blockers.append("decision_brief_problem_reference_invalid")
 
-    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
-    if len(hypotheses) < 2:
-        blockers.append("decision_brief_competing_hypotheses_missing")
+    raw_hypotheses = payload.get("hypotheses", [])
+    if raw_hypotheses and not isinstance(raw_hypotheses, list):
+        blockers.append("decision_brief_hypotheses_invalid")
+    hypotheses = (
+        [item for item in raw_hypotheses if isinstance(item, Mapping)]
+        if isinstance(raw_hypotheses, list)
+        else []
+    )
     for index, hypothesis in enumerate(hypotheses):
         statement = str(hypothesis.get("statement") or "").strip()
         status = str(hypothesis.get("status") or "").strip()
@@ -862,9 +873,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         ):
             blockers.append(f"decision_brief_hypothesis_reference_invalid:{index}")
 
-    calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
-    if not calculations:
-        blockers.append("decision_brief_calculation_missing")
+    raw_calculations = payload.get("calculations", [])
+    if raw_calculations and not isinstance(raw_calculations, list):
+        blockers.append("decision_brief_calculations_invalid")
+    calculations = (
+        [item for item in raw_calculations if isinstance(item, Mapping)]
+        if isinstance(raw_calculations, list)
+        else []
+    )
     for index, calculation in enumerate(calculations):
         reference = calculation.get("reference")
         if (
@@ -879,13 +895,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         if not str(calculation.get("limits") or "").strip():
             blockers.append(f"decision_brief_calculation_limits_missing:{index}")
 
-    options = [item for item in payload.get("options", []) if isinstance(item, Mapping)]
-    if len(options) < 2:
-        blockers.append("decision_brief_options_missing")
-    if options and not any(bool(item.get("non_ai")) for item in options):
-        blockers.append("decision_brief_non_ai_option_missing")
-    if options and not any(bool(item.get("status_quo")) for item in options):
-        blockers.append("decision_brief_status_quo_missing")
+    raw_options = payload.get("options", [])
+    if raw_options and not isinstance(raw_options, list):
+        blockers.append("decision_brief_options_invalid")
+    options = (
+        [item for item in raw_options if isinstance(item, Mapping)]
+        if isinstance(raw_options, list)
+        else []
+    )
     allowed_option_types = {choice for choice, _label in SolutionOption.OptionType.choices}
     for index, option in enumerate(options):
         if (
@@ -909,16 +926,17 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         ):
             blockers.append("decision_brief_recommendation_invalid")
 
-    if not isinstance(payload.get("risks_unknowns"), list):
-        blockers.append("decision_brief_risks_unknowns_missing")
+    risks_unknowns = payload.get("risks_unknowns")
+    if risks_unknowns is not None and not isinstance(risks_unknowns, list):
+        blockers.append("decision_brief_risks_unknowns_invalid")
 
     validation = payload.get("validation_step")
-    if (
+    if validation is not None and (
         not isinstance(validation, Mapping)
         or not str(validation.get("step") or "").strip()
         or not str(validation.get("measurement") or "").strip()
     ):
-        blockers.append("decision_brief_validation_step_missing")
+        blockers.append("decision_brief_validation_step_invalid")
 
     return tuple(sorted(set(blockers)))
 
