@@ -757,6 +757,4 @@ def test_internal_fixed_route_boundary_is_accepted_by_runtime(
     assert result.status == InvestigationRun.Status.WAITING_HUMAN
     run = InvestigationRun.objects.get(pk=handle.run_id)
     assert run.clarification_reason == "fixed_route_boundary"
-    assert run.clarification_payload["required_action"] == (
-        "An der Fixed-Route-Grenze stoppen."
-    )
+    assert run.clarification_payload["required_action"] == "An der Fixed-Route-Grenze stoppen."
