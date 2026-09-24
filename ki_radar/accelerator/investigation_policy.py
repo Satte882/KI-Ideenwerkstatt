@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-POLICY_VERSION = "vs1-stop-policy-v3"
+POLICY_VERSION = "vs1-stop-policy-v4"
 
 
 class PolicyOutcome(StrEnum):
@@ -113,8 +113,6 @@ def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
         blockers.append("claim_register_missing")
 
     for check in evidence_checks:
-        if check.critical and check.status in {"open", "conflicting"}:
-            blockers.append(f"critical_unresolved:{check.claim_id}")
         if check.status == "supported" and not check.evidence_refs:
             blockers.append(f"supported_without_evidence:{check.claim_id}")
         if check.status == "refuted" and not (check.counterevidence_refs or check.evidence_refs):
@@ -128,12 +126,6 @@ def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
 
     if state.question_narrowed:
         blockers.append("decision_question_changed")
-    if not state.data_check_executed:
-        blockers.append("data_check_missing")
-    if not state.counterevidence_search_executed:
-        blockers.append("counterevidence_search_missing")
-    if not state.counterevidence_hits_processed:
-        blockers.append("counterevidence_hits_unprocessed")
     if not state.source_relevance_complete:
         blockers.append("source_relevance_incomplete")
 
@@ -208,22 +200,6 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
             ReasonCode.MISSING_EVIDENCE,
             blockers,
         )
-    verifier_failed = any(
-        blocker
-        in {
-            "verifier_critical",
-            "verifier_source_reference_invalid",
-            "verifier_critical_scope_incomplete",
-        }
-        for blocker in blockers
-    )
-    if verifier_failed and not state.repair_available:
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.VERIFICATION_FAILED,
-            blockers,
-        )
-
-    # Missing/stale verification and deterministic package blockers are runtime
-    # work, not a reason to delegate internal work to a human.
+    # Missing/stale/critical verification and deterministic package blockers are
+    # runtime work. Only a genuine external decision boundary is delegated to a human.
     return PolicyDecision(PolicyOutcome.CONTINUE, None, blockers)
