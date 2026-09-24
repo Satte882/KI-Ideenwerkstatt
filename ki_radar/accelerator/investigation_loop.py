@@ -230,6 +230,7 @@ def _planner_contract_error(
         )
     if action.action == "clarify" and action.clarification_reason not in {
         ReasonCode.MISSING_EVIDENCE.value,
+        ReasonCode.FIXED_ROUTE_BOUNDARY.value,
         ReasonCode.PERMISSION_OR_SCOPE.value,
         ReasonCode.VALUE_TRADEOFF.value,
     }:
