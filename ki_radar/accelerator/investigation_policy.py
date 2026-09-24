@@ -4,18 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-POLICY_VERSION = "vs1-stop-policy-v2"
-
-REQUIRED_AREAS = frozenset(
-    {
-        "problem_context",
-        "competing_hypotheses",
-        "solution_options",
-        "constraints_risks",
-        "recommendation_validation",
-    }
-)
-
+POLICY_VERSION = "vs1-stop-policy-v3"
 
 class PolicyOutcome(StrEnum):
     CONTINUE = "CONTINUE"
@@ -47,8 +36,6 @@ class PolicyCheck:
     references_valid: bool = True
     change_guard_valid: bool = True
     used_as_premise: bool = False
-    optional_unknown_justified: bool = False
-    optional_unknown_verified: bool = False
     metadata: Mapping[str, object] = field(default_factory=dict)
 
 
@@ -74,7 +61,6 @@ class PolicyState:
     brief_hash: str
     brief_blockers: tuple[str, ...] = ()
     verifier: VerifierState | None = None
-    allowed_action_available: bool = False
     external_critical_gap: bool = False
     permission_or_scope_block: bool = False
     value_tradeoff: bool = False
@@ -82,7 +68,6 @@ class PolicyState:
     technical_failure: bool = False
     retry_available: bool = False
     no_progress_streak: int = 0
-    replan_available: bool = False
     repair_available: bool = False
     question_narrowed: bool = False
     aborted: bool = False
@@ -104,79 +89,32 @@ def _current_hashes(state: PolicyState) -> dict[str, str]:
     }
 
 
-def _semantic_contract_blockers(checks: tuple[PolicyCheck, ...]) -> list[str]:
-    blockers: list[str] = []
-    handled_areas = {
-        check.area
-        for check in checks
-        if check.status in {"supported", "refuted", "conflicting"}
-        or (
-            check.area == "solution_options"
-            and check.claim_kind == "option"
-            and check.status == "open"
-            and not check.used_as_premise
-        )
-        or (not check.critical and check.optional_unknown_justified)
-    }
-    for area in sorted(REQUIRED_AREAS - handled_areas):
-        blockers.append(f"required_area_open:{area}")
+def is_evidence_claim(area: str, claim_kind: str) -> bool:
+    """Return whether a claim belongs to evidence readiness.
 
-    hypotheses = [
-        check
-        for check in checks
-        if check.area == "competing_hypotheses" and check.claim_kind == "hypothesis"
-    ]
-    if len(hypotheses) < 2:
-        blockers.append("at_least_two_competing_hypotheses_required")
+    Solution options are candidate proposals and validation steps are future brief
+    content. Neither category is an evidence claim and neither may block the
+    pre-verifier contract.
+    """
+    if area == "solution_options" and claim_kind == "option":
+        return False
+    if area == "recommendation_validation" and claim_kind == "validation":
+        return False
+    return True
 
-    options = [
-        check
-        for check in checks
-        if check.area == "solution_options" and check.claim_kind == "option"
-    ]
-    if len(options) < 2:
-        blockers.append("at_least_two_solution_options_required")
-    if options and not any(bool(check.metadata.get("non_ai")) for check in options):
-        blockers.append("non_ai_option_required")
-    if options and not any(bool(check.metadata.get("status_quo")) for check in options):
-        blockers.append("status_quo_consideration_required")
 
-    recommendation = any(
-        check.area == "recommendation_validation" and check.claim_kind == "recommendation"
-        for check in checks
+def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
+    """Deterministic package contract that must pass before verification."""
+    blockers = list(state.brief_blockers)
+    evidence_checks = tuple(
+        check for check in state.checks if is_evidence_claim(check.area, check.claim_kind)
     )
-    validation = any(
-        check.area == "recommendation_validation" and check.claim_kind == "validation"
-        for check in checks
-    )
-    if not recommendation:
-        blockers.append("recommendation_required")
-    if not validation:
-        blockers.append("validation_step_required")
-    return blockers
+    if not evidence_checks:
+        blockers.append("claim_register_missing")
 
-
-def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
-    blockers = _semantic_contract_blockers(state.checks)
-    blockers.extend(state.brief_blockers)
-
-    critical_ids: set[str] = set()
-    for check in state.checks:
-        if check.critical:
-            critical_ids.add(check.claim_id)
-            if check.status in {"open", "conflicting"}:
-                blockers.append(f"critical_unresolved:{check.claim_id}")
-        elif (
-            check.status == "open"
-            and not (
-                check.area == "solution_options"
-                and check.claim_kind == "option"
-                and not check.used_as_premise
-            )
-            and not (check.optional_unknown_justified and check.optional_unknown_verified)
-        ):
-            blockers.append(f"optional_unknown_unjustified:{check.claim_id}")
-
+    for check in evidence_checks:
+        if check.critical and check.status in {"open", "conflicting"}:
+            blockers.append(f"critical_unresolved:{check.claim_id}")
         if check.status == "supported" and not check.evidence_refs:
             blockers.append(f"supported_without_evidence:{check.claim_id}")
         if check.status == "refuted" and not (check.counterevidence_refs or check.evidence_refs):
@@ -199,6 +137,17 @@ def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
     if not state.source_relevance_complete:
         blockers.append("source_relevance_incomplete")
 
+    return tuple(sorted(set(blockers)))
+
+
+def verifier_blockers(state: PolicyState) -> tuple[str, ...]:
+    """Verification state after the deterministic package contract passes."""
+    blockers: list[str] = []
+    critical_ids = {
+        check.claim_id
+        for check in state.checks
+        if check.critical and is_evidence_claim(check.area, check.claim_kind)
+    }
     verifier = state.verifier
     if verifier is None:
         blockers.append("verifier_missing")
@@ -211,8 +160,11 @@ def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
             blockers.append("verifier_stale")
         if not critical_ids.issubset(verifier.checked_critical_claims):
             blockers.append("verifier_critical_scope_incomplete")
-
     return tuple(sorted(set(blockers)))
+
+
+def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
+    return tuple(sorted(set((*pre_verifier_blockers(state), *verifier_blockers(state)))))
 
 
 def evaluate_policy(state: PolicyState) -> PolicyDecision:
@@ -250,9 +202,25 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
             ReasonCode.TECHNICAL_FAILURE,
             blockers,
         )
+    if state.external_critical_gap:
+        return PolicyDecision(
+            PolicyOutcome.HUMAN_CLARIFICATION,
+            ReasonCode.MISSING_EVIDENCE,
+            blockers,
+        )
+    if state.no_progress_streak >= 2:
+        return PolicyDecision(
+            PolicyOutcome.HUMAN_CLARIFICATION,
+            ReasonCode.NO_PROGRESS,
+            blockers,
+        )
 
     verifier_failed = any(
-        blocker == "verifier_critical" or blocker == "verifier_source_reference_invalid"
+        blocker in {
+            "verifier_critical",
+            "verifier_source_reference_invalid",
+            "verifier_critical_scope_incomplete",
+        }
         for blocker in blockers
     )
     if verifier_failed and not state.repair_available:
@@ -262,38 +230,6 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
             blockers,
         )
 
-    if (
-        state.no_progress_streak >= 2
-        and not state.replan_available
-        and not state.allowed_action_available
-    ):
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.NO_PROGRESS,
-            blockers,
-        )
-
-    if (
-        state.allowed_action_available
-        or state.replan_available
-        or (state.technical_failure and state.retry_available)
-    ):
-        return PolicyDecision(PolicyOutcome.CONTINUE, None, blockers)
-
-    if state.external_critical_gap:
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.MISSING_EVIDENCE,
-            blockers,
-        )
-    if "verifier_missing" in blockers or "verifier_stale" in blockers:
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.VERIFICATION_FAILED,
-            blockers,
-        )
-    return PolicyDecision(
-        PolicyOutcome.HUMAN_CLARIFICATION,
-        ReasonCode.MISSING_EVIDENCE,
-        blockers,
-    )
+    # Missing/stale verification and deterministic package blockers are runtime
+    # work, not a reason to delegate internal work to a human.
+    return PolicyDecision(PolicyOutcome.CONTINUE, None, blockers)
