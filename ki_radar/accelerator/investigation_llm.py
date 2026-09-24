@@ -1289,9 +1289,7 @@ def request_verifier_report(
             response_format=verifier_response_format(),
         )
         read_requests = [
-            dict(item)
-            for item in payload.get("read_requests", [])
-            if isinstance(item, Mapping)
+            dict(item) for item in payload.get("read_requests", []) if isinstance(item, Mapping)
         ]
         if not read_requests:
             return _record_verifier_report(
