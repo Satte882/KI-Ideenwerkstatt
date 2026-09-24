@@ -68,7 +68,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v12"
+LOOP_VERSION = "vs1-agent-loop-v13"
 BUDGET_VERSION = "vs1-budget-v6"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -938,13 +938,32 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     return tuple(sorted(set(blockers)))
 
 
+def _claim_is_critical(
+    *,
+    area: str,
+    claim_kind: str,
+    used_as_premise: bool,
+) -> bool:
+    """Derive decision-criticality deterministically; the model cannot downgrade it."""
+    return (
+        area in {"problem_context", "competing_hypotheses"}
+        or claim_kind == "recommendation"
+        or used_as_premise
+    )
+
+
 def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, Any]:
     claim_id = str(raw.get("claim_id") or "").strip()
+    statement_raw = raw.get("statement")
+    statement = statement_raw.strip() if isinstance(statement_raw, str) else ""
     area = str(raw.get("area") or "").strip()
     claim_kind = str(raw.get("claim_kind") or "").strip()
     status = str(raw.get("status") or "").strip()
+    used_as_premise_raw = raw.get("used_as_premise", False)
     if not claim_id or len(claim_id) > 100:
         raise InvestigationRunError("Claim-ID ist ungültig.", code="invalid_claim")
+    if not statement:
+        raise InvestigationRunError("Claim-Aussage ist erforderlich.", code="invalid_claim")
     if area not in {
         "problem_context",
         "competing_hypotheses",
@@ -957,17 +976,28 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
         raise InvestigationRunError("Claim-Art ist ungültig.", code="invalid_claim")
     if status not in {"open", "supported", "refuted", "conflicting"}:
         raise InvestigationRunError("Claim-Status ist ungültig.", code="invalid_claim")
+    if not isinstance(used_as_premise_raw, bool):
+        raise InvestigationRunError(
+            "used_as_premise muss ein Boolean sein.",
+            code="invalid_claim",
+        )
     evidence_refs = [
         dict(item) for item in raw.get("evidence_refs", []) if isinstance(item, Mapping)
     ]
     counter_refs = [
         dict(item) for item in raw.get("counterevidence_refs", []) if isinstance(item, Mapping)
     ]
+    used_as_premise = used_as_premise_raw
     return {
         "claim_id": claim_id,
+        "statement": statement,
         "area": area,
         "claim_kind": claim_kind,
-        "critical": bool(raw.get("critical")),
+        "critical": _claim_is_critical(
+            area=area,
+            claim_kind=claim_kind,
+            used_as_premise=used_as_premise,
+        ),
         "status": status,
         "evidence_refs": evidence_refs,
         "counterevidence_refs": counter_refs,
@@ -976,7 +1006,7 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
             reference_valid(run, item) for item in evidence_refs + counter_refs
         ),
         "change_guard_valid": True,
-        "used_as_premise": bool(raw.get("used_as_premise")),
+        "used_as_premise": used_as_premise,
         "metadata": dict(raw.get("metadata") or {}),
     }
 
@@ -993,6 +1023,11 @@ def enforce_claim_guard(
         if new is None or not new.get("critical"):
             raise InvestigationRunError(
                 "Ein kritischer Prüfpunkt darf nicht gelöscht, umbenannt oder herabgestuft werden.",
+                code="critical_claim_guard",
+            )
+        if str(new.get("statement") or "") != str(old.get("statement") or ""):
+            raise InvestigationRunError(
+                "Die Aussage eines kritischen Claims darf unter derselben Claim-ID nicht wechseln.",
                 code="critical_claim_guard",
             )
 

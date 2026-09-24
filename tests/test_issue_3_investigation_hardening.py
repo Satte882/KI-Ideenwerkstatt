@@ -188,6 +188,7 @@ def ready_claims(source):
     return (
         {
             "claim_id": "problem",
+            "statement": "problem",
             "area": "problem_context",
             "claim_kind": "fact",
             "critical": True,
@@ -196,6 +197,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "hyp-a",
+            "statement": "hyp-a",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -204,6 +206,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "hyp-b",
+            "statement": "hyp-b",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -212,6 +215,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "opt-ai",
+            "statement": "opt-ai",
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
@@ -220,6 +224,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "opt-non-ai",
+            "statement": "opt-non-ai",
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
@@ -228,6 +233,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "risk",
+            "statement": "risk",
             "area": "constraints_risks",
             "claim_kind": "risk",
             "critical": True,
@@ -236,6 +242,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "recommendation",
+            "statement": "recommendation",
             "area": "recommendation_validation",
             "claim_kind": "recommendation",
             "critical": True,
@@ -244,6 +251,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "validation",
+            "statement": "validation",
             "area": "recommendation_validation",
             "claim_kind": "validation",
             "critical": True,
@@ -415,6 +423,7 @@ def test_a24_regression_multiple_unique_verifier_reads_do_not_create_critical_fa
     )
     run.refresh_from_db()
     checked = critical_ids(list(run.claim_register))
+    assert checked == ["problem", "hyp-a", "hyp-b", "recommendation"]
     responses = [
         {
             "read_requests": [
@@ -592,6 +601,7 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     }
     claim_a = {
         "claim_id": "hyp-a",
+        "statement": "hyp-a",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -600,6 +610,7 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     }
     claim_b = {
         "claim_id": "hyp-b",
+        "statement": "hyp-b",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -696,6 +707,7 @@ def test_distinct_source_reads_and_csv_profile_on_same_claim_are_progress(
     csv = sources["cases.csv"]
     claim = {
         "claim_id": "C1",
+        "statement": "C1",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -853,6 +865,7 @@ def test_evidence_linked_claim_counts_even_with_planner_progress_none(
     )
     claim = {
         "claim_id": "C1",
+        "statement": "C1",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -970,8 +983,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v12"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v12"
+    assert run.loop_version == "vs1-agent-loop-v13"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v13"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1336,6 +1349,7 @@ def test_unchanged_planner_state_cannot_erase_claims_or_brief(
     )
     claim = {
         "claim_id": "observed",
+        "statement": "observed",
         "area": "problem_context",
         "claim_kind": "observation",
         "status": "supported",
@@ -1762,6 +1776,7 @@ def test_null_inactive_planner_fields_do_not_block_tool_or_erase_state(
     )
     claim = {
         "claim_id": "observation",
+        "statement": "observation",
         "area": "problem_context",
         "claim_kind": "observation",
         "status": "open",
@@ -1912,6 +1927,7 @@ def test_claim_register_requires_nonempty_claim_kind(
             [
                 {
                     "claim_id": "hyp-a",
+                    "statement": "hyp-a",
                     "area": "competing_hypotheses",
                     "status": "open",
                 }
@@ -1919,6 +1935,149 @@ def test_claim_register_requires_nonempty_claim_kind(
         )
 
     assert exc_info.value.code == "invalid_claim"
+
+
+@pytest.mark.django_db
+def test_claim_statement_is_persisted_and_criticality_is_server_derived(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="claim-contract-derived",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    normalized = normalize_claim_register(
+        run,
+        [
+            {
+                "claim_id": "problem",
+                "statement": "Der Engpass liegt im aktuellen Prozess.",
+                "area": "problem_context",
+                "claim_kind": "observation",
+                "critical": False,
+                "status": "open",
+            },
+            {
+                "claim_id": "risk",
+                "statement": "Ein sekundäres Risiko bleibt offen.",
+                "area": "constraints_risks",
+                "claim_kind": "risk",
+                "critical": True,
+                "status": "open",
+            },
+            {
+                "claim_id": "premise-risk",
+                "statement": "Dieses Risiko wird als Empfehlungspremisse verwendet.",
+                "area": "constraints_risks",
+                "claim_kind": "risk",
+                "critical": False,
+                "used_as_premise": True,
+                "status": "open",
+            },
+            {
+                "claim_id": "recommendation",
+                "statement": "Option A ist die gestützte Richtung.",
+                "area": "recommendation_validation",
+                "claim_kind": "recommendation",
+                "critical": False,
+                "status": "open",
+            },
+        ],
+    )
+
+    by_id = {item["claim_id"]: item for item in normalized}
+    assert by_id["problem"]["statement"] == "Der Engpass liegt im aktuellen Prozess."
+    assert by_id["problem"]["critical"] is True
+    assert by_id["risk"]["critical"] is False
+    assert by_id["premise-risk"]["critical"] is True
+    assert by_id["recommendation"]["critical"] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("statement", [None, "", "   "])
+def test_claim_statement_is_required(
+    owner,
+    business_unit,
+    tmp_path,
+    statement,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key=f"claim-statement-{statement!r}",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        normalize_claim_register(
+            run,
+            [
+                {
+                    "claim_id": "hyp-a",
+                    "statement": statement,
+                    "area": "competing_hypotheses",
+                    "claim_kind": "hypothesis",
+                    "status": "open",
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "invalid_claim"
+
+
+@pytest.mark.django_db
+def test_critical_claim_statement_cannot_change_under_same_id(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="critical-statement-guard",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    first = [
+        {
+            "claim_id": "hyp-a",
+            "statement": "Hypothese A erklärt die Verzögerung.",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "status": "open",
+        }
+    ]
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        claim_register=first,
+    )
+    run.refresh_from_db()
+    assert run.claim_register[0]["statement"] == "Hypothese A erklärt die Verzögerung."
+    assert run.claim_register[0]["critical"] is True
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        normalize_claim_register(
+            run,
+            [
+                {
+                    "claim_id": "hyp-a",
+                    "statement": "Eine andere Ursache erklärt die Verzögerung.",
+                    "area": "competing_hypotheses",
+                    "claim_kind": "hypothesis",
+                    "status": "open",
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "critical_claim_guard"
 
 
 @pytest.mark.django_db

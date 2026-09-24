@@ -590,6 +590,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
     claims = (
         {
             "claim_id": "problem",
+            "statement": "problem",
             "area": "problem_context",
             "claim_kind": "fact",
             "critical": True,
@@ -598,6 +599,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
         },
         {
             "claim_id": "hyp-a",
+            "statement": "hyp-a",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -606,6 +608,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
         },
         {
             "claim_id": "hyp-b",
+            "statement": "hyp-b",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -614,6 +617,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
         },
         {
             "claim_id": "recommendation",
+            "statement": "recommendation",
             "area": "recommendation_validation",
             "claim_kind": "recommendation",
             "critical": True,
@@ -622,6 +626,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
         },
         {
             "claim_id": "candidate-option",
+            "statement": "candidate-option",
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
@@ -629,6 +634,7 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
         },
         {
             "claim_id": "future-validation",
+            "statement": "future-validation",
             "area": "recommendation_validation",
             "claim_kind": "validation",
             "critical": True,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v13"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v5"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v6"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -49,11 +49,14 @@ TOOL_PARAMETER_CONTRACTS = {
 _SYNTHESIS_DOMAIN_RULES = """claim_register enthält ausschließlich Evidence Claims:
 Aussagen, die wahr, falsch, widersprüchlich oder offen sein können und dafür Evidenz
 benötigen. Jeder Eintrag ist ein Objekt mit nichtleerer claim_id (maximal 100 Zeichen),
-area aus problem_context|competing_hypotheses|constraints_risks|recommendation_validation,
+einem nichtleeren statement, area aus
+problem_context|competing_hypotheses|constraints_risks|recommendation_validation,
 einem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.
-Nutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte;
-kritische bestehende Evidence Claims dürfen nicht gelöscht, umbenannt oder herabgestuft
-werden. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
+Nutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte.
+Criticality wird serverseitig aus der Claim-Semantik abgeleitet; erfinde oder steuere
+kein critical-Feld. Kritische bestehende Evidence Claims dürfen nicht gelöscht,
+umbenannt, inhaltlich unter derselben claim_id umgeschrieben oder herabgestuft werden.
+Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
 area=competing_hypotheses und claim_kind=hypothesis geführt werden, wenn die Evidenzlage
 mehr als eine plausible Erklärung trägt.
 
