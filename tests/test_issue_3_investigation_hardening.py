@@ -1427,56 +1427,54 @@ def test_covered_sources_and_targeted_search_force_synthesis_without_more_tools(
 
 
 @pytest.mark.django_db
-def test_text_only_sources_can_enter_synthesis_without_csv_check(
+def test_planner_can_enter_synthesis_before_benchmark_completeness(
     owner, business_unit, tmp_path, monkeypatch
 ):
-    process = make_process(owner=owner, business_unit=business_unit, name="Text-only evidence")
-    (tmp_path / "notes.md").write_text("Eine Gegenhypothese ist dokumentiert.\n", encoding="utf-8")
+    process = make_process(owner=owner, business_unit=business_unit, name="Early synthesis")
+    (tmp_path / "notes.md").write_text("Eine Hypothese ist dokumentiert.\n", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     handle = start_investigation(
         actor=owner,
-        request=StartInvestigationRequest(snapshot.snapshot_id, "text-only-evidence"),
-    )
-    source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
-    execute_tool_step(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        tool_name="read_source",
-        parameters={"source_id": str(source.source_id)},
-    )
-    advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=lambda **_kwargs: planner_action(
-            tool_name="search_sources", parameters={"query": "Gegenhypothese"}
-        ),
+        request=StartInvestigationRequest(snapshot.snapshot_id, "early-synthesis"),
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert investigation_evidence_complete(run) is False
     assert run.data_check_executed is False
-    assert investigation_evidence_complete(run) is True
-    assert "data_check_missing" not in evaluate_run_policy(run).blockers
+    assert run.counterevidence_search_executed is False
 
-    def empty_synthesis(**kwargs):
-        assert kwargs["response_format"] == {"type": "json_object"}
-        raw = json.dumps(
-            {
-                "action": "synthesize",
-                "target_claim_id": "",
-                "expected_discriminating_finding": "",
-                "rationale": "Zusammenfassen.",
-                "tool_name": "",
-                "parameters": "{}",
-                "claim_register": "null",
-                "brief_payload": "null",
-                "source_relevance": "{}",
-                "progress_kind": "none",
-                "progress_payload": "{}",
-                "clarification_reason": "",
-                "clarification_payload": "{}",
-            }
-        )
+    calls = []
+
+    def provider(**kwargs):
+        response_format = kwargs["response_format"]
+        if response_format == {"type": "json_object"}:
+            calls.append("synthesizer")
+            raw = json.dumps(
+                {
+                    "claim_register": [],
+                    "brief_payload": {},
+                    "source_relevance": {},
+                    "clarification_reason": "missing_evidence",
+                    "clarification_payload": {
+                        "question": "Welche externe Information entscheidet die Richtung?",
+                        "decision_impact": "Ohne sie bleibt die Richtungsentscheidung offen.",
+                    },
+                    "investigation_request": {},
+                }
+            )
+        else:
+            calls.append("planner")
+            raw = json.dumps(
+                {
+                    "action": "synthesize",
+                    "target_claim_id": "",
+                    "expected_discriminating_finding": "",
+                    "rationale": "Der vorhandene Stand ist reviewfähig genug für eine Synthese.",
+                    "tool_name": "",
+                    "parameters": "{}",
+                    "clarification_reason": "",
+                    "clarification_payload": "{}",
+                }
+            )
         return OpenRouterResult(
             content=raw,
             model="test-model",
@@ -1484,82 +1482,20 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
             output_chars=len(raw),
         )
 
-    monkeypatch.setattr(
-        "ki_radar.accelerator.investigation_llm.request_openrouter", empty_synthesis
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    action = request_planner_action(
+        actor=owner,
+        run=run,
+        executor_token=handle.executor_token,
     )
-    result = advance_investigation(
-        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
-    )
-    run.refresh_from_db()
-    assert result.status == InvestigationRun.Status.RUNNING
-    assert run.model_calls.get().error_code == "invalid_response"
-    assert run.claim_register == []
-    assert run.brief_payload == {}
 
-    def partial_synthesis(**_kwargs):
-        raw = json.dumps(
-            {
-                "action": "synthesize",
-                "target_claim_id": "problem",
-                "expected_discriminating_finding": "",
-                "rationale": "Unvollständiger Entwurf.",
-                "tool_name": "",
-                "parameters": "{}",
-                "claim_register": json.dumps(
-                    [
-                        {
-                            "claim_id": "problem",
-                            "area": "problem_context",
-                            "claim_kind": "observation",
-                            "critical": True,
-                            "status": "open",
-                        }
-                    ]
-                ),
-                "brief_payload": json.dumps({"draft": "Unvollständig"}),
-                "source_relevance": json.dumps(
-                    {
-                        str(source.source_id): {
-                            "relevant": True,
-                            "reason": "Quelle beschreibt die Gegenhypothese.",
-                            "reference": {
-                                "source_id": str(source.source_id),
-                                "locator": {"line": 1},
-                                "revision_hash": source.content_sha256,
-                            },
-                        }
-                    }
-                ),
-                "progress_kind": "none",
-                "progress_payload": "{}",
-                "clarification_reason": "",
-                "clarification_payload": "{}",
-            }
-        )
-        return OpenRouterResult(
-            content=raw,
-            model="test-model",
-            usage={"prompt_tokens": 50, "completion_tokens": 25},
-            output_chars=len(raw),
-        )
-
-    monkeypatch.setattr(
-        "ki_radar.accelerator.investigation_llm.request_openrouter", partial_synthesis
-    )
-    first = advance_investigation(
-        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
-    )
-    second = advance_investigation(
-        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
-    )
-    run.refresh_from_db()
-    assert first.status == InvestigationRun.Status.RUNNING
-    assert second.status == InvestigationRun.Status.FAILED
-    assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "pre_verifier_contract_failed"
-    assert run.usage["model_calls"] == 3
-    assert run.usage["verifier_calls"] == 0
-
+    assert calls == ["planner", "synthesizer"]
+    assert action.action == "clarify"
+    assert action.clarification_reason == "missing_evidence"
+    assert list(run.model_calls.order_by("created_at").values_list("role", flat=True)) == [
+        InvestigationModelCall.Role.PLANNER,
+        InvestigationModelCall.Role.SYNTHESIZER,
+    ]
 
 @pytest.mark.django_db
 def test_synthesizer_can_request_decision_critical_missing_evidence(
@@ -2054,7 +1990,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 @pytest.mark.django_db
-def test_verifier_gets_exactly_one_repair_cycle_then_fails(
+def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
     owner,
     business_unit,
     tmp_path,
@@ -2063,10 +1999,34 @@ def test_verifier_gets_exactly_one_repair_cycle_then_fails(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        key="repair",
+        key="verifier-convergence",
     )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.source_id)},
+        target_claim_id="problem",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    ref = source_ref(source)
     claims = ready_claims(source)
-    brief = {"recommendation": "Option A", "validation": "Messung fortsetzen"}
+    brief = {
+        "question_scope": {
+            "question": run.decision_question,
+            "scope": "Autorisierter Testfall.",
+        },
+        "problem": {
+            "statement": "Die Gruppen unterscheiden sich.",
+            "references": [ref],
+        },
+        "recommendation": {
+            "summary": "Option A prüfen.",
+            "rationale": "Die verfügbare Evidenz trägt diese Richtung.",
+            "references": [ref],
+        },
+    }
     apply_planner_state(
         actor=owner,
         run_id=handle.run_id,
@@ -2080,72 +2040,42 @@ def test_verifier_gets_exactly_one_repair_cycle_then_fails(
         actor=owner,
         run_id=handle.run_id,
         executor_token=handle.executor_token,
-        relevance={
-            str(source.source_id): {
-                "relevant": True,
-                "reason": "CSV trägt die entscheidungsrelevanten Messwerte.",
-                "reference": source_ref(source),
-            }
-        },
-    )
-    execute_tool_step(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        tool_name="profile_csv",
-        parameters={"source_id": str(source.source_id)},
-        target_claim_id="problem",
-    )
-    execute_tool_step(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        tool_name="search_sources",
-        parameters={"query": "counter-never-present", "cursor": 0, "limit": 20},
-        target_claim_id="hyp-b",
+        relevance={str(source.source_id): {"relevant": True}},
     )
 
-    def verify_planner(**kwargs):
-        run = kwargs["run"]
-        brief = dict(run.brief_payload)
-        if run.repair_cycles:
-            brief["validation"] = "Kritischen Verifier-Befund erneut prüfen"
+    def same_synthesis(**kwargs):
+        current = kwargs["run"]
         return planner_action(
             action="synthesize",
-            target_claim_id="verification",
+            target_claim_id="",
             tool_name="",
             parameters={},
-            claim_register=tuple(run.claim_register),
-            brief_payload=brief,
+            claim_register=tuple(current.claim_register),
+            brief_payload=dict(current.brief_payload),
         )
 
     def failing_verifier(**kwargs):
         return create_critical_verifier_report(kwargs["run"])
 
-    first = advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=verify_planner,
-        verifier=failing_verifier,
-    )
-    run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert first.status == InvestigationRun.Status.RUNNING
-    assert run.repair_cycles == 1
-
-    second = advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=verify_planner,
-        verifier=failing_verifier,
-    )
+    results = [
+        advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=same_synthesis,
+            verifier=failing_verifier,
+        )
+        for _ in range(4)
+    ]
     run.refresh_from_db()
-    assert second.status == InvestigationRun.Status.FAILED
-    assert run.clarification_reason == "verification_failed"
-    assert run.verifier_reports.count() == 2
-    assert run.repair_cycles == 1
 
+    assert [item.status for item in results[:3]] == [InvestigationRun.Status.RUNNING] * 3
+    assert results[3].status == InvestigationRun.Status.FAILED
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "no_progress_loop"
+    assert run.clarification_payload["repeat_count"] == 3
+    assert run.verifier_reports.count() == 3
+    assert run.repair_cycles == 0
 
 @pytest.mark.django_db(transaction=True)
 def test_parallel_materialization_creates_exactly_one_revision(
