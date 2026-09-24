@@ -866,8 +866,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v9"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v9"
+    assert run.loop_version == "vs1-agent-loop-v10"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v10"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1597,6 +1597,108 @@ def test_synthesizer_can_request_decision_critical_missing_evidence(
     run.refresh_from_db()
     assert run.claim_register == []
     assert run.brief_payload == {}
+
+
+@pytest.mark.django_db
+def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="synthesis-reinvestigate"
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.source_id)},
+    )
+    advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: planner_action(
+            tool_name="search_sources",
+            parameters={"query": "counter-never-present", "cursor": 0, "limit": 20},
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert investigation_evidence_complete(run) is True
+
+    calls = 0
+
+    def provider(**kwargs):
+        nonlocal calls
+        calls += 1
+        if kwargs["response_format"] == {"type": "json_object"}:
+            raw = json.dumps(
+                {
+                    "claim_register": [],
+                    "brief_payload": {},
+                    "source_relevance": {},
+                    "clarification_reason": "",
+                    "clarification_payload": {},
+                    "investigation_request": {
+                        "goal": "Vergleiche die mittleren Werte nach Verfügbarkeit.",
+                        "reason": "Die Gruppenprüfung ist aus der freigegebenen CSV möglich.",
+                    },
+                }
+            )
+        else:
+            context = json.loads(kwargs["messages"][1]["content"])
+            assert context["phase"] == "investigation"
+            assert context["synthesis_investigation_request"]["goal"].startswith("Vergleiche")
+            raw = json.dumps(
+                {
+                    "action": "tool",
+                    "target_claim_id": "availability",
+                    "expected_discriminating_finding": "Gruppenunterschied quantifizieren.",
+                    "rationale": "Die vom Synthesizer erkannte interne Evidenzlücke schließen.",
+                    "tool_name": "compare_groups",
+                    "parameters": json.dumps(
+                        {
+                            "source_id": str(source.source_id),
+                            "group_by": "available",
+                            "aggregation": "mean",
+                            "value_column": "value",
+                            "filters": [],
+                            "unit_column": "unit",
+                        }
+                    ),
+                    "clarification_reason": "",
+                    "clarification_payload": "{}",
+                }
+            )
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+
+    first = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert run.status == InvestigationRun.Status.RUNNING
+    assert run.clarification_reason == ""
+    assert (
+        run.model_calls.order_by("-created_at").first().role
+        == InvestigationModelCall.Role.SYNTHESIZER
+    )
+
+    second = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert second.status == InvestigationRun.Status.RUNNING
+    assert run.status == InvestigationRun.Status.RUNNING
+    assert run.clarification_reason == ""
+    assert run.steps.order_by("-sequence").first().tool_name == "compare_groups"
+    assert calls == 2
 
 
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():

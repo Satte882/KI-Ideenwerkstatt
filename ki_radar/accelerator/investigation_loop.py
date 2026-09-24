@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from .investigation_llm import (
     PlannerAction,
+    _pending_synthesis_investigation,
     request_planner_action,
     request_verifier_report,
 )
@@ -154,8 +155,11 @@ def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
 ) -> InvestigationRunError | None:
+    pending_investigation = _pending_synthesis_investigation(run)
     allowed_actions = (
-        {"synthesize", "clarify"}
+        {"tool", "investigate", "clarify"}
+        if pending_investigation
+        else {"synthesize", "investigate", "clarify"}
         if investigation_evidence_complete(run)
         else {"tool", "verify", "clarify"}
     )
@@ -222,6 +226,7 @@ def _synthesis_attempts_since_verification(run: InvestigationRun) -> int:
         calls = calls.filter(created_at__gt=latest_input.created_at)
     return sum(
         call.get("clarification_reason") != "missing_evidence"
+        and not bool(call.get("investigation_request"))
         for call in calls.values_list("accepted_payload", flat=True)
     )
 
@@ -282,7 +287,7 @@ def _handle_budget_exhaustion(
 
 def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
     if action.action != "tool":
-        return action.action in {"verify", "clarify"}
+        return action.action in {"verify", "clarify", "investigate"}
     try:
         params = normalize_tool_parameters(action.tool_name, action.parameters)
     except InvestigationRunError:
@@ -412,6 +417,17 @@ def advance_investigation(
             relevance=action.source_relevance,
         )
         run.refresh_from_db()
+
+    if action.action == "investigate":
+        return AdvanceResult(
+            run.pk,
+            run.status,
+            evaluate_run_policy(
+                run,
+                allowed_action_available=True,
+                replan_available=True,
+            ),
+        )
 
     if (
         action.action != "synthesize"

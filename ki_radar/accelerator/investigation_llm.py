@@ -182,6 +182,26 @@ def _validate_synthesis_package(run: InvestigationRun, payload: Mapping[str, Any
     reason = payload.get("clarification_reason", "")
     if reason not in {"", "missing_evidence"}:
         raise InvestigationRunError("Ungültiger Klärungsgrund.", code="invalid_reason_code")
+
+    investigation_request = _decode_structured_field(
+        payload, "investigation_request", expected_type=Mapping, default={}
+    )
+    if investigation_request:
+        if reason:
+            raise InvestigationRunError(
+                (
+                    "Interne Untersuchung und menschliche Klärung dürfen nicht "
+                    "gleichzeitig angefordert werden."
+                ),
+                code="invalid_response",
+            )
+        if not str(investigation_request.get("goal") or "").strip():
+            raise InvestigationRunError(
+                "Interne Untersuchung benötigt ein konkretes Untersuchungsziel.",
+                code="invalid_response",
+            )
+        return
+
     if reason == "missing_evidence":
         clarification = _decode_structured_field(
             payload, "clarification_payload", expected_type=Mapping, default={}
@@ -331,8 +351,40 @@ def _usage_tokens(result, messages: list[dict[str, str]]) -> tuple[int, int, int
     return prompt_tokens, completion_tokens, prompt_tokens + completion_tokens
 
 
+def _pending_synthesis_investigation(run: InvestigationRun) -> dict[str, str]:
+    """Return an unresolved tool-addressable gap raised by the latest synthesis."""
+    latest = (
+        run.model_calls.filter(
+            role=InvestigationModelCall.Role.SYNTHESIZER,
+            status=InvestigationModelCall.Status.SUCCESS,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if latest is None:
+        return {}
+    raw = latest.accepted_payload.get("investigation_request")
+    if not isinstance(raw, Mapping):
+        return {}
+    goal = str(raw.get("goal") or "").strip()
+    if not goal:
+        return {}
+    if run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS,
+        created_at__gt=latest.created_at,
+    ).exists():
+        return {}
+    if run.input_revisions.filter(created_at__gt=latest.created_at).exists():
+        return {}
+    return {
+        "goal": goal,
+        "reason": str(raw.get("reason") or "").strip(),
+    }
+
+
 def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     sources = list_sources(actor=actor, snapshot_id=run.source_snapshot_id)
+    pending_investigation = _pending_synthesis_investigation(run)
     previous_call = run.model_calls.order_by("-created_at").first()
     last_planner_error: dict[str, str] = {}
     if (
@@ -348,7 +400,14 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             "detail": str(diagnostics.get("structured_contract_error") or "")[:250],
         }
     return {
-        "phase": "synthesis" if investigation_evidence_complete(run) else "investigation",
+        "phase": (
+            "investigation"
+            if pending_investigation
+            else "synthesis"
+            if investigation_evidence_complete(run)
+            else "investigation"
+        ),
+        "synthesis_investigation_request": pending_investigation,
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
         "sources": [
@@ -1004,7 +1063,7 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
-    if investigation_evidence_complete(run):
+    if investigation_evidence_complete(run) and not _pending_synthesis_investigation(run):
         return request_synthesis_package(actor=actor, run=run, executor_token=executor_token)
     payload, _call = _structured_provider_call(
         actor=actor,
@@ -1053,6 +1112,25 @@ def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -
         response_format=synthesis_response_format(),
         payload_validator=lambda response: _validate_synthesis_package(run, response),
     )
+    investigation_request = _decode_structured_field(
+        payload, "investigation_request", expected_type=Mapping, default={}
+    )
+    if investigation_request:
+        return PlannerAction(
+            action="investigate",
+            target_claim_id="",
+            expected_discriminating_finding=str(investigation_request.get("goal") or ""),
+            rationale=str(investigation_request.get("reason") or ""),
+            tool_name="",
+            parameters={},
+            claim_register=None,
+            brief_payload=None,
+            source_relevance={},
+            progress_kind="none",
+            progress_payload={},
+            clarification_reason="",
+            clarification_payload=dict(investigation_request),
+        )
     if payload.get("clarification_reason") == "missing_evidence":
         clarification = _decode_structured_field(
             payload, "clarification_payload", expected_type=Mapping, default={}
