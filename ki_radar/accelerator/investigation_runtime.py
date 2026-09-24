@@ -1827,6 +1827,13 @@ def set_source_relevance(
     executor_token,
     relevance: Mapping[str, Mapping[str, Any]],
 ) -> InvestigationRun:
+    """Persist minimal manifest coverage without forcing ceremonial citations.
+
+    Every authorized source must be classified relevant/irrelevant. A source
+    marked relevant must actually have been read or analyzed by a successful
+    tool step. Optional reasons/references are retained and validated when
+    supplied, but an irrelevant source needs no artificial read.
+    """
     run = locked_run(actor=actor, run_id=run_id)
     assert_active(run)
     assert_executor(run, executor_token)
@@ -1835,30 +1842,47 @@ def set_source_relevance(
     supplied = {str(key): dict(value) for key, value in dict(relevance or {}).items()}
     if set(supplied) != source_ids:
         raise InvestigationRunError(
-            "Für jede Manifestquelle ist genau eine Relevanzbegründung erforderlich.",
+            "Für jede Manifestquelle ist eine relevant/irrelevant-Klassifikation erforderlich.",
             code="source_relevance_incomplete",
         )
 
+    observed_source_ids = {
+        str(step.parameters.get("source_id") or "")
+        for step in run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            tool_name__in={"read_source", "profile_csv", "compare_groups"},
+        )
+    }
     normalized: dict[str, dict[str, Any]] = {}
     for source_id, item in supplied.items():
-        reason = str(item.get("reason") or "").strip()
         relevant = item.get("relevant")
+        if not isinstance(relevant, bool):
+            raise InvestigationRunError(
+                "Quellenklassifikation benötigt relevant=true|false.",
+                code="invalid_source_relevance",
+            )
+        if relevant and source_id not in observed_source_ids:
+            raise InvestigationRunError(
+                "Als relevant markierte Quelle wurde nicht tatsächlich gelesen oder analysiert.",
+                code="source_relevance_unobserved",
+            )
+
+        reason = str(item.get("reason") or "").strip()
         reference = item.get("reference")
-        if not reason or not isinstance(relevant, bool) or not isinstance(reference, Mapping):
+        if reference is not None and (
+            not isinstance(reference, Mapping) or not reference_valid(run, reference)
+        ):
             raise InvestigationRunError(
-                "Relevanzbegründung benötigt relevant, reason und eine reale Fundstelle/Analyse.",
+                "Optionale Relevanzreferenz verweist nicht auf eine gültige Fundstelle/Analyse.",
                 code="invalid_source_relevance",
             )
-        if not reference_valid(run, reference):
-            raise InvestigationRunError(
-                "Relevanzbegründung verweist nicht auf eine gültige Fundstelle/Analyse.",
-                code="invalid_source_relevance",
-            )
-        normalized[source_id] = {
-            "relevant": relevant,
-            "reason": reason,
-            "reference": dict(reference),
-        }
+
+        normalized_item: dict[str, Any] = {"relevant": relevant}
+        if reason:
+            normalized_item["reason"] = reason
+        if isinstance(reference, Mapping):
+            normalized_item["reference"] = dict(reference)
+        normalized[source_id] = normalized_item
 
     run.source_relevance = normalized
     run.source_relevance_complete = True
