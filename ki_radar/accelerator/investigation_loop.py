@@ -238,7 +238,9 @@ def _planner_contract_error(
             code="invalid_progress_kind",
         )
     if action.action == "clarify" and action.clarification_reason not in {
-        item.value for item in ReasonCode
+        ReasonCode.MISSING_EVIDENCE.value,
+        ReasonCode.PERMISSION_OR_SCOPE.value,
+        ReasonCode.VALUE_TRADEOFF.value,
     }:
         return InvestigationRunError(
             "Planner lieferte einen ungültigen Klärungsgrund.",
