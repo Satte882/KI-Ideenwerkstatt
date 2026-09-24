@@ -1685,7 +1685,10 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
     assert first.status == InvestigationRun.Status.RUNNING
     assert run.status == InvestigationRun.Status.RUNNING
     assert run.clarification_reason == ""
-    assert run.model_calls.order_by("-created_at").first().role == InvestigationModelCall.Role.SYNTHESIZER
+    assert (
+        run.model_calls.order_by("-created_at").first().role
+        == InvestigationModelCall.Role.SYNTHESIZER
+    )
 
     second = advance_investigation(
         actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
