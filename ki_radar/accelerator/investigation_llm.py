@@ -189,7 +189,10 @@ def _validate_synthesis_package(run: InvestigationRun, payload: Mapping[str, Any
     if investigation_request:
         if reason:
             raise InvestigationRunError(
-                "Interne Untersuchung und menschliche Klärung dürfen nicht gleichzeitig angefordert werden.",
+                (
+                    "Interne Untersuchung und menschliche Klärung dürfen nicht "
+                    "gleichzeitig angefordert werden."
+                ),
                 code="invalid_response",
             )
         if not str(investigation_request.get("goal") or "").strip():
