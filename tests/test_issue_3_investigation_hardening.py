@@ -26,7 +26,7 @@ from ki_radar.accelerator.investigation_llm import (
 )
 from ki_radar.accelerator.investigation_loop import (
     TRANSIENT_PROVIDER_CODES,
-    _synthesis_attempts_since_verification,
+    _pre_verifier_package_attempts_since_verification,
     advance_investigation,
     run_until_boundary,
 )
@@ -802,7 +802,7 @@ def test_provider_timeout_retries_once_then_fails_closed(
 
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "technical_failure"
     assert run.usage["provider_attempts"] == 2
     assert run.status != InvestigationRun.Status.READY
@@ -865,9 +865,9 @@ def test_empty_provider_response_retries_once_then_fails_closed(
 
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v10"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v10"
+    assert second.status == InvestigationRun.Status.FAILED
+    assert run.loop_version == "vs1-agent-loop-v11"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v11"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -968,7 +968,7 @@ def test_invalid_provider_response_retries_once_then_fails_closed(
 
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert provider_calls == 2
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "invalid_response"
@@ -1111,7 +1111,7 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
     calls = list(run.model_calls.order_by("created_at"))
 
     assert first.status == InvestigationRun.Status.RUNNING
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert provider_calls == 2
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "invalid_response"
@@ -1549,9 +1549,9 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
     )
     run.refresh_from_db()
     assert first.status == InvestigationRun.Status.RUNNING
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "synthesis_incomplete"
+    assert run.clarification_payload["error_code"] == "pre_verifier_contract_failed"
     assert run.usage["model_calls"] == 3
     assert run.usage["verifier_calls"] == 0
 
@@ -1593,7 +1593,7 @@ def test_synthesizer_can_request_decision_critical_missing_evidence(
     assert action.clarification_reason == "missing_evidence"
     assert "freigabeberechtigt" in action.clarification_payload["question"]
     assert run.model_calls.get().role == InvestigationModelCall.Role.SYNTHESIZER
-    assert _synthesis_attempts_since_verification(run) == 0
+    assert _pre_verifier_package_attempts_since_verification(run) == 0
     run.refresh_from_db()
     assert run.claim_register == []
     assert run.brief_payload == {}
@@ -2054,7 +2054,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 @pytest.mark.django_db
-def test_verifier_gets_exactly_one_repair_cycle_then_human_clarification(
+def test_verifier_gets_exactly_one_repair_cycle_then_fails(
     owner,
     business_unit,
     tmp_path,
@@ -2141,10 +2141,10 @@ def test_verifier_gets_exactly_one_repair_cycle_then_human_clarification(
         verifier=failing_verifier,
     )
     run.refresh_from_db()
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "verification_failed"
     assert run.verifier_reports.count() == 2
-    assert run.repair_cycles == 2
+    assert run.repair_cycles == 1
 
 
 @pytest.mark.django_db(transaction=True)
@@ -2631,7 +2631,7 @@ def test_truncated_structured_response_is_accounted_and_never_retried(
         result = advance_investigation(
             actor=owner, run_id=run.pk, executor_token=handle.executor_token
         )
-        assert result.status == InvestigationRun.Status.WAITING_HUMAN
+        assert result.status == InvestigationRun.Status.FAILED
         run.refresh_from_db()
         assert run.clarification_payload["error_code"] == "output_truncated"
         assert run.clarification_payload["attempts"] == 1
