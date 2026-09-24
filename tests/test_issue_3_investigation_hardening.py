@@ -423,6 +423,7 @@ def test_a24_regression_multiple_unique_verifier_reads_do_not_create_critical_fa
     )
     run.refresh_from_db()
     checked = critical_ids(list(run.claim_register))
+    assert checked == ["problem", "hyp-a", "hyp-b", "recommendation"]
     responses = [
         {
             "read_requests": [
@@ -982,8 +983,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v12"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v12"
+    assert run.loop_version == "vs1-agent-loop-v13"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v13"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1934,6 +1935,147 @@ def test_claim_register_requires_nonempty_claim_kind(
         )
 
     assert exc_info.value.code == "invalid_claim"
+
+
+@pytest.mark.django_db
+def test_claim_statement_is_persisted_and_criticality_is_server_derived(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="claim-contract-derived",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    normalized = normalize_claim_register(
+        run,
+        [
+            {
+                "claim_id": "problem",
+                "statement": "Der Engpass liegt im aktuellen Prozess.",
+                "area": "problem_context",
+                "claim_kind": "observation",
+                "critical": False,
+                "status": "open",
+            },
+            {
+                "claim_id": "risk",
+                "statement": "Ein sekundäres Risiko bleibt offen.",
+                "area": "constraints_risks",
+                "claim_kind": "risk",
+                "critical": True,
+                "status": "open",
+            },
+            {
+                "claim_id": "premise-risk",
+                "statement": "Dieses Risiko wird als Empfehlungspremisse verwendet.",
+                "area": "constraints_risks",
+                "claim_kind": "risk",
+                "critical": False,
+                "used_as_premise": True,
+                "status": "open",
+            },
+            {
+                "claim_id": "recommendation",
+                "statement": "Option A ist die gestützte Richtung.",
+                "area": "recommendation_validation",
+                "claim_kind": "recommendation",
+                "critical": False,
+                "status": "open",
+            },
+        ],
+    )
+
+    by_id = {item["claim_id"]: item for item in normalized}
+    assert by_id["problem"]["statement"] == "Der Engpass liegt im aktuellen Prozess."
+    assert by_id["problem"]["critical"] is True
+    assert by_id["risk"]["critical"] is False
+    assert by_id["premise-risk"]["critical"] is True
+    assert by_id["recommendation"]["critical"] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("statement", [None, "", "   "])
+def test_claim_statement_is_required(
+    owner,
+    business_unit,
+    tmp_path,
+    statement,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key=f"claim-statement-{statement!r}",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        normalize_claim_register(
+            run,
+            [
+                {
+                    "claim_id": "hyp-a",
+                    "statement": statement,
+                    "area": "competing_hypotheses",
+                    "claim_kind": "hypothesis",
+                    "status": "open",
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "invalid_claim"
+
+
+@pytest.mark.django_db
+def test_critical_claim_statement_cannot_change_under_same_id(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="critical-statement-guard",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    first = [
+        {
+            "claim_id": "hyp-a",
+            "statement": "Hypothese A erklärt die Verzögerung.",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "status": "open",
+        }
+    ]
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        claim_register=first,
+    )
+    run.refresh_from_db()
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        normalize_claim_register(
+            run,
+            [
+                {
+                    "claim_id": "hyp-a",
+                    "statement": "Eine andere Ursache erklärt die Verzögerung.",
+                    "area": "competing_hypotheses",
+                    "claim_kind": "hypothesis",
+                    "status": "open",
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "critical_claim_guard"
 
 
 @pytest.mark.django_db
