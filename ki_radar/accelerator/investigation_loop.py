@@ -336,10 +336,11 @@ def _action_state_fingerprint(run: InvestigationRun, action: PlannerAction) -> s
         "tool_state": tool_state,
         "verifier": (
             {
-                "id": str(latest_verifier.pk),
-                "revision": latest_verifier.revision,
                 "success": latest_verifier.success,
                 "critical_findings": latest_verifier.critical_findings,
+                "findings": latest_verifier.findings,
+                "source_references_valid": latest_verifier.source_references_valid,
+                "checked_critical_claims": latest_verifier.checked_critical_claims,
             }
             if latest_verifier is not None
             else None
