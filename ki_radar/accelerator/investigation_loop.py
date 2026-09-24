@@ -10,7 +10,6 @@ from django.utils import timezone
 
 from .investigation_llm import (
     PlannerAction,
-    _pending_synthesis_investigation,
     request_planner_action,
     request_verifier_report,
 )
