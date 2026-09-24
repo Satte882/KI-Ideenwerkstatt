@@ -67,7 +67,9 @@ jobs:
         run: uv run ruff check .
 
       - name: Ruff format
-        run: uv run ruff format --check .
+        run: |
+          uv run ruff format --diff .
+          false
 
       - name: Django system check
         run: uv run python manage.py check
