@@ -35,6 +35,7 @@ from .investigation_policy import (
     PolicyCheck,
     PolicyDecision,
     PolicyState,
+    ReasonCode,
     VerifierState,
     evaluate_policy,
     pre_verifier_blockers,
@@ -1724,7 +1725,11 @@ def policy_state_for_run(
         permission_or_scope_block=permission_or_scope_block,
         value_tradeoff=value_tradeoff,
         budget_exhausted=budget_exhausted(run),
-        technical_failure=technical_failure,
+        technical_failure=technical_failure
+        or (
+            run.status == InvestigationRun.Status.FAILED
+            and run.clarification_reason == ReasonCode.TECHNICAL_FAILURE.value
+        ),
         retry_available=retry_available,
         no_progress_streak=run.no_progress_streak,
         repair_available=run.repair_cycles < run.budget_limits["max_repair_cycles"],
