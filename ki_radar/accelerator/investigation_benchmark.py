@@ -476,13 +476,29 @@ def _expected_analysis_observed(run: InvestigationRun, *, variant: str) -> bool:
 
 
 def _agentic_course_change_observed(run: InvestigationRun) -> bool:
-    return run.steps.filter(
+    # Keep historical step markers readable, but the Lean-Reset runtime now
+    # separates tool execution from synthesis. The authoritative course-change
+    # signal is therefore an evidence-backed competing hypothesis that the
+    # synthesizer has refuted or marked conflicting.
+    if run.steps.filter(
         status=InvestigationStep.Status.SUCCESS,
         progress_kind__in=[
             InvestigationStep.ProgressKind.REFUTATION,
             InvestigationStep.ProgressKind.CONTRADICTION,
         ],
-    ).exists()
+    ).exists():
+        return True
+    for item in run.claim_register:
+        if str(item.get("area") or "") != "competing_hypotheses":
+            continue
+        status = str(item.get("status") or "")
+        evidence_refs = item.get("evidence_refs") or []
+        counterevidence_refs = item.get("counterevidence_refs") or []
+        if status == "refuted" and counterevidence_refs:
+            return True
+        if status == "conflicting" and evidence_refs and counterevidence_refs:
+            return True
+    return False
 
 
 def _benchmark_brief_complete(run: InvestigationRun) -> bool:

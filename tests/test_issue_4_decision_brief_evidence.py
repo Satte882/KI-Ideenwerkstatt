@@ -1375,13 +1375,23 @@ def test_adaptive_a_requires_agentic_effect_not_ready_status_only(
         },
         target_claim_id="cause",
     )
-    step.progress_kind = InvestigationStep.ProgressKind.REFUTATION
-    step.save(update_fields=["progress_kind", "updated_at"])
+    assert step.progress_kind == InvestigationStep.ProgressKind.COVERAGE
+    ref = source_reference(csv_source, row=3, column="approver_available")
     run.refresh_from_db()
     apply_planner_state(
         actor=owner,
         run_id=run.pk,
         executor_token=handle.executor_token,
+        claim_register=(
+            {
+                "claim_id": "initial-cause",
+                "statement": "Freigeberverfügbarkeit erklärt die Verzögerung.",
+                "area": "competing_hypotheses",
+                "claim_kind": "hypothesis",
+                "status": "refuted",
+                "counterevidence_refs": [ref],
+            },
+        ),
         brief_payload=full_brief(
             run=run,
             source=csv_source,
