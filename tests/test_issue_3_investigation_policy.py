@@ -101,9 +101,7 @@ def valid_verifier(checks: tuple[PolicyCheck, ...], **overrides) -> VerifierStat
         },
         "source_references_valid": True,
         "checked_critical_claims": frozenset(
-            c.claim_id
-            for c in checks
-            if c.critical and is_evidence_claim(c.area, c.claim_kind)
+            c.claim_id for c in checks if c.critical and is_evidence_claim(c.area, c.claim_kind)
         ),
     }
     values.update(overrides)
@@ -130,9 +128,7 @@ def ready_state(**overrides) -> PolicyState:
 
 
 def replace_check(checks, claim_id, **changes):
-    return tuple(
-        replace(item, **changes) if item.claim_id == claim_id else item for item in checks
-    )
+    return tuple(replace(item, **changes) if item.claim_id == claim_id else item for item in checks)
 
 
 def test_critical_evidence_gap_is_runtime_work_until_external_gap_is_proven():
@@ -212,11 +208,7 @@ def test_verifier_missing_is_runtime_transition_not_human_blocker():
     ("mutation", "expected_blocker"),
     [
         (
-            {
-                "verifier": valid_verifier(
-                    base_checks(), success=False, critical_findings=1
-                )
-            },
+            {"verifier": valid_verifier(base_checks(), success=False, critical_findings=1)},
             "verifier_critical",
         ),
         (
@@ -279,16 +271,12 @@ def test_relevant_revision_change_invalidates_old_verifier(changed_field):
     ("state", "blocker"),
     [
         (
-            ready_state(
-                checks=replace_check(base_checks(), "problem", change_guard_valid=False)
-            ),
+            ready_state(checks=replace_check(base_checks(), "problem", change_guard_valid=False)),
             "invalid_claim_revision:problem",
         ),
         (ready_state(question_narrowed=True), "decision_question_changed"),
         (
-            ready_state(
-                checks=replace_check(base_checks(), "hyp-b", used_as_premise=True)
-            ),
+            ready_state(checks=replace_check(base_checks(), "hyp-b", used_as_premise=True)),
             "refuted_premise_used:hyp-b",
         ),
     ],
@@ -304,9 +292,7 @@ def test_abort_permission_and_restart_persisted_state_fail_closed():
     assert aborted.outcome == PolicyOutcome.HUMAN_CLARIFICATION
     assert "run_aborted" in aborted.blockers
 
-    revoked = evaluate_policy(
-        ready_state(verifier=None, permission_or_scope_block=True)
-    )
+    revoked = evaluate_policy(ready_state(verifier=None, permission_or_scope_block=True))
     assert revoked.outcome == PolicyOutcome.HUMAN_CLARIFICATION
     assert revoked.reason_code == ReasonCode.PERMISSION_OR_SCOPE
 
