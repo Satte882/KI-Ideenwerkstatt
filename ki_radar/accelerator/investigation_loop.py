@@ -29,6 +29,7 @@ from .investigation_runtime import (
     budget_exhausted,
     evaluate_run_policy,
     execute_tool_step,
+    investigation_evidence_complete,
     locked_run,
     mark_counterevidence_processed,
     normalize_tool_parameters,
@@ -153,9 +154,19 @@ def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
 ) -> InvestigationRunError | None:
-    if action.action not in {"tool", "verify", "clarify"}:
+    allowed_actions = (
+        {"synthesize", "clarify"}
+        if investigation_evidence_complete(run)
+        else {"tool", "verify", "clarify"}
+    )
+    if action.action not in allowed_actions:
         return InvestigationRunError(
             "Planner-Aktion ist ungültig.",
+            code="invalid_planner_action",
+        )
+    if action.action == "synthesize" and (action.tool_name or action.parameters):
+        return InvestigationRunError(
+            "Eine Synthese darf kein Werkzeug anfordern.",
             code="invalid_planner_action",
         )
     if action.action == "tool" and action.tool_name not in ALLOWED_TOOLS:
@@ -441,12 +452,22 @@ def advance_investigation(
             step.pk,
         )
 
-    if action.action == "verify":
+    if action.action in {"verify", "synthesize"}:
         pre = evaluate_run_policy(run)
         non_verifier_blockers = [
             blocker for blocker in pre.blockers if not blocker.startswith("verifier_")
         ]
         if non_verifier_blockers:
+            if action.action == "synthesize":
+                return AdvanceResult(
+                    run.pk,
+                    run.status,
+                    evaluate_run_policy(
+                        run,
+                        allowed_action_available=True,
+                        replan_available=True,
+                    ),
+                )
             raise InvestigationRunError(
                 "Verifier darf erst nach Bearbeitung der übrigen READY-Bedingungen laufen.",
                 code="verification_premature",

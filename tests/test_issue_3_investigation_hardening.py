@@ -17,6 +17,7 @@ from django.utils import timezone
 from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
     _decode_structured_field,
+    _planner_context,
     _reserve_model_call,
     _structured_provider_call,
     request_planner_action,
@@ -51,7 +52,9 @@ from ki_radar.accelerator.investigation_runtime import (
     apply_planner_state,
     budget_exhausted,
     content_hash,
+    evaluate_run_policy,
     execute_tool_step,
+    investigation_evidence_complete,
     materialize_brief_revision,
     normalize_claim_register,
     set_source_relevance,
@@ -861,8 +864,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v7"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v7"
+    assert run.loop_version == "vs1-agent-loop-v8"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v8"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1333,6 +1336,179 @@ def test_counterevidence_search_reuses_previously_read_hit(
     assert run.counterevidence_hits_processed is read_first
 
 
+@pytest.mark.django_db
+def test_covered_sources_and_targeted_search_force_synthesis_without_more_tools(
+    owner, business_unit, tmp_path
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Evidence transition")
+    (tmp_path / "case.md").write_text("Freigaben dauern lange.\n", encoding="utf-8")
+    (tmp_path / "counter.md").write_text(
+        "Fehlende Freigeber verlängern die Freigabe.\n", encoding="utf-8"
+    )
+    (tmp_path / "cases.csv").write_text("available,hours\nyes,4\nno,28\n", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "evidence-transition"),
+    )
+    sources = {
+        item.filename: item
+        for item in list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources
+    }
+    for filename in ("case.md", "counter.md"):
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name="read_source",
+            parameters={"source_id": str(sources[filename].source_id)},
+        )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert investigation_evidence_complete(run) is False
+
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(sources["cases.csv"].source_id)},
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(sources["cases.csv"].source_id),
+            "group_by": "available",
+            "aggregation": "mean",
+            "value_column": "hours",
+        },
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(sources["cases.csv"].source_id),
+            "group_by": "available",
+            "aggregation": "count",
+        },
+    )
+    search = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: planner_action(
+            tool_name="search_sources",
+            parameters={"query": "Freigeber"},
+        ),
+    )
+    run.refresh_from_db()
+    assert search.status == InvestigationRun.Status.RUNNING
+    assert run.counterevidence_search_executed is True
+    assert run.counterevidence_hits_processed is True
+    assert investigation_evidence_complete(run) is True
+    context = _planner_context(owner, run)
+    assert context["phase"] == "synthesis"
+    assert [item["tool_name"] for item in context["recent_steps"]] == [
+        "search_sources",
+        "compare_groups",
+        "compare_groups",
+        "profile_csv",
+        "read_source",
+        "read_source",
+    ]
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=lambda **_kwargs: planner_action(
+                tool_name="read_source",
+                parameters={"source_id": str(sources["case.md"].source_id)},
+            ),
+        )
+    run.refresh_from_db()
+    assert exc_info.value.code == "invalid_planner_action"
+    assert run.steps.count() == 6
+
+
+@pytest.mark.django_db
+def test_text_only_sources_can_enter_synthesis_without_csv_check(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Text-only evidence")
+    (tmp_path / "notes.md").write_text("Eine Gegenhypothese ist dokumentiert.\n", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "text-only-evidence"),
+    )
+    source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="read_source",
+        parameters={"source_id": str(source.source_id)},
+    )
+    advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: planner_action(
+            tool_name="search_sources", parameters={"query": "Gegenhypothese"}
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.data_check_executed is False
+    assert investigation_evidence_complete(run) is True
+    assert "data_check_missing" not in evaluate_run_policy(run).blockers
+
+    def empty_synthesis(**kwargs):
+        assert kwargs["response_format"]["json_schema"]["schema"]["properties"]["action"][
+            "enum"
+        ] == ["synthesize", "clarify"]
+        raw = json.dumps(
+            {
+                "action": "synthesize",
+                "target_claim_id": "",
+                "expected_discriminating_finding": "",
+                "rationale": "Zusammenfassen.",
+                "tool_name": "",
+                "parameters": "{}",
+                "claim_register": "null",
+                "brief_payload": "null",
+                "source_relevance": "{}",
+                "progress_kind": "none",
+                "progress_payload": "{}",
+                "clarification_reason": "",
+                "clarification_payload": "{}",
+            }
+        )
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter", empty_synthesis
+    )
+    result = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert result.status == InvestigationRun.Status.RUNNING
+    assert run.model_calls.get().error_code == "invalid_response"
+    assert run.claim_register == []
+    assert run.brief_payload == {}
+
+
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
     assert (
         _decode_structured_field(
@@ -1746,13 +1922,16 @@ def test_verifier_gets_exactly_one_repair_cycle_then_human_clarification(
 
     def verify_planner(**kwargs):
         run = kwargs["run"]
+        brief = dict(run.brief_payload)
+        if run.repair_cycles:
+            brief["validation"] = "Kritischen Verifier-Befund erneut prüfen"
         return planner_action(
-            action="verify",
+            action="synthesize",
             target_claim_id="verification",
             tool_name="",
             parameters={},
             claim_register=tuple(run.claim_register),
-            brief_payload=run.brief_payload,
+            brief_payload=brief,
         )
 
     def failing_verifier(**kwargs):
@@ -1887,11 +2066,11 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v10"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v11"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
-    assert schema["properties"]["tool_name"]["enum"] == list(PLANNER_TOOL_NAMES)
-    assert set(schema["properties"]["tool_name"]["enum"]) == {
+    assert schema["properties"]["tool_name"]["enum"] == ["", *PLANNER_TOOL_NAMES]
+    assert set(schema["properties"]["tool_name"]["enum"]) - {""} == {
         "list_sources",
         "search_sources",
         "read_source",
@@ -2165,9 +2344,13 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
             else:
                 assert recent[0]["tool_name"] == "search_sources"
                 assert recent[0]["result_payload"]["total_matches"] == 0
+                assert context["phase"] == "synthesis"
+                assert kwargs["response_format"]["json_schema"]["schema"]["properties"]["action"][
+                    "enum"
+                ] == ["synthesize", "clarify"]
                 saw_counter_result = True
                 payload = {
-                    "action": "verify",
+                    "action": "synthesize",
                     "target_claim_id": "verification",
                     "expected_discriminating_finding": "READY-Vertrag unabhängig prüfen.",
                     "rationale": "Pflichtprüfungen sind strukturell belegt.",

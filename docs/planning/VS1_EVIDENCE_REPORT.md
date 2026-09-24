@@ -123,6 +123,25 @@ Providerantworten geprüft; A/18 bleibt als technischer Fehlversuch in der Campa
 Für diese Reparatur wurde kein weiterer realer Providerlauf gestartet. Token- und
 Kostenwerte bleiben Nachweis- und Safety-Metadaten, kein Optimierungsziel für Issue #1.
 
+### Technischer Folgefall A/19 vom 23.09.2026
+
+Run `4441e458-2b7f-4e2b-b91d-baedacf8bbe8` erreichte nach erfolgreichen Quellen-,
+Gruppenvergleichs- und Suchschritten weder Claim Register noch Decision Brief oder
+Verifier. Alle zehn Planner-Slots waren verbraucht, obwohl das Tokenbudget nicht die
+Ursache war. Der Planner lieferte für Claim Register und Brief wiederholt `null`; sein
+Kontext enthielt nur die letzten fünf Werkzeugschritte und verlor dadurch frühere
+Quellenlektüre. Die Suchprüfung erkannte zudem eine fachlich gezielte Suche ohne
+Schlüsselwort „Gegenbeleg“ nicht als Gegenbelegsuche.
+
+Der allgemeine Ablauf leitet die Phasen Investigation, Synthesis und Verification jetzt
+aus persistierter Quellen- und Werkzeugabdeckung ab. Nach abgeschlossener Exploration
+werden keine weiteren Exploration-Tools ausgeführt; die Synthese muss Claims, Brief
+und Relevanzbelege liefern, bevor der unabhängige Verifier startet. Der vollständige
+Werkzeugverlauf bleibt im Synthesekontext sichtbar. Die Korrektur wurde ohne weiteren
+realen Providerlauf mit simulierten End-to-End-Antworten geprüft. A/19 wurde regulär
+abgebrochen, um die ProcessAnalysis freizugeben; seine zehn Modellaufrufe und der
+technische Fehlversuch bleiben in der Campaign-Historie.
+
 ## Automatisierte Nachweise
 
 Automatisierte #4-Tests decken insbesondere ab:
