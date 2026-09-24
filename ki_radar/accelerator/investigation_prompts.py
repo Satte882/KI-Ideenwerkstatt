@@ -178,8 +178,6 @@ def planner_response_format() -> dict:
                             "missing_evidence",
                             "permission_or_scope",
                             "value_tradeoff",
-                            "permission_or_scope",
-                            "value_tradeoff",
                         ],
                     },
                     "clarification_payload": {
