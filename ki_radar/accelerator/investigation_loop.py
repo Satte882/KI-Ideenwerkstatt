@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from .investigation_llm import (
     PlannerAction,
+    _pending_synthesis_investigation,
     request_planner_action,
     request_verifier_report,
 )
@@ -154,8 +155,11 @@ def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
 ) -> InvestigationRunError | None:
+    pending_investigation = _pending_synthesis_investigation(run)
     allowed_actions = (
-        {"synthesize", "investigate", "clarify"}
+        {"tool", "clarify"}
+        if pending_investigation
+        else {"synthesize", "investigate", "clarify"}
         if investigation_evidence_complete(run)
         else {"tool", "verify", "clarify"}
     )
