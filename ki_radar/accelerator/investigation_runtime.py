@@ -89,7 +89,7 @@ MIN_VERIFIER_COMPLETION_TOKENS = 8_192
 MIN_PLANNER_TIMEOUT_SECONDS = 60
 MIN_VERIFIER_TIMEOUT_SECONDS = 75
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
-TOOL_SCHEMA_VERSION = "vs1-tool-schema-v2"
+TOOL_SCHEMA_VERSION = "vs1-tool-schema-v3"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
     "zdr": True,
     "data_collection": "deny",
@@ -1505,7 +1505,6 @@ def execute_tool_step(
                 "tool": tool_name,
                 "parameters": params,
                 "manifest_hash": run.manifest_hash,
-                "target_claim_id": target_claim_id,
             }
         )
         existing = run.steps.filter(step_key=step_key).first()
