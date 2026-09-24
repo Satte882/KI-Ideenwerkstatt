@@ -137,7 +137,9 @@ Der allgemeine Ablauf leitet die Phasen Investigation, Synthesis und Verificatio
 aus persistierter Quellen- und Werkzeugabdeckung ab. Nach abgeschlossener Exploration
 werden keine weiteren Exploration-Tools ausgeführt; die Synthese muss Claims, Brief
 und Relevanzbelege liefern, bevor der unabhängige Verifier startet. Der vollständige
-Werkzeugverlauf bleibt im Synthesekontext sichtbar. Die Korrektur wurde ohne weiteren
+Werkzeugverlauf bleibt im Synthesekontext sichtbar. Zwei unvollständige Synthesen
+enden mit einem konkreten Vertragsfehler statt mit ausgeschöpften Planner-Slots.
+Die Korrektur wurde ohne weiteren
 realen Providerlauf mit simulierten End-to-End-Antworten geprüft. A/19 wurde regulär
 abgebrochen, um die ProcessAnalysis freizugeben; seine zehn Modellaufrufe und der
 technische Fehlversuch bleiben in der Campaign-Historie.

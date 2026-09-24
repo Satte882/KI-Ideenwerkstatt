@@ -1508,6 +1508,69 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
     assert run.claim_register == []
     assert run.brief_payload == {}
 
+    def partial_synthesis(**_kwargs):
+        raw = json.dumps(
+            {
+                "action": "synthesize",
+                "target_claim_id": "problem",
+                "expected_discriminating_finding": "",
+                "rationale": "Unvollständiger Entwurf.",
+                "tool_name": "",
+                "parameters": "{}",
+                "claim_register": json.dumps(
+                    [
+                        {
+                            "claim_id": "problem",
+                            "area": "problem_context",
+                            "claim_kind": "observation",
+                            "status": "open",
+                        }
+                    ]
+                ),
+                "brief_payload": json.dumps({"draft": "Unvollständig"}),
+                "source_relevance": json.dumps(
+                    {
+                        str(source.source_id): {
+                            "relevant": True,
+                            "reason": "Quelle beschreibt die Gegenhypothese.",
+                            "reference": {
+                                "source_id": str(source.source_id),
+                                "locator": {"line": 1},
+                                "revision_hash": source.content_sha256,
+                            },
+                        }
+                    }
+                ),
+                "progress_kind": "none",
+                "progress_payload": "{}",
+                "clarification_reason": "",
+                "clarification_payload": "{}",
+            }
+        )
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter", partial_synthesis
+    )
+    first = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    second = advance_investigation(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run.refresh_from_db()
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "synthesis_incomplete"
+    assert run.usage["model_calls"] == 3
+    assert run.usage["verifier_calls"] == 0
+
 
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
     assert (

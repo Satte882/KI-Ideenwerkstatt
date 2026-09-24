@@ -212,6 +212,17 @@ def _provider_failures(run: InvestigationRun) -> int:
     return failures
 
 
+def _synthesis_attempts_since_verification(run: InvestigationRun) -> int:
+    calls = run.model_calls.filter(role="planner", status="success")
+    latest_report = run.verifier_reports.order_by("-created_at").first()
+    if latest_report is not None:
+        calls = calls.filter(created_at__gt=latest_report.created_at)
+    return sum(
+        call.get("action") == "synthesize"
+        for call in calls.values_list("accepted_payload", flat=True)
+    )
+
+
 def _handle_provider_failure(
     *,
     actor,
@@ -400,7 +411,11 @@ def advance_investigation(
         )
         run.refresh_from_db()
 
-    if run.no_progress_streak >= 2 and not _replan_is_distinct(run, action):
+    if (
+        action.action != "synthesize"
+        and run.no_progress_streak >= 2
+        and not _replan_is_distinct(run, action)
+    ):
         waiting = _set_waiting_human(
             actor=actor,
             run_id=run.pk,
@@ -459,6 +474,20 @@ def advance_investigation(
         ]
         if non_verifier_blockers:
             if action.action == "synthesize":
+                if _synthesis_attempts_since_verification(run) >= 2:
+                    waiting = _set_waiting_human(
+                        actor=actor,
+                        run_id=run.pk,
+                        executor_token=executor_token,
+                        reason=ReasonCode.TECHNICAL_FAILURE.value,
+                        payload={
+                            "error_code": "synthesis_incomplete",
+                            "blockers": non_verifier_blockers,
+                            "impact": "Die Synthese erfüllt den Entscheidungsvertrag nicht.",
+                            "required_action": "Synthese-/Vertragsfehler technisch prüfen.",
+                        },
+                    )
+                    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
                 return AdvanceResult(
                     run.pk,
                     run.status,
