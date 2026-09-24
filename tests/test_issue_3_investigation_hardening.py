@@ -1455,13 +1455,7 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
     assert "data_check_missing" not in evaluate_run_policy(run).blockers
 
     def empty_synthesis(**kwargs):
-        assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
-            "claim_register",
-            "brief_payload",
-            "source_relevance",
-            "clarification_reason",
-            "clarification_payload",
-        }
+        assert kwargs["response_format"] == {"type": "json_object"}
         raw = json.dumps(
             {
                 "action": "synthesize",
@@ -1572,25 +1566,17 @@ def test_synthesizer_can_request_decision_critical_missing_evidence(
     run = InvestigationRun.objects.get(pk=handle.run_id)
 
     def provider(**kwargs):
-        assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
-            "claim_register",
-            "brief_payload",
-            "source_relevance",
-            "clarification_reason",
-            "clarification_payload",
-        }
+        assert kwargs["response_format"] == {"type": "json_object"}
         raw = json.dumps(
             {
-                "claim_register": "null",
-                "brief_payload": "null",
-                "source_relevance": "{}",
+                "claim_register": [],
+                "brief_payload": {},
+                "source_relevance": {},
                 "clarification_reason": "missing_evidence",
-                "clarification_payload": json.dumps(
-                    {
-                        "question": "Wie viele Fälle waren insgesamt freigabeberechtigt?",
-                        "decision_impact": "Ohne Nenner ist die Quote nicht belastbar.",
-                    }
-                ),
+                "clarification_payload": {
+                    "question": "Wie viele Fälle waren insgesamt freigabeberechtigt?",
+                    "decision_impact": "Ohne Nenner ist die Quote nicht belastbar.",
+                },
             }
         )
         return OpenRouterResult(
@@ -2440,13 +2426,7 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
                 assert recent[0]["tool_name"] == "search_sources"
                 assert recent[0]["result_payload"]["total_matches"] == 0
                 assert context["phase"] == "synthesis"
-                assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
-                    "claim_register",
-                    "brief_payload",
-                    "source_relevance",
-                    "clarification_reason",
-                    "clarification_payload",
-                }
+                assert kwargs["response_format"] == {"type": "json_object"}
                 saw_counter_result = True
                 payload = {
                     "action": "synthesize",
