@@ -136,10 +136,18 @@ def _decode_structured_field(
 
 
 def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, Any]) -> None:
-    if payload.get("action") not in {"tool", "clarify"}:
+    if payload.get("action") not in {"tool", "synthesize", "clarify"}:
         raise InvestigationRunError("Ungültige Untersuchungsaktion.", code="invalid_planner_action")
     _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
+    if payload.get("action") == "synthesize":
+        if str(payload.get("tool_name") or "") or _decode_structured_field(
+            payload, "parameters", expected_type=Mapping, default={}
+        ):
+            raise InvestigationRunError(
+                "Synthese darf kein Werkzeug oder Parameter enthalten.",
+                code="invalid_planner_action",
+            )
     if payload.get("action") == "tool":
         tool_name = str(payload.get("tool_name") or "")
         if tool_name not in ALLOWED_TOOLS:
@@ -223,18 +231,37 @@ def _validate_synthesis_package(run: InvestigationRun, payload: Mapping[str, Any
         )
 
     source_ids = {str(pk) for pk in run.source_snapshot.sources.values_list("pk", flat=True)}
-    if set(relevance) != source_ids or any(
-        not isinstance(item, Mapping)
-        or not isinstance(item.get("relevant"), bool)
-        or not str(item.get("reason") or "").strip()
-        or not isinstance(item.get("reference"), Mapping)
-        or not reference_valid(run, item["reference"])
-        for item in relevance.values()
-    ):
+    if set(relevance) != source_ids:
         raise InvestigationRunError(
-            "Die Synthese benötigt gültige Relevanzbelege für alle Quellen.",
-            code="invalid_source_relevance",
+            "Die Synthese muss jede Manifestquelle relevant/irrelevant klassifizieren.",
+            code="source_relevance_incomplete",
         )
+    observed_source_ids = {
+        str(step.parameters.get("source_id") or "")
+        for step in run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            tool_name__in={"read_source", "profile_csv", "compare_groups"},
+        )
+    }
+    for source_id, item in relevance.items():
+        if not isinstance(item, Mapping) or not isinstance(item.get("relevant"), bool):
+            raise InvestigationRunError(
+                "Quellenklassifikation benötigt relevant=true|false.",
+                code="invalid_source_relevance",
+            )
+        reference = item.get("reference")
+        if reference is not None and (
+            not isinstance(reference, Mapping) or not reference_valid(run, reference)
+        ):
+            raise InvestigationRunError(
+                "Optionale Relevanzreferenz ist ungültig.",
+                code="invalid_source_relevance",
+            )
+        if bool(item.get("relevant")) and source_id not in observed_source_ids:
+            raise InvestigationRunError(
+                "Als relevant markierte Quelle wurde nicht gelesen oder analysiert.",
+                code="source_relevance_unobserved",
+            )
 
     previous_ids = {item["claim_id"] for item in run.claim_register}
     proposed_ids = {str(item.get("claim_id")) for item in claims if isinstance(item, Mapping)}
@@ -1075,8 +1102,6 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
-    if investigation_evidence_complete(run) and not _pending_synthesis_investigation(run):
-        return request_synthesis_package(actor=actor, run=run, executor_token=executor_token)
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -1089,6 +1114,8 @@ def request_planner_action(
         response_format=planner_response_format(),
         payload_validator=lambda response: _validate_investigation_action(run, response),
     )
+    if payload.get("action") == "synthesize":
+        return request_synthesis_package(actor=actor, run=run, executor_token=executor_token)
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     clarification_payload = _decode_structured_field(
         payload, "clarification_payload", expected_type=Mapping, default={}
@@ -1244,89 +1271,110 @@ def request_verifier_report(
     run: InvestigationRun,
     executor_token,
 ) -> InvestigationVerifierReport:
+    """Run an independent review with iterative, unique evidence reads.
+
+    A request for more evidence is not itself a critical finding. The verifier
+    may continue reading while global run/campaign budgets permit. Repeating the
+    exact same read request is treated as a noncritical review caveat rather
+    than manufacturing a verification failure.
+    """
     assert_actor_can_edit_run(actor, run)
     analysis_replays = _deterministic_analysis_replays(actor, run)
-    first_payload, first_call = _structured_provider_call(
-        actor=actor,
-        run_id=run.pk,
-        executor_token=executor_token,
-        role=InvestigationModelCall.Role.VERIFIER,
-        instruction=VERIFIER_INSTRUCTION,
-        prompt_version=VERIFIER_PROMPT_VERSION,
-        schema_version=VERIFIER_SCHEMA_VERSION,
-        context=_verifier_context(run, analysis_replays=analysis_replays),
-        response_format=verifier_response_format(),
-    )
-
-    read_requests = [
-        dict(item) for item in first_payload.get("read_requests", []) if isinstance(item, Mapping)
-    ]
-    if not read_requests:
-        return _record_verifier_report(
-            run_id=run.pk,
-            call=first_call,
-            payload=_apply_replay_findings(first_payload, analysis_replays),
-        )
-
     verifier_reads: list[dict[str, Any]] = []
-    for item in read_requests:
-        step = execute_tool_step(
+    seen_read_requests: set[str] = set()
+    context = _verifier_context(run, analysis_replays=analysis_replays)
+
+    while True:
+        payload, call = _structured_provider_call(
             actor=actor,
             run_id=run.pk,
             executor_token=executor_token,
-            tool_name="read_source",
-            parameters={
-                "source_id": item.get("source_id"),
-                "cursor": item.get("cursor", 0),
-                "limit": item.get("limit", 100),
-                "columns": item.get("columns") or [],
-            },
-            target_claim_id=f"verifier:{item.get('claim_id') or ''}",
-            expected_discriminating_finding="Verifier-Fundstelle prüfen",
-            verifier_read=True,
+            role=InvestigationModelCall.Role.VERIFIER,
+            instruction=VERIFIER_INSTRUCTION,
+            prompt_version=VERIFIER_PROMPT_VERSION,
+            schema_version=VERIFIER_SCHEMA_VERSION,
+            context=context,
+            response_format=verifier_response_format(),
         )
-        verifier_reads.append(
-            {
-                "claim_id": str(item.get("claim_id") or ""),
-                "source_id": str(item.get("source_id") or ""),
-                "result": step.result_payload,
-                "result_hash": step.result_hash,
-            }
-        )
+        read_requests = [
+            dict(item)
+            for item in payload.get("read_requests", [])
+            if isinstance(item, Mapping)
+        ]
+        if not read_requests:
+            return _record_verifier_report(
+                run_id=run.pk,
+                call=call,
+                payload=_apply_replay_findings(payload, analysis_replays),
+            )
 
-    run.refresh_from_db()
-    second_context = _verifier_context(run, analysis_replays=analysis_replays)
-    second_context["verifier_reads"] = verifier_reads
-    final_payload, final_call = _structured_provider_call(
-        actor=actor,
-        run_id=run.pk,
-        executor_token=executor_token,
-        role=InvestigationModelCall.Role.VERIFIER,
-        instruction=VERIFIER_INSTRUCTION,
-        prompt_version=VERIFIER_PROMPT_VERSION,
-        schema_version=VERIFIER_SCHEMA_VERSION,
-        context=second_context,
-        response_format=verifier_response_format(),
-    )
+        new_requests: list[dict[str, Any]] = []
+        for item in read_requests:
+            read_key = content_hash(
+                {
+                    "source_id": str(item.get("source_id") or ""),
+                    "cursor": int(item.get("cursor", 0)),
+                    "limit": int(item.get("limit", 100)),
+                    "columns": list(item.get("columns") or []),
+                }
+            )
+            if read_key in seen_read_requests:
+                continue
+            seen_read_requests.add(read_key)
+            new_requests.append(item)
 
-    if final_payload.get("read_requests"):
-        findings = list(final_payload.get("findings") or [])
-        findings.append(
-            {
-                "severity": "critical",
-                "code": "verification_reads_incomplete",
-                "claim_id": "",
-                "message": (
-                    "Der Verifier benötigt nach dem zweiten Aufruf weitere Fundstellenprüfung."
-                ),
-            }
-        )
-        final_payload = dict(final_payload)
-        final_payload["findings"] = findings
-        final_payload["source_references_valid"] = False
+        if not new_requests:
+            final_payload = dict(payload)
+            findings = [
+                dict(item)
+                for item in final_payload.get("findings", [])
+                if isinstance(item, Mapping)
+            ]
+            findings.append(
+                {
+                    "severity": "noncritical",
+                    "code": "verification_repeated_read_request",
+                    "claim_id": "",
+                    "message": (
+                        "Der Verifier forderte ausschließlich bereits gelesene "
+                        "Fundstellen erneut an; die Wiederholung blockiert READY nicht."
+                    ),
+                }
+            )
+            final_payload["findings"] = findings
+            final_payload["read_requests"] = []
+            return _record_verifier_report(
+                run_id=run.pk,
+                call=call,
+                payload=_apply_replay_findings(final_payload, analysis_replays),
+            )
 
-    return _record_verifier_report(
-        run_id=run.pk,
-        call=final_call,
-        payload=_apply_replay_findings(final_payload, analysis_replays),
-    )
+        for item in new_requests:
+            step = execute_tool_step(
+                actor=actor,
+                run_id=run.pk,
+                executor_token=executor_token,
+                tool_name="read_source",
+                parameters={
+                    "source_id": item.get("source_id"),
+                    "cursor": item.get("cursor", 0),
+                    "limit": item.get("limit", 100),
+                    "columns": item.get("columns") or [],
+                },
+                target_claim_id=f"verifier:{item.get('claim_id') or ''}",
+                expected_discriminating_finding="Verifier-Fundstelle prüfen",
+                verifier_read=True,
+            )
+            verifier_reads.append(
+                {
+                    "claim_id": str(item.get("claim_id") or ""),
+                    "source_id": str(item.get("source_id") or ""),
+                    "result": step.result_payload,
+                    "result_hash": step.result_hash,
+                }
+            )
+
+        run.refresh_from_db()
+        context = _verifier_context(run, analysis_replays=analysis_replays)
+        context["verifier_reads"] = list(verifier_reads)
+
