@@ -1511,6 +1511,7 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
                             "claim_id": "problem",
                             "area": "problem_context",
                             "claim_kind": "observation",
+                            "critical": True,
                             "status": "open",
                         }
                     ]
