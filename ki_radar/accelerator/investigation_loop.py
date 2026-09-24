@@ -507,7 +507,7 @@ def advance_investigation(
         executor_token=executor_token,
         action=action,
     )
-    if repeat_count >= MAX_IDENTICAL_ACTION_STATE_REPEATS:
+    if repeat_count > MAX_IDENTICAL_ACTION_STATE_REPEATS:
         failed = _set_failed_runtime(
             actor=actor,
             run_id=run.pk,
