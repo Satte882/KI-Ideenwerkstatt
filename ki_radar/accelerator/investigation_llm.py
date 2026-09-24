@@ -64,9 +64,11 @@ from .investigation_runtime import (
     elapsed_seconds,
     evaluate_run_policy,
     execute_tool_step,
+    investigation_evidence_complete,
     locked_run,
     normalize_claim_register,
     normalize_tool_parameters,
+    reference_valid,
 )
 from .investigation_tools import (
     TOOL_VERSION,
@@ -145,9 +147,55 @@ def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
 def _validate_planner_semantic_payload(
     run: InvestigationRun,
     payload: Mapping[str, Any],
+    *,
+    phase: str = "investigation",
 ) -> None:
     """Validate the persisted planner state contract before accepting a model response."""
     _validate_planner_transport_payload(payload)
+    if phase == "synthesis":
+        if payload.get("action") not in {"synthesize", "clarify"}:
+            raise InvestigationRunError(
+                "Nach Abschluss der Exploration sind keine weiteren Werkzeuge erlaubt.",
+                code="invalid_planner_action",
+            )
+        if payload.get("action") == "synthesize":
+            if payload.get("tool_name") or _decode_structured_field(
+                payload, "parameters", expected_type=Mapping, default={}
+            ):
+                raise InvestigationRunError(
+                    "Eine Synthese darf kein Werkzeug anfordern.",
+                    code="invalid_planner_action",
+                )
+            for field in ("claim_register", "brief_payload", "source_relevance"):
+                value = _decode_structured_field(
+                    payload,
+                    field,
+                    expected_type=(list, Mapping, type(None)),
+                    default=None,
+                )
+                if not value:
+                    raise InvestigationRunError(
+                        f"Die Synthese benötigt einen vollständigen Wert für '{field}'.",
+                        code="invalid_response",
+                    )
+            relevance = _decode_structured_field(
+                payload, "source_relevance", expected_type=Mapping, default={}
+            )
+            source_ids = {
+                str(pk) for pk in run.source_snapshot.sources.values_list("pk", flat=True)
+            }
+            if set(relevance) != source_ids or any(
+                not isinstance(item, Mapping)
+                or not isinstance(item.get("relevant"), bool)
+                or not str(item.get("reason") or "").strip()
+                or not isinstance(item.get("reference"), Mapping)
+                or not reference_valid(run, item["reference"])
+                for item in relevance.values()
+            ):
+                raise InvestigationRunError(
+                    "Die Synthese benötigt gültige Relevanzbelege für alle Quellen.",
+                    code="invalid_source_relevance",
+                )
     raw_claims = _decode_structured_field(
         payload,
         "claim_register",
@@ -332,6 +380,7 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             "detail": str(diagnostics.get("structured_contract_error") or "")[:250],
         }
     return {
+        "phase": "synthesis" if investigation_evidence_complete(run) else "investigation",
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
         "sources": [
@@ -361,9 +410,7 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
                 "progress_kind": step.progress_kind,
                 "progress_payload": step.progress_payload,
             }
-            for step in run.steps.order_by("-sequence")[
-                : (12 if run.execution_mode == "fixed" else 5)
-            ]
+            for step in run.steps.order_by("-sequence")
         ],
         "input_revisions": [
             {
@@ -500,6 +547,7 @@ def _reserve_model_call(
     prompt_version: str,
     schema_version: str,
     context: Mapping[str, Any],
+    response_format: dict[str, Any] | None = None,
 ) -> InvestigationModelCall:
     run = locked_run(actor=actor, run_id=run_id)
     assert_active(run)
@@ -515,7 +563,7 @@ def _reserve_model_call(
     prompt_token_reservation = _estimate_tokens(canonical_json(prompt_payload))
     # UTF-8 bytes (including the response schema) conservatively bound context
     # tokens without changing the existing usage reservation and safety limits.
-    response_schema = (
+    response_schema = response_format or (
         planner_response_format()
         if role == InvestigationModelCall.Role.PLANNER
         else verifier_response_format()
@@ -779,6 +827,7 @@ def _structured_provider_call(
         prompt_version=prompt_version,
         schema_version=schema_version,
         context=context,
+        response_format=response_format,
     )
     messages = [
         {"role": "system", "content": instruction},
@@ -961,6 +1010,7 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
+    phase = "synthesis" if investigation_evidence_complete(run) else "investigation"
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -970,8 +1020,10 @@ def request_planner_action(
         prompt_version=PLANNER_PROMPT_VERSION,
         schema_version=PLANNER_SCHEMA_VERSION,
         context=_planner_context(actor, run),
-        response_format=planner_response_format(),
-        payload_validator=lambda payload: _validate_planner_semantic_payload(run, payload),
+        response_format=planner_response_format(phase=phase),
+        payload_validator=lambda payload: _validate_planner_semantic_payload(
+            run, payload, phase=phase
+        ),
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     claim_register = _decode_structured_field(

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v8"
+PLANNER_PROMPT_VERSION = "vs1-planner-v9"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v10"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v11"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -44,7 +44,15 @@ TOOL_PARAMETER_CONTRACTS = {
     },
 }
 
-PLANNER_INSTRUCTION = """Du planst genau den nächsten prüfbaren Untersuchungsschritt.
+PLANNER_INSTRUCTION = """Du arbeitest in der serverseitig bestimmten Untersuchungsphase.
+Der Kontext enthält die serverseitig bestimmte phase. In investigation wähle nötige
+Werkzeuge für noch fehlende Evidenz. In synthesis sind weitere Werkzeuge verboten:
+Fasse den vollständigen gespeicherten Werkzeugverlauf in Claim Register, Source-Relevance
+und Decision Brief zusammen und antworte mit action=synthesize. Verwende dabei echte
+Fundstellen und kennzeichne Unbekanntes. Nur eine entscheidungskritische externe Lücke
+rechtfertigt action=clarify. Nach vollständiger Synthese startet der Server die unabhängige
+Verifikation selbst; fordere dafür kein weiteres Werkzeug an. Für synthesize, verify und
+clarify setze tool_name auf den leeren String und parameters auf "{}".
 Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quellenraum.
 Begründe knapp Ziel-Prüfpunkt und unterscheidenden erwarteten Befund; liefere keine
 verborgene Gedankenkette. Erfinde keine Fakten, erweitere weder Scope noch Budget und
@@ -122,8 +130,10 @@ def planner_response_format(
     *,
     allowed_source_ids: tuple[str, ...] = (),
     csv_source_ids: tuple[str, ...] = (),
+    phase: str = "investigation",
 ) -> dict:
     del allowed_source_ids, csv_source_ids
+    actions = ["synthesize", "clarify"] if phase == "synthesis" else ["tool", "verify", "clarify"]
     return {
         "type": "json_schema",
         "json_schema": {
@@ -132,13 +142,13 @@ def planner_response_format(
             "schema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["tool", "verify", "clarify"]},
+                    "action": {"type": "string", "enum": actions},
                     "target_claim_id": {"type": "string"},
                     "expected_discriminating_finding": {"type": "string"},
                     "rationale": {"type": "string"},
                     "tool_name": {
                         "type": "string",
-                        "enum": list(PLANNER_TOOL_NAMES),
+                        "enum": ["", *PLANNER_TOOL_NAMES],
                     },
                     "parameters": {
                         "type": "string",

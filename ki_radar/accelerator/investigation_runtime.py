@@ -63,7 +63,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v7"
+LOOP_VERSION = "vs1-agent-loop-v8"
 BUDGET_VERSION = "vs1-budget-v5"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -1003,6 +1003,31 @@ def meaningful_register_change(
     return False
 
 
+def investigation_evidence_complete(run: InvestigationRun) -> bool:
+    """Use persisted tool coverage to decide when exploration must end."""
+    data_check_complete = (
+        run.data_check_executed
+        or not run.source_snapshot.sources.filter(
+            source_type=InvestigationSource.SourceType.CSV
+        ).exists()
+    )
+    if not (
+        data_check_complete
+        and run.counterevidence_search_executed
+        and run.counterevidence_hits_processed
+    ):
+        return False
+    covered: set[str] = set()
+    for step in run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("sequence"):
+        source_id = str(step.parameters.get("source_id") or "")
+        if (
+            step.tool_name == "read_source" and step.result_payload.get("next_cursor") is None
+        ) or step.tool_name in {"profile_csv", "compare_groups"}:
+            covered.add(source_id)
+    source_ids = {str(pk) for pk in run.source_snapshot.sources.values_list("pk", flat=True)}
+    return bool(source_ids) and source_ids <= covered
+
+
 @transaction.atomic
 def apply_planner_state(
     *,
@@ -1040,15 +1065,19 @@ def apply_planner_state(
 
     # Evidence-linked claim changes are observable progress even when the planner
     # labels its own action as "none" (for example while planning the next tool).
-    legitimate_progress = meaningful_register_change(before, list(run.claim_register)) or (
-        progress_kind
-        in {
-            InvestigationStep.ProgressKind.EVIDENCE,
-            InvestigationStep.ProgressKind.REFUTATION,
-            InvestigationStep.ProgressKind.CONTRADICTION,
-            InvestigationStep.ProgressKind.COVERAGE,
-        }
-        and bool(dict(progress_payload or {}).get("coverage_change"))
+    legitimate_progress = (
+        brief_changed
+        or meaningful_register_change(before, list(run.claim_register))
+        or (
+            progress_kind
+            in {
+                InvestigationStep.ProgressKind.EVIDENCE,
+                InvestigationStep.ProgressKind.REFUTATION,
+                InvestigationStep.ProgressKind.CONTRADICTION,
+                InvestigationStep.ProgressKind.COVERAGE,
+            }
+            and bool(dict(progress_payload or {}).get("coverage_change"))
+        )
     )
     if legitimate_progress:
         run.no_progress_streak = 0
@@ -1574,13 +1603,8 @@ def execute_tool_step(
             )
 
             if tool_name == "search_sources":
-                query = str(params.get("query") or "").casefold()
-                if any(
-                    marker in query
-                    for marker in ("gegen", "counter", "wider", "alternative", "nicht")
-                ):
-                    locked.counterevidence_search_executed = True
-                    locked.counterevidence_hits_processed = not bool(payload.get("hits"))
+                locked.counterevidence_search_executed = True
+                locked.counterevidence_hits_processed = not bool(payload.get("hits"))
 
             locked.save(
                 update_fields=[
@@ -1649,7 +1673,10 @@ def policy_state_for_run(
 ) -> PolicyState:
     return PolicyState(
         checks=policy_checks(run),
-        data_check_executed=run.data_check_executed,
+        data_check_executed=run.data_check_executed
+        or not run.source_snapshot.sources.filter(
+            source_type=InvestigationSource.SourceType.CSV
+        ).exists(),
         counterevidence_search_executed=run.counterevidence_search_executed,
         counterevidence_hits_processed=run.counterevidence_hits_processed,
         source_relevance_complete=run.source_relevance_complete,

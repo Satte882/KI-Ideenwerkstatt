@@ -29,6 +29,7 @@ from .investigation_runtime import (
     budget_exhausted,
     evaluate_run_policy,
     execute_tool_step,
+    investigation_evidence_complete,
     locked_run,
     mark_counterevidence_processed,
     normalize_tool_parameters,
@@ -153,9 +154,19 @@ def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
 ) -> InvestigationRunError | None:
-    if action.action not in {"tool", "verify", "clarify"}:
+    allowed_actions = (
+        {"synthesize", "clarify"}
+        if investigation_evidence_complete(run)
+        else {"tool", "verify", "clarify"}
+    )
+    if action.action not in allowed_actions:
         return InvestigationRunError(
             "Planner-Aktion ist ungültig.",
+            code="invalid_planner_action",
+        )
+    if action.action == "synthesize" and (action.tool_name or action.parameters):
+        return InvestigationRunError(
+            "Eine Synthese darf kein Werkzeug anfordern.",
             code="invalid_planner_action",
         )
     if action.action == "tool" and action.tool_name not in ALLOWED_TOOLS:
@@ -199,6 +210,17 @@ def _provider_failures(run: InvestigationRun) -> int:
         if status == "failed":
             failures += 1
     return failures
+
+
+def _synthesis_attempts_since_verification(run: InvestigationRun) -> int:
+    calls = run.model_calls.filter(role="planner", status="success")
+    latest_report = run.verifier_reports.order_by("-created_at").first()
+    if latest_report is not None:
+        calls = calls.filter(created_at__gt=latest_report.created_at)
+    return sum(
+        call.get("action") == "synthesize"
+        for call in calls.values_list("accepted_payload", flat=True)
+    )
 
 
 def _handle_provider_failure(
@@ -389,7 +411,11 @@ def advance_investigation(
         )
         run.refresh_from_db()
 
-    if run.no_progress_streak >= 2 and not _replan_is_distinct(run, action):
+    if (
+        action.action != "synthesize"
+        and run.no_progress_streak >= 2
+        and not _replan_is_distinct(run, action)
+    ):
         waiting = _set_waiting_human(
             actor=actor,
             run_id=run.pk,
@@ -441,12 +467,36 @@ def advance_investigation(
             step.pk,
         )
 
-    if action.action == "verify":
+    if action.action in {"verify", "synthesize"}:
         pre = evaluate_run_policy(run)
         non_verifier_blockers = [
             blocker for blocker in pre.blockers if not blocker.startswith("verifier_")
         ]
         if non_verifier_blockers:
+            if action.action == "synthesize":
+                if _synthesis_attempts_since_verification(run) >= 2:
+                    waiting = _set_waiting_human(
+                        actor=actor,
+                        run_id=run.pk,
+                        executor_token=executor_token,
+                        reason=ReasonCode.TECHNICAL_FAILURE.value,
+                        payload={
+                            "error_code": "synthesis_incomplete",
+                            "blockers": non_verifier_blockers,
+                            "impact": "Die Synthese erfüllt den Entscheidungsvertrag nicht.",
+                            "required_action": "Synthese-/Vertragsfehler technisch prüfen.",
+                        },
+                    )
+                    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+                return AdvanceResult(
+                    run.pk,
+                    run.status,
+                    evaluate_run_policy(
+                        run,
+                        allowed_action_available=True,
+                        replan_available=True,
+                    ),
+                )
             raise InvestigationRunError(
                 "Verifier darf erst nach Bearbeitung der übrigen READY-Bedingungen laufen.",
                 code="verification_premature",
