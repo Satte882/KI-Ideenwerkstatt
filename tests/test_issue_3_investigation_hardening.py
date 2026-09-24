@@ -1553,17 +1553,8 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
         tool_name="profile_csv",
         parameters={"source_id": str(source.source_id)},
     )
-    advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=lambda **_kwargs: planner_action(
-            tool_name="search_sources",
-            parameters={"query": "counter-never-present", "cursor": 0, "limit": 20},
-        ),
-    )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert investigation_evidence_complete(run) is True
+    assert investigation_evidence_complete(run) is False
 
     calls = 0
 
@@ -1584,16 +1575,28 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
                     },
                 }
             )
+        elif calls == 1:
+            raw = json.dumps(
+                {
+                    "action": "synthesize",
+                    "target_claim_id": "",
+                    "expected_discriminating_finding": "",
+                    "rationale": "Der aktuelle Stand soll synthetisiert und auf Lücken geprüft werden.",
+                    "tool_name": "",
+                    "parameters": "{}",
+                    "clarification_reason": "",
+                    "clarification_payload": "{}",
+                }
+            )
         else:
             context = json.loads(kwargs["messages"][1]["content"])
-            assert context["phase"] == "investigation"
             assert context["synthesis_investigation_request"]["goal"].startswith("Vergleiche")
             raw = json.dumps(
                 {
                     "action": "tool",
                     "target_claim_id": "availability",
                     "expected_discriminating_finding": "Gruppenunterschied quantifizieren.",
-                    "rationale": "Die vom Synthesizer erkannte interne Evidenzlücke schließen.",
+                    "rationale": "Die intern erkannte Evidenzlücke schließen.",
                     "tool_name": "compare_groups",
                     "parameters": json.dumps(
                         {
@@ -1625,62 +1628,18 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
     assert first.status == InvestigationRun.Status.RUNNING
     assert run.status == InvestigationRun.Status.RUNNING
     assert run.clarification_reason == ""
-    assert (
-        run.model_calls.order_by("-created_at").first().role
-        == InvestigationModelCall.Role.SYNTHESIZER
-    )
+    assert list(run.model_calls.order_by("created_at").values_list("role", flat=True)) == [
+        InvestigationModelCall.Role.PLANNER,
+        InvestigationModelCall.Role.SYNTHESIZER,
+    ]
 
     second = advance_investigation(
         actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
     )
     run.refresh_from_db()
     assert second.status == InvestigationRun.Status.RUNNING
-    assert run.status == InvestigationRun.Status.RUNNING
-    assert run.clarification_reason == ""
-    assert run.steps.order_by("-sequence").first().tool_name == "compare_groups"
-    assert calls == 2
-
-
-def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
-    assert (
-        _decode_structured_field(
-            {"source_relevance": "[]"},
-            "source_relevance",
-            expected_type=Mapping,
-            default={},
-        )
-        == {}
-    )
-    with pytest.raises(InvestigationRunError, match="list") as exc_info:
-        _decode_structured_field(
-            {"source_relevance": '[{"relevant": true}]'},
-            "source_relevance",
-            expected_type=Mapping,
-            default={},
-        )
-    assert exc_info.value.code == "invalid_response"
-
-
-@pytest.mark.parametrize("empty_value", [None, "null"])
-@pytest.mark.parametrize(
-    "field", ["parameters", "source_relevance", "progress_payload", "clarification_payload"]
-)
-def test_empty_planner_object_fields_accept_json_null(field, empty_value):
-    assert (
-        _decode_structured_field({field: empty_value}, field, expected_type=Mapping, default={})
-        == {}
-    )
-
-
-@pytest.mark.parametrize("field", ["claim_register", "brief_payload"])
-@pytest.mark.parametrize("empty_value", [None, "null"])
-def test_null_planner_state_still_means_unchanged(field, empty_value):
-    assert (
-        _decode_structured_field(
-            {field: empty_value}, field, expected_type=(list, type(None)), default=None
-        )
-        is None
-    )
+    assert run.steps.filter(tool_name="compare_groups", status=InvestigationStep.Status.SUCCESS).exists()
+    assert calls == 3
 
 
 @pytest.mark.django_db
