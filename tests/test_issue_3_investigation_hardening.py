@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import timedelta
@@ -16,7 +15,6 @@ from django.utils import timezone
 
 from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
-    _decode_structured_field,
     _planner_context,
     _reserve_model_call,
     _structured_provider_call,
@@ -33,6 +31,7 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationModelCall,
     InvestigationRun,
     InvestigationSourceFolder,
+    InvestigationStep,
     InvestigationToolResult,
     InvestigationVerifierReport,
 )
@@ -53,7 +52,6 @@ from ki_radar.accelerator.investigation_runtime import (
     apply_planner_state,
     budget_exhausted,
     content_hash,
-    evaluate_run_policy,
     execute_tool_step,
     investigation_evidence_complete,
     materialize_brief_revision,
@@ -1691,7 +1689,9 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
                     "action": "synthesize",
                     "target_claim_id": "",
                     "expected_discriminating_finding": "",
-                    "rationale": "Der aktuelle Stand soll synthetisiert und auf Lücken geprüft werden.",
+                    "rationale": (
+                        "Der aktuelle Stand soll synthetisiert und auf Lücken geprüft werden."
+                    ),
                     "tool_name": "",
                     "parameters": "{}",
                     "clarification_reason": "",
@@ -1748,7 +1748,10 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
     )
     run.refresh_from_db()
     assert second.status == InvestigationRun.Status.RUNNING
-    assert run.steps.filter(tool_name="compare_groups", status=InvestigationStep.Status.SUCCESS).exists()
+    assert run.steps.filter(
+        tool_name="compare_groups",
+        status=InvestigationStep.Status.SUCCESS,
+    ).exists()
     assert calls == 3
 
 
