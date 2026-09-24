@@ -561,8 +561,9 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     )
     run.refresh_from_db()
     assert third.status == InvestigationRun.Status.RUNNING
-    assert fourth.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.clarification_reason == "no_progress"
+    assert fourth.status == InvestigationRun.Status.FAILED
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "no_progress_loop"
 
 
 @pytest.mark.django_db
@@ -677,9 +678,10 @@ def test_repeated_read_with_changed_claim_id_does_not_reset_progress(
     assert statuses == [
         InvestigationRun.Status.RUNNING,
         InvestigationRun.Status.RUNNING,
-        InvestigationRun.Status.WAITING_HUMAN,
+        InvestigationRun.Status.FAILED,
     ]
-    assert run.clarification_reason == "no_progress"
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "no_progress_loop"
     assert run.usage["tool_calls"] == 2
 
 
@@ -1875,11 +1877,12 @@ def test_investigation_actions_ignore_unsolicited_claim_register(
     calls = list(run.model_calls.order_by("created_at"))
 
     assert first.status == InvestigationRun.Status.RUNNING
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     assert provider_calls == 2
     assert run.claim_register == []
     assert run.steps.count() == 1
-    assert run.clarification_reason == "no_progress"
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "no_progress_loop"
     assert [(call.status, call.error_code) for call in calls] == [
         (InvestigationModelCall.Status.SUCCESS, ""),
         (InvestigationModelCall.Status.SUCCESS, ""),
