@@ -28,9 +28,9 @@ from .investigation_runtime import (
     assert_actor_can_edit_run,
     assert_executor,
     budget_exhausted,
+    content_hash,
     evaluate_run_policy,
     execute_tool_step,
-    investigation_evidence_complete,
     locked_run,
     mark_counterevidence_processed,
     normalize_tool_parameters,
@@ -49,7 +49,7 @@ TRANSIENT_PROVIDER_CODES = frozenset(
     }
 )
 PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)
-MAX_PRE_VERIFIER_PACKAGE_ATTEMPTS = 2  # initial package + one technical retry
+MAX_IDENTICAL_ACTION_STATE_REPEATS = 3
 
 
 @dataclass(frozen=True)
@@ -197,15 +197,7 @@ def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
 ) -> InvestigationRunError | None:
-    pending_investigation = _pending_synthesis_investigation(run)
-    allowed_actions = (
-        {"tool", "investigate", "clarify"}
-        if pending_investigation
-        else {"synthesize", "investigate", "clarify"}
-        if investigation_evidence_complete(run)
-        else {"tool", "clarify"}
-    )
-    if action.action not in allowed_actions:
+    if action.action not in {"tool", "synthesize", "investigate", "clarify"}:
         return InvestigationRunError(
             "Planner-Aktion ist ungültig.",
             code="invalid_planner_action",
@@ -260,21 +252,6 @@ def _provider_failures(run: InvestigationRun) -> int:
     return failures
 
 
-def _pre_verifier_package_attempts_since_verification(run: InvestigationRun) -> int:
-    calls = run.model_calls.filter(role="synthesizer", status="success")
-    latest_report = run.verifier_reports.order_by("-created_at").first()
-    if latest_report is not None:
-        calls = calls.filter(created_at__gt=latest_report.created_at)
-    latest_input = run.input_revisions.order_by("-created_at").first()
-    if latest_input is not None:
-        calls = calls.filter(created_at__gt=latest_input.created_at)
-    return sum(
-        call.get("clarification_reason") != "missing_evidence"
-        and not bool(call.get("investigation_request"))
-        for call in calls.values_list("accepted_payload", flat=True)
-    )
-
-
 def _handle_provider_failure(
     *,
     actor,
@@ -326,22 +303,80 @@ def _handle_budget_exhaustion(
     return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
 
 
-def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
-    if action.action != "tool":
-        return action.action in {"clarify", "investigate"}
-    try:
-        params = normalize_tool_parameters(action.tool_name, action.parameters)
-    except InvestigationRunError:
-        return False
-    # A different tool or request may investigate the same claim. Conversely,
-    # changing only the claim ID must not make a repeated request distinct.
-    return not any(
-        step.parameters == params
-        for step in run.steps.filter(
-            status=InvestigationStep.Status.SUCCESS,
-            tool_name=action.tool_name,
+def _action_state_fingerprint(run: InvestigationRun, action: PlannerAction) -> str | None:
+    """Fingerprint only actions whose repetition can form an internal loop."""
+    if action.action not in {"tool", "synthesize"}:
+        return None
+
+    action_payload: dict[str, Any] = {"action": action.action}
+    if action.action == "tool":
+        try:
+            parameters = normalize_tool_parameters(action.tool_name, action.parameters)
+        except InvestigationRunError:
+            parameters = dict(action.parameters)
+        action_payload.update(
+            {
+                "tool_name": action.tool_name,
+                "parameters": parameters,
+            }
         )
-    )
+
+    tool_state = [
+        {
+            "step_key": step.step_key,
+            "result_hash": step.result_hash,
+            "status": step.status,
+        }
+        for step in run.steps.order_by("sequence")
+    ]
+    latest_verifier = run.verifier_reports.order_by("-revision").first()
+    latest_input = run.input_revisions.order_by("-created_at").first()
+    state_payload = {
+        "register_hash": run.register_hash,
+        "brief_hash": run.brief_hash,
+        "tool_state": tool_state,
+        "verifier": (
+            {
+                "id": str(latest_verifier.pk),
+                "revision": latest_verifier.revision,
+                "success": latest_verifier.success,
+                "critical_findings": latest_verifier.critical_findings,
+            }
+            if latest_verifier is not None
+            else None
+        ),
+        "input_revision": str(latest_input.pk) if latest_input is not None else "",
+    }
+    return content_hash({"action": action_payload, "state": state_payload})
+
+
+@transaction.atomic
+def _record_action_state_repeat(
+    *,
+    actor,
+    run_id,
+    executor_token,
+    action: PlannerAction,
+) -> tuple[InvestigationRun, int]:
+    run = locked_run(actor=actor, run_id=run_id)
+    assert_active(run)
+    assert_executor(run, executor_token)
+    fingerprint = _action_state_fingerprint(run, action)
+    usage = dict(run.usage)
+    if fingerprint is None:
+        usage.pop("action_state_fingerprint", None)
+        usage.pop("action_state_repeat_count", None)
+        repeat_count = 0
+    elif usage.get("action_state_fingerprint") == fingerprint:
+        repeat_count = int(usage.get("action_state_repeat_count", 0)) + 1
+        usage["action_state_repeat_count"] = repeat_count
+    else:
+        repeat_count = 1
+        usage["action_state_fingerprint"] = fingerprint
+        usage["action_state_repeat_count"] = repeat_count
+    run.usage = usage
+    run.save(update_fields=["usage", "updated_at"])
+    return run, repeat_count
 
 
 def _try_mark_counterevidence_processed(
@@ -466,11 +501,13 @@ def advance_investigation(
             evaluate_run_policy(run),
         )
 
-    if (
-        action.action != "synthesize"
-        and run.no_progress_streak >= 1
-        and not _replan_is_distinct(run, action)
-    ):
+    run, repeat_count = _record_action_state_repeat(
+        actor=actor,
+        run_id=run.pk,
+        executor_token=executor_token,
+        action=action,
+    )
+    if repeat_count >= MAX_IDENTICAL_ACTION_STATE_REPEATS:
         failed = _set_failed_runtime(
             actor=actor,
             run_id=run.pk,
@@ -478,20 +515,11 @@ def advance_investigation(
             reason=ReasonCode.TECHNICAL_FAILURE.value,
             error_code="no_progress_loop",
             impact=(
-                "Der Agent würde einen bereits erfolglosen Werkzeugschritt ohne "
-                "neuen Erkenntnisgewinn wiederholen."
+                "Derselbe Aktions-/Zustands-Fingerprint trat dreimal unmittelbar "
+                "hintereinander ohne neue Evidenz oder Zustandsänderung auf."
             ),
             required_action="Planner-/Loop-Verhalten technisch prüfen.",
-            details={
-                "recent_steps": [
-                    {
-                        "sequence": step.sequence,
-                        "tool": step.tool_name,
-                        "target_claim_id": step.target_claim_id,
-                    }
-                    for step in run.steps.order_by("-sequence")[:2]
-                ]
-            },
+            details={"repeat_count": repeat_count},
         )
         return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
@@ -525,29 +553,6 @@ def advance_investigation(
     if action.action == "synthesize":
         pre_blockers = pre_verifier_blockers_for_run(run)
         if pre_blockers:
-            attempts = _pre_verifier_package_attempts_since_verification(run)
-            if attempts >= MAX_PRE_VERIFIER_PACKAGE_ATTEMPTS:
-                failed = _set_failed_runtime(
-                    actor=actor,
-                    run_id=run.pk,
-                    executor_token=executor_token,
-                    reason=ReasonCode.TECHNICAL_FAILURE.value,
-                    error_code="pre_verifier_contract_failed",
-                    impact=(
-                        "Die Synthese erfüllt den deterministischen Package-Vertrag "
-                        "auch nach einem technischen Retry nicht."
-                    ),
-                    required_action="Synthese-/Pre-Verifier-Vertrag technisch prüfen.",
-                    details={
-                        "attempts": attempts,
-                        "blockers": list(pre_blockers),
-                    },
-                )
-                return AdvanceResult(
-                    failed.pk,
-                    failed.status,
-                    evaluate_run_policy(failed),
-                )
             return AdvanceResult(
                 run.pk,
                 run.status,
@@ -603,45 +608,22 @@ def advance_investigation(
             return AdvanceResult(ready.pk, ready.status, decision)
 
         if not report.success:
-            if run.repair_cycles < run.budget_limits["max_repair_cycles"]:
-                with transaction.atomic():
-                    locked = locked_run(actor=actor, run_id=run.pk)
-                    assert_executor(locked, executor_token)
-                    locked.repair_cycles += 1
-                    locked.save(update_fields=["repair_cycles", "updated_at"])
-                repaired_run = InvestigationRun.objects.get(pk=run.pk)
-                return AdvanceResult(
-                    repaired_run.pk,
-                    InvestigationRun.Status.RUNNING,
-                    evaluate_run_policy(repaired_run),
-                )
-
-            failed = _set_failed_runtime(
-                actor=actor,
-                run_id=run.pk,
-                executor_token=executor_token,
-                reason=ReasonCode.VERIFICATION_FAILED.value,
-                error_code="verification_failed",
-                impact=(
-                    "Das Decision Package bleibt nach dem einzigen Repair-Zyklus "
-                    "nicht ausreichend verifiziert."
-                ),
-                required_action="Verifier-/Package-Vertrag technisch prüfen.",
-                details={"findings": report.findings},
+            # Concrete verifier findings are runtime work. The next planner call
+            # sees the persisted review and may gather evidence or synthesize again.
+            return AdvanceResult(
+                run.pk,
+                InvestigationRun.Status.RUNNING,
+                evaluate_run_policy(run),
             )
-            return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
-        failed = _set_failed_runtime(
-            actor=actor,
-            run_id=run.pk,
-            executor_token=executor_token,
-            reason=ReasonCode.TECHNICAL_FAILURE.value,
-            error_code="post_verifier_contract_failed",
-            impact="Der Verifier meldet Erfolg, aber READY bleibt deterministisch blockiert.",
-            required_action="Runtime-/Policy-Invarianten technisch prüfen.",
-            details={"blockers": list(decision.blockers)},
+        # A nominally successful verifier with a remaining deterministic blocker
+        # stays inside the runtime loop; the generic fingerprint/budget guards
+        # handle true non-convergence without inventing a new workflow state.
+        return AdvanceResult(
+            run.pk,
+            InvestigationRun.Status.RUNNING,
+            evaluate_run_policy(run),
         )
-        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
     if action.action == "clarify":
         reason = action.clarification_reason or ReasonCode.MISSING_EVIDENCE.value
@@ -664,9 +646,9 @@ def run_until_boundary(
     executor_token,
     planner: Callable[..., PlannerAction] = request_planner_action,
     verifier: Callable[..., InvestigationVerifierReport] = request_verifier_report,
-    max_iterations: int = 24,
+    max_iterations: int = 64,
 ) -> AdvanceResult:
-    if max_iterations < 1 or max_iterations > 64:
+    if max_iterations < 1 or max_iterations > 128:
         raise InvestigationRunError(
             "Iterationsgrenze ist ungültig.",
             code="invalid_iteration_limit",
