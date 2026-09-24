@@ -188,6 +188,7 @@ def ready_claims(source):
     return (
         {
             "claim_id": "problem",
+            "statement": "problem",
             "area": "problem_context",
             "claim_kind": "fact",
             "critical": True,
@@ -196,6 +197,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "hyp-a",
+            "statement": "hyp-a",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -204,6 +206,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "hyp-b",
+            "statement": "hyp-b",
             "area": "competing_hypotheses",
             "claim_kind": "hypothesis",
             "critical": True,
@@ -212,6 +215,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "opt-ai",
+            "statement": "opt-ai",
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
@@ -220,6 +224,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "opt-non-ai",
+            "statement": "opt-non-ai",
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
@@ -228,6 +233,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "risk",
+            "statement": "risk",
             "area": "constraints_risks",
             "claim_kind": "risk",
             "critical": True,
@@ -236,6 +242,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "recommendation",
+            "statement": "recommendation",
             "area": "recommendation_validation",
             "claim_kind": "recommendation",
             "critical": True,
@@ -244,6 +251,7 @@ def ready_claims(source):
         },
         {
             "claim_id": "validation",
+            "statement": "validation",
             "area": "recommendation_validation",
             "claim_kind": "validation",
             "critical": True,
@@ -592,6 +600,7 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     }
     claim_a = {
         "claim_id": "hyp-a",
+        "statement": "hyp-a",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -600,6 +609,7 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     }
     claim_b = {
         "claim_id": "hyp-b",
+        "statement": "hyp-b",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -696,6 +706,7 @@ def test_distinct_source_reads_and_csv_profile_on_same_claim_are_progress(
     csv = sources["cases.csv"]
     claim = {
         "claim_id": "C1",
+        "statement": "C1",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -853,6 +864,7 @@ def test_evidence_linked_claim_counts_even_with_planner_progress_none(
     )
     claim = {
         "claim_id": "C1",
+        "statement": "C1",
         "area": "competing_hypotheses",
         "claim_kind": "hypothesis",
         "critical": True,
@@ -1336,6 +1348,7 @@ def test_unchanged_planner_state_cannot_erase_claims_or_brief(
     )
     claim = {
         "claim_id": "observed",
+        "statement": "observed",
         "area": "problem_context",
         "claim_kind": "observation",
         "status": "supported",
@@ -1762,6 +1775,7 @@ def test_null_inactive_planner_fields_do_not_block_tool_or_erase_state(
     )
     claim = {
         "claim_id": "observation",
+        "statement": "observation",
         "area": "problem_context",
         "claim_kind": "observation",
         "status": "open",
@@ -1912,6 +1926,7 @@ def test_claim_register_requires_nonempty_claim_kind(
             [
                 {
                     "claim_id": "hyp-a",
+                    "statement": "hyp-a",
                     "area": "competing_hypotheses",
                     "status": "open",
                 }
