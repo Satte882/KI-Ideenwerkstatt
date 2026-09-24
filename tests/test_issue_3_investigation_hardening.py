@@ -1605,6 +1605,7 @@ def test_planner_can_enter_synthesis_before_benchmark_completeness(
         InvestigationModelCall.Role.SYNTHESIZER,
     ]
 
+
 @pytest.mark.django_db
 def test_synthesizer_can_request_decision_critical_missing_evidence(
     owner, business_unit, tmp_path, monkeypatch
@@ -2148,6 +2149,7 @@ def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
     assert run.clarification_payload["repeat_count"] == 3
     assert run.verifier_reports.count() == 3
     assert run.repair_cycles == 0
+
 
 @pytest.mark.django_db(transaction=True)
 def test_parallel_materialization_creates_exactly_one_revision(
@@ -2792,7 +2794,10 @@ def test_verifier_receives_its_reserved_time_share(owner, business_unit, tmp_pat
         context={},
     )
     assert call.effective_parameters["timeout_seconds"] >= 300
-    assert call.effective_parameters["timeout_seconds"] <= run.budget_limits["max_runtime_seconds"]
+    assert (
+        call.effective_parameters["timeout_seconds"]
+        <= run.budget_limits["max_runtime_seconds"]
+    )
 
 
 @pytest.mark.django_db
