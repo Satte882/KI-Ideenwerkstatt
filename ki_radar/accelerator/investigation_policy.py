@@ -96,11 +96,10 @@ def is_evidence_claim(area: str, claim_kind: str) -> bool:
     content. Neither category is an evidence claim and neither may block the
     pre-verifier contract.
     """
-    if area == "solution_options" and claim_kind == "option":
-        return False
-    if area == "recommendation_validation" and claim_kind == "validation":
-        return False
-    return True
+    return not (
+        (area == "solution_options" and claim_kind == "option")
+        or (area == "recommendation_validation" and claim_kind == "validation")
+    )
 
 
 def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
