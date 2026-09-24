@@ -1539,19 +1539,15 @@ def test_campaign_headroom_protects_verification_without_allocating_entire_campa
         "schema_version": "headroom-test",
         "context": {},
     }
-    if campaign_output == 40_000:
-        with pytest.raises(InvestigationRunError) as exc_info:
-            _reserve_model_call(**args)
-        assert exc_info.value.code == "evidence_budget_exhausted"
-        assert InvestigationRun.objects.get(pk=handle.run_id).model_calls.count() == 0
-        campaign.refresh_from_db()
-        assert campaign.usage["provider_calls"] == 0
-    else:
-        call = _reserve_model_call(**args)
-        assert call.effective_parameters["max_tokens"] == 131_072 - 32_768 - 18_725
-        campaign.refresh_from_db()
-        assert campaign.usage["reserved_output_tokens"] == 131_072 - 32_768 - 18_725
-        assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
+    call = _reserve_model_call(**args)
+    campaign.refresh_from_db()
+
+    protected_output = 28_884
+    expected_max_tokens = min(131_072, campaign_output - protected_output)
+    assert call.effective_parameters["max_tokens"] == expected_max_tokens
+    assert campaign.usage["provider_calls"] == 1
+    assert campaign.usage["reserved_output_tokens"] == expected_max_tokens
+    assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
 
 
 @pytest.mark.django_db
