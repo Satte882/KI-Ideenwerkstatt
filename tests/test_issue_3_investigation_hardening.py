@@ -37,7 +37,7 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationToolResult,
     InvestigationVerifierReport,
 )
-from ki_radar.accelerator.investigation_policy import PolicyOutcome
+from ki_radar.accelerator.investigation_policy import PolicyOutcome, is_evidence_claim
 from ki_radar.accelerator.investigation_prompts import (
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
@@ -218,8 +218,7 @@ def ready_claims(source):
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
-            "status": "supported",
-            "evidence_refs": [ref],
+            "status": "open",
             "metadata": {"non_ai": False},
         },
         {
@@ -227,8 +226,7 @@ def ready_claims(source):
             "area": "solution_options",
             "claim_kind": "option",
             "critical": True,
-            "status": "supported",
-            "evidence_refs": [ref],
+            "status": "open",
             "metadata": {"non_ai": True, "status_quo": True},
         },
         {
@@ -252,14 +250,18 @@ def ready_claims(source):
             "area": "recommendation_validation",
             "claim_kind": "validation",
             "critical": True,
-            "status": "supported",
-            "evidence_refs": [ref],
+            "status": "open",
         },
     )
 
 
 def critical_ids(claims):
-    return [str(item["claim_id"]) for item in claims if item.get("critical")]
+    return [
+        str(item["claim_id"])
+        for item in claims
+        if item.get("critical")
+        and is_evidence_claim(str(item.get("area") or ""), str(item.get("claim_kind") or ""))
+    ]
 
 
 def create_critical_verifier_report(run):
