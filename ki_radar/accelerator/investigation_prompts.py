@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v13"
+PLANNER_PROMPT_VERSION = "vs1-planner-v14"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v6"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
@@ -108,6 +108,11 @@ parameters. Der Server besitzt Quellen, Werkzeugergebnisse, Claims und Brief; sc
 diese Zustände nicht zurück. Nutze nur die Werkzeugnamen,
 Source-IDs und Parameter aus dem Kontext. Für read_source und profile_csv ist genau
 eine source_id erlaubt. Für compare_groups gelten die angegebenen Pflichtfelder.
+Bevor du action=synthesize wählst: Wenn eine tragende Hypothese oder Empfehlung auf einer
+quantitativen Beziehung zwischen strukturierten Feldern beruht und die dafür nötigen Werte
+im freigegebenen Quellenraum vorhanden sind, führe die passende reproduzierbare Analyse mit
+einem erlaubten Werkzeug aus, insbesondere compare_groups. Verschiebe einen solchen intern
+lösbaren Analysecheck nicht nur in validation_step; bloßes Lesen der Rohzeilen ersetzt ihn nicht.
 parameters und clarification_payload sind serialisierte JSON-Objekte; leer ist "{}".
 Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
