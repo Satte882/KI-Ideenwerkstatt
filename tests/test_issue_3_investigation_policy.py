@@ -177,6 +177,21 @@ def test_noncritical_open_evidence_unknown_is_disclosed_not_globally_gated():
     assert all("optional_unknown" not in blocker for blocker in result.blockers)
 
 
+def test_benchmark_activity_flags_do_not_gate_runtime_ready():
+    state = ready_state(
+        data_check_executed=False,
+        counterevidence_search_executed=False,
+        counterevidence_hits_processed=False,
+    )
+    result = evaluate_policy(state)
+    pre = pre_verifier_blockers(state)
+
+    assert result.outcome == PolicyOutcome.READY_FOR_DECISION
+    assert "data_check_missing" not in pre
+    assert "counterevidence_search_missing" not in pre
+    assert "counterevidence_hits_unprocessed" not in pre
+
+
 def test_solution_options_and_validation_plan_are_not_evidence_readiness_claims():
     checks = base_checks()
     assert is_evidence_claim("solution_options", "option") is False
