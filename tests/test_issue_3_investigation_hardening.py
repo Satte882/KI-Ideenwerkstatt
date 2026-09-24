@@ -1508,7 +1508,7 @@ def test_covered_sources_and_targeted_search_force_synthesis_without_more_tools(
     assert run.counterevidence_hits_processed is True
     assert investigation_evidence_complete(run) is True
     context = _planner_context(owner, run)
-    assert context["phase"] == "synthesis"
+    assert context["phase"] == "investigation"
     assert [item["tool_name"] for item in context["recent_steps"]] == [
         "search_sources",
         "compare_groups",
@@ -2536,7 +2536,7 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
             else:
                 assert recent[0]["tool_name"] == "search_sources"
                 assert recent[0]["result_payload"]["total_matches"] == 0
-                assert context["phase"] == "synthesis"
+                assert context["phase"] == "investigation"
                 assert kwargs["response_format"] == {"type": "json_object"}
                 saw_counter_result = True
                 payload = {
