@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v10"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v1"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v2"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v12"
-SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v2"
+SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v3"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -106,12 +106,15 @@ genau ein vollständiges Decision Package: Claim Register, Decision Brief und
 Relevanzentscheidung für jede Manifestquelle. Verwende nur nachprüfbare Fundstellen.
 Kennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine
 Fakten oder Messwerte. Bei einer Reparatur bleiben vorhandene Claim-IDs und
-Briefabschnitte erhalten. Die drei Package-Felder enthalten serialisiertes JSON.
+Briefabschnitte erhalten. Antworte als ein einziges JSON-Objekt. claim_register ist
+ein echtes JSON-Array; brief_payload, source_relevance und clarification_payload
+sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
+serialisiert werden.
 Wenn eine externe, entscheidungskritische Information fehlt, setze
-clarification_reason=missing_evidence und formuliere in clarification_payload
-die konkrete Frage und ihren Einfluss auf die Entscheidung. In diesem Fall
-dürfen die drei Package-Felder "null", "null" und "{}" enthalten.
-Sonst setze clarification_reason auf den leeren String und clarification_payload auf "{}".
+clarification_reason=missing_evidence, claim_register=[], brief_payload={},
+source_relevance={} und formuliere in clarification_payload die konkrete Frage
+und ihren Einfluss auf die Entscheidung. Sonst setze clarification_reason auf
+den leeren String und clarification_payload auf {}.
 """
     + _SYNTHESIS_DOMAIN_RULES
 )
@@ -184,35 +187,10 @@ def planner_response_format() -> dict:
 
 
 def synthesis_response_format() -> dict:
-    fields = {
-        "claim_register": {
-            "type": "string",
-            "description": "Serialisiertes vollständiges JSON-Array.",
-        },
-        "brief_payload": {
-            "type": "string",
-            "description": "Serialisiertes vollständiges JSON-Objekt.",
-        },
-        "source_relevance": {
-            "type": "string",
-            "description": "Serialisiertes JSON-Objekt für jede Manifestquelle.",
-        },
-        "clarification_reason": {"type": "string", "enum": ["", "missing_evidence"]},
-        "clarification_payload": {"type": "string", "description": "Serialisiertes JSON-Objekt."},
-    }
-    return {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "vs1_synthesis_package",
-            "strict": True,
-            "schema": {
-                "type": "object",
-                "properties": fields,
-                "required": list(fields),
-                "additionalProperties": False,
-            },
-        },
-    }
+    # The synthesis package is deliberately not double-encoded into string fields.
+    # JSON object mode keeps the provider contract simple while the server performs
+    # the authoritative domain/provenance validation of the native package.
+    return {"type": "json_object"}
 
 
 def verifier_response_format() -> dict:
