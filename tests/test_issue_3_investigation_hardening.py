@@ -26,7 +26,6 @@ from ki_radar.accelerator.investigation_llm import (
 )
 from ki_radar.accelerator.investigation_loop import (
     TRANSIENT_PROVIDER_CODES,
-    _pre_verifier_package_attempts_since_verification,
     advance_investigation,
     run_until_boundary,
 )
@@ -1411,18 +1410,19 @@ def test_covered_sources_and_targeted_search_force_synthesis_without_more_tools(
         "read_source",
     ]
 
-    with pytest.raises(InvestigationRunError) as exc_info:
-        advance_investigation(
-            actor=owner,
-            run_id=handle.run_id,
-            executor_token=handle.executor_token,
-            planner=lambda **_kwargs: planner_action(
-                tool_name="read_source",
-                parameters={"source_id": str(sources["case.md"].source_id)},
-            ),
-        )
+    extra = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: planner_action(
+            tool_name="read_source",
+            parameters={"source_id": str(sources["case.md"].source_id)},
+        ),
+    )
     run.refresh_from_db()
-    assert exc_info.value.code == "invalid_planner_action"
+    assert extra.status == InvestigationRun.Status.RUNNING
+    # The planner may continue investigating after the benchmark-completeness
+    # signal; the repeated read is idempotent and does not create another step.
     assert run.steps.count() == 6
 
 
@@ -1598,7 +1598,6 @@ def test_synthesizer_can_request_decision_critical_missing_evidence(
     assert action.clarification_reason == "missing_evidence"
     assert "freigabeberechtigt" in action.clarification_payload["question"]
     assert run.model_calls.get().role == InvestigationModelCall.Role.SYNTHESIZER
-    assert _pre_verifier_package_attempts_since_verification(run) == 0
     run.refresh_from_db()
     assert run.claim_register == []
     assert run.brief_payload == {}
@@ -1954,7 +1953,7 @@ def test_budget_exhaustion_before_work_never_becomes_ready(
 
 
 @pytest.mark.django_db
-def test_default_budget_version_covers_benchmark_and_repair_envelope(
+def test_default_budget_version_uses_generous_global_envelope(
     owner,
     business_unit,
     tmp_path,
@@ -1963,26 +1962,21 @@ def test_default_budget_version_covers_benchmark_and_repair_envelope(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        key="budget-v3",
+        key="budget-v6",
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     limits = run.budget_limits
 
-    assert BUDGET_VERSION == "vs1-budget-v5"
-    assert run.execution_snapshot["budget_version"] == "vs1-budget-v5"
-    assert limits["max_model_calls"] == 14
-    assert limits["max_verifier_calls"] == 4
-    assert limits["verifier_reserved_model_calls"] == 4
-    assert limits["max_repair_cycles"] == 1
-
-    # Four verifier calls cover two possible two-call verifier rounds:
-    # initial verification and the one allowed post-repair verification.
-    assert limits["max_verifier_calls"] == 2 * (1 + limits["max_repair_cycles"])
-
-    # The run has its own generous envelope. Four viable verifier responses
-    # stay protected without imposing a per-call completion ceiling.
-    assert limits["max_output_tokens"] == 131_072
-    assert limits["verifier_reserved_output_tokens"] == limits["max_verifier_calls"] * 8_192
+    assert BUDGET_VERSION == "vs1-budget-v6"
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v6"
+    assert limits["max_model_calls"] == 40
+    assert limits["max_tool_calls"] == 40
+    assert limits["max_verifier_calls"] == limits["max_model_calls"]
+    assert limits["max_verifier_reads"] == limits["max_tool_calls"]
+    assert limits["verifier_reserved_model_calls"] == 2
+    assert "max_repair_cycles" not in limits
+    assert limits["max_output_tokens"] == 500_000
+    assert limits["verifier_reserved_output_tokens"] == 2 * 8_192
 
 
 @pytest.mark.django_db
@@ -2243,7 +2237,7 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
         owner=owner,
         process=process_2,
         root=expanded_root,
-        run_limits={"max_tool_calls": 13},
+        run_limits={"max_tool_calls": 41},
     )
     with pytest.raises(InvestigationRunError) as budget_exc:
         start_investigation(
@@ -2257,9 +2251,10 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v13"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v14"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
+    assert schema["properties"]["action"]["enum"] == ["tool", "synthesize", "clarify"]
     assert schema["properties"]["tool_name"]["enum"] == ["", *PLANNER_TOOL_NAMES]
     assert set(schema["properties"]["tool_name"]["enum"]) - {""} == {
         "list_sources",
@@ -2313,7 +2308,7 @@ def test_planner_schema_uses_portable_closed_strict_subset():
 def test_verifier_schema_uses_strict_structured_outputs():
     response_format = verifier_response_format()
 
-    assert VERIFIER_SCHEMA_VERSION == "vs1-verifier-schema-v4"
+    assert VERIFIER_SCHEMA_VERSION == "vs1-verifier-schema-v5"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     _assert_portable_strict_schema(response_format["json_schema"]["schema"])
