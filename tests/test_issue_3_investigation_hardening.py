@@ -21,10 +21,12 @@ from ki_radar.accelerator.investigation_llm import (
     _reserve_model_call,
     _structured_provider_call,
     request_planner_action,
+    request_synthesis_package,
     request_verifier_report,
 )
 from ki_radar.accelerator.investigation_loop import (
     TRANSIENT_PROVIDER_CODES,
+    _synthesis_attempts_since_verification,
     advance_investigation,
     run_until_boundary,
 )
@@ -864,8 +866,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
-    assert run.loop_version == "vs1-agent-loop-v8"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v8"
+    assert run.loop_version == "vs1-agent-loop-v9"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v9"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1215,15 +1217,15 @@ def test_invalid_model_tool_parameters_get_one_informed_retry_before_execution(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ("first_claims", "first_brief", "expected_code"),
+    ("first_claims", "first_brief"),
     [
-        ("[]", "{}", "invalid_claim"),
-        ('[{"claim_id":"replacement"}]', "null", "invalid_claim"),
-        ("null", "{}", "invalid_brief"),
+        ("[]", "{}"),
+        ('[{"claim_id":"replacement"}]', "null"),
+        ("null", "{}"),
     ],
 )
 def test_unchanged_planner_state_cannot_erase_claims_or_brief(
-    owner, business_unit, tmp_path, monkeypatch, first_claims, first_brief, expected_code
+    owner, business_unit, tmp_path, monkeypatch, first_claims, first_brief
 ):
     _process, _snapshot, handle, source = start_csv_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="state-preservation"
@@ -1276,23 +1278,7 @@ def test_unchanged_planner_state_cannot_erase_claims_or_brief(
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     assert first.status == InvestigationRun.Status.RUNNING
-    assert run.model_calls.get().error_code == "invalid_response"
-    assert (
-        run.model_calls.get().effective_parameters["response_diagnostics"][
-            "structured_contract_error_code"
-        ]
-        == expected_code
-    )
-    assert run.claim_register[0]["claim_id"] == "observed"
-    assert run.brief_payload == {"draft": "Evidenzgestützter Arbeitsstand"}
-    assert run.steps.count() == 0
-
-    second = advance_investigation(
-        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
-    )
-    run.refresh_from_db()
-    assert second.status == InvestigationRun.Status.RUNNING
-    assert provider_calls == 2
+    assert run.model_calls.get().status == InvestigationModelCall.Status.SUCCESS
     assert run.claim_register[0]["claim_id"] == "observed"
     assert run.brief_payload == {"draft": "Evidenzgestützter Arbeitsstand"}
     assert list(run.steps.values_list("tool_name", "status")) == [("list_sources", "success")]
@@ -1469,9 +1455,13 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
     assert "data_check_missing" not in evaluate_run_policy(run).blockers
 
     def empty_synthesis(**kwargs):
-        assert kwargs["response_format"]["json_schema"]["schema"]["properties"]["action"][
-            "enum"
-        ] == ["synthesize", "clarify"]
+        assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
+            "claim_register",
+            "brief_payload",
+            "source_relevance",
+            "clarification_reason",
+            "clarification_payload",
+        }
         raw = json.dumps(
             {
                 "action": "synthesize",
@@ -1570,6 +1560,57 @@ def test_text_only_sources_can_enter_synthesis_without_csv_check(
     assert run.clarification_payload["error_code"] == "synthesis_incomplete"
     assert run.usage["model_calls"] == 3
     assert run.usage["verifier_calls"] == 0
+
+
+@pytest.mark.django_db
+def test_synthesizer_can_request_decision_critical_missing_evidence(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="synthesis-gap"
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    def provider(**kwargs):
+        assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
+            "claim_register",
+            "brief_payload",
+            "source_relevance",
+            "clarification_reason",
+            "clarification_payload",
+        }
+        raw = json.dumps(
+            {
+                "claim_register": "null",
+                "brief_payload": "null",
+                "source_relevance": "{}",
+                "clarification_reason": "missing_evidence",
+                "clarification_payload": json.dumps(
+                    {
+                        "question": "Wie viele Fälle waren insgesamt freigabeberechtigt?",
+                        "decision_impact": "Ohne Nenner ist die Quote nicht belastbar.",
+                    }
+                ),
+            }
+        )
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    action = request_synthesis_package(actor=owner, run=run, executor_token=handle.executor_token)
+
+    assert action.action == "clarify"
+    assert action.clarification_reason == "missing_evidence"
+    assert "freigabeberechtigt" in action.clarification_payload["question"]
+    assert run.model_calls.get().role == InvestigationModelCall.Role.SYNTHESIZER
+    assert _synthesis_attempts_since_verification(run) == 0
+    run.refresh_from_db()
+    assert run.claim_register == []
+    assert run.brief_payload == {}
 
 
 def test_empty_relevance_list_is_losslessly_normalized_but_nonempty_list_fails():
@@ -1677,7 +1718,7 @@ def test_null_inactive_planner_fields_do_not_block_tool_or_erase_state(
 
 
 @pytest.mark.django_db
-def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
+def test_investigation_actions_ignore_unsolicited_claim_register(
     owner,
     business_unit,
     tmp_path,
@@ -1749,20 +1790,13 @@ def test_semantically_invalid_claim_register_is_failed_and_retry_capped(
     assert second.status == InvestigationRun.Status.WAITING_HUMAN
     assert provider_calls == 2
     assert run.claim_register == []
-    assert run.steps.count() == 0
-    assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "invalid_response"
-    assert run.clarification_payload["attempts"] == 2
+    assert run.steps.count() == 1
+    assert run.clarification_reason == "no_progress"
     assert [(call.status, call.error_code) for call in calls] == [
-        (InvestigationModelCall.Status.FAILED, "invalid_response"),
-        (InvestigationModelCall.Status.FAILED, "invalid_response"),
+        (InvestigationModelCall.Status.SUCCESS, ""),
+        (InvestigationModelCall.Status.SUCCESS, ""),
     ]
-    assert all(call.accepted_payload == {} for call in calls)
-    assert all(
-        call.effective_parameters["response_diagnostics"]["structured_contract_error_code"]
-        == "invalid_claim"
-        for call in calls
-    )
+    assert all(call.accepted_payload for call in calls)
 
 
 @pytest.mark.django_db
@@ -2129,7 +2163,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v11"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v12"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == ["", *PLANNER_TOOL_NAMES]
@@ -2166,16 +2200,14 @@ def test_planner_schema_uses_portable_closed_strict_subset():
     _assert_portable_strict_schema(schema)
     for name in (
         "parameters",
-        "claim_register",
-        "brief_payload",
-        "source_relevance",
-        "progress_payload",
         "clarification_payload",
     ):
         assert schema["properties"][name]["type"] == "string"
 
     assert "{}" in schema["properties"]["parameters"]["description"]
-    assert "[]" in schema["properties"]["claim_register"]["description"]
+    assert "claim_register" not in schema["properties"]
+    assert "brief_payload" not in schema["properties"]
+    assert "source_relevance" not in schema["properties"]
 
 
 def test_verifier_schema_uses_strict_structured_outputs():
@@ -2408,9 +2440,13 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
                 assert recent[0]["tool_name"] == "search_sources"
                 assert recent[0]["result_payload"]["total_matches"] == 0
                 assert context["phase"] == "synthesis"
-                assert kwargs["response_format"]["json_schema"]["schema"]["properties"]["action"][
-                    "enum"
-                ] == ["synthesize", "clarify"]
+                assert set(kwargs["response_format"]["json_schema"]["schema"]["properties"]) == {
+                    "claim_register",
+                    "brief_payload",
+                    "source_relevance",
+                    "clarification_reason",
+                    "clarification_payload",
+                }
                 saw_counter_result = True
                 payload = {
                     "action": "synthesize",
@@ -2610,7 +2646,28 @@ def test_later_planner_gets_time_without_consuming_verifier_reserve(owner, busin
     )
     assert run.budget_limits["max_runtime_seconds"] == 4_200
     assert run.budget_limits["verifier_reserved_seconds"] == 1_200
-    assert 460 <= call.effective_parameters["timeout_seconds"] <= 463
+    # The planner shares the remaining runtime with the calls that stay possible
+    # after the derived reserves: four verifier calls (1_200 s) and the synthesis
+    # share (1 + max_repair_cycles = two of fourteen calls, so 600 s).
+    assert 567 <= call.effective_parameters["timeout_seconds"] <= 571
+
+
+@pytest.mark.django_db
+def test_two_synthesis_calls_remain_after_investigation_budget(owner, business_unit, tmp_path):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="synthesis-reserve"
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    usage = dict(run.usage)
+    usage["model_calls"] = 8
+    run.usage = usage
+
+    assert budget_exhausted(run, reserve_verifier=True, reserve_synthesis=True)
+    assert not budget_exhausted(run, reserve_verifier=True)
+
+    usage["model_calls"] = 9
+    run.usage = usage
+    assert not budget_exhausted(run, reserve_verifier=True)
 
 
 @pytest.mark.django_db

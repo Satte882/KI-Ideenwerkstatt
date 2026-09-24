@@ -423,6 +423,7 @@ def run_fixed_route_until_boundary(*, actor, run_id, executor_token) -> AdvanceR
 def comparison_contract(run: InvestigationRun) -> dict[str, Any]:
     snapshot = run.execution_snapshot
     planner = snapshot.get("planner") or {}
+    synthesizer = snapshot.get("synthesizer") or {}
     verifier = snapshot.get("verifier") or {}
     return {
         "process_version": snapshot.get("process_version"),
@@ -434,6 +435,11 @@ def comparison_contract(run: InvestigationRun) -> dict[str, Any]:
             "prompt_version": planner.get("prompt_version"),
             "instruction_hash": planner.get("instruction_hash"),
             "schema_version": planner.get("schema_version"),
+        },
+        "synthesizer": {
+            "prompt_version": synthesizer.get("prompt_version"),
+            "instruction_hash": synthesizer.get("instruction_hash"),
+            "schema_version": synthesizer.get("schema_version"),
         },
         "verifier": {
             "prompt_version": verifier.get("prompt_version"),

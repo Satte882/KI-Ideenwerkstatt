@@ -904,7 +904,7 @@ def test_model_call_reserves_estimated_tokens_not_utf8_bytes(
     process = make_process(owner=owner, business_unit=business_unit, name="Token reservation")
     (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
-    campaign = evidence_campaign(owner=owner, process=process)
+    campaign = evidence_campaign(owner=owner, process=process, output_tokens=200_000)
     handle = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
@@ -1351,9 +1351,9 @@ def test_campaign_headroom_protects_verification_without_allocating_entire_campa
         assert campaign.usage["provider_calls"] == 0
     else:
         call = _reserve_model_call(**args)
-        assert call.effective_parameters["max_tokens"] == 131_072 - 32_768
+        assert call.effective_parameters["max_tokens"] == 131_072 - 32_768 - 18_725
         campaign.refresh_from_db()
-        assert campaign.usage["reserved_output_tokens"] == 131_072 - 32_768
+        assert campaign.usage["reserved_output_tokens"] == 131_072 - 32_768 - 18_725
         assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
 
 
@@ -1365,7 +1365,7 @@ def test_truncated_campaign_attempt_settles_known_usage_or_retains_reservation(
     process = make_process(owner=owner, business_unit=business_unit, name="Truncation accounting")
     (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
-    campaign = evidence_campaign(owner=owner, process=process)
+    campaign = evidence_campaign(owner=owner, process=process, output_tokens=200_000)
     handle = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(

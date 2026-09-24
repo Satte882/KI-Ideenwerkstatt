@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v9"
+PLANNER_PROMPT_VERSION = "vs1-planner-v10"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v1"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v11"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v12"
+SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v2"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -44,37 +46,9 @@ TOOL_PARAMETER_CONTRACTS = {
     },
 }
 
-PLANNER_INSTRUCTION = """Du arbeitest in der serverseitig bestimmten Untersuchungsphase.
-Der Kontext enthält die serverseitig bestimmte phase. In investigation wähle nötige
-Werkzeuge für noch fehlende Evidenz. In synthesis sind weitere Werkzeuge verboten:
-Fasse den vollständigen gespeicherten Werkzeugverlauf in Claim Register, Source-Relevance
-und Decision Brief zusammen und antworte mit action=synthesize. Verwende dabei echte
-Fundstellen und kennzeichne Unbekanntes. Nur eine entscheidungskritische externe Lücke
-rechtfertigt action=clarify. Nach vollständiger Synthese startet der Server die unabhängige
-Verifikation selbst; fordere dafür kein weiteres Werkzeug an. Für synthesize, verify und
-clarify setze tool_name auf den leeren String und parameters auf "{}".
-Arbeite nur mit den serverseitig erlaubten Werkzeugen und dem freigegebenen Quellenraum.
-Begründe knapp Ziel-Prüfpunkt und unterscheidenden erwarteten Befund; liefere keine
-verborgene Gedankenkette. Erfinde keine Fakten, erweitere weder Scope noch Budget und
-triff keine fachliche Freigabe. Nutze vorhandene Evidenz vor einer menschlichen Rückfrage.
-Halte den werkzeugspezifischen Parametervertrag exakt ein. read_source und profile_csv
-akzeptieren genau eine source_id pro Aufruf; mehrere Quellen werden in getrennten Schritten
-gelesen. Verwende ausschließlich Source-IDs aus dem bereitgestellten Quellenmanifest.
-Die vollständigen erlaubten Parameternamen stehen in tool_parameter_contracts des Kontexts.
-Für compare_groups heißen die Pflichtfelder source_id, group_by und aggregation;
-value_column ist außer bei aggregation=count ebenfalls nötig. Verwende nur dort genannte
-Parameternamen und Aggregationen; erfinde keine Synonyme.
-Die Felder parameters, claim_register, brief_payload, source_relevance, progress_payload und
-clarification_payload werden als Strings transportiert, müssen aber IMMER serialisiertes JSON
-enthalten. Verwende für ein unverändertes Claim Register oder einen unveränderten Brief exakt
-"null". Nur ein tatsächlicher Ersatz enthält die vollständige Liste bzw. das vollständige
-Objekt. Ein bestehender Arbeitsstand darf nie mit [] oder {} gelöscht werden. Bei einem
-Ersatz bleiben alle vorhandenen Claim-IDs und Brief-Abschnitte erhalten; korrigiere
-Inhalte innerhalb der Einträge und kennzeichne widerlegte Aussagen entsprechend.
-Für sonstige leere Objekte verwende exakt "{}" und für leere Listen exakt "[]".
-Verwende niemals einen leeren String, "unverändert" oder sonstigen Freitext als Ersatz für JSON.
-Jeder Eintrag in claim_register ist ein Objekt mit einer nichtleeren claim_id (maximal 100
-Zeichen), area aus problem_context|competing_hypotheses|solution_options|constraints_risks|
+_SYNTHESIS_DOMAIN_RULES = """Jeder Eintrag in claim_register ist ein Objekt mit einer
+nichtleeren claim_id (maximal 100 Zeichen), area aus
+problem_context|competing_hypotheses|solution_options|constraints_risks|
 recommendation_validation, einem nichtleeren claim_kind und status aus
 open|supported|refuted|conflicting. Nutze evidence_refs/counterevidence_refs nur als Arrays
 reproduzierbarer Referenzobjekte; kritische bestehende Claims dürfen nicht gelöscht,
@@ -113,9 +87,34 @@ Werkzeugresultaten. Für quantitative Vergleiche verwende compare_groups und ref
 das Ergebnis; berechne keine prüfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.
 source_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;
 jeder Wert hat {relevant:boolean,reason:string,reference:Referenzobjekt}.
-Solange noch nicht jede Quelle eine gültige Referenz hat, verwende hierfür "{}".
-Suche vor dem Abschluss ausdrücklich nach Gegenbelegen und verarbeite Treffer.
-Ein unveränderter Arbeitsstand braucht keine erneute identische Werkzeuganfrage."""
+Verarbeite Treffer der bereits ausgeführten Gegenbelegsuche.
+"""
+
+PLANNER_INSTRUCTION = """Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.
+Wähle genau den nächsten fachlich sinnvollen Werkzeugschritt oder eine wirklich
+entscheidungskritische Rückfrage. Der Server besitzt Quellen, Werkzeugergebnisse,
+Claims und Brief; schreibe diese Zustände nicht zurück. Nutze nur die Werkzeugnamen,
+Source-IDs und Parameter aus dem Kontext. Für read_source und profile_csv ist genau
+eine source_id erlaubt. Für compare_groups gelten die angegebenen Pflichtfelder.
+parameters und clarification_payload sind serialisierte JSON-Objekte; leer ist "{}".
+Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Erfinde keine Fakten,
+Messwerte, Freigaben oder zusätzlichen Scope. Begründe knapp den Prüfpunkt."""
+
+SYNTHESIS_INSTRUCTION = (
+    """Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf
+genau ein vollständiges Decision Package: Claim Register, Decision Brief und
+Relevanzentscheidung für jede Manifestquelle. Verwende nur nachprüfbare Fundstellen.
+Kennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine
+Fakten oder Messwerte. Bei einer Reparatur bleiben vorhandene Claim-IDs und
+Briefabschnitte erhalten. Die drei Package-Felder enthalten serialisiertes JSON.
+Wenn eine externe, entscheidungskritische Information fehlt, setze
+clarification_reason=missing_evidence und formuliere in clarification_payload
+die konkrete Frage und ihren Einfluss auf die Entscheidung. In diesem Fall
+dürfen die drei Package-Felder "null", "null" und "{}" enthalten.
+Sonst setze clarification_reason auf den leeren String und clarification_payload auf "{}".
+"""
+    + _SYNTHESIS_DOMAIN_RULES
+)
 
 VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe Entscheidungsfrage,
 fünf Pflichtbereiche, Claims, reale Quellen-/Analysefundstellen, Gegenbelege, Empfehlung
@@ -126,14 +125,7 @@ strukturierte Findings statt einer bloßen Freigabe. Erfinde keine Evidenz und t
 fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
-def planner_response_format(
-    *,
-    allowed_source_ids: tuple[str, ...] = (),
-    csv_source_ids: tuple[str, ...] = (),
-    phase: str = "investigation",
-) -> dict:
-    del allowed_source_ids, csv_source_ids
-    actions = ["synthesize", "clarify"] if phase == "synthesis" else ["tool", "verify", "clarify"]
+def planner_response_format() -> dict:
     return {
         "type": "json_schema",
         "json_schema": {
@@ -142,7 +134,7 @@ def planner_response_format(
             "schema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": actions},
+                    "action": {"type": "string", "enum": ["tool", "clarify"]},
                     "target_claim_id": {"type": "string"},
                     "expected_discriminating_finding": {"type": "string"},
                     "rationale": {"type": "string"},
@@ -156,36 +148,6 @@ def planner_response_format(
                             "Serialisiertes JSON-Objekt mit Parametern für tool_name "
                             "gemäß tool_parameter_contracts im Kontext; leer exakt {}."
                         ),
-                    },
-                    "claim_register": {
-                        "type": "string",
-                        "description": (
-                            "Unverändert exakt null; sonst serialisiertes JSON-Array des "
-                            "vollständigen Claim-Registers. Bestehende Claims nicht mit [] "
-                            "löschen. Jeder Eintrag benötigt claim_id, area, "
-                            "claim_kind und status gemäß Planner-Vertrag."
-                        ),
-                    },
-                    "brief_payload": {
-                        "type": "string",
-                        "description": (
-                            "Unverändert exakt null; sonst serialisiertes JSON-Objekt "
-                            "des aktuellen Decision Briefs. Bestehenden Brief nicht mit {} löschen."
-                        ),
-                    },
-                    "source_relevance": {
-                        "type": "string",
-                        "description": (
-                            "Serialisiertes JSON-Objekt der Relevanz je Source-ID; leer exakt {}."
-                        ),
-                    },
-                    "progress_kind": {
-                        "type": "string",
-                        "enum": ["none", "evidence", "refutation", "contradiction", "coverage"],
-                    },
-                    "progress_payload": {
-                        "type": "string",
-                        "description": "Serialisiertes JSON-Objekt zum Fortschritt; leer exakt {}.",
                     },
                     "clarification_reason": {
                         "type": "string",
@@ -212,14 +174,41 @@ def planner_response_format(
                     "rationale",
                     "tool_name",
                     "parameters",
-                    "claim_register",
-                    "brief_payload",
-                    "source_relevance",
-                    "progress_kind",
-                    "progress_payload",
                     "clarification_reason",
                     "clarification_payload",
                 ],
+                "additionalProperties": False,
+            },
+        },
+    }
+
+
+def synthesis_response_format() -> dict:
+    fields = {
+        "claim_register": {
+            "type": "string",
+            "description": "Serialisiertes vollständiges JSON-Array.",
+        },
+        "brief_payload": {
+            "type": "string",
+            "description": "Serialisiertes vollständiges JSON-Objekt.",
+        },
+        "source_relevance": {
+            "type": "string",
+            "description": "Serialisiertes JSON-Objekt für jede Manifestquelle.",
+        },
+        "clarification_reason": {"type": "string", "enum": ["", "missing_evidence"]},
+        "clarification_payload": {"type": "string", "description": "Serialisiertes JSON-Objekt."},
+    }
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "vs1_synthesis_package",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": fields,
+                "required": list(fields),
                 "additionalProperties": False,
             },
         },
