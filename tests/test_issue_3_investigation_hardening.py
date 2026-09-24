@@ -393,6 +393,116 @@ def test_verifier_replays_analysis_without_side_effect_and_mismatch_blocks_succe
 
 
 @pytest.mark.django_db
+def test_a24_regression_multiple_unique_verifier_reads_do_not_create_critical_failure(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="a24-verifier-reads",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        claim_register=ready_claims(source),
+        brief_payload={},
+        progress_kind="evidence",
+        progress_payload={"coverage_change": True},
+    )
+    run.refresh_from_db()
+    checked = critical_ids(list(run.claim_register))
+    responses = [
+        {
+            "read_requests": [
+                {
+                    "source_id": str(source.source_id),
+                    "cursor": 0,
+                    "limit": 1,
+                    "columns": [],
+                    "claim_id": "problem",
+                }
+            ],
+            "findings": [
+                {
+                    "severity": "noncritical",
+                    "code": "TRACE_MORE",
+                    "claim_id": "problem",
+                    "message": "Eine konkrete Fundstelle soll noch gelesen werden.",
+                }
+            ],
+            "source_references_valid": True,
+            "checked_critical_claims": checked,
+        },
+        {
+            "read_requests": [
+                {
+                    "source_id": str(source.source_id),
+                    "cursor": 1,
+                    "limit": 1,
+                    "columns": [],
+                    "claim_id": "hyp-a",
+                }
+            ],
+            "findings": [
+                {
+                    "severity": "noncritical",
+                    "code": "TRACE_MORE_2",
+                    "claim_id": "hyp-a",
+                    "message": "Eine zweite konkrete Fundstelle soll noch gelesen werden.",
+                }
+            ],
+            "source_references_valid": True,
+            "checked_critical_claims": checked,
+        },
+        {
+            "read_requests": [],
+            "findings": [
+                {
+                    "severity": "noncritical",
+                    "code": "CAVEAT_ONLY",
+                    "claim_id": "problem",
+                    "message": "Die Stichprobe bleibt klein, ist aber prüfbar.",
+                }
+            ],
+            "source_references_valid": True,
+            "checked_critical_claims": checked,
+        },
+    ]
+
+    def provider(**_kwargs):
+        payload = responses.pop(0)
+        raw = json.dumps(payload)
+        return OpenRouterResult(
+            content=raw,
+            model="test-model",
+            usage={"prompt_tokens": 50, "completion_tokens": 25},
+            output_chars=len(raw),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    report = request_verifier_report(
+        actor=owner,
+        run=run,
+        executor_token=handle.executor_token,
+    )
+    run.refresh_from_db()
+
+    assert report.success is True
+    assert report.critical_findings == 0
+    assert all(item["code"] != "verification_reads_incomplete" for item in report.findings)
+    assert run.model_calls.filter(role=InvestigationModelCall.Role.VERIFIER).count() == 3
+    assert run.usage["verifier_reads"] == 2
+    assert run.steps.filter(target_claim_id__startswith="verifier:").count() == 2
+    assert responses == []
+
+
+@pytest.mark.django_db
 def test_replay_detects_real_persisted_result_payload_tamper(
     owner,
     business_unit,
