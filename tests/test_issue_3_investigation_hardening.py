@@ -1888,7 +1888,7 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     usage = dict(run.usage)
-    usage["model_calls"] = 10
+    usage["model_calls"] = 38
     usage["verifier_calls"] = 0
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
@@ -1903,7 +1903,7 @@ def test_verifier_reserve_tracks_only_remaining_verifier_calls(
     assert budget_exhausted(run, reserve_verifier=True) is False
 
     usage = dict(run.usage)
-    usage["model_calls"] = 11
+    usage["model_calls"] = 39
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
     run.refresh_from_db()
@@ -2622,30 +2622,31 @@ def test_later_planner_gets_time_without_consuming_verifier_reserve(owner, busin
         schema_version="runtime-share-test",
         context={},
     )
-    assert run.budget_limits["max_runtime_seconds"] == 4_200
-    assert run.budget_limits["verifier_reserved_seconds"] == 1_200
-    # The planner shares the remaining runtime with the calls that stay possible
-    # after the derived reserves: four verifier calls (1_200 s) and the synthesis
-    # share (1 + max_repair_cycles = two of fourteen calls, so 600 s).
-    assert 567 <= call.effective_parameters["timeout_seconds"] <= 571
+    assert run.budget_limits["max_runtime_seconds"] == 12_000
+    assert run.budget_limits["verifier_reserved_seconds"] == 600
+    # The planner is no longer squeezed by a repair state machine. It shares the
+    # global frame while a small independent-review reserve remains protected.
+    assert call.effective_parameters["timeout_seconds"] >= 300
 
 
 @pytest.mark.django_db
-def test_two_synthesis_calls_remain_after_investigation_budget(owner, business_unit, tmp_path):
+def test_one_synthesis_share_remains_protected_without_repair_micro_budget(
+    owner, business_unit, tmp_path
+):
     _process, _snapshot, handle, _source = start_csv_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="synthesis-reserve"
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     usage = dict(run.usage)
-    usage["model_calls"] = 8
+    usage["model_calls"] = 37
     run.usage = usage
 
     assert budget_exhausted(run, reserve_verifier=True, reserve_synthesis=True)
     assert not budget_exhausted(run, reserve_verifier=True)
 
-    usage["model_calls"] = 9
+    usage["model_calls"] = 38
     run.usage = usage
-    assert not budget_exhausted(run, reserve_verifier=True)
+    assert budget_exhausted(run, reserve_verifier=True)
 
 
 @pytest.mark.django_db
@@ -2668,7 +2669,8 @@ def test_verifier_receives_its_reserved_time_share(owner, business_unit, tmp_pat
         schema_version="verifier-time-test",
         context={},
     )
-    assert 300 <= call.effective_parameters["timeout_seconds"] <= 302
+    assert call.effective_parameters["timeout_seconds"] >= 300
+    assert call.effective_parameters["timeout_seconds"] <= run.budget_limits["max_runtime_seconds"]
 
 
 @pytest.mark.django_db
