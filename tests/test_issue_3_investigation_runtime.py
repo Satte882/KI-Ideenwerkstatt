@@ -458,12 +458,18 @@ def test_repeated_no_progress_tool_loop_fails_without_human_delegation(
         executor_token=handle.executor_token,
         planner=same_step,
     )
-    assert second.status == third.status == InvestigationRun.Status.RUNNING
-    assert fourth.status == InvestigationRun.Status.FAILED
+    fifth = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=same_step,
+    )
+    assert second.status == third.status == fourth.status == InvestigationRun.Status.RUNNING
+    assert fifth.status == InvestigationRun.Status.FAILED
     run = InvestigationRun.objects.get(pk=handle.run_id)
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
-    assert run.clarification_payload["repeat_count"] == 3
+    assert run.clarification_payload["repeat_count"] == 4
     assert run.usage["tool_calls"] == 1
 
 
