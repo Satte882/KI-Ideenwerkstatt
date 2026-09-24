@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v12"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v4"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v3"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v13"
+PLANNER_PROMPT_VERSION = "vs1-planner-v13"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v5"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
-VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
+VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
 PLANNER_TOOL_NAMES = (
     "list_sources",
@@ -53,8 +53,9 @@ area aus problem_context|competing_hypotheses|constraints_risks|recommendation_v
 einem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.
 Nutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte;
 kritische bestehende Evidence Claims dürfen nicht gelöscht, umbenannt oder herabgestuft
-werden. Führe mindestens zwei konkurrierende Hypothesen als eigene Evidence Claims mit
-area=competing_hypotheses und claim_kind=hypothesis.
+werden. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
+area=competing_hypotheses und claim_kind=hypothesis geführt werden, wenn die Evidenzlage
+mehr als eine plausible Erklärung trägt.
 
 Solution Options sind Kandidaten und gehören ausschließlich in brief_payload.options, nicht
 in claim_register. Der zukünftige Validation Plan gehört ausschließlich in
@@ -64,13 +65,14 @@ Evidence Claim geführt werden, wenn ihre Evidenzbasis explizit referenziert wir
 Unbekannte Punkte werden ehrlich als offen bzw. in risks_unknowns ausgewiesen und dürfen
 nicht als bestätigte Tatsachen oder Empfehlungspremissen verwendet werden.
 
-Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
-Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
-references, mindestens zwei competing hypotheses mit Evidenz/Gegenbelegen, calculations mit
-Tool-Resultat/Population/Grenzen, mindestens zwei options einschließlich Non-AI und Status quo,
-recommendation mit Evidenz, risks_unknowns sowie validation_step. Vorschläge sind keine
-bestätigten Tatsachen. Eine fehlende entscheidungskritische Größe bleibt unbekannt und führt
-zu einer präzisen clarification statt zu einer erfundenen Zahl oder READY.
+Wenn der Run einen Decision Brief verlangt, pflege brief_payload als möglichst vollständigen
+prüfbaren Arbeitsstand. Methodische Qualitätsmerkmale wie mehrere competing hypotheses,
+Berechnungen, Non-AI-/Status-quo-Optionen und validation_step sind erwünscht und werden
+separat im Benchmark gemessen; sie sind aber keine universellen technischen READY-Gates.
+question_scope, problem und recommendation müssen die tatsächlich verwendete Evidenz korrekt
+referenzieren. Vorschläge sind keine bestätigten Tatsachen. Eine fehlende
+entscheidungskritische Größe bleibt unbekannt und führt zu einer präzisen clarification
+statt zu einer erfundenen Zahl.
 
 Verwende exakt die folgenden Feldnamen des Decision-Brief-Vertrags:
 question_scope={question,scope}, problem={statement,references}, hypotheses als Liste
@@ -89,14 +91,18 @@ Eine Quellenreferenz hat {source_id,locator,revision_hash}; locator verwendet be
 Werkzeugresultaten. Für quantitative Vergleiche verwende compare_groups und referenziere
 das Ergebnis; berechne keine prüfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.
 source_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;
-jeder Wert hat {relevant:boolean,reason:string,reference:Referenzobjekt}.
-Verarbeite Treffer der bereits ausgeführten Gegenbelegsuche.
+jeder Wert benötigt mindestens {relevant:boolean}. reason und reference sind optional.
+Eine Quelle mit relevant=true muss tatsächlich gelesen oder analysiert worden sein;
+relevant=false benötigt keine künstliche Fundstellenprüfung.
+Verarbeite Gegenbelege, wenn sie für die Entscheidung relevant sind.
 """
 
 PLANNER_INSTRUCTION = """Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.
-Wähle genau den nächsten fachlich sinnvollen Werkzeugschritt oder eine wirklich
-entscheidungskritische Rückfrage. Der Server besitzt Quellen, Werkzeugergebnisse,
-Claims und Brief; schreibe diese Zustände nicht zurück. Nutze nur die Werkzeugnamen,
+Wähle genau den nächsten fachlich sinnvollen Schritt: Werkzeug, Synthese oder eine wirklich
+entscheidungskritische Rückfrage. Wenn die vorhandene Evidenz für einen reviewfähigen
+Entscheidungsstand genügt, wähle action=synthesize mit leerem tool_name und "{}" als
+parameters. Der Server besitzt Quellen, Werkzeugergebnisse, Claims und Brief; schreibe
+diese Zustände nicht zurück. Nutze nur die Werkzeugnamen,
 Source-IDs und Parameter aus dem Kontext. Für read_source und profile_csv ist genau
 eine source_id erlaubt. Für compare_groups gelten die angegebenen Pflichtfelder.
 parameters und clarification_payload sind serialisierte JSON-Objekte; leer ist "{}".
@@ -141,10 +147,14 @@ Evidenz für die bereits erfolgte Durchführung des Validation Plans.
 
 Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
 unbekannt korrekt getrennt sind, ob die Empfehlung durch Evidenz getragen wird und ob
-Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten. Berücksichtige
-Gegenbelege und relevante offene Punkte. Liefere strukturierte Findings statt einer bloßen
-Freigabe. Erfinde keine Evidenz und triff keine fachliche Freigabe. Verwende nur den
-rekonstruierbaren Arbeitsstand."""
+vorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.
+Berücksichtige Gegenbelege und relevante offene Punkte. Prüfe jeden als kritisch markierten
+Evidence Claim ausdrücklich und liste seine ID in checked_critical_claims. Fordere zusätzliche
+read_requests nur an, wenn eine konkrete Fundstelle für diese Integritätsprüfung wirklich
+fehlt. Nichtkritische Caveats dürfen READY nicht verhindern: Wenn kein konkreter kritischer
+Evidenz-/Integritätsfehler verbleibt, liefere ausschließlich noncritical Findings und
+source_references_valid=true. Erfinde keine Evidenz und triff keine fachliche Freigabe.
+Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
 def planner_response_format() -> dict:
@@ -156,7 +166,7 @@ def planner_response_format() -> dict:
             "schema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["tool", "clarify"]},
+                    "action": {"type": "string", "enum": ["tool", "synthesize", "clarify"]},
                     "target_claim_id": {"type": "string"},
                     "expected_discriminating_finding": {"type": "string"},
                     "rationale": {"type": "string"},

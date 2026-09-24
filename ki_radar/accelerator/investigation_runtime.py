@@ -68,8 +68,8 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v11"
-BUDGET_VERSION = "vs1-budget-v5"
+LOOP_VERSION = "vs1-agent-loop-v12"
+BUDGET_VERSION = "vs1-budget-v6"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
 # not live provider metadata: changes require a deliberate transport revision.
@@ -89,7 +89,7 @@ MIN_VERIFIER_COMPLETION_TOKENS = 8_192
 MIN_PLANNER_TIMEOUT_SECONDS = 60
 MIN_VERIFIER_TIMEOUT_SECONDS = 75
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
-TOOL_SCHEMA_VERSION = "vs1-tool-schema-v2"
+TOOL_SCHEMA_VERSION = "vs1-tool-schema-v3"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
     "zdr": True,
     "data_collection": "deny",
@@ -99,26 +99,24 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 }
 
 DEFAULT_BUDGET = {
-    "max_tool_calls": 12,
-    # Up to 8 investigation calls, plus one synthesis per allowed repair cycle
-    # (initial package and repair) and two verifier rounds
-    # (initial verification + one repair cycle), each verifier round allowing
-    # the existing two-call read-and-recheck path.
-    "max_model_calls": 14,
-    "max_verifier_calls": 4,
-    # The pinned endpoint took over five minutes for a 15k-token structured
-    # answer. Give each of 14 possible calls five minutes on average, with four such
-    # shares protected for verification. Calls still use the remaining-time
-    # calculation and the run/campaign safety limits remain independent.
-    "max_runtime_seconds": 14 * 300,
-    "max_input_tokens": 105_000,
-    "max_output_tokens": 131_072,
-    "verifier_reserved_model_calls": 4,
+    # Generous global safety frame. Investigation, synthesis and verification
+    # share this budget instead of being forced through narrow phase-specific
+    # convergence limits.
+    "max_tool_calls": 40,
+    "max_model_calls": 40,
+    # Verifier-specific counters remain for observability and hard runaway safety,
+    # but are no tighter than the global model/tool frame.
+    "max_verifier_calls": 40,
+    "max_runtime_seconds": 40 * 300,
+    "max_input_tokens": 400_000,
+    "max_output_tokens": 500_000,
+    # Keep enough headroom for an independent first review without reserving
+    # a complete multi-round verifier state machine.
+    "verifier_reserved_model_calls": 2,
     "verifier_reserved_input_tokens": 20_000,
-    "verifier_reserved_output_tokens": 4 * MIN_VERIFIER_COMPLETION_TOKENS,
-    "verifier_reserved_seconds": 4 * 300,
-    "max_verifier_reads": 12,
-    "max_repair_cycles": 1,
+    "verifier_reserved_output_tokens": 2 * MIN_VERIFIER_COMPLETION_TOKENS,
+    "verifier_reserved_seconds": 2 * 300,
+    "max_verifier_reads": 40,
 }
 USAGE_KEYS = (
     "tool_calls",
@@ -458,14 +456,13 @@ def elapsed_seconds(run: InvestigationRun) -> int:
 
 
 def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
+    """Reserve only the small guaranteed review headroom, not a verifier state machine."""
     limits = run.budget_limits
     usage = run.usage
-    max_verifier_calls = int(limits["max_verifier_calls"])
-    remaining_verifier_calls = max(
-        0,
-        max_verifier_calls - int(usage.get("verifier_calls", 0)),
-    )
-    if max_verifier_calls <= 0 or remaining_verifier_calls <= 0:
+    reserved_calls = max(0, int(limits["verifier_reserved_model_calls"]))
+    used_reserved_calls = min(reserved_calls, int(usage.get("verifier_calls", 0)))
+    remaining_calls = reserved_calls - used_reserved_calls
+    if reserved_calls <= 0 or remaining_calls <= 0:
         return {
             "model_calls": 0,
             "input_tokens": 0,
@@ -474,12 +471,10 @@ def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
         }
 
     def proportional_reserve(total: int) -> int:
-        return (
-            int(total) * remaining_verifier_calls + max_verifier_calls - 1
-        ) // max_verifier_calls
+        return (int(total) * remaining_calls + reserved_calls - 1) // reserved_calls
 
     return {
-        "model_calls": proportional_reserve(limits["verifier_reserved_model_calls"]),
+        "model_calls": remaining_calls,
         "input_tokens": proportional_reserve(limits["verifier_reserved_input_tokens"]),
         "output_tokens": proportional_reserve(limits["verifier_reserved_output_tokens"]),
         "seconds": proportional_reserve(limits["verifier_reserved_seconds"]),
@@ -487,13 +482,9 @@ def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
 
 
 def _remaining_synthesis_reserve(run: InvestigationRun) -> dict[str, int]:
-    """Reserve the normal per-call share for synthesis and a permitted repair.
-
-    This derives entirely from the frozen run budget and existing repair policy;
-    it adds no synthesis-only token, timeout, or transport limit.
-    """
+    """Reserve one normal model-call share so the planner can hand off to synthesis."""
     limits = run.budget_limits
-    calls = 1 + int(limits["max_repair_cycles"])
+    calls = 1
     total_calls = max(1, int(limits["max_model_calls"]))
 
     def proportional_share(total: int) -> int:
@@ -514,7 +505,7 @@ def budget_exhausted(
     usage = run.usage
     if elapsed_seconds(run) >= limits["max_runtime_seconds"]:
         return True
-    if usage["tool_calls"] >= limits["max_tool_calls"] and not investigation_evidence_complete(run):
+    if usage["tool_calls"] >= limits["max_tool_calls"]:
         return True
     if usage["model_calls"] >= limits["max_model_calls"]:
         return True
@@ -822,6 +813,12 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
 
 
 def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
+    """Hard integrity contract for a reviewable Decision Package.
+
+    Method completeness (for example two hypotheses, a status-quo option or a
+    validation plan) is measured by the benchmark, not used as a universal
+    runtime READY gate.
+    """
     if not bool(run.execution_snapshot.get("decision_brief_required")):
         return ()
 
@@ -847,9 +844,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         if not references or not all(reference_valid(run, item) for item in references):
             blockers.append("decision_brief_problem_reference_invalid")
 
-    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
-    if len(hypotheses) < 2:
-        blockers.append("decision_brief_competing_hypotheses_missing")
+    raw_hypotheses = payload.get("hypotheses", [])
+    if raw_hypotheses and not isinstance(raw_hypotheses, list):
+        blockers.append("decision_brief_hypotheses_invalid")
+    hypotheses = (
+        [item for item in raw_hypotheses if isinstance(item, Mapping)]
+        if isinstance(raw_hypotheses, list)
+        else []
+    )
     for index, hypothesis in enumerate(hypotheses):
         statement = str(hypothesis.get("statement") or "").strip()
         status = str(hypothesis.get("status") or "").strip()
@@ -868,9 +870,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         ):
             blockers.append(f"decision_brief_hypothesis_reference_invalid:{index}")
 
-    calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
-    if not calculations:
-        blockers.append("decision_brief_calculation_missing")
+    raw_calculations = payload.get("calculations", [])
+    if raw_calculations and not isinstance(raw_calculations, list):
+        blockers.append("decision_brief_calculations_invalid")
+    calculations = (
+        [item for item in raw_calculations if isinstance(item, Mapping)]
+        if isinstance(raw_calculations, list)
+        else []
+    )
     for index, calculation in enumerate(calculations):
         reference = calculation.get("reference")
         if (
@@ -885,13 +892,14 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         if not str(calculation.get("limits") or "").strip():
             blockers.append(f"decision_brief_calculation_limits_missing:{index}")
 
-    options = [item for item in payload.get("options", []) if isinstance(item, Mapping)]
-    if len(options) < 2:
-        blockers.append("decision_brief_options_missing")
-    if options and not any(bool(item.get("non_ai")) for item in options):
-        blockers.append("decision_brief_non_ai_option_missing")
-    if options and not any(bool(item.get("status_quo")) for item in options):
-        blockers.append("decision_brief_status_quo_missing")
+    raw_options = payload.get("options", [])
+    if raw_options and not isinstance(raw_options, list):
+        blockers.append("decision_brief_options_invalid")
+    options = (
+        [item for item in raw_options if isinstance(item, Mapping)]
+        if isinstance(raw_options, list)
+        else []
+    )
     allowed_option_types = {choice for choice, _label in SolutionOption.OptionType.choices}
     for index, option in enumerate(options):
         if (
@@ -915,16 +923,17 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         ):
             blockers.append("decision_brief_recommendation_invalid")
 
-    if not isinstance(payload.get("risks_unknowns"), list):
-        blockers.append("decision_brief_risks_unknowns_missing")
+    risks_unknowns = payload.get("risks_unknowns")
+    if risks_unknowns is not None and not isinstance(risks_unknowns, list):
+        blockers.append("decision_brief_risks_unknowns_invalid")
 
     validation = payload.get("validation_step")
-    if (
+    if validation is not None and (
         not isinstance(validation, Mapping)
         or not str(validation.get("step") or "").strip()
         or not str(validation.get("measurement") or "").strip()
     ):
-        blockers.append("decision_brief_validation_step_missing")
+        blockers.append("decision_brief_validation_step_invalid")
 
     return tuple(sorted(set(blockers)))
 
@@ -1493,7 +1502,6 @@ def execute_tool_step(
                 "tool": tool_name,
                 "parameters": params,
                 "manifest_hash": run.manifest_hash,
-                "target_claim_id": target_claim_id,
             }
         )
         existing = run.steps.filter(step_key=step_key).first()
@@ -1732,7 +1740,7 @@ def policy_state_for_run(
         ),
         retry_available=retry_available,
         no_progress_streak=run.no_progress_streak,
-        repair_available=run.repair_cycles < run.budget_limits["max_repair_cycles"],
+        repair_available=True,
         aborted=run.status == InvestigationRun.Status.ABORTED,
     )
 
@@ -1815,6 +1823,13 @@ def set_source_relevance(
     executor_token,
     relevance: Mapping[str, Mapping[str, Any]],
 ) -> InvestigationRun:
+    """Persist minimal manifest coverage without forcing ceremonial citations.
+
+    Every authorized source must be classified relevant/irrelevant. A source
+    marked relevant must actually have been read or analyzed by a successful
+    tool step. Optional reasons/references are retained and validated when
+    supplied, but an irrelevant source needs no artificial read.
+    """
     run = locked_run(actor=actor, run_id=run_id)
     assert_active(run)
     assert_executor(run, executor_token)
@@ -1823,30 +1838,47 @@ def set_source_relevance(
     supplied = {str(key): dict(value) for key, value in dict(relevance or {}).items()}
     if set(supplied) != source_ids:
         raise InvestigationRunError(
-            "Für jede Manifestquelle ist genau eine Relevanzbegründung erforderlich.",
+            "Für jede Manifestquelle ist eine relevant/irrelevant-Klassifikation erforderlich.",
             code="source_relevance_incomplete",
         )
 
+    observed_source_ids = {
+        str(step.parameters.get("source_id") or "")
+        for step in run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            tool_name__in={"read_source", "profile_csv", "compare_groups"},
+        )
+    }
     normalized: dict[str, dict[str, Any]] = {}
     for source_id, item in supplied.items():
-        reason = str(item.get("reason") or "").strip()
         relevant = item.get("relevant")
+        if not isinstance(relevant, bool):
+            raise InvestigationRunError(
+                "Quellenklassifikation benötigt relevant=true|false.",
+                code="invalid_source_relevance",
+            )
+        if relevant and source_id not in observed_source_ids:
+            raise InvestigationRunError(
+                "Als relevant markierte Quelle wurde nicht tatsächlich gelesen oder analysiert.",
+                code="source_relevance_unobserved",
+            )
+
+        reason = str(item.get("reason") or "").strip()
         reference = item.get("reference")
-        if not reason or not isinstance(relevant, bool) or not isinstance(reference, Mapping):
+        if reference is not None and (
+            not isinstance(reference, Mapping) or not reference_valid(run, reference)
+        ):
             raise InvestigationRunError(
-                "Relevanzbegründung benötigt relevant, reason und eine reale Fundstelle/Analyse.",
+                "Optionale Relevanzreferenz verweist nicht auf eine gültige Fundstelle/Analyse.",
                 code="invalid_source_relevance",
             )
-        if not reference_valid(run, reference):
-            raise InvestigationRunError(
-                "Relevanzbegründung verweist nicht auf eine gültige Fundstelle/Analyse.",
-                code="invalid_source_relevance",
-            )
-        normalized[source_id] = {
-            "relevant": relevant,
-            "reason": reason,
-            "reference": dict(reference),
-        }
+
+        normalized_item: dict[str, Any] = {"relevant": relevant}
+        if reason:
+            normalized_item["reason"] = reason
+        if isinstance(reference, Mapping):
+            normalized_item["reference"] = dict(reference)
+        normalized[source_id] = normalized_item
 
     run.source_relevance = normalized
     run.source_relevance_complete = True

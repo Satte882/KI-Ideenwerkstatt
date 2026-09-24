@@ -446,10 +446,30 @@ def test_repeated_no_progress_tool_loop_fails_without_human_delegation(
         executor_token=handle.executor_token,
         planner=same_step,
     )
-    assert second.status == InvestigationRun.Status.FAILED
+    third = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=same_step,
+    )
+    fourth = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=same_step,
+    )
+    fifth = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=same_step,
+    )
+    assert second.status == third.status == fourth.status == InvestigationRun.Status.RUNNING
+    assert fifth.status == InvestigationRun.Status.FAILED
     run = InvestigationRun.objects.get(pk=handle.run_id)
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
+    assert run.clarification_payload["repeat_count"] == 4
     assert run.usage["tool_calls"] == 1
 
 
@@ -510,7 +530,7 @@ def test_counterevidence_hits_must_be_read_before_processed(
 
 
 @pytest.mark.django_db
-def test_source_relevance_requires_every_manifest_source_and_real_reference(
+def test_source_relevance_requires_full_classification_and_real_access_for_relevant_sources(
     owner,
     business_unit,
     tmp_path,
@@ -524,31 +544,40 @@ def test_source_relevance_requires_every_manifest_source_and_real_reference(
     )
     source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
 
-    with pytest.raises(InvestigationRunError):
+    with pytest.raises(InvestigationRunError) as missing:
         set_source_relevance(
             actor=owner,
             run_id=handle.run_id,
             executor_token=handle.executor_token,
             relevance={},
         )
+    assert missing.value.code == "source_relevance_incomplete"
 
+    with pytest.raises(InvestigationRunError) as unread:
+        set_source_relevance(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            relevance={str(source.source_id): {"relevant": True}},
+        )
+    assert unread.value.code == "source_relevance_unobserved"
+
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="read_source",
+        parameters={"source_id": str(source.source_id)},
+        target_claim_id="source-coverage",
+    )
     run = set_source_relevance(
         actor=owner,
         run_id=handle.run_id,
         executor_token=handle.executor_token,
-        relevance={
-            str(source.source_id): {
-                "relevant": True,
-                "reason": "Inhalt belegt den Problemkontext.",
-                "reference": {
-                    "source_id": str(source.source_id),
-                    "locator": {"line": 1},
-                    "revision_hash": source.content_sha256,
-                },
-            }
-        },
+        relevance={str(source.source_id): {"relevant": True}},
     )
     assert run.source_relevance_complete is True
+    assert run.source_relevance == {str(source.source_id): {"relevant": True}}
 
 
 @pytest.mark.django_db

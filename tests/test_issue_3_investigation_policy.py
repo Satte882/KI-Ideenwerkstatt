@@ -131,12 +131,13 @@ def replace_check(checks, claim_id, **changes):
     return tuple(replace(item, **changes) if item.claim_id == claim_id else item for item in checks)
 
 
-def test_critical_evidence_gap_is_runtime_work_until_external_gap_is_proven():
+def test_open_critical_claim_reaches_verifier_until_external_gap_is_proven():
     checks = replace_check(base_checks(), "problem", status="open", evidence_refs=())
     result = evaluate_policy(ready_state(checks=checks, verifier=None))
 
     assert result.outcome == PolicyOutcome.CONTINUE
-    assert "critical_unresolved:problem" in result.blockers
+    assert result.blockers == ("verifier_missing",)
+    assert "critical_unresolved:problem" not in result.blockers
 
     external = evaluate_policy(
         ready_state(checks=checks, verifier=None, external_critical_gap=True)
@@ -174,6 +175,21 @@ def test_noncritical_open_evidence_unknown_is_disclosed_not_globally_gated():
 
     assert result.outcome == PolicyOutcome.READY_FOR_DECISION
     assert all("optional_unknown" not in blocker for blocker in result.blockers)
+
+
+def test_benchmark_activity_flags_do_not_gate_runtime_ready():
+    state = ready_state(
+        data_check_executed=False,
+        counterevidence_search_executed=False,
+        counterevidence_hits_processed=False,
+    )
+    result = evaluate_policy(state)
+    pre = pre_verifier_blockers(state)
+
+    assert result.outcome == PolicyOutcome.READY_FOR_DECISION
+    assert "data_check_missing" not in pre
+    assert "counterevidence_search_missing" not in pre
+    assert "counterevidence_hits_unprocessed" not in pre
 
 
 def test_solution_options_and_validation_plan_are_not_evidence_readiness_claims():
@@ -225,6 +241,17 @@ def test_verification_and_reference_failures_never_ready(mutation, expected_bloc
     result = evaluate_policy(ready_state(**mutation))
     assert result.outcome != PolicyOutcome.READY_FOR_DECISION
     assert expected_blocker in result.blockers
+
+
+def test_verifier_must_cover_every_critical_evidence_claim():
+    verifier = valid_verifier(
+        base_checks(),
+        checked_critical_claims=frozenset({"problem"}),
+    )
+    result = evaluate_policy(ready_state(verifier=verifier))
+
+    assert result.outcome == PolicyOutcome.CONTINUE
+    assert "verifier_critical_scope_incomplete" in result.blockers
 
 
 def test_stale_verifier_is_automatically_reverifiable_runtime_state():

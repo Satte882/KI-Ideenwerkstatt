@@ -485,6 +485,26 @@ def _agentic_course_change_observed(run: InvestigationRun) -> bool:
     ).exists()
 
 
+def _benchmark_brief_complete(run: InvestigationRun) -> bool:
+    """Issue-#4 method completeness, deliberately separate from runtime READY."""
+    payload = run.brief_payload if isinstance(run.brief_payload, dict) else {}
+    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, dict)]
+    calculations = [item for item in payload.get("calculations", []) if isinstance(item, dict)]
+    options = [item for item in payload.get("options", []) if isinstance(item, dict)]
+    validation = payload.get("validation_step")
+    return (
+        len(hypotheses) >= 2
+        and bool(calculations)
+        and len(options) >= 2
+        and any(bool(item.get("non_ai")) for item in options)
+        and any(bool(item.get("status_quo")) for item in options)
+        and isinstance(payload.get("risks_unknowns"), list)
+        and isinstance(validation, dict)
+        and bool(str(validation.get("step") or "").strip())
+        and bool(str(validation.get("measurement") or "").strip())
+    )
+
+
 def _scored_run_reached_expected_boundary(
     run: InvestigationRun,
     *,
@@ -495,9 +515,10 @@ def _scored_run_reached_expected_boundary(
             InvestigationRun.Status.WAITING_HUMAN,
             InvestigationRun.Status.ABORTED,
         }
-    if run.status != InvestigationRun.Status.READY or not _expected_analysis_observed(
-        run,
-        variant=variant,
+    if (
+        run.status != InvestigationRun.Status.READY
+        or not _expected_analysis_observed(run, variant=variant)
+        or not _benchmark_brief_complete(run)
     ):
         return False
     if run.execution_mode == "fixed":
@@ -609,6 +630,7 @@ def evidence_campaign_report(campaign: InvestigationEvidenceCampaign) -> dict[st
                 "status": run.status,
                 "clarification_reason": run.clarification_reason,
                 "runtime_seconds": runtime_seconds,
+                "benchmark_brief_complete": _benchmark_brief_complete(run),
                 **usage,
             }
         )

@@ -1371,6 +1371,17 @@ def test_adaptive_a_requires_agentic_effect_not_ready_status_only(
     )
     step.progress_kind = InvestigationStep.ProgressKind.REFUTATION
     step.save(update_fields=["progress_kind", "updated_at"])
+    run.refresh_from_db()
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        brief_payload=full_brief(
+            run=run,
+            source=csv_source,
+            result_id=step.result_payload["result_id"],
+        ),
+    )
     InvestigationRun.objects.filter(pk=run.pk).update(
         status=InvestigationRun.Status.READY,
         finished_at=timezone.now(),
@@ -1387,6 +1398,55 @@ def test_adaptive_a_requires_agentic_effect_not_ready_status_only(
     )
     report = evidence_campaign_report(campaign)
     assert report["matrix"]["A"]["adaptive_real_scored"] == 0
+
+
+@pytest.mark.django_db
+def test_runtime_ready_does_not_automatically_pass_issue4_methodology(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="READY vs benchmark")
+    write_variant_pack(tmp_path, "A")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ready-not-benchmark-complete",
+            evidence_campaign_id=campaign.pk,
+            execution_mode="adaptive",
+            evidence_metadata={
+                "provider_mode": "real",
+                "phase": "scored",
+                "variant": "A",
+                "attempt": 1,
+            },
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        data_check_executed=True,
+        counterevidence_search_executed=True,
+        counterevidence_hits_processed=True,
+        brief_payload={
+            "question_scope": {"question": run.decision_question, "scope": "Test"},
+            "problem": {"statement": "Problem", "references": []},
+            "recommendation": {"summary": "Richtung", "rationale": "Test", "references": []},
+        },
+    )
+
+    report = evidence_campaign_report(campaign)
+
+    assert report["matrix"]["A"]["adaptive_real_sampled"] == 1
+    assert report["matrix"]["A"]["adaptive_real_scored"] == 0
+    attempt = next(item for item in report["attempts"] if item["run_id"] == str(run.pk))
+    assert attempt["status"] == InvestigationRun.Status.READY
+    assert attempt["benchmark_brief_complete"] is False
 
 
 @pytest.mark.django_db
@@ -1479,19 +1539,15 @@ def test_campaign_headroom_protects_verification_without_allocating_entire_campa
         "schema_version": "headroom-test",
         "context": {},
     }
-    if campaign_output == 40_000:
-        with pytest.raises(InvestigationRunError) as exc_info:
-            _reserve_model_call(**args)
-        assert exc_info.value.code == "evidence_budget_exhausted"
-        assert InvestigationRun.objects.get(pk=handle.run_id).model_calls.count() == 0
-        campaign.refresh_from_db()
-        assert campaign.usage["provider_calls"] == 0
-    else:
-        call = _reserve_model_call(**args)
-        assert call.effective_parameters["max_tokens"] == 131_072 - 32_768 - 18_725
-        campaign.refresh_from_db()
-        assert campaign.usage["reserved_output_tokens"] == 131_072 - 32_768 - 18_725
-        assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
+    call = _reserve_model_call(**args)
+    campaign.refresh_from_db()
+
+    protected_output = 28_884
+    expected_max_tokens = min(131_072, campaign_output - protected_output)
+    assert call.effective_parameters["max_tokens"] == expected_max_tokens
+    assert campaign.usage["provider_calls"] == 1
+    assert campaign.usage["reserved_output_tokens"] == expected_max_tokens
+    assert campaign.usage["reserved_output_tokens"] < campaign.limits["max_output_tokens"]
 
 
 @pytest.mark.django_db
