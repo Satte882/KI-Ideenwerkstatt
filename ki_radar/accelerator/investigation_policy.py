@@ -6,6 +6,7 @@ from enum import StrEnum
 
 POLICY_VERSION = "vs1-stop-policy-v3"
 
+
 class PolicyOutcome(StrEnum):
     CONTINUE = "CONTINUE"
     READY_FOR_DECISION = "READY_FOR_DECISION"
@@ -106,7 +107,9 @@ def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
     """Deterministic package contract that must pass before verification."""
     blockers = list(state.brief_blockers)
     evidence_checks = tuple(
-        check for check in state.checks if is_evidence_claim(check.area, check.claim_kind)
+        check
+        for check in state.checks
+        if is_evidence_claim(check.area, check.claim_kind)
     )
     if not evidence_checks:
         blockers.append("claim_register_missing")
@@ -116,7 +119,9 @@ def pre_verifier_blockers(state: PolicyState) -> tuple[str, ...]:
             blockers.append(f"critical_unresolved:{check.claim_id}")
         if check.status == "supported" and not check.evidence_refs:
             blockers.append(f"supported_without_evidence:{check.claim_id}")
-        if check.status == "refuted" and not (check.counterevidence_refs or check.evidence_refs):
+        if check.status == "refuted" and not (
+            check.counterevidence_refs or check.evidence_refs
+        ):
             blockers.append(f"refuted_without_evidence:{check.claim_id}")
         if not check.references_valid:
             blockers.append(f"invalid_reference:{check.claim_id}")
@@ -163,7 +168,9 @@ def verifier_blockers(state: PolicyState) -> tuple[str, ...]:
 
 
 def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
-    return tuple(sorted(set((*pre_verifier_blockers(state), *verifier_blockers(state)))))
+    return tuple(
+        sorted(set((*pre_verifier_blockers(state), *verifier_blockers(state))))
+    )
 
 
 def evaluate_policy(state: PolicyState) -> PolicyDecision:
