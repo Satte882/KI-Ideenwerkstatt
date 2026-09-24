@@ -140,14 +140,14 @@ def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, 
         raise InvestigationRunError("Ungültige Untersuchungsaktion.", code="invalid_planner_action")
     _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
-    if payload.get("action") == "synthesize":
-        if str(payload.get("tool_name") or "") or _decode_structured_field(
-            payload, "parameters", expected_type=Mapping, default={}
-        ):
-            raise InvestigationRunError(
-                "Synthese darf kein Werkzeug oder Parameter enthalten.",
-                code="invalid_planner_action",
-            )
+    if payload.get("action") == "synthesize" and (
+        str(payload.get("tool_name") or "")
+        or _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
+    ):
+        raise InvestigationRunError(
+            "Synthese darf kein Werkzeug oder Parameter enthalten.",
+            code="invalid_planner_action",
+        )
     if payload.get("action") == "tool":
         tool_name = str(payload.get("tool_name") or "")
         if tool_name not in ALLOWED_TOOLS:
