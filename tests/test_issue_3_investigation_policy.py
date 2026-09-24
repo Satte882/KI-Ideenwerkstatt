@@ -253,10 +253,10 @@ def test_budget_exhaustion_before_verification_is_not_success():
     assert result.reason_code == ReasonCode.BUDGET_EXHAUSTED
 
 
-def test_no_progress_is_a_separate_loop_boundary_not_readiness_semantics():
+def test_no_progress_counter_is_not_a_readiness_or_human_boundary():
     result = evaluate_policy(ready_state(verifier=None, no_progress_streak=2))
-    assert result.outcome == PolicyOutcome.HUMAN_CLARIFICATION
-    assert result.reason_code == ReasonCode.NO_PROGRESS
+    assert result.outcome == PolicyOutcome.CONTINUE
+    assert result.reason_code is None
 
 
 @pytest.mark.parametrize(
