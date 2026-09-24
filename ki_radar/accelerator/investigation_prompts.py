@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v10"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v2"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v3"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v12"
-SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v3"
+SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
 PLANNER_TOOL_NAMES = (
@@ -110,11 +110,16 @@ Briefabschnitte erhalten. Antworte als ein einziges JSON-Objekt. claim_register 
 ein echtes JSON-Array; brief_payload, source_relevance und clarification_payload
 sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
 serialisiert werden.
-Wenn eine externe, entscheidungskritische Information fehlt, setze
-clarification_reason=missing_evidence, claim_register=[], brief_payload={},
-source_relevance={} und formuliere in clarification_payload die konkrete Frage
-und ihren Einfluss auf die Entscheidung. Sonst setze clarification_reason auf
-den leeren String und clarification_payload auf {}.
+Wenn eine entscheidungskritische Evidenzlücke mit den bereits freigegebenen Quellen
+und erlaubten Werkzeugen selbst geschlossen werden kann, setze clarification_reason auf
+den leeren String und liefere investigation_request={goal,reason}; frage den Menschen dafür
+nicht. Der Planner übernimmt danach wieder genau den nächsten Werkzeugschritt. Nur wenn die
+fehlende Information außerhalb des freigegebenen Quellenraums liegt oder eine echte menschliche
+Entscheidung erfordert, setze clarification_reason=missing_evidence, investigation_request={},
+claim_register=[], brief_payload={}, source_relevance={} und formuliere in
+clarification_payload die konkrete Frage und ihren Einfluss auf die Entscheidung.
+Bei einem vollständigen Package setze clarification_reason auf den leeren String,
+investigation_request={} und clarification_payload auf {}.
 """
     + _SYNTHESIS_DOMAIN_RULES
 )
