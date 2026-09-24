@@ -2251,7 +2251,7 @@ def test_planner_schema_allows_only_executable_tools():
     response_format = planner_response_format()
     schema = response_format["json_schema"]["schema"]
 
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v12"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v13"
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert schema["properties"]["tool_name"]["enum"] == ["", *PLANNER_TOOL_NAMES]
@@ -2263,6 +2263,12 @@ def test_planner_schema_allows_only_executable_tools():
         "compare_groups",
     }
     assert set(TOOL_PARAMETER_CONTRACTS) == set(PLANNER_TOOL_NAMES)
+    assert schema["properties"]["clarification_reason"]["enum"] == [
+        "",
+        "missing_evidence",
+        "permission_or_scope",
+        "value_tradeoff",
+    ]
 
 
 def _assert_portable_strict_schema(schema):
