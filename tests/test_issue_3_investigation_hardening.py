@@ -656,21 +656,18 @@ def test_legitimate_negative_progress_survives_but_repeated_null_step_stops(
     def null_planner(**_kwargs):
         return null_action
 
-    third = advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=null_planner,
-    )
-    fourth = advance_investigation(
-        actor=owner,
-        run_id=handle.run_id,
-        executor_token=handle.executor_token,
-        planner=null_planner,
-    )
+    repeated = [
+        advance_investigation(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            planner=null_planner,
+        )
+        for _ in range(5)
+    ]
     run.refresh_from_db()
-    assert third.status == InvestigationRun.Status.RUNNING
-    assert fourth.status == InvestigationRun.Status.FAILED
+    assert [item.status for item in repeated[:4]] == [InvestigationRun.Status.RUNNING] * 4
+    assert repeated[4].status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
 
@@ -765,7 +762,7 @@ def test_repeated_read_with_changed_claim_id_does_not_reset_progress(
         request=StartInvestigationRequest(snapshot.snapshot_id, "repeated-read"),
     )
     source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
-    targets = iter(("C1", "C2", "C3"))
+    targets = iter(("C1", "C2", "C3", "C4", "C5"))
 
     def planner(**_kwargs):
         return planner_action(
@@ -781,17 +778,15 @@ def test_repeated_read_with_changed_claim_id_does_not_reset_progress(
             executor_token=handle.executor_token,
             planner=planner,
         ).status
-        for _ in range(3)
+        for _ in range(5)
     ]
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert statuses == [
-        InvestigationRun.Status.RUNNING,
-        InvestigationRun.Status.RUNNING,
-        InvestigationRun.Status.FAILED,
+    assert statuses == [InvestigationRun.Status.RUNNING] * 4 + [
+        InvestigationRun.Status.FAILED
     ]
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
-    assert run.usage["tool_calls"] == 2
+    assert run.usage["tool_calls"] == 1
 
 
 @pytest.mark.django_db
@@ -977,8 +972,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v11"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v11"
+    assert run.loop_version == "vs1-agent-loop-v12"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v12"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -1887,13 +1882,11 @@ def test_investigation_actions_ignore_unsolicited_claim_register(
     run = InvestigationRun.objects.get(pk=handle.run_id)
     calls = list(run.model_calls.order_by("created_at"))
 
-    assert first.status == InvestigationRun.Status.RUNNING
-    assert second.status == InvestigationRun.Status.FAILED
+    assert first.status == second.status == InvestigationRun.Status.RUNNING
     assert provider_calls == 2
     assert run.claim_register == []
     assert run.steps.count() == 1
-    assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "no_progress_loop"
+    assert run.clarification_reason == ""
     assert [(call.status, call.error_code) for call in calls] == [
         (InvestigationModelCall.Status.SUCCESS, ""),
         (InvestigationModelCall.Status.SUCCESS, ""),
@@ -2138,16 +2131,16 @@ def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
             planner=same_synthesis,
             verifier=failing_verifier,
         )
-        for _ in range(4)
+        for _ in range(5)
     ]
     run.refresh_from_db()
 
-    assert [item.status for item in results[:3]] == [InvestigationRun.Status.RUNNING] * 3
-    assert results[3].status == InvestigationRun.Status.FAILED
+    assert [item.status for item in results[:4]] == [InvestigationRun.Status.RUNNING] * 4
+    assert results[4].status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
     assert run.clarification_payload["repeat_count"] == 3
-    assert run.verifier_reports.count() == 3
+    assert run.verifier_reports.count() == 4
     assert run.repair_cycles == 0
 
 
@@ -2692,13 +2685,13 @@ def test_completion_and_timeout_floors_prevent_provider_attempt(
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     if capacity_kind == "completion":
-        protected = 32_768 if role == "planner" else 0
+        protected = 28_884 if role == "planner" else 0
         usage = dict(run.usage)
         usage["output_tokens"] = run.budget_limits["max_output_tokens"] - protected - 8_191
         run.usage = usage
         run.save(update_fields=["usage", "updated_at"])
     else:
-        protected = 1_200 if role == "planner" else 0
+        protected = 900 if role == "planner" else 0
         floor = 60 if role == "planner" else 75
         elapsed = run.budget_limits["max_runtime_seconds"] - protected - floor + 1
         InvestigationRun.objects.filter(pk=run.pk).update(
@@ -2890,7 +2883,7 @@ def test_frozen_tool_parameter_contract_cannot_change_after_run_start(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="frozen-tool-contract"
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert run.execution_snapshot["tools"]["schema_version"] == "vs1-tool-schema-v2"
+    assert run.execution_snapshot["tools"]["schema_version"] == "vs1-tool-schema-v3"
     assert run.execution_snapshot["tools"]["parameter_contracts"] == TOOL_PARAMETER_CONTRACTS
     frozen = json.loads(json.dumps(run.execution_snapshot))
     frozen["tools"]["parameter_contracts"]["compare_groups"]["required"] = ["source_id"]
