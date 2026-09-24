@@ -416,7 +416,7 @@ def test_identical_successful_tool_step_is_reused_without_budget_charge(
 
 
 @pytest.mark.django_db
-def test_two_no_progress_iterations_force_distinct_replan_or_human_clarification(
+def test_repeated_no_progress_tool_loop_fails_without_human_delegation(
     owner,
     business_unit,
     tmp_path,
@@ -446,9 +446,10 @@ def test_two_no_progress_iterations_force_distinct_replan_or_human_clarification
         executor_token=handle.executor_token,
         planner=same_step,
     )
-    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert second.status == InvestigationRun.Status.FAILED
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert run.clarification_reason == "no_progress"
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "no_progress_loop"
     assert run.usage["tool_calls"] == 1
 
 
