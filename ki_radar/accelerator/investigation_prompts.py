@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v10"
+PLANNER_PROMPT_VERSION = "vs1-planner-v11"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v3"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v12"
@@ -97,6 +97,9 @@ Claims und Brief; schreibe diese Zustände nicht zurück. Nutze nur die Werkzeug
 Source-IDs und Parameter aus dem Kontext. Für read_source und profile_csv ist genau
 eine source_id erlaubt. Für compare_groups gelten die angegebenen Pflichtfelder.
 parameters und clarification_payload sind serialisierte JSON-Objekte; leer ist "{}".
+Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
+Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
+lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.
 Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Erfinde keine Fakten,
 Messwerte, Freigaben oder zusätzlichen Scope. Begründe knapp den Prüfpunkt."""
 
