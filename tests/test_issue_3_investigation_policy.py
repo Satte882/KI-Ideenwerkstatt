@@ -205,6 +205,37 @@ def test_05_external_critical_unknown_requires_human_optional_unknown_can_still_
     assert result.outcome == PolicyOutcome.READY_FOR_DECISION
 
 
+def test_open_solution_option_is_a_candidate_not_an_unresolved_unknown():
+    open_option = PolicyCheck(
+        claim_id="status-quo",
+        area="solution_options",
+        claim_kind="option",
+        critical=False,
+        status="open",
+        metadata={"non_ai": True, "status_quo": True},
+    )
+    checks = (*base_checks(), open_option)
+    result = evaluate_policy(ready_state(checks=checks))
+
+    assert result.outcome == PolicyOutcome.READY_FOR_DECISION
+    assert "optional_unknown_unjustified:status-quo" not in result.blockers
+
+
+def test_open_non_option_still_requires_explicit_optional_unknown_justification():
+    open_context = PolicyCheck(
+        claim_id="optional-context",
+        area="constraints_risks",
+        claim_kind="context",
+        critical=False,
+        status="open",
+    )
+    checks = (*base_checks(), open_context)
+    result = evaluate_policy(ready_state(checks=checks))
+
+    assert result.outcome != PolicyOutcome.READY_FOR_DECISION
+    assert "optional_unknown_unjustified:optional-context" in result.blockers
+
+
 def test_06_value_tradeoff_requires_human_instead_of_autonomous_weighting():
     result = evaluate_policy(ready_state(verifier=None, value_tradeoff=True))
     assert result.outcome == PolicyOutcome.HUMAN_CLARIFICATION

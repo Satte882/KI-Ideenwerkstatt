@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-POLICY_VERSION = "vs1-stop-policy-v1"
+POLICY_VERSION = "vs1-stop-policy-v2"
 
 REQUIRED_AREAS = frozenset(
     {
@@ -110,6 +110,12 @@ def _semantic_contract_blockers(checks: tuple[PolicyCheck, ...]) -> list[str]:
         check.area
         for check in checks
         if check.status in {"supported", "refuted", "conflicting"}
+        or (
+            check.area == "solution_options"
+            and check.claim_kind == "option"
+            and check.status == "open"
+            and not check.used_as_premise
+        )
         or (not check.critical and check.optional_unknown_justified)
     }
     for area in sorted(REQUIRED_AREAS - handled_areas):
@@ -160,8 +166,14 @@ def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
             critical_ids.add(check.claim_id)
             if check.status in {"open", "conflicting"}:
                 blockers.append(f"critical_unresolved:{check.claim_id}")
-        elif check.status == "open" and not (
-            check.optional_unknown_justified and check.optional_unknown_verified
+        elif (
+            check.status == "open"
+            and not (
+                check.area == "solution_options"
+                and check.claim_kind == "option"
+                and not check.used_as_premise
+            )
+            and not (check.optional_unknown_justified and check.optional_unknown_verified)
         ):
             blockers.append(f"optional_unknown_unjustified:{check.claim_id}")
 
