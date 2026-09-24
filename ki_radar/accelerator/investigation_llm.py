@@ -29,7 +29,7 @@ from .investigation_models import (
     InvestigationStep,
     InvestigationVerifierReport,
 )
-from .investigation_policy import POLICY_VERSION
+from .investigation_policy import POLICY_VERSION, is_evidence_claim
 from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
@@ -385,6 +385,7 @@ def _pending_synthesis_investigation(run: InvestigationRun) -> dict[str, str]:
 def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     sources = list_sources(actor=actor, snapshot_id=run.source_snapshot_id)
     pending_investigation = _pending_synthesis_investigation(run)
+    latest_verifier = run.verifier_reports.order_by("-revision").first()
     previous_call = run.model_calls.order_by("-created_at").first()
     last_planner_error: dict[str, str] = {}
     if (
@@ -450,6 +451,17 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
         "usage": run.usage,
         "budget_limits": run.budget_limits,
         "policy_blockers": list(evaluate_run_policy(run).blockers),
+        "latest_verifier": (
+            {
+                "success": latest_verifier.success,
+                "findings": latest_verifier.findings,
+                "source_references_valid": latest_verifier.source_references_valid,
+                "checked_critical_claims": latest_verifier.checked_critical_claims,
+                "bound_hashes": latest_verifier.bound_hashes,
+            }
+            if latest_verifier is not None
+            else {}
+        ),
     }
 
 
@@ -1173,7 +1185,12 @@ def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -
 
 
 def _critical_claim_ids(run: InvestigationRun) -> set[str]:
-    return {str(item["claim_id"]) for item in run.claim_register if bool(item.get("critical"))}
+    return {
+        str(item["claim_id"])
+        for item in run.claim_register
+        if bool(item.get("critical"))
+        and is_evidence_claim(str(item.get("area") or ""), str(item.get("claim_kind") or ""))
+    }
 
 
 def _record_verifier_report(
@@ -1191,6 +1208,10 @@ def _record_verifier_report(
             bool(item.get("references_valid", False))
             for item in run.claim_register
             if item.get("status") in {"supported", "refuted"}
+            and is_evidence_claim(
+                str(item.get("area") or ""),
+                str(item.get("claim_kind") or ""),
+            )
         )
         success = (
             critical_findings == 0

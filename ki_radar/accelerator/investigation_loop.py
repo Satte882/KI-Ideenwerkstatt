@@ -34,6 +34,7 @@ from .investigation_runtime import (
     locked_run,
     mark_counterevidence_processed,
     normalize_tool_parameters,
+    pre_verifier_blockers_for_run,
     set_source_relevance,
 )
 
@@ -48,6 +49,7 @@ TRANSIENT_PROVIDER_CODES = frozenset(
     }
 )
 PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)
+MAX_PRE_VERIFIER_PACKAGE_ATTEMPTS = 2  # initial package + one technical retry
 
 
 @dataclass(frozen=True)
@@ -151,6 +153,46 @@ def _set_failed_planner_contract(
     return run
 
 
+@transaction.atomic
+def _set_failed_runtime(
+    *,
+    actor,
+    run_id,
+    executor_token,
+    reason: str,
+    error_code: str,
+    impact: str,
+    required_action: str,
+    details: Mapping[str, Any] | None = None,
+) -> InvestigationRun:
+    run = locked_run(actor=actor, run_id=run_id)
+    assert_active(run)
+    assert_executor(run, executor_token)
+    run.status = InvestigationRun.Status.FAILED
+    run.clarification_reason = reason
+    run.clarification_payload = {
+        "error_code": error_code,
+        "impact": impact,
+        "required_action": required_action,
+        **dict(details or {}),
+    }
+    run.finished_at = timezone.now()
+    run.executor_generation += 1
+    run.executor_token = uuid.uuid4()
+    run.save(
+        update_fields=[
+            "status",
+            "clarification_reason",
+            "clarification_payload",
+            "finished_at",
+            "executor_generation",
+            "executor_token",
+            "updated_at",
+        ]
+    )
+    return run
+
+
 def _planner_contract_error(
     run: InvestigationRun,
     action: PlannerAction,
@@ -161,7 +203,7 @@ def _planner_contract_error(
         if pending_investigation
         else {"synthesize", "investigate", "clarify"}
         if investigation_evidence_complete(run)
-        else {"tool", "verify", "clarify"}
+        else {"tool", "clarify"}
     )
     if action.action not in allowed_actions:
         return InvestigationRunError(
@@ -196,7 +238,9 @@ def _planner_contract_error(
             code="invalid_progress_kind",
         )
     if action.action == "clarify" and action.clarification_reason not in {
-        item.value for item in ReasonCode
+        ReasonCode.MISSING_EVIDENCE.value,
+        ReasonCode.PERMISSION_OR_SCOPE.value,
+        ReasonCode.VALUE_TRADEOFF.value,
     }:
         return InvestigationRunError(
             "Planner lieferte einen ungültigen Klärungsgrund.",
@@ -216,7 +260,7 @@ def _provider_failures(run: InvestigationRun) -> int:
     return failures
 
 
-def _synthesis_attempts_since_verification(run: InvestigationRun) -> int:
+def _pre_verifier_package_attempts_since_verification(run: InvestigationRun) -> int:
     calls = run.model_calls.filter(role="synthesizer", status="success")
     latest_report = run.verifier_reports.order_by("-created_at").first()
     if latest_report is not None:
@@ -245,23 +289,20 @@ def _handle_provider_failure(
             run,
             technical_failure=True,
             retry_available=True,
-            replan_available=True,
         )
         return AdvanceResult(run.pk, run.status, decision)
 
-    waiting = _set_waiting_human(
+    failed = _set_failed_runtime(
         actor=actor,
         run_id=run.pk,
         executor_token=executor_token,
         reason=ReasonCode.TECHNICAL_FAILURE.value,
-        payload={
-            "error_code": error.code,
-            "attempts": failures,
-            "impact": "Die Untersuchung ist technisch unvollständig.",
-            "required_action": "Technische Fortsetzungs-/Betriebsentscheidung.",
-        },
+        error_code=error.code,
+        impact="Die Untersuchung ist wegen eines technischen Providerfehlers beendet.",
+        required_action="Provider-/Transportfehler technisch prüfen.",
+        details={"attempts": failures},
     )
-    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+    return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
 
 def _handle_budget_exhaustion(
@@ -287,7 +328,7 @@ def _handle_budget_exhaustion(
 
 def _replan_is_distinct(run: InvestigationRun, action: PlannerAction) -> bool:
     if action.action != "tool":
-        return action.action in {"verify", "clarify", "investigate"}
+        return action.action in {"clarify", "investigate"}
     try:
         params = normalize_tool_parameters(action.tool_name, action.parameters)
     except InvestigationRunError:
@@ -422,11 +463,7 @@ def advance_investigation(
         return AdvanceResult(
             run.pk,
             run.status,
-            evaluate_run_policy(
-                run,
-                allowed_action_available=True,
-                replan_available=True,
-            ),
+            evaluate_run_policy(run),
         )
 
     if (
@@ -434,17 +471,18 @@ def advance_investigation(
         and run.no_progress_streak >= 1
         and not _replan_is_distinct(run, action)
     ):
-        waiting = _set_waiting_human(
+        failed = _set_failed_runtime(
             actor=actor,
             run_id=run.pk,
             executor_token=executor_token,
-            reason=ReasonCode.NO_PROGRESS.value,
-            payload={
-                "impact": (
-                    "Der letzte Werkzeugschritt brachte keine neue Evidenzabdeckung; "
-                    "die nächste Aktion würde ihn ohne Erkenntnisgewinn wiederholen."
-                ),
-                "required_action": "Neue Evidenz, Scope-/Zugriffsentscheidung oder Abbruch.",
+            reason=ReasonCode.TECHNICAL_FAILURE.value,
+            error_code="no_progress_loop",
+            impact=(
+                "Der Agent würde einen bereits erfolglosen Werkzeugschritt ohne "
+                "neuen Erkenntnisgewinn wiederholen."
+            ),
+            required_action="Planner-/Loop-Verhalten technisch prüfen.",
+            details={
                 "recent_steps": [
                     {
                         "sequence": step.sequence,
@@ -452,10 +490,10 @@ def advance_investigation(
                         "target_claim_id": step.target_claim_id,
                     }
                     for step in run.steps.order_by("-sequence")[:2]
-                ],
+                ]
             },
         )
-        return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
     if action.action == "tool":
         step = execute_tool_step(
@@ -480,49 +518,44 @@ def advance_investigation(
         return AdvanceResult(
             run.pk,
             run.status,
-            evaluate_run_policy(
-                run,
-                allowed_action_available=True,
-                replan_available=True,
-            ),
+            evaluate_run_policy(run),
             step.pk,
         )
 
-    if action.action in {"verify", "synthesize"}:
-        pre = evaluate_run_policy(run)
-        non_verifier_blockers = [
-            blocker for blocker in pre.blockers if not blocker.startswith("verifier_")
-        ]
-        if non_verifier_blockers:
-            if action.action == "synthesize":
-                if _synthesis_attempts_since_verification(run) >= 2:
-                    waiting = _set_waiting_human(
-                        actor=actor,
-                        run_id=run.pk,
-                        executor_token=executor_token,
-                        reason=ReasonCode.TECHNICAL_FAILURE.value,
-                        payload={
-                            "error_code": "synthesis_incomplete",
-                            "blockers": non_verifier_blockers,
-                            "impact": "Die Synthese erfüllt den Entscheidungsvertrag nicht.",
-                            "required_action": "Synthese-/Vertragsfehler technisch prüfen.",
-                        },
-                    )
-                    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
-                return AdvanceResult(
-                    run.pk,
-                    run.status,
-                    evaluate_run_policy(
-                        run,
-                        allowed_action_available=True,
-                        replan_available=True,
+    if action.action == "synthesize":
+        pre_blockers = pre_verifier_blockers_for_run(run)
+        if pre_blockers:
+            attempts = _pre_verifier_package_attempts_since_verification(run)
+            if attempts >= MAX_PRE_VERIFIER_PACKAGE_ATTEMPTS:
+                failed = _set_failed_runtime(
+                    actor=actor,
+                    run_id=run.pk,
+                    executor_token=executor_token,
+                    reason=ReasonCode.TECHNICAL_FAILURE.value,
+                    error_code="pre_verifier_contract_failed",
+                    impact=(
+                        "Die Synthese erfüllt den deterministischen Package-Vertrag "
+                        "auch nach einem technischen Retry nicht."
                     ),
+                    required_action="Synthese-/Pre-Verifier-Vertrag technisch prüfen.",
+                    details={
+                        "attempts": attempts,
+                        "blockers": list(pre_blockers),
+                    },
                 )
-            raise InvestigationRunError(
-                "Verifier darf erst nach Bearbeitung der übrigen READY-Bedingungen laufen.",
-                code="verification_premature",
+                return AdvanceResult(
+                    failed.pk,
+                    failed.status,
+                    evaluate_run_policy(failed),
+                )
+            return AdvanceResult(
+                run.pk,
+                run.status,
+                evaluate_run_policy(run),
             )
 
+        # The verifier is runtime-owned. A complete technical package triggers it
+        # automatically; the synthesizer never requests verification.
         try:
             report = verifier(
                 actor=actor,
@@ -569,41 +602,46 @@ def advance_investigation(
             )
             return AdvanceResult(ready.pk, ready.status, decision)
 
-        if report.critical_findings:
+        if not report.success:
             if run.repair_cycles < run.budget_limits["max_repair_cycles"]:
                 with transaction.atomic():
                     locked = locked_run(actor=actor, run_id=run.pk)
                     assert_executor(locked, executor_token)
                     locked.repair_cycles += 1
                     locked.save(update_fields=["repair_cycles", "updated_at"])
+                repaired_run = InvestigationRun.objects.get(pk=run.pk)
                 return AdvanceResult(
-                    run.pk,
+                    repaired_run.pk,
                     InvestigationRun.Status.RUNNING,
-                    evaluate_run_policy(
-                        InvestigationRun.objects.get(pk=run.pk),
-                        allowed_action_available=True,
-                        replan_available=True,
-                    ),
+                    evaluate_run_policy(repaired_run),
                 )
 
-            with transaction.atomic():
-                locked = locked_run(actor=actor, run_id=run.pk)
-                assert_executor(locked, executor_token)
-                locked.repair_cycles = locked.budget_limits["max_repair_cycles"] + 1
-                locked.save(update_fields=["repair_cycles", "updated_at"])
+            failed = _set_failed_runtime(
+                actor=actor,
+                run_id=run.pk,
+                executor_token=executor_token,
+                reason=ReasonCode.VERIFICATION_FAILED.value,
+                error_code="verification_failed",
+                impact=(
+                    "Das Decision Package bleibt nach dem einzigen Repair-Zyklus "
+                    "nicht ausreichend verifiziert."
+                ),
+                required_action="Verifier-/Package-Vertrag technisch prüfen.",
+                details={"findings": report.findings},
+            )
+            return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
-        waiting = _set_waiting_human(
+        failed = _set_failed_runtime(
             actor=actor,
             run_id=run.pk,
             executor_token=executor_token,
-            reason=ReasonCode.VERIFICATION_FAILED.value,
-            payload={
-                "findings": report.findings,
-                "impact": "Die Entscheidungsgrundlage ist nicht ausreichend verifiziert.",
-                "required_action": "Kritische Findings fachlich/technisch klären.",
-            },
+            reason=ReasonCode.TECHNICAL_FAILURE.value,
+            error_code="post_verifier_contract_failed",
+            impact="Der Verifier meldet Erfolg, aber READY bleibt deterministisch blockiert.",
+            required_action="Runtime-/Policy-Invarianten technisch prüfen.",
+            details={"blockers": list(decision.blockers)},
         )
-        return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
     if action.action == "clarify":
         reason = action.clarification_reason or ReasonCode.MISSING_EVIDENCE.value
@@ -647,15 +685,13 @@ def run_until_boundary(
             return last
 
     run = InvestigationRun.objects.get(pk=run_id)
-    waiting = _set_waiting_human(
+    failed = _set_failed_runtime(
         actor=actor,
         run_id=run.pk,
         executor_token=executor_token,
         reason=ReasonCode.TECHNICAL_FAILURE.value,
-        payload={
-            "error_code": "iteration_guard",
-            "impact": "Die technische Iterationsgrenze wurde ohne terminalen Zustand erreicht.",
-            "required_action": "Run prüfen und gezielt fortsetzen oder abbrechen.",
-        },
+        error_code="iteration_guard",
+        impact="Die technische Iterationsgrenze wurde ohne terminalen Zustand erreicht.",
+        required_action="Planner-/Loop-Verhalten technisch prüfen.",
     )
-    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+    return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))

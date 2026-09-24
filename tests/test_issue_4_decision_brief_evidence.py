@@ -46,10 +46,13 @@ from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
     StartInvestigationRequest,
     abort_investigation,
+    apply_planner_state,
     canonical_json,
     content_hash,
     evaluate_run_policy,
     execute_tool_step,
+    pre_verifier_blockers_for_run,
+    set_source_relevance,
     start_investigation,
 )
 from ki_radar.accelerator.investigation_tools import (
@@ -533,6 +536,140 @@ def test_variant_b_missing_denominator_stays_human_clarification(
     assert decision.outcome == PolicyOutcome.HUMAN_CLARIFICATION
     assert decision.reason_code == ReasonCode.MISSING_EVIDENCE
     assert decision.outcome != PolicyOutcome.READY_FOR_DECISION
+
+
+@pytest.mark.django_db
+def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="A23 regression")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="a23-validation-regression",
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    calculation = execute_tool_step(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="hyp-a",
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        tool_name="search_sources",
+        parameters={"query": "counter-never-present", "cursor": 0, "limit": 20},
+        target_claim_id="hyp-b",
+    )
+    ref = source_reference(source, row=1, column="group")
+    claims = (
+        {
+            "claim_id": "problem",
+            "area": "problem_context",
+            "claim_kind": "fact",
+            "critical": True,
+            "status": "supported",
+            "evidence_refs": [ref],
+        },
+        {
+            "claim_id": "hyp-a",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "critical": True,
+            "status": "supported",
+            "evidence_refs": [ref],
+        },
+        {
+            "claim_id": "hyp-b",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "critical": True,
+            "status": "refuted",
+            "counterevidence_refs": [ref],
+        },
+        {
+            "claim_id": "recommendation",
+            "area": "recommendation_validation",
+            "claim_kind": "recommendation",
+            "critical": True,
+            "status": "supported",
+            "evidence_refs": [ref],
+        },
+        {
+            "claim_id": "candidate-option",
+            "area": "solution_options",
+            "claim_kind": "option",
+            "critical": True,
+            "status": "open",
+        },
+        {
+            "claim_id": "future-validation",
+            "area": "recommendation_validation",
+            "claim_kind": "validation",
+            "critical": True,
+            "status": "open",
+        },
+    )
+    brief = full_brief(
+        run=run,
+        source=source,
+        result_id=calculation.result_ref["tool_result_id"],
+    )
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        claim_register=claims,
+        brief_payload=brief,
+        progress_kind="evidence",
+        progress_payload={"coverage_change": True},
+    )
+    set_source_relevance(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        relevance={
+            str(source.pk): {
+                "relevant": True,
+                "reason": "CSV enthält Problem-, Hypothesen- und Berechnungsbelege.",
+                "reference": ref,
+            }
+        },
+    )
+    run.refresh_from_db()
+
+    assert pre_verifier_blockers_for_run(run) == ()
+    decision = evaluate_run_policy(run)
+    assert decision.outcome == PolicyOutcome.CONTINUE
+    assert decision.blockers == ("verifier_missing",)
+    assert brief["validation_step"]["step"]
+    assert "critical_unresolved:candidate-option" not in decision.blockers
+    assert "critical_unresolved:future-validation" not in decision.blockers
 
 
 @pytest.mark.django_db

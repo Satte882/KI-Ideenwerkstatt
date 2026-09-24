@@ -35,8 +35,10 @@ from .investigation_policy import (
     PolicyCheck,
     PolicyDecision,
     PolicyState,
+    ReasonCode,
     VerifierState,
     evaluate_policy,
+    pre_verifier_blockers,
 )
 from .investigation_prompts import (
     PLANNER_INSTRUCTION,
@@ -66,7 +68,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v10"
+LOOP_VERSION = "vs1-agent-loop-v11"
 BUDGET_VERSION = "vs1-budget-v5"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -966,8 +968,6 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
         ),
         "change_guard_valid": True,
         "used_as_premise": bool(raw.get("used_as_premise")),
-        "optional_unknown_justified": bool(raw.get("optional_unknown_justified")),
-        "optional_unknown_verified": bool(raw.get("optional_unknown_verified")),
         "metadata": dict(raw.get("metadata") or {}),
     }
 
@@ -1678,8 +1678,6 @@ def policy_checks(run: InvestigationRun) -> tuple[PolicyCheck, ...]:
             references_valid=bool(item.get("references_valid", False)),
             change_guard_valid=bool(item.get("change_guard_valid", True)),
             used_as_premise=bool(item.get("used_as_premise")),
-            optional_unknown_justified=bool(item.get("optional_unknown_justified")),
-            optional_unknown_verified=bool(item.get("optional_unknown_verified")),
             metadata=dict(item.get("metadata") or {}),
         )
         for item in run.claim_register
@@ -1702,13 +1700,11 @@ def latest_verifier_state(run: InvestigationRun) -> VerifierState | None:
 def policy_state_for_run(
     run: InvestigationRun,
     *,
-    allowed_action_available: bool = False,
     external_critical_gap: bool = False,
     permission_or_scope_block: bool = False,
     value_tradeoff: bool = False,
     technical_failure: bool = False,
     retry_available: bool = False,
-    replan_available: bool = False,
 ) -> PolicyState:
     return PolicyState(
         checks=policy_checks(run),
@@ -1725,15 +1721,17 @@ def policy_state_for_run(
         brief_hash=run.brief_hash,
         brief_blockers=decision_brief_blockers(run),
         verifier=latest_verifier_state(run),
-        allowed_action_available=allowed_action_available,
         external_critical_gap=external_critical_gap,
         permission_or_scope_block=permission_or_scope_block,
         value_tradeoff=value_tradeoff,
         budget_exhausted=budget_exhausted(run),
-        technical_failure=technical_failure,
+        technical_failure=technical_failure
+        or (
+            run.status == InvestigationRun.Status.FAILED
+            and run.clarification_reason == ReasonCode.TECHNICAL_FAILURE.value
+        ),
         retry_available=retry_available,
         no_progress_streak=run.no_progress_streak,
-        replan_available=replan_available,
         repair_available=run.repair_cycles < run.budget_limits["max_repair_cycles"],
         aborted=run.status == InvestigationRun.Status.ABORTED,
     )
@@ -1741,6 +1739,11 @@ def policy_state_for_run(
 
 def evaluate_run_policy(run: InvestigationRun, **kwargs) -> PolicyDecision:
     return evaluate_policy(policy_state_for_run(run, **kwargs))
+
+
+def pre_verifier_blockers_for_run(run: InvestigationRun) -> tuple[str, ...]:
+    """Return the exact deterministic contract that gates automatic verification."""
+    return pre_verifier_blockers(policy_state_for_run(run))
 
 
 @transaction.atomic
