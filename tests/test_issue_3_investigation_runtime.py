@@ -716,3 +716,45 @@ def test_planner_decodes_closed_schema_json_fields_without_changing_action_seman
     assert action.brief_payload is None
     assert action.source_relevance == {}
     assert action.progress_payload == {}
+
+
+@pytest.mark.django_db
+def test_internal_fixed_route_boundary_is_accepted_by_runtime(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="Fixed route boundary",
+    )
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(
+        owner=owner,
+        process=process,
+        root=tmp_path,
+    )
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "fixed-route-boundary"),
+    )
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: empty_action(
+            action="clarify",
+            clarification_reason="fixed_route_boundary",
+            clarification_payload={
+                "impact": "Die feste Kontrollstrecke ist ausgeschöpft.",
+                "required_action": "An der Fixed-Route-Grenze stoppen.",
+            },
+        ),
+    )
+
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert run.clarification_reason == "fixed_route_boundary"
+    assert run.clarification_payload["required_action"] == "An der Fixed-Route-Grenze stoppen."
