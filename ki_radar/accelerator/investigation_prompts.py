@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v12"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v4"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v3"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v13"
+PLANNER_PROMPT_VERSION = "vs1-planner-v13"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v5"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
-VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
+VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
 PLANNER_TOOL_NAMES = (
     "list_sources",
@@ -156,7 +156,7 @@ def planner_response_format() -> dict:
             "schema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["tool", "clarify"]},
+                    "action": {"type": "string", "enum": ["tool", "synthesize", "clarify"]},
                     "target_claim_id": {"type": "string"},
                     "expected_discriminating_finding": {"type": "string"},
                     "rationale": {"type": "string"},
