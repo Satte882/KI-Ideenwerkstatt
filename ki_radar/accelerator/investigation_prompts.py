@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v11"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v3"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v2"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v12"
+PLANNER_PROMPT_VERSION = "vs1-planner-v12"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v4"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v3"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v13"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v4"
 
@@ -46,20 +46,23 @@ TOOL_PARAMETER_CONTRACTS = {
     },
 }
 
-_SYNTHESIS_DOMAIN_RULES = """Jeder Eintrag in claim_register ist ein Objekt mit einer
-nichtleeren claim_id (maximal 100 Zeichen), area aus
-problem_context|competing_hypotheses|solution_options|constraints_risks|
-recommendation_validation, einem nichtleeren claim_kind und status aus
-open|supported|refuted|conflicting. Nutze evidence_refs/counterevidence_refs nur als Arrays
-reproduzierbarer Referenzobjekte; kritische bestehende Claims dürfen nicht gelöscht,
-umbenannt oder herabgestuft werden.
-Führe mindestens zwei konkurrierende Hypothesen als eigene Claims mit
-area=competing_hypotheses und claim_kind=hypothesis. Options-Claims verwenden
-area=solution_options, claim_kind=option und metadata.non_ai bzw.
-metadata.status_quo als boolesche Kennzeichen. Empfehlung und Validierung sind
-eigene Claims mit area=recommendation_validation und claim_kind=recommendation
-bzw. validation. Ein unbelegter Vorschlag bleibt offen und darf nicht als
-bestätigte Tatsache verwendet werden.
+_SYNTHESIS_DOMAIN_RULES = """claim_register enthält ausschließlich Evidence Claims:
+Aussagen, die wahr, falsch, widersprüchlich oder offen sein können und dafür Evidenz
+benötigen. Jeder Eintrag ist ein Objekt mit nichtleerer claim_id (maximal 100 Zeichen),
+area aus problem_context|competing_hypotheses|constraints_risks|recommendation_validation,
+einem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.
+Nutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte;
+kritische bestehende Evidence Claims dürfen nicht gelöscht, umbenannt oder herabgestuft
+werden. Führe mindestens zwei konkurrierende Hypothesen als eigene Evidence Claims mit
+area=competing_hypotheses und claim_kind=hypothesis.
+
+Solution Options sind Kandidaten und gehören ausschließlich in brief_payload.options, nicht
+in claim_register. Der zukünftige Validation Plan gehört ausschließlich in
+brief_payload.validation_step und ist kein Evidence Claim. Dass ein Pilot oder Messschritt
+noch nicht ausgeführt wurde, ist daher kein Evidenzmangel. Eine Empfehlung kann als
+Evidence Claim geführt werden, wenn ihre Evidenzbasis explizit referenziert wird.
+Unbekannte Punkte werden ehrlich als offen bzw. in risks_unknowns ausgewiesen und dürfen
+nicht als bestätigte Tatsachen oder Empfehlungspremissen verwendet werden.
 
 Wenn der Run einen vollständigen Decision Brief verlangt, pflege brief_payload als prüfbaren
 Arbeitsstand mit genau diesen fachlichen Bausteinen: question_scope, problem mit echten
@@ -101,7 +104,9 @@ Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesize
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
 lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.
 Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Erfinde keine Fakten,
-Messwerte, Freigaben oder zusätzlichen Scope. Begründe knapp den Prüfpunkt."""
+Messwerte, Freigaben oder zusätzlichen Scope. Nutze clarification nur für eine echte externe
+entscheidungskritische Evidenzlücke, Permission/Scope oder einen Value-Trade-off; technische
+Fehler, Budget und Verifikation gehören dem Server. Begründe knapp den Prüfpunkt."""
 
 SYNTHESIS_INSTRUCTION = (
     """Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf
@@ -127,13 +132,19 @@ investigation_request={} und clarification_payload auf {}.
     + _SYNTHESIS_DOMAIN_RULES
 )
 
-VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe Entscheidungsfrage,
-fünf Pflichtbereiche, Claims, reale Quellen-/Analysefundstellen, Gegenbelege, Empfehlung
-und denselben versionierten Decision-Brief-Stand. Prüfe insbesondere, ob Aussagen als
-bestätigte Daten, berichtete Meinung, Hypothese oder unbekannt korrekt getrennt sind und ob
-Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen tragen. Liefere
-strukturierte Findings statt einer bloßen Freigabe. Erfinde keine Evidenz und triff keine
-fachliche Freigabe. Verwende nur den rekonstruierbaren Arbeitsstand."""
+VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe
+Entscheidungsfrage, Evidence Claims, reale Quellen-/Analysefundstellen, Gegenbelege,
+Empfehlung und denselben versionierten Decision-Brief-Stand. Solution Options sind
+Kandidaten, keine Evidence Claims; ein zukünftiger validation_step ist ein konkreter
+Messplan und muss noch nicht ausgeführt sein. Fordere daher weder Options-Claims noch
+Evidenz für die bereits erfolgte Durchführung des Validation Plans.
+
+Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
+unbekannt korrekt getrennt sind, ob die Empfehlung durch Evidenz getragen wird und ob
+Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten. Berücksichtige
+Gegenbelege und relevante offene Punkte. Liefere strukturierte Findings statt einer bloßen
+Freigabe. Erfinde keine Evidenz und triff keine fachliche Freigabe. Verwende nur den
+rekonstruierbaren Arbeitsstand."""
 
 
 def planner_response_format() -> dict:
@@ -167,10 +178,8 @@ def planner_response_format() -> dict:
                             "missing_evidence",
                             "permission_or_scope",
                             "value_tradeoff",
-                            "budget_exhausted",
-                            "no_progress",
-                            "verification_failed",
-                            "technical_failure",
+                            "permission_or_scope",
+                            "value_tradeoff",
                         ],
                     },
                     "clarification_payload": {
