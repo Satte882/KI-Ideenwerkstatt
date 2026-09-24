@@ -1208,6 +1208,10 @@ def _record_verifier_report(
             bool(item.get("references_valid", False))
             for item in run.claim_register
             if item.get("status") in {"supported", "refuted"}
+            and is_evidence_claim(
+                str(item.get("area") or ""),
+                str(item.get("claim_kind") or ""),
+            )
         )
         success = (
             critical_findings == 0
