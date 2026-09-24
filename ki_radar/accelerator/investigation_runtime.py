@@ -68,8 +68,8 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v11"
-BUDGET_VERSION = "vs1-budget-v5"
+LOOP_VERSION = "vs1-agent-loop-v12"
+BUDGET_VERSION = "vs1-budget-v6"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
 # not live provider metadata: changes require a deliberate transport revision.
@@ -99,26 +99,24 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 }
 
 DEFAULT_BUDGET = {
-    "max_tool_calls": 12,
-    # Up to 8 investigation calls, plus one synthesis per allowed repair cycle
-    # (initial package and repair) and two verifier rounds
-    # (initial verification + one repair cycle), each verifier round allowing
-    # the existing two-call read-and-recheck path.
-    "max_model_calls": 14,
-    "max_verifier_calls": 4,
-    # The pinned endpoint took over five minutes for a 15k-token structured
-    # answer. Give each of 14 possible calls five minutes on average, with four such
-    # shares protected for verification. Calls still use the remaining-time
-    # calculation and the run/campaign safety limits remain independent.
-    "max_runtime_seconds": 14 * 300,
-    "max_input_tokens": 105_000,
-    "max_output_tokens": 131_072,
-    "verifier_reserved_model_calls": 4,
+    # Generous global safety frame. Investigation, synthesis and verification
+    # share this budget instead of being forced through narrow phase-specific
+    # convergence limits.
+    "max_tool_calls": 40,
+    "max_model_calls": 40,
+    # Verifier-specific counters remain for observability and hard runaway safety,
+    # but are no tighter than the global model/tool frame.
+    "max_verifier_calls": 40,
+    "max_runtime_seconds": 40 * 300,
+    "max_input_tokens": 400_000,
+    "max_output_tokens": 500_000,
+    # Keep enough headroom for an independent first review without reserving
+    # a complete multi-round verifier state machine.
+    "verifier_reserved_model_calls": 2,
     "verifier_reserved_input_tokens": 20_000,
-    "verifier_reserved_output_tokens": 4 * MIN_VERIFIER_COMPLETION_TOKENS,
-    "verifier_reserved_seconds": 4 * 300,
-    "max_verifier_reads": 12,
-    "max_repair_cycles": 1,
+    "verifier_reserved_output_tokens": 2 * MIN_VERIFIER_COMPLETION_TOKENS,
+    "verifier_reserved_seconds": 2 * 300,
+    "max_verifier_reads": 40,
 }
 USAGE_KEYS = (
     "tool_calls",
@@ -487,13 +485,9 @@ def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
 
 
 def _remaining_synthesis_reserve(run: InvestigationRun) -> dict[str, int]:
-    """Reserve the normal per-call share for synthesis and a permitted repair.
-
-    This derives entirely from the frozen run budget and existing repair policy;
-    it adds no synthesis-only token, timeout, or transport limit.
-    """
+    """Reserve one normal model-call share so the planner can hand off to synthesis."""
     limits = run.budget_limits
-    calls = 1 + int(limits["max_repair_cycles"])
+    calls = 1
     total_calls = max(1, int(limits["max_model_calls"]))
 
     def proportional_share(total: int) -> int:
@@ -514,7 +508,7 @@ def budget_exhausted(
     usage = run.usage
     if elapsed_seconds(run) >= limits["max_runtime_seconds"]:
         return True
-    if usage["tool_calls"] >= limits["max_tool_calls"] and not investigation_evidence_complete(run):
+    if usage["tool_calls"] >= limits["max_tool_calls"]:
         return True
     if usage["model_calls"] >= limits["max_model_calls"]:
         return True
@@ -1732,7 +1726,7 @@ def policy_state_for_run(
         ),
         retry_available=retry_available,
         no_progress_streak=run.no_progress_streak,
-        repair_available=run.repair_cycles < run.budget_limits["max_repair_cycles"],
+        repair_available=True,
         aborted=run.status == InvestigationRun.Status.ABORTED,
     )
 
