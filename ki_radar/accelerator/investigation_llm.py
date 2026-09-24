@@ -69,7 +69,6 @@ from .investigation_runtime import (
     elapsed_seconds,
     evaluate_run_policy,
     execute_tool_step,
-    investigation_evidence_complete,
     locked_run,
     normalize_claim_register,
     normalize_tool_parameters,
@@ -428,13 +427,7 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             "detail": str(diagnostics.get("structured_contract_error") or "")[:250],
         }
     return {
-        "phase": (
-            "investigation"
-            if pending_investigation
-            else "synthesis"
-            if investigation_evidence_complete(run)
-            else "investigation"
-        ),
+        "phase": "investigation",
         "synthesis_investigation_request": pending_investigation,
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
@@ -498,7 +491,6 @@ def _investigation_context(actor, run: InvestigationRun) -> dict[str, Any]:
         context.pop(field)
     context["recent_steps"] = context["recent_steps"][:5]
     context["evidence_coverage"] = {
-        "complete": investigation_evidence_complete(run),
         "data_check_executed": run.data_check_executed,
         "counterevidence_search_executed": run.counterevidence_search_executed,
         "counterevidence_hits_processed": run.counterevidence_hits_processed,
