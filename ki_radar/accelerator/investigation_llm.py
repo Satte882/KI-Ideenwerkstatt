@@ -1367,4 +1367,3 @@ def request_verifier_report(
         run.refresh_from_db()
         context = _verifier_context(run, analysis_replays=analysis_replays)
         context["verifier_reads"] = list(verifier_reads)
-
