@@ -682,7 +682,7 @@ def test_planner_decodes_closed_schema_json_fields_without_changing_action_seman
     )
 
     assert action.parameters == {}
-    assert action.claim_register == ()
-    assert action.brief_payload == {}
+    assert action.claim_register is None
+    assert action.brief_payload is None
     assert action.source_relevance == {}
-    assert action.progress_payload == {"coverage_change": False}
+    assert action.progress_payload == {}

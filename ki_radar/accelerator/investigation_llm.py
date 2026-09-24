@@ -34,11 +34,15 @@ from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
+    SYNTHESIS_INSTRUCTION,
+    SYNTHESIS_PROMPT_VERSION,
+    SYNTHESIS_SCHEMA_VERSION,
     TOOL_PARAMETER_CONTRACTS,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
     VERIFIER_SCHEMA_VERSION,
     planner_response_format,
+    synthesis_response_format,
     verifier_response_format,
 )
 from .investigation_runtime import (
@@ -54,6 +58,7 @@ from .investigation_runtime import (
     MIN_VERIFIER_TIMEOUT_SECONDS,
     TOOL_SCHEMA_VERSION,
     InvestigationRunError,
+    _remaining_synthesis_reserve,
     _remaining_verifier_reserve,
     assert_active,
     assert_actor_can_edit_run,
@@ -130,111 +135,18 @@ def _decode_structured_field(
     return value
 
 
-def _validate_planner_transport_payload(payload: Mapping[str, Any]) -> None:
-    """Validate opaque JSON-string fields before a provider response becomes SUCCESS."""
+def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, Any]) -> None:
+    if payload.get("action") not in {"tool", "clarify"}:
+        raise InvestigationRunError("Ungültige Untersuchungsaktion.", code="invalid_planner_action")
     _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
-    _decode_structured_field(
-        payload, "claim_register", expected_type=(list, type(None)), default=None
-    )
-    _decode_structured_field(
-        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
-    )
-    _decode_structured_field(payload, "source_relevance", expected_type=Mapping, default={})
-    _decode_structured_field(payload, "progress_payload", expected_type=Mapping, default={})
     _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
-
-
-def _validate_planner_semantic_payload(
-    run: InvestigationRun,
-    payload: Mapping[str, Any],
-    *,
-    phase: str = "investigation",
-) -> None:
-    """Validate the persisted planner state contract before accepting a model response."""
-    _validate_planner_transport_payload(payload)
-    if phase == "synthesis":
-        if payload.get("action") not in {"synthesize", "clarify"}:
-            raise InvestigationRunError(
-                "Nach Abschluss der Exploration sind keine weiteren Werkzeuge erlaubt.",
-                code="invalid_planner_action",
-            )
-        if payload.get("action") == "synthesize":
-            if payload.get("tool_name") or _decode_structured_field(
-                payload, "parameters", expected_type=Mapping, default={}
-            ):
-                raise InvestigationRunError(
-                    "Eine Synthese darf kein Werkzeug anfordern.",
-                    code="invalid_planner_action",
-                )
-            for field in ("claim_register", "brief_payload", "source_relevance"):
-                value = _decode_structured_field(
-                    payload,
-                    field,
-                    expected_type=(list, Mapping, type(None)),
-                    default=None,
-                )
-                if not value:
-                    raise InvestigationRunError(
-                        f"Die Synthese benötigt einen vollständigen Wert für '{field}'.",
-                        code="invalid_response",
-                    )
-            relevance = _decode_structured_field(
-                payload, "source_relevance", expected_type=Mapping, default={}
-            )
-            source_ids = {
-                str(pk) for pk in run.source_snapshot.sources.values_list("pk", flat=True)
-            }
-            if set(relevance) != source_ids or any(
-                not isinstance(item, Mapping)
-                or not isinstance(item.get("relevant"), bool)
-                or not str(item.get("reason") or "").strip()
-                or not isinstance(item.get("reference"), Mapping)
-                or not reference_valid(run, item["reference"])
-                for item in relevance.values()
-            ):
-                raise InvestigationRunError(
-                    "Die Synthese benötigt gültige Relevanzbelege für alle Quellen.",
-                    code="invalid_source_relevance",
-                )
-    raw_claims = _decode_structured_field(
-        payload,
-        "claim_register",
-        expected_type=(list, type(None)),
-        default=None,
-    )
-    if raw_claims is not None:
-        previous_claim_ids = {item["claim_id"] for item in run.claim_register}
-        proposed_claim_ids = {
-            str(item.get("claim_id")) for item in raw_claims if isinstance(item, Mapping)
-        }
-        if missing_claim_ids := sorted(previous_claim_ids - proposed_claim_ids):
-            raise InvestigationRunError(
-                "Bestehende Claims dürfen nicht verschwinden; unverändert ist null: "
-                + ", ".join(missing_claim_ids),
-                code="invalid_claim",
-            )
-        normalize_claim_register(run, raw_claims)
-    brief = _decode_structured_field(
-        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
-    )
-    if brief is not None and (missing_sections := sorted(set(run.brief_payload) - set(brief))):
-        raise InvestigationRunError(
-            "Bestehende Brief-Abschnitte dürfen nicht verschwinden; unverändert ist null: "
-            + ", ".join(missing_sections),
-            code="invalid_brief",
-        )
     if payload.get("action") == "tool":
         tool_name = str(payload.get("tool_name") or "")
         if tool_name not in ALLOWED_TOOLS:
-            raise InvestigationRunError(
-                "Planner forderte ein nicht erlaubtes Werkzeug an.", code="tool_not_allowed"
-            )
-        parameters = _decode_structured_field(
-            payload, "parameters", expected_type=Mapping, default={}
-        )
+            raise InvestigationRunError("Nicht erlaubtes Werkzeug.", code="tool_not_allowed")
         normalized = normalize_tool_parameters(
             tool_name,
-            parameters,
+            _decode_structured_field(payload, "parameters", expected_type=Mapping, default={}),
             allowed_source_ids=frozenset(
                 str(source_id)
                 for source_id in run.source_snapshot.sources.values_list("pk", flat=True)
@@ -247,25 +159,76 @@ def _validate_planner_semantic_payload(
                 and source.source_type != InvestigationSource.SourceType.CSV
             ):
                 raise InvestigationRunError(
-                    f"{tool_name} benötigt eine CSV-Quelle.", code="invalid_tool_parameters"
+                    "CSV-Quelle erforderlich.", code="invalid_tool_parameters"
                 )
             if source.source_type == InvestigationSource.SourceType.CSV:
-                requested_columns: set[str] = set()
-                if tool_name == "read_source":
-                    requested_columns.update(normalized["columns"])
-                elif tool_name == "compare_groups":
-                    requested_columns.add(normalized["group_by"])
-                    requested_columns.update(item["column"] for item in normalized["filters"])
-                    requested_columns.update(
-                        column
-                        for column in (normalized["value_column"], normalized["unit_column"])
-                        if column is not None
+                columns = set(normalized.get("columns") or [])
+                if tool_name == "compare_groups":
+                    columns.add(normalized["group_by"])
+                    columns.update(item["column"] for item in normalized["filters"])
+                    columns.update(
+                        value
+                        for value in (normalized["value_column"], normalized["unit_column"])
+                        if value is not None
                     )
-                if missing := sorted(requested_columns - set(source.columns)):
+                if missing := sorted(columns - set(source.columns)):
                     raise InvestigationRunError(
                         f"Unbekannte CSV-Spalten: {', '.join(missing)}.",
                         code="invalid_tool_parameters",
                     )
+
+
+def _validate_synthesis_package(run: InvestigationRun, payload: Mapping[str, Any]) -> None:
+    reason = payload.get("clarification_reason", "")
+    if reason not in {"", "missing_evidence"}:
+        raise InvestigationRunError("Ungültiger Klärungsgrund.", code="invalid_reason_code")
+    if reason == "missing_evidence":
+        clarification = _decode_structured_field(
+            payload, "clarification_payload", expected_type=Mapping, default={}
+        )
+        if not str(clarification.get("question") or "").strip():
+            raise InvestigationRunError(
+                "Klärung benötigt eine konkrete Frage.", code="invalid_response"
+            )
+        return
+
+    claims = _decode_structured_field(payload, "claim_register", expected_type=list, default=[])
+    brief = _decode_structured_field(payload, "brief_payload", expected_type=Mapping, default={})
+    relevance = _decode_structured_field(
+        payload, "source_relevance", expected_type=Mapping, default={}
+    )
+    if not claims or not brief or not relevance:
+        raise InvestigationRunError(
+            "Die Synthese benötigt ein vollständiges Package.", code="invalid_response"
+        )
+
+    source_ids = {str(pk) for pk in run.source_snapshot.sources.values_list("pk", flat=True)}
+    if set(relevance) != source_ids or any(
+        not isinstance(item, Mapping)
+        or not isinstance(item.get("relevant"), bool)
+        or not str(item.get("reason") or "").strip()
+        or not isinstance(item.get("reference"), Mapping)
+        or not reference_valid(run, item["reference"])
+        for item in relevance.values()
+    ):
+        raise InvestigationRunError(
+            "Die Synthese benötigt gültige Relevanzbelege für alle Quellen.",
+            code="invalid_source_relevance",
+        )
+
+    previous_ids = {item["claim_id"] for item in run.claim_register}
+    proposed_ids = {str(item.get("claim_id")) for item in claims if isinstance(item, Mapping)}
+    if missing := sorted(previous_ids - proposed_ids):
+        raise InvestigationRunError(
+            "Bestehende Claims dürfen nicht verschwinden: " + ", ".join(missing),
+            code="invalid_claim",
+        )
+    normalize_claim_register(run, claims)
+    if missing_sections := sorted(set(run.brief_payload) - set(brief)):
+        raise InvestigationRunError(
+            "Bestehende Brief-Abschnitte dürfen nicht verschwinden: " + ", ".join(missing_sections),
+            code="invalid_brief",
+        )
 
 
 def _requested_model() -> str:
@@ -310,11 +273,15 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         )
 
     planner = frozen.get("planner") or {}
+    synthesizer = frozen.get("synthesizer") or {}
     verifier = frozen.get("verifier") or {}
     if (
         planner.get("prompt_version") != PLANNER_PROMPT_VERSION
         or planner.get("instruction_hash") != _instruction_hash(PLANNER_INSTRUCTION)
         or planner.get("schema_version") != PLANNER_SCHEMA_VERSION
+        or synthesizer.get("prompt_version") != SYNTHESIS_PROMPT_VERSION
+        or synthesizer.get("instruction_hash") != _instruction_hash(SYNTHESIS_INSTRUCTION)
+        or synthesizer.get("schema_version") != SYNTHESIS_SCHEMA_VERSION
         or verifier.get("prompt_version") != VERIFIER_PROMPT_VERSION
         or verifier.get("instruction_hash") != _instruction_hash(VERIFIER_INSTRUCTION)
         or verifier.get("schema_version") != VERIFIER_SCHEMA_VERSION
@@ -370,7 +337,8 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     last_planner_error: dict[str, str] = {}
     if (
         previous_call is not None
-        and previous_call.role == InvestigationModelCall.Role.PLANNER
+        and previous_call.role
+        in {InvestigationModelCall.Role.PLANNER, InvestigationModelCall.Role.SYNTHESIZER}
         and previous_call.status == InvestigationModelCall.Status.FAILED
         and previous_call.error_code == "invalid_response"
     ):
@@ -424,6 +392,20 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
         "budget_limits": run.budget_limits,
         "policy_blockers": list(evaluate_run_policy(run).blockers),
     }
+
+
+def _investigation_context(actor, run: InvestigationRun) -> dict[str, Any]:
+    context = _planner_context(actor, run)
+    for field in ("claim_register", "brief_payload", "source_relevance"):
+        context.pop(field)
+    context["recent_steps"] = context["recent_steps"][:5]
+    context["evidence_coverage"] = {
+        "complete": investigation_evidence_complete(run),
+        "data_check_executed": run.data_check_executed,
+        "counterevidence_search_executed": run.counterevidence_search_executed,
+        "counterevidence_hits_processed": run.counterevidence_hits_processed,
+    }
+    return context
 
 
 def _deterministic_analysis_replays(actor, run: InvestigationRun) -> list[dict[str, Any]]:
@@ -566,6 +548,8 @@ def _reserve_model_call(
     response_schema = response_format or (
         planner_response_format()
         if role == InvestigationModelCall.Role.PLANNER
+        else synthesis_response_format()
+        if role == InvestigationModelCall.Role.SYNTHESIZER
         else verifier_response_format()
     )
     context_token_bound = (
@@ -588,15 +572,21 @@ def _reserve_model_call(
         )
     completion_floor = (
         MIN_PLANNER_COMPLETION_TOKENS
-        if role == InvestigationModelCall.Role.PLANNER
+        if role != InvestigationModelCall.Role.VERIFIER
         else MIN_VERIFIER_COMPLETION_TOKENS
     )
     timeout_floor = (
         MIN_PLANNER_TIMEOUT_SECONDS
-        if role == InvestigationModelCall.Role.PLANNER
+        if role != InvestigationModelCall.Role.VERIFIER
         else MIN_VERIFIER_TIMEOUT_SECONDS
     )
     verifier_reserve = _remaining_verifier_reserve(run)
+    if role == InvestigationModelCall.Role.PLANNER:
+        synthesis_reserve = _remaining_synthesis_reserve(run)
+        verifier_reserve = {
+            **verifier_reserve,
+            **{key: verifier_reserve[key] + synthesis_reserve[key] for key in verifier_reserve},
+        }
     if role == InvestigationModelCall.Role.VERIFIER:
         # Allocate one equal share of the reserved verifier time to this call;
         # protect the remaining shares for reads, rechecks and repair.
@@ -631,7 +621,7 @@ def _reserve_model_call(
             "Die Run-Zeit reicht nicht für einen sinnvollen Modellaufruf samt Verifier-Reserve.",
             code="runtime_capacity_exhausted",
         )
-    if role == InvestigationModelCall.Role.PLANNER:
+    if role != InvestigationModelCall.Role.VERIFIER:
         remaining_planner_calls = max(
             1,
             run.budget_limits["max_model_calls"]
@@ -682,7 +672,11 @@ def _reserve_model_call(
         if usage["verifier_calls"] >= run.budget_limits["max_verifier_calls"]:
             raise InvestigationRunError("Verifier-Budget ist erschöpft.", code="budget_exhausted")
         usage["verifier_calls"] += 1
-    elif budget_exhausted(run, reserve_verifier=True):
+    elif budget_exhausted(
+        run,
+        reserve_verifier=True,
+        reserve_synthesis=role == InvestigationModelCall.Role.PLANNER,
+    ):
         raise InvestigationRunError(
             "Die für den Verifier reservierten Modellbudgets würden verletzt.",
             code="budget_exhausted",
@@ -1010,7 +1004,8 @@ def request_planner_action(
     executor_token,
 ) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
-    phase = "synthesis" if investigation_evidence_complete(run) else "investigation"
+    if investigation_evidence_complete(run):
+        return request_synthesis_package(actor=actor, run=run, executor_token=executor_token)
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -1019,25 +1014,11 @@ def request_planner_action(
         instruction=PLANNER_INSTRUCTION,
         prompt_version=PLANNER_PROMPT_VERSION,
         schema_version=PLANNER_SCHEMA_VERSION,
-        context=_planner_context(actor, run),
-        response_format=planner_response_format(phase=phase),
-        payload_validator=lambda payload: _validate_planner_semantic_payload(
-            run, payload, phase=phase
-        ),
+        context=_investigation_context(actor, run),
+        response_format=planner_response_format(),
+        payload_validator=lambda response: _validate_investigation_action(run, response),
     )
     parameters = _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
-    claim_register = _decode_structured_field(
-        payload, "claim_register", expected_type=(list, type(None)), default=None
-    )
-    brief_payload = _decode_structured_field(
-        payload, "brief_payload", expected_type=(Mapping, type(None)), default=None
-    )
-    source_relevance = _decode_structured_field(
-        payload, "source_relevance", expected_type=Mapping, default={}
-    )
-    progress_payload = _decode_structured_field(
-        payload, "progress_payload", expected_type=Mapping, default={}
-    )
     clarification_payload = _decode_structured_field(
         payload, "clarification_payload", expected_type=Mapping, default={}
     )
@@ -1048,17 +1029,68 @@ def request_planner_action(
         rationale=str(payload.get("rationale") or ""),
         tool_name=str(payload.get("tool_name") or ""),
         parameters=dict(parameters),
-        claim_register=tuple(claim_register) if claim_register is not None else None,
-        brief_payload=dict(brief_payload) if brief_payload is not None else None,
-        source_relevance={
-            str(key): dict(value)
-            for key, value in dict(source_relevance).items()
-            if isinstance(value, Mapping)
-        },
-        progress_kind=str(payload.get("progress_kind") or "none"),
-        progress_payload=dict(progress_payload),
+        claim_register=None,
+        brief_payload=None,
+        source_relevance={},
+        progress_kind="none",
+        progress_payload={},
         clarification_reason=str(payload.get("clarification_reason") or ""),
         clarification_payload=dict(clarification_payload),
+    )
+
+
+def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -> PlannerAction:
+    assert_actor_can_edit_run(actor, run)
+    payload, _call = _structured_provider_call(
+        actor=actor,
+        run_id=run.pk,
+        executor_token=executor_token,
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        instruction=SYNTHESIS_INSTRUCTION,
+        prompt_version=SYNTHESIS_PROMPT_VERSION,
+        schema_version=SYNTHESIS_SCHEMA_VERSION,
+        context=_planner_context(actor, run),
+        response_format=synthesis_response_format(),
+        payload_validator=lambda response: _validate_synthesis_package(run, response),
+    )
+    if payload.get("clarification_reason") == "missing_evidence":
+        clarification = _decode_structured_field(
+            payload, "clarification_payload", expected_type=Mapping, default={}
+        )
+        return PlannerAction(
+            action="clarify",
+            target_claim_id="",
+            expected_discriminating_finding="",
+            rationale="",
+            tool_name="",
+            parameters={},
+            claim_register=None,
+            brief_payload=None,
+            source_relevance={},
+            progress_kind="none",
+            progress_payload={},
+            clarification_reason="missing_evidence",
+            clarification_payload=dict(clarification),
+        )
+    claims = _decode_structured_field(payload, "claim_register", expected_type=list, default=[])
+    brief = _decode_structured_field(payload, "brief_payload", expected_type=Mapping, default={})
+    relevance = _decode_structured_field(
+        payload, "source_relevance", expected_type=Mapping, default={}
+    )
+    return PlannerAction(
+        action="synthesize",
+        target_claim_id="",
+        expected_discriminating_finding="",
+        rationale="",
+        tool_name="",
+        parameters={},
+        claim_register=tuple(claims),
+        brief_payload=dict(brief),
+        source_relevance={str(key): dict(value) for key, value in relevance.items()},
+        progress_kind="none",
+        progress_payload={},
+        clarification_reason="",
+        clarification_payload={},
     )
 
 

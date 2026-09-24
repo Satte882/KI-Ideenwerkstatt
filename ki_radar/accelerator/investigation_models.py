@@ -446,6 +446,7 @@ class InvestigationStep(TimeStampedModel):
 class InvestigationModelCall(TimeStampedModel):
     class Role(models.TextChoices):
         PLANNER = "planner", "Planner"
+        SYNTHESIZER = "synthesizer", "Synthesizer"
         VERIFIER = "verifier", "Verifier"
 
     class Status(models.TextChoices):

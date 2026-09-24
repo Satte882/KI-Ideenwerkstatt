@@ -213,12 +213,15 @@ def _provider_failures(run: InvestigationRun) -> int:
 
 
 def _synthesis_attempts_since_verification(run: InvestigationRun) -> int:
-    calls = run.model_calls.filter(role="planner", status="success")
+    calls = run.model_calls.filter(role="synthesizer", status="success")
     latest_report = run.verifier_reports.order_by("-created_at").first()
     if latest_report is not None:
         calls = calls.filter(created_at__gt=latest_report.created_at)
+    latest_input = run.input_revisions.order_by("-created_at").first()
+    if latest_input is not None:
+        calls = calls.filter(created_at__gt=latest_input.created_at)
     return sum(
-        call.get("action") == "synthesize"
+        call.get("clarification_reason") != "missing_evidence"
         for call in calls.values_list("accepted_payload", flat=True)
     )
 
@@ -391,18 +394,17 @@ def advance_investigation(
         )
         raise contract_error
 
-    apply_planner_state(
-        actor=actor,
-        run_id=run.pk,
-        executor_token=executor_token,
-        claim_register=action.claim_register,
-        brief_payload=action.brief_payload,
-        progress_kind=action.progress_kind,
-        progress_payload=action.progress_payload,
-    )
-    run.refresh_from_db()
+    if action.action == "synthesize":
+        apply_planner_state(
+            actor=actor,
+            run_id=run.pk,
+            executor_token=executor_token,
+            claim_register=action.claim_register,
+            brief_payload=action.brief_payload,
+        )
+        run.refresh_from_db()
 
-    if action.source_relevance:
+    if action.action == "synthesize" and action.source_relevance:
         set_source_relevance(
             actor=actor,
             run_id=run.pk,
@@ -413,7 +415,7 @@ def advance_investigation(
 
     if (
         action.action != "synthesize"
-        and run.no_progress_streak >= 2
+        and run.no_progress_streak >= 1
         and not _replan_is_distinct(run, action)
     ):
         waiting = _set_waiting_human(
@@ -422,7 +424,10 @@ def advance_investigation(
             executor_token=executor_token,
             reason=ReasonCode.NO_PROGRESS.value,
             payload={
-                "impact": "Zwei aufeinanderfolgende Schritte änderten den Erkenntnisstand nicht.",
+                "impact": (
+                    "Der letzte Werkzeugschritt brachte keine neue Evidenzabdeckung; "
+                    "die nächste Aktion würde ihn ohne Erkenntnisgewinn wiederholen."
+                ),
                 "required_action": "Neue Evidenz, Scope-/Zugriffsentscheidung oder Abbruch.",
                 "recent_steps": [
                     {

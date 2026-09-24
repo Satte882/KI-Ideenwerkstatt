@@ -28,7 +28,7 @@ Sie führt für die kleinen eingefrorenen A/B/C-Packs in fixer Reihenfolge aus:
 2. vollständiges Lesen aller Manifestquellen des Packs;
 3. Profilierung jeder CSV;
 4. bis zu drei deterministisch aus den vorhandenen Spalten abgeleitete Gruppenchecks;
-5. erst danach Synthese und Verifikation mit demselben Planner-/Verifier-Vertrag wie die adaptive Strecke.
+5. erst danach Synthese und Verifikation mit denselben versionierten Verträgen wie die adaptive Strecke.
 
 Zusätzliche adaptive Toolwünsche der Kontrollstrecke werden nicht nachträglich erlaubt, sondern als sichtbare Grenze der festen Strecke berichtet.
 
@@ -39,6 +39,7 @@ Für einen gültigen Vergleich müssen gemäß assert_comparable_runs() identisc
 - Run-Maximalbudgets;
 - Modelltransport und Modellalias;
 - Planner-Prompt/-Schema;
+- Synthesizer-Prompt/-Schema;
 - Verifier-Prompt/-Schema;
 - Toolvertrag;
 - persistente Evidence-Campaign und deren autorisierte Revision.
@@ -185,3 +186,29 @@ VS1/3 ist erst extern wirksamkeitsseitig belegt, wenn mindestens:
 5. alle Fehlversuche und der gesamte Providerverbrauch im gemeinsamen Budgetbericht enthalten sind.
 
 Issue #1 bleibt unabhängig davon offen, bis dessen vollständige Definition of Done gegen die Baseline gemessen wurde.
+
+## Serienbefund A/1–A/19 und Architekturkorrektur vom 24.09.2026
+
+Die lokale Campaign-Datenbank enthält genau 19 chronologisch gespeicherte A-Runs.
+Keiner erreichte READY; A/15 hatte sieben Claims und einen Brief, aber keine
+Quellenrelevanz, A/18 zwei Claims ohne Brief, A/17 Relevanz für drei Quellen ohne
+Claims. Die übrigen Runs hatten am Ende kein vollständiges Package.
+
+| Runs | Beobachtung aus Modellaufrufen und Runzustand | Schluss |
+| --- | --- | --- |
+| A/1–A/2 | Nicht erlaubtes Werkzeug bzw. ungültige Werkzeugparameter | Aktionsvertrag war fehleranfällig. |
+| A/3–A/6 | Ungültige Providerantworten bzw. Planner-Aktionen nach ersten erfolgreichen Schritten | Ein Fehler im gemeinsamen Response brach die Untersuchung ab. |
+| A/7–A/9 | Providerfehler oder ungültige Antworten vor belastbarer Evidenz | Nicht vollständig durch den Planner-Vertrag erklärbar. |
+| A/10–A/14 | Mehrere Werkzeugaufrufe, aber keine vollständige Synthese; A/14 stoppte wegen fehlendem Fortschritt | Exploration und fachlicher Zustand konkurrierten in denselben Planner-Slots. |
+| A/15–A/17 | Teilweise Claims/Brief/Relevanz, ungültige Relevanz oder Toolparameter, gekappte Antwort | Wiederholtes Gesamtzustands-Transportieren erzeugte Verlust- und Validierungsflächen; Providergrenzen blieben eigenständig. |
+| A/18–A/19 | `null`-Transportfehler bzw. zehn Planner-Slots ohne Claims oder Brief | A/19 erreichte trotz Evidenz keinen Syntheseaufruf. |
+
+Der gemeinsame Architekturbeitrag ist der überladene wiederholte Planner-Response.
+Er erklärt nicht jeden Ausfall, insbesondere nicht Providerfehler und gekappte
+Antworten. Die Umsetzung nach ADR 0008 trennt die Untersuchung von der einmaligen
+Package-Synthese, hält den Evidence-State serverseitig und reserviert die Synthese
+vor dem Verifier im Runbudget; die Reservierung wird aus dem bestehenden Runbudget
+und den erlaubten Repair-Zyklen abgeleitet, ohne eigene Synthesizer-Grenzwerte.
+A/1–A/19 und ihr Verbrauch bleiben unverändert.
+Es wurde kein A/20 und kein anderer realer Providerlauf gestartet. Die neue
+Ergebnisqualität und der 10x-Gewinn sind damit noch nicht empirisch belegt.

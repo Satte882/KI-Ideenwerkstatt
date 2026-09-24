@@ -43,6 +43,9 @@ from .investigation_prompts import (
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
+    SYNTHESIS_INSTRUCTION,
+    SYNTHESIS_PROMPT_VERSION,
+    SYNTHESIS_SCHEMA_VERSION,
     TOOL_PARAMETER_CONTRACTS,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
@@ -63,7 +66,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v8"
+LOOP_VERSION = "vs1-agent-loop-v9"
 BUDGET_VERSION = "vs1-budget-v5"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -75,8 +78,8 @@ ENDPOINT_CAPABILITY = {
     "context_tokens": 1_048_576,
     "completion_tokens": 131_072,
 }
-# Strict planner JSON carries complete claims/brief; the verifier returns findings
-# and references. Hidden medium reasoning also consumes completion tokens. A
+# Synthesis and verification use structured outputs. Hidden medium reasoning
+# also consumes completion tokens. A
 # 4096-token completion yielded no visible content, so 8192 is the minimum
 # viable window for reasoning plus structured output, never a per-call ceiling.
 MIN_PLANNER_COMPLETION_TOKENS = 8_192
@@ -95,7 +98,8 @@ ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
 
 DEFAULT_BUDGET = {
     "max_tool_calls": 12,
-    # Up to 10 planner attempts plus two verifier rounds
+    # Up to 8 investigation calls, plus one synthesis per allowed repair cycle
+    # (initial package and repair) and two verifier rounds
     # (initial verification + one repair cycle), each verifier round allowing
     # the existing two-call read-and-recheck path.
     "max_model_calls": 14,
@@ -357,6 +361,12 @@ def base_execution_snapshot(
             "instruction_template": PLANNER_INSTRUCTION,
             "schema_version": PLANNER_SCHEMA_VERSION,
         },
+        "synthesizer": {
+            "prompt_version": SYNTHESIS_PROMPT_VERSION,
+            "instruction_hash": hashlib.sha256(SYNTHESIS_INSTRUCTION.encode("utf-8")).hexdigest(),
+            "instruction_template": SYNTHESIS_INSTRUCTION,
+            "schema_version": SYNTHESIS_SCHEMA_VERSION,
+        },
         "verifier": {
             "prompt_version": VERIFIER_PROMPT_VERSION,
             "instruction_hash": hashlib.sha256(VERIFIER_INSTRUCTION.encode("utf-8")).hexdigest(),
@@ -474,12 +484,35 @@ def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
     }
 
 
-def budget_exhausted(run: InvestigationRun, *, reserve_verifier: bool = False) -> bool:
+def _remaining_synthesis_reserve(run: InvestigationRun) -> dict[str, int]:
+    """Reserve the normal per-call share for synthesis and a permitted repair.
+
+    This derives entirely from the frozen run budget and existing repair policy;
+    it adds no synthesis-only token, timeout, or transport limit.
+    """
+    limits = run.budget_limits
+    calls = 1 + int(limits["max_repair_cycles"])
+    total_calls = max(1, int(limits["max_model_calls"]))
+
+    def proportional_share(total: int) -> int:
+        return (int(total) * calls + total_calls - 1) // total_calls
+
+    return {
+        "model_calls": calls,
+        "input_tokens": proportional_share(limits["max_input_tokens"]),
+        "output_tokens": proportional_share(limits["max_output_tokens"]),
+        "seconds": proportional_share(limits["max_runtime_seconds"]),
+    }
+
+
+def budget_exhausted(
+    run: InvestigationRun, *, reserve_verifier: bool = False, reserve_synthesis: bool = False
+) -> bool:
     limits = run.budget_limits
     usage = run.usage
     if elapsed_seconds(run) >= limits["max_runtime_seconds"]:
         return True
-    if usage["tool_calls"] >= limits["max_tool_calls"]:
+    if usage["tool_calls"] >= limits["max_tool_calls"] and not investigation_evidence_complete(run):
         return True
     if usage["model_calls"] >= limits["max_model_calls"]:
         return True
@@ -489,6 +522,10 @@ def budget_exhausted(run: InvestigationRun, *, reserve_verifier: bool = False) -
         return True
     if reserve_verifier:
         reserve = _remaining_verifier_reserve(run)
+        if reserve_synthesis:
+            synthesis = _remaining_synthesis_reserve(run)
+            for key, value in synthesis.items():
+                reserve[key] += value
         return (
             limits["max_model_calls"] - usage["model_calls"] <= reserve["model_calls"]
             or limits["max_input_tokens"] - usage["input_tokens"] <= reserve["input_tokens"]
@@ -1585,6 +1622,8 @@ def execute_tool_step(
                 current.progress_payload = {"coverage_change": True}
                 locked.no_progress_streak = 0
                 locked.last_progress_at = timezone.now()
+            elif not verifier_read:
+                locked.no_progress_streak += 1
             if tool_name in {"profile_csv", "compare_groups"}:
                 current.result_ref = {"tool_result_id": payload.get("result_id")}
                 locked.data_check_executed = True
