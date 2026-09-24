@@ -781,9 +781,7 @@ def test_repeated_read_with_changed_claim_id_does_not_reset_progress(
         for _ in range(5)
     ]
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert statuses == [InvestigationRun.Status.RUNNING] * 4 + [
-        InvestigationRun.Status.FAILED
-    ]
+    assert statuses == [InvestigationRun.Status.RUNNING] * 4 + [InvestigationRun.Status.FAILED]
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
     assert run.usage["tool_calls"] == 1
