@@ -2794,10 +2794,7 @@ def test_verifier_receives_its_reserved_time_share(owner, business_unit, tmp_pat
         context={},
     )
     assert call.effective_parameters["timeout_seconds"] >= 300
-    assert (
-        call.effective_parameters["timeout_seconds"]
-        <= run.budget_limits["max_runtime_seconds"]
-    )
+    assert call.effective_parameters["timeout_seconds"] <= run.budget_limits["max_runtime_seconds"]
 
 
 @pytest.mark.django_db
