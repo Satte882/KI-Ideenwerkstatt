@@ -2060,6 +2060,8 @@ def test_critical_claim_statement_cannot_change_under_same_id(
         claim_register=first,
     )
     run.refresh_from_db()
+    assert run.claim_register[0]["statement"] == "Hypothese A erklärt die Verzögerung."
+    assert run.claim_register[0]["critical"] is True
 
     with pytest.raises(InvestigationRunError) as exc_info:
         normalize_claim_register(
