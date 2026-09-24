@@ -456,14 +456,13 @@ def elapsed_seconds(run: InvestigationRun) -> int:
 
 
 def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
+    """Reserve only the small guaranteed review headroom, not a verifier state machine."""
     limits = run.budget_limits
     usage = run.usage
-    max_verifier_calls = int(limits["max_verifier_calls"])
-    remaining_verifier_calls = max(
-        0,
-        max_verifier_calls - int(usage.get("verifier_calls", 0)),
-    )
-    if max_verifier_calls <= 0 or remaining_verifier_calls <= 0:
+    reserved_calls = max(0, int(limits["verifier_reserved_model_calls"]))
+    used_reserved_calls = min(reserved_calls, int(usage.get("verifier_calls", 0)))
+    remaining_calls = reserved_calls - used_reserved_calls
+    if reserved_calls <= 0 or remaining_calls <= 0:
         return {
             "model_calls": 0,
             "input_tokens": 0,
@@ -472,12 +471,10 @@ def _remaining_verifier_reserve(run: InvestigationRun) -> dict[str, int]:
         }
 
     def proportional_reserve(total: int) -> int:
-        return (
-            int(total) * remaining_verifier_calls + max_verifier_calls - 1
-        ) // max_verifier_calls
+        return (int(total) * remaining_calls + reserved_calls - 1) // reserved_calls
 
     return {
-        "model_calls": proportional_reserve(limits["verifier_reserved_model_calls"]),
+        "model_calls": remaining_calls,
         "input_tokens": proportional_reserve(limits["verifier_reserved_input_tokens"]),
         "output_tokens": proportional_reserve(limits["verifier_reserved_output_tokens"]),
         "seconds": proportional_reserve(limits["verifier_reserved_seconds"]),
