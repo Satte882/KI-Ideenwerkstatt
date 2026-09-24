@@ -208,13 +208,6 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
             ReasonCode.MISSING_EVIDENCE,
             blockers,
         )
-    if state.no_progress_streak >= 2:
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.NO_PROGRESS,
-            blockers,
-        )
-
     verifier_failed = any(
         blocker in {
             "verifier_critical",
