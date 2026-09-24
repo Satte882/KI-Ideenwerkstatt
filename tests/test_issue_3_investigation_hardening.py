@@ -2137,7 +2137,7 @@ def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
     assert results[4].status == InvestigationRun.Status.FAILED
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "no_progress_loop"
-    assert run.clarification_payload["repeat_count"] == 3
+    assert run.clarification_payload["repeat_count"] == 4
     assert run.verifier_reports.count() == 4
     assert run.repair_cycles == 0
 
