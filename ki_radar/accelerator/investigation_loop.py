@@ -157,7 +157,7 @@ def _planner_contract_error(
 ) -> InvestigationRunError | None:
     pending_investigation = _pending_synthesis_investigation(run)
     allowed_actions = (
-        {"tool", "clarify"}
+        {"tool", "investigate", "clarify"}
         if pending_investigation
         else {"synthesize", "investigate", "clarify"}
         if investigation_evidence_complete(run)
