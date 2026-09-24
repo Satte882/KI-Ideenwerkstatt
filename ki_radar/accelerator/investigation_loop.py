@@ -471,17 +471,18 @@ def advance_investigation(
         and run.no_progress_streak >= 1
         and not _replan_is_distinct(run, action)
     ):
-        waiting = _set_waiting_human(
+        failed = _set_failed_runtime(
             actor=actor,
             run_id=run.pk,
             executor_token=executor_token,
-            reason=ReasonCode.NO_PROGRESS.value,
-            payload={
-                "impact": (
-                    "Der letzte Werkzeugschritt brachte keine neue Evidenzabdeckung; "
-                    "die nächste Aktion würde ihn ohne Erkenntnisgewinn wiederholen."
-                ),
-                "required_action": "Neue Evidenz, Scope-/Zugriffsentscheidung oder Abbruch.",
+            reason=ReasonCode.TECHNICAL_FAILURE.value,
+            error_code="no_progress_loop",
+            impact=(
+                "Der Agent würde einen bereits erfolglosen Werkzeugschritt ohne "
+                "neuen Erkenntnisgewinn wiederholen."
+            ),
+            required_action="Planner-/Loop-Verhalten technisch prüfen.",
+            details={
                 "recent_steps": [
                     {
                         "sequence": step.sequence,
@@ -489,10 +490,10 @@ def advance_investigation(
                         "target_claim_id": step.target_claim_id,
                     }
                     for step in run.steps.order_by("-sequence")[:2]
-                ],
+                ]
             },
         )
-        return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
     if action.action == "tool":
         step = execute_tool_step(
@@ -684,15 +685,13 @@ def run_until_boundary(
             return last
 
     run = InvestigationRun.objects.get(pk=run_id)
-    waiting = _set_waiting_human(
+    failed = _set_failed_runtime(
         actor=actor,
         run_id=run.pk,
         executor_token=executor_token,
         reason=ReasonCode.TECHNICAL_FAILURE.value,
-        payload={
-            "error_code": "iteration_guard",
-            "impact": "Die technische Iterationsgrenze wurde ohne terminalen Zustand erreicht.",
-            "required_action": "Run prüfen und gezielt fortsetzen oder abbrechen.",
-        },
+        error_code="iteration_guard",
+        impact="Die technische Iterationsgrenze wurde ohne terminalen Zustand erreicht.",
+        required_action="Planner-/Loop-Verhalten technisch prüfen.",
     )
-    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
+    return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
