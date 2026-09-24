@@ -2449,6 +2449,22 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
                 "source_references_valid": True,
                 "checked_critical_claims": critical_ids(claims),
             }
+        elif "Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf" in system:
+            assert kwargs["response_format"] == {"type": "json_object"}
+            payload = {
+                "claim_register": list(claims),
+                "brief_payload": brief,
+                "source_relevance": {
+                    str(source.source_id): {
+                        "relevant": True,
+                        "reason": "CSV enthält die untersuchten Messwerte.",
+                        "reference": ref,
+                    }
+                },
+                "clarification_reason": "",
+                "clarification_payload": {},
+                "investigation_request": {},
+            }
         else:
             planner_calls += 1
             recent = context["recent_steps"]
@@ -2537,26 +2553,19 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
                 assert recent[0]["tool_name"] == "search_sources"
                 assert recent[0]["result_payload"]["total_matches"] == 0
                 assert context["phase"] == "investigation"
-                assert kwargs["response_format"] == {"type": "json_object"}
                 saw_counter_result = True
                 payload = {
                     "action": "synthesize",
-                    "target_claim_id": "verification",
-                    "expected_discriminating_finding": "READY-Vertrag unabhängig prüfen.",
-                    "rationale": "Pflichtprüfungen sind strukturell belegt.",
+                    "target_claim_id": "",
+                    "expected_discriminating_finding": "",
+                    "rationale": "Der Evidenzstand ist bereit für den unabhängigen Review.",
                     "tool_name": "",
                     "parameters": {},
-                    "claim_register": list(claims),
-                    "brief_payload": brief,
-                    "source_relevance": {
-                        str(source.source_id): {
-                            "relevant": True,
-                            "reason": "CSV enthält die untersuchten Messwerte.",
-                            "reference": ref,
-                        }
-                    },
-                    "progress_kind": "evidence",
-                    "progress_payload": {"coverage_change": True},
+                    "claim_register": [],
+                    "brief_payload": {},
+                    "source_relevance": {},
+                    "progress_kind": "none",
+                    "progress_payload": {},
                     "clarification_reason": "",
                     "clarification_payload": {},
                 }
@@ -2588,7 +2597,7 @@ def test_mocked_model_transport_drives_adaptive_trace_through_verified_ready(
     assert run.verifier_reports.get().success is True
     assert run.status == InvestigationRun.Status.READY
     assert run.usage["tool_calls"] == 4
-    assert run.usage["model_calls"] == 6
+    assert run.usage["model_calls"] == 7
     calls = list(run.model_calls.order_by("created_at"))
     assert all(call.effective_parameters["max_tokens"] > 4096 for call in calls)
     assert all(call.effective_parameters["timeout_seconds"] > 60 for call in calls)
