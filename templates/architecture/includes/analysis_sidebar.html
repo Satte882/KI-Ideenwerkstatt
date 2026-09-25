@@ -1,5 +1,13 @@
 {% if process_context_navigation %}
 <div class="sidebar-local-depth sidebar-process-context" aria-label="Kontext Prozessanalyse">
+  <a href="{{ process_context_navigation.value_stream_url }}" class="sidebar-local-step">
+    <span aria-hidden="true">○</span>
+    <span>Value Stream</span>
+  </a>
+  <a href="{{ process_context_navigation.focus_url }}" class="sidebar-local-step">
+    <span aria-hidden="true">○</span>
+    <span>Fokus &amp; Priorisierung</span>
+  </a>
   <a href="{{ process_context_navigation.process_url }}" class="sidebar-local-step sidebar-local-context-root{% if process_context_navigation.active_key == 'process' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'process' %} aria-current="page"{% endif %}>
     <span aria-hidden="true">{% if process_context_navigation.active_key == 'process' %}●{% else %}↳{% endif %}</span>
     <span>Prozessanalyse</span>
