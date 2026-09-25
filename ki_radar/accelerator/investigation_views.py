@@ -52,6 +52,33 @@ def _run_redirect(run_id):
     return redirect("accelerator:investigation_detail", run_id=run_id)
 
 
+def _referenced_tool_result_ids(value) -> set[uuid.UUID]:
+    result_ids: set[uuid.UUID] = set()
+    if isinstance(value, dict):
+        raw_result_id = value.get("tool_result_id")
+        if raw_result_id:
+            try:
+                result_ids.add(uuid.UUID(str(raw_result_id)))
+            except (TypeError, ValueError):
+                pass
+        for nested in value.values():
+            result_ids.update(_referenced_tool_result_ids(nested))
+    elif isinstance(value, list):
+        for nested in value:
+            result_ids.update(_referenced_tool_result_ids(nested))
+    return result_ids
+
+
+def _tool_results_for_run(run: InvestigationRun):
+    result_ids = _referenced_tool_result_ids(run.brief_payload)
+    for result_ref in run.steps.values_list("result_ref", flat=True):
+        result_ids.update(_referenced_tool_result_ids(result_ref))
+    return InvestigationToolResult.objects.filter(
+        snapshot=run.source_snapshot,
+        pk__in=result_ids,
+    )
+
+
 @login_required
 def investigation_authorize(request, process_pk):
     process = get_object_or_404(
@@ -184,9 +211,7 @@ def investigation_detail(request, run_id):
     run = read_run(actor=request.user, run_id=run_id)
     policy = evaluate_run_policy(run)
     sources = list(run.source_snapshot.sources.order_by("filename"))
-    tool_results = list(
-        InvestigationToolResult.objects.filter(snapshot=run.source_snapshot).order_by("created_at")
-    )
+    tool_results = list(_tool_results_for_run(run).order_by("created_at"))
     latest_materialization = run.materializations.select_related("brief_revision").first()
     return render(
         request,
@@ -302,10 +327,7 @@ def investigation_source(request, run_id, source_id):
 def investigation_tool_result(request, run_id, result_id):
     run = read_run(actor=request.user, run_id=run_id)
     try:
-        result = InvestigationToolResult.objects.get(
-            pk=result_id,
-            snapshot=run.source_snapshot,
-        )
+        result = _tool_results_for_run(run).get(pk=result_id)
     except (InvestigationToolResult.DoesNotExist, ValueError) as exc:
         raise Http404 from exc
     payload = {
