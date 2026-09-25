@@ -92,6 +92,7 @@ def _build_plan(
     process_changes: list[dict[str, Any]] = []
     solution_changes: list[dict[str, Any]] = []
     conflicts: list[dict[str, Any]] = []
+    side_effects: list[dict[str, str]] = []
 
     if process.version != expected_process_version:
         conflicts.append(
@@ -107,6 +108,7 @@ def _build_plan(
             "process_changes": process_changes,
             "solution_changes": solution_changes,
             "conflicts": conflicts,
+            "side_effects": side_effects,
             "change_count": 0,
         }
 
@@ -218,10 +220,26 @@ def _build_plan(
         )
         current_name_map[key] = None
 
+    if process_changes and (
+        process.status == ProcessAnalysis.Status.VALIDATED
+        or process.validations.filter(process_version=process.version).exists()
+    ):
+        side_effects.append(
+            {
+                "type": "process_revalidation_required",
+                "label": "Prozessvalidierung",
+                "description": (
+                    "Die aktuelle Validierung wird durch die Prozessänderung prüfbedürftig; "
+                    "die neue Prozessversion muss erneut validiert werden."
+                ),
+            }
+        )
+
     return {
         "process_changes": process_changes,
         "solution_changes": solution_changes,
         "conflicts": conflicts,
+        "side_effects": side_effects,
         "change_count": len(process_changes) + len(solution_changes),
     }
 
