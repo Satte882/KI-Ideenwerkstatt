@@ -80,7 +80,7 @@
 }
 
 
-.sidebar-process-context .sidebar-local-context-root {
+.sidebar-process-context .sidebar-local-context-parent {
   color: var(--text);
   font-weight: 750;
 }
