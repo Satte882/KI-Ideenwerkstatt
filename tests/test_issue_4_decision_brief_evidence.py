@@ -970,6 +970,26 @@ def test_architecture_adoption_preserves_process_revalidation_semantics(
     )
     base_value = process.diagnostic_observations
 
+    preview = preview_investigation_draft_adoption(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={"diagnostic_observations": base_value},
+        base_options={},
+        process_fields={"diagnostic_observations": "Neue evidenzgestützte Beobachtung."},
+        solution_proposals=[],
+    )
+    assert preview["side_effects"] == [
+        {
+            "type": "process_revalidation_required",
+            "label": "Prozessvalidierung",
+            "description": (
+                "Die aktuelle Validierung wird durch die Prozessänderung prüfbedürftig; "
+                "die neue Prozessversion muss erneut validiert werden."
+            ),
+        }
+    ]
+
     result = adopt_investigation_drafts(
         actor=owner,
         process_analysis_id=process.pk,
@@ -986,6 +1006,33 @@ def test_architecture_adoption_preserves_process_revalidation_semantics(
     }
     assert process.version == 2
     assert process.status == ProcessAnalysis.Status.REVIEW_REQUIRED
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_rejects_red_solution_state_fields(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Red fields")
+
+    with pytest.raises(InvestigationDraftAdoptionError) as exc_info:
+        preview_investigation_draft_adoption(
+            actor=owner,
+            process_analysis_id=process.pk,
+            expected_process_version=process.version,
+            base_process={},
+            base_options={},
+            process_fields={},
+            solution_proposals=[
+                {
+                    "name": "Unzulässiger Vorschlag",
+                    "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+                    "recommendation": SolutionOption.Recommendation.PREFERRED,
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "unsupported_solution_fields"
 
 
 @pytest.mark.django_db
