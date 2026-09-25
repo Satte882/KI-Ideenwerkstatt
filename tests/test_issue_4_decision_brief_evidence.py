@@ -63,8 +63,14 @@ from ki_radar.accelerator.investigation_tools import (
     create_source_snapshot,
 )
 from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
+from ki_radar.architecture.investigation_adoption import (
+    InvestigationDraftAdoptionError,
+    adopt_investigation_drafts,
+    preview_investigation_draft_adoption,
+)
 from ki_radar.architecture.models import (
     ProcessAnalysis,
+    ProcessValidation,
     SolutionOption,
     ValueStream,
     ValueStreamStage,
@@ -923,6 +929,156 @@ def test_human_solution_option_change_is_reported_not_overwritten(
         operation_key="materialize-once",
     )
     assert retry.pk == result.pk
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_rechecks_permission(owner, reader, business_unit):
+    process = make_process(owner=owner, business_unit=business_unit, name="Boundary permission")
+
+    with pytest.raises(InvestigationDraftAdoptionError) as exc_info:
+        preview_investigation_draft_adoption(
+            actor=reader,
+            process_analysis_id=process.pk,
+            expected_process_version=process.version,
+            base_process={"diagnostic_observations": process.diagnostic_observations},
+            base_options={},
+            process_fields={"diagnostic_observations": "Neuer belegter Befund."},
+            solution_proposals=[],
+        )
+
+    assert exc_info.value.code == "architecture_edit_forbidden"
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_preserves_process_revalidation_semantics(owner, business_unit):
+    process = make_process(owner=owner, business_unit=business_unit, name="Revalidation")
+    process.status = ProcessAnalysis.Status.VALIDATED
+    process.save(update_fields=["status", "updated_at"])
+    ProcessValidation.objects.create(
+        process_analysis=process,
+        process_version=process.version,
+        validated_by=owner,
+        validator_role="Business Owner",
+        note="Ausgangsstand geprüft.",
+    )
+    base_value = process.diagnostic_observations
+
+    preview = preview_investigation_draft_adoption(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={"diagnostic_observations": base_value},
+        base_options={},
+        process_fields={"diagnostic_observations": "Neue evidenzgestützte Beobachtung."},
+        solution_proposals=[],
+    )
+    assert preview["side_effects"] == [
+        {
+            "type": "process_revalidation_required",
+            "label": "Prozessvalidierung",
+            "description": (
+                "Die aktuelle Validierung wird durch die Prozessänderung prüfbedürftig; "
+                "die neue Prozessversion muss erneut validiert werden."
+            ),
+        }
+    ]
+
+    result = adopt_investigation_drafts(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={"diagnostic_observations": base_value},
+        base_options={},
+        process_fields={"diagnostic_observations": "Neue evidenzgestützte Beobachtung."},
+        solution_proposals=[],
+    )
+
+    process.refresh_from_db()
+    assert result.applied_fields == {
+        "diagnostic_observations": "Neue evidenzgestützte Beobachtung."
+    }
+    assert process.version == 2
+    assert process.status == ProcessAnalysis.Status.REVIEW_REQUIRED
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_rejects_red_solution_state_fields(owner, business_unit):
+    process = make_process(owner=owner, business_unit=business_unit, name="Red fields")
+
+    with pytest.raises(InvestigationDraftAdoptionError) as exc_info:
+        preview_investigation_draft_adoption(
+            actor=owner,
+            process_analysis_id=process.pk,
+            expected_process_version=process.version,
+            base_process={},
+            base_options={},
+            process_fields={},
+            solution_proposals=[
+                {
+                    "name": "Unzulässiger Vorschlag",
+                    "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+                    "recommendation": SolutionOption.Recommendation.PREFERRED,
+                }
+            ],
+        )
+
+    assert exc_info.value.code == "unsupported_solution_fields"
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_never_resets_decided_solution_option(owner, business_unit):
+    process = make_process(owner=owner, business_unit=business_unit, name="Decision boundary")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Bestehende Option",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        description="Menschlicher Entwurf.",
+        expected_value="Nutzenhypothese.",
+    )
+    base_updated_at = option.updated_at.isoformat()
+    SolutionOption.objects.filter(pk=option.pk).update(
+        recommendation=SolutionOption.Recommendation.REJECTED
+    )
+
+    proposal = {
+        "existing_option_id": str(option.pk),
+        "name": "Bestehende Option",
+        "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+        "description": "Agentisch geänderter Entwurf.",
+        "expected_value": "Neue Nutzenhypothese.",
+        "bottleneck_coverage": "",
+        "data_requirements": "",
+        "application_impact": "",
+        "integration_impact": "",
+        "risks": "",
+        "architecture_fit": "",
+        "evidence_basis": option.evidence_basis,
+    }
+    kwargs = {
+        "actor": owner,
+        "process_analysis_id": process.pk,
+        "expected_process_version": process.version,
+        "base_process": {},
+        "base_options": {
+            str(option.pk): {
+                "id": str(option.pk),
+                "updated_at": base_updated_at,
+            }
+        },
+        "process_fields": {},
+        "solution_proposals": [proposal],
+    }
+
+    preview = preview_investigation_draft_adoption(**kwargs)
+    assert [item["type"] for item in preview["conflicts"]] == ["solution_option_decision_changed"]
+    assert preview["solution_changes"] == []
+
+    result = adopt_investigation_drafts(**kwargs)
+    option.refresh_from_db()
+    assert [item["type"] for item in result.conflicts] == ["solution_option_decision_changed"]
+    assert option.recommendation == SolutionOption.Recommendation.REJECTED
+    assert option.description == "Menschlicher Entwurf."
 
 
 @pytest.mark.django_db
