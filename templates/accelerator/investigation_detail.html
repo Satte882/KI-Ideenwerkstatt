@@ -30,14 +30,80 @@
         <strong>Entscheidungsgrundlage technisch bereit.</strong>
         Die fachliche Auswahl, Freigabe und spätere Lifecycle-Entscheidungen bleiben beim Menschen.
       </div>
-      <div class="d-flex gap-2 flex-wrap">
+      <div class="d-flex gap-2 flex-wrap mb-3">
         <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_export' run.pk %}">Decision Brief als Markdown</a>
-        <form method="post" action="{% url 'accelerator:investigation_materialize' run.pk %}" class="m-0">
-          {% csrf_token %}
-          <input type="hidden" name="operation_key" value="ui-materialize-{{ run.brief_hash|slice:':32' }}">
-          <button class="btn btn-primary" type="submit">Befunde als Entwürfe übernehmen</button>
-        </form>
+        {% if latest_materialization %}
+          <a class="btn btn-primary" href="{% url 'architecture:solution_option_compare' run.process_analysis.pk %}">Lösungsoptionen vergleichen</a>
+        {% endif %}
       </div>
+
+      {% if latest_materialization %}
+        <div class="cr-inline-note" data-testid="materialization-complete">
+          <div>
+            <strong>Übernahme abgeschlossen.</strong>
+            <span>
+              {{ latest_materialization.applied_fields|length }} Prozessfeld(er),
+              {{ latest_materialization.created_solution_option_ids|length }} neue und
+              {{ latest_materialization.updated_solution_option_ids|length }} aktualisierte Lösungsoption(en).
+              {% if latest_materialization.conflicts %}{{ latest_materialization.conflicts|length }} Konflikt(e) wurden nicht überschrieben.{% endif %}
+            </span>
+          </div>
+          <a href="{% url 'architecture:solution_option_compare' run.process_analysis.pk %}">Zum fachlichen Vergleich</a>
+        </div>
+      {% elif materialization_preview %}
+        <section class="app-card materialization-preview mt-3" aria-labelledby="materialization-preview-title" data-testid="materialization-preview">
+          <div class="card-header">
+            <strong id="materialization-preview-title">Geplante Übernahme prüfen</strong>
+            <div class="small text-muted mt-1">Erst nach Ihrer Bestätigung werden die unten genannten Fachobjekte geändert. Eine bevorzugte Lösung wird dabei nicht ausgewählt.</div>
+          </div>
+          <div class="card-body">
+            <div class="section-title">Prozessanalyse</div>
+            {% for change in materialization_preview.process_changes %}
+              <div class="materialization-preview__change">
+                <strong>{{ change.label }}</strong>
+                {% if change.current %}<div class="small text-muted mt-1">Bisher: <span class="text-preline">{{ change.current }}</span></div>{% endif %}
+                <div class="mt-1">Geplant: <span class="text-preline">{{ change.proposed }}</span></div>
+              </div>
+            {% empty %}
+              <p class="text-muted">Keine konfliktfreie Änderung an Prozessfeldern geplant.</p>
+            {% endfor %}
+
+            <div class="section-title mt-4">Lösungsoptionen</div>
+            <div class="d-grid gap-2">
+              {% for change in materialization_preview.solution_changes %}
+                <div class="materialization-preview__option">
+                  <div><strong>{{ change.name }}</strong><div class="small text-muted">{{ change.action_label }}</div></div>
+                  {% if change.description %}<div class="small">{{ change.description }}</div>{% endif %}
+                </div>
+              {% empty %}
+                <p class="text-muted mb-0">Keine konfliktfreie Änderung an Lösungsoptionen geplant.</p>
+              {% endfor %}
+            </div>
+
+            {% if materialization_preview.conflicts %}
+              <div class="alert alert-warning mt-4 mb-0">
+                <strong>Bestehende Änderungen werden geschützt.</strong>
+                <ul class="mb-0 mt-2">
+                  {% for conflict in materialization_preview.conflicts %}
+                    <li>{{ conflict.label|default:conflict.type }} – wird nicht still überschrieben.</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+          <div class="card-footer">
+            <form method="post" action="{% url 'accelerator:investigation_materialize' run.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="operation_key" value="ui-materialize-{{ run.brief_hash|slice:':32' }}">
+              <div class="form-check mb-3">
+                <input class="form-check-input" id="confirm-materialization" type="checkbox" name="confirm_materialization" value="yes" required>
+                <label class="form-check-label" for="confirm-materialization">Ich habe die geplanten Änderungen geprüft und möchte sie in die bestehenden Fachobjekte übernehmen.</label>
+              </div>
+              <button class="btn btn-primary" type="submit">Geprüfte Änderungen übernehmen</button>
+            </form>
+          </div>
+        </section>
+      {% endif %}
     {% elif run.status == "waiting_human" %}
       <div class="alert alert-warning">
         <strong>Entscheidungsrelevante Klärung erforderlich.</strong>
