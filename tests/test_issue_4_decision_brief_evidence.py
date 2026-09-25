@@ -1090,16 +1090,34 @@ def test_investigation_tool_results_are_scoped_to_run_references(
         encoding="utf-8",
     )
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+
+    run_b = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="run-scoped-tool-results-b",
+        ),
+    )
+    step_b = execute_tool_step(
+        actor=owner,
+        run_id=run_b.run_id,
+        executor_token=run_b.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.pk)},
+        target_claim_id="run-b-profile",
+    )
+    abort_investigation(actor=owner, run_id=run_b.run_id)
+
     run_a = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
             snapshot_id=snapshot.snapshot_id,
             idempotency_key="run-scoped-tool-results-a",
         ),
-    )
-    source = InvestigationSource.objects.get(
-        snapshot_id=snapshot.snapshot_id,
-        filename="cases.csv",
     )
     step_a = execute_tool_step(
         actor=owner,
@@ -1115,22 +1133,6 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             "unit_column": "unit",
         },
         target_claim_id="run-a-calculation",
-    )
-    abort_investigation(actor=owner, run_id=run_a.run_id)
-    run_b = start_investigation(
-        actor=owner,
-        request=StartInvestigationRequest(
-            snapshot_id=snapshot.snapshot_id,
-            idempotency_key="run-scoped-tool-results-b",
-        ),
-    )
-    step_b = execute_tool_step(
-        actor=owner,
-        run_id=run_b.run_id,
-        executor_token=run_b.executor_token,
-        tool_name="profile_csv",
-        parameters={"source_id": str(source.pk)},
-        target_claim_id="run-b-profile",
     )
     result_a_id = step_a.result_ref["tool_result_id"]
     result_b_id = step_b.result_ref["tool_result_id"]
@@ -1151,18 +1153,40 @@ def test_investigation_tool_results_are_scoped_to_run_references(
         == 404
     )
 
-    persisted_run_a = InvestigationRun.objects.get(pk=run_a.run_id)
-    persisted_run_a.brief_payload = {
-        "calculations": [
-            {
-                "reference": {
-                    "tool_result_id": str(result_b_id),
-                    "revision_hash": source.content_sha256,
+    apply_planner_state(
+        actor=owner,
+        run_id=run_a.run_id,
+        executor_token=run_a.executor_token,
+        brief_payload={
+            "calculations": [
+                {
+                    "reference": {
+                        "tool_result_id": str(result_b_id),
+                        "revision_hash": "0" * 64,
+                    }
                 }
-            }
-        ]
-    }
-    persisted_run_a.save(update_fields=["brief_payload"])
+            ]
+        },
+    )
+    assert str(result_b_id) not in client.get(
+        reverse("accelerator:investigation_detail", args=[run_a.run_id])
+    ).content.decode()
+
+    apply_planner_state(
+        actor=owner,
+        run_id=run_a.run_id,
+        executor_token=run_a.executor_token,
+        brief_payload={
+            "calculations": [
+                {
+                    "reference": {
+                        "tool_result_id": str(result_b_id),
+                        "revision_hash": source.content_sha256,
+                    }
+                }
+            ]
+        },
+    )
 
     detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
     assert str(result_b_id) in detail_a.content.decode()
