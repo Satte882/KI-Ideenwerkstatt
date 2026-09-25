@@ -1,4 +1,23 @@
-{% if analysis_navigation %}
+{% if process_context_navigation %}
+<div class="sidebar-local-depth sidebar-process-context" aria-label="Kontext Prozessanalyse">
+  <a href="{{ process_context_navigation.process_url }}" class="sidebar-local-step sidebar-local-context-root{% if process_context_navigation.active_key == 'process' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'process' %} aria-current="page"{% endif %}>
+    <span aria-hidden="true">{% if process_context_navigation.active_key == 'process' %}●{% else %}↳{% endif %}</span>
+    <span>Prozessanalyse</span>
+  </a>
+  <div class="sidebar-local-subdepth">
+    {% if process_context_navigation.decision_brief_url %}
+    <a href="{{ process_context_navigation.decision_brief_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'brief' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'brief' %} aria-current="page"{% endif %}>
+      <span aria-hidden="true">{% if process_context_navigation.active_key == 'brief' %}●{% else %}○{% endif %}</span>
+      <span>Decision Brief</span>
+    </a>
+    {% endif %}
+    <a href="{{ process_context_navigation.comparison_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'compare' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'compare' %} aria-current="page"{% endif %}>
+      <span aria-hidden="true">{% if process_context_navigation.active_key == 'compare' %}●{% else %}○{% endif %}</span>
+      <span>Lösungsoptionen vergleichen</span>
+    </a>
+  </div>
+</div>
+{% elif analysis_navigation %}
 <div class="sidebar-local-depth" aria-label="Lokale Analysetiefe">
   {% for step in analysis_navigation.steps %}
     {% if step.url %}<a href="{{ step.url }}" class="sidebar-local-step sidebar-local-{{ step.state }}{% if step.is_active %} sidebar-local-active{% endif %}"{% if step.is_active %} aria-current="step"{% endif %}>{% else %}<span class="sidebar-local-step sidebar-local-{{ step.state }}{% if step.is_active %} sidebar-local-active{% endif %}"{% if step.is_active %} aria-current="step"{% endif %}>{% endif %}
