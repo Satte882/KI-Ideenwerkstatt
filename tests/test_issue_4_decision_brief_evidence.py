@@ -1056,10 +1056,20 @@ def test_investigation_read_only_views_do_not_require_transaction(
         ),
     )
     source = InvestigationSource.objects.get(snapshot_id=snapshot.snapshot_id)
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    run.brief_payload = full_brief(
+        run=run,
+        source=source,
+        result_id=uuid.uuid4(),
+    )
+    run.save(update_fields=["brief_payload"])
     client.force_login(owner)
 
     detail = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
     assert detail.status_code == 200
+    detail_body = detail.content.decode()
+    assert "Konkurrierende Ursachen" in detail_body
+    assert str(source.pk) in detail_body
 
     source_detail = client.get(
         reverse("accelerator:investigation_source", args=[handle.run_id, source.pk])

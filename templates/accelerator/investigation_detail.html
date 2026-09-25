@@ -112,8 +112,20 @@
             <div class="{% if not forloop.last %}pb-3 mb-3 border-bottom border-secondary-subtle{% endif %}">
               <span class="badge badge-soft">{{ item.status }}</span>
               <div class="mt-2">{{ item.statement }}</div>
-              {% if item.references %}<div class="small text-muted mt-1">Evidenz: {% for ref in item.references %}{{ ref.source_id|default:ref.tool_result_id }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
-              {% if item.counterevidence_refs %}<div class="small text-muted mt-1">Gegenbeleg: {% for ref in item.counterevidence_refs %}{{ ref.source_id|default:ref.tool_result_id }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+              {% if item.references %}
+                <div class="small text-muted mt-1">Evidenz:
+                  {% for ref in item.references %}
+                    {% if ref.source_id %}{{ ref.source_id }}{% elif ref.tool_result_id %}{{ ref.tool_result_id }}{% endif %}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+              {% if item.counterevidence_refs %}
+                <div class="small text-muted mt-1">Gegenbeleg:
+                  {% for ref in item.counterevidence_refs %}
+                    {% if ref.source_id %}{{ ref.source_id }}{% elif ref.tool_result_id %}{{ ref.tool_result_id }}{% endif %}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
           {% empty %}<p class="text-muted mb-0">Noch keine belastbaren konkurrierenden Hypothesen.</p>{% endfor %}
         </div>
