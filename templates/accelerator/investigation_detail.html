@@ -302,7 +302,7 @@
   <summary>Technische Laufdetails</summary>
   <div class="decision-disclosure__content">
     <dl class="stage-facts mb-0">
-      <dt>Technischer Run</dt><dd>{{ run.get_status_display }}</dd>
+      <dt>Technischer Run</dt><dd>{{ decision_surface.technical_status_label }}</dd>
       <dt>Brief-Revision</dt><dd>{{ run.brief_revision }}</dd>
       {% if run.brief_hash %}<dt>Brief-Hash</dt><dd><code>{{ run.brief_hash }}</code></dd>{% endif %}
     </dl>
