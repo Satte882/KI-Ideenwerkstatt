@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from uuid import UUID
 
 import pytest
 
@@ -98,3 +99,63 @@ def test_process_steps_remain_unlinked_until_analysis_exists():
     assert steps["solution"].url is None
     assert navigation.previous is None
     assert navigation.next.key == "focus"
+
+
+def test_process_context_navigation_marks_decision_brief_inside_process_analysis():
+    from ki_radar.architecture.templatetags.analysis_navigation import (
+        _process_context_from_context,
+    )
+
+    process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
+    run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    process = SimpleNamespace(
+        pk=process_id,
+        get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
+    )
+    run = SimpleNamespace(pk=run_id, process_analysis=process)
+    request = SimpleNamespace(
+        resolver_match=SimpleNamespace(
+            namespace="accelerator",
+            url_name="investigation_detail",
+        )
+    )
+
+    navigation = _process_context_from_context({"request": request, "run": run})
+
+    assert navigation["active_key"] == "brief"
+    assert navigation["process_url"] == f"/architecture/processes/{process_id}/"
+    assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
+    assert navigation["comparison_url"] == (
+        f"/architecture/processes/{process_id}/options/compare/"
+    )
+
+
+def test_process_context_navigation_prefers_materialized_brief_on_comparison_page():
+    from ki_radar.architecture.templatetags.analysis_navigation import (
+        _process_context_from_context,
+    )
+
+    process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
+    run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    process = SimpleNamespace(
+        pk=process_id,
+        get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
+    )
+    run = SimpleNamespace(pk=run_id, process_analysis=process)
+    request = SimpleNamespace(
+        resolver_match=SimpleNamespace(
+            namespace="architecture",
+            url_name="solution_option_compare",
+        )
+    )
+
+    navigation = _process_context_from_context(
+        {
+            "request": request,
+            "process_analysis": process,
+            "latest_investigation_materialization": SimpleNamespace(run=run),
+        }
+    )
+
+    assert navigation["active_key"] == "compare"
+    assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
