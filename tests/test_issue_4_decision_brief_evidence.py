@@ -1519,8 +1519,7 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     assert "Begründung" in body
     assert (
         "Gruppenvergleich zeigt höhere Freigabedauer (Stunden) nach Freigeber verfügbar; "
-        "Datenprüfung bestätigt die Datengrundlage."
-        in body
+        "Datenprüfung bestätigt die Datengrundlage." in body
     )
     assert "compare_groups zeigt höhere approval_hours" not in body
     assert "approval_hours" not in body
