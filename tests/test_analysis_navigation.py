@@ -22,6 +22,7 @@ def journey(*states):
         steps=tuple(SimpleNamespace(key=key, state=state) for key, state in states)
     )
 
+
 def test_analysis_step_url_preserves_query_and_adds_fragment():
     url = analysis_step_url(
         "/architecture/value-streams/7/?source=portfolio",
@@ -32,9 +33,11 @@ def test_analysis_step_url_preserves_query_and_adds_fragment():
         "/architecture/value-streams/7/?source=portfolio&analysis_step=focus#fokus-priorisierung"
     )
 
+
 def test_analysis_step_url_rejects_unknown_step():
     with pytest.raises(ValueError, match="Unknown analysis step"):
         analysis_step_url("/architecture/value-streams/7/", "unknown")
+
 
 def test_navigation_uses_canonical_targets_and_active_step():
     navigation = build_analysis_navigation(
@@ -58,6 +61,7 @@ def test_navigation_uses_canonical_targets_and_active_step():
     assert navigation.previous.key == "value_stream"
     assert navigation.next.key == "process"
 
+
 def test_invalid_requested_step_falls_back_to_page_default():
     navigation = build_analysis_navigation(
         journey=journey(
@@ -75,6 +79,7 @@ def test_invalid_requested_step_falls_back_to_page_default():
     assert navigation.active_key == "process"
     assert navigation.previous.key == "focus"
     assert navigation.next.key == "solution"
+
 
 def test_process_steps_remain_unlinked_until_analysis_exists():
     navigation = build_analysis_navigation(
@@ -94,6 +99,7 @@ def test_process_steps_remain_unlinked_until_analysis_exists():
     assert steps["solution"].url is None
     assert navigation.previous is None
     assert navigation.next.key == "focus"
+
 
 def test_process_context_navigation_marks_decision_brief_inside_process_analysis():
     from ki_radar.architecture.templatetags.analysis_navigation import (
@@ -136,6 +142,7 @@ def test_process_context_navigation_marks_decision_brief_inside_process_analysis
     assert navigation["comparison_url"] == (
         f"/architecture/processes/{process_id}/options/compare/"
     )
+
 
 def test_process_context_navigation_prefers_materialized_brief_on_comparison_page():
     from ki_radar.architecture.templatetags.analysis_navigation import (
@@ -223,11 +230,10 @@ def test_process_detail_solution_step_marks_solution_parent_active():
         ),
     )
 
-    navigation = _process_context_from_context(
-        {"request": request, "process_analysis": process}
-    )
+    navigation = _process_context_from_context({"request": request, "process_analysis": process})
 
     assert navigation["active_key"] == "solution"
+
 
 def test_process_page_uses_broad_solution_space_label_not_comparison_label():
     from pathlib import Path
@@ -260,7 +266,4 @@ def test_comparison_is_nested_under_process_not_solution_parent():
     solution_pos = template.index("<span>Lösungsoptionen</span>")
 
     assert process_pos < compare_pos < solution_pos
-    assert (
-        "active_key == 'brief' or process_context_navigation.active_key == 'compare'"
-        in template
-    )
+    assert "active_key == 'brief' or process_context_navigation.active_key == 'compare'" in template
