@@ -14,7 +14,7 @@
     {% if run.brief_payload %}
       <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_export' run.pk %}">Markdown exportieren</a>
     {% endif %}
-    <a class="btn btn-outline-secondary" href="{{ run.process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+    <a class="btn btn-outline-secondary" href="{{ run.process_analysis.get_absolute_url }}">Prozessanalyse öffnen</a>
   </div>
 </div>
 
