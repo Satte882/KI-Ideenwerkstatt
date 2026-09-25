@@ -302,9 +302,7 @@ def test_materialized_investigation_text_is_humanized_in_process_core(
     assert "Population:" not in scale_text
     assert "tool-result:" not in scale_text
     assert "source-sha256:" not in scale_text
-    assert humanize_process_text(process.cause_hypotheses).startswith(
-        "Durch Evidenz gestützt:"
-    )
+    assert humanize_process_text(process.cause_hypotheses).startswith("Durch Evidenz gestützt:")
 
     client.force_login(owner)
     body = client.get(process.get_absolute_url()).content.decode()
