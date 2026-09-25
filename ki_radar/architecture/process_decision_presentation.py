@@ -72,7 +72,8 @@ def build_process_decision_surface(
         next_step = {
             "label": "Aktueller Discovery-Stand abgeschlossen",
             "reason": getattr(journey, "completion_message", "") or (
-                "Für diesen Prozess ist derzeit kein weiterer verpflichtender Discovery-Schritt offen."
+                "Für diesen Prozess ist derzeit kein weiterer verpflichtender "
+                "Discovery-Schritt offen."
             ),
         }
 
