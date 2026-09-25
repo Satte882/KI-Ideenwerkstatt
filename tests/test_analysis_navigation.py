@@ -108,8 +108,10 @@ def test_process_context_navigation_marks_decision_brief_inside_process_analysis
 
     process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
     run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
     process = SimpleNamespace(
         pk=process_id,
+        stage=SimpleNamespace(value_stream=value_stream),
         get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
     )
     run = SimpleNamespace(pk=run_id, process_analysis=process)
@@ -123,6 +125,12 @@ def test_process_context_navigation_marks_decision_brief_inside_process_analysis
     navigation = _process_context_from_context({"request": request, "run": run})
 
     assert navigation["active_key"] == "brief"
+    assert navigation["value_stream_url"] == (
+        "/architecture/value-streams/7/?analysis_step=value_stream#value-stream"
+    )
+    assert navigation["focus_url"] == (
+        "/architecture/value-streams/7/?analysis_step=focus#fokus-priorisierung"
+    )
     assert navigation["process_url"] == f"/architecture/processes/{process_id}/"
     assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
     assert navigation["comparison_url"] == (
@@ -137,8 +145,10 @@ def test_process_context_navigation_prefers_materialized_brief_on_comparison_pag
 
     process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
     run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
     process = SimpleNamespace(
         pk=process_id,
+        stage=SimpleNamespace(value_stream=value_stream),
         get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
     )
     run = SimpleNamespace(pk=run_id, process_analysis=process)
@@ -159,3 +169,22 @@ def test_process_context_navigation_prefers_materialized_brief_on_comparison_pag
 
     assert navigation["active_key"] == "compare"
     assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
+
+
+
+def test_process_context_sidebar_keeps_parent_analysis_levels_visible():
+    from pathlib import Path
+
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "templates"
+        / "architecture"
+        / "includes"
+        / "analysis_sidebar.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<span>Value Stream</span>" in template
+    assert "<span>Fokus &amp; Priorisierung</span>" in template
+    assert "<span>Prozessanalyse</span>" in template
+    assert "<span>Decision Brief</span>" in template
+    assert "<span>Lösungsoptionen vergleichen</span>" in template
