@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from ki_radar.accelerator.investigation_models import InvestigationMaterialization
 from ki_radar.accelerator.solution_generation_entry import (
     build_solution_generation_entry_context,
 )
@@ -46,6 +47,12 @@ def solution_option_compare(request, pk):
     generation_entry = build_solution_generation_entry_context(process_analysis)
     selection_history = process_analysis.solution_selection_decisions.all()
     latest_selection = selection_history.first()
+    latest_investigation_materialization = (
+        InvestigationMaterialization.objects.select_related("run")
+        .filter(run__process_analysis=process_analysis)
+        .order_by("-created_at")
+        .first()
+    )
 
     form = SolutionSelectionForm(
         request.POST or None,
@@ -94,6 +101,7 @@ def solution_option_compare(request, pk):
             "can_select": can_select,
             "selection_history": selection_history,
             "latest_selection": latest_selection,
+            "latest_investigation_materialization": latest_investigation_materialization,
             **generation_entry,
         },
     )
