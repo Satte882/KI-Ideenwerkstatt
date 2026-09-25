@@ -44,6 +44,11 @@ def _process_context_from_context(context):
     )
     if active_key is None:
         return None
+    if (
+        active_key == "process"
+        and getattr(request, "GET", {}).get("analysis_step") == "solution"
+    ):
+        active_key = "solution"
 
     run = context.get("run")
     process_analysis = context.get("process_analysis")
@@ -65,11 +70,14 @@ def _process_context_from_context(context):
     value_stream = process_analysis.stage.value_stream
     value_stream_url = value_stream.get_absolute_url()
 
+    process_url = process_analysis.get_absolute_url()
+
     return {
         "active_key": active_key,
         "value_stream_url": analysis_step_url(value_stream_url, "value_stream"),
         "focus_url": analysis_step_url(value_stream_url, "focus"),
-        "process_url": process_analysis.get_absolute_url(),
+        "process_url": analysis_step_url(process_url, "process"),
+        "solution_url": analysis_step_url(process_url, "solution"),
         "decision_brief_url": (
             reverse(
                 "accelerator:investigation_detail",
