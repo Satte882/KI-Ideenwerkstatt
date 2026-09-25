@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from contextlib import suppress
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -57,10 +58,8 @@ def _referenced_tool_result_ids(value) -> set[uuid.UUID]:
     if isinstance(value, dict):
         raw_result_id = value.get("tool_result_id")
         if raw_result_id:
-            try:
+            with suppress(TypeError, ValueError):
                 result_ids.add(uuid.UUID(str(raw_result_id)))
-            except (TypeError, ValueError):
-                pass
         for nested in value.values():
             result_ids.update(_referenced_tool_result_ids(nested))
     elif isinstance(value, list):
