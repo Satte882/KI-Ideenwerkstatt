@@ -1168,9 +1168,12 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             ],
         },
     )
-    assert str(result_b_id) not in client.get(
-        reverse("accelerator:investigation_detail", args=[run_a.run_id])
-    ).content.decode()
+    assert (
+        str(result_b_id)
+        not in client.get(
+            reverse("accelerator:investigation_detail", args=[run_a.run_id])
+        ).content.decode()
+    )
 
     apply_planner_state(
         actor=owner,
