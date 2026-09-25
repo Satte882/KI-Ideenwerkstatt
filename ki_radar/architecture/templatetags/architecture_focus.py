@@ -6,7 +6,7 @@ from ki_radar.accelerator.solution_generation_entry import (
 from ki_radar.core.taxonomy import ScreeningLevel
 
 from ..models import EvidenceBasis, TimeToValue
-from ..process_findings import build_process_findings
+from ..process_findings import build_process_findings, humanize_process_text
 from ..stage_focus import get_stage_focus_decision
 
 register = template.Library()
@@ -35,6 +35,11 @@ def time_to_value_label(value):
 @register.filter
 def evidence_basis_label(value):
     return EVIDENCE_BASIS_LABELS.get(value, "-")
+
+
+@register.filter
+def process_human_text(value):
+    return humanize_process_text(value)
 
 
 @register.filter
