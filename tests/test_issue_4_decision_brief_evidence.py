@@ -43,7 +43,7 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationSourceFolder,
     InvestigationStep,
 )
-from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
+from ki_radar.accelerator.investigation_policy import PolicyDecision, PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
     ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     InvestigationRunError,
@@ -1403,6 +1403,7 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     owner,
     business_unit,
     tmp_path,
+    monkeypatch,
 ):
     process = make_process(owner=owner, business_unit=business_unit, name="Human decision surface")
     (tmp_path / "cases.csv").write_text(
@@ -1471,6 +1472,25 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
         brief_hash=brief_hash,
     )
     client.force_login(owner)
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.evaluate_run_policy",
+        lambda _run: PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ()),
+    )
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.preview_decision_brief_materialization",
+        lambda **_kwargs: {
+            "process_changes": [
+                {
+                    "label": "Beobachtung / Problem",
+                    "current": "Laufzeiten schwanken",
+                    "proposed": "Freigabezeiten schwanken deutlich.",
+                }
+            ],
+            "solution_changes": [],
+            "conflicts": [],
+            "side_effects": [],
+        },
+    )
 
     response = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
     body = response.content.decode()
