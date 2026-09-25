@@ -13,11 +13,12 @@
 
 <header class="cr-page-header cr-work-header">
   <div class="cr-page-header__copy">
-    <div class="eyebrow mb-2">{{ process_analysis.stage.value_stream.name }} · {{ process_analysis.stage.name }}</div>
+    <div class="eyebrow mb-2">Prozessanalyse · {{ process_analysis.stage.value_stream.name }} · {{ process_analysis.stage.name }}</div>
     <h1 class="cr-page-header__title">{{ process_analysis.name }}</h1>
     <p class="cr-work-header__summary">{{ process_analysis.get_status_display }} · Ist-Prozess, Architekturkontext und Lösungsoptionen.</p>
   </div>
   <div class="cr-work-header__actions">
+    {% if latest_investigation_run %}<a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Decision Brief öffnen</a>{% endif %}
     <a class="btn btn-outline-secondary" href="{{ process_analysis.stage.value_stream.get_absolute_url }}">Zum Value Stream</a>
     {% if can_validate and process_analysis.status != 'validated' %}<a class="btn btn-outline-secondary" href="{% url 'architecture:process_analysis_validate' process_analysis.pk %}">Ist-Prozess validieren</a>{% endif %}
     {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Bearbeiten</a>{% endif %}
