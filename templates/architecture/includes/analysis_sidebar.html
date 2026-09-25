@@ -10,28 +10,26 @@
   </a>
 
   <a href="{{ process_context_navigation.process_url }}" class="sidebar-local-step sidebar-local-context-parent{% if process_context_navigation.active_key == 'process' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'process' %} aria-current="page"{% endif %}>
-    <span aria-hidden="true">{% if process_context_navigation.active_key == 'process' %}●{% elif process_context_navigation.active_key == 'brief' %}▾{% else %}○{% endif %}</span>
+    <span aria-hidden="true">{% if process_context_navigation.active_key == 'process' %}●{% elif process_context_navigation.active_key == 'brief' or process_context_navigation.active_key == 'compare' %}▾{% else %}○{% endif %}</span>
     <span>Prozessanalyse</span>
   </a>
-  {% if process_context_navigation.decision_brief_url %}
   <div class="sidebar-local-subdepth">
+    {% if process_context_navigation.decision_brief_url %}
     <a href="{{ process_context_navigation.decision_brief_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'brief' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'brief' %} aria-current="page"{% endif %}>
       <span aria-hidden="true">{% if process_context_navigation.active_key == 'brief' %}●{% else %}○{% endif %}</span>
       <span>Decision Brief</span>
     </a>
-  </div>
-  {% endif %}
-
-  <a href="{{ process_context_navigation.solution_url }}" class="sidebar-local-step sidebar-local-context-parent{% if process_context_navigation.active_key == 'solution' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'solution' %} aria-current="page"{% endif %}>
-    <span aria-hidden="true">{% if process_context_navigation.active_key == 'solution' %}●{% elif process_context_navigation.active_key == 'compare' %}▾{% else %}○{% endif %}</span>
-    <span>Lösungsoptionen</span>
-  </a>
-  <div class="sidebar-local-subdepth">
+    {% endif %}
     <a href="{{ process_context_navigation.comparison_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'compare' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'compare' %} aria-current="page"{% endif %}>
       <span aria-hidden="true">{% if process_context_navigation.active_key == 'compare' %}●{% else %}○{% endif %}</span>
-      <span>Vergleich</span>
+      <span>Optionen vergleichen</span>
     </a>
   </div>
+
+  <a href="{{ process_context_navigation.solution_url }}" class="sidebar-local-step sidebar-local-context-parent{% if process_context_navigation.active_key == 'solution' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'solution' %} aria-current="page"{% endif %}>
+    <span aria-hidden="true">{% if process_context_navigation.active_key == 'solution' %}●{% else %}○{% endif %}</span>
+    <span>Lösungsoptionen</span>
+  </a>
 </div>
 {% elif analysis_navigation %}
 <div class="sidebar-local-depth" aria-label="Lokale Analysetiefe">
