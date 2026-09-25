@@ -307,10 +307,7 @@ def build_decision_surface(
             "kind": "process",
             "title": "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten",
             "description": (
-                clarification_question
-                or needed_evidence
-                or required_action
-                or status_detail
+                clarification_question or needed_evidence or required_action or status_detail
             ),
         }
     else:
@@ -318,8 +315,7 @@ def build_decision_surface(
             "kind": "wait",
             "title": "Untersuchung abschließen lassen",
             "description": (
-                "Während des laufenden Agentenlaufs ist keine fachliche "
-                "Entscheidung nötig."
+                "Während des laufenden Agentenlaufs ist keine fachliche Entscheidung nötig."
             ),
         }
 
