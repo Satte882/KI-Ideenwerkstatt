@@ -220,7 +220,10 @@ def build_decision_surface(
     ready_for_decision = (
         policy_outcome == "READY_FOR_DECISION" and run.status == InvestigationRun.Status.READY
     )
-    clarification_required = policy_outcome == "HUMAN_CLARIFICATION"
+    clarification_required = (
+        policy_outcome == "HUMAN_CLARIFICATION"
+        or run.status == InvestigationRun.Status.WAITING_HUMAN
+    )
 
     status_label = "Untersuchung läuft"
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
@@ -249,6 +252,13 @@ def build_decision_surface(
         status_detail = (
             _clarification_text(run, "impact")
             or "Für die Richtungsentscheidung fehlt noch eine entscheidungskritische Information."
+        )
+        status_tone = "review"
+    elif run.status == InvestigationRun.Status.READY:
+        status_label = "Entscheidungsgrundlage noch unvollständig"
+        status_detail = (
+            "Der gespeicherte Stand erfüllt die aktuelle Readiness-Prüfung noch nicht. "
+            "Aus diesem Stand wird keine fachliche Empfehlung abgeleitet."
         )
         status_tone = "review"
 
