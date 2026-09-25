@@ -1164,9 +1164,7 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             ],
         },
     )
-    invalid_detail = client.get(
-        reverse("accelerator:investigation_detail", args=[run_a.run_id])
-    )
+    invalid_detail = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
     assert result_b_url not in invalid_detail.content.decode()
     assert client.get(result_b_url).status_code == 404
 
