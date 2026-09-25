@@ -932,11 +932,7 @@ def test_human_solution_option_change_is_reported_not_overwritten(
 
 
 @pytest.mark.django_db
-def test_architecture_adoption_rechecks_permission(
-    owner,
-    reader,
-    business_unit,
-):
+def test_architecture_adoption_rechecks_permission(owner, reader, business_unit):
     process = make_process(owner=owner, business_unit=business_unit, name="Boundary permission")
 
     with pytest.raises(InvestigationDraftAdoptionError) as exc_info:
@@ -954,10 +950,7 @@ def test_architecture_adoption_rechecks_permission(
 
 
 @pytest.mark.django_db
-def test_architecture_adoption_preserves_process_revalidation_semantics(
-    owner,
-    business_unit,
-):
+def test_architecture_adoption_preserves_process_revalidation_semantics(owner, business_unit):
     process = make_process(owner=owner, business_unit=business_unit, name="Revalidation")
     process.status = ProcessAnalysis.Status.VALIDATED
     process.save(update_fields=["status", "updated_at"])
@@ -1009,10 +1002,7 @@ def test_architecture_adoption_preserves_process_revalidation_semantics(
 
 
 @pytest.mark.django_db
-def test_architecture_adoption_rejects_red_solution_state_fields(
-    owner,
-    business_unit,
-):
+def test_architecture_adoption_rejects_red_solution_state_fields(owner, business_unit):
     process = make_process(owner=owner, business_unit=business_unit, name="Red fields")
 
     with pytest.raises(InvestigationDraftAdoptionError) as exc_info:
@@ -1036,10 +1026,7 @@ def test_architecture_adoption_rejects_red_solution_state_fields(
 
 
 @pytest.mark.django_db
-def test_architecture_adoption_never_resets_decided_solution_option(
-    owner,
-    business_unit,
-):
+def test_architecture_adoption_never_resets_decided_solution_option(owner, business_unit):
     process = make_process(owner=owner, business_unit=business_unit, name="Decision boundary")
     option = SolutionOption.objects.create(
         process_analysis=process,
@@ -1084,16 +1071,12 @@ def test_architecture_adoption_never_resets_decided_solution_option(
     }
 
     preview = preview_investigation_draft_adoption(**kwargs)
-    assert [item["type"] for item in preview["conflicts"]] == [
-        "solution_option_decision_changed"
-    ]
+    assert [item["type"] for item in preview["conflicts"]] == ["solution_option_decision_changed"]
     assert preview["solution_changes"] == []
 
     result = adopt_investigation_drafts(**kwargs)
     option.refresh_from_db()
-    assert [item["type"] for item in result.conflicts] == [
-        "solution_option_decision_changed"
-    ]
+    assert [item["type"] for item in result.conflicts] == ["solution_option_decision_changed"]
     assert option.recommendation == SolutionOption.Recommendation.REJECTED
     assert option.description == "Menschlicher Entwurf."
 
