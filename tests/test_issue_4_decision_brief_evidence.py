@@ -1165,7 +1165,7 @@ def test_investigation_tool_results_are_scoped_to_run_references(
                         "revision_hash": "0" * 64,
                     },
                 },
-            ]
+            ],
         },
     )
     assert str(result_b_id) not in client.get(
@@ -1184,7 +1184,7 @@ def test_investigation_tool_results_are_scoped_to_run_references(
                         "revision_hash": source.content_sha256,
                     },
                 },
-            ]
+            ],
         },
     )
 
