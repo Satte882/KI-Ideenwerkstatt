@@ -34,6 +34,7 @@ from .investigation_runtime import (
     continue_with_human_input,
     evaluate_run_policy,
     read_run,
+    reference_valid,
     start_investigation,
 )
 from .investigation_tools import (
@@ -53,25 +54,34 @@ def _run_redirect(run_id):
     return redirect("accelerator:investigation_detail", run_id=run_id)
 
 
-def _referenced_tool_result_ids(value) -> set[uuid.UUID]:
+def _tool_result_id(value) -> uuid.UUID | None:
+    if not isinstance(value, dict) or not value.get("tool_result_id"):
+        return None
+    with suppress(TypeError, ValueError):
+        return uuid.UUID(str(value["tool_result_id"]))
+    return None
+
+
+def _brief_tool_result_ids(run: InvestigationRun, value) -> set[uuid.UUID]:
     result_ids: set[uuid.UUID] = set()
     if isinstance(value, dict):
-        raw_result_id = value.get("tool_result_id")
-        if raw_result_id:
-            with suppress(TypeError, ValueError):
-                result_ids.add(uuid.UUID(str(raw_result_id)))
+        result_id = _tool_result_id(value)
+        if result_id is not None and reference_valid(run, value):
+            result_ids.add(result_id)
         for nested in value.values():
-            result_ids.update(_referenced_tool_result_ids(nested))
+            result_ids.update(_brief_tool_result_ids(run, nested))
     elif isinstance(value, list):
         for nested in value:
-            result_ids.update(_referenced_tool_result_ids(nested))
+            result_ids.update(_brief_tool_result_ids(run, nested))
     return result_ids
 
 
 def _tool_results_for_run(run: InvestigationRun):
-    result_ids = _referenced_tool_result_ids(run.brief_payload)
+    result_ids = _brief_tool_result_ids(run, run.brief_payload)
     for result_ref in run.steps.values_list("result_ref", flat=True):
-        result_ids.update(_referenced_tool_result_ids(result_ref))
+        result_id = _tool_result_id(result_ref)
+        if result_id is not None:
+            result_ids.add(result_id)
     return InvestigationToolResult.objects.filter(
         snapshot=run.source_snapshot,
         pk__in=result_ids,
