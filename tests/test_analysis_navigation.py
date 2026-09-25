@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from uuid import UUID
 
 import pytest
 
@@ -98,3 +99,156 @@ def test_process_steps_remain_unlinked_until_analysis_exists():
     assert steps["solution"].url is None
     assert navigation.previous is None
     assert navigation.next.key == "focus"
+
+
+def test_process_context_navigation_marks_decision_brief_inside_process_analysis():
+    from ki_radar.architecture.templatetags.analysis_navigation import (
+        _process_context_from_context,
+    )
+
+    process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
+    run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
+    process = SimpleNamespace(
+        pk=process_id,
+        stage=SimpleNamespace(value_stream=value_stream),
+        get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
+    )
+    run = SimpleNamespace(pk=run_id, process_analysis=process)
+    request = SimpleNamespace(
+        GET={},
+        resolver_match=SimpleNamespace(
+            namespace="accelerator",
+            url_name="investigation_detail",
+        ),
+    )
+
+    navigation = _process_context_from_context({"request": request, "run": run})
+
+    assert navigation["active_key"] == "brief"
+    assert navigation["value_stream_url"] == (
+        "/architecture/value-streams/7/?analysis_step=value_stream#value-stream"
+    )
+    assert navigation["focus_url"] == (
+        "/architecture/value-streams/7/?analysis_step=focus#fokus-priorisierung"
+    )
+    assert navigation["process_url"] == (
+        f"/architecture/processes/{process_id}/?analysis_step=process#prozessanalyse"
+    )
+    assert navigation["solution_url"] == (
+        f"/architecture/processes/{process_id}/?analysis_step=solution#loesungsoptionen"
+    )
+    assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
+    assert navigation["comparison_url"] == (
+        f"/architecture/processes/{process_id}/options/compare/"
+    )
+
+
+def test_process_context_navigation_prefers_materialized_brief_on_comparison_page():
+    from ki_radar.architecture.templatetags.analysis_navigation import (
+        _process_context_from_context,
+    )
+
+    process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
+    run_id = UUID("aab16792-39aa-46be-935a-ba97248bcebd")
+    value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
+    process = SimpleNamespace(
+        pk=process_id,
+        stage=SimpleNamespace(value_stream=value_stream),
+        get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
+    )
+    run = SimpleNamespace(pk=run_id, process_analysis=process)
+    request = SimpleNamespace(
+        GET={},
+        resolver_match=SimpleNamespace(
+            namespace="architecture",
+            url_name="solution_option_compare",
+        ),
+    )
+
+    navigation = _process_context_from_context(
+        {
+            "request": request,
+            "process_analysis": process,
+            "latest_investigation_materialization": SimpleNamespace(run=run),
+        }
+    )
+
+    assert navigation["active_key"] == "compare"
+    assert navigation["decision_brief_url"] == f"/accelerator/investigations/{run_id}/"
+
+
+def test_process_context_sidebar_keeps_parent_analysis_levels_visible():
+    from pathlib import Path
+
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "templates"
+        / "architecture"
+        / "includes"
+        / "analysis_sidebar.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<span>Value Stream</span>" in template
+    assert "<span>Fokus &amp; Priorisierung</span>" in template
+    assert "<span>Prozessanalyse</span>" in template
+    assert "<span>Decision Brief</span>" in template
+    assert "<span>Lösungsoptionen</span>" in template
+    assert "<span>Optionen vergleichen</span>" in template
+    assert "Lösungsoptionen vergleichen</span>" not in template
+    assert template.index("<span>Prozessanalyse</span>") < template.index(
+        "<span>Decision Brief</span>"
+    )
+    assert template.index("<span>Prozessanalyse</span>") < template.index(
+        "<span>Optionen vergleichen</span>"
+    )
+    assert template.index("<span>Optionen vergleichen</span>") < template.index(
+        "<span>Lösungsoptionen</span>"
+    )
+
+
+def test_process_detail_solution_step_marks_solution_parent_active():
+    from ki_radar.architecture.templatetags.analysis_navigation import (
+        _process_context_from_context,
+    )
+
+    process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
+    value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
+    process = SimpleNamespace(
+        pk=process_id,
+        stage=SimpleNamespace(value_stream=value_stream),
+        get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
+        investigation_runs=SimpleNamespace(
+            order_by=lambda *_args: SimpleNamespace(first=lambda: None)
+        ),
+    )
+    request = SimpleNamespace(
+        GET={"analysis_step": "solution"},
+        resolver_match=SimpleNamespace(
+            namespace="architecture",
+            url_name="process_analysis_detail",
+        ),
+    )
+
+    navigation = _process_context_from_context({"request": request, "process_analysis": process})
+
+    assert navigation["active_key"] == "solution"
+
+
+def test_comparison_is_nested_under_process_not_solution_parent():
+    from pathlib import Path
+
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "templates"
+        / "architecture"
+        / "includes"
+        / "analysis_sidebar.html"
+    ).read_text(encoding="utf-8")
+
+    process_pos = template.index("<span>Prozessanalyse</span>")
+    compare_pos = template.index("<span>Optionen vergleichen</span>")
+    solution_pos = template.index("<span>Lösungsoptionen</span>")
+
+    assert process_pos < compare_pos < solution_pos
+    assert "active_key == 'brief' or process_context_navigation.active_key == 'compare'" in template

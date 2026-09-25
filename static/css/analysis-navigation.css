@@ -78,3 +78,27 @@
     scroll-margin-top: 16px;
   }
 }
+
+
+.sidebar-process-context .sidebar-local-context-parent {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.sidebar-local-subdepth {
+  display: grid;
+  gap: 2px;
+  margin-left: 9px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(148, 163, 184, .16);
+}
+
+.sidebar-local-substep {
+  font-size: .69rem;
+  padding-block: 4px;
+}
+
+.sidebar-local-substep > span:last-child {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
