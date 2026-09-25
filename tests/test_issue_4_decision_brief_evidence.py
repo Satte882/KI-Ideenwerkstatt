@@ -22,6 +22,7 @@ from ki_radar.accelerator.investigation_benchmark import (
 from ki_radar.accelerator.investigation_brief import (
     materialize_decision_brief,
     preview_decision_brief_materialization,
+    render_decision_brief_markdown,
 )
 from ki_radar.accelerator.investigation_evidence import (
     authorize_campaign_continuation,
@@ -36,6 +37,7 @@ from ki_radar.accelerator.investigation_llm import (
     _structured_provider_call,
 )
 from ki_radar.accelerator.investigation_models import (
+    InvestigationBriefRevision,
     InvestigationModelCall,
     InvestigationProviderReservation,
     InvestigationRun,
@@ -760,6 +762,7 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     owner,
     business_unit,
     tmp_path,
+    monkeypatch,
 ):
     process = make_process(owner=owner, business_unit=business_unit, name="Safe handoff")
     (tmp_path / "cases.csv").write_text(
@@ -807,6 +810,10 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
         brief_hash=content_hash(payload),
     )
     client.force_login(owner)
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.evaluate_run_policy",
+        lambda _run: PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ()),
+    )
     materialize_url = reverse("accelerator:investigation_materialize", args=[run.pk])
 
     response = client.post(materialize_url, {"operation_key": "ui-safe-handoff"})
@@ -1520,12 +1527,19 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
         in body
     )
 
-    export = client.get(reverse("accelerator:investigation_export", args=[run.pk]))
-    export_body = export.content.decode()
-    assert export.status_code == 200
+    stored_run = InvestigationRun.objects.get(pk=run.pk)
+    revision = InvestigationBriefRevision.objects.create(
+        run=stored_run,
+        revision=1,
+        payload=stored_run.brief_payload,
+        content_hash=stored_run.brief_hash,
+        operation_key="decision-surface-render-check",
+        process_version=stored_run.process_version,
+    )
+    export_body = render_decision_brief_markdown(revision)
     assert payload["recommendation"]["summary"] in body
     assert payload["recommendation"]["summary"] in export_body
-    assert brief_hash == InvestigationRun.objects.get(pk=run.pk).brief_hash
+    assert brief_hash == stored_run.brief_hash
 
     process_page = client.get(process.get_absolute_url())
     process_body = process_page.content.decode()
@@ -1567,6 +1581,18 @@ def test_ready_run_with_current_policy_blockers_is_not_presented_as_decision_rea
     assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
     assert "Entscheidungsgrundlage bereit" not in body
     assert "Lösungsoptionen fachlich vergleichen" not in body
+    assert "Geplante Übernahme in den Lösungsraum prüfen" not in body
+
+    response = client.post(
+        reverse("accelerator:investigation_materialize", args=[handle.run_id]),
+        {
+            "operation_key": "stale-ready-must-not-materialize",
+            "confirm_materialization": "yes",
+        },
+    )
+    assert response.status_code == 302
+    assert InvestigationRun.objects.get(pk=handle.run_id).materializations.count() == 0
+    assert process.solution_options.count() == 0
 
 
 @pytest.mark.django_db
