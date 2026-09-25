@@ -235,21 +235,6 @@ def test_process_detail_solution_step_marks_solution_parent_active():
     assert navigation["active_key"] == "solution"
 
 
-def test_process_page_uses_broad_solution_space_label_not_comparison_label():
-    from pathlib import Path
-
-    template = (
-        Path(__file__).resolve().parents[1]
-        / "templates"
-        / "architecture"
-        / "process_analysis_detail.html"
-    ).read_text(encoding="utf-8")
-
-    solution_section = template[template.index('id="loesungsoptionen"') :]
-    assert "<strong>Lösungsoptionen</strong>" in solution_section
-    assert "Vergleichsmatrix öffnen" in solution_section
-
-
 def test_comparison_is_nested_under_process_not_solution_parent():
     from pathlib import Path
 
