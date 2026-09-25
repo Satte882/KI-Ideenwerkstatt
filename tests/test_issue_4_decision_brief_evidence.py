@@ -1592,8 +1592,7 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
         clarification_payload={
             "question": "Wie hoch war die Gesamtzahl aller freigabepflichtigen Vorgänge?",
             "impact": (
-                "Ohne diese Bezugsgröße kann keine belastbare Eskalationsquote "
-                "berechnet werden."
+                "Ohne diese Bezugsgröße kann keine belastbare Eskalationsquote berechnet werden."
             ),
             "needed_evidence": "Dokumentierte Gesamtzahl im gleichen Zeitraum.",
         },
