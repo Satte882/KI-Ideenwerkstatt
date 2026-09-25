@@ -833,6 +833,31 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     assert process.solution_options.count() == 2
     assert run.materializations.count() == 1
 
+    process.refresh_from_db()
+    assert "Durch Evidenz gestützt:" in process.cause_hypotheses
+    assert "Durch Evidenz nicht gestützt:" in process.cause_hypotheses
+    assert "[supported]" not in process.cause_hypotheses
+    assert "[refuted]" not in process.cause_hypotheses
+    assert "Datenbasis: 4 Datensätze" in process.baseline_metrics
+    assert "Aussagegrenze: Kleine synthetische Stichprobe" in process.baseline_metrics
+    assert "tool-result:" not in process.baseline_metrics
+    assert "source-sha256:" not in process.baseline_metrics
+
+    process_page = client.get(process.get_absolute_url())
+    process_body = process_page.content.decode()
+    assert process_page.status_code == 200
+    assert 'data-testid="process-decision-surface"' in process_body
+    assert process_body.index("1 · Situation") < process_body.index("2 · Wichtigster Befund")
+    assert process_body.index("2 · Wichtigster Befund") < process_body.index(
+        "3 · Evidenzbasierte Empfehlung"
+    )
+    assert process_body.index("3 · Evidenzbasierte Empfehlung") < process_body.index(
+        "4 · Nächster Schritt"
+    )
+    assert payload["recommendation"]["summary"] in process_body
+    assert "setzt keine bevorzugte Lösungsoption" in process_body
+    assert "Rohdaten und Herkunft anzeigen" in process_body
+
     comparison = client.get(response.url)
     body = comparison.content.decode()
     assert comparison.status_code == 200

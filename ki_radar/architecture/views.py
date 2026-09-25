@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 
+from ki_radar.accelerator.investigation_models import InvestigationMaterialization
 from ki_radar.accounts.permissions import (
     GROUP_COORDINATOR,
     in_group,
@@ -39,6 +40,7 @@ from .models import (
     WorkDesignTask,
 )
 from .permissions import can_edit_value_stream, can_manage_architecture
+from .process_decision_presentation import build_process_decision_surface
 from .provenance import build_process_source_snapshot, source_differences
 from .work_design import (
     build_solution_source_snapshot,
@@ -399,12 +401,25 @@ def process_analysis_detail(request, pk):
             current_investigation_snapshot.run_limits
         )
 
+    journey = build_process_analysis_journey(process_analysis, request.user)
+    latest_investigation_materialization = (
+        InvestigationMaterialization.objects.select_related("run", "brief_revision")
+        .filter(run__process_analysis=process_analysis)
+        .order_by("-created_at")
+        .first()
+    )
+    process_decision_surface = build_process_decision_surface(
+        process_analysis=process_analysis,
+        latest_materialization=latest_investigation_materialization,
+        journey=journey,
+    )
+
     return render(
         request,
         "architecture/process_analysis_detail.html",
         {
             "process_analysis": process_analysis,
-            "journey": build_process_analysis_journey(process_analysis, request.user),
+            "journey": journey,
             "can_edit": _can_edit_process(request.user, process_analysis),
             "can_validate": _can_edit_process(request.user, process_analysis),
             "latest_validation": process_analysis.validations.first(),
@@ -416,6 +431,8 @@ def process_analysis_detail(request, pk):
             "highlighted_solution_option": highlighted_solution_option,
             "solution_design_task": solution_design_task,
             "latest_investigation_run": latest_investigation_run,
+            "latest_investigation_materialization": latest_investigation_materialization,
+            "process_decision_surface": process_decision_surface,
             "current_investigation_snapshot": current_investigation_snapshot,
             "active_investigation_folders": active_investigation_folders,
             "investigation_effective_budget": investigation_effective_budget,

@@ -1,0 +1,29 @@
+{% if process_decision_surface %}
+<section class="app-card decision-panel process-decision-surface mb-4" data-testid="process-decision-surface">
+  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <div>
+      <strong>Entscheidungskern</strong>
+      <div class="small text-muted mt-1">Verdichtete fachliche Sicht auf den übernommenen Decision Brief. Die verbindliche Lösungswahl erfolgt ausschließlich im Lösungsvergleich.</div>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:investigation_detail' process_decision_surface.run_id %}">Decision Brief / Herkunft öffnen</a>
+  </div>
+  <div class="card-body process-decision-surface__body">
+    <section class="process-decision-surface__section">
+      <div class="section-title">1 · Situation</div>
+      <div class="text-preline">{{ process_decision_surface.situation }}</div>
+    </section>
+    <section class="process-decision-surface__section">
+      <div class="section-title">2 · Wichtigster Befund</div>
+      <div class="text-preline">{{ process_decision_surface.finding }}</div>
+    </section>
+    <section class="process-decision-surface__section process-decision-surface__recommendation">
+      <div class="section-title">3 · Evidenzbasierte Empfehlung</div>
+      <div class="text-preline"><strong>{{ process_decision_surface.recommendation }}</strong></div>
+      {% if process_decision_surface.recommendation_rationale %}
+        <div class="small text-muted mt-2 text-preline">{{ process_decision_surface.recommendation_rationale }}</div>
+      {% endif %}
+      <div class="small text-muted mt-2">Advisory: Diese Empfehlung setzt keine bevorzugte Lösungsoption. Vergleich, Nicht-Weiterverfolgung und Preferred-Auswahl bleiben im kanonischen Lösungsvergleich.</div>
+    </section>
+  </div>
+</section>
+{% endif %}

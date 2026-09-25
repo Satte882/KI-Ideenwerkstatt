@@ -885,3 +885,44 @@
   }
 }
 
+/* Issue #48 follow-up: compact ProcessAnalysis decision surface */
+.ui-control-room.page-process-analysis .process-decision-surface__body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0;
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__section {
+  min-width: 0;
+  padding: 16px 18px;
+  border-right: 1px solid var(--line-soft);
+  overflow-wrap: anywhere;
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__section:last-child {
+  border-right: 0;
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__recommendation {
+  background: color-mix(in srgb, var(--ice) 5%, var(--surface-1));
+}
+
+.ui-control-room.page-process-analysis #evidence-investigation > summary {
+  font-weight: 650;
+}
+
+@media (max-width: 900px) {
+  .ui-control-room.page-process-analysis .process-decision-surface__body {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-control-room.page-process-analysis .process-decision-surface__section {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .ui-control-room.page-process-analysis .process-decision-surface__section:last-child {
+    border-bottom: 0;
+  }
+}
+

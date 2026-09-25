@@ -9,7 +9,7 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
-from ki_radar.architecture.process_findings import build_process_findings
+from ki_radar.architecture.process_findings import build_process_findings, humanize_process_text
 from ki_radar.architecture.stage_focus import StageFocusDecision
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
@@ -250,6 +250,77 @@ def test_process_decision_basis_is_compact_and_traceable_without_new_facts(
     findings_index = body.index("Kernbefund")
     solutions_index = body.index("Lösungsoptionen vergleichen")
     assert findings_index < solutions_index
+
+
+@pytest.mark.django_db
+def test_materialized_investigation_text_is_humanized_in_process_core(
+    client,
+    owner,
+    business_unit,
+):
+    value_stream = make_selected_stream(owner=owner, business_unit=business_unit)
+    stage = make_stage(
+        value_stream,
+        1,
+        "Freigabe",
+        "Schwankende Freigabezeiten",
+        "Offen",
+    )
+    raw_metric = (
+        "Mittlere approval_hours nach queue_retries: 0=5.5 (n=2), 4=23 (n=1). "
+        "| Population: rows_total: 4; included_rows: [1, 2, 3, 4] "
+        "| Grenzen: Kleine Stichprobe. "
+        "| Nachweis: tool-result:b7630e51-ee87-4ac9-93ac-4d5dae5d44c5 "
+        "source-sha256:aaef53e70008ec0a70f4a24f6a894429d66f337faf17b96aa3c434038a8e0782"
+    )
+    process = ProcessAnalysis.objects.create(
+        stage=stage,
+        name="Historisch materialisierte Analyse",
+        status=ProcessAnalysis.Status.DRAFT,
+        scope_start="Fall liegt vor.",
+        scope_end="Entscheidung liegt vor.",
+        trigger="Fall wird eingereicht.",
+        outcome="Richtung ist dokumentiert.",
+        current_flow="Fall prüfen.",
+        roles="Fachbereich",
+        systems="Workflow",
+        data_objects="Fallunterlagen",
+        bottlenecks="Schwankende Freigabezeiten",
+        diagnostic_observations="Die Bearbeitungs- und Freigabezeiten schwanken.",
+        cause_hypotheses=(
+            "[supported] Technische Queue-Fehler verlängern die Durchlaufzeit.\n"
+            "[refuted] approver_available erklärt die Verzögerung."
+        ),
+        baseline_metrics=raw_metric,
+        analyzed_by=owner,
+    )
+
+    groups = {group.key: group for group in build_process_findings(process)}
+    scale_text = " ".join(item.text for item in groups["scale"].items)
+    assert "Freigabedauer (Stunden)" in scale_text
+    assert "Queue-Wiederholungen" in scale_text
+    assert "Population:" not in scale_text
+    assert "tool-result:" not in scale_text
+    assert "source-sha256:" not in scale_text
+    assert humanize_process_text(process.cause_hypotheses).startswith("Durch Evidenz gestützt:")
+
+    client.force_login(owner)
+    body = client.get(process.get_absolute_url()).content.decode()
+    core_start = body.index("Kernbefund")
+    raw_start = body.index("Rohdaten und Herkunft anzeigen")
+    visible_core = body[core_start:raw_start]
+    assert "Durch Evidenz gestützt:" in visible_core
+    assert "Durch Evidenz nicht gestützt:" in visible_core
+    assert "[supported]" not in visible_core
+    assert "[refuted]" not in visible_core
+    assert "approval_hours" not in visible_core
+    assert "queue_retries" not in visible_core
+    assert "tool-result:" not in visible_core
+    assert "source-sha256:" not in visible_core
+
+    raw_audit = body[raw_start:]
+    assert "tool-result:" in raw_audit
+    assert "source-sha256:" in raw_audit
 
 
 @pytest.mark.django_db

@@ -103,6 +103,14 @@ def test_workspace_css_is_scoped_responsive_and_accessible():
     assert "overflow-x" not in CSS
 
 
+def test_solution_comparison_and_process_cards_keep_overflow_guards():
+    assert ".page-solution-compare .comparison-matrix:is(" in CSS
+    assert "table-layout: fixed" in CSS
+    assert "overflow-wrap: anywhere" in CSS
+    assert ".page-process-analysis .solution-option-card {" in CSS
+    assert "min-width: 0" in CSS
+
+
 def test_remaining_detail_workspaces_use_shared_control_room_primitives():
     for parts in REMAINING_DETAILS:
         template = _template(*parts)
