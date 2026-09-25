@@ -53,10 +53,10 @@
       </a>
 
       <div class="nav-caption">Vorhaben</div>
-      <a class="sidebar-link {% if request.resolver_match.namespace == 'architecture' %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}">
+      <a class="sidebar-link {% if request.resolver_match.namespace == 'architecture' or request.resolver_match.namespace == 'accelerator' and request.resolver_match.url_name|slice:':14' == 'investigation_' %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}">
         <span class="nav-icon">⇢</span> Analyse
       </a>
-      {% if journey and request.resolver_match.namespace == 'architecture' %}
+      {% if request.resolver_match.namespace == 'architecture' or request.resolver_match.namespace == 'accelerator' and request.resolver_match.url_name|slice:':14' == 'investigation_' %}
       {% analysis_sidebar %}
       {% endif %}
       <a class="sidebar-link {% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}" href="{% url 'use_cases:list' %}">
