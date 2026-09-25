@@ -61,29 +61,39 @@ def build_process_decision_surface(
         finding = humanize_process_text(process_analysis.baseline_metrics)
 
     recommendation_summary = humanize_process_text(recommendation.get("summary"))
+    if not recommendation_summary:
+        recommendation_summary = (
+            "Noch keine evidenzbasierte Empfehlung aus einem übernommenen Decision Brief."
+        )
     recommendation_rationale = humanize_process_text(recommendation.get("rationale"))
 
     next_action = getattr(journey, "next_action", None)
-    next_step = {
-        "label": getattr(next_action, "label", "") if next_action else "",
-        "reason": getattr(next_action, "reason", "") if next_action else "",
-    }
-    if next_action is None:
-        next_step = {
-            "label": "Aktueller Discovery-Stand abgeschlossen",
-            "reason": getattr(journey, "completion_message", "") or (
+    if next_action is not None:
+        next_label = getattr(next_action, "label", "")
+        next_reason = getattr(next_action, "reason", "")
+    else:
+        next_label = "Aktueller Discovery-Stand abgeschlossen"
+        next_reason = getattr(journey, "completion_message", "")
+        if not next_reason:
+            next_reason = (
                 "Für diesen Prozess ist derzeit kein weiterer verpflichtender "
                 "Discovery-Schritt offen."
-            ),
-        }
+            )
+
+    if not situation:
+        situation = "Noch kein kompakter Situationskontext dokumentiert."
+    if not finding:
+        finding = "Noch kein belastbarer Kernbefund dokumentiert."
+
+    next_step = {
+        "label": next_label,
+        "reason": next_reason,
+    }
 
     return {
-        "situation": situation or "Noch kein kompakter Situationskontext dokumentiert.",
-        "finding": finding or "Noch kein belastbarer Kernbefund dokumentiert.",
-        "recommendation": (
-            recommendation_summary
-            or "Noch keine evidenzbasierte Empfehlung aus einem übernommenen Decision Brief."
-        ),
+        "situation": situation,
+        "finding": finding,
+        "recommendation": recommendation_summary,
         "recommendation_rationale": recommendation_rationale,
         "next_step": next_step,
         "run_id": str(latest_materialization.run_id),
