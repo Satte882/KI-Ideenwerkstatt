@@ -2,7 +2,7 @@ from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 
-from ki_radar.architecture.analysis_navigation import build_analysis_navigation
+from ki_radar.architecture.analysis_navigation import analysis_step_url, build_analysis_navigation
 
 register = template.Library()
 
@@ -62,8 +62,13 @@ def _process_context_from_context(context):
     if decision_brief_run is None:
         decision_brief_run = process_analysis.investigation_runs.order_by("-created_at").first()
 
+    value_stream = process_analysis.stage.value_stream
+    value_stream_url = value_stream.get_absolute_url()
+
     return {
         "active_key": active_key,
+        "value_stream_url": analysis_step_url(value_stream_url, "value_stream"),
+        "focus_url": analysis_step_url(value_stream_url, "focus"),
         "process_url": process_analysis.get_absolute_url(),
         "decision_brief_url": (
             reverse(
