@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from contextlib import suppress
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -33,6 +34,7 @@ from .investigation_runtime import (
     continue_with_human_input,
     evaluate_run_policy,
     read_run,
+    reference_valid,
     start_investigation,
 )
 from .investigation_tools import (
@@ -50,6 +52,40 @@ def _editable_process(user, process: ProcessAnalysis) -> bool:
 
 def _run_redirect(run_id):
     return redirect("accelerator:investigation_detail", run_id=run_id)
+
+
+def _tool_result_id(value) -> uuid.UUID | None:
+    if not isinstance(value, dict) or not value.get("tool_result_id"):
+        return None
+    with suppress(TypeError, ValueError):
+        return uuid.UUID(str(value["tool_result_id"]))
+    return None
+
+
+def _brief_tool_result_ids(run: InvestigationRun, value) -> set[uuid.UUID]:
+    result_ids: set[uuid.UUID] = set()
+    if isinstance(value, dict):
+        result_id = _tool_result_id(value)
+        if result_id is not None and reference_valid(run, value):
+            result_ids.add(result_id)
+        for nested in value.values():
+            result_ids.update(_brief_tool_result_ids(run, nested))
+    elif isinstance(value, list):
+        for nested in value:
+            result_ids.update(_brief_tool_result_ids(run, nested))
+    return result_ids
+
+
+def _tool_results_for_run(run: InvestigationRun):
+    result_ids = _brief_tool_result_ids(run, run.brief_payload)
+    for result_ref in run.steps.values_list("result_ref", flat=True):
+        result_id = _tool_result_id(result_ref)
+        if result_id is not None:
+            result_ids.add(result_id)
+    return InvestigationToolResult.objects.filter(
+        snapshot=run.source_snapshot,
+        pk__in=result_ids,
+    )
 
 
 @login_required
@@ -184,9 +220,7 @@ def investigation_detail(request, run_id):
     run = read_run(actor=request.user, run_id=run_id)
     policy = evaluate_run_policy(run)
     sources = list(run.source_snapshot.sources.order_by("filename"))
-    tool_results = list(
-        InvestigationToolResult.objects.filter(snapshot=run.source_snapshot).order_by("created_at")
-    )
+    tool_results = list(_tool_results_for_run(run).order_by("created_at"))
     latest_materialization = run.materializations.select_related("brief_revision").first()
     return render(
         request,
@@ -302,10 +336,7 @@ def investigation_source(request, run_id, source_id):
 def investigation_tool_result(request, run_id, result_id):
     run = read_run(actor=request.user, run_id=run_id)
     try:
-        result = InvestigationToolResult.objects.get(
-            pk=result_id,
-            snapshot=run.source_snapshot,
-        )
+        result = _tool_results_for_run(run).get(pk=result_id)
     except (InvestigationToolResult.DoesNotExist, ValueError) as exc:
         raise Http404 from exc
     payload = {

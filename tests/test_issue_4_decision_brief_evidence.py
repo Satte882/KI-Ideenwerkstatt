@@ -1078,6 +1078,118 @@ def test_investigation_read_only_views_do_not_require_transaction(
 
 
 @pytest.mark.django_db
+def test_investigation_tool_results_are_scoped_to_run_references(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Run scoped evidence")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+
+    run_b = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="run-scoped-tool-results-b",
+        ),
+    )
+    step_b = execute_tool_step(
+        actor=owner,
+        run_id=run_b.run_id,
+        executor_token=run_b.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.pk)},
+        target_claim_id="run-b-profile",
+    )
+    abort_investigation(actor=owner, run_id=run_b.run_id)
+
+    run_a = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="run-scoped-tool-results-a",
+        ),
+    )
+    step_a = execute_tool_step(
+        actor=owner,
+        run_id=run_a.run_id,
+        executor_token=run_a.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="run-a-calculation",
+    )
+    result_a_id = step_a.result_ref["tool_result_id"]
+    result_b_id = step_b.result_ref["tool_result_id"]
+    result_b_url = reverse(
+        "accelerator:investigation_tool_result",
+        args=[run_a.run_id, result_b_id],
+    )
+    client.force_login(owner)
+
+    detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
+    detail_body = detail_a.content.decode()
+    assert detail_a.status_code == 200
+    assert str(result_a_id) in detail_body
+    assert result_b_url not in detail_body
+    assert client.get(result_b_url).status_code == 404
+
+    apply_planner_state(
+        actor=owner,
+        run_id=run_a.run_id,
+        executor_token=run_a.executor_token,
+        brief_payload={
+            "calculations": [
+                {
+                    "reference": {
+                        "tool_result_id": str(result_b_id),
+                        "revision_hash": "0" * 64,
+                    },
+                },
+            ],
+        },
+    )
+    invalid_detail = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
+    assert result_b_url not in invalid_detail.content.decode()
+    assert client.get(result_b_url).status_code == 404
+
+    apply_planner_state(
+        actor=owner,
+        run_id=run_a.run_id,
+        executor_token=run_a.executor_token,
+        brief_payload={
+            "calculations": [
+                {
+                    "reference": {
+                        "tool_result_id": str(result_b_id),
+                        "revision_hash": source.content_sha256,
+                    },
+                },
+            ],
+        },
+    )
+
+    detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
+    assert result_b_url in detail_a.content.decode()
+    assert client.get(result_b_url).status_code == 200
+
+
+@pytest.mark.django_db
 def test_model_call_reserves_estimated_tokens_not_utf8_bytes(
     owner,
     business_unit,
