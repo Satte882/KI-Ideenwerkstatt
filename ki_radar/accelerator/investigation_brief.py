@@ -189,15 +189,11 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
 
 def _solution_proposals(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     proposals: list[dict[str, Any]] = []
-    for raw_option in (
-        item for item in payload.get("options", []) if isinstance(item, Mapping)
-    ):
+    for raw_option in (item for item in payload.get("options", []) if isinstance(item, Mapping)):
         proposal = _option_payload(raw_option)
         if not proposal["name"]:
             continue
-        proposal["existing_option_id"] = str(
-            raw_option.get("existing_option_id") or ""
-        ).strip()
+        proposal["existing_option_id"] = str(raw_option.get("existing_option_id") or "").strip()
         proposals.append(proposal)
     return proposals
 
