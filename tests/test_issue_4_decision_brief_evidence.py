@@ -1097,13 +1097,6 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             idempotency_key="run-scoped-tool-results-a",
         ),
     )
-    run_b = start_investigation(
-        actor=owner,
-        request=StartInvestigationRequest(
-            snapshot_id=snapshot.snapshot_id,
-            idempotency_key="run-scoped-tool-results-b",
-        ),
-    )
     source = InvestigationSource.objects.get(
         snapshot_id=snapshot.snapshot_id,
         filename="cases.csv",
@@ -1122,6 +1115,14 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             "unit_column": "unit",
         },
         target_claim_id="run-a-calculation",
+    )
+    abort_investigation(actor=owner, run_id=run_a.run_id)
+    run_b = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="run-scoped-tool-results-b",
+        ),
     )
     step_b = execute_tool_step(
         actor=owner,
