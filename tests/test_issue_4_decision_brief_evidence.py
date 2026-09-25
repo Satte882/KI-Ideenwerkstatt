@@ -890,6 +890,16 @@ def test_human_solution_option_change_is_reported_not_overwritten(
     existing.description = "Vom Menschen nach dem Run bewusst geändert."
     existing.save()
 
+    preview = preview_decision_brief_materialization(
+        actor=owner,
+        run_id=handle.run_id,
+    )
+    assert any(item["type"] == "solution_option_changed" for item in preview["conflicts"])
+    assert not any(
+        item.get("option_id") == str(existing.pk)
+        for item in preview["solution_changes"]
+    )
+
     result = materialize_decision_brief(
         actor=owner,
         run_id=handle.run_id,
