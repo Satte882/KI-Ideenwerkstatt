@@ -254,10 +254,7 @@ def preview_investigation_draft_adoption(
     process_fields: Mapping[str, str],
     solution_proposals: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
-    _validate_contract(
-        process_fields=process_fields,
-        solution_proposals=solution_proposals,
-    )
+    _validate_contract(process_fields=process_fields, solution_proposals=solution_proposals)
     process = ProcessAnalysis.objects.select_related("stage__value_stream").get(
         pk=process_analysis_id
     )
@@ -340,11 +337,7 @@ def adopt_investigation_drafts(
 
     current_by_id = {str(option.pk): option for option in current_options}
     for change in plan["solution_changes"]:
-        fields = {
-            key: change[key]
-            for key in _ALLOWED_SOLUTION_FIELDS
-            if key in change
-        }
+        fields = {key: change[key] for key in _ALLOWED_SOLUTION_FIELDS if key in change}
         if change["action"] == "update":
             option = current_by_id[change["option_id"]]
             for field_name, value in fields.items():
