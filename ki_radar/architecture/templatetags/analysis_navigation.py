@@ -2,7 +2,10 @@ from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 
-from ki_radar.architecture.analysis_navigation import analysis_step_url, build_analysis_navigation
+from ki_radar.architecture.analysis_navigation import (
+    analysis_step_url,
+    build_analysis_navigation,
+)
 
 register = template.Library()
 
@@ -65,7 +68,9 @@ def _process_context_from_context(context):
     if decision_brief_run is None:
         decision_brief_run = context.get("latest_investigation_run")
     if decision_brief_run is None:
-        decision_brief_run = process_analysis.investigation_runs.order_by("-created_at").first()
+        decision_brief_run = process_analysis.investigation_runs.order_by(
+            "-created_at"
+        ).first()
 
     value_stream = process_analysis.stage.value_stream
     value_stream_url = value_stream.get_absolute_url()
@@ -124,7 +129,9 @@ def analysis_sidebar(context):
     return {
         "process_context_navigation": process_context_navigation,
         "analysis_navigation": (
-            None if process_context_navigation is not None else _navigation_from_context(context)
+            None
+            if process_context_navigation is not None
+            else _navigation_from_context(context)
         ),
     }
 
