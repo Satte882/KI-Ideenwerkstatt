@@ -80,8 +80,10 @@ def build_process_decision_surface(
     return {
         "situation": situation or "Noch kein kompakter Situationskontext dokumentiert.",
         "finding": finding or "Noch kein belastbarer Kernbefund dokumentiert.",
-        "recommendation": recommendation_summary
-        or "Noch keine evidenzbasierte Empfehlung aus einem übernommenen Decision Brief.",
+        "recommendation": (
+            recommendation_summary
+            or "Noch keine evidenzbasierte Empfehlung aus einem übernommenen Decision Brief."
+        ),
         "recommendation_rationale": recommendation_rationale,
         "next_step": next_step,
         "run_id": str(latest_materialization.run_id),
