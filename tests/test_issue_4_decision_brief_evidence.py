@@ -1039,6 +1039,40 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
 
 
 @pytest.mark.django_db
+def test_investigation_read_only_views_do_not_require_transaction(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Read only UI")
+    (tmp_path / "notes.txt").write_text("Beleg für die Detailansicht.", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="read-only-investigation-view",
+        ),
+    )
+    source = InvestigationSource.objects.get(snapshot_id=snapshot.snapshot_id)
+    client.force_login(owner)
+
+    detail = client.get(
+        reverse("accelerator:investigation_detail", args=[handle.run_id])
+    )
+    assert detail.status_code == 200
+
+    source_detail = client.get(
+        reverse(
+            "accelerator:investigation_source",
+            args=[handle.run_id, source.pk],
+        )
+    )
+    assert source_detail.status_code == 200
+
+
+@pytest.mark.django_db
 def test_model_call_reserves_estimated_tokens_not_utf8_bytes(
     owner,
     business_unit,
