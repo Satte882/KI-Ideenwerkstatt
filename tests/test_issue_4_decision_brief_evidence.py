@@ -1163,8 +1163,8 @@ def test_investigation_tool_results_are_scoped_to_run_references(
                     "reference": {
                         "tool_result_id": str(result_b_id),
                         "revision_hash": "0" * 64,
-                    }
-                }
+                    },
+                },
             ]
         },
     )
@@ -1182,8 +1182,8 @@ def test_investigation_tool_results_are_scoped_to_run_references(
                     "reference": {
                         "tool_result_id": str(result_b_id),
                         "revision_hash": source.content_sha256,
-                    }
-                }
+                    },
+                },
             ]
         },
     )
