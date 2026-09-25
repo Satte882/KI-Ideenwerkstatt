@@ -229,7 +229,6 @@ def build_decision_surface(
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
     status_tone = "neutral"
     technical_status_label = {
-        InvestigationRun.Status.PENDING: "Technisch vorbereitet",
         InvestigationRun.Status.RUNNING: "Technische Untersuchung läuft",
         InvestigationRun.Status.WAITING_HUMAN: "Technisch auf Klärung wartend",
         InvestigationRun.Status.READY: "Technisch abgeschlossen",
