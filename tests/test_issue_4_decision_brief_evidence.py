@@ -1658,8 +1658,7 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
     assert "Fragestellung: Welche Lösungsrichtung ist durch die Evidenz gestützt?" in body
     assert (
         "Entscheidungskritischer Nachweis fehlt: Dokumentierte Gesamtzahl im gleichen "
-        "Zeitraum wie die 18 Eskalationen."
-        in body
+        "Zeitraum wie die 18 Eskalationen." in body
     )
     assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
     assert "Wie hoch war die Gesamtzahl aller freigabepflichtigen Vorgänge?" in body
