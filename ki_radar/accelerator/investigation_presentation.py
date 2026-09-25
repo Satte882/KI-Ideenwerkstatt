@@ -210,9 +210,9 @@ def build_decision_surface(
         if str(item or "").strip()
     ]
 
-    situation = humanize_investigation_text(problem.get("statement")) or humanize_investigation_text(
-        run.decision_question
-    )
+    situation = humanize_investigation_text(
+        problem.get("statement")
+    ) or humanize_investigation_text(run.decision_question)
     scope = humanize_investigation_text(question_scope.get("scope"))
     finding = _supported_finding(payload, hypotheses, calculations)
 
@@ -306,13 +306,21 @@ def build_decision_surface(
         next_action = {
             "kind": "process",
             "title": "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten",
-            "description": clarification_question or needed_evidence or required_action or status_detail,
+            "description": (
+                clarification_question
+                or needed_evidence
+                or required_action
+                or status_detail
+            ),
         }
     else:
         next_action = {
             "kind": "wait",
             "title": "Untersuchung abschließen lassen",
-            "description": "Während des laufenden Agentenlaufs ist keine fachliche Entscheidung nötig.",
+            "description": (
+                "Während des laufenden Agentenlaufs ist keine fachliche "
+                "Entscheidung nötig."
+            ),
         }
 
     if not finding:
