@@ -896,8 +896,7 @@ def test_human_solution_option_change_is_reported_not_overwritten(
     )
     assert any(item["type"] == "solution_option_changed" for item in preview["conflicts"])
     assert not any(
-        item.get("option_id") == str(existing.pk)
-        for item in preview["solution_changes"]
+        item.get("option_id") == str(existing.pk) for item in preview["solution_changes"]
     )
 
     result = materialize_decision_brief(
