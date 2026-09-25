@@ -22,6 +22,7 @@ from .investigation_brief import (
     render_decision_brief_markdown,
 )
 from .investigation_loop import run_until_boundary
+from .investigation_presentation import build_decision_surface
 from .investigation_models import (
     InvestigationRun,
     InvestigationSource,
@@ -232,6 +233,12 @@ def investigation_detail(request, run_id):
             )
         except InvestigationRunError:
             materialization_preview = None
+    decision_surface = build_decision_surface(
+        run=run,
+        policy=policy,
+        latest_materialization=latest_materialization,
+        materialization_preview=materialization_preview,
+    )
     return render(
         request,
         "accelerator/investigation_detail.html",
@@ -242,6 +249,7 @@ def investigation_detail(request, run_id):
             "tool_results": tool_results,
             "latest_materialization": latest_materialization,
             "materialization_preview": materialization_preview,
+            "decision_surface": decision_surface,
         },
     )
 
