@@ -32,7 +32,7 @@ from .investigation_runtime import (
     abort_investigation,
     continue_with_human_input,
     evaluate_run_policy,
-    locked_run,
+    read_run,
     start_investigation,
 )
 from .investigation_tools import (
@@ -181,7 +181,7 @@ def investigation_start(request, process_pk):
 @login_required
 @require_GET
 def investigation_detail(request, run_id):
-    run = locked_run(actor=request.user, run_id=run_id)
+    run = read_run(actor=request.user, run_id=run_id)
     policy = evaluate_run_policy(run)
     sources = list(run.source_snapshot.sources.order_by("filename"))
     tool_results = list(
@@ -280,7 +280,7 @@ def investigation_export(request, run_id):
 @login_required
 @require_GET
 def investigation_source(request, run_id, source_id):
-    run = locked_run(actor=request.user, run_id=run_id)
+    run = read_run(actor=request.user, run_id=run_id)
     try:
         source = InvestigationSource.objects.get(pk=source_id, snapshot=run.source_snapshot)
     except (InvestigationSource.DoesNotExist, ValueError) as exc:
@@ -300,7 +300,7 @@ def investigation_source(request, run_id, source_id):
 @login_required
 @require_GET
 def investigation_tool_result(request, run_id, result_id):
-    run = locked_run(actor=request.user, run_id=run_id)
+    run = read_run(actor=request.user, run_id=run_id)
     try:
         result = InvestigationToolResult.objects.get(
             pk=result_id,
