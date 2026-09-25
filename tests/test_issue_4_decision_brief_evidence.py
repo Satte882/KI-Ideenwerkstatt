@@ -1136,22 +1136,18 @@ def test_investigation_tool_results_are_scoped_to_run_references(
     )
     result_a_id = step_a.result_ref["tool_result_id"]
     result_b_id = step_b.result_ref["tool_result_id"]
+    result_b_url = reverse(
+        "accelerator:investigation_tool_result",
+        args=[run_a.run_id, result_b_id],
+    )
     client.force_login(owner)
 
     detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
     detail_body = detail_a.content.decode()
     assert detail_a.status_code == 200
     assert str(result_a_id) in detail_body
-    assert str(result_b_id) not in detail_body
-    assert (
-        client.get(
-            reverse(
-                "accelerator:investigation_tool_result",
-                args=[run_a.run_id, result_b_id],
-            )
-        ).status_code
-        == 404
-    )
+    assert result_b_url not in detail_body
+    assert client.get(result_b_url).status_code == 404
 
     apply_planner_state(
         actor=owner,
@@ -1168,12 +1164,11 @@ def test_investigation_tool_results_are_scoped_to_run_references(
             ],
         },
     )
-    assert (
-        str(result_b_id)
-        not in client.get(
-            reverse("accelerator:investigation_detail", args=[run_a.run_id])
-        ).content.decode()
+    invalid_detail = client.get(
+        reverse("accelerator:investigation_detail", args=[run_a.run_id])
     )
+    assert result_b_url not in invalid_detail.content.decode()
+    assert client.get(result_b_url).status_code == 404
 
     apply_planner_state(
         actor=owner,
@@ -1192,16 +1187,8 @@ def test_investigation_tool_results_are_scoped_to_run_references(
     )
 
     detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
-    assert str(result_b_id) in detail_a.content.decode()
-    assert (
-        client.get(
-            reverse(
-                "accelerator:investigation_tool_result",
-                args=[run_a.run_id, result_b_id],
-            )
-        ).status_code
-        == 200
-    )
+    assert result_b_url in detail_a.content.decode()
+    assert client.get(result_b_url).status_code == 200
 
 
 @pytest.mark.django_db
