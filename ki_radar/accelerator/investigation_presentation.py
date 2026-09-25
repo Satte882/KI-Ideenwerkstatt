@@ -216,22 +216,17 @@ def build_decision_surface(
     scope = humanize_investigation_text(question_scope.get("scope"))
     finding = _supported_finding(payload, hypotheses, calculations)
 
+    policy_outcome = str(policy.outcome)
+    ready_for_decision = (
+        policy_outcome == "READY_FOR_DECISION" and run.status == InvestigationRun.Status.READY
+    )
+    clarification_required = policy_outcome == "HUMAN_CLARIFICATION"
+
     status_label = "Untersuchung läuft"
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
     status_tone = "neutral"
 
-    if run.status == InvestigationRun.Status.READY:
-        status_label = "Entscheidungsgrundlage bereit"
-        status_detail = "Die Evidenz ist geprüft; die fachliche Lösungsentscheidung ist noch offen."
-        status_tone = "ready"
-    elif run.status == InvestigationRun.Status.WAITING_HUMAN:
-        status_label = "Klärung erforderlich"
-        status_detail = (
-            _clarification_text(run, "impact")
-            or "Für die Richtungsentscheidung fehlt noch eine entscheidungskritische Information."
-        )
-        status_tone = "review"
-    elif run.status == InvestigationRun.Status.ABORTED:
+    if run.status == InvestigationRun.Status.ABORTED:
         status_label = "Untersuchung beendet"
         status_detail = (
             "Der Lauf wurde beendet. Aus diesem Stand wird keine fachliche "
@@ -245,8 +240,19 @@ def build_decision_surface(
             "fachlicher Schluss abgeleitet werden."
         )
         status_tone = "danger"
+    elif ready_for_decision:
+        status_label = "Entscheidungsgrundlage bereit"
+        status_detail = "Die Evidenz ist geprüft; die fachliche Lösungsentscheidung ist noch offen."
+        status_tone = "ready"
+    elif clarification_required:
+        status_label = "Klärung erforderlich"
+        status_detail = (
+            _clarification_text(run, "impact")
+            or "Für die Richtungsentscheidung fehlt noch eine entscheidungskritische Information."
+        )
+        status_tone = "review"
 
-    if run.status == InvestigationRun.Status.READY:
+    if ready_for_decision:
         recommendation_summary = humanize_investigation_text(recommendation.get("summary"))
         recommendation_rationale = humanize_investigation_text(recommendation.get("rationale"))
     else:
@@ -257,7 +263,7 @@ def build_decision_surface(
     needed_evidence = _clarification_text(run, "needed_evidence")
     required_action = _clarification_text(run, "required_action")
 
-    if run.status == InvestigationRun.Status.READY and latest_materialization:
+    if ready_for_decision and latest_materialization:
         next_action = {
             "kind": "compare",
             "title": "Lösungsoptionen fachlich vergleichen",
@@ -267,7 +273,7 @@ def build_decision_surface(
                 "bevorzugte Option auswählen."
             ),
         }
-    elif run.status == InvestigationRun.Status.READY and materialization_preview is not None:
+    elif ready_for_decision and materialization_preview is not None:
         next_action = {
             "kind": "handoff",
             "title": "Entwürfe vor der Übergabe prüfen",
@@ -276,13 +282,17 @@ def build_decision_surface(
                 "Entwürfe in den bestehenden Lösungsraum."
             ),
         }
-    elif run.status == InvestigationRun.Status.WAITING_HUMAN:
+    elif clarification_required and run.status == InvestigationRun.Status.WAITING_HUMAN:
         next_action = {
             "kind": "clarify",
             "title": clarification_question or "Entscheidungskritische Information klären",
             "description": needed_evidence or required_action or status_detail,
         }
-    elif run.status in {InvestigationRun.Status.ABORTED, InvestigationRun.Status.FAILED}:
+    elif run.status in {
+        InvestigationRun.Status.ABORTED,
+        InvestigationRun.Status.FAILED,
+        InvestigationRun.Status.READY,
+    }:
         next_action = {
             "kind": "process",
             "title": "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten",
@@ -330,7 +340,7 @@ def build_decision_surface(
         "clarification_question": clarification_question,
         "needed_evidence": needed_evidence,
         "required_action": required_action,
-        "policy_outcome": str(policy.outcome),
+        "policy_outcome": policy_outcome,
         "policy_reason": str(policy.reason_code or ""),
         "steps": present_investigation_steps(run),
     }
