@@ -6,6 +6,11 @@ from typing import Any
 from django.db import IntegrityError, transaction
 from django.db.models import Max
 
+from ki_radar.architecture.investigation_adoption import (
+    InvestigationDraftAdoptionError,
+    adopt_investigation_drafts,
+    preview_investigation_draft_adoption,
+)
 from ki_radar.architecture.models import EvidenceBasis, ProcessAnalysis, SolutionOption
 
 from .investigation_models import (
@@ -182,15 +187,23 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
     )
 
 
-_PROCESS_FIELD_LABELS = {
-    "diagnostic_observations": "Beobachtung / Problem",
-    "cause_hypotheses": "Ursachenhypothesen",
-    "baseline_metrics": "Baseline und Kennzahlen",
-}
+def _solution_proposals(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    proposals: list[dict[str, Any]] = []
+    for raw_option in (
+        item for item in payload.get("options", []) if isinstance(item, Mapping)
+    ):
+        proposal = _option_payload(raw_option)
+        if not proposal["name"]:
+            continue
+        proposal["existing_option_id"] = str(
+            raw_option.get("existing_option_id") or ""
+        ).strip()
+        proposals.append(proposal)
+    return proposals
 
 
 def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
-    """Describe the conflict-safe domain changes without writing anything."""
+    """Describe domain-owned draft adoption without writing anything."""
 
     run = read_run(actor=actor, run_id=run_id)
     if run.status != InvestigationRun.Status.READY:
@@ -205,124 +218,19 @@ def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
             code="decision_brief_incomplete",
         )
 
-    process = ProcessAnalysis.objects.select_related("stage__value_stream").get(
-        pk=run.process_analysis_id
-    )
-    base_process = _process_base(run)
-    base_options = _base_options(run)
     payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
-    target_fields = _target_process_fields(payload)
-
-    process_changes: list[dict[str, Any]] = []
-    solution_changes: list[dict[str, Any]] = []
-    conflicts: list[dict[str, Any]] = []
-
-    if process.version != run.process_version:
-        conflicts.append(
-            {
-                "type": "process_version_changed",
-                "label": "Prozessstand wurde zwischenzeitlich geändert",
-                "expected": run.process_version,
-                "current": process.version,
-                "action": "Keine Prozessfelder oder Lösungsoptionen werden still überschrieben.",
-            }
+    try:
+        return preview_investigation_draft_adoption(
+            actor=actor,
+            process_analysis_id=run.process_analysis_id,
+            expected_process_version=run.process_version,
+            base_process=_process_base(run),
+            base_options=_base_options(run),
+            process_fields=_target_process_fields(payload),
+            solution_proposals=_solution_proposals(payload),
         )
-    else:
-        for field_name, proposed in target_fields.items():
-            if not proposed:
-                continue
-            base_value = str(base_process.get(field_name) or "")
-            current_value = str(getattr(process, field_name) or "")
-            if current_value != base_value:
-                conflicts.append(
-                    {
-                        "type": "process_field_changed",
-                        "label": _PROCESS_FIELD_LABELS.get(field_name, field_name),
-                        "field": field_name,
-                        "current": current_value,
-                        "proposed": proposed,
-                    }
-                )
-                continue
-            if current_value != proposed:
-                process_changes.append(
-                    {
-                        "field": field_name,
-                        "label": _PROCESS_FIELD_LABELS.get(field_name, field_name),
-                        "current": current_value,
-                        "proposed": proposed,
-                    }
-                )
-
-        current_options = {str(option.pk): option for option in process.solution_options.all()}
-        current_name_map = {
-            option.name.strip().casefold(): option for option in current_options.values()
-        }
-        for raw_option in (
-            item for item in payload.get("options", []) if isinstance(item, Mapping)
-        ):
-            proposal = _option_payload(raw_option)
-            if not proposal["name"]:
-                continue
-            existing_option_id = str(raw_option.get("existing_option_id") or "").strip()
-            if existing_option_id:
-                current = current_options.get(existing_option_id)
-                base = base_options.get(existing_option_id)
-                if current is None or base is None:
-                    conflicts.append(
-                        {
-                            "type": "solution_option_missing_or_new",
-                            "label": proposal["name"],
-                            "proposed": proposal,
-                        }
-                    )
-                    continue
-                if current.updated_at.isoformat() != str(base.get("updated_at") or ""):
-                    conflicts.append(
-                        {
-                            "type": "solution_option_changed",
-                            "label": current.name,
-                            "proposed": proposal,
-                        }
-                    )
-                    continue
-                solution_changes.append(
-                    {
-                        "action": "update",
-                        "action_label": "Vorhandenen Entwurf aktualisieren",
-                        "option_id": existing_option_id,
-                        "name": proposal["name"],
-                        "description": proposal["description"],
-                    }
-                )
-                continue
-
-            collision = current_name_map.get(proposal["name"].casefold())
-            if collision is not None:
-                conflicts.append(
-                    {
-                        "type": "solution_option_name_collision",
-                        "label": proposal["name"],
-                        "current_option_id": str(collision.pk),
-                        "proposed": proposal,
-                    }
-                )
-                continue
-            solution_changes.append(
-                {
-                    "action": "create",
-                    "action_label": "Neuen Entwurf anlegen",
-                    "name": proposal["name"],
-                    "description": proposal["description"],
-                }
-            )
-
-    return {
-        "process_changes": process_changes,
-        "solution_changes": solution_changes,
-        "conflicts": conflicts,
-        "change_count": len(process_changes) + len(solution_changes),
-    }
+    except InvestigationDraftAdoptionError as exc:
+        raise InvestigationRunError(str(exc), code=exc.code) from exc
 
 
 @transaction.atomic
@@ -349,151 +257,39 @@ def materialize_decision_brief(
     if existing_for_revision is not None:
         return existing_for_revision
 
-    process = (
-        ProcessAnalysis.objects.select_for_update()
-        .select_related("stage__value_stream")
-        .get(pk=run.process_analysis_id)
-    )
-    base_process = _process_base(run)
-    base_options = _base_options(run)
     payload = revision.payload if isinstance(revision.payload, Mapping) else {}
-    target_fields = _target_process_fields(payload)
     base_domain_hash = str(
         (run.execution_snapshot.get("domain_materialization_base") or {}).get("content_hash") or ""
     )
-
-    conflicts: list[dict[str, Any]] = []
-    applied_fields: dict[str, str] = {}
-    created_ids: list[str] = []
-    updated_ids: list[str] = []
-
-    if process.version != run.process_version:
-        conflicts.append(
-            {
-                "type": "process_version_changed",
-                "expected": run.process_version,
-                "current": process.version,
-                "action": "Keine Prozessfelder oder Lösungsoptionen wurden überschrieben.",
-            }
+    try:
+        adoption = adopt_investigation_drafts(
+            actor=actor,
+            process_analysis_id=run.process_analysis_id,
+            expected_process_version=run.process_version,
+            base_process=_process_base(run),
+            base_options=_base_options(run),
+            process_fields=_target_process_fields(payload),
+            solution_proposals=_solution_proposals(payload),
         )
-    else:
-        changed_process = False
-        for field_name, proposed in target_fields.items():
-            if not proposed:
-                continue
-            base_value = str(base_process.get(field_name) or "")
-            current_value = str(getattr(process, field_name) or "")
-            if current_value != base_value:
-                conflicts.append(
-                    {
-                        "type": "process_field_changed",
-                        "field": field_name,
-                        "base": base_value,
-                        "current": current_value,
-                        "proposed": proposed,
-                    }
-                )
-                continue
-            if current_value != proposed:
-                setattr(process, field_name, proposed)
-                applied_fields[field_name] = proposed
-                changed_process = True
-        if changed_process:
-            process.version += 1
-            process.save(
-                update_fields=[
-                    *applied_fields.keys(),
-                    "version",
-                    "updated_at",
-                ]
-            )
+    except InvestigationDraftAdoptionError as exc:
+        raise InvestigationRunError(str(exc), code=exc.code) from exc
 
-        current_options = {
-            str(option.pk): option
-            for option in SolutionOption.objects.select_for_update().filter(
-                process_analysis=process
-            )
-        }
-        current_name_map = {
-            option.name.strip().casefold(): option for option in current_options.values()
-        }
-        for raw_option in (
-            item for item in payload.get("options", []) if isinstance(item, Mapping)
-        ):
-            proposal = _option_payload(raw_option)
-            if not proposal["name"]:
-                continue
-            existing_option_id = str(raw_option.get("existing_option_id") or "").strip()
-            if existing_option_id:
-                current = current_options.get(existing_option_id)
-                base = base_options.get(existing_option_id)
-                if current is None or base is None:
-                    conflicts.append(
-                        {
-                            "type": "solution_option_missing_or_new",
-                            "option_id": existing_option_id,
-                            "proposed": proposal,
-                        }
-                    )
-                    continue
-                if current.updated_at.isoformat() != str(base.get("updated_at") or ""):
-                    conflicts.append(
-                        {
-                            "type": "solution_option_changed",
-                            "option_id": existing_option_id,
-                            "name": current.name,
-                            "base_updated_at": base.get("updated_at"),
-                            "current_updated_at": current.updated_at.isoformat(),
-                            "proposed": proposal,
-                        }
-                    )
-                    continue
-                for field_name, value in proposal.items():
-                    setattr(current, field_name, value)
-                current.recommendation = SolutionOption.Recommendation.CANDIDATE
-                current.evaluation_status = SolutionOption.EvaluationStatus.DRAFT
-                current.save()
-                updated_ids.append(str(current.pk))
-                current_name_map[current.name.strip().casefold()] = current
-                continue
-
-            collision = current_name_map.get(proposal["name"].casefold())
-            if collision is not None:
-                conflicts.append(
-                    {
-                        "type": "solution_option_name_collision",
-                        "name": proposal["name"],
-                        "current_option_id": str(collision.pk),
-                        "proposed": proposal,
-                    }
-                )
-                continue
-            created = SolutionOption.objects.create(
-                process_analysis=process,
-                created_by=actor,
-                recommendation=SolutionOption.Recommendation.CANDIDATE,
-                evaluation_status=SolutionOption.EvaluationStatus.DRAFT,
-                **proposal,
-            )
-            created_ids.append(str(created.pk))
-            current_name_map[created.name.strip().casefold()] = created
-
-    outcome = (
-        InvestigationMaterialization.Outcome.CONFLICT
-        if conflicts
-        else InvestigationMaterialization.Outcome.APPLIED
-    )
+    process = ProcessAnalysis.objects.get(pk=run.process_analysis_id)
     return InvestigationMaterialization.objects.create(
         run=run,
         brief_revision=revision,
         operation_key=key,
-        outcome=outcome,
+        outcome=(
+            InvestigationMaterialization.Outcome.CONFLICT
+            if adoption.conflicts
+            else InvestigationMaterialization.Outcome.APPLIED
+        ),
         base_domain_hash=base_domain_hash,
         resulting_domain_hash=_current_domain_hash(process),
-        applied_fields=applied_fields,
-        created_solution_option_ids=created_ids,
-        updated_solution_option_ids=updated_ids,
-        conflicts=conflicts,
+        applied_fields=adoption.applied_fields,
+        created_solution_option_ids=list(adoption.created_solution_option_ids),
+        updated_solution_option_ids=list(adoption.updated_solution_option_ids),
+        conflicts=list(adoption.conflicts),
         materialized_by=actor,
     )
 
