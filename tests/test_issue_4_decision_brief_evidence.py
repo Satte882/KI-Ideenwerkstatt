@@ -814,6 +814,13 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
         "ki_radar.accelerator.investigation_views.evaluate_run_policy",
         lambda _run: PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ()),
     )
+    detail_before = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
+    detail_before_body = detail_before.content.decode()
+    assert detail_before.status_code == 200
+    assert "Geprüfte Entwürfe übernehmen" in detail_before_body
+    assert "Zurück zum Decision Brief" in detail_before_body
+    assert 'href="#decision-surface-title"' in detail_before_body
+
     materialize_url = reverse("accelerator:investigation_materialize", args=[run.pk])
 
     response = client.post(materialize_url, {"operation_key": "ui-safe-handoff"})
