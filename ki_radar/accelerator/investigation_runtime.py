@@ -419,6 +419,21 @@ def assert_actor_can_edit_run(actor, run: InvestigationRun) -> None:
         raise PermissionDenied("Der Quellenraum gehört nicht zu diesem Fall.")
 
 
+def read_run(*, actor, run_id) -> InvestigationRun:
+    try:
+        run = (
+            InvestigationRun.objects.select_related(
+                "process_analysis__stage__value_stream",
+                "source_snapshot__folder",
+            )
+            .get(pk=run_id)
+        )
+    except (InvestigationRun.DoesNotExist, ValueError) as exc:
+        raise PermissionDenied("Der Investigation-Run ist nicht zugänglich.") from exc
+    assert_actor_can_edit_run(actor, run)
+    return run
+
+
 def locked_run(*, actor, run_id) -> InvestigationRun:
     try:
         run = (
