@@ -1485,6 +1485,9 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     assert "Gegenbeleg vorhanden" in body
     assert "Freigabedauer (Stunden)" in body
     assert "Freigeber verfügbar" in body
+    assert "approval_hours" not in body
+    assert "approver_available" not in body
+    assert "Prozessanalyse öffnen" in body
     assert "Population: {" not in body
     assert "coverage_change" not in body
     assert "Gruppenvergleich reproduzierbar berechnet" in body
@@ -1503,6 +1506,47 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     assert payload["recommendation"]["summary"] in body
     assert payload["recommendation"]["summary"] in export_body
     assert brief_hash == InvestigationRun.objects.get(pk=run.pk).brief_hash
+
+    process_page = client.get(process.get_absolute_url())
+    process_body = process_page.content.decode()
+    assert process_page.status_code == 200
+    assert "Prozessanalyse ·" in process_body
+    assert "Decision Brief öffnen" in process_body
+    assert reverse("accelerator:investigation_detail", args=[run.pk]) in process_body
+
+
+@pytest.mark.django_db
+def test_ready_run_with_current_policy_blockers_is_not_presented_as_decision_ready(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Stale ready")
+    (tmp_path / "notes.txt").write_text("Unvollständiger Stand.", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="stale-ready-surface",
+            decision_brief_required=True,
+        ),
+    )
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+    )
+    client.force_login(owner)
+
+    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Entscheidungsgrundlage noch unvollständig" in body
+    assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
+    assert "Entscheidungsgrundlage bereit" not in body
+    assert "Lösungsoptionen fachlich vergleichen" not in body
 
 
 @pytest.mark.django_db
