@@ -27,6 +27,8 @@ from .investigation_models import (
     InvestigationSource,
     InvestigationToolResult,
 )
+from .investigation_policy import PolicyOutcome
+from .investigation_presentation import build_decision_surface
 from .investigation_runtime import (
     DEFAULT_BUDGET,
     InvestigationRunError,
@@ -224,7 +226,11 @@ def investigation_detail(request, run_id):
     tool_results = list(_tool_results_for_run(run).order_by("created_at"))
     latest_materialization = run.materializations.select_related("brief_revision").first()
     materialization_preview = None
-    if run.status == InvestigationRun.Status.READY and latest_materialization is None:
+    if (
+        run.status == InvestigationRun.Status.READY
+        and policy.outcome == PolicyOutcome.READY_FOR_DECISION
+        and latest_materialization is None
+    ):
         try:
             materialization_preview = preview_decision_brief_materialization(
                 actor=request.user,
@@ -232,6 +238,12 @@ def investigation_detail(request, run_id):
             )
         except InvestigationRunError:
             materialization_preview = None
+    decision_surface = build_decision_surface(
+        run=run,
+        policy=policy,
+        latest_materialization=latest_materialization,
+        materialization_preview=materialization_preview,
+    )
     return render(
         request,
         "accelerator/investigation_detail.html",
@@ -242,6 +254,7 @@ def investigation_detail(request, run_id):
             "tool_results": tool_results,
             "latest_materialization": latest_materialization,
             "materialization_preview": materialization_preview,
+            "decision_surface": decision_surface,
         },
     )
 
@@ -285,6 +298,16 @@ def investigation_continue(request, run_id):
 @login_required
 @require_POST
 def investigation_materialize(request, run_id):
+    run = read_run(actor=request.user, run_id=run_id)
+    policy = evaluate_run_policy(run)
+    if policy.outcome != PolicyOutcome.READY_FOR_DECISION:
+        messages.warning(
+            request,
+            "Die Entscheidungsgrundlage ist noch nicht vollständig geprüft; "
+            "es werden keine Entwürfe übernommen.",
+        )
+        return _run_redirect(run_id)
+
     if request.POST.get("confirm_materialization") != "yes":
         messages.warning(
             request,

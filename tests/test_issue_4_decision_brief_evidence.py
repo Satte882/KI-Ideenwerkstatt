@@ -22,6 +22,7 @@ from ki_radar.accelerator.investigation_benchmark import (
 from ki_radar.accelerator.investigation_brief import (
     materialize_decision_brief,
     preview_decision_brief_materialization,
+    render_decision_brief_markdown,
 )
 from ki_radar.accelerator.investigation_evidence import (
     authorize_campaign_continuation,
@@ -36,6 +37,7 @@ from ki_radar.accelerator.investigation_llm import (
     _structured_provider_call,
 )
 from ki_radar.accelerator.investigation_models import (
+    InvestigationBriefRevision,
     InvestigationModelCall,
     InvestigationProviderReservation,
     InvestigationRun,
@@ -43,7 +45,7 @@ from ki_radar.accelerator.investigation_models import (
     InvestigationSourceFolder,
     InvestigationStep,
 )
-from ki_radar.accelerator.investigation_policy import PolicyOutcome, ReasonCode
+from ki_radar.accelerator.investigation_policy import PolicyDecision, PolicyOutcome, ReasonCode
 from ki_radar.accelerator.investigation_runtime import (
     ISSUE4_INVESTIGATION_PROVIDER_POLICY,
     InvestigationRunError,
@@ -760,6 +762,7 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     owner,
     business_unit,
     tmp_path,
+    monkeypatch,
 ):
     process = make_process(owner=owner, business_unit=business_unit, name="Safe handoff")
     (tmp_path / "cases.csv").write_text(
@@ -807,6 +810,10 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
         brief_hash=content_hash(payload),
     )
     client.force_login(owner)
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.evaluate_run_policy",
+        lambda _run: PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ()),
+    )
     materialize_url = reverse("accelerator:investigation_materialize", args=[run.pk])
 
     response = client.post(materialize_url, {"operation_key": "ui-safe-handoff"})
@@ -831,6 +838,12 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     assert comparison.status_code == 200
     assert "Letzte evidenzgestützte Übernahme" in body
     assert reverse("accelerator:investigation_detail", args=[run.pk]) in body
+
+    detail = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
+    detail_body = detail.content.decode()
+    assert detail.status_code == 200
+    assert "Lösungsoptionen fachlich vergleichen" in detail_body
+    assert reverse("architecture:solution_option_compare", args=[process.pk]) in detail_body
 
 
 @pytest.mark.django_db
@@ -1389,6 +1402,280 @@ def test_investigation_read_only_views_do_not_require_transaction(
         reverse("accelerator:investigation_source", args=[handle.run_id, source.pk])
     )
     assert source_detail.status_code == 200
+
+
+@pytest.mark.django_db
+def test_decision_surface_prioritizes_human_decision_over_technical_audit(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Human decision surface")
+    (tmp_path / "cases.csv").write_text(
+        "approver_available,approval_hours,unit\nyes,5,h\nyes,5,h\nno,29,h\nno,30,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="human-decision-surface",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "approver_available",
+            "aggregation": "mean",
+            "value_column": "approval_hours",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="approval-delay",
+        expected_discriminating_finding=(
+            "Unterscheidet sich approval_hours nach approver_available?"
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    payload["calculations"][0] = {
+        "summary": (
+            "Mittlere approval_hours nach approver_available unterscheidet sich "
+            "zwischen den Gruppen."
+        ),
+        "reference": {
+            "tool_result_id": str(step.result_ref["tool_result_id"]),
+            "revision_hash": source.content_sha256,
+        },
+        "population": {
+            "rows_total": 4,
+            "included_rows": [1, 2, 3, 4],
+            "aggregated_rows": [1, 2, 3, 4],
+            "filter_matched_rows": 4,
+        },
+        "limits": "Kleine Stichprobe; keine Kausalitätsaussage.",
+    }
+    brief_hash = content_hash(payload)
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=brief_hash,
+    )
+    client.force_login(owner)
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.evaluate_run_policy",
+        lambda _run: PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ()),
+    )
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.preview_decision_brief_materialization",
+        lambda **_kwargs: {
+            "process_changes": [
+                {
+                    "label": "Beobachtung / Problem",
+                    "current": "Laufzeiten schwanken",
+                    "proposed": "Freigabezeiten schwanken deutlich.",
+                }
+            ],
+            "solution_changes": [],
+            "conflicts": [],
+            "side_effects": [],
+        },
+    )
+
+    response = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert body.index("1 · Situation") < body.index("2 · Wichtigster Befund")
+    assert body.index("2 · Wichtigster Befund") < body.index("3 · Empfehlung")
+    assert body.index("3 · Empfehlung") < body.index("4 · Nächster Schritt")
+    assert "Entscheidungsgrundlage bereit" in body
+    assert "READY_FOR_DECISION" not in body
+    assert "Durch aktuelle Evidenz gestützt" in body
+    assert "Gegenbeleg vorhanden" in body
+    assert "Freigabedauer (Stunden)" in body
+    assert "Freigeber verfügbar" in body
+    assert "approval_hours" not in body
+    assert "approver_available" not in body
+    assert "Prozessanalyse öffnen" in body
+    assert "Population: {" not in body
+    assert "coverage_change" not in body
+    assert "Gruppenvergleich reproduzierbar berechnet" in body
+    assert reverse("accelerator:investigation_source", args=[run.pk, source.pk]) in body
+    assert (
+        reverse(
+            "accelerator:investigation_tool_result",
+            args=[run.pk, step.result_ref["tool_result_id"]],
+        )
+        in body
+    )
+
+    stored_run = InvestigationRun.objects.get(pk=run.pk)
+    revision = InvestigationBriefRevision.objects.create(
+        run=stored_run,
+        revision=1,
+        payload=stored_run.brief_payload,
+        content_hash=stored_run.brief_hash,
+        operation_key="decision-surface-render-check",
+        process_version=stored_run.process_version,
+    )
+    export_body = render_decision_brief_markdown(revision)
+    assert payload["recommendation"]["summary"] in body
+    assert payload["recommendation"]["summary"] in export_body
+    assert brief_hash == stored_run.brief_hash
+
+    process_page = client.get(process.get_absolute_url())
+    process_body = process_page.content.decode()
+    assert process_page.status_code == 200
+    assert "Prozessanalyse ·" in process_body
+    assert "Decision Brief öffnen" in process_body
+    assert reverse("accelerator:investigation_detail", args=[run.pk]) in process_body
+
+
+@pytest.mark.django_db
+def test_ready_run_with_current_policy_blockers_is_not_presented_as_decision_ready(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Stale ready")
+    (tmp_path / "notes.txt").write_text("Unvollständiger Stand.", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="stale-ready-surface",
+            decision_brief_required=True,
+        ),
+    )
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+    )
+    client.force_login(owner)
+
+    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Entscheidungsgrundlage noch unvollständig" in body
+    assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
+    assert "Entscheidungsgrundlage bereit" not in body
+    assert "Lösungsoptionen fachlich vergleichen" not in body
+    assert "Geplante Übernahme in den Lösungsraum prüfen" not in body
+
+    response = client.post(
+        reverse("accelerator:investigation_materialize", args=[handle.run_id]),
+        {
+            "operation_key": "stale-ready-must-not-materialize",
+            "confirm_materialization": "yes",
+        },
+    )
+    assert response.status_code == 302
+    assert InvestigationRun.objects.get(pk=handle.run_id).materializations.count() == 0
+    assert process.solution_options.count() == 0
+
+
+@pytest.mark.django_db
+def test_aborted_clarification_is_presented_as_open_evidence_question(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Aborted clarification")
+    (tmp_path / "notes.txt").write_text("Bezugsgröße fehlt.", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="aborted-clarification-surface",
+        ),
+    )
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        status=InvestigationRun.Status.ABORTED,
+        clarification_reason=ReasonCode.MISSING_EVIDENCE.value,
+        clarification_payload={
+            "question": "Wie hoch war die Gesamtzahl aller freigabepflichtigen Vorgänge?",
+            "impact": (
+                "Ohne diese Bezugsgröße kann keine belastbare Eskalationsquote berechnet werden."
+            ),
+            "needed_evidence": "Dokumentierte Gesamtzahl im gleichen Zeitraum.",
+        },
+        finished_at=timezone.now(),
+    )
+    client.force_login(owner)
+
+    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Untersuchung beendet" in body
+    assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
+    assert "Wie hoch war die Gesamtzahl aller freigabepflichtigen Vorgänge?" in body
+    assert "Dokumentierte Gesamtzahl im gleichen Zeitraum." in body
+    assert "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten" in body
+    assert 'name="answer"' not in body
+    assert process.get_absolute_url() in body
+
+
+@pytest.mark.django_db
+def test_waiting_human_surface_uses_real_continue_contract(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Clarification")
+    (tmp_path / "notes.txt").write_text("Bezugsgröße fehlt.", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="waiting-human-surface",
+        ),
+    )
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        status=InvestigationRun.Status.WAITING_HUMAN,
+        clarification_reason=ReasonCode.MISSING_EVIDENCE.value,
+        clarification_payload={
+            "question": "Wie viele Vorgänge waren insgesamt freigabepflichtig?",
+            "impact": "Ohne Bezugsgröße ist die Quote nicht belastbar.",
+            "needed_evidence": "Gesamtzahl für denselben Zeitraum.",
+        },
+    )
+    client.force_login(owner)
+
+    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Klärung erforderlich" in body
+    assert "Wie viele Vorgänge waren insgesamt freigabepflichtig?" in body
+    assert "Gesamtzahl für denselben Zeitraum." in body
+    assert 'name="answer"' in body
+    assert reverse("accelerator:investigation_continue", args=[handle.run_id]) in body
 
 
 @pytest.mark.django_db
