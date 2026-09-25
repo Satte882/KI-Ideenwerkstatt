@@ -236,11 +236,9 @@ def build_decision_surface(
 
     problem_statement = humanize_investigation_text(problem.get("statement"))
     frozen_problem = _frozen_process_text(run, "diagnostic_observations")
-    situation = (
-        problem_statement
-        or frozen_problem
-        or humanize_investigation_text(run.decision_question)
-    )
+    situation = problem_statement or frozen_problem
+    if not situation:
+        situation = humanize_investigation_text(run.decision_question)
     scope = humanize_investigation_text(question_scope.get("scope"))
     if not scope and situation != humanize_investigation_text(run.decision_question):
         scope = f"Fragestellung: {humanize_investigation_text(run.decision_question)}"
