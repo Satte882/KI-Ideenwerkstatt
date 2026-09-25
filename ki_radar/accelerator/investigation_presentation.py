@@ -23,6 +23,13 @@ _TOOL_LABELS = {
     "compare_groups": "Gruppenvergleich reproduzierbar berechnet",
 }
 
+_INLINE_TOOL_LABELS = {
+    "read_source": "Quellenprüfung",
+    "search_sources": "Quellensuche",
+    "profile_csv": "Datenprüfung",
+    "compare_groups": "Gruppenvergleich",
+}
+
 _PROGRESS_LABELS = {
     InvestigationStep.ProgressKind.NONE: "Kein neuer entscheidungsrelevanter Befund",
     InvestigationStep.ProgressKind.EVIDENCE: "Neuer Beleg",
@@ -36,6 +43,8 @@ def humanize_investigation_text(value: object) -> str:
     text = str(value or "").strip()
     for field_name, label in _FIELD_LABELS.items():
         text = re.sub(rf"\b{re.escape(field_name)}\b", label, text)
+    for tool_name, label in _INLINE_TOOL_LABELS.items():
+        text = re.sub(rf"\b{re.escape(tool_name)}\b", label, text)
     return text
 
 
