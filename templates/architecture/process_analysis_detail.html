@@ -27,6 +27,8 @@
 
 {% include "includes/local_work_status.html" %}
 
+{% include "architecture/includes/process_decision_surface.html" %}
+
 <div class="cr-next-action" id="next-action">{% include "includes/next_action.html" %}</div>
 
 {% if not process_analysis.stage.value_stream.focus.is_selected %}<div class="alert alert-warning"><strong>Prozessdetailanalyse nicht freigegeben:</strong> Der übergeordnete Value Stream muss zuerst vollständig bewertet und für die Vertiefung ausgewählt werden.</div>{% endif %}
@@ -101,12 +103,12 @@
       <section class="col-md-6" id="analysis-roles"><div class="section-title">Rollen und Verantwortung</div><div class="text-preline">{{ process_analysis.roles }}</div></section>
     </div>
     <details class="architecture-disclosure mt-3" data-testid="process-original-fields">
-      <summary>Dokumentierte Ausgangsangaben</summary>
+      <summary>Rohdaten und Herkunft anzeigen</summary>
       <div class="row g-4 pt-3">
         {% if process_analysis.diagnostic_observations %}<section class="col-md-6" id="analysis-diagnostic-observations"><div class="section-title">Beobachtung / Problem</div><div class="text-preline">{{ process_analysis.diagnostic_observations }}</div></section>{% endif %}
         <section class="col-md-6" id="analysis-bottlenecks"><div class="section-title">Bottlenecks und Ursachen</div><div class="text-preline">{{ process_analysis.bottlenecks }}</div></section>
         <section class="col-md-6" id="analysis-baseline-metrics"><div class="section-title">Baseline und Kennzahlen</div><div class="text-preline">{{ process_analysis.baseline_metrics }}</div></section>
-        <div class="col-12 small text-muted">Der Freitext „Bottlenecks und Ursachen“ wird nicht automatisch als bestätigte Ursache eingeordnet.</div>
+        <div class="col-12 small text-muted">Diese eingeklappten Ausgangsangaben bleiben für Audit und Nachvollziehbarkeit unverändert erhalten. Der Freitext „Bottlenecks und Ursachen“ wird nicht automatisch als bestätigte Ursache eingeordnet.</div>
       </div>
     </details>
   </div>
