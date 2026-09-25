@@ -1454,6 +1454,10 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
         source=source,
         result_id=step.result_ref["tool_result_id"],
     )
+    payload["recommendation"]["rationale"] = (
+        "compare_groups zeigt höhere approval_hours nach approver_available; "
+        "profile_csv bestätigt die Datengrundlage."
+    )
     payload["calculations"][0] = {
         "summary": (
             "Mittlere approval_hours nach approver_available unterscheidet sich "
@@ -1512,6 +1516,12 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     assert "Gegenbeleg vorhanden" in body
     assert "Freigabedauer (Stunden)" in body
     assert "Freigeber verfügbar" in body
+    assert "Begründung" in body
+    assert (
+        "Gruppenvergleich zeigt höhere Freigabedauer (Stunden) nach Freigeber verfügbar; "
+        "Datenprüfung bestätigt die Datengrundlage." in body
+    )
+    assert "compare_groups zeigt höhere approval_hours" not in body
     assert "approval_hours" not in body
     assert "approver_available" not in body
     assert "Prozessanalyse öffnen" in body
