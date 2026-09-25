@@ -1613,6 +1613,10 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
     tmp_path,
 ):
     process = make_process(owner=owner, business_unit=business_unit, name="Aborted clarification")
+    process.diagnostic_observations = (
+        "18 Eskalationen sollen eingeordnet werden, um eine belastbare Lösungsrichtung abzuleiten."
+    )
+    process.save(update_fields=["diagnostic_observations", "updated_at"])
     (tmp_path / "notes.txt").write_text("Bezugsgröße fehlt.", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     handle = start_investigation(
@@ -1630,10 +1634,14 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
             "impact": (
                 "Ohne diese Bezugsgröße kann keine belastbare Eskalationsquote berechnet werden."
             ),
-            "needed_evidence": "Dokumentierte Gesamtzahl im gleichen Zeitraum.",
+            "needed_evidence": (
+                "Dokumentierte Gesamtzahl im gleichen Zeitraum wie die 18 Eskalationen."
+            ),
         },
         finished_at=timezone.now(),
     )
+    process.diagnostic_observations = "Später durch einen anderen Run veränderter Prozessbefund."
+    process.save(update_fields=["diagnostic_observations", "updated_at"])
     client.force_login(owner)
 
     response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
@@ -1641,10 +1649,21 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
 
     assert response.status_code == 200
     assert "Untersuchung beendet" in body
+    assert body.count("Der Lauf wurde beendet.") == 1
+    assert (
+        "18 Eskalationen sollen eingeordnet werden, um eine belastbare Lösungsrichtung abzuleiten."
+        in body
+    )
+    assert "Später durch einen anderen Run veränderter Prozessbefund." not in body
+    assert "Fragestellung: Welche Lösungsrichtung ist durch die Evidenz gestützt?" in body
+    assert (
+        "Entscheidungskritischer Nachweis fehlt: Dokumentierte Gesamtzahl im gleichen "
+        "Zeitraum wie die 18 Eskalationen."
+        in body
+    )
     assert "Noch keine belastbare Empfehlung aus diesem Lauf." in body
     assert "Wie hoch war die Gesamtzahl aller freigabepflichtigen Vorgänge?" in body
-    assert "Dokumentierte Gesamtzahl im gleichen Zeitraum." in body
-    assert "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten" in body
+    assert "Fehlenden Nachweis ergänzen und Untersuchung neu starten" in body
     assert 'name="answer"' not in body
     assert process.get_absolute_url() in body
 
