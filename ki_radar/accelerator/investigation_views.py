@@ -288,7 +288,8 @@ def investigation_materialize(request, run_id):
     if request.POST.get("confirm_materialization") != "yes":
         messages.warning(
             request,
-            "Bitte die angezeigten Änderungen ausdrücklich bestätigen, bevor sie übernommen werden.",
+            "Bitte die angezeigten Änderungen ausdrücklich bestätigen, "
+            "bevor sie übernommen werden.",
         )
         return _run_redirect(run_id)
 
