@@ -19,6 +19,7 @@ from .investigation_runtime import (
     decision_brief_blockers,
     locked_run,
     normalize_idempotency_key,
+    read_run,
 )
 
 
@@ -179,6 +180,149 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
             "solution_options": options,
         }
     )
+
+
+_PROCESS_FIELD_LABELS = {
+    "diagnostic_observations": "Beobachtung / Problem",
+    "cause_hypotheses": "Ursachenhypothesen",
+    "baseline_metrics": "Baseline und Kennzahlen",
+}
+
+
+def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
+    """Describe the conflict-safe domain changes without writing anything."""
+
+    run = read_run(actor=actor, run_id=run_id)
+    if run.status != InvestigationRun.Status.READY:
+        raise InvestigationRunError(
+            "Nur ein technisch READY-geprüfter Brief kann zur Übernahme vorbereitet werden.",
+            code="ready_required",
+        )
+    blockers = decision_brief_blockers(run)
+    if blockers:
+        raise InvestigationRunError(
+            "Der Decision Brief erfüllt den VS1/3-Vertrag noch nicht.",
+            code="decision_brief_incomplete",
+        )
+
+    process = ProcessAnalysis.objects.select_related("stage__value_stream").get(
+        pk=run.process_analysis_id
+    )
+    base_process = _process_base(run)
+    base_options = _base_options(run)
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    target_fields = _target_process_fields(payload)
+
+    process_changes: list[dict[str, Any]] = []
+    solution_changes: list[dict[str, Any]] = []
+    conflicts: list[dict[str, Any]] = []
+
+    if process.version != run.process_version:
+        conflicts.append(
+            {
+                "type": "process_version_changed",
+                "label": "Prozessstand wurde zwischenzeitlich geändert",
+                "expected": run.process_version,
+                "current": process.version,
+                "action": "Keine Prozessfelder oder Lösungsoptionen werden still überschrieben.",
+            }
+        )
+    else:
+        for field_name, proposed in target_fields.items():
+            if not proposed:
+                continue
+            base_value = str(base_process.get(field_name) or "")
+            current_value = str(getattr(process, field_name) or "")
+            if current_value != base_value:
+                conflicts.append(
+                    {
+                        "type": "process_field_changed",
+                        "label": _PROCESS_FIELD_LABELS.get(field_name, field_name),
+                        "field": field_name,
+                        "current": current_value,
+                        "proposed": proposed,
+                    }
+                )
+                continue
+            if current_value != proposed:
+                process_changes.append(
+                    {
+                        "field": field_name,
+                        "label": _PROCESS_FIELD_LABELS.get(field_name, field_name),
+                        "current": current_value,
+                        "proposed": proposed,
+                    }
+                )
+
+        current_options = {str(option.pk): option for option in process.solution_options.all()}
+        current_name_map = {
+            option.name.strip().casefold(): option for option in current_options.values()
+        }
+        for raw_option in (
+            item for item in payload.get("options", []) if isinstance(item, Mapping)
+        ):
+            proposal = _option_payload(raw_option)
+            if not proposal["name"]:
+                continue
+            existing_option_id = str(raw_option.get("existing_option_id") or "").strip()
+            if existing_option_id:
+                current = current_options.get(existing_option_id)
+                base = base_options.get(existing_option_id)
+                if current is None or base is None:
+                    conflicts.append(
+                        {
+                            "type": "solution_option_missing_or_new",
+                            "label": proposal["name"],
+                            "proposed": proposal,
+                        }
+                    )
+                    continue
+                if current.updated_at.isoformat() != str(base.get("updated_at") or ""):
+                    conflicts.append(
+                        {
+                            "type": "solution_option_changed",
+                            "label": current.name,
+                            "proposed": proposal,
+                        }
+                    )
+                    continue
+                solution_changes.append(
+                    {
+                        "action": "update",
+                        "action_label": "Vorhandenen Entwurf aktualisieren",
+                        "option_id": existing_option_id,
+                        "name": proposal["name"],
+                        "description": proposal["description"],
+                    }
+                )
+                continue
+
+            collision = current_name_map.get(proposal["name"].casefold())
+            if collision is not None:
+                conflicts.append(
+                    {
+                        "type": "solution_option_name_collision",
+                        "label": proposal["name"],
+                        "current_option_id": str(collision.pk),
+                        "proposed": proposal,
+                    }
+                )
+                continue
+            solution_changes.append(
+                {
+                    "action": "create",
+                    "action_label": "Neuen Entwurf anlegen",
+                    "name": proposal["name"],
+                    "description": proposal["description"],
+                }
+            )
+
+    return {
+        "process_changes": process_changes,
+        "solution_changes": solution_changes,
+        "conflicts": conflicts,
+        "change_count": len(process_changes) + len(solution_changes),
+    }
 
 
 @transaction.atomic

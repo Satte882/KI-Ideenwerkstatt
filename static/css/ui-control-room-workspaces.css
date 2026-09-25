@@ -665,3 +665,56 @@
     flex-direction: column;
   }
 }
+
+/* Issue #50: explicit Decision Brief handoff and stable solution cards */
+.ui-control-room .materialization-preview__change {
+  min-width: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room .materialization-preview__change:last-child {
+  border-bottom: 0;
+}
+
+.ui-control-room .materialization-preview__change .text-preline,
+.ui-control-room .materialization-preview__option {
+  overflow-wrap: anywhere;
+}
+
+.ui-control-room .materialization-preview__option {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(0, 1.2fr);
+  gap: 14px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-process-analysis .solution-option-card {
+  min-width: 0;
+}
+
+.ui-control-room.page-process-analysis .solution-option-card > .d-flex > * {
+  min-width: 0;
+}
+
+.ui-control-room.page-process-analysis .solution-option-card h2,
+.ui-control-room.page-process-analysis .solution-option-card .stage-facts dt,
+.ui-control-room.page-process-analysis .solution-option-card .stage-facts dd {
+  overflow-wrap: anywhere;
+}
+
+.ui-control-room.page-process-analysis .solution-option-card .stage-facts {
+  grid-template-columns: minmax(118px, .8fr) minmax(0, 1.2fr);
+}
+
+@media (max-width: 520px) {
+  .ui-control-room .materialization-preview__option,
+  .ui-control-room.page-process-analysis .solution-option-card .stage-facts {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -13,6 +13,22 @@
   <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
 </div>
 
+{% if latest_investigation_materialization %}
+<div class="cr-inline-note mb-4" data-testid="investigation-materialization-origin">
+  <div>
+    <strong>Letzte evidenzgestützte Übernahme</strong>
+    <span>
+      {{ latest_investigation_materialization.applied_fields|length }} Prozessfeld(er),
+      {{ latest_investigation_materialization.created_solution_option_ids|length }} neue und
+      {{ latest_investigation_materialization.updated_solution_option_ids|length }} aktualisierte Lösungsoption(en)
+      stammen aus einem geprüften Decision Brief.
+      {% if latest_investigation_materialization.conflicts %}{{ latest_investigation_materialization.conflicts|length }} Konflikt(e) wurden geschützt und nicht überschrieben.{% endif %}
+    </span>
+  </div>
+  <a href="{% url 'accelerator:investigation_detail' latest_investigation_materialization.run_id %}">Decision Brief / Herkunft öffnen</a>
+</div>
+{% endif %}
+
 {% for blocker in blockers %}<div class="alert alert-warning">{{ blocker }}</div>{% endfor %}
 
 <div class="app-card mb-4">

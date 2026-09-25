@@ -19,7 +19,10 @@ from ki_radar.accelerator.investigation_benchmark import (
     prepare_fixed_route,
     request_fixed_route_synthesis,
 )
-from ki_radar.accelerator.investigation_brief import materialize_decision_brief
+from ki_radar.accelerator.investigation_brief import (
+    materialize_decision_brief,
+    preview_decision_brief_materialization,
+)
 from ki_radar.accelerator.investigation_evidence import (
     authorize_campaign_continuation,
     create_evidence_campaign,
@@ -679,6 +682,152 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
 
 
 @pytest.mark.django_db
+def test_materialization_preview_is_read_only_and_describes_domain_changes(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Preview")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="materialize-preview",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+    before_version = process.version
+
+    preview = preview_decision_brief_materialization(actor=owner, run_id=run.pk)
+
+    process.refresh_from_db()
+    assert process.version == before_version
+    assert process.solution_options.count() == 0
+    assert {item["label"] for item in preview["process_changes"]} == {
+        "Beobachtung / Problem",
+        "Ursachenhypothesen",
+        "Baseline und Kennzahlen",
+    }
+    assert [item["action"] for item in preview["solution_changes"]] == ["create", "create"]
+    assert preview["conflicts"] == []
+
+
+@pytest.mark.django_db
+def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comparison(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Safe handoff")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="materialize-ui-confirm",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+    client.force_login(owner)
+    materialize_url = reverse("accelerator:investigation_materialize", args=[run.pk])
+
+    response = client.post(materialize_url, {"operation_key": "ui-safe-handoff"})
+    assert response.status_code == 302
+    assert process.solution_options.count() == 0
+    assert run.materializations.count() == 0
+
+    response = client.post(
+        materialize_url,
+        {
+            "operation_key": "ui-safe-handoff",
+            "confirm_materialization": "yes",
+        },
+    )
+    assert response.status_code == 302
+    assert response.url == reverse("architecture:solution_option_compare", args=[process.pk])
+    assert process.solution_options.count() == 2
+    assert run.materializations.count() == 1
+
+    comparison = client.get(response.url)
+    body = comparison.content.decode()
+    assert comparison.status_code == 200
+    assert "Letzte evidenzgestützte Übernahme" in body
+    assert reverse("accelerator:investigation_detail", args=[run.pk]) in body
+
+
+@pytest.mark.django_db
 def test_human_solution_option_change_is_reported_not_overwritten(
     owner,
     business_unit,
@@ -740,6 +889,15 @@ def test_human_solution_option_change_is_reported_not_overwritten(
 
     existing.description = "Vom Menschen nach dem Run bewusst geändert."
     existing.save()
+
+    preview = preview_decision_brief_materialization(
+        actor=owner,
+        run_id=handle.run_id,
+    )
+    assert any(item["type"] == "solution_option_changed" for item in preview["conflicts"])
+    assert not any(
+        item.get("option_id") == str(existing.pk) for item in preview["solution_changes"]
+    )
 
     result = materialize_decision_brief(
         actor=owner,

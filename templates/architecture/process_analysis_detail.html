@@ -292,6 +292,9 @@
     <div><strong>Lösungsoptionen vergleichen</strong><div class="small text-muted mt-1">Alternativen anhand identischer Kriterien prüfen und die Auswahl getrennt auditieren. Methodik: Opportunities &amp; Solutions (ADM Phase E).</div></div>
     {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}
       <div class="d-flex gap-2 flex-wrap">
+        {% if process_analysis.solution_options.all %}
+          <a class="btn btn-sm btn-primary" href="{% url 'architecture:solution_option_compare' process_analysis.pk %}">Vergleichsmatrix öffnen</a>
+        {% endif %}
         {% if solution_design_task %}
           <a class="btn btn-sm btn-primary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}?work_design_task={{ solution_design_task.pk }}">Lösungsoption für diese Aufgabe ergänzen</a>
         {% elif process_analysis.solution_options.all %}

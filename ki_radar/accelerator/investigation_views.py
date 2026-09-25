@@ -18,6 +18,7 @@ from ki_radar.review_export_security import sanitize_external_markdown
 from .investigation_brief import (
     freeze_review_revision,
     materialize_decision_brief,
+    preview_decision_brief_materialization,
     render_decision_brief_markdown,
 )
 from .investigation_loop import run_until_boundary
@@ -222,6 +223,15 @@ def investigation_detail(request, run_id):
     sources = list(run.source_snapshot.sources.order_by("filename"))
     tool_results = list(_tool_results_for_run(run).order_by("created_at"))
     latest_materialization = run.materializations.select_related("brief_revision").first()
+    materialization_preview = None
+    if run.status == InvestigationRun.Status.READY and latest_materialization is None:
+        try:
+            materialization_preview = preview_decision_brief_materialization(
+                actor=request.user,
+                run_id=run.pk,
+            )
+        except InvestigationRunError:
+            materialization_preview = None
     return render(
         request,
         "accelerator/investigation_detail.html",
@@ -231,6 +241,7 @@ def investigation_detail(request, run_id):
             "sources": sources,
             "tool_results": tool_results,
             "latest_materialization": latest_materialization,
+            "materialization_preview": materialization_preview,
         },
     )
 
@@ -274,6 +285,14 @@ def investigation_continue(request, run_id):
 @login_required
 @require_POST
 def investigation_materialize(request, run_id):
+    if request.POST.get("confirm_materialization") != "yes":
+        messages.warning(
+            request,
+            "Bitte die angezeigten Änderungen ausdrücklich bestätigen, "
+            "bevor sie übernommen werden.",
+        )
+        return _run_redirect(run_id)
+
     try:
         result = materialize_decision_brief(
             actor=request.user,
@@ -287,16 +306,24 @@ def investigation_materialize(request, run_id):
     if result.conflicts:
         messages.warning(
             request,
-            "Der fachliche Stand hat sich geändert. Nicht überschreibbare Differenzen werden "
-            "im Decision Brief angezeigt.",
+            "Die konfliktfreien Änderungen wurden übernommen. Bestehende menschliche Änderungen "
+            "wurden nicht überschrieben; die ausgelassenen Differenzen stehen im Decision Brief.",
         )
-    else:
-        messages.success(
-            request,
-            "Belegte Prozessbefunde und SolutionOption-Entwürfe wurden in die bestehenden "
-            "Fachobjekte übernommen.",
-        )
-    return _run_redirect(run_id)
+        return _run_redirect(run_id)
+
+    messages.success(
+        request,
+        (
+            f"Übernommen: {len(result.applied_fields)} Prozessfeld(er), "
+            f"{len(result.created_solution_option_ids)} neue und "
+            f"{len(result.updated_solution_option_ids)} aktualisierte Lösungsoption(en). "
+            "Als Nächstes die Optionen fachlich vergleichen."
+        ),
+    )
+    return redirect(
+        "architecture:solution_option_compare",
+        pk=result.run.process_analysis_id,
+    )
 
 
 @login_required
