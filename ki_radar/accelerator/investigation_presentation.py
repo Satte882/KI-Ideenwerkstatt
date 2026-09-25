@@ -194,6 +194,16 @@ def _clarification_text(run: InvestigationRun, key: str) -> str:
     return humanize_investigation_text(payload.get(key))
 
 
+def _frozen_process_text(run: InvestigationRun, key: str) -> str:
+    base = run.execution_snapshot.get("domain_materialization_base")
+    if not isinstance(base, Mapping):
+        return ""
+    process = base.get("process")
+    if not isinstance(process, Mapping):
+        return ""
+    return humanize_investigation_text(process.get(key))
+
+
 def build_decision_surface(
     *,
     run: InvestigationRun,
@@ -219,11 +229,26 @@ def build_decision_surface(
         if str(item or "").strip()
     ]
 
-    situation = humanize_investigation_text(
-        problem.get("statement")
-    ) or humanize_investigation_text(run.decision_question)
+    clarification_question = _clarification_text(run, "question")
+    needed_evidence = _clarification_text(run, "needed_evidence")
+    required_action = _clarification_text(run, "required_action")
+    clarification_impact = _clarification_text(run, "impact")
+
+    problem_statement = humanize_investigation_text(problem.get("statement"))
+    frozen_problem = _frozen_process_text(run, "diagnostic_observations")
+    situation = problem_statement or frozen_problem or humanize_investigation_text(
+        run.decision_question
+    )
     scope = humanize_investigation_text(question_scope.get("scope"))
+    if not scope and situation != humanize_investigation_text(run.decision_question):
+        scope = f"Fragestellung: {humanize_investigation_text(run.decision_question)}"
+
     finding = _supported_finding(payload, hypotheses, calculations)
+    if not finding and run.clarification_reason == "missing_evidence":
+        if needed_evidence:
+            finding = f"Entscheidungskritischer Nachweis fehlt: {needed_evidence}"
+        else:
+            finding = clarification_impact
 
     policy_outcome = str(policy.outcome)
     ready_for_decision = (
@@ -266,7 +291,7 @@ def build_decision_surface(
     elif clarification_required:
         status_label = "Klärung erforderlich"
         status_detail = (
-            _clarification_text(run, "impact")
+            clarification_impact
             or "Für die Richtungsentscheidung fehlt noch eine entscheidungskritische Information."
         )
         status_tone = "review"
@@ -283,11 +308,7 @@ def build_decision_surface(
         recommendation_rationale = humanize_investigation_text(recommendation.get("rationale"))
     else:
         recommendation_summary = "Noch keine belastbare Empfehlung aus diesem Lauf."
-        recommendation_rationale = _clarification_text(run, "impact") or status_detail
-
-    clarification_question = _clarification_text(run, "question")
-    needed_evidence = _clarification_text(run, "needed_evidence")
-    required_action = _clarification_text(run, "required_action")
+        recommendation_rationale = clarification_impact or status_detail
 
     if ready_for_decision and latest_materialization:
         next_action = {
@@ -321,9 +342,13 @@ def build_decision_surface(
     }:
         evidence_hint = needed_evidence or required_action
         description_parts = [item for item in [clarification_question, evidence_hint] if item]
+        if run.clarification_reason == "missing_evidence":
+            next_title = "Fehlenden Nachweis ergänzen und Untersuchung neu starten"
+        else:
+            next_title = "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten"
         next_action = {
             "kind": "process",
-            "title": "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten",
+            "title": next_title,
             "description": " · ".join(description_parts) or status_detail,
         }
     else:
