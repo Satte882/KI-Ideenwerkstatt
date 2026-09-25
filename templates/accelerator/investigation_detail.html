@@ -4,321 +4,321 @@
 {% block body_class %}page-detail-workspace page-investigation{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
-<div class="page-header">
+<div class="page-header cr-work-header">
   <div>
     <div class="eyebrow mb-2">{{ run.process_analysis.name }}</div>
-    <h1 class="page-title">Evidenzbasierte Untersuchung</h1>
-    <p class="page-subtitle">Technischer Agentenlauf zur Vorbereitung einer menschlichen Richtungsentscheidung. Kein fachliches Approval und kein zusätzlicher Lifecycle.</p>
+    <h1 class="page-title">Decision Brief</h1>
+    <p class="page-subtitle">Evidenz, Gegenbelege und Berechnungen werden zu einer prüfbaren Richtungsgrundlage verdichtet. Die fachliche Lösungsentscheidung bleibt im bestehenden Lösungsvergleich.</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{{ run.process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+  <div class="cr-work-header__actions">
+    {% if run.brief_payload %}
+      <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_export' run.pk %}">Markdown exportieren</a>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{{ run.process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+  </div>
 </div>
 
-<div class="app-card mb-4">
+<section class="app-card decision-surface mb-4" aria-labelledby="decision-surface-title">
   <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <div>
-      <strong>Entscheidungsstand</strong>
-      <div class="small text-muted mt-1">{{ run.decision_question }}</div>
+      <strong id="decision-surface-title">Entscheidungsgrundlage</strong>
+      <div class="small text-muted mt-1">{{ decision_surface.question }}</div>
     </div>
-    <div class="text-end">
-      <span class="badge {% if policy.outcome == 'READY_FOR_DECISION' %}state-ready{% elif policy.outcome == 'HUMAN_CLARIFICATION' %}state-review{% else %}badge-soft{% endif %}">{{ policy.outcome }}</span>
-      <div class="small text-muted mt-1">Technischer Run: {{ run.get_status_display }}</div>
+    <div class="decision-status decision-status--{{ decision_surface.status_tone }}">
+      <strong>{{ decision_surface.status_label }}</strong>
+      <span>{{ decision_surface.status_detail }}</span>
     </div>
   </div>
-  <div class="card-body">
-    {% if run.status == "ready" %}
-      <div class="alert alert-success">
-        <strong>Entscheidungsgrundlage technisch bereit.</strong>
-        Die fachliche Auswahl, Freigabe und spätere Lifecycle-Entscheidungen bleiben beim Menschen.
-      </div>
-      <div class="d-flex gap-2 flex-wrap mb-3">
-        <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_export' run.pk %}">Decision Brief als Markdown</a>
-        {% if latest_materialization %}
+
+  <div class="card-body decision-surface__body">
+    <section class="decision-surface__section" aria-labelledby="decision-situation-title">
+      <div class="decision-surface__label" id="decision-situation-title">1 · Situation</div>
+      <div class="decision-surface__text">{{ decision_surface.situation }}</div>
+      {% if decision_surface.scope %}<div class="small text-muted mt-2">{{ decision_surface.scope }}</div>{% endif %}
+    </section>
+
+    <section class="decision-surface__section" aria-labelledby="decision-finding-title">
+      <div class="decision-surface__label" id="decision-finding-title">2 · Wichtigster Befund</div>
+      <div class="decision-surface__text">{{ decision_surface.finding }}</div>
+    </section>
+
+    <section class="decision-surface__section decision-surface__recommendation" aria-labelledby="decision-recommendation-title">
+      <div class="decision-surface__label" id="decision-recommendation-title">3 · Empfehlung</div>
+      <div class="decision-surface__text">{{ decision_surface.recommendation_summary }}</div>
+      {% if decision_surface.recommendation_rationale %}
+        <div class="small mt-2">{{ decision_surface.recommendation_rationale }}</div>
+      {% endif %}
+      {% if decision_surface.risks %}
+        <div class="decision-surface__limits mt-3">
+          <strong>Grenzen und offene Punkte</strong>
+          <ul class="mb-0 mt-1">
+            {% for item in decision_surface.risks %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="decision-surface__section decision-surface__next" aria-labelledby="decision-next-title">
+      <div class="decision-surface__label" id="decision-next-title">4 · Nächster Schritt</div>
+      <div class="decision-surface__text">{{ decision_surface.next_action.title }}</div>
+      <div class="small text-muted mt-2">{{ decision_surface.next_action.description }}</div>
+
+      <div class="mt-3">
+        {% if decision_surface.next_action.kind == "compare" %}
           <a class="btn btn-primary" href="{% url 'architecture:solution_option_compare' run.process_analysis.pk %}">Lösungsoptionen vergleichen</a>
+        {% elif decision_surface.next_action.kind == "handoff" %}
+          <a class="btn btn-primary" href="#materialization-preview">Geplante Übernahme prüfen</a>
+        {% elif decision_surface.next_action.kind == "clarify" %}
+          <a class="btn btn-primary" href="#clarification-form">Klärung beantworten</a>
+        {% elif decision_surface.next_action.kind == "process" %}
+          <a class="btn btn-primary" href="{{ run.process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
         {% endif %}
       </div>
+    </section>
+  </div>
+</section>
 
-      {% if latest_materialization %}
-        <div class="cr-inline-note" data-testid="materialization-complete">
-          <div>
-            <strong>Übernahme abgeschlossen.</strong>
-            <span>
-              {{ latest_materialization.applied_fields|length }} Prozessfeld(er),
-              {{ latest_materialization.created_solution_option_ids|length }} neue und
-              {{ latest_materialization.updated_solution_option_ids|length }} aktualisierte Lösungsoption(en).
-              {% if latest_materialization.conflicts %}{{ latest_materialization.conflicts|length }} Konflikt(e) wurden nicht überschrieben.{% endif %}
-            </span>
-          </div>
-          <a href="{% url 'architecture:solution_option_compare' run.process_analysis.pk %}">Zum fachlichen Vergleich</a>
-        </div>
-      {% elif materialization_preview %}
-        <section class="app-card materialization-preview mt-3" aria-labelledby="materialization-preview-title" data-testid="materialization-preview">
-          <div class="card-header">
-            <strong id="materialization-preview-title">Geplante Übernahme prüfen</strong>
-            <div class="small text-muted mt-1">Erst nach Ihrer Bestätigung werden die unten genannten Fachobjekte geändert. Eine bevorzugte Lösung wird dabei nicht ausgewählt.</div>
-          </div>
-          <div class="card-body">
-            <div class="section-title">Prozessanalyse</div>
-            {% for change in materialization_preview.process_changes %}
-              <div class="materialization-preview__change">
-                <strong>{{ change.label }}</strong>
-                {% if change.current %}<div class="small text-muted mt-1">Bisher: <span class="text-preline">{{ change.current }}</span></div>{% endif %}
-                <div class="mt-1">Geplant: <span class="text-preline">{{ change.proposed }}</span></div>
-              </div>
-            {% empty %}
-              <p class="text-muted">Keine konfliktfreie Änderung an Prozessfeldern geplant.</p>
-            {% endfor %}
+{% if run.status == "waiting_human" %}
+<section class="app-card mb-4" id="clarification-form" aria-labelledby="clarification-title">
+  <div class="card-header">
+    <strong id="clarification-title">Entscheidungskritische Klärung</strong>
+    {% if decision_surface.needed_evidence %}<div class="small text-muted mt-1">Benötigt: {{ decision_surface.needed_evidence }}</div>{% endif %}
+  </div>
+  <form method="post" action="{% url 'accelerator:investigation_continue' run.pk %}">
+    {% csrf_token %}
+    <div class="card-body">
+      <label class="form-label" for="investigation-answer">{{ decision_surface.clarification_question|default:"Antwort auf die offene Klärung" }}</label>
+      <textarea class="form-control" id="investigation-answer" name="answer" rows="4" required></textarea>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-primary" type="submit">Mit dieser Information fortsetzen</button>
+    </div>
+  </form>
+</section>
+{% endif %}
 
-            <div class="section-title mt-4">Lösungsoptionen</div>
-            <div class="d-grid gap-2">
-              {% for change in materialization_preview.solution_changes %}
-                <div class="materialization-preview__option">
-                  <div><strong>{{ change.name }}</strong><div class="small text-muted">{{ change.action_label }}</div></div>
-                  {% if change.description %}<div class="small">{{ change.description }}</div>{% endif %}
-                </div>
-              {% empty %}
-                <p class="text-muted mb-0">Keine konfliktfreie Änderung an Lösungsoptionen geplant.</p>
-              {% endfor %}
-            </div>
-
-            {% if materialization_preview.side_effects %}
-              <div class="alert alert-info mt-4 mb-0">
-                <strong>Folgewirkung der Übernahme</strong>
-                <ul class="mb-0 mt-2">
-                  {% for effect in materialization_preview.side_effects %}
-                    <li><strong>{{ effect.label }}</strong>: {{ effect.description }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            {% endif %}
-
-            {% if materialization_preview.conflicts %}
-              <div class="alert alert-warning mt-4 mb-0">
-                <strong>Bestehende Änderungen werden geschützt.</strong>
-                <ul class="mb-0 mt-2">
-                  {% for conflict in materialization_preview.conflicts %}
-                    <li>{{ conflict.label|default:conflict.type }} – wird nicht still überschrieben.</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            {% endif %}
-          </div>
-          <div class="card-footer">
-            <form method="post" action="{% url 'accelerator:investigation_materialize' run.pk %}">
-              {% csrf_token %}
-              <input type="hidden" name="operation_key" value="ui-materialize-{{ run.brief_hash|slice:':32' }}">
-              <div class="form-check mb-3">
-                <input class="form-check-input" id="confirm-materialization" type="checkbox" name="confirm_materialization" value="yes" required>
-                <label class="form-check-label" for="confirm-materialization">Ich habe die geplanten Änderungen geprüft und möchte sie in die bestehenden Fachobjekte übernehmen.</label>
-              </div>
-              <button class="btn btn-primary" type="submit">Geprüfte Änderungen übernehmen</button>
-            </form>
-          </div>
-        </section>
-      {% endif %}
-    {% elif run.status == "waiting_human" %}
-      <div class="alert alert-warning">
-        <strong>Entscheidungsrelevante Klärung erforderlich.</strong>
-        {% if run.clarification_payload.impact %}<div>{{ run.clarification_payload.impact }}</div>{% endif %}
-        {% if run.clarification_payload.required_action %}<div class="mt-1">{{ run.clarification_payload.required_action }}</div>{% endif %}
+{% if run.status == "ready" and not latest_materialization and materialization_preview %}
+<section class="app-card materialization-preview mb-4" id="materialization-preview" aria-labelledby="materialization-preview-title" data-testid="materialization-preview">
+  <div class="card-header">
+    <strong id="materialization-preview-title">Geplante Übernahme in den Lösungsraum prüfen</strong>
+    <div class="small text-muted mt-1">Es werden nur bestätigte Entwürfe übernommen. Eine bevorzugte Lösung wird hier weder bewertet noch ausgewählt.</div>
+  </div>
+  <div class="card-body">
+    <div class="section-title">Prozessanalyse</div>
+    {% for change in materialization_preview.process_changes %}
+      <div class="materialization-preview__change">
+        <strong>{{ change.label }}</strong>
+        {% if change.current %}<div class="small text-muted mt-1">Bisher: <span class="text-preline">{{ change.current }}</span></div>{% endif %}
+        <div class="mt-1">Geplant: <span class="text-preline">{{ change.proposed }}</span></div>
       </div>
-      <form method="post" action="{% url 'accelerator:investigation_continue' run.pk %}" class="app-card mb-3">
-        {% csrf_token %}
-        <div class="card-body">
-          <label class="form-label" for="investigation-answer">Antwort auf die offene Klärung</label>
-          <textarea class="form-control" id="investigation-answer" name="answer" rows="4" required></textarea>
-          <button class="btn btn-primary mt-3" type="submit">Mit dieser Information fortsetzen</button>
+    {% empty %}
+      <p class="text-muted">Keine konfliktfreie Änderung an Prozessfeldern geplant.</p>
+    {% endfor %}
+
+    <div class="section-title mt-4">Lösungskandidaten</div>
+    <div class="d-grid gap-2">
+      {% for change in materialization_preview.solution_changes %}
+        <div class="materialization-preview__option">
+          <div><strong>{{ change.name }}</strong><div class="small text-muted">{{ change.action_label }}</div></div>
+          {% if change.description %}<div class="small">{{ change.description }}</div>{% endif %}
         </div>
-      </form>
-    {% endif %}
+      {% empty %}
+        <p class="text-muted mb-0">Keine konfliktfreie Änderung an Lösungskandidaten geplant.</p>
+      {% endfor %}
+    </div>
 
-    {% if run.status == "running" or run.status == "waiting_human" %}
-      <form method="post" action="{% url 'accelerator:investigation_abort' run.pk %}" class="mt-3">
-        {% csrf_token %}
-        <button class="btn btn-outline-secondary" type="submit">Untersuchung abbrechen</button>
-      </form>
-    {% endif %}
-
-    {% if policy.blockers %}
-      <details class="architecture-disclosure mt-3">
-        <summary>Aktuelle technische READY-Blocker</summary>
-        <ul class="pt-3 mb-0">
-          {% for blocker in policy.blockers %}<li>{{ blocker }}</li>{% endfor %}
+    {% if materialization_preview.side_effects %}
+      <div class="alert alert-info mt-4 mb-0">
+        <strong>Folgewirkung der Übernahme</strong>
+        <ul class="mb-0 mt-2">
+          {% for effect in materialization_preview.side_effects %}
+            <li><strong>{{ effect.label }}</strong>: {{ effect.description }}</li>
+          {% endfor %}
         </ul>
-      </details>
+      </div>
+    {% endif %}
+
+    {% if materialization_preview.conflicts %}
+      <div class="alert alert-warning mt-4 mb-0">
+        <strong>Bestehende Änderungen werden geschützt.</strong>
+        <ul class="mb-0 mt-2">
+          {% for conflict in materialization_preview.conflicts %}
+            <li>{{ conflict.label|default:conflict.type }} – wird nicht still überschrieben.</li>
+          {% endfor %}
+        </ul>
+      </div>
     {% endif %}
   </div>
-</div>
+  <div class="card-footer">
+    <form method="post" action="{% url 'accelerator:investigation_materialize' run.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="ui-materialize-{{ run.brief_hash|slice:':32' }}">
+      <div class="form-check mb-3">
+        <input class="form-check-input" id="confirm-materialization" type="checkbox" name="confirm_materialization" value="yes" required>
+        <label class="form-check-label" for="confirm-materialization">Ich habe die geplanten Änderungen geprüft und möchte sie als Entwürfe in die bestehenden Fachobjekte übernehmen.</label>
+      </div>
+      <button class="btn btn-primary" type="submit">Geprüfte Entwürfe übernehmen</button>
+    </form>
+  </div>
+</section>
+{% endif %}
 
 {% if run.brief_payload %}
-<section class="cr-section mb-4" aria-labelledby="decision-brief-title">
-  <header class="cr-section-heading">
-    <div>
-      <h2 id="decision-brief-title">Decision Brief</h2>
-      <p>Review-Stand {{ run.brief_hash|slice:":12" }} · Quellen und Berechnungen bleiben über ihre IDs nachvollziehbar.</p>
-    </div>
-  </header>
-
-  <div class="app-card mb-3">
-    <div class="card-body">
-      <div class="section-title">Frage und Scope</div>
-      <p>{{ run.brief_payload.question_scope.question|default:run.decision_question }}</p>
-      <div class="text-preline">{{ run.brief_payload.question_scope.scope }}</div>
-    </div>
-  </div>
-
-  <div class="app-card mb-3">
-    <div class="card-body">
-      <div class="section-title">Belegtes Problem</div>
-      <div class="text-preline">{{ run.brief_payload.problem.statement }}</div>
-      {% if run.brief_payload.problem.references %}
-        <div class="small text-muted mt-2">Fundstellen:
-          {% for ref in run.brief_payload.problem.references %}
-            {% if ref.source_id %}Source {{ ref.source_id }}{% elif ref.tool_result_id %}ToolResult {{ ref.tool_result_id }}{% endif %}{% if not forloop.last %} · {% endif %}
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="row g-3 mb-3">
-    <div class="col-12 col-lg-6">
-      <div class="app-card h-100">
-        <div class="card-body">
-          <div class="section-title">Konkurrierende Ursachen</div>
-          {% for item in run.brief_payload.hypotheses %}
-            <div class="{% if not forloop.last %}pb-3 mb-3 border-bottom border-secondary-subtle{% endif %}">
-              <span class="badge badge-soft">{{ item.status }}</span>
-              <div class="mt-2">{{ item.statement }}</div>
-              {% if item.references %}
-                <div class="small text-muted mt-1">Evidenz:
-                  {% for ref in item.references %}
-                    {% if ref.source_id %}{{ ref.source_id }}{% elif ref.tool_result_id %}{{ ref.tool_result_id }}{% endif %}{% if not forloop.last %}, {% endif %}
-                  {% endfor %}
-                </div>
-              {% endif %}
-              {% if item.counterevidence_refs %}
-                <div class="small text-muted mt-1">Gegenbeleg:
-                  {% for ref in item.counterevidence_refs %}
-                    {% if ref.source_id %}{{ ref.source_id }}{% elif ref.tool_result_id %}{{ ref.tool_result_id }}{% endif %}{% if not forloop.last %}, {% endif %}
-                  {% endfor %}
-                </div>
-              {% endif %}
-            </div>
-          {% empty %}<p class="text-muted mb-0">Noch keine belastbaren konkurrierenden Hypothesen.</p>{% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="col-12 col-lg-6">
-      <div class="app-card h-100">
-        <div class="card-body">
-          <div class="section-title">Berechnete Befunde</div>
-          {% for item in run.brief_payload.calculations %}
-            <div class="{% if not forloop.last %}pb-3 mb-3 border-bottom border-secondary-subtle{% endif %}">
-              <div>{{ item.summary }}</div>
-              <div class="small text-muted mt-1">Population: {{ item.population }}</div>
-              <div class="small text-muted">Grenzen: {{ item.limits }}</div>
-              {% if item.reference.tool_result_id %}<div class="small mt-1">ToolResult {{ item.reference.tool_result_id }}</div>{% endif %}
-            </div>
-          {% empty %}<p class="text-muted mb-0">Noch kein reproduzierbarer Datenbefund.</p>{% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="app-card mb-3">
-    <div class="card-body">
-      <div class="section-title">Handlungsoptionen</div>
-      <div class="row g-3 mt-1">
-        {% for option in run.brief_payload.options %}
-          <div class="col-12 col-lg-6">
-            <div class="border border-secondary-subtle rounded p-3 h-100">
-              <div class="d-flex gap-2 flex-wrap mb-2">
-                <strong>{{ option.name }}</strong>
-                {% if option.non_ai %}<span class="badge badge-soft">Non-AI</span>{% endif %}
-                {% if option.status_quo %}<span class="badge badge-soft">Status quo</span>{% endif %}
-              </div>
-              <div>{{ option.description }}</div>
-              <div class="small text-muted mt-2">Erwarteter Beitrag: {{ option.expected_value }}</div>
-              {% if option.risks %}<div class="small text-muted mt-1">Risiken: {{ option.risks }}</div>{% endif %}
-            </div>
+<details class="architecture-disclosure decision-disclosure mb-3">
+  <summary>Begründung, Gegenbelege und Unsicherheiten prüfen</summary>
+  <div class="decision-disclosure__content">
+    <div class="row g-4">
+      <div class="col-12 col-lg-6">
+        <h2 class="h6">Konkurrierende Ursachen</h2>
+        {% for item in decision_surface.hypotheses %}
+          <div class="decision-evidence-row {% if not forloop.last %}border-bottom{% endif %}">
+            <span class="badge decision-evidence-badge decision-evidence-badge--{{ item.tone }}">{{ item.status_label }}</span>
+            <div class="mt-2">{{ item.statement }}</div>
           </div>
-        {% empty %}<p class="text-muted">Noch keine belastbaren Optionen.</p>{% endfor %}
+        {% empty %}
+          <p class="text-muted mb-0">Noch keine belastbaren konkurrierenden Hypothesen.</p>
+        {% endfor %}
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <h2 class="h6">Berechnete Befunde</h2>
+        {% for item in decision_surface.calculations %}
+          <div class="decision-evidence-row {% if not forloop.last %}border-bottom{% endif %}">
+            <div>{{ item.summary }}</div>
+            {% if item.population_summary %}<div class="small text-muted mt-1">Datenbasis: {{ item.population_summary }}</div>{% endif %}
+            {% if item.limits %}<div class="small text-muted mt-1">Aussagegrenze: {{ item.limits }}</div>{% endif %}
+          </div>
+        {% empty %}
+          <p class="text-muted mb-0">Noch kein reproduzierbarer Datenbefund.</p>
+        {% endfor %}
       </div>
     </div>
-  </div>
 
-  <div class="app-card mb-3">
-    <div class="card-body">
-      <div class="section-title">Empfehlung für die menschliche Richtungsentscheidung</div>
-      <div class="text-preline">{{ run.brief_payload.recommendation.summary }}</div>
-      <div class="small text-muted mt-2">{{ run.brief_payload.recommendation.rationale }}</div>
-    </div>
-  </div>
-
-  <div class="row g-3">
-    <div class="col-12 col-lg-6"><div class="app-card h-100"><div class="card-body">
-      <div class="section-title">Risiken und Unbekanntes</div>
-      <ul class="mb-0">{% for item in run.brief_payload.risks_unknowns %}<li>{{ item }}</li>{% empty %}<li>Keine Angaben im aktuellen Brief.</li>{% endfor %}</ul>
-    </div></div></div>
-    <div class="col-12 col-lg-6"><div class="app-card h-100"><div class="card-body">
-      <div class="section-title">Kleinster Validierungsschritt</div>
-      <div>{{ run.brief_payload.validation_step.step }}</div>
-      <div class="small text-muted mt-2">Messansatz: {{ run.brief_payload.validation_step.measurement }}</div>
-    </div></div></div>
-  </div>
-</section>
-{% endif %}
-
-{% if latest_materialization %}
-<section class="app-card mb-4">
-  <div class="card-header"><strong>Übernahme in bestehende Fachobjekte</strong></div>
-  <div class="card-body">
-    <div>Status: {{ latest_materialization.get_outcome_display }}</div>
-    {% if latest_materialization.conflicts %}
-      <div class="alert alert-warning mt-3 mb-0">
-        <strong>Menschliche Änderungen wurden nicht überschrieben.</strong>
-        <ul class="mt-2 mb-0">{% for conflict in latest_materialization.conflicts %}<li>{{ conflict.type }}{% if conflict.name %}: {{ conflict.name }}{% endif %}{% if conflict.field %}: {{ conflict.field }}{% endif %}</li>{% endfor %}</ul>
+    {% if decision_surface.validation_step.step or decision_surface.validation_step.measurement %}
+      <div class="decision-validation mt-4">
+        <strong>Kleinster Validierungsschritt</strong>
+        {% if decision_surface.validation_step.step %}<div class="mt-1">{{ decision_surface.validation_step.step }}</div>{% endif %}
+        {% if decision_surface.validation_step.measurement %}<div class="small text-muted mt-1">Messansatz: {{ decision_surface.validation_step.measurement }}</div>{% endif %}
       </div>
     {% endif %}
   </div>
-</section>
+</details>
+
+<details class="architecture-disclosure decision-disclosure mb-3">
+  <summary>Vorgeschlagene Lösungskandidaten für die Übergabe anzeigen</summary>
+  <div class="decision-disclosure__content">
+    <p class="small text-muted">Diese Kandidaten sind noch nicht fachlich bewertet. Bearbeitung, „nicht weiter verfolgen“, Vergleich und verbindliche Auswahl erfolgen ausschließlich im bestehenden Lösungsraum.</p>
+    <div class="decision-candidate-list">
+      {% for option in decision_surface.options %}
+        <article class="decision-candidate">
+          <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+            <strong>{{ option.name }}</strong>
+            <div class="d-flex gap-2 flex-wrap">
+              {% if option.non_ai %}<span class="badge badge-soft">Ohne KI</span>{% endif %}
+              {% if option.status_quo %}<span class="badge badge-soft">Status quo</span>{% endif %}
+            </div>
+          </div>
+          {% if option.description %}<div class="mt-2">{{ option.description }}</div>{% endif %}
+          {% if option.expected_value %}<div class="small text-muted mt-2">Erwarteter Beitrag: {{ option.expected_value }}</div>{% endif %}
+          {% if option.risks %}<div class="small text-muted mt-1">Risiken: {{ option.risks }}</div>{% endif %}
+        </article>
+      {% empty %}
+        <p class="text-muted mb-0">Noch keine Lösungskandidaten im aktuellen Brief.</p>
+      {% endfor %}
+    </div>
+  </div>
+</details>
 {% endif %}
 
-<section class="app-card mb-4">
-  <div class="card-header"><strong>Quellen und reproduzierbare Analysen</strong></div>
-  <div class="card-body">
-    <details class="architecture-disclosure">
-      <summary>Autorisierte Quellen anzeigen</summary>
-      <ul class="pt-3 mb-0">
-        {% for source in sources %}
-          <li><a href="{% url 'accelerator:investigation_source' run.pk source.pk %}">{{ source.filename }}</a> · Source {{ source.pk }} · {{ source.source_type }}</li>
-        {% empty %}<li>Keine Quellen.</li>{% endfor %}
-      </ul>
-    </details>
-    <details class="architecture-disclosure mt-2">
-      <summary>Berechnungen anzeigen</summary>
-      <ul class="pt-3 mb-0">
-        {% for result in tool_results %}
-          <li><a href="{% url 'accelerator:investigation_tool_result' run.pk result.pk %}">{{ result.tool_name }}</a> · ToolResult {{ result.pk }}</li>
-        {% empty %}<li>Noch keine persistierten Berechnungen.</li>{% endfor %}
-      </ul>
-    </details>
+<details class="architecture-disclosure decision-disclosure mb-3">
+  <summary>Quellen und reproduzierbare Analysen</summary>
+  <div class="decision-disclosure__content">
+    <div class="row g-4">
+      <div class="col-12 col-lg-6">
+        <h2 class="h6">Autorisierte Quellen</h2>
+        <ul class="mb-0">
+          {% for source in sources %}
+            <li><a href="{% url 'accelerator:investigation_source' run.pk source.pk %}">{{ source.filename }}</a> <span class="small text-muted">· {{ source.get_source_type_display }}</span></li>
+          {% empty %}<li>Keine Quellen.</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="col-12 col-lg-6">
+        <h2 class="h6">Reproduzierbare Berechnungen</h2>
+        <ul class="mb-0">
+          {% for result in tool_results %}
+            <li><a href="{% url 'accelerator:investigation_tool_result' run.pk result.pk %}">{{ result.get_tool_name_display }}</a></li>
+          {% empty %}<li>Noch keine persistierten Berechnungen.</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="small text-muted mt-3">Technische IDs, Hashes, Parameter, Populationen und Rohresultate bleiben in den verlinkten Auditansichten nachvollziehbar.</div>
   </div>
-</section>
+</details>
 
-<section class="app-card">
-  <div class="card-header"><strong>Untersuchungsspur</strong><div class="small text-muted mt-1">Ziel, Werkzeug und sichtbare Erkenntnisänderung – keine verborgene Gedankenkette.</div></div>
-  <div class="card-body">
-    <ol class="mb-0">
-      {% for step in run.steps.all %}
+<details class="architecture-disclosure decision-disclosure mb-3">
+  <summary>Untersuchungsspur nachvollziehen</summary>
+  <div class="decision-disclosure__content">
+    <p class="small text-muted">Sichtbar sind fachliche Aktionen und Erkenntnisänderungen, keine verborgene Modell-Gedankenkette.</p>
+    <ol class="decision-trace mb-0">
+      {% for step in decision_surface.steps %}
         <li class="{% if not forloop.last %}mb-3{% endif %}">
-          <strong>{{ step.tool_name }}</strong>
-          {% if step.target_claim_id %}<span class="small text-muted"> · Prüfpunkt {{ step.target_claim_id }}</span>{% endif %}
-          {% if step.expected_discriminating_finding %}<div class="small mt-1">Erwarteter unterscheidender Befund: {{ step.expected_discriminating_finding }}</div>{% endif %}
-          <div class="small text-muted mt-1">Erkenntnisänderung: {{ step.get_progress_kind_display }}{% if step.progress_payload %} · {{ step.progress_payload }}{% endif %}</div>
+          <strong>{{ step.action_label }}</strong>
+          <div class="small text-muted mt-1">{{ step.progress_label }}</div>
+          {% if step.expected_finding %}<div class="small mt-1">Prüfziel: {{ step.expected_finding }}</div>{% endif %}
+          <details class="decision-trace__technical mt-2">
+            <summary>Technische Schrittdetails</summary>
+            <div class="small text-muted mt-2">Werkzeug: {{ step.tool_name }}{% if step.target_claim_id %} · Prüfpunkt: {{ step.target_claim_id }}{% endif %} · Status: {{ step.status }}</div>
+          </details>
         </li>
       {% empty %}<li>Noch keine Untersuchungsschritte.</li>{% endfor %}
     </ol>
   </div>
-</section>
+</details>
+
+{% if latest_materialization %}
+<details class="architecture-disclosure decision-disclosure mb-3">
+  <summary>Übernahmeprotokoll</summary>
+  <div class="decision-disclosure__content">
+    <p class="mb-0">
+      {{ latest_materialization.applied_fields|length }} Prozessfeld(er),
+      {{ latest_materialization.created_solution_option_ids|length }} neue und
+      {{ latest_materialization.updated_solution_option_ids|length }} aktualisierte Lösungskandidaten wurden übernommen.
+    </p>
+    {% if latest_materialization.conflicts %}
+      <div class="alert alert-warning mt-3 mb-0">
+        <strong>Menschliche Änderungen wurden nicht überschrieben.</strong>
+        <ul class="mt-2 mb-0">
+          {% for conflict in latest_materialization.conflicts %}
+            <li>{{ conflict.label|default:conflict.type }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
+
+<details class="architecture-disclosure decision-disclosure">
+  <summary>Technische Laufdetails</summary>
+  <div class="decision-disclosure__content">
+    <dl class="stage-facts mb-0">
+      <dt>Technischer Run</dt><dd>{{ run.get_status_display }}</dd>
+      <dt>Brief-Revision</dt><dd>{{ run.brief_revision }}</dd>
+      {% if run.brief_hash %}<dt>Brief-Hash</dt><dd><code>{{ run.brief_hash }}</code></dd>{% endif %}
+    </dl>
+    {% if policy.blockers %}
+      <div class="mt-3">
+        <strong>Technische Readiness-Blocker</strong>
+        <ul class="mt-2 mb-0">{% for blocker in policy.blockers %}<li><code>{{ blocker }}</code></li>{% endfor %}</ul>
+      </div>
+    {% endif %}
+  </div>
+</details>
+
+{% if run.status == "running" or run.status == "waiting_human" %}
+<form method="post" action="{% url 'accelerator:investigation_abort' run.pk %}" class="mt-3">
+  {% csrf_token %}
+  <button class="btn btn-outline-secondary" type="submit">Untersuchung abbrechen</button>
+</form>
+{% endif %}
 {% endblock %}
