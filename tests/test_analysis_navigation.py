@@ -195,13 +195,16 @@ def test_process_context_sidebar_keeps_parent_analysis_levels_visible():
     assert "<span>Prozessanalyse</span>" in template
     assert "<span>Decision Brief</span>" in template
     assert "<span>Lösungsoptionen</span>" in template
-    assert "<span>Vergleich</span>" in template
+    assert "<span>Optionen vergleichen</span>" in template
     assert "Lösungsoptionen vergleichen</span>" not in template
     assert template.index("<span>Prozessanalyse</span>") < template.index(
         "<span>Decision Brief</span>"
     )
-    assert template.index("<span>Lösungsoptionen</span>") < template.index(
-        "<span>Vergleich</span>"
+    assert template.index("<span>Prozessanalyse</span>") < template.index(
+        "<span>Optionen vergleichen</span>"
+    )
+    assert template.index("<span>Optionen vergleichen</span>") < template.index(
+        "<span>Lösungsoptionen</span>"
     )
 
 
@@ -249,3 +252,23 @@ def test_process_page_uses_broad_solution_space_label_not_comparison_label():
     solution_section = template[template.index('id="loesungsoptionen"') :]
     assert "<strong>Lösungsoptionen</strong>" in solution_section
     assert "Vergleichsmatrix öffnen" in solution_section
+
+
+
+def test_comparison_is_nested_under_process_not_solution_parent():
+    from pathlib import Path
+
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "templates"
+        / "architecture"
+        / "includes"
+        / "analysis_sidebar.html"
+    ).read_text(encoding="utf-8")
+
+    process_pos = template.index("<span>Prozessanalyse</span>")
+    compare_pos = template.index("<span>Optionen vergleichen</span>")
+    solution_pos = template.index("<span>Lösungsoptionen</span>")
+
+    assert process_pos < compare_pos < solution_pos
+    assert "active_key == 'brief' or process_context_navigation.active_key == 'compare'" in template
