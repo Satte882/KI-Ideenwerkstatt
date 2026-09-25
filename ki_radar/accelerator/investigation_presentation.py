@@ -228,6 +228,14 @@ def build_decision_surface(
     status_label = "Untersuchung läuft"
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
     status_tone = "neutral"
+    technical_status_label = {
+        InvestigationRun.Status.PENDING: "Technisch vorbereitet",
+        InvestigationRun.Status.RUNNING: "Technische Untersuchung läuft",
+        InvestigationRun.Status.WAITING_HUMAN: "Technisch auf Klärung wartend",
+        InvestigationRun.Status.READY: "Technisch abgeschlossen",
+        InvestigationRun.Status.FAILED: "Technisch fehlgeschlagen",
+        InvestigationRun.Status.ABORTED: "Technisch beendet",
+    }.get(run.status, run.status)
 
     if run.status == InvestigationRun.Status.ABORTED:
         status_label = "Untersuchung beendet"
@@ -303,12 +311,12 @@ def build_decision_surface(
         InvestigationRun.Status.FAILED,
         InvestigationRun.Status.READY,
     }:
+        evidence_hint = needed_evidence or required_action
+        description_parts = [item for item in [clarification_question, evidence_hint] if item]
         next_action = {
             "kind": "process",
             "title": "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten",
-            "description": (
-                clarification_question or needed_evidence or required_action or status_detail
-            ),
+            "description": " · ".join(description_parts) or status_detail,
         }
     else:
         next_action = {
@@ -326,6 +334,7 @@ def build_decision_surface(
         "status_label": status_label,
         "status_detail": status_detail,
         "status_tone": status_tone,
+        "technical_status_label": technical_status_label,
         "situation": situation,
         "scope": scope,
         "question": humanize_investigation_text(
