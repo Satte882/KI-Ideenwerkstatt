@@ -718,3 +718,170 @@
   }
 }
 
+/* Issue #51: human-first Decision Brief surface */
+.ui-control-room.page-investigation .decision-surface {
+  border-color: var(--line);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+
+.ui-control-room.page-investigation .decision-surface > .card-header {
+  border-bottom-color: var(--line);
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-investigation .decision-status {
+  display: grid;
+  gap: 3px;
+  max-width: 38rem;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.ui-control-room.page-investigation .decision-status span {
+  color: var(--muted);
+}
+
+.ui-control-room.page-investigation .decision-status--ready {
+  border-color: color-mix(in srgb, var(--success) 38%, var(--line));
+}
+
+.ui-control-room.page-investigation .decision-status--review {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
+}
+
+.ui-control-room.page-investigation .decision-status--danger {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
+}
+
+.ui-control-room.page-investigation .decision-surface__body {
+  padding: 0;
+}
+
+.ui-control-room.page-investigation .decision-surface__section {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-investigation .decision-surface__section:last-child {
+  border-bottom: 0;
+}
+
+.ui-control-room.page-investigation .decision-surface__label {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.ui-control-room.page-investigation .decision-surface__text {
+  max-width: 88ch;
+  font-size: 1rem;
+  font-weight: 620;
+  line-height: 1.5;
+}
+
+.ui-control-room.page-investigation .decision-surface__recommendation {
+  border-left: 3px solid var(--ice-strong);
+  background: color-mix(in srgb, var(--ice) 5%, var(--surface-1));
+}
+
+.ui-control-room.page-investigation .decision-surface__limits {
+  max-width: 88ch;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.ui-control-room.page-investigation .decision-surface__next {
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-investigation .decision-disclosure {
+  border-color: var(--line);
+  background: var(--surface-1);
+}
+
+.ui-control-room.page-investigation .decision-disclosure__content {
+  padding: 18px 20px 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-investigation .decision-evidence-row {
+  min-width: 0;
+  padding: 12px 0;
+  border-color: var(--line-soft) !important;
+}
+
+.ui-control-room.page-investigation .decision-evidence-badge {
+  white-space: normal;
+  text-align: left;
+}
+
+.ui-control-room.page-investigation .decision-evidence-badge--ready {
+  border-color: color-mix(in srgb, var(--success) 34%, var(--line));
+}
+
+.ui-control-room.page-investigation .decision-evidence-badge--review {
+  border-color: color-mix(in srgb, var(--warning) 38%, var(--line));
+}
+
+.ui-control-room.page-investigation .decision-validation {
+  max-width: 88ch;
+  padding: 14px 16px;
+  border-left: 3px solid var(--line-strong);
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-investigation .decision-candidate-list {
+  display: grid;
+  gap: 0;
+}
+
+.ui-control-room.page-investigation .decision-candidate {
+  min-width: 0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-soft);
+  overflow-wrap: anywhere;
+}
+
+.ui-control-room.page-investigation .decision-candidate:last-child {
+  border-bottom: 0;
+}
+
+.ui-control-room.page-investigation .decision-trace {
+  padding-left: 1.25rem;
+}
+
+.ui-control-room.page-investigation .decision-trace__technical summary {
+  color: var(--muted);
+  font-size: .75rem;
+}
+
+.ui-control-room.page-investigation #materialization-preview,
+.ui-control-room.page-investigation #clarification-form {
+  scroll-margin-top: 20px;
+}
+
+.ui-control-room.page-investigation .decision-disclosure code {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .ui-control-room.page-investigation .decision-status {
+    width: 100%;
+    max-width: none;
+  }
+
+  .ui-control-room.page-investigation .decision-surface__section,
+  .ui-control-room.page-investigation .decision-disclosure__content {
+    padding-inline: 16px;
+  }
+}
+
