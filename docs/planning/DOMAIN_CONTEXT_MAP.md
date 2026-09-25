@@ -67,6 +67,27 @@ Der bestehende Ansatz, Herkunftsdaten als Snapshot zu übernehmen und spätere A
 
 **Boundary-Smell:** `use_cases.intake_views::_persist_optional_origin()` erzeugt `architecture.models.UseCaseOrigin` direkt über den ORM. Die fachliche Richtung ist richtig, der Schreibzugriff liegt aber technisch auf der Consumer-Seite. Langfristig sollte `architecture` einen kleinen Command wie `create_use_case_origin(...)` besitzen, der die Herkunftsinvarianten kapselt.
 
+### 3.1a Accelerator / Investigation als unterstützende Capability
+
+`ki_radar/accelerator` ist **kein eigener fachlicher Lösungs-Context**. Die Investigation darf
+Quellen prüfen, Evidenz verdichten, Ursachenhypothesen bewerten, mögliche Handlungsrichtungen
+und unbewertete Entwurfsvorschläge vorbereiten sowie deren Herkunft/Revision dokumentieren.
+
+Die Grenze ist verbindlich:
+
+- kanonische `ProcessAnalysis`- und `SolutionOption`-Änderungen laufen über einen
+  Architecture-owned Domain Service;
+- Investigation-eigene Empfehlung bleibt advisory und setzt weder `recommendation` noch
+  `evaluation_status` einer `SolutionOption`;
+- Bearbeitung, Bewertung, „nicht weiter verfolgen“, Vergleich und bevorzugte Auswahl gehören
+  ausschließlich zu **Discovery & Solution Framing**;
+- `SolutionSelectionDecision` bleibt die einzige verbindliche Lösungsentscheidung;
+- bereits fachlich bewertete oder entschiedene Optionen dürfen durch spätere
+  Investigation-Entwürfe weder überschrieben noch zurückgestuft werden.
+
+Damit ist der Handoff ein **Übergang von Evidenz-/Arbeitsartefakten in den kanonischen
+Lösungsraum**, kein zweiter Lösungsvergleich und keine zweite Entscheidungswahrheit.
+
 ### 3.2 Use Case Steering
 
 **Physisches Mapping:** fachlich gemeinsam `ki_radar/use_cases/` und `ki_radar/reviews/`.
@@ -126,6 +147,7 @@ Die folgenden Bereiche sind fachlich wichtig, besitzen derzeit aber keinen ausre
 - **Journey / Workflow / Status Dimensions:** Read Models und Navigation über mehrere Kontexte.
 - **Outcome Workspace:** Projektion aus Lifecycle, Review-Artefakten, Delivery-Handover und Messdaten; die Messdaten selbst liegen auf dem Use Case.
 - **Scale Readiness:** abgeleitete Entscheidungs-/Readiness-Policy aus Pilot-, Governance-, Delivery-, Betriebs- und ML-Test-Score-Evidenz. Der historische Snapshot wird im Lifecycle-Review gespeichert, die Quelldaten bleiben bei ihren jeweiligen Ownern.
+- **Accelerator / Investigation:** technische und fachliche Unterstützungs-Capability für Evidenz, Entwürfe und Herkunft; kein eigener Source of Truth für Prozessanalyse, Lösungsoptionen oder Lösungsentscheidungen.
 - **Decisioning:** aktuell eine interne Capability von Use Case Steering. `DecisionAssessment` und `ApprovalDecision` sind eng an den Use-Case-Lifecycle gekoppelt und brauchen heute keinen eigenen Django-/Bounded-Context-Split.
 
 ## 4. Ubiquitous Language
