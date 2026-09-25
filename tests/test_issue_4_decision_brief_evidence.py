@@ -1058,16 +1058,11 @@ def test_investigation_read_only_views_do_not_require_transaction(
     source = InvestigationSource.objects.get(snapshot_id=snapshot.snapshot_id)
     client.force_login(owner)
 
-    detail = client.get(
-        reverse("accelerator:investigation_detail", args=[handle.run_id])
-    )
+    detail = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
     assert detail.status_code == 200
 
     source_detail = client.get(
-        reverse(
-            "accelerator:investigation_source",
-            args=[handle.run_id, source.pk],
-        )
+        reverse("accelerator:investigation_source", args=[handle.run_id, source.pk])
     )
     assert source_detail.status_code == 200
 
