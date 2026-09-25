@@ -18,6 +18,7 @@ from .investigation_models import (
     InvestigationMaterialization,
     InvestigationRun,
 )
+from .investigation_presentation import humanize_investigation_text, population_summary
 from .investigation_runtime import (
     InvestigationRunError,
     content_hash,
@@ -111,26 +112,43 @@ def _target_process_fields(payload: Mapping[str, Any]) -> dict[str, str]:
     problem = payload.get("problem")
     hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
     calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
-    hypothesis_lines = [
-        ("[" + str(item.get("status") or "open") + "] " + str(item.get("statement") or "").strip())
-        for item in hypotheses
-        if str(item.get("statement") or "").strip()
-    ]
+
+    hypothesis_labels = {
+        "supported": "Durch Evidenz gestützt",
+        "refuted": "Durch Evidenz nicht gestützt",
+        "conflicting": "Widersprüchliche Evidenz",
+        "open": "Noch offen",
+    }
+    hypothesis_lines = []
+    for item in hypotheses:
+        statement = humanize_investigation_text(item.get("statement"))
+        if not statement:
+            continue
+        status = str(item.get("status") or "open")
+        label = hypothesis_labels.get(status, "Noch offen")
+        hypothesis_lines.append(f"{label}: {statement}")
+
     calculation_lines: list[str] = []
     for item in calculations:
-        summary = str(item.get("summary") or "").strip()
+        summary = humanize_investigation_text(item.get("summary"))
         reference = item.get("reference")
-        population = item.get("population")
-        limits = str(item.get("limits") or "").strip()
         if not summary or not isinstance(reference, Mapping):
             continue
-        calculation_lines.append(
-            f"{summary} | Population: {_list_text(population)} | Grenzen: {limits} | "
-            f"Nachweis: {_reference_label(reference)}"
-        )
+
+        parts = [summary]
+        data_basis = population_summary(item.get("population"))
+        if data_basis:
+            parts.append(f"Datenbasis: {data_basis}")
+        limits = humanize_investigation_text(item.get("limits"))
+        if limits:
+            parts.append(f"Aussagegrenze: {limits}")
+        calculation_lines.append(" · ".join(parts))
+
     return {
         "diagnostic_observations": (
-            str(problem.get("statement") or "").strip() if isinstance(problem, Mapping) else ""
+            humanize_investigation_text(problem.get("statement"))
+            if isinstance(problem, Mapping)
+            else ""
         ),
         "cause_hypotheses": "\n".join(hypothesis_lines),
         "baseline_metrics": "\n".join(calculation_lines),
