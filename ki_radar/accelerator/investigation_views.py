@@ -22,12 +22,12 @@ from .investigation_brief import (
     render_decision_brief_markdown,
 )
 from .investigation_loop import run_until_boundary
-from .investigation_presentation import build_decision_surface
 from .investigation_models import (
     InvestigationRun,
     InvestigationSource,
     InvestigationToolResult,
 )
+from .investigation_presentation import build_decision_surface
 from .investigation_runtime import (
     DEFAULT_BUDGET,
     InvestigationRunError,
