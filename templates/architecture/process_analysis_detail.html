@@ -247,7 +247,7 @@
 <div class="app-card mb-4 solution-space-card" id="loesungsoptionen">
   {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}{% solution_generation_entry process_analysis as generation_entry %}{% endif %}
   <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
-    <div><strong>Lösungsoptionen vergleichen</strong><div class="small text-muted mt-1">Alternativen anhand identischer Kriterien prüfen und die Auswahl getrennt auditieren. Methodik: Opportunities &amp; Solutions (ADM Phase E).</div></div>
+    <div><strong>Lösungsoptionen</strong><div class="small text-muted mt-1">Alternativen entwickeln, ergänzen und für die getrennt auditierte Vergleichsentscheidung vorbereiten. Methodik: Opportunities &amp; Solutions (ADM Phase E).</div></div>
     {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}
       <div class="d-flex gap-2 flex-wrap">
         {% if process_analysis.solution_options.all %}
