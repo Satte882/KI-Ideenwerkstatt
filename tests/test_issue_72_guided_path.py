@@ -489,3 +489,7 @@ def test_evidence_materialization_does_not_switch_product_workspace_to_audit_mod
     assert "Der fachliche Kern wurde bereits übernommen." not in body
     assert "Evidenzgestützte Vertiefung" in body
     assert "Untersuchung starten" in body
+
+    comparison = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    assert comparison.status_code == 200
+    assert str(evidence_handle.run_id) not in comparison.content.decode()

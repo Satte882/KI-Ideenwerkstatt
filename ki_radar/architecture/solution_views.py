@@ -49,7 +49,10 @@ def solution_option_compare(request, pk):
     latest_selection = selection_history.first()
     latest_investigation_materialization = (
         InvestigationMaterialization.objects.select_related("run")
-        .filter(run__process_analysis=process_analysis)
+        .filter(
+            run__process_analysis=process_analysis,
+            run__evidence_campaign__isnull=True,
+        )
         .order_by("-created_at")
         .first()
     )
