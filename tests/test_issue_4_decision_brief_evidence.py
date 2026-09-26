@@ -36,6 +36,7 @@ from ki_radar.accelerator.investigation_llm import (
     _reserve_model_call,
     _structured_provider_call,
 )
+from ki_radar.accelerator.investigation_loop import advance_investigation
 from ki_radar.accelerator.investigation_models import (
     InvestigationBriefRevision,
     InvestigationModelCall,
@@ -542,11 +543,129 @@ def test_variant_b_missing_denominator_stays_human_clarification(
     assert step.result_payload["columns"]["total_eligible"]["missing"] == 3
     assert step.result_payload["columns"]["total_eligible"]["type"] == "empty"
 
+    analysis_ref = {
+        "tool_result_id": str(step.result_ref["tool_result_id"]),
+        "revision_hash": csv_source.content_sha256,
+    }
+    brief_payload = {
+        "calculations": [
+            {
+                "summary": "Eskalationsquote ist ohne Bezugsgröße nicht berechenbar.",
+                "reference": analysis_ref,
+            }
+        ],
+        "recommendation": {
+            "summary": "Zuerst die fehlende Bezugsgröße erheben.",
+            "rationale": "Ohne Nenner ist keine belastbare Quote möglich.",
+            "references": [analysis_ref],
+        },
+    }
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        brief_payload=brief_payload,
+        brief_hash=content_hash(brief_payload),
+        source_relevance_complete=True,
+        counterevidence_search_executed=True,
+        counterevidence_hits_processed=True,
+    )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    decision = evaluate_run_policy(run, external_critical_gap=True)
+
+    decision = evaluate_run_policy(run)
     assert decision.outcome == PolicyOutcome.HUMAN_CLARIFICATION
     assert decision.reason_code == ReasonCode.MISSING_EVIDENCE
-    assert decision.outcome != PolicyOutcome.READY_FOR_DECISION
+    assert "external_critical_gap" in decision.blockers
+
+    def planner_must_not_run(**_kwargs):
+        raise AssertionError("Missing Evidence muss vor einem weiteren Modellaufruf stoppen.")
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=planner_must_not_run,
+    )
+    run.refresh_from_db()
+
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == ReasonCode.MISSING_EVIDENCE.value
+    assert "total_eligible" in run.clarification_payload["needed_evidence"]
+
+
+@pytest.mark.django_db
+def test_failed_decision_surface_quarantines_unverified_analysis(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="FAILED Surface")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="failed-surface-quarantine",
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    brief_payload = {
+        "question_scope": {
+            "question": run.decision_question,
+            "scope": "Unverifizierter Zwischenstand.",
+        },
+        "problem": {
+            "statement": "Ein plausibler Zwischenbefund liegt vor.",
+            "references": [],
+        },
+        "hypotheses": [
+            {
+                "statement": "Eine plausible Ursache wurde noch nicht verifiziert.",
+                "status": "supported",
+                "references": [],
+                "counterevidence_refs": [],
+            }
+        ],
+        "options": [
+            {
+                "name": "Unverifizierter Kandidat",
+                "description": "Darf nach dem technischen Fehlschlag nicht übernommen werden.",
+                "expected_value": "Noch nicht belastbar.",
+                "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+                "non_ai": True,
+                "status_quo": False,
+            }
+        ],
+        "recommendation": {
+            "summary": "Zwischenstand nicht als Entscheidung verwenden.",
+            "rationale": "Die technische Prüfung ist fehlgeschlagen.",
+            "references": [],
+        },
+        "risks_unknowns": ["Verifikation fehlt."],
+    }
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.FAILED,
+        finished_at=timezone.now(),
+        clarification_reason=ReasonCode.TECHNICAL_FAILURE.value,
+        clarification_payload={
+            "impact": "Technischer Lauf nicht konvergiert.",
+            "required_action": "Untersuchung neu starten.",
+        },
+        brief_payload=brief_payload,
+        brief_hash=content_hash(brief_payload),
+    )
+
+    client.force_login(owner)
+    response = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Technische Prüfung fehlgeschlagen" in body
+    assert "Unverifizierten Zwischenstand anzeigen" in body
+    assert "Nicht als Entscheidungsgrundlage verwenden." in body
+    assert "Unverifizierte Lösungskandidaten anzeigen" in body
+    assert "nicht übernommen werden" in body
+    assert "Geprüfte Entwürfe übernehmen" not in body
 
 
 @pytest.mark.django_db

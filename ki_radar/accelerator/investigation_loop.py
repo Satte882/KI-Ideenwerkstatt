@@ -28,6 +28,7 @@ from .investigation_runtime import (
     assert_executor,
     budget_exhausted,
     content_hash,
+    decision_blocking_missing_evidence,
     evaluate_run_policy,
     execute_tool_step,
     locked_run,
@@ -86,6 +87,32 @@ def _set_waiting_human(
         ]
     )
     return run
+
+
+def _apply_detected_missing_evidence_boundary(
+    *,
+    actor,
+    run: InvestigationRun,
+    executor_token,
+    decision: PolicyDecision,
+) -> AdvanceResult | None:
+    if (
+        run.status != InvestigationRun.Status.RUNNING
+        or decision.outcome != PolicyOutcome.HUMAN_CLARIFICATION
+        or decision.reason_code != ReasonCode.MISSING_EVIDENCE
+    ):
+        return None
+    payload = decision_blocking_missing_evidence(run)
+    if payload is None:
+        return None
+    waiting = _set_waiting_human(
+        actor=actor,
+        run_id=run.pk,
+        executor_token=executor_token,
+        reason=ReasonCode.MISSING_EVIDENCE.value,
+        payload=payload,
+    )
+    return AdvanceResult(waiting.pk, waiting.status, evaluate_run_policy(waiting))
 
 
 @transaction.atomic
@@ -419,6 +446,14 @@ def advance_investigation(
         return AdvanceResult(run.pk, run.status, evaluate_run_policy(run))
 
     decision = evaluate_run_policy(run)
+    missing_boundary = _apply_detected_missing_evidence_boundary(
+        actor=actor,
+        run=run,
+        executor_token=executor_token,
+        decision=decision,
+    )
+    if missing_boundary is not None:
+        return missing_boundary
     if decision.outcome == PolicyOutcome.READY_FOR_DECISION:
         ready = _set_ready(
             actor=actor,
@@ -494,6 +529,17 @@ def advance_investigation(
             relevance=action.source_relevance,
         )
         run.refresh_from_db()
+
+    if action.action == "synthesize":
+        decision = evaluate_run_policy(run)
+        missing_boundary = _apply_detected_missing_evidence_boundary(
+            actor=actor,
+            run=run,
+            executor_token=executor_token,
+            decision=decision,
+        )
+        if missing_boundary is not None:
+            return missing_boundary
 
     if action.action == "investigate":
         return AdvanceResult(

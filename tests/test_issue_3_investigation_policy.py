@@ -152,6 +152,14 @@ def test_all_prechecks_and_valid_verifier_are_ready():
     assert result.reason_code is None
 
 
+def test_external_critical_gap_overrides_nominally_ready_package():
+    result = evaluate_policy(ready_state(external_critical_gap=True))
+
+    assert result.outcome == PolicyOutcome.HUMAN_CLARIFICATION
+    assert result.reason_code == ReasonCode.MISSING_EVIDENCE
+    assert "external_critical_gap" in result.blockers
+
+
 def test_hallucination_guards_survive_lean_reset():
     checks = replace_check(base_checks(), "problem", evidence_refs=())
     checks = replace_check(checks, "hyp-b", counterevidence_refs=(), evidence_refs=())
