@@ -511,15 +511,19 @@ def _portable_repo_root_candidates(raw_path: str) -> tuple[Path, ...]:
 
 
 def _scan_registered_folder(folder: InvestigationSourceFolder) -> tuple[_ScannedSource, ...]:
+    path_error: InvestigationToolError | None = None
     try:
         return _scan_folder(folder.root_path)
-    except InvestigationToolError as original_error:
-        if original_error.code != "source_path_unreadable":
+    except InvestigationToolError as exc:
+        if exc.code != "source_path_unreadable":
             raise
+        path_error = exc
 
     latest_snapshot = folder.snapshots.order_by("-revision").first()
     if latest_snapshot is None:
-        raise original_error
+        if path_error is None:
+            raise RuntimeError("Missing source-path error.")
+        raise path_error
 
     matching: list[tuple[_ScannedSource, ...]] = []
     for candidate in _portable_repo_root_candidates(folder.root_path):
