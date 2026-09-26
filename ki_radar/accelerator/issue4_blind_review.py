@@ -33,7 +33,10 @@ _PROJECT_MARKER_RE = re.compile(
     re.IGNORECASE,
 )
 _LOCAL_URL_RE = re.compile(r"https?://(?:127\.0\.0\.1|localhost)(?::\d+)?/\S*", re.IGNORECASE)
-_BENCHMARK_WORD_RE = re.compile(r"\b(?:PASS|FAIL|scored|adaptive|benchmark|attempt)\b", re.IGNORECASE)
+_BENCHMARK_WORD_RE = re.compile(
+    r"\\b(?:PASS|FAIL|scored|adaptive|benchmark|attempt)\\b",
+    re.IGNORECASE,
+)
 
 
 class BlindReviewPackageError(RuntimeError):
