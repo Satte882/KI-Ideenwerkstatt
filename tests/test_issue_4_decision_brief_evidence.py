@@ -2176,7 +2176,10 @@ def test_issue4_runner_binds_variant_to_calibrated_snapshot_and_freezes_scored_s
     _folder2, snapshot2 = snapshot_for_root(owner=owner, process=process, root=second_root)
     campaign = evidence_campaign(owner=owner, process=process)
 
+    runner_calls = []
+
     def fake_runner(**kwargs):
+        runner_calls.append(kwargs)
         return type(
             "Result",
             (),
@@ -2312,7 +2315,10 @@ def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_
 
     before_matrix = evidence_campaign_report(campaign)["matrix"]
 
+    runner_calls = []
+
     def fake_runner(**kwargs):
+        runner_calls.append(kwargs)
         return type(
             "Result",
             (),
@@ -2347,6 +2353,36 @@ def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_
         "variant": "A",
         "attempt": 1,
     }
+    step = execute_tool_step(
+        actor=owner,
+        run_id=post_fix.pk,
+        executor_token=post_fix.executor_token,
+        tool_name="list_sources",
+        parameters={},
+        target_claim_id="historical-replay",
+        expected_discriminating_finding="Historischer Snapshot bleibt lesbar.",
+    )
+    assert step.status == InvestigationStep.Status.SUCCESS
+
+    call_command(
+        "run_issue4_evidence",
+        campaign=str(campaign.pk),
+        variant="A",
+        mode="adaptive",
+        phase="post_fix",
+        attempt=1,
+    )
+    assert len(runner_calls) == 2
+    assert (
+        InvestigationRun.objects.filter(
+            evidence_campaign=campaign,
+            evidence_metadata__phase="post_fix",
+            evidence_metadata__variant="A",
+            evidence_metadata__attempt=1,
+        ).count()
+        == 1
+    )
+
     with pytest.raises(InvestigationRunError) as exc_info:
         preview_decision_brief_materialization(actor=owner, run_id=post_fix.pk)
     assert exc_info.value.code == "historical_snapshot_replay_read_only"

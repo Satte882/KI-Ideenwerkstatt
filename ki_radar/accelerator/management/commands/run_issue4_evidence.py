@@ -106,12 +106,19 @@ class Command(BaseCommand):
             raise CommandError(f"Evidence run could not start: {exc}") from exc
 
         if handle.reused:
-            self.stdout.write(
-                self.style.WARNING(
-                    f"Existing attempt reused; no provider call started: {handle.run_id}"
+            if phase == "post_fix" and handle.status == InvestigationRun.Status.RUNNING:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Existing running post-fix attempt resumed: {handle.run_id}"
+                    )
                 )
-            )
-            return
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Existing attempt reused; no provider call started: {handle.run_id}"
+                    )
+                )
+                return
 
         if handle.status != InvestigationRun.Status.RUNNING:
             self.stdout.write(
