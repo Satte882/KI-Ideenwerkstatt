@@ -26,14 +26,18 @@ class Command(BaseCommand):
         parser.add_argument("--campaign", required=True)
         parser.add_argument("--variant", required=True, choices=("A", "B", "C"))
         parser.add_argument("--mode", required=True, choices=("adaptive", "fixed"))
-        parser.add_argument("--phase", required=True, choices=("calibration", "scored"))
+        parser.add_argument(
+            "--phase",
+            required=True,
+            choices=("calibration", "scored", "post_fix"),
+        )
         parser.add_argument("--attempt", required=True, type=int)
         parser.add_argument(
             "--snapshot",
             required=False,
             help=(
                 "Explicit Source-Snapshot UUID. Required only for the first calibration "
-                "run of each A/B/C variant; later runs reuse the frozen binding."
+                "run of each A/B/C variant; scored and post_fix runs reuse the frozen binding."
             ),
         )
 
