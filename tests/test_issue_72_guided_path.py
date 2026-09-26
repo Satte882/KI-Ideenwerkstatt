@@ -156,9 +156,7 @@ def test_authorization_is_business_first_and_returns_to_visible_start(
         },
     )
     assert response.status_code == 302
-    assert response["Location"].endswith(
-        f"{process.get_absolute_url()}#evidence-investigation"
-    )
+    assert response["Location"].endswith(f"{process.get_absolute_url()}#evidence-investigation")
 
     snapshot = process.investigation_source_snapshots.get()
     assert snapshot.folder_id == folder.pk
