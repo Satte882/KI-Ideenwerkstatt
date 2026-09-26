@@ -26,7 +26,10 @@ _UUID_RE = re.compile(
     r"[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\b"
 )
 _HASH_RE = re.compile(r"\b[0-9a-fA-F]{64}\b")
-_SCENARIO_RE = re.compile(r"\b(Fall|Variante|Variant|Case)\s+([ABC])\b", re.IGNORECASE)
+_SCENARIO_RE = re.compile(
+    r"\b(Fall|Variante|Variant|Case)\s*[-_:#/]?\s*([ABC])\b",
+    re.IGNORECASE,
+)
 _BENCHMARK_SLOT_RE = re.compile(r"\b[ABC]/(?:adaptive|fixed)/\d+\b", re.IGNORECASE)
 _PROJECT_MARKER_RE = re.compile(
     r"\bVS1\s*/\s*#?4\b|\bIssue\s*#?4\b",
