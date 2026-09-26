@@ -68,7 +68,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v13"
+LOOP_VERSION = "vs1-agent-loop-v14"
 BUDGET_VERSION = "vs1-budget-v6"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -950,6 +950,113 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     return tuple(sorted(set(blockers)))
 
 
+def _referenced_tool_result_ids(payload: Mapping[str, Any]) -> set[uuid.UUID]:
+    calculations = payload.get("calculations", [])
+    recommendation = payload.get("recommendation")
+    if not isinstance(calculations, list) or not isinstance(recommendation, Mapping):
+        return set()
+
+    calculation_ids: set[uuid.UUID] = set()
+    for item in calculations:
+        if not isinstance(item, Mapping):
+            continue
+        reference = item.get("reference")
+        if not isinstance(reference, Mapping):
+            continue
+        raw = str(reference.get("tool_result_id") or "").strip()
+        try:
+            calculation_ids.add(uuid.UUID(raw))
+        except (TypeError, ValueError):
+            continue
+
+    recommendation_ids: set[uuid.UUID] = set()
+    for reference in recommendation.get("references", []):
+        if not isinstance(reference, Mapping):
+            continue
+        raw = str(reference.get("tool_result_id") or "").strip()
+        try:
+            recommendation_ids.add(uuid.UUID(raw))
+        except (TypeError, ValueError):
+            continue
+    return calculation_ids & recommendation_ids
+
+
+def _completely_missing_decision_column(result: InvestigationToolResult) -> str:
+    if result.tool_name == InvestigationToolResult.ToolName.COMPARE_GROUPS:
+        value_column = str(result.parameters.get("value_column") or "").strip()
+        if not value_column:
+            return ""
+        population = result.population if isinstance(result.population, Mapping) else {}
+        matched = int(population.get("filter_matched_rows") or population.get("rows_total") or 0)
+        aggregated = population.get("aggregated_rows")
+        aggregated_rows = aggregated if isinstance(aggregated, list) else []
+        missing = int((result.missing_values or {}).get(value_column) or 0)
+        if matched > 0 and not aggregated_rows and missing >= matched:
+            return value_column
+        return ""
+
+    if result.tool_name == InvestigationToolResult.ToolName.PROFILE_CSV:
+        payload = result.result_payload if isinstance(result.result_payload, Mapping) else {}
+        columns = payload.get("columns")
+        if not isinstance(columns, Mapping):
+            return ""
+        empty_columns = [
+            str(name)
+            for name, details in columns.items()
+            if isinstance(details, Mapping)
+            and int(details.get("missing") or 0) > 0
+            and int(details.get("non_missing") or 0) == 0
+            and str(details.get("type") or "") == "empty"
+        ]
+        if len(empty_columns) == 1:
+            return empty_columns[0]
+    return ""
+
+
+def decision_blocking_missing_evidence(run: InvestigationRun) -> dict[str, str] | None:
+    """Detect a proven, decision-critical source-room gap without model judgment."""
+    if not bool(run.execution_snapshot.get("decision_brief_required")):
+        return None
+    if not (
+        run.source_relevance_complete
+        and run.counterevidence_search_executed
+        and run.counterevidence_hits_processed
+    ):
+        return None
+
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    result_ids = _referenced_tool_result_ids(payload)
+    if not result_ids:
+        return None
+
+    results = InvestigationToolResult.objects.filter(
+        pk__in=result_ids,
+        snapshot=run.source_snapshot,
+    ).order_by("created_at", "id")
+    for result in results:
+        column = _completely_missing_decision_column(result)
+        if not column:
+            continue
+        return {
+            "question": (
+                f"Welcher belastbare Wert liegt für {column} im betrachteten Zeitraum vor?"
+            ),
+            "needed_evidence": (
+                f"Belastbarer Wert für {column} im betrachteten Zeitraum aus einer "
+                "autorisierten Quelle."
+            ),
+            "impact": (
+                f"Die entscheidungskritische Größe {column} fehlt vollständig; "
+                "die darauf gestützte Berechnung ist nicht belastbar."
+            ),
+            "required_action": (
+                f"{column} ergänzen und die Untersuchung mit derselben Richtungsfrage "
+                "neu bewerten."
+            ),
+        }
+    return None
+
+
 def _claim_is_critical(
     *,
     area: str,
@@ -972,6 +1079,10 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
     claim_kind = str(raw.get("claim_kind") or "").strip()
     status = str(raw.get("status") or "").strip()
     used_as_premise_raw = raw.get("used_as_premise", False)
+    metadata_raw = raw.get("metadata") or {}
+    if not isinstance(metadata_raw, Mapping):
+        raise InvestigationRunError("Claim-Metadaten sind ungültig.", code="invalid_claim")
+    metadata = dict(metadata_raw)
     if not claim_id or len(claim_id) > 100:
         raise InvestigationRunError("Claim-ID ist ungültig.", code="invalid_claim")
     if not statement:
@@ -1019,7 +1130,7 @@ def normalize_claim(run: InvestigationRun, raw: Mapping[str, Any]) -> dict[str, 
         ),
         "change_guard_valid": True,
         "used_as_premise": used_as_premise,
-        "metadata": dict(raw.get("metadata") or {}),
+        "metadata": metadata,
     }
 
 
@@ -1027,14 +1138,73 @@ def enforce_claim_guard(
     previous: list[dict[str, Any]],
     proposed: list[dict[str, Any]],
 ) -> None:
-    by_id = {item["claim_id"]: item for item in proposed}
+    previous_by_id = {item["claim_id"]: item for item in previous}
+    proposed_by_id = {item["claim_id"]: item for item in proposed}
+    active_replacements: dict[str, list[dict[str, Any]]] = {}
+
+    for item in proposed:
+        metadata = item.get("metadata") if isinstance(item.get("metadata"), Mapping) else {}
+        target_id = str(metadata.get("replaces_claim_id") or "").strip()
+        if not target_id:
+            continue
+        if target_id == item["claim_id"]:
+            raise InvestigationRunError(
+                "Ein Claim kann sich nicht selbst ersetzen.",
+                code="critical_claim_guard",
+            )
+        old = previous_by_id.get(target_id)
+        previous_same = previous_by_id.get(item["claim_id"])
+        if old is None:
+            if (
+                previous_same is not None
+                and str(
+                    (previous_same.get("metadata") or {}).get("replaces_claim_id") or ""
+                ).strip()
+                == target_id
+            ):
+                continue
+            raise InvestigationRunError(
+                "Ein Claim darf nur einen vorhandenen kritischen Claim ersetzen.",
+                code="critical_claim_guard",
+            )
+        active_replacements.setdefault(target_id, []).append(item)
+
+    for target_id, replacements in active_replacements.items():
+        old = previous_by_id[target_id]
+        if (
+            len(replacements) != 1
+            or not old.get("critical")
+            or target_id in proposed_by_id
+        ):
+            raise InvestigationRunError(
+                "Ein kritischer Claim benötigt genau einen expliziten Ersatz.",
+                code="critical_claim_guard",
+            )
+        replacement = replacements[0]
+        if (
+            not replacement.get("critical")
+            or replacement.get("area") != old.get("area")
+            or replacement.get("claim_kind") != old.get("claim_kind")
+        ):
+            raise InvestigationRunError(
+                "Ein Ersatzclaim muss Kritikalität, Bereich und Claim-Art erhalten.",
+                code="critical_claim_guard",
+            )
+
     for old in previous:
         if not old.get("critical"):
             continue
-        new = by_id.get(old["claim_id"])
-        if new is None or not new.get("critical"):
+        new = proposed_by_id.get(old["claim_id"])
+        if new is None:
+            if old["claim_id"] in active_replacements:
+                continue
             raise InvestigationRunError(
-                "Ein kritischer Prüfpunkt darf nicht gelöscht, umbenannt oder herabgestuft werden.",
+                "Ein kritischer Prüfpunkt darf nicht still verschwinden.",
+                code="critical_claim_guard",
+            )
+        if not new.get("critical"):
+            raise InvestigationRunError(
+                "Ein kritischer Prüfpunkt darf nicht herabgestuft werden.",
                 code="critical_claim_guard",
             )
         if str(new.get("statement") or "") != str(old.get("statement") or ""):
@@ -1755,12 +1925,16 @@ def latest_verifier_state(run: InvestigationRun) -> VerifierState | None:
 def policy_state_for_run(
     run: InvestigationRun,
     *,
-    external_critical_gap: bool = False,
+    external_critical_gap: bool | None = None,
     permission_or_scope_block: bool = False,
     value_tradeoff: bool = False,
     technical_failure: bool = False,
     retry_available: bool = False,
 ) -> PolicyState:
+    detected_gap = decision_blocking_missing_evidence(run)
+    effective_external_gap = (
+        bool(detected_gap) if external_critical_gap is None else external_critical_gap
+    )
     return PolicyState(
         checks=policy_checks(run),
         data_check_executed=run.data_check_executed
@@ -1776,7 +1950,7 @@ def policy_state_for_run(
         brief_hash=run.brief_hash,
         brief_blockers=decision_brief_blockers(run),
         verifier=latest_verifier_state(run),
-        external_critical_gap=external_critical_gap,
+        external_critical_gap=effective_external_gap,
         permission_or_scope_block=permission_or_scope_block,
         value_tradeoff=value_tradeoff,
         budget_exhausted=budget_exhausted(run),
