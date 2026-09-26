@@ -135,13 +135,43 @@ def _decode_structured_field(
 
 
 def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, Any]) -> None:
+    required_fields = {
+        "action",
+        "target_claim_id",
+        "expected_discriminating_finding",
+        "rationale",
+        "tool_name",
+        "parameters",
+        "clarification_reason",
+        "clarification_payload",
+    }
+    unknown = sorted(set(payload) - required_fields)
+    missing = sorted(required_fields - set(payload))
+    if unknown or missing:
+        details = []
+        if missing:
+            details.append("fehlend: " + ", ".join(missing))
+        if unknown:
+            details.append("unbekannt: " + ", ".join(unknown))
+        raise InvestigationRunError(
+            "Planner-Antwort verletzt den Top-Level-Vertrag (" + "; ".join(details) + ").",
+            code="invalid_response",
+        )
+    if not isinstance(payload.get("parameters"), Mapping):
+        raise InvestigationRunError(
+            "Planner-Feld 'parameters' muss ein JSON-Objekt sein.",
+            code="invalid_response",
+        )
+    if not isinstance(payload.get("clarification_payload"), Mapping):
+        raise InvestigationRunError(
+            "Planner-Feld 'clarification_payload' muss ein JSON-Objekt sein.",
+            code="invalid_response",
+        )
     if payload.get("action") not in {"tool", "synthesize", "clarify"}:
         raise InvestigationRunError("Ungültige Untersuchungsaktion.", code="invalid_planner_action")
-    _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
-    _decode_structured_field(payload, "clarification_payload", expected_type=Mapping, default={})
     if payload.get("action") == "synthesize" and (
         str(payload.get("tool_name") or "")
-        or _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})
+        or payload["parameters"]
     ):
         raise InvestigationRunError(
             "Synthese darf kein Werkzeug oder Parameter enthalten.",
@@ -153,7 +183,7 @@ def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, 
             raise InvestigationRunError("Nicht erlaubtes Werkzeug.", code="tool_not_allowed")
         normalized = normalize_tool_parameters(
             tool_name,
-            _decode_structured_field(payload, "parameters", expected_type=Mapping, default={}),
+            payload["parameters"],
             allowed_source_ids=frozenset(
                 str(source_id)
                 for source_id in run.source_snapshot.sources.values_list("pk", flat=True)
