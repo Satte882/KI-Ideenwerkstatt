@@ -258,6 +258,7 @@ def build_decision_surface(
         policy_outcome == "HUMAN_CLARIFICATION"
         or run.status == InvestigationRun.Status.WAITING_HUMAN
     )
+    analysis_quarantined = run.status == InvestigationRun.Status.FAILED
 
     status_label = "Untersuchung läuft"
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
@@ -342,7 +343,10 @@ def build_decision_surface(
     }:
         evidence_hint = needed_evidence or required_action
         description_parts = [item for item in [clarification_question, evidence_hint] if item]
-        if run.clarification_reason == "missing_evidence":
+        if (
+            run.clarification_reason == "missing_evidence"
+            or str(policy.reason_code or "") == "missing_evidence"
+        ):
             next_title = "Fehlenden Nachweis ergänzen und Untersuchung neu starten"
         else:
             next_title = "Aus der Prozessanalyse einen neuen Untersuchungsstand vorbereiten"
@@ -367,6 +371,7 @@ def build_decision_surface(
         "status_label": status_label,
         "status_detail": status_detail,
         "status_tone": status_tone,
+        "analysis_quarantined": analysis_quarantined,
         "technical_status_label": technical_status_label,
         "situation": situation,
         "scope": scope,
