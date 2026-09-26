@@ -749,9 +749,7 @@ def build_blind_review_package(
             )
             exact_tokens = _exact_tokens_for_run(run)
             exact_tokens.update(
-                source.original_filename
-                for source in sources
-                if _as_text(source.original_filename)
+                source.original_filename for source in sources if _as_text(source.original_filename)
             )
             reviewer_markdown, redaction_counts = redact_blinding_metadata(
                 raw_markdown,
