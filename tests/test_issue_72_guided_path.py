@@ -22,7 +22,11 @@ from ki_radar.accelerator.investigation_runtime import (
     StartInvestigationRequest,
     start_investigation,
 )
-from ki_radar.accelerator.investigation_tools import SnapshotRequest, create_source_snapshot
+from ki_radar.accelerator.investigation_tools import (
+    InvestigationToolError,
+    SnapshotRequest,
+    create_source_snapshot,
+)
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
 
 
@@ -145,7 +149,7 @@ def test_authorization_is_business_first_and_returns_to_visible_start(
     assert "max_model_calls" in body
     assert "keine fachliche Eingabe" in body
     assert "A-Fall" not in body
-    assert "Quellenbasis für „Guided Path“" in body
+    assert "Fallunterlagen" in body
 
     question = "Welche Ursache ist belegt und welche Lösungsrichtung folgt daraus?"
     response = client.post(
@@ -168,7 +172,7 @@ def test_authorization_is_business_first_and_returns_to_visible_start(
     assert detail.status_code == 200
     assert "Untersuchungsgrundlage autorisiert." in body
     assert question in body
-    assert "Quellenbasis für „Guided Path“" in body
+    assert "Fallunterlagen" in body
     assert "notes.txt" in body
     assert "Untersuchung starten" in body
     assert "Systemseitige technische Limits" in body
@@ -363,7 +367,123 @@ def test_masked_benchmark_source_choices_remain_distinguishable_by_snapshot_cont
     for folder_name, evidence_name in roots:
         assert folder_name not in body
         assert evidence_name in body
-    assert body.count("Quellenbasis für „Mehrere Quellen“") == 3
+    assert "Fallunterlagen" in body
+
+
+@pytest.mark.django_db
+def test_issue4_variant_label_uses_business_source_description(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="VS1/#4 Neutral Evidence Case",
+    )
+    root = tmp_path / "A"
+    root.mkdir()
+    folder = registered_folder(
+        owner=owner,
+        process=process,
+        root=root,
+        name="VS1/#4 Variant A",
+    )
+    authorize_snapshot(owner=owner, process=process, folder=folder)
+    client.force_login(owner)
+
+    response = client.get(reverse("accelerator:investigation_authorize", args=[process.pk]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "VS1/#4 Variant A" not in body
+    assert "Fallunterlagen" in body
+    assert "notes.txt" in body
+
+
+@pytest.mark.django_db
+def test_repo_local_source_path_can_move_between_host_and_container_when_manifest_matches(
+    owner,
+    business_unit,
+    tmp_path,
+    settings,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    original_root = (
+        tmp_path / "host-repo" / "tests" / "fixtures" / "investigation_source_packs" / "A"
+    )
+    original_root.mkdir(parents=True)
+    (original_root / "notes.txt").write_text("identischer Beleg", encoding="utf-8")
+    folder = InvestigationSourceFolder.objects.create(
+        process_analysis=process,
+        name="VS1/#4 Variant A",
+        root_path=str(original_root),
+        registered_by=owner,
+    )
+    first = authorize_snapshot(owner=owner, process=process, folder=folder)
+
+    runtime_root = tmp_path / "runtime-repo"
+    runtime_source = runtime_root / "tests" / "fixtures" / "investigation_source_packs" / "A"
+    runtime_source.mkdir(parents=True)
+    (runtime_source / "notes.txt").write_text("identischer Beleg", encoding="utf-8")
+    settings.BASE_DIR = runtime_root
+
+    InvestigationSourceFolder.objects.filter(pk=folder.pk).update(
+        root_path=(
+            r"C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt"
+            r"\tests\fixtures\investigation_source_packs\A"
+        )
+    )
+    folder.refresh_from_db()
+
+    second = authorize_snapshot(owner=owner, process=process, folder=folder)
+
+    assert first.revision == 1
+    assert second.revision == 2
+    assert second.manifest_hash == first.manifest_hash
+
+
+@pytest.mark.django_db
+def test_repo_local_source_path_remap_rejects_changed_manifest(
+    owner,
+    business_unit,
+    tmp_path,
+    settings,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    original_root = (
+        tmp_path / "host-repo" / "tests" / "fixtures" / "investigation_source_packs" / "A"
+    )
+    original_root.mkdir(parents=True)
+    (original_root / "notes.txt").write_text("autorisierter Beleg", encoding="utf-8")
+    folder = InvestigationSourceFolder.objects.create(
+        process_analysis=process,
+        name="VS1/#4 Variant A",
+        root_path=str(original_root),
+        registered_by=owner,
+    )
+    authorize_snapshot(owner=owner, process=process, folder=folder)
+
+    runtime_root = tmp_path / "runtime-repo"
+    runtime_source = runtime_root / "tests" / "fixtures" / "investigation_source_packs" / "A"
+    runtime_source.mkdir(parents=True)
+    (runtime_source / "notes.txt").write_text("veränderter Beleg", encoding="utf-8")
+    settings.BASE_DIR = runtime_root
+
+    InvestigationSourceFolder.objects.filter(pk=folder.pk).update(
+        root_path=(
+            r"C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt"
+            r"\tests\fixtures\investigation_source_packs\A"
+        )
+    )
+    folder.refresh_from_db()
+
+    with pytest.raises(InvestigationToolError) as exc_info:
+        authorize_snapshot(owner=owner, process=process, folder=folder)
+
+    assert exc_info.value.code == "source_path_unreadable"
+    assert folder.snapshots.count() == 1
 
 
 @pytest.mark.django_db(transaction=True)

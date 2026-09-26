@@ -90,8 +90,17 @@ class InvestigationSourceFolder(TimeStampedModel):
             "a fall",
             "b fall",
             "c fall",
+            "variant a",
+            "variant b",
+            "variant c",
+            "vs1/#4 variant a",
+            "vs1/#4 variant b",
+            "vs1/#4 variant c",
         }
         if normalized in benchmark_labels:
+            data_objects = str(self.process_analysis.data_objects or "").strip()
+            if data_objects:
+                return data_objects
             return f"Quellenbasis für „{self.process_analysis.name}“"
         return self.name
 

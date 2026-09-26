@@ -9,11 +9,12 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from statistics import median
 from typing import Any
 from uuid import UUID
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Max
@@ -314,10 +315,22 @@ def _is_reparse_or_symlink(path: Path) -> bool:
     return bool(reparse_flag and file_attributes & reparse_flag)
 
 
+def _path_parts(raw_path: str) -> tuple[tuple[str, ...], ...]:
+    variants: list[tuple[str, ...]] = []
+    for path_type in (PureWindowsPath, PurePosixPath):
+        pure = path_type(raw_path)
+        parts = tuple(
+            part for part in pure.parts if part not in {pure.anchor, pure.drive, "/", "\\"}
+        )
+        if parts and parts not in variants:
+            variants.append(parts)
+    return tuple(variants)
+
+
 def _root_path(raw_path: str) -> Path:
-    raw = Path(raw_path)
-    if ".." in raw.parts:
+    if any(".." in parts for parts in _path_parts(raw_path)):
         raise _error("Parent-Traversal ist für Quellenordner unzulässig.", "path_traversal")
+    raw = Path(raw_path)
     if _is_reparse_or_symlink(raw):
         raise _error("Symlinks, Junctions und Reparse-Points sind unzulässig.", "reparse_point")
     try:
@@ -459,6 +472,79 @@ def _manifest_hash(scanned: tuple[_ScannedSource, ...]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _portable_repo_root_candidates(raw_path: str) -> tuple[Path, ...]:
+    """Resolve inaccessible repo-local paths across host/container boundaries.
+
+    The stored path remains authoritative. This only discovers candidate paths
+    below the current BASE_DIR; callers must still verify source identity.
+    """
+    try:
+        base = Path(settings.BASE_DIR).resolve(strict=True)
+    except OSError:
+        return ()
+
+    candidates: dict[Path, int] = {}
+    for parts in _path_parts(raw_path):
+        for start in range(len(parts) - 1):
+            suffix = parts[start:]
+            if len(suffix) < 2 or ".." in suffix:
+                continue
+            candidate = base.joinpath(*suffix)
+            try:
+                resolved = candidate.resolve(strict=True)
+                resolved.relative_to(base)
+            except (OSError, ValueError):
+                continue
+            if not resolved.is_dir():
+                continue
+            candidates[resolved] = max(candidates.get(resolved, 0), len(suffix))
+
+    return tuple(
+        path
+        for path, _specificity in sorted(
+            candidates.items(),
+            key=lambda item: (-item[1], str(item[0])),
+        )
+    )
+
+
+def _scan_registered_folder(folder: InvestigationSourceFolder) -> tuple[_ScannedSource, ...]:
+    path_error: InvestigationToolError | None = None
+    try:
+        return _scan_folder(folder.root_path)
+    except InvestigationToolError as exc:
+        if exc.code != "source_path_unreadable":
+            raise
+        path_error = exc
+
+    latest_snapshot = folder.snapshots.order_by("-revision").first()
+    if latest_snapshot is None:
+        if path_error is None:
+            raise RuntimeError("Missing source-path error.")
+        raise path_error
+
+    matching: list[tuple[_ScannedSource, ...]] = []
+    for candidate in _portable_repo_root_candidates(folder.root_path):
+        try:
+            scanned = _scan_folder(str(candidate))
+        except InvestigationToolError:
+            continue
+        if _manifest_hash(scanned) == latest_snapshot.manifest_hash:
+            matching.append(scanned)
+
+    if len(matching) == 1:
+        return matching[0]
+
+    raise _error(
+        (
+            "Der registrierte Quellenpfad ist in dieser Laufzeit nicht erreichbar "
+            "und konnte nicht eindeutig auf die bereits autorisierte Quellenbasis "
+            "abgebildet werden."
+        ),
+        "source_path_unreadable",
+    )
+
+
 def _process_context(process: ProcessAnalysis) -> dict[str, Any]:
     return {
         "process_analysis_id": str(process.pk),
@@ -504,7 +590,7 @@ def create_source_snapshot(*, actor, request: SnapshotRequest) -> SnapshotResult
     if folder.process_analysis_id != process.pk or not folder.is_active:
         raise PermissionDenied("Der Quellenordner ist für diesen Fall nicht freigegeben.")
 
-    scanned = _scan_folder(folder.root_path)
+    scanned = _scan_registered_folder(folder)
     manifest_hash = _manifest_hash(scanned)
 
     with transaction.atomic():
