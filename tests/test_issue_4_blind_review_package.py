@@ -134,6 +134,61 @@ def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics()
     assert not find_blinding_leaks(redacted, exact_tokens={run_id})
 
 
+def test_neutral_provenance_keeps_source_traceability_without_internal_ids():
+    source_id = "11111111-1111-4111-8111-111111111111"
+    tool_result_id = "22222222-2222-4222-8222-222222222222"
+    run = SimpleNamespace(
+        brief_payload={
+            "problem": {
+                "references": [
+                    {"source_id": source_id, "locator": {"line": 2}},
+                ]
+            },
+            "hypotheses": [
+                {
+                    "references": [],
+                    "counterevidence_refs": [
+                        {"source_id": source_id, "locator": {"line": 4}},
+                    ],
+                }
+            ],
+            "calculations": [
+                {"reference": {"tool_result_id": tool_result_id}},
+            ],
+            "recommendation": {
+                "references": [{"source_id": source_id, "locator": {"line": 4}}],
+            },
+        },
+        steps=SimpleNamespace(
+            all=lambda: [
+                SimpleNamespace(
+                    result_ref={"tool_result_id": tool_result_id},
+                    parameters={"source_id": source_id},
+                )
+            ]
+        ),
+    )
+    sources = [
+        ReviewSource(
+            alias="Quelle 1",
+            source_type="md",
+            content="Fachlicher Inhalt",
+            original_filename="01_case_note.md",
+            source_id=source_id,
+        )
+    ]
+
+    entries = blind_review._neutral_provenance_entries(run, sources)
+
+    assert "Problem -> Quelle 1 (Zeile 2)" in entries
+    assert "Gegenbeleg zu Ursachenhypothese 1 -> Quelle 1 (Zeile 4)" in entries
+    assert "Berechnung 1 -> Reproduzierbare Analyse zu Quelle 1" in entries
+    assert "Empfehlung -> Quelle 1 (Zeile 4)" in entries
+    combined = "\n".join(entries)
+    assert source_id not in combined
+    assert tool_result_id not in combined
+
+
 def test_failed_surface_must_block_fachliche_conclusion_and_recommendation():
     qualify_decision_surface(
         run_status="failed",
