@@ -60,7 +60,9 @@ def _as_text(value: object) -> str:
 
 
 def _slot_for_run(run: Any) -> tuple[str, int] | None:
-    metadata = run.evidence_metadata if isinstance(run.evidence_metadata, Mapping) else {}
+    metadata = (
+        run.evidence_metadata if isinstance(run.evidence_metadata, Mapping) else {}
+    )
     if str(getattr(run, "execution_mode", "")) != "adaptive":
         return None
     if str(metadata.get("provider_mode") or "") != "real":
@@ -94,11 +96,13 @@ def select_scored_adaptive_runs(runs: Iterable[Any]) -> dict[tuple[str, int], An
         details: list[str] = []
         if missing:
             details.append(
-                "fehlend=" + ",".join(f"{variant}/{attempt}" for variant, attempt in missing)
+                "fehlend="
+                + ",".join(f"{variant}/{attempt}" for variant, attempt in missing)
             )
         if extra:
             details.append(
-                "unerwartet=" + ",".join(f"{variant}/{attempt}" for variant, attempt in extra)
+                "unerwartet="
+                + ",".join(f"{variant}/{attempt}" for variant, attempt in extra)
             )
         raise BlindReviewPackageError(
             "Die eingefrorene Adaptive-Scored-Stichprobe ist nicht exakt 9/9"
@@ -199,11 +203,15 @@ def qualify_decision_surface(
     finding = _as_text(surface.get("finding"))
 
     if not status_label or not status_detail:
-        raise BlindReviewPackageError("Die Human Surface besitzt keinen eindeutigen Status.")
+        raise BlindReviewPackageError(
+            "Die Human Surface besitzt keinen eindeutigen Status."
+        )
 
     if run_status == InvestigationRun.Status.FAILED:
         if "fehlgeschlagen" not in status_label.casefold():
-            raise BlindReviewPackageError("FAILED wird in der Human Surface nicht sicher markiert.")
+            raise BlindReviewPackageError(
+                "FAILED wird in der Human Surface nicht sicher markiert."
+            )
         if "kein fachlicher schluss" not in status_detail.casefold():
             raise BlindReviewPackageError(
                 "FAILED sperrt die fachliche Schlussfolgerung in der Human Surface nicht eindeutig."
@@ -230,7 +238,9 @@ def qualify_decision_surface(
 
 def _surface_for_run(run: InvestigationRun) -> dict[str, Any]:
     policy = evaluate_run_policy(run)
-    latest_materialization = run.materializations.select_related("brief_revision").first()
+    latest_materialization = run.materializations.select_related(
+        "brief_revision"
+    ).first()
     materialization_preview = None
     if (
         run.status == InvestigationRun.Status.READY
@@ -304,7 +314,9 @@ def _neutral_provenance_entries(
     run: InvestigationRun,
     sources: Iterable[ReviewSource],
 ) -> list[str]:
-    source_aliases = {source.source_id: source.alias for source in sources if source.source_id}
+    source_aliases = {
+        source.source_id: source.alias for source in sources if source.source_id
+    }
     tool_sources: dict[str, str] = {}
     for step in run.steps.all():
         reference = step.result_ref if isinstance(step.result_ref, Mapping) else {}
@@ -329,7 +341,9 @@ def _neutral_provenance_entries(
     payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
     entries: list[str] = []
 
-    problem = payload.get("problem") if isinstance(payload.get("problem"), Mapping) else {}
+    problem = (
+        payload.get("problem") if isinstance(payload.get("problem"), Mapping) else {}
+    )
     for reference in problem.get("references", []):
         label = reference_label(reference)
         if label:
@@ -664,11 +678,14 @@ def build_blind_review_package(
     curator_path = output_dir / "blind-review-curator.json"
     if not overwrite and (package_path.exists() or curator_path.exists()):
         raise BlindReviewPackageError(
-            "Review-Paket existiert bereits. --overwrite nur für bewusstes Neuerzeugen verwenden."
+            "Review-Paket existiert bereits. "
+            "--overwrite nur für bewusstes Neuerzeugen verwenden."
         )
 
     curator_entries: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="blind-review-", dir=output_dir) as temp_name:
+    with tempfile.TemporaryDirectory(
+        prefix="blind-review-", dir=output_dir
+    ) as temp_name:
         temp_dir = Path(temp_name)
         cases_dir = temp_dir / "cases"
         cases_dir.mkdir(parents=True)
