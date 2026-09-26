@@ -161,6 +161,29 @@ def _replace_source_variant_label(match: re.Match[str]) -> str:
     return match.group(1)
 
 
+def replace_source_filenames(
+    text: str,
+    sources: Iterable[ReviewSource],
+) -> tuple[str, int]:
+    output = text
+    replaced = 0
+    replacements = sorted(
+        (
+            (source.original_filename, source.alias)
+            for source in sources
+            if _as_text(source.original_filename)
+        ),
+        key=lambda item: len(item[0]),
+        reverse=True,
+    )
+    for original_filename, alias in replacements:
+        occurrences = output.count(original_filename)
+        if occurrences:
+            output = output.replace(original_filename, alias)
+            replaced += occurrences
+    return output, replaced
+
+
 def redact_blinding_metadata(
     text: str,
     *,
@@ -720,11 +743,20 @@ def build_blind_review_package(
                 sources=sources,
                 provenance_entries=_neutral_provenance_entries(run, sources),
             )
+            raw_markdown, source_filename_redactions = replace_source_filenames(
+                raw_markdown,
+                sources,
+            )
             exact_tokens = _exact_tokens_for_run(run)
+            exact_tokens.update(
+                source.original_filename for source in sources if _as_text(source.original_filename)
+            )
             reviewer_markdown, redaction_counts = redact_blinding_metadata(
                 raw_markdown,
                 exact_tokens=exact_tokens,
             )
+            if source_filename_redactions:
+                redaction_counts["source_filename"] = source_filename_redactions
             leaks = find_blinding_leaks(reviewer_markdown, exact_tokens=exact_tokens)
             if leaks:
                 raise BlindReviewPackageError(

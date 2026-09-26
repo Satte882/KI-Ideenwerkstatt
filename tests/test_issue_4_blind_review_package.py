@@ -146,6 +146,22 @@ def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics()
     assert not find_blinding_leaks(redacted, exact_tokens={run_id})
 
 
+def test_source_filenames_are_replaced_by_neutral_aliases():
+    sources = [
+        ReviewSource("Quelle 1", "md", "A", "a.md"),
+        ReviewSource("Quelle 2", "md", "B", "b.md"),
+        ReviewSource("Datensatz 1", "csv", "x,y", "data.csv"),
+    ]
+
+    redacted, count = blind_review.replace_source_filenames(
+        "a.md b.md data.csv a.md",
+        sources,
+    )
+
+    assert redacted == "Quelle 1 Quelle 2 Datensatz 1 Quelle 1"
+    assert count == 4
+
+
 def test_neutral_provenance_keeps_source_traceability_without_internal_ids():
     source_id = "11111111-1111-4111-8111-111111111111"
     tool_result_id = "22222222-2222-4222-8222-222222222222"
