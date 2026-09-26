@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v14"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v6"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v7"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -54,9 +54,13 @@ problem_context|competing_hypotheses|constraints_risks|recommendation_validation
 einem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.
 Nutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte.
 Criticality wird serverseitig aus der Claim-Semantik abgeleitet; erfinde oder steuere
-kein critical-Feld. Kritische bestehende Evidence Claims dürfen nicht gelöscht,
-umbenannt, inhaltlich unter derselben claim_id umgeschrieben oder herabgestuft werden.
-Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
+kein critical-Feld. Kritische bestehende Evidence Claims dürfen nicht still gelöscht,
+umbenannt, unter derselben claim_id inhaltlich umgeschrieben oder herabgestuft werden.
+Wenn neue Evidenz oder Verifier-Feedback einen kritischen Claim fachlich überholt,
+ersetze ihn explizit: neue claim_id, gleicher area/claim_kind und
+metadata.replaces_claim_id=<alte claim_id>. Der alte Claim wird dann nicht zusätzlich
+weitergeführt; stale und korrigierter widersprüchlicher Claim dürfen nicht parallel aktiv
+bleiben. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
 area=competing_hypotheses und claim_kind=hypothesis geführt werden, wenn die Evidenzlage
 mehr als eine plausible Erklärung trägt.
 
