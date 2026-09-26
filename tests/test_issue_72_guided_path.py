@@ -312,6 +312,61 @@ def test_product_and_evidence_active_runs_coexist_but_same_scope_still_blocks(
     assert evidence_exc.value.code == "active_run_exists"
     assert evidence_exc.value.existing_run_id == evidence.run_id
 
+    with pytest.raises(InvestigationRunError) as scope_exc:
+        start_evidence(
+            owner=owner,
+            snapshot=snapshot,
+            campaign=campaign,
+            key="issue72-product-main",
+        )
+    assert scope_exc.value.code == "idempotency_scope_conflict"
+    assert scope_exc.value.existing_run_id == product.run_id
+
+
+@pytest.mark.django_db
+def test_masked_benchmark_source_choices_remain_distinguishable_by_snapshot_contents(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Mehrere Quellen")
+    roots = []
+    for folder_name, evidence_name in [
+        ("A-Fall", "02_counterevidence.md"),
+        ("B-Fall", "02_report.md"),
+        ("C-Fall", "02_system_note.md"),
+    ]:
+        root = tmp_path / folder_name
+        root.mkdir()
+        (root / evidence_name).write_text("Beleg", encoding="utf-8")
+        folder = InvestigationSourceFolder.objects.create(
+            process_analysis=process,
+            name=folder_name,
+            root_path=str(root),
+            registered_by=owner,
+        )
+        create_source_snapshot(
+            actor=owner,
+            request=SnapshotRequest(
+                process_analysis_id=process.pk,
+                folder_id=folder.pk,
+                decision_question="Welche Richtung ist belegt?",
+                run_limits={},
+            ),
+        )
+        roots.append((folder_name, evidence_name))
+
+    client.force_login(owner)
+    response = client.get(reverse("accelerator:investigation_authorize", args=[process.pk]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    for folder_name, evidence_name in roots:
+        assert folder_name not in body
+        assert evidence_name in body
+    assert body.count("Quellenbasis für „Mehrere Quellen“") == 3
+
 
 @pytest.mark.django_db(transaction=True)
 def test_parallel_product_and_evidence_starts_use_separate_active_slots(
