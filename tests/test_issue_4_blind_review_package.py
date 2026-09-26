@@ -147,39 +147,19 @@ def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics()
 
 
 def test_source_filenames_are_replaced_by_neutral_aliases():
-    text = (
-        "Quellen: 01_case_note.md, 02_system_note.md und cases.csv. "
-        "01_case_note.md wird erneut referenziert."
-    )
     sources = [
-        ReviewSource(
-            alias="Quelle 1",
-            source_type="md",
-            content="A",
-            original_filename="01_case_note.md",
-        ),
-        ReviewSource(
-            alias="Quelle 2",
-            source_type="md",
-            content="B",
-            original_filename="02_system_note.md",
-        ),
-        ReviewSource(
-            alias="Datensatz 1",
-            source_type="csv",
-            content="x,y",
-            original_filename="cases.csv",
-        ),
+        ReviewSource("Quelle 1", "md", "A", "a.md"),
+        ReviewSource("Quelle 2", "md", "B", "b.md"),
+        ReviewSource("Datensatz 1", "csv", "x,y", "data.csv"),
     ]
 
-    redacted, count = blind_review.replace_source_filenames(text, sources)
-
-    assert count == 4
-    assert redacted == (
-        "Quellen: Quelle 1, Quelle 2 und Datensatz 1. "
-        "Quelle 1 wird erneut referenziert."
+    redacted, count = blind_review.replace_source_filenames(
+        "a.md b.md data.csv a.md",
+        sources,
     )
 
+    assert redacted == "Quelle 1 Quelle 2 Datensatz 1 Quelle 1"
+    assert count == 4
 
 def test_neutral_provenance_keeps_source_traceability_without_internal_ids():
     source_id = "11111111-1111-4111-8111-111111111111"
