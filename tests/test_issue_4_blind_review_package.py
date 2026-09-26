@@ -263,6 +263,7 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monk
         run.clarification_reason = ""
         run.evidence_campaign = SimpleNamespace(campaign_key="private-campaign")
         run.source_snapshot = SimpleNamespace()
+        run.brief_payload = {}
         run.steps = SimpleNamespace(all=lambda: [])
 
     campaign = SimpleNamespace(
