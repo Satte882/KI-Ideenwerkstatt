@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-POLICY_VERSION = "vs1-stop-policy-v4"
+POLICY_VERSION = "vs1-stop-policy-v5"
 
 
 class PolicyOutcome(StrEnum):
@@ -161,6 +161,12 @@ def readiness_blockers(state: PolicyState) -> tuple[str, ...]:
 
 def evaluate_policy(state: PolicyState) -> PolicyDecision:
     blockers = readiness_blockers(state)
+    if state.external_critical_gap:
+        return PolicyDecision(
+            PolicyOutcome.HUMAN_CLARIFICATION,
+            ReasonCode.MISSING_EVIDENCE,
+            tuple(sorted(set((*blockers, "external_critical_gap")))),
+        )
     if not blockers:
         return PolicyDecision(PolicyOutcome.READY_FOR_DECISION, None, ())
 
@@ -192,12 +198,6 @@ def evaluate_policy(state: PolicyState) -> PolicyDecision:
         return PolicyDecision(
             PolicyOutcome.HUMAN_CLARIFICATION,
             ReasonCode.TECHNICAL_FAILURE,
-            blockers,
-        )
-    if state.external_critical_gap:
-        return PolicyDecision(
-            PolicyOutcome.HUMAN_CLARIFICATION,
-            ReasonCode.MISSING_EVIDENCE,
             blockers,
         )
     # Missing/stale/critical verification and deterministic package blockers are
