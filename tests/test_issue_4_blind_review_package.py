@@ -35,13 +35,19 @@ def fake_run(variant: str, attempt: int, *, execution_mode: str = "adaptive"):
 
 
 def full_sample():
-    return [fake_run(variant, attempt) for variant in ("A", "B", "C") for attempt in range(1, 4)]
+    return [
+        fake_run(variant, attempt)
+        for variant in ("A", "B", "C")
+        for attempt in range(1, 4)
+    ]
 
 
 def minimal_surface():
     return {
         "status_label": "Entscheidungsgrundlage bereit",
-        "status_detail": "Die Evidenz ist geprüft; die fachliche Entscheidung ist noch offen.",
+        "status_detail": (
+            "Die Evidenz ist geprüft; die fachliche Entscheidung ist noch offen."
+        ),
         "situation": "Die Freigabezeiten schwanken.",
         "scope": "Es wird nur der vorliegende Prozess betrachtet.",
         "finding": "Freigeberverfügbarkeit ist mit längeren Laufzeiten verbunden.",
@@ -108,8 +114,12 @@ def test_select_scored_adaptive_runs_rejects_missing_or_duplicate_slots():
 
 
 def test_review_order_is_deterministic_without_exposing_variant_order():
-    first = deterministic_review_order(blind_review.EXPECTED_SLOTS, seed="fixed-private-seed")
-    second = deterministic_review_order(blind_review.EXPECTED_SLOTS, seed="fixed-private-seed")
+    first = deterministic_review_order(
+        blind_review.EXPECTED_SLOTS, seed="fixed-private-seed"
+    )
+    second = deterministic_review_order(
+        blind_review.EXPECTED_SLOTS, seed="fixed-private-seed"
+    )
 
     assert first == second
     assert set(first) == blind_review.EXPECTED_SLOTS
@@ -199,7 +209,9 @@ def test_failed_surface_must_block_fachliche_conclusion_and_recommendation():
                 "Der Lauf ist technisch fehlgeschlagen. "
                 "Aus diesem Stand darf kein fachlicher Schluss abgeleitet werden."
             ),
-            "recommendation_summary": "Noch keine belastbare Empfehlung aus diesem Lauf.",
+            "recommendation_summary": (
+                "Noch keine belastbare Empfehlung aus diesem Lauf."
+            ),
             "finding": "Zwischenbefund",
         },
     )
@@ -254,7 +266,9 @@ class FakeRunCollection:
         return iter(self.runs)
 
 
-def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monkeypatch):
+def test_build_package_keeps_curator_mapping_outside_reviewer_zip(
+    tmp_path, monkeypatch
+):
     runs = full_sample()
     for run in runs:
         run.process_analysis_id = f"process-{run.pk}"
@@ -271,7 +285,11 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monk
         investigation_runs=FakeRunCollection(runs),
     )
 
-    monkeypatch.setattr(blind_review, "_surface_for_run", lambda _run: minimal_surface())
+    monkeypatch.setattr(
+        blind_review,
+        "_surface_for_run",
+        lambda _run: minimal_surface(),
+    )
     monkeypatch.setattr(
         blind_review,
         "_review_sources",
@@ -279,7 +297,9 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monk
             ReviewSource(
                 alias="Quelle 1",
                 source_type="md",
-                content=f"Fall {run.evidence_metadata['variant']} mit fachlicher Evidenz.",
+                content=(
+                    f"Fall {run.evidence_metadata['variant']} mit fachlicher Evidenz."
+                ),
                 original_filename=f"{run.evidence_metadata['variant']}_source.md",
             )
         ],
