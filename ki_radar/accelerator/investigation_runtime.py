@@ -146,6 +146,7 @@ class StartInvestigationRequest:
     execution_mode: str = "adaptive"
     evidence_metadata: Mapping[str, Any] | None = None
     decision_brief_required: bool = False
+    allow_historical_snapshot_replay: bool = False
 
 
 @dataclass(frozen=True)
@@ -304,6 +305,25 @@ def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, objec
     return {**payload, "content_hash": content_hash(payload)}
 
 
+def historical_domain_materialization_snapshot(
+    snapshot: InvestigationSourceSnapshot,
+) -> dict[str, object]:
+    """Frozen domain context for read-only historical evidence replay."""
+    context = snapshot.process_context if isinstance(snapshot.process_context, Mapping) else {}
+    payload = {
+        "process": {
+            "id": str(snapshot.process_analysis_id),
+            "version": snapshot.process_version,
+            "updated_at": snapshot.created_at.isoformat(),
+            "diagnostic_observations": str(context.get("diagnostic_observations") or ""),
+            "cause_hypotheses": str(context.get("cause_hypotheses") or ""),
+            "baseline_metrics": str(context.get("baseline_metrics") or ""),
+        },
+        "solution_options": [],
+    }
+    return {**payload, "content_hash": content_hash(payload)}
+
+
 def base_execution_snapshot(
     snapshot: InvestigationSourceSnapshot,
     budget: Mapping[str, int],
@@ -313,6 +333,7 @@ def base_execution_snapshot(
     evidence_campaign: InvestigationEvidenceCampaign | None = None,
     evidence_metadata: Mapping[str, Any] | None = None,
     decision_brief_required: bool = False,
+    historical_snapshot_replay: bool = False,
 ) -> dict[str, object]:
     return {
         "runtime": runtime_version_snapshot(),
@@ -324,6 +345,7 @@ def base_execution_snapshot(
         "fixed_route_version": (FIXED_ROUTE_VERSION if execution_mode == "fixed" else None),
         "evidence_metadata": dict(evidence_metadata or {}),
         "decision_brief_required": bool(decision_brief_required),
+        "historical_snapshot_replay": bool(historical_snapshot_replay),
         "evidence_campaign": (
             {
                 "id": str(evidence_campaign.pk),
@@ -336,7 +358,11 @@ def base_execution_snapshot(
             if evidence_campaign is not None
             else None
         ),
-        "domain_materialization_base": domain_materialization_snapshot(process),
+        "domain_materialization_base": (
+            historical_domain_materialization_snapshot(snapshot)
+            if historical_snapshot_replay
+            else domain_materialization_snapshot(process)
+        ),
         "source_snapshot_id": str(snapshot.pk),
         "manifest_hash": snapshot.manifest_hash,
         "model_transport": {
@@ -544,6 +570,26 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
     key = normalize_idempotency_key(request.idempotency_key)
     snapshot = _authorized_snapshot(actor=actor, snapshot_id=request.snapshot_id)
     budget = budget_from_snapshot(snapshot.run_limits)
+    evidence_metadata = dict(request.evidence_metadata or {})
+    evidence_provider_mode = (
+        str(evidence_metadata.get("provider_mode") or "").strip().casefold()
+    )
+    evidence_phase = (
+        str(evidence_metadata.get("phase") or evidence_metadata.get("evidence_phase") or "")
+        .strip()
+        .casefold()
+    )
+    historical_snapshot_replay = bool(request.allow_historical_snapshot_replay)
+    if historical_snapshot_replay and not (
+        evidence_provider_mode == "real"
+        and evidence_phase == "post_fix"
+        and request.evidence_campaign_id is not None
+    ):
+        raise InvestigationRunError(
+            "Historischer Snapshot-Replay ist ausschließlich für reale Post-Fix-Nachweise "
+            "mit EvidenceCampaign zulässig.",
+            code="historical_snapshot_replay_forbidden",
+        )
 
     with transaction.atomic():
         process = (
@@ -562,7 +608,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
         ).get(pk=snapshot.pk)
         if not snapshot.folder.is_active:
             raise PermissionDenied("Der Quellenraum wurde vor dem Start entzogen.")
-        if process.version != snapshot.process_version:
+        if process.version != snapshot.process_version and not historical_snapshot_replay:
             raise InvestigationRunError(
                 "Der Quellen-Snapshot gehört zu einer älteren ProcessAnalysis-Version.",
                 code="process_version_conflict",
@@ -599,7 +645,6 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 "Unbekannte Vergleichsstrecke.",
                 code="invalid_execution_mode",
             )
-        evidence_metadata = dict(request.evidence_metadata or {})
         evidence_campaign = None
         if request.evidence_campaign_id is not None:
             try:
@@ -616,14 +661,6 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     "Das Gesamtnachweisbudget gehört nicht zu diesem Fall.",
                     code="invalid_evidence_budget",
                 )
-        evidence_provider_mode = (
-            str(evidence_metadata.get("provider_mode") or "").strip().casefold()
-        )
-        evidence_phase = (
-            str(evidence_metadata.get("phase") or evidence_metadata.get("evidence_phase") or "")
-            .strip()
-            .casefold()
-        )
         real_evidence_run = evidence_provider_mode == "real" and bool(evidence_phase)
         if (execution_mode == "fixed" or real_evidence_run) and evidence_campaign is None:
             raise InvestigationRunError(
@@ -640,6 +677,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             evidence_campaign=evidence_campaign,
             evidence_metadata=evidence_metadata,
             decision_brief_required=bool(request.decision_brief_required),
+            historical_snapshot_replay=historical_snapshot_replay,
         )
         try:
             with transaction.atomic():
@@ -651,7 +689,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     evidence_metadata=evidence_metadata,
                     requested_by=actor,
                     idempotency_key=key,
-                    process_version=process.version,
+                    process_version=snapshot.process_version,
                     decision_question=snapshot.decision_question,
                     contract_hash=content_hash(contract_payload(snapshot, budget)),
                     manifest_hash=snapshot.manifest_hash,
