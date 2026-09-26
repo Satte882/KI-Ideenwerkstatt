@@ -2384,7 +2384,6 @@ def test_historical_snapshot_replay_flag_is_not_a_general_stale_snapshot_bypass(
     assert exc_info.value.code == "historical_snapshot_replay_forbidden"
 
 
-
 @pytest.mark.django_db
 def test_issue4_runner_rejects_variant_snapshot_mismatch(
     owner,
