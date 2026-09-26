@@ -17,7 +17,9 @@ from .investigation_policy import PolicyOutcome
 from .investigation_presentation import build_decision_surface
 from .investigation_runtime import InvestigationRunError, evaluate_run_policy
 
-EXPECTED_SLOTS = frozenset(\n    (variant, attempt) for variant in ("A", "B", "C") for attempt in range(1, 4)\n)
+EXPECTED_SLOTS = frozenset(
+    (variant, attempt) for variant in ("A", "B", "C") for attempt in range(1, 4)
+)
 
 _UUID_RE = re.compile(
     r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-"
@@ -134,7 +136,8 @@ def redact_blinding_metadata(
     output = text
     counts: dict[str, int] = {}
 
-    normalized_tokens = {_as_text(item) for item in exact_tokens if _as_text(item)}\n    for token in sorted(normalized_tokens, key=len, reverse=True):
+    normalized_tokens = {_as_text(item) for item in exact_tokens if _as_text(item)}
+    for token in sorted(normalized_tokens, key=len, reverse=True):
         occurrences = output.count(token)
         if occurrences:
             output = output.replace(token, "[redigiert]")
@@ -203,7 +206,10 @@ def qualify_decision_surface(
 
     if clarification_reason == "missing_evidence":
         if run_status in {InvestigationRun.Status.ABORTED, InvestigationRun.Status.WAITING_HUMAN}:
-            if (\n                "nachweis fehlt" not in finding.casefold()\n                and "information" not in finding.casefold()\n            ):
+            if (
+                "nachweis fehlt" not in finding.casefold()
+                and "information" not in finding.casefold()
+            ):
                 raise BlindReviewPackageError(
                     "Missing Evidence ist in der Human Surface nicht als Lücke erkennbar."
                 )
@@ -316,7 +322,11 @@ def render_review_case(
         lines.extend(f"- {item}" for item in risks)
         lines.append("")
 
-    next_action = (\n        surface.get("next_action")\n        if isinstance(surface.get("next_action"), Mapping)\n        else {}\n    )
+    next_action = (
+        surface.get("next_action")
+        if isinstance(surface.get("next_action"), Mapping)
+        else {}
+    )
     lines.extend(
         [
             "## 4 · Nächster Schritt",
@@ -407,9 +417,9 @@ def render_review_case(
             [
                 f"### {source.alias}",
                 "",
-                f"\`\`\`{language}",
+                f"```{language}",
                 source.content.rstrip(),
-                "\`\`\`",
+                "```",
                 "",
             ]
         )
