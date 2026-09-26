@@ -334,13 +334,8 @@ def _handle_provider_failure(
             executor_token=executor_token,
             reason=ReasonCode.TECHNICAL_FAILURE.value,
             error_code="structured_contract_error",
-            impact=(
-                "Die Modellantwort verletzt wiederholt den strukturierten "
-                "Untersuchungsvertrag."
-            ),
-            required_action=(
-                "Prompt-/Schema-Vertrag der betroffenen Modellrolle technisch prüfen."
-            ),
+            impact="Die Modellantwort verletzt wiederholt den strukturierten Untersuchungsvertrag.",
+            required_action="Prompt-/Schema-Vertrag der betroffenen Modellrolle technisch prüfen.",
             details={
                 "attempts": failures,
                 "model_role": call.role,
