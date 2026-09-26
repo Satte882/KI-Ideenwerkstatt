@@ -983,8 +983,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v13"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v13"
+    assert run.loop_version == "vs1-agent-loop-v14"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v14"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
