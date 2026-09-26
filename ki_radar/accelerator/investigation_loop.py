@@ -281,6 +281,34 @@ def _provider_failures(run: InvestigationRun) -> int:
     return failures
 
 
+def _latest_structured_contract_failure(
+    run: InvestigationRun,
+) -> tuple[InvestigationModelCall, str, str] | None:
+    call = run.model_calls.order_by("-created_at").first()
+    if (
+        call is None
+        or call.status != InvestigationModelCall.Status.FAILED
+        or call.error_code != "invalid_response"
+    ):
+        return None
+    diagnostics = call.effective_parameters.get("response_diagnostics") or {}
+    source_code = str(diagnostics.get("structured_contract_error_code") or "").strip()
+    if not source_code:
+        return None
+    detail = str(diagnostics.get("structured_contract_error") or "").strip()
+    return call, source_code, detail
+
+
+def _synthesizer_retry_due(run: InvestigationRun) -> bool:
+    call = run.model_calls.order_by("-created_at").first()
+    return bool(
+        call is not None
+        and call.role == InvestigationModelCall.Role.SYNTHESIZER
+        and call.status == InvestigationModelCall.Status.FAILED
+        and call.error_code == "invalid_response"
+    )
+
+
 def _handle_provider_failure(
     *,
     actor,
@@ -290,6 +318,38 @@ def _handle_provider_failure(
 ) -> AdvanceResult:
     run.refresh_from_db()
     failures = _provider_failures(run)
+    structured_failure = _latest_structured_contract_failure(run)
+    if structured_failure is not None:
+        call, contract_code, contract_detail = structured_failure
+        if failures <= 1:
+            decision = evaluate_run_policy(
+                run,
+                technical_failure=True,
+                retry_available=True,
+            )
+            return AdvanceResult(run.pk, run.status, decision)
+        failed = _set_failed_runtime(
+            actor=actor,
+            run_id=run.pk,
+            executor_token=executor_token,
+            reason=ReasonCode.TECHNICAL_FAILURE.value,
+            error_code="structured_contract_error",
+            impact=(
+                "Die Modellantwort verletzt wiederholt den strukturierten "
+                "Untersuchungsvertrag."
+            ),
+            required_action=(
+                "Prompt-/Schema-Vertrag der betroffenen Modellrolle technisch prüfen."
+            ),
+            details={
+                "attempts": failures,
+                "model_role": call.role,
+                "contract_error_code": contract_code,
+                "contract_error": contract_detail,
+            },
+        )
+        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
+
     if error.code in TRANSIENT_PROVIDER_CODES and failures <= 1:
         decision = evaluate_run_policy(
             run,
@@ -499,7 +559,7 @@ def advance_investigation(
         )
 
     try:
-        if _verifier_repair_due(run):
+        if _verifier_repair_due(run) or _synthesizer_retry_due(run):
             action = synthesizer(
                 actor=actor,
                 run=run,
