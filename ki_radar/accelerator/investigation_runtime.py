@@ -571,9 +571,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
     snapshot = _authorized_snapshot(actor=actor, snapshot_id=request.snapshot_id)
     budget = budget_from_snapshot(snapshot.run_limits)
     evidence_metadata = dict(request.evidence_metadata or {})
-    evidence_provider_mode = (
-        str(evidence_metadata.get("provider_mode") or "").strip().casefold()
-    )
+    evidence_provider_mode = str(evidence_metadata.get("provider_mode") or "").strip().casefold()
     evidence_phase = (
         str(evidence_metadata.get("phase") or evidence_metadata.get("evidence_phase") or "")
         .strip()
