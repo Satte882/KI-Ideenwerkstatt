@@ -2315,7 +2315,10 @@ def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_
 
     before_matrix = evidence_campaign_report(campaign)["matrix"]
 
+    runner_calls = []
+
     def fake_runner(**kwargs):
+        runner_calls.append(kwargs)
         return type(
             "Result",
             (),
