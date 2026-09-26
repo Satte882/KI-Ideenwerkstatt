@@ -30,7 +30,7 @@
         <select class="form-select" id="source-folder" name="folder_id" required>
           {% if folders|length > 1 %}<option value="">Bitte auswählen</option>{% endif %}
           {% for folder in folders %}
-            <option value="{{ folder.pk }}" {% if selected_folder_id == folder.pk|stringformat:"s" %}selected{% endif %}>{{ folder.product_display_name }}</option>
+            <option value="{{ folder.pk }}" {% if selected_folder_id == folder.pk|stringformat:"s" %}selected{% endif %}>{{ folder.product_display_name }}{% if folder.product_source_hint %} · {{ folder.product_source_hint }}{% endif %}</option>
           {% endfor %}
         </select>
         <div class="form-text">Aus dieser registrierten Grundlage wird beim Bestätigen ein unveränderlicher Quellen-Snapshot erzeugt. Einzeldateien und Werkzeuge werden nicht manuell ausgewählt.</div>
