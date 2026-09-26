@@ -161,6 +161,7 @@ def test_source_filenames_are_replaced_by_neutral_aliases():
     assert redacted == "Quelle 1 Quelle 2 Datensatz 1 Quelle 1"
     assert count == 4
 
+
 def test_neutral_provenance_keeps_source_traceability_without_internal_ids():
     source_id = "11111111-1111-4111-8111-111111111111"
     tool_result_id = "22222222-2222-4222-8222-222222222222"
