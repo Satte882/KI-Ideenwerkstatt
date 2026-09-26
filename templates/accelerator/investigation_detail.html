@@ -170,6 +170,16 @@
 {% endif %}
 
 {% if run.brief_payload %}
+{% if decision_surface.analysis_quarantined %}
+<details class="architecture-disclosure decision-disclosure decision-disclosure--quarantined mb-3">
+  <summary>Unverifizierten Zwischenstand anzeigen</summary>
+  <div class="decision-disclosure__content">
+    <div class="alert alert-danger mb-3">
+      <strong>Nicht als Entscheidungsgrundlage verwenden.</strong>
+      Die folgenden Befunde und Kandidaten stammen aus einem technisch fehlgeschlagenen
+      Zwischenstand und bleiben ausschließlich für Nachvollziehbarkeit und Fehleranalyse sichtbar.
+    </div>
+{% endif %}
 <details class="architecture-disclosure decision-disclosure mb-3">
   <summary>Begründung, Gegenbelege und Unsicherheiten prüfen</summary>
   <div class="decision-disclosure__content">
@@ -211,9 +221,13 @@
 </details>
 
 <details class="architecture-disclosure decision-disclosure mb-3">
-  <summary>Vorgeschlagene Lösungskandidaten für die Übergabe anzeigen</summary>
+  <summary>{% if decision_surface.analysis_quarantined %}Unverifizierte Lösungskandidaten anzeigen{% else %}Vorgeschlagene Lösungskandidaten für die Übergabe anzeigen{% endif %}</summary>
   <div class="decision-disclosure__content">
-    <p class="small text-muted">Diese Kandidaten sind noch nicht fachlich bewertet. Bearbeitung, „nicht weiter verfolgen“, Vergleich und verbindliche Auswahl erfolgen ausschließlich im bestehenden Lösungsraum.</p>
+    {% if decision_surface.analysis_quarantined %}
+      <p class="small text-muted">Diese Kandidaten gehören zu einem technisch fehlgeschlagenen Zwischenstand. Nicht übernehmen, priorisieren oder als fachlich geprüfte Optionen verwenden.</p>
+    {% else %}
+      <p class="small text-muted">Diese Kandidaten sind noch nicht fachlich bewertet. Bearbeitung, „nicht weiter verfolgen“, Vergleich und verbindliche Auswahl erfolgen ausschließlich im bestehenden Lösungsraum.</p>
+    {% endif %}
     <div class="decision-candidate-list">
       {% for option in decision_surface.options %}
         <article class="decision-candidate">
@@ -234,6 +248,10 @@
     </div>
   </div>
 </details>
+{% if decision_surface.analysis_quarantined %}
+  </div>
+</details>
+{% endif %}
 {% endif %}
 
 <details class="architecture-disclosure decision-disclosure mb-3">
