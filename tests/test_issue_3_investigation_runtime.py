@@ -24,6 +24,7 @@ from ki_radar.accelerator.investigation_runtime import (
     StartInvestigationRequest,
     abort_investigation,
     continue_with_human_input,
+    enforce_claim_guard,
     execute_tool_step,
     mark_counterevidence_processed,
     materialize_brief_revision,
@@ -124,6 +125,41 @@ def empty_action(**overrides):
     }
     values.update(overrides)
     return PlannerAction(**values)
+
+
+def test_critical_claim_can_be_explicitly_replaced_after_repair():
+    previous = [
+        {
+            "claim_id": "cause-old",
+            "statement": "Die Wissenslücke ist noch nicht gegen Falldaten geprüft.",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "critical": True,
+            "metadata": {},
+        }
+    ]
+    replacement = {
+        "claim_id": "cause-repaired",
+        "statement": "Die Wissenslücke wurde geprüft und wird durch die Falldaten nicht gestützt.",
+        "area": "competing_hypotheses",
+        "claim_kind": "hypothesis",
+        "critical": True,
+        "metadata": {"replaces_claim_id": "cause-old"},
+    }
+
+    enforce_claim_guard(previous, [replacement])
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        enforce_claim_guard(previous, [])
+    assert exc_info.value.code == "critical_claim_guard"
+
+    invalid_replacement = {
+        **replacement,
+        "area": "problem_context",
+    }
+    with pytest.raises(InvestigationRunError) as exc_info:
+        enforce_claim_guard(previous, [invalid_replacement])
+    assert exc_info.value.code == "critical_claim_guard"
 
 
 @pytest.mark.django_db
