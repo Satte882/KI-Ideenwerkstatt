@@ -612,11 +612,18 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 code="process_version_conflict",
             )
 
+        is_evidence_request = request.evidence_campaign_id is not None
         same = InvestigationRun.objects.filter(
             process_analysis=process,
             idempotency_key=key,
         ).first()
         if same is not None:
+            if (same.evidence_campaign_id is not None) != is_evidence_request:
+                raise InvestigationRunError(
+                    "Der Idempotency-Key wurde bereits für einen anderen Run-Zweck verwendet.",
+                    code="idempotency_scope_conflict",
+                    existing_run_id=same.pk,
+                )
             assert_actor_can_edit_run(actor, same)
             return RunHandle(
                 same.pk,
@@ -629,6 +636,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
         active = InvestigationRun.objects.filter(
             process_analysis=process,
             status__in=InvestigationRun.ACTIVE_STATUSES,
+            evidence_campaign__isnull=not is_evidence_request,
         ).first()
         if active is not None:
             raise InvestigationRunError(
@@ -715,6 +723,12 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 idempotency_key=key,
             ).first()
             if same is not None:
+                if (same.evidence_campaign_id is not None) != is_evidence_request:
+                    raise InvestigationRunError(
+                        "Der Idempotency-Key wurde parallel für einen anderen Run-Zweck verwendet.",
+                        code="idempotency_scope_conflict",
+                        existing_run_id=same.pk,
+                    ) from exc
                 return RunHandle(
                     same.pk,
                     same.executor_token,
@@ -725,6 +739,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             active = InvestigationRun.objects.filter(
                 process_analysis=process,
                 status__in=InvestigationRun.ACTIVE_STATUSES,
+                evidence_campaign__isnull=not is_evidence_request,
             ).first()
             raise InvestigationRunError(
                 "Für diese ProcessAnalysis wurde parallel bereits eine Untersuchung reserviert.",
