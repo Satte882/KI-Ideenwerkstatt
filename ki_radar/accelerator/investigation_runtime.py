@@ -1740,7 +1740,10 @@ def execute_tool_step(
                 "Der Run wartet auf menschliche Klärung.",
                 code="human_input_required",
             )
-        if run.process_analysis.version != run.process_version:
+        if (
+            run.process_analysis.version != run.process_version
+            and not bool(run.execution_snapshot.get("historical_snapshot_replay"))
+        ):
             raise InvestigationRunError(
                 "Die ProcessAnalysis wurde während des Runs geändert.",
                 code="process_version_conflict",
