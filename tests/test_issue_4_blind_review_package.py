@@ -35,19 +35,13 @@ def fake_run(variant: str, attempt: int, *, execution_mode: str = "adaptive"):
 
 
 def full_sample():
-    return [
-        fake_run(variant, attempt)
-        for variant in ("A", "B", "C")
-        for attempt in range(1, 4)
-    ]
+    return [fake_run(variant, attempt) for variant in ("A", "B", "C") for attempt in range(1, 4)]
 
 
 def minimal_surface():
     return {
         "status_label": "Entscheidungsgrundlage bereit",
-        "status_detail": (
-            "Die Evidenz ist geprüft; die fachliche Entscheidung ist noch offen."
-        ),
+        "status_detail": ("Die Evidenz ist geprüft; die fachliche Entscheidung ist noch offen."),
         "situation": "Die Freigabezeiten schwanken.",
         "scope": "Es wird nur der vorliegende Prozess betrachtet.",
         "finding": "Freigeberverfügbarkeit ist mit längeren Laufzeiten verbunden.",
@@ -114,12 +108,8 @@ def test_select_scored_adaptive_runs_rejects_missing_or_duplicate_slots():
 
 
 def test_review_order_is_deterministic_without_exposing_variant_order():
-    first = deterministic_review_order(
-        blind_review.EXPECTED_SLOTS, seed="fixed-private-seed"
-    )
-    second = deterministic_review_order(
-        blind_review.EXPECTED_SLOTS, seed="fixed-private-seed"
-    )
+    first = deterministic_review_order(blind_review.EXPECTED_SLOTS, seed="fixed-private-seed")
+    second = deterministic_review_order(blind_review.EXPECTED_SLOTS, seed="fixed-private-seed")
 
     assert first == second
     assert set(first) == blind_review.EXPECTED_SLOTS
@@ -133,8 +123,7 @@ def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics()
         f"Run {run_id}. "
         "A/adaptive/2. "
         "http://127.0.0.1:8001/accelerator/investigations/"
-        f"{run_id}/. "
-        + "a" * 64
+        f"{run_id}/. " + "a" * 64
     )
 
     redacted, counts = redact_blinding_metadata(raw, exact_tokens={run_id})
@@ -209,9 +198,7 @@ def test_failed_surface_must_block_fachliche_conclusion_and_recommendation():
                 "Der Lauf ist technisch fehlgeschlagen. "
                 "Aus diesem Stand darf kein fachlicher Schluss abgeleitet werden."
             ),
-            "recommendation_summary": (
-                "Noch keine belastbare Empfehlung aus diesem Lauf."
-            ),
+            "recommendation_summary": ("Noch keine belastbare Empfehlung aus diesem Lauf."),
             "finding": "Zwischenbefund",
         },
     )
@@ -266,9 +253,7 @@ class FakeRunCollection:
         return iter(self.runs)
 
 
-def test_build_package_keeps_curator_mapping_outside_reviewer_zip(
-    tmp_path, monkeypatch
-):
+def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monkeypatch):
     runs = full_sample()
     for run in runs:
         run.process_analysis_id = f"process-{run.pk}"
@@ -297,9 +282,7 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(
             ReviewSource(
                 alias="Quelle 1",
                 source_type="md",
-                content=(
-                    f"Fall {run.evidence_metadata['variant']} mit fachlicher Evidenz."
-                ),
+                content=(f"Fall {run.evidence_metadata['variant']} mit fachlicher Evidenz."),
                 original_filename=f"{run.evidence_metadata['variant']}_source.md",
             )
         ],
@@ -330,9 +313,7 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(
         assert {f"cases/R{index:02d}.md" for index in range(1, 10)} <= names
         assert all("curator" not in name.casefold() for name in names)
         combined = "\n".join(
-            archive.read(name).decode("utf-8")
-            for name in names
-            if name.endswith(".md")
+            archive.read(name).decode("utf-8") for name in names if name.endswith(".md")
         )
 
     assert "campaign-private" not in combined
