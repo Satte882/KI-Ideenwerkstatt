@@ -99,6 +99,7 @@ class Command(BaseCommand):
                         "attempt": attempt,
                     },
                     decision_brief_required=True,
+                    allow_historical_snapshot_replay=phase == "post_fix",
                 ),
             )
         except InvestigationRunError as exc:
