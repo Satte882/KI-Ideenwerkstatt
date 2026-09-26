@@ -1,0 +1,28 @@
+name: PR format preview
+
+on:
+  pull_request:
+    paths:
+      - "ki_radar/accelerator/issue4_blind_review.py"
+      - "tests/test_issue_4_blind_review_package.py"
+      - ".github/workflows/format-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --dev
+      - name: Format target files
+        run: |
+          uv run ruff format ki_radar/accelerator/issue4_blind_review.py tests/test_issue_4_blind_review_package.py
+      - name: Show exact formatter diff
+        run: |
+          git diff -- ki_radar/accelerator/issue4_blind_review.py tests/test_issue_4_blind_review_package.py
