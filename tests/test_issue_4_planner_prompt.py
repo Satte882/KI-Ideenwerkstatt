@@ -7,7 +7,7 @@ from ki_radar.accelerator.investigation_prompts import (
 
 
 def test_planner_requires_reproducible_quantitative_check_before_synthesis():
-    assert PLANNER_PROMPT_VERSION == "vs1-planner-v15"
+    assert PLANNER_PROMPT_VERSION == "vs1-planner-v16"
     assert "Bevor du action=synthesize wählst" in PLANNER_INSTRUCTION
     assert "quantitativen Beziehung zwischen strukturierten Feldern" in PLANNER_INSTRUCTION
     assert "insbesondere compare_groups" in PLANNER_INSTRUCTION
@@ -29,3 +29,11 @@ def test_repair_synthesis_requires_explicit_critical_claim_replacement():
 def test_planner_requires_native_json_transport():
     assert "echte\nJSON-Objekte" in PLANNER_INSTRUCTION
     assert "niemals als JSON-Text in Strings" in PLANNER_INSTRUCTION
+
+
+def test_planner_action_specific_fields_may_be_omitted():
+    assert "action ist immer Pflicht" in PLANNER_INSTRUCTION
+    assert "Bei action=tool sind" in PLANNER_INSTRUCTION
+    assert "Bei action=clarify sind" in PLANNER_INSTRUCTION
+    assert "Bei action=synthesize genügt action" in PLANNER_INSTRUCTION
+    assert "inaktive Felder dürfen" in PLANNER_INSTRUCTION
