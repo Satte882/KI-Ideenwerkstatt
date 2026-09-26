@@ -37,6 +37,45 @@ SCORED_ATTEMPTS = {
     "adaptive": frozenset({1, 2, 3}),
     "fixed": frozenset({1}),
 }
+
+
+def scored_sample_slot_counts(
+    campaign: InvestigationEvidenceCampaign,
+) -> dict[tuple[str, str, int], int]:
+    """Count only the predeclared real scored slots; post-fix runs never enter this sample."""
+    counts: dict[tuple[str, str, int], int] = {}
+    for run in campaign.investigation_runs.all():
+        metadata = dict(run.evidence_metadata or {})
+        if (
+            str(metadata.get("provider_mode") or "") != "real"
+            or str(metadata.get("phase") or "") != "scored"
+        ):
+            continue
+        variant = str(metadata.get("variant") or "").upper()
+        mode = str(run.execution_mode or "")
+        allowed = SCORED_ATTEMPTS.get(mode)
+        try:
+            attempt = int(metadata.get("attempt"))
+        except (TypeError, ValueError):
+            continue
+        if variant not in {"A", "B", "C"} or allowed is None or attempt not in allowed:
+            continue
+        key = (variant, mode, attempt)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def scored_sample_is_frozen(campaign: InvestigationEvidenceCampaign) -> bool:
+    counts = scored_sample_slot_counts(campaign)
+    expected = {
+        (variant, mode, attempt)
+        for variant in ("A", "B", "C")
+        for mode, attempts in SCORED_ATTEMPTS.items()
+        for attempt in attempts
+    }
+    return set(counts) == expected and all(counts[key] == 1 for key in expected)
+
+
 EXPECTED_ANALYSIS_GROUP = {
     "A": "approver_available",
     "C": "queue_retries",
@@ -117,6 +156,12 @@ def resolve_benchmark_snapshot(
                 "Source-Snapshot gebunden werden.",
                 code="benchmark_calibration_required",
             )
+        if phase == "post_fix":
+            raise InvestigationRunError(
+                "Post-Fix-Verifikation darf nur die bereits eingefrorene Snapshot-Bindung "
+                "der Variante wiederverwenden.",
+                code="benchmark_post_fix_binding_required",
+            )
         if requested_snapshot_id is None:
             raise InvestigationRunError(
                 "Der erste Kalibrierungslauf einer Variante benötigt einen expliziten Snapshot.",
@@ -184,6 +229,21 @@ def validate_evidence_attempt(
                 code="benchmark_scoring_already_started",
             )
         return
+
+    if phase == "post_fix":
+        if not scored_sample_is_frozen(campaign):
+            raise InvestigationRunError(
+                "Post-Fix-Verifikation ist erst nach exakt einem eingefrorenen Real-Run "
+                "für jeden der 12 vorab definierten Scored-Slots erlaubt.",
+                code="benchmark_post_fix_before_sample_complete",
+            )
+        return
+
+    if phase != "scored":
+        raise InvestigationRunError(
+            "Unbekannte Evidence-Phase.",
+            code="invalid_benchmark_phase",
+        )
 
     allowed = SCORED_ATTEMPTS.get(mode)
     if allowed is None or attempt not in allowed:

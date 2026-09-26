@@ -18,6 +18,9 @@ from ki_radar.accelerator.investigation_benchmark import (
     evidence_campaign_report,
     prepare_fixed_route,
     request_fixed_route_synthesis,
+    resolve_benchmark_snapshot,
+    scored_sample_is_frozen,
+    validate_evidence_attempt,
 )
 from ki_radar.accelerator.investigation_brief import (
     materialize_decision_brief,
@@ -2227,6 +2230,101 @@ def test_issue4_runner_binds_variant_to_calibrated_snapshot_and_freezes_scored_s
             attempt=2,
             snapshot=str(snapshot1.snapshot_id),
         )
+
+    with pytest.raises(CommandError):
+        call_command(
+            "run_issue4_evidence",
+            campaign=str(campaign.pk),
+            variant="A",
+            mode="adaptive",
+            phase="post_fix",
+            attempt=1,
+        )
+
+
+@pytest.mark.django_db
+def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_matrix(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Post-Fix harness")
+    snapshots = {}
+    for variant in ("A", "B", "C"):
+        root = tmp_path / variant
+        write_variant_pack(root, variant)
+        _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=root)
+        snapshots[variant] = snapshot
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    for variant in ("A", "B", "C"):
+        for mode, attempts in (("adaptive", (1, 2, 3)), ("fixed", (1,))):
+            for attempt in attempts:
+                handle = start_investigation(
+                    actor=owner,
+                    request=StartInvestigationRequest(
+                        snapshot_id=snapshots[variant].snapshot_id,
+                        idempotency_key=f"seed-{variant}-{mode}-{attempt}",
+                        evidence_campaign_id=campaign.pk,
+                        execution_mode=mode,
+                        evidence_metadata={
+                            "provider_mode": "real",
+                            "phase": "scored",
+                            "variant": variant,
+                            "attempt": attempt,
+                        },
+                        decision_brief_required=True,
+                    ),
+                )
+                abort_investigation(actor=owner, run_id=handle.run_id)
+
+    assert scored_sample_is_frozen(campaign) is True
+    validate_evidence_attempt(
+        campaign=campaign,
+        variant="A",
+        mode="adaptive",
+        phase="post_fix",
+        attempt=1,
+    )
+    resolved = resolve_benchmark_snapshot(
+        campaign=campaign,
+        variant="A",
+        phase="post_fix",
+    )
+    assert resolved.pk == snapshots["A"].snapshot_id
+
+    before_matrix = evidence_campaign_report(campaign)["matrix"]
+
+    def fake_runner(**kwargs):
+        return type(
+            "Result",
+            (),
+            {"run_id": kwargs["run_id"], "status": InvestigationRun.Status.RUNNING},
+        )()
+
+    monkeypatch.setattr(issue4_evidence_command, "run_until_boundary", fake_runner)
+    call_command(
+        "run_issue4_evidence",
+        campaign=str(campaign.pk),
+        variant="A",
+        mode="adaptive",
+        phase="post_fix",
+        attempt=1,
+    )
+
+    post_fix = InvestigationRun.objects.get(
+        evidence_campaign=campaign,
+        evidence_metadata__phase="post_fix",
+    )
+    assert post_fix.source_snapshot_id == snapshots["A"].snapshot_id
+    assert post_fix.evidence_metadata == {
+        "provider_mode": "real",
+        "phase": "post_fix",
+        "variant": "A",
+        "attempt": 1,
+    }
+    assert evidence_campaign_report(campaign)["matrix"] == before_matrix
 
 
 @pytest.mark.django_db
