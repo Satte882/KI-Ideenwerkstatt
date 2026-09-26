@@ -52,6 +52,7 @@ class ReviewSource:
     source_type: str
     content: str
     original_filename: str
+    source_id: str = ""
 
 
 def _as_text(value: object) -> str:
@@ -275,6 +276,7 @@ def _review_sources(run: InvestigationRun) -> list[ReviewSource]:
                 source_type=source.source_type,
                 content=source.content,
                 original_filename=source.filename,
+                source_id=str(source.pk),
             )
         )
     return sources
@@ -286,11 +288,91 @@ def _append_if(lines: list[str], heading: str, value: object) -> None:
         lines.extend([heading, "", text, ""])
 
 
+def _locator_label(reference: Mapping[str, Any]) -> str:
+    locator = reference.get("locator")
+    if not isinstance(locator, Mapping):
+        return ""
+    parts: list[str] = []
+    for key, label in (("line", "Zeile"), ("row", "Zeile"), ("column", "Spalte")):
+        value = locator.get(key)
+        if value not in {None, ""}:
+            parts.append(f"{label} {value}")
+    return ", ".join(parts)
+
+
+def _neutral_provenance_entries(
+    run: InvestigationRun,
+    sources: Iterable[ReviewSource],
+) -> list[str]:
+    source_aliases = {source.source_id: source.alias for source in sources if source.source_id}
+    tool_sources: dict[str, str] = {}
+    for step in run.steps.all():
+        reference = step.result_ref if isinstance(step.result_ref, Mapping) else {}
+        parameters = step.parameters if isinstance(step.parameters, Mapping) else {}
+        result_id = _as_text(reference.get("tool_result_id"))
+        source_id = _as_text(parameters.get("source_id"))
+        if result_id and source_id in source_aliases:
+            tool_sources[result_id] = source_aliases[source_id]
+
+    def reference_label(reference: object) -> str:
+        if not isinstance(reference, Mapping):
+            return ""
+        source_id = _as_text(reference.get("source_id"))
+        if source_id in source_aliases:
+            suffix = _locator_label(reference)
+            return source_aliases[source_id] + (f" ({suffix})" if suffix else "")
+        tool_result_id = _as_text(reference.get("tool_result_id"))
+        if tool_result_id in tool_sources:
+            return f"Reproduzierbare Analyse zu {tool_sources[tool_result_id]}"
+        return ""
+
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    entries: list[str] = []
+
+    problem = payload.get("problem") if isinstance(payload.get("problem"), Mapping) else {}
+    for reference in problem.get("references", []):
+        label = reference_label(reference)
+        if label:
+            entries.append(f"Problem -> {label}")
+
+    for index, hypothesis in enumerate(payload.get("hypotheses", []), start=1):
+        if not isinstance(hypothesis, Mapping):
+            continue
+        for reference in hypothesis.get("references", []):
+            label = reference_label(reference)
+            if label:
+                entries.append(f"Ursachenhypothese {index} -> {label}")
+        for reference in hypothesis.get("counterevidence_refs", []):
+            label = reference_label(reference)
+            if label:
+                entries.append(f"Gegenbeleg zu Ursachenhypothese {index} -> {label}")
+
+    for index, calculation in enumerate(payload.get("calculations", []), start=1):
+        if not isinstance(calculation, Mapping):
+            continue
+        label = reference_label(calculation.get("reference"))
+        if label:
+            entries.append(f"Berechnung {index} -> {label}")
+
+    recommendation = (
+        payload.get("recommendation")
+        if isinstance(payload.get("recommendation"), Mapping)
+        else {}
+    )
+    for reference in recommendation.get("references", []):
+        label = reference_label(reference)
+        if label:
+            entries.append(f"Empfehlung -> {label}")
+
+    return list(dict.fromkeys(entries))
+
+
 def render_review_case(
     *,
     review_code: str,
     surface: Mapping[str, Any],
     sources: Iterable[ReviewSource],
+    provenance_entries: Iterable[str] = (),
 ) -> str:
     lines = [
         f"# Anonymisierte Entscheidungsgrundlage {review_code}",
@@ -417,6 +499,12 @@ def render_review_case(
             if option_risks:
                 lines.append(f"Risiken: {option_risks}")
             lines.append("")
+
+    provenance = [item for item in provenance_entries if _as_text(item)]
+    if provenance:
+        lines.extend(["## Nachweiszuordnung", ""])
+        lines.extend(f"- {item}" for item in provenance)
+        lines.append("")
 
     lines.extend(["## Quellen und Daten zur Prüfung", ""])
     for source in sources:
@@ -597,6 +685,7 @@ def build_blind_review_package(
                 review_code=review_code,
                 surface=surface,
                 sources=sources,
+                provenance_entries=_neutral_provenance_entries(run, sources),
             )
             exact_tokens = _exact_tokens_for_run(run)
             reviewer_markdown, redaction_counts = redact_blinding_metadata(
