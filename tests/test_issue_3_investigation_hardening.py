@@ -2286,6 +2286,7 @@ def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
             executor_token=handle.executor_token,
             planner=same_synthesis,
             verifier=failing_verifier,
+            synthesizer=same_synthesis,
         )
         for _ in range(5)
     ]
