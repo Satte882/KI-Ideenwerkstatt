@@ -109,7 +109,7 @@ def start_evidence(*, owner, snapshot, campaign, key="issue72-evidence"):
     return start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
-            snapshot_id=snapshot.pk,
+            snapshot_id=snapshot.snapshot_id,
             idempotency_key=key,
             evidence_campaign_id=campaign.pk,
             evidence_metadata={
@@ -213,7 +213,7 @@ def test_waiting_evidence_run_does_not_occupy_product_guided_path(
     product_handle = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
-            snapshot_id=snapshot.pk,
+            snapshot_id=snapshot.snapshot_id,
             idempotency_key="issue72-product",
             decision_brief_required=True,
         ),
@@ -267,14 +267,14 @@ def test_product_and_evidence_active_runs_coexist_but_same_scope_still_blocks(
     product = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
-            snapshot_id=snapshot.pk,
+            snapshot_id=snapshot.snapshot_id,
             idempotency_key="issue72-product-main",
         ),
     )
     product_retry = start_investigation(
         actor=owner,
         request=StartInvestigationRequest(
-            snapshot_id=snapshot.pk,
+            snapshot_id=snapshot.snapshot_id,
             idempotency_key="issue72-product-main",
         ),
     )
@@ -293,7 +293,7 @@ def test_product_and_evidence_active_runs_coexist_but_same_scope_still_blocks(
         start_investigation(
             actor=coordinator,
             request=StartInvestigationRequest(
-                snapshot_id=snapshot.pk,
+                snapshot_id=snapshot.snapshot_id,
                 idempotency_key="issue72-product-second",
             ),
         )
@@ -390,7 +390,7 @@ def test_parallel_product_and_evidence_starts_use_separate_active_slots(
         barrier.wait()
         try:
             request_kwargs = {
-                "snapshot_id": snapshot.pk,
+                "snapshot_id": snapshot.snapshot_id,
                 "idempotency_key": (
                     "issue72-parallel-evidence" if evidence_mode else "issue72-parallel-product"
                 ),
