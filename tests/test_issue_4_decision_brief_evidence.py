@@ -36,6 +36,7 @@ from ki_radar.accelerator.investigation_llm import (
     _reserve_model_call,
     _structured_provider_call,
 )
+from ki_radar.accelerator.investigation_loop import advance_investigation
 from ki_radar.accelerator.investigation_models import (
     InvestigationBriefRevision,
     InvestigationModelCall,
@@ -542,11 +543,51 @@ def test_variant_b_missing_denominator_stays_human_clarification(
     assert step.result_payload["columns"]["total_eligible"]["missing"] == 3
     assert step.result_payload["columns"]["total_eligible"]["type"] == "empty"
 
+    analysis_ref = {
+        "tool_result_id": str(step.result_ref["tool_result_id"]),
+        "revision_hash": csv_source.content_sha256,
+    }
+    brief_payload = {
+        "calculations": [
+            {
+                "summary": "Eskalationsquote ist ohne Bezugsgröße nicht berechenbar.",
+                "reference": analysis_ref,
+            }
+        ],
+        "recommendation": {
+            "summary": "Zuerst die fehlende Bezugsgröße erheben.",
+            "rationale": "Ohne Nenner ist keine belastbare Quote möglich.",
+            "references": [analysis_ref],
+        },
+    }
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        brief_payload=brief_payload,
+        brief_hash=content_hash(brief_payload),
+        source_relevance_complete=True,
+        counterevidence_search_executed=True,
+        counterevidence_hits_processed=True,
+    )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    decision = evaluate_run_policy(run, external_critical_gap=True)
+
+    decision = evaluate_run_policy(run)
     assert decision.outcome == PolicyOutcome.HUMAN_CLARIFICATION
     assert decision.reason_code == ReasonCode.MISSING_EVIDENCE
-    assert decision.outcome != PolicyOutcome.READY_FOR_DECISION
+    assert "external_critical_gap" in decision.blockers
+
+    def planner_must_not_run(**_kwargs):
+        raise AssertionError("Missing Evidence muss vor einem weiteren Modellaufruf stoppen.")
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=planner_must_not_run,
+    )
+    run.refresh_from_db()
+
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == ReasonCode.MISSING_EVIDENCE.value
+    assert "total_eligible" in run.clarification_payload["needed_evidence"]
 
 
 @pytest.mark.django_db
