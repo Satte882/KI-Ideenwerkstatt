@@ -76,6 +76,25 @@ class InvestigationSourceFolder(TimeStampedModel):
                     )
         super().save(*args, **kwargs)
 
+    @property
+    def product_display_name(self) -> str:
+        """Hide benchmark-only A/B/C labels from the normal product surface."""
+        normalized = " ".join(self.name.strip().casefold().replace("_", "-").split())
+        benchmark_labels = {
+            "a-fall",
+            "b-fall",
+            "c-fall",
+            "fall a",
+            "fall b",
+            "fall c",
+            "a fall",
+            "b fall",
+            "c fall",
+        }
+        if normalized in benchmark_labels:
+            return f"Quellenbasis für „{self.process_analysis.name}“"
+        return self.name
+
     def __str__(self) -> str:
         return f"{self.process_analysis_id}: {self.name}"
 
@@ -333,8 +352,19 @@ class InvestigationRun(TimeStampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["process_analysis"],
-                condition=models.Q(status__in=["running", "waiting_human"]),
-                name="uniq_active_investigation_run",
+                condition=models.Q(
+                    status__in=["running", "waiting_human"],
+                    evidence_campaign__isnull=True,
+                ),
+                name="uniq_active_product_run",
+            ),
+            models.UniqueConstraint(
+                fields=["process_analysis"],
+                condition=models.Q(
+                    status__in=["running", "waiting_human"],
+                    evidence_campaign__isnull=False,
+                ),
+                name="uniq_active_evidence_run",
             ),
             models.UniqueConstraint(
                 fields=["process_analysis", "idempotency_key"],
