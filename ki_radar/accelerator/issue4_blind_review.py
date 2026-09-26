@@ -743,11 +743,22 @@ def build_blind_review_package(
                 sources=sources,
                 provenance_entries=_neutral_provenance_entries(run, sources),
             )
+            raw_markdown, source_filename_redactions = replace_source_filenames(
+                raw_markdown,
+                sources,
+            )
             exact_tokens = _exact_tokens_for_run(run)
+            exact_tokens.update(
+                source.original_filename
+                for source in sources
+                if _as_text(source.original_filename)
+            )
             reviewer_markdown, redaction_counts = redact_blinding_metadata(
                 raw_markdown,
                 exact_tokens=exact_tokens,
             )
+            if source_filename_redactions:
+                redaction_counts["source_filename"] = source_filename_redactions
             leaks = find_blinding_leaks(reviewer_markdown, exact_tokens=exact_tokens)
             if leaks:
                 raise BlindReviewPackageError(
