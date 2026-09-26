@@ -30,11 +30,33 @@ _SCENARIO_RE = re.compile(
     r"\b(Fall|Variante|Variant|Case)\s*[-_:#/]?\s*([ABC])\b",
     re.IGNORECASE,
 )
-_BENCHMARK_SLOT_RE = re.compile(r"\b[ABC]/(?:adaptive|fixed)/\d+\b", re.IGNORECASE)
-_PROJECT_MARKER_RE = re.compile(
-    r"\bVS1\s*/\s*#?4\b|\bIssue\s*#?4\b",
+_SCENARIO_IN_RE = re.compile(
+    r"\bim\s+(?:Fall|Case)\s*[-_:#/]?\s*[ABC]\b",
     re.IGNORECASE,
 )
+_SCENARIO_FROM_RE = re.compile(
+    r"\bvon\s+(?:Fall|Case)\s*[-_:#/]?\s*[ABC]\b",
+    re.IGNORECASE,
+)
+_SCENARIO_COMPARE_RE = re.compile(
+    r"\bähnelt\s+(?:Fall|Case)\s*[-_:#/]?\s*[ABC]\b",
+    re.IGNORECASE,
+)
+_SOURCE_VARIANT_LABEL_RE = re.compile(
+    r"\b(Gegenbeleg|Systemhinweis|Berichtsstand|Counterevidence|System note|Report)"
+    r"\s*[-_:#/]?\s*([ABC])\b",
+    re.IGNORECASE,
+)
+_CASE_ID_RE = re.compile(r"\b[ABC]-(\d{2,})\b", re.IGNORECASE)
+_BENCHMARK_SLOT_RE = re.compile(r"\b[ABC]/(?:adaptive|fixed)/\d+\b", re.IGNORECASE)
+_PROJECT_MARKER_RE = re.compile(
+    r"\bVS1\s*/\s*#?4(?:\s+Neutral Evidence Case)?\b"
+    r"|\bIssue\s*#?4\b"
+    r"|\bNeutral Evidence Case\b"
+    r"|\bNeutraler Evidenzfall\b",
+    re.IGNORECASE,
+)
+_REPEATED_PROCESS_RE = re.compile(r"\bProzessanalyse(?:\s+Prozessanalyse)+\b", re.IGNORECASE)
 _LOCAL_URL_RE = re.compile(r"https?://(?:127\.0\.0\.1|localhost)(?::\d+)?/\S*", re.IGNORECASE)
 _BENCHMARK_WORD_RE = re.compile(
     r"\b(?:PASS|FAIL|scored|adaptive|benchmark|attempt)\b",
@@ -135,6 +157,10 @@ def _replace_scenario_label(match: re.Match[str]) -> str:
     return "this case"
 
 
+def _replace_source_variant_label(match: re.Match[str]) -> str:
+    return match.group(1)
+
+
 def redact_blinding_metadata(
     text: str,
     *,
@@ -151,9 +177,18 @@ def redact_blinding_metadata(
             counts["exact_identifier"] = counts.get("exact_identifier", 0) + occurrences
 
     substitutions = (
+        ("scenario_context", _SCENARIO_FROM_RE, "dieses Falls"),
+        ("scenario_context", _SCENARIO_IN_RE, "in diesem Fall"),
+        (
+            "scenario_context",
+            _SCENARIO_COMPARE_RE,
+            "ähnelt einem vergleichbaren Referenzfall",
+        ),
         ("scenario_label", _SCENARIO_RE, _replace_scenario_label),
+        ("source_variant_label", _SOURCE_VARIANT_LABEL_RE, _replace_source_variant_label),
+        ("case_id", _CASE_ID_RE, r"case-\1"),
         ("benchmark_slot", _BENCHMARK_SLOT_RE, "[redigierte Zuordnung]"),
-        ("project_marker", _PROJECT_MARKER_RE, "Neutraler Evidenzfall"),
+        ("project_marker", _PROJECT_MARKER_RE, "Prozessanalyse"),
         ("local_url", _LOCAL_URL_RE, "[lokaler Link entfernt]"),
         ("uuid", _UUID_RE, "[redigierte ID]"),
         ("hash", _HASH_RE, "[redigierter Hash]"),
@@ -163,6 +198,7 @@ def redact_blinding_metadata(
         if replaced:
             counts[name] = counts.get(name, 0) + replaced
 
+    output = _REPEATED_PROCESS_RE.sub("Prozessanalyse", output)
     return output, counts
 
 
@@ -172,6 +208,8 @@ def find_blinding_leaks(text: str, *, exact_tokens: Iterable[str] = ()) -> list[
         ("UUID", _UUID_RE),
         ("64-Zeichen-Hash", _HASH_RE),
         ("A/B/C-Szenariolabel", _SCENARIO_RE),
+        ("A/B/C-Quellenlabel", _SOURCE_VARIANT_LABEL_RE),
+        ("A/B/C-Fall-ID", _CASE_ID_RE),
         ("Benchmark-Slot", _BENCHMARK_SLOT_RE),
         ("Projekt-/Issue-Marker", _PROJECT_MARKER_RE),
         ("lokale URL", _LOCAL_URL_RE),
@@ -666,8 +704,10 @@ def build_blind_review_package(
         cases_dir = temp_dir / "cases"
         cases_dir.mkdir(parents=True)
 
-        (temp_dir / "README.md").write_text(reviewer_readme(), encoding="utf-8")
-        (temp_dir / "Bewertungsbogen.md").write_text(reviewer_form(), encoding="utf-8")
+        (temp_dir / "README.md").write_text(reviewer_readme(), encoding="utf-8", newline="\n")
+        (temp_dir / "Bewertungsbogen.md").write_text(
+            reviewer_form(), encoding="utf-8", newline="\n"
+        )
 
         for index, slot in enumerate(ordered_slots, start=1):
             review_code = f"R{index:02d}"
@@ -692,7 +732,7 @@ def build_blind_review_package(
                 )
 
             case_path = cases_dir / f"{review_code}.md"
-            case_path.write_text(reviewer_markdown, encoding="utf-8")
+            case_path.write_text(reviewer_markdown, encoding="utf-8", newline="\n")
             curator_entries.append(
                 {
                     "review_code": review_code,
@@ -705,9 +745,7 @@ def build_blind_review_package(
                         source.alias: source.original_filename for source in sources
                     },
                     "redactions": redaction_counts,
-                    "reviewer_sha256": hashlib.sha256(
-                        reviewer_markdown.encode("utf-8")
-                    ).hexdigest(),
+                    "reviewer_sha256": _sha256_file(case_path),
                 }
             )
 
@@ -733,5 +771,6 @@ def build_blind_review_package(
     curator_path.write_text(
         json.dumps(curator, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     return package_path, curator_path
