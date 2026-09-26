@@ -119,7 +119,10 @@ def test_review_order_is_deterministic_without_exposing_variant_order():
 def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics():
     run_id = "aab16792-39aa-46be-935a-ba97248bcebd"
     raw = (
-        "Fall A zeigt Freigabeverzögerungen. VS1/#4. "
+        "Im Fall A zeigen sich Freigabeverzögerungen. "
+        "Die Durchlaufzeit von Fall C ähnelt Fall A. "
+        "Gegenbeleg A, Berichtsstand B und Systemhinweis C. "
+        "A-01 und C-04. Neutral Evidence Case. VS1/#4. "
         f"Run {run_id}. "
         "A/adaptive/2. "
         "http://127.0.0.1:8001/accelerator/investigations/"
@@ -129,6 +132,16 @@ def test_metadata_redaction_removes_public_lookup_keys_but_preserves_semantics()
     redacted, counts = redact_blinding_metadata(raw, exact_tokens={run_id})
 
     assert "Freigabeverzögerungen" in redacted
+    assert "in diesem Fall" in redacted
+    assert "dieses Falls ähnelt einem vergleichbaren Referenzfall" in redacted
+    assert "Gegenbeleg A" not in redacted
+    assert "Berichtsstand B" not in redacted
+    assert "Systemhinweis C" not in redacted
+    assert "A-01" not in redacted
+    assert "C-04" not in redacted
+    assert "case-01" in redacted
+    assert "case-04" in redacted
+    assert "Neutral Evidence Case" not in redacted
     assert counts
     assert not find_blinding_leaks(redacted, exact_tokens={run_id})
 
@@ -316,6 +329,9 @@ def test_build_package_keeps_curator_mapping_outside_reviewer_zip(tmp_path, monk
         combined = "\n".join(
             archive.read(name).decode("utf-8") for name in names if name.endswith(".md")
         )
+        for entry in curator["mapping"]:
+            payload = archive.read(f"cases/{entry['review_code']}.md")
+            assert blind_review.hashlib.sha256(payload).hexdigest() == entry["reviewer_sha256"]
 
     assert "campaign-private" not in combined
     assert not find_blinding_leaks(combined)
