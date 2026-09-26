@@ -135,6 +135,21 @@ def _decode_structured_field(
 
 
 def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, Any]) -> None:
+    required_fields = {
+        "action",
+        "target_claim_id",
+        "expected_discriminating_finding",
+        "rationale",
+        "tool_name",
+        "parameters",
+        "clarification_reason",
+        "clarification_payload",
+    }
+    if missing := sorted(required_fields - set(payload)):
+        raise InvestigationRunError(
+            "Planner-Antwort ist unvollständig; fehlend: " + ", ".join(missing),
+            code="invalid_response",
+        )
     if payload.get("action") not in {"tool", "synthesize", "clarify"}:
         raise InvestigationRunError("Ungültige Untersuchungsaktion.", code="invalid_planner_action")
     _decode_structured_field(payload, "parameters", expected_type=Mapping, default={})

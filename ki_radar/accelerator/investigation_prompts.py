@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v14"
+PLANNER_PROMPT_VERSION = "vs1-planner-v15"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v7"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v14"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v15"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
@@ -107,7 +107,7 @@ Verarbeite Gegenbelege, wenn sie für die Entscheidung relevant sind.
 PLANNER_INSTRUCTION = """Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.
 Wähle genau den nächsten fachlich sinnvollen Schritt: Werkzeug, Synthese oder eine wirklich
 entscheidungskritische Rückfrage. Wenn die vorhandene Evidenz für einen reviewfähigen
-Entscheidungsstand genügt, wähle action=synthesize mit leerem tool_name und "{}" als
+Entscheidungsstand genügt, wähle action=synthesize mit leerem tool_name und {} als
 parameters. Der Server besitzt Quellen, Werkzeugergebnisse, Claims und Brief; schreibe
 diese Zustände nicht zurück. Nutze nur die Werkzeugnamen,
 Source-IDs und Parameter aus dem Kontext. Für read_source und profile_csv ist genau
@@ -117,7 +117,8 @@ quantitativen Beziehung zwischen strukturierten Feldern beruht und die dafür n�
 im freigegebenen Quellenraum vorhanden sind, führe die passende reproduzierbare Analyse mit
 einem erlaubten Werkzeug aus, insbesondere compare_groups. Verschiebe einen solchen intern
 lösbaren Analysecheck nicht nur in validation_step; bloßes Lesen der Rohzeilen ersetzt ihn nicht.
-parameters und clarification_payload sind serialisierte JSON-Objekte; leer ist "{}".
+Antworte als ein einziges JSON-Objekt. parameters und clarification_payload sind echte
+JSON-Objekte und dürfen niemals als JSON-Text in Strings serialisiert werden; leer ist {}.
 Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
 lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.
@@ -170,57 +171,10 @@ Verwende nur den rekonstruierbaren Arbeitsstand."""
 
 
 def planner_response_format() -> dict:
-    return {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "vs1_planner_action",
-            "strict": True,
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "action": {"type": "string", "enum": ["tool", "synthesize", "clarify"]},
-                    "target_claim_id": {"type": "string"},
-                    "expected_discriminating_finding": {"type": "string"},
-                    "rationale": {"type": "string"},
-                    "tool_name": {
-                        "type": "string",
-                        "enum": ["", *PLANNER_TOOL_NAMES],
-                    },
-                    "parameters": {
-                        "type": "string",
-                        "description": (
-                            "Serialisiertes JSON-Objekt mit Parametern für tool_name "
-                            "gemäß tool_parameter_contracts im Kontext; leer exakt {}."
-                        ),
-                    },
-                    "clarification_reason": {
-                        "type": "string",
-                        "enum": [
-                            "",
-                            "missing_evidence",
-                            "permission_or_scope",
-                            "value_tradeoff",
-                        ],
-                    },
-                    "clarification_payload": {
-                        "type": "string",
-                        "description": "Serialisiertes JSON-Objekt zur Klärung; leer exakt {}.",
-                    },
-                },
-                "required": [
-                    "action",
-                    "target_claim_id",
-                    "expected_discriminating_finding",
-                    "rationale",
-                    "tool_name",
-                    "parameters",
-                    "clarification_reason",
-                    "clarification_payload",
-                ],
-                "additionalProperties": False,
-            },
-        },
-    }
+    # Planner fields are native JSON. Tool-specific semantics stay authoritative
+    # on the server because one compact provider schema cannot safely express the
+    # heterogeneous parameter contracts without double-encoding objects as strings.
+    return {"type": "json_object"}
 
 
 def synthesis_response_format() -> dict:

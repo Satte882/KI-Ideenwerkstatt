@@ -1560,8 +1560,8 @@ def test_planner_can_enter_synthesis_before_benchmark_completeness(
     calls = []
 
     def provider(**kwargs):
-        response_format = kwargs["response_format"]
-        if response_format == {"type": "json_object"}:
+        system = kwargs["messages"][0]["content"]
+        if "Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf" in system:
             calls.append("synthesizer")
             raw = json.dumps(
                 {
@@ -1585,9 +1585,9 @@ def test_planner_can_enter_synthesis_before_benchmark_completeness(
                     "expected_discriminating_finding": "",
                     "rationale": "Der vorhandene Stand ist reviewfähig genug für eine Synthese.",
                     "tool_name": "",
-                    "parameters": "{}",
+                    "parameters": {},
                     "clarification_reason": "",
-                    "clarification_payload": "{}",
+                    "clarification_payload": {},
                 }
             )
         return OpenRouterResult(
@@ -1677,7 +1677,8 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
     def provider(**kwargs):
         nonlocal calls
         calls += 1
-        if kwargs["response_format"] == {"type": "json_object"}:
+        system = kwargs["messages"][0]["content"]
+        if "Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf" in system:
             raw = json.dumps(
                 {
                     "claim_register": [],
@@ -1701,9 +1702,9 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
                         "Der aktuelle Stand soll synthetisiert und auf Lücken geprüft werden."
                     ),
                     "tool_name": "",
-                    "parameters": "{}",
+                    "parameters": {},
                     "clarification_reason": "",
-                    "clarification_payload": "{}",
+                    "clarification_payload": {},
                 }
             )
         else:
@@ -1716,18 +1717,16 @@ def test_tool_addressable_synthesis_gap_returns_to_planner_without_human_wait(
                     "expected_discriminating_finding": "Gruppenunterschied quantifizieren.",
                     "rationale": "Die intern erkannte Evidenzlücke schließen.",
                     "tool_name": "compare_groups",
-                    "parameters": json.dumps(
-                        {
-                            "source_id": str(source.source_id),
-                            "group_by": "available",
-                            "aggregation": "mean",
-                            "value_column": "value",
-                            "filters": [],
-                            "unit_column": "unit",
-                        }
-                    ),
+                    "parameters": {
+                        "source_id": str(source.source_id),
+                        "group_by": "available",
+                        "aggregation": "mean",
+                        "value_column": "value",
+                        "filters": [],
+                        "unit_column": "unit",
+                    },
                     "clarification_reason": "",
-                    "clarification_payload": "{}",
+                    "clarification_payload": {},
                 }
             )
         return OpenRouterResult(
@@ -2401,29 +2400,17 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
     assert budget_exc.value.code == "budget_expansion_forbidden"
 
 
-def test_planner_schema_allows_only_executable_tools():
-    response_format = planner_response_format()
-    schema = response_format["json_schema"]["schema"]
-
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v14"
-    assert response_format["type"] == "json_schema"
-    assert response_format["json_schema"]["strict"] is True
-    assert schema["properties"]["action"]["enum"] == ["tool", "synthesize", "clarify"]
-    assert schema["properties"]["tool_name"]["enum"] == ["", *PLANNER_TOOL_NAMES]
-    assert set(schema["properties"]["tool_name"]["enum"]) - {""} == {
+def test_planner_transport_keeps_only_executable_tool_contracts():
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v15"
+    assert planner_response_format() == {"type": "json_object"}
+    assert set(TOOL_PARAMETER_CONTRACTS) == set(PLANNER_TOOL_NAMES)
+    assert set(PLANNER_TOOL_NAMES) == {
         "list_sources",
         "search_sources",
         "read_source",
         "profile_csv",
         "compare_groups",
     }
-    assert set(TOOL_PARAMETER_CONTRACTS) == set(PLANNER_TOOL_NAMES)
-    assert schema["properties"]["clarification_reason"]["enum"] == [
-        "",
-        "missing_evidence",
-        "permission_or_scope",
-        "value_tradeoff",
-    ]
 
 
 def _assert_portable_strict_schema(schema):
@@ -2443,20 +2430,11 @@ def _assert_portable_strict_schema(schema):
     visit(schema)
 
 
-def test_planner_schema_uses_portable_closed_strict_subset():
-    schema = planner_response_format()["json_schema"]["schema"]
+def test_planner_transport_does_not_double_encode_parameter_objects():
+    response_format = planner_response_format()
 
-    _assert_portable_strict_schema(schema)
-    for name in (
-        "parameters",
-        "clarification_payload",
-    ):
-        assert schema["properties"][name]["type"] == "string"
-
-    assert "{}" in schema["properties"]["parameters"]["description"]
-    assert "claim_register" not in schema["properties"]
-    assert "brief_payload" not in schema["properties"]
-    assert "source_relevance" not in schema["properties"]
+    assert response_format == {"type": "json_object"}
+    assert "json_schema" not in response_format
 
 
 def test_verifier_schema_uses_strict_structured_outputs():
