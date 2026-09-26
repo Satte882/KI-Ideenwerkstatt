@@ -704,9 +704,7 @@ def build_blind_review_package(
         cases_dir = temp_dir / "cases"
         cases_dir.mkdir(parents=True)
 
-        (temp_dir / "README.md").write_text(
-            reviewer_readme(), encoding="utf-8", newline="\n"
-        )
+        (temp_dir / "README.md").write_text(reviewer_readme(), encoding="utf-8", newline="\n")
         (temp_dir / "Bewertungsbogen.md").write_text(
             reviewer_form(), encoding="utf-8", newline="\n"
         )
