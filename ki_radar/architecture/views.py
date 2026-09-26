@@ -380,12 +380,16 @@ def process_analysis_detail(request, pk):
     if solution_design_task and not validate_task(solution_design_task.criteria).complete:
         solution_design_task = None
 
-    latest_investigation_run = process_analysis.investigation_runs.first()
+    latest_investigation_run = process_analysis.investigation_runs.filter(
+        evidence_campaign__isnull=True
+    ).first()
     active_investigation_folders = list(
         process_analysis.investigation_source_folders.filter(is_active=True).order_by("name")
     )
     current_investigation_snapshot = (
-        process_analysis.investigation_source_snapshots.select_related("folder")
+        process_analysis.investigation_source_snapshots.select_related(
+            "folder", "folder__process_analysis"
+        )
         .filter(
             process_version=process_analysis.version,
             folder__is_active=True,
@@ -404,7 +408,10 @@ def process_analysis_detail(request, pk):
     journey = build_process_analysis_journey(process_analysis, request.user)
     latest_investigation_materialization = (
         InvestigationMaterialization.objects.select_related("run", "brief_revision")
-        .filter(run__process_analysis=process_analysis)
+        .filter(
+            run__process_analysis=process_analysis,
+            run__evidence_campaign__isnull=True,
+        )
         .order_by("-created_at")
         .first()
     )

@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
@@ -214,13 +215,14 @@ def test_process_detail_solution_step_marks_solution_parent_active():
 
     process_id = UUID("11db1767-16ab-48b3-b5f7-bb9f8baae4d0")
     value_stream = AbsoluteUrlObject("/architecture/value-streams/7/")
+    investigation_runs = Mock(spec=["filter"])
+    product_runs = investigation_runs.filter.return_value
+    product_runs.order_by.return_value.first.return_value = None
     process = SimpleNamespace(
         pk=process_id,
         stage=SimpleNamespace(value_stream=value_stream),
         get_absolute_url=lambda: f"/architecture/processes/{process_id}/",
-        investigation_runs=SimpleNamespace(
-            order_by=lambda *_args: SimpleNamespace(first=lambda: None)
-        ),
+        investigation_runs=investigation_runs,
     )
     request = SimpleNamespace(
         GET={"analysis_step": "solution"},
@@ -233,6 +235,10 @@ def test_process_detail_solution_step_marks_solution_parent_active():
     navigation = _process_context_from_context({"request": request, "process_analysis": process})
 
     assert navigation["active_key"] == "solution"
+    assert navigation["decision_brief_url"] is None
+    investigation_runs.filter.assert_called_once_with(evidence_campaign__isnull=True)
+    product_runs.order_by.assert_called_once_with("-created_at")
+    product_runs.order_by.return_value.first.assert_called_once_with()
 
 
 def test_comparison_is_nested_under_process_not_solution_parent():

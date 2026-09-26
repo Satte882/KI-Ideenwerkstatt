@@ -1471,7 +1471,7 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
     )
     response = client.get(authorize_url)
     assert response.status_code == 200
-    assert "Feste Run-Limits" in response.content.decode()
+    assert "Systemseitige technische Limits anzeigen" in response.content.decode()
     assert "max_model_calls" in response.content.decode()
     assert "Einzeldateien oder Werkzeuge werden nicht manuell ausgewählt" in (
         response.content.decode()
@@ -1496,7 +1496,7 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
     detail = client.get(process.get_absolute_url())
     body = detail.content.decode()
     assert detail.status_code == 200
-    assert "Autorisierter Quellenstand" in body
+    assert "Untersuchungsgrundlage autorisiert." in body
     assert "max_model_calls" in body
     assert "Untersuchung starten" in body
 

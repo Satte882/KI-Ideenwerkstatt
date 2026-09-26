@@ -100,13 +100,27 @@ def investigation_authorize(request, process_pk):
     if not _editable_process(request.user, process):
         raise PermissionDenied
 
-    folders = list(process.investigation_source_folders.filter(is_active=True).order_by("name"))
+    folders = list(
+        process.investigation_source_folders.select_related("process_analysis")
+        .filter(is_active=True)
+        .order_by("name")
+    )
     if not folders:
         messages.warning(
             request,
             "Für diese Prozessanalyse ist noch kein aktiver Fallordner administrativ registriert.",
         )
         return redirect(process)
+
+    for folder in folders:
+        latest_snapshot = folder.snapshots.prefetch_related("sources").first()
+        folder.product_source_hint = (
+            ", ".join(
+                latest_snapshot.sources.order_by("filename").values_list("filename", flat=True)[:3]
+            )
+            if latest_snapshot is not None
+            else ""
+        )
 
     default_question = (
         f"Welche Lösungsrichtung ist für „{process.name}“ durch die Evidenz gestützt?"
@@ -145,11 +159,11 @@ def investigation_authorize(request, process_pk):
                 messages.success(
                     request,
                     (
-                        f"Quellenrevision {snapshot.revision} und Run-Budget wurden "
-                        "unveränderlich autorisiert."
+                        f"Untersuchungsgrundlage autorisiert (Revision {snapshot.revision}). "
+                        "Sie können die Untersuchung jetzt starten."
                     ),
                 )
-                return redirect(process)
+                return redirect(f"{process.get_absolute_url()}#evidence-investigation")
 
     return render(
         request,

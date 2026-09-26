@@ -65,7 +65,11 @@ def _process_context_from_context(context):
     if decision_brief_run is None:
         decision_brief_run = context.get("latest_investigation_run")
     if decision_brief_run is None:
-        decision_brief_run = process_analysis.investigation_runs.order_by("-created_at").first()
+        decision_brief_run = (
+            process_analysis.investigation_runs.filter(evidence_campaign__isnull=True)
+            .order_by("-created_at")
+            .first()
+        )
 
     value_stream = process_analysis.stage.value_stream
     value_stream_url = value_stream.get_absolute_url()
