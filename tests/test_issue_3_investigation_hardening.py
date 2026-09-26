@@ -2212,6 +2212,109 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 @pytest.mark.django_db
+def test_failed_verifier_routes_next_iteration_to_synthesizer_repair(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="verifier-repair-route",
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="profile_csv",
+        parameters={"source_id": str(source.source_id)},
+        target_claim_id="problem",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    ref = source_ref(source)
+    claims = ready_claims(source)
+    brief = {
+        "question_scope": {
+            "question": run.decision_question,
+            "scope": "Autorisierter Testfall.",
+        },
+        "problem": {"statement": "Die Gruppen unterscheiden sich.", "references": [ref]},
+        "recommendation": {
+            "summary": "Option A prüfen.",
+            "rationale": "Die verfügbare Evidenz trägt diese Richtung.",
+            "references": [ref],
+        },
+    }
+    apply_planner_state(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        claim_register=claims,
+        brief_payload=brief,
+        progress_kind="evidence",
+        progress_payload={"coverage_change": True},
+    )
+    set_source_relevance(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        relevance={str(source.source_id): {"relevant": True}},
+    )
+
+    def initial_synthesis(**kwargs):
+        current = kwargs["run"]
+        return planner_action(
+            action="synthesize",
+            target_claim_id="",
+            tool_name="",
+            parameters={},
+            claim_register=tuple(current.claim_register),
+            brief_payload=dict(current.brief_payload),
+        )
+
+    first = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=initial_synthesis,
+        verifier=lambda **kwargs: create_critical_verifier_report(kwargs["run"]),
+        synthesizer=initial_synthesis,
+    )
+    assert first.status == InvestigationRun.Status.RUNNING
+
+    repair_calls = []
+
+    def planner_must_not_run(**_kwargs):
+        raise AssertionError("Frischer Verifier-Fail muss zuerst zur Synthese-Reparatur.")
+
+    def repair_synthesizer(**_kwargs):
+        repair_calls.append("called")
+        return planner_action(
+            action="clarify",
+            clarification_reason="missing_evidence",
+            clarification_payload={
+                "impact": "Verifier-Lücke benötigt externen Nachweis.",
+                "required_input": "Zusätzlichen Nachweis bereitstellen.",
+            },
+        )
+
+    second = advance_investigation(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        planner=planner_must_not_run,
+        verifier=lambda **kwargs: create_critical_verifier_report(kwargs["run"]),
+        synthesizer=repair_synthesizer,
+    )
+    run.refresh_from_db()
+
+    assert repair_calls == ["called"]
+    assert second.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == "missing_evidence"
+
+
+@pytest.mark.django_db
 def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
     owner,
     business_unit,
@@ -2286,6 +2389,7 @@ def test_repeated_identical_verifier_failure_uses_generic_convergence_guard(
             executor_token=handle.executor_token,
             planner=same_synthesis,
             verifier=failing_verifier,
+            synthesizer=same_synthesis,
         )
         for _ in range(5)
     ]

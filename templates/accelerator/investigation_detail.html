@@ -179,6 +179,17 @@
       Die folgenden Befunde und Kandidaten stammen aus einem technisch fehlgeschlagenen
       Zwischenstand und bleiben ausschließlich für Nachvollziehbarkeit und Fehleranalyse sichtbar.
     </div>
+    {% if decision_surface.quarantined_situation or decision_surface.quarantined_finding %}
+      <div class="mb-3">
+        <strong>Unverifizierter Zwischenstand</strong>
+        {% if decision_surface.quarantined_situation %}
+          <div class="small mt-2">{{ decision_surface.quarantined_situation }}</div>
+        {% endif %}
+        {% if decision_surface.quarantined_finding %}
+          <div class="small text-muted mt-2">Zwischenbefund: {{ decision_surface.quarantined_finding }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
 {% endif %}
 <details class="architecture-disclosure decision-disclosure mb-3">
   <summary>Begründung, Gegenbelege und Unsicherheiten prüfen</summary>

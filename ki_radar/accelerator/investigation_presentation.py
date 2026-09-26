@@ -259,6 +259,17 @@ def build_decision_surface(
         or run.status == InvestigationRun.Status.WAITING_HUMAN
     )
     analysis_quarantined = run.status == InvestigationRun.Status.FAILED
+    quarantined_situation = situation if analysis_quarantined else ""
+    quarantined_finding = finding if analysis_quarantined else ""
+
+    if analysis_quarantined:
+        situation = frozen_problem or humanize_investigation_text(run.decision_question)
+        scope = (
+            f"Fragestellung: {humanize_investigation_text(run.decision_question)}"
+            if situation != humanize_investigation_text(run.decision_question)
+            else ""
+        )
+        finding = "Kein verifizierter Befund aus diesem Lauf."
 
     status_label = "Untersuchung läuft"
     status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
@@ -372,6 +383,8 @@ def build_decision_surface(
         "status_detail": status_detail,
         "status_tone": status_tone,
         "analysis_quarantined": analysis_quarantined,
+        "quarantined_situation": quarantined_situation,
+        "quarantined_finding": quarantined_finding,
         "technical_status_label": technical_status_label,
         "situation": situation,
         "scope": scope,
