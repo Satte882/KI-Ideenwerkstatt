@@ -11,9 +11,11 @@ from django.utils import timezone
 from .investigation_llm import (
     PlannerAction,
     request_planner_action,
+    request_synthesis_package,
     request_verifier_report,
 )
 from .investigation_models import (
+    InvestigationModelCall,
     InvestigationRun,
     InvestigationStep,
     InvestigationVerifierReport,
@@ -407,6 +409,32 @@ def _record_action_state_repeat(
     return run, repeat_count
 
 
+def _verifier_repair_due(run: InvestigationRun) -> bool:
+    """Route a fresh failed verification to one synthesis repair before replanning.
+
+    A verifier rejection normally concerns the persisted claim/brief package. Re-reading an
+    already successful source cannot change that package and can therefore deadlock with tool
+    deduplication. Give the synthesizer one direct repair pass against the persisted findings.
+    If that repair asks for new investigation work, the following iteration returns to the
+    planner through the normal synthesis_investigation_request handoff.
+    """
+    report = run.verifier_reports.order_by("-revision").first()
+    if report is None or report.success:
+        return False
+    if dict(report.bound_hashes) != {
+        "contract": run.contract_hash,
+        "manifest": run.manifest_hash,
+        "register": run.register_hash,
+        "brief": run.brief_hash,
+    }:
+        return False
+    return not run.model_calls.filter(
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        status=InvestigationModelCall.Status.SUCCESS,
+        created_at__gt=report.created_at,
+    ).exists()
+
+
 def _try_mark_counterevidence_processed(
     *,
     actor,
@@ -470,7 +498,14 @@ def advance_investigation(
         )
 
     try:
-        action = planner(actor=actor, run=run, executor_token=executor_token)
+        if _verifier_repair_due(run):
+            action = request_synthesis_package(
+                actor=actor,
+                run=run,
+                executor_token=executor_token,
+            )
+        else:
+            action = planner(actor=actor, run=run, executor_token=executor_token)
     except InvestigationRunError as exc:
         if exc.code in {
             "budget_exhausted",
@@ -562,8 +597,8 @@ def advance_investigation(
             reason=ReasonCode.TECHNICAL_FAILURE.value,
             error_code="no_progress_loop",
             impact=(
-                "Derselbe Aktions-/Zustands-Fingerprint trat dreimal unmittelbar "
-                "hintereinander ohne neue Evidenz oder Zustandsänderung auf."
+                "Derselbe Aktions-/Zustands-Fingerprint wurde wiederholt ohne "
+                "neue Evidenz oder Zustandsänderung erzeugt."
             ),
             required_action="Planner-/Loop-Verhalten technisch prüfen.",
             details={"repeat_count": repeat_count},
@@ -655,8 +690,9 @@ def advance_investigation(
             return AdvanceResult(ready.pk, ready.status, decision)
 
         if not report.success:
-            # Concrete verifier findings are runtime work. The next planner call
-            # sees the persisted review and may gather evidence or synthesize again.
+            # Concrete verifier findings are runtime work. The next iteration routes
+            # once through the synthesizer so claim/brief references can be repaired
+            # before the generic planner is allowed to request more evidence.
             return AdvanceResult(
                 run.pk,
                 InvestigationRun.Status.RUNNING,
