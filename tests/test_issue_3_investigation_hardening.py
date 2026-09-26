@@ -2401,7 +2401,7 @@ def test_server_rejects_unsafe_tool_and_budget_expansion(
 
 
 def test_planner_transport_keeps_only_executable_tool_contracts():
-    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v15"
+    assert PLANNER_SCHEMA_VERSION == "vs1-planner-schema-v16"
     assert planner_response_format() == {"type": "json_object"}
     assert set(TOOL_PARAMETER_CONTRACTS) == set(PLANNER_TOOL_NAMES)
     assert set(PLANNER_TOOL_NAMES) == {

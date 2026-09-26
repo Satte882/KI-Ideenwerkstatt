@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v15"
+PLANNER_PROMPT_VERSION = "vs1-planner-v16"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v7"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
-PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v15"
+PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
@@ -117,8 +117,13 @@ quantitativen Beziehung zwischen strukturierten Feldern beruht und die dafür n�
 im freigegebenen Quellenraum vorhanden sind, führe die passende reproduzierbare Analyse mit
 einem erlaubten Werkzeug aus, insbesondere compare_groups. Verschiebe einen solchen intern
 lösbaren Analysecheck nicht nur in validation_step; bloßes Lesen der Rohzeilen ersetzt ihn nicht.
-Antworte als ein einziges JSON-Objekt. parameters und clarification_payload sind echte
-JSON-Objekte und dürfen niemals als JSON-Text in Strings serialisiert werden; leer ist {}.
+Antworte als ein einziges JSON-Objekt. action ist immer Pflicht. Bei action=tool sind
+tool_name und parameters Pflicht; target_claim_id, expected_discriminating_finding und
+rationale sind optional. Bei action=clarify sind clarification_reason und
+clarification_payload Pflicht. Bei action=synthesize genügt action; inaktive Felder dürfen
+weggelassen werden und werden serverseitig leer normalisiert. parameters und
+clarification_payload sind echte JSON-Objekte und dürfen niemals als JSON-Text in Strings
+serialisiert werden; leer ist {}.
 Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
 lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.

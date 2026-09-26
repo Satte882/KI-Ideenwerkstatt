@@ -713,13 +713,8 @@ def test_planner_uses_native_json_fields_without_double_encoding(
     run = InvestigationRun.objects.get(pk=handle.run_id)
     payload = {
         "action": "tool",
-        "target_claim_id": "manifest",
-        "expected_discriminating_finding": "Quelle erfassen.",
-        "rationale": "Der Quellenraum wird zuerst gelesen.",
         "tool_name": "list_sources",
         "parameters": {},
-        "clarification_reason": "",
-        "clarification_payload": {},
     }
 
     def fake_provider(**kwargs):
@@ -741,10 +736,57 @@ def test_planner_uses_native_json_fields_without_double_encoding(
     )
 
     assert action.parameters == {}
+    assert action.target_claim_id == ""
+    assert action.expected_discriminating_finding == ""
+    assert action.rationale == ""
+    assert action.clarification_reason == ""
+    assert action.clarification_payload == {}
     assert action.claim_register is None
     assert action.brief_payload is None
     assert action.source_relevance == {}
     assert action.progress_payload == {}
+
+
+@pytest.mark.django_db
+def test_planner_clarify_still_requires_reason(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "clarify-reason-required"),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    def fake_provider(**_kwargs):
+        content = json.dumps(
+            {
+                "action": "clarify",
+                "clarification_payload": {"question": "Welche externe Evidenz fehlt?"},
+            }
+        )
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={"prompt_tokens": 10, "completion_tokens": 5},
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", fake_provider)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        request_planner_action(
+            actor=owner,
+            run=run,
+            executor_token=handle.executor_token,
+        )
+
+    assert exc_info.value.code == "invalid_response"
 
 
 @pytest.mark.django_db
