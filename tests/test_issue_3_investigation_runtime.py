@@ -697,7 +697,7 @@ def test_resume_does_not_silently_switch_model_alias(
 
 
 @pytest.mark.django_db
-def test_planner_decodes_closed_schema_json_fields_without_changing_action_semantics(
+def test_planner_uses_native_json_fields_without_double_encoding(
     owner,
     business_unit,
     tmp_path,
@@ -708,7 +708,7 @@ def test_planner_decodes_closed_schema_json_fields_without_changing_action_seman
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     handle = start_investigation(
         actor=owner,
-        request=StartInvestigationRequest(snapshot.snapshot_id, "closed-schema"),
+        request=StartInvestigationRequest(snapshot.snapshot_id, "native-json"),
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     payload = {
@@ -717,20 +717,13 @@ def test_planner_decodes_closed_schema_json_fields_without_changing_action_seman
         "expected_discriminating_finding": "Quelle erfassen.",
         "rationale": "Der Quellenraum wird zuerst gelesen.",
         "tool_name": "list_sources",
-        "parameters": "{}",
-        "claim_register": "[]",
-        "brief_payload": "{}",
-        "source_relevance": "{}",
-        "progress_kind": "none",
-        "progress_payload": '{"coverage_change": false}',
+        "parameters": {},
         "clarification_reason": "",
-        "clarification_payload": "{}",
+        "clarification_payload": {},
     }
 
     def fake_provider(**kwargs):
-        schema = kwargs["response_format"]["json_schema"]["schema"]
-        assert schema["additionalProperties"] is False
-        assert schema["properties"]["parameters"]["type"] == "string"
+        assert kwargs["response_format"] == {"type": "json_object"}
         content = json.dumps(payload)
         return OpenRouterResult(
             content=content,
