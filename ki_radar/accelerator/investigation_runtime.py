@@ -626,9 +626,11 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 reused=True,
             )
 
+        is_evidence_request = request.evidence_campaign_id is not None
         active = InvestigationRun.objects.filter(
             process_analysis=process,
             status__in=InvestigationRun.ACTIVE_STATUSES,
+            evidence_campaign__isnull=not is_evidence_request,
         ).first()
         if active is not None:
             raise InvestigationRunError(
@@ -725,6 +727,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             active = InvestigationRun.objects.filter(
                 process_analysis=process,
                 status__in=InvestigationRun.ACTIVE_STATUSES,
+                evidence_campaign__isnull=not is_evidence_request,
             ).first()
             raise InvestigationRunError(
                 "Für diese ProcessAnalysis wurde parallel bereits eine Untersuchung reserviert.",
