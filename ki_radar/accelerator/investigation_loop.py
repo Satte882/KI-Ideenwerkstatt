@@ -461,6 +461,7 @@ def advance_investigation(
     executor_token,
     planner: Callable[..., PlannerAction] = request_planner_action,
     verifier: Callable[..., InvestigationVerifierReport] = request_verifier_report,
+    synthesizer: Callable[..., PlannerAction] = request_synthesis_package,
 ) -> AdvanceResult:
     run = InvestigationRun.objects.select_related(
         "process_analysis__stage__value_stream",
@@ -499,7 +500,7 @@ def advance_investigation(
 
     try:
         if _verifier_repair_due(run):
-            action = request_synthesis_package(
+            action = synthesizer(
                 actor=actor,
                 run=run,
                 executor_token=executor_token,
@@ -729,6 +730,7 @@ def run_until_boundary(
     executor_token,
     planner: Callable[..., PlannerAction] = request_planner_action,
     verifier: Callable[..., InvestigationVerifierReport] = request_verifier_report,
+    synthesizer: Callable[..., PlannerAction] = request_synthesis_package,
     max_iterations: int = 64,
 ) -> AdvanceResult:
     if max_iterations < 1 or max_iterations > 128:
@@ -745,6 +747,7 @@ def run_until_boundary(
             executor_token=executor_token,
             planner=planner,
             verifier=verifier,
+            synthesizer=synthesizer,
         )
         if last.status != InvestigationRun.Status.RUNNING:
             return last
