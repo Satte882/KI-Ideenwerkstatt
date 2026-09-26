@@ -320,9 +320,7 @@ def _path_parts(raw_path: str) -> tuple[tuple[str, ...], ...]:
     for path_type in (PureWindowsPath, PurePosixPath):
         pure = path_type(raw_path)
         parts = tuple(
-            part
-            for part in pure.parts
-            if part not in {pure.anchor, pure.drive, "/", "\\"}
+            part for part in pure.parts if part not in {pure.anchor, pure.drive, "/", "\\"}
         )
         if parts and parts not in variants:
             variants.append(parts)
