@@ -220,6 +220,12 @@ def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
     """Describe domain-owned draft adoption without writing anything."""
 
     run = read_run(actor=actor, run_id=run_id)
+    if bool(run.execution_snapshot.get("historical_snapshot_replay")):
+        raise InvestigationRunError(
+            "Historische Post-Fix-Replays sind reine Nachweisartefakte und können nicht "
+            "in den aktuellen Lösungsraum übernommen werden.",
+            code="historical_snapshot_replay_read_only",
+        )
     if run.status != InvestigationRun.Status.READY:
         raise InvestigationRunError(
             "Nur ein technisch READY-geprüfter Brief kann zur Übernahme vorbereitet werden.",
@@ -255,6 +261,12 @@ def materialize_decision_brief(
     operation_key: str,
 ) -> InvestigationMaterialization:
     run = locked_run(actor=actor, run_id=run_id)
+    if bool(run.execution_snapshot.get("historical_snapshot_replay")):
+        raise InvestigationRunError(
+            "Historische Post-Fix-Replays sind reine Nachweisartefakte und können nicht "
+            "materialisiert werden.",
+            code="historical_snapshot_replay_read_only",
+        )
     key = normalize_idempotency_key(operation_key)
     existing = run.materializations.filter(operation_key=key).first()
     if existing is not None:

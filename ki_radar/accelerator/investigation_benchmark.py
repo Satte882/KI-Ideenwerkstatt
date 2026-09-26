@@ -195,7 +195,7 @@ def resolve_benchmark_snapshot(
             "Der Benchmark-Snapshot gehört nicht zur Campaign.",
             code="benchmark_snapshot_invalid",
         )
-    if snapshot.process_version != campaign.process_analysis.version:
+    if phase != "post_fix" and snapshot.process_version != campaign.process_analysis.version:
         raise InvestigationRunError(
             "Der Benchmark-Snapshot gehört nicht zur aktuellen ProcessAnalysis-Version.",
             code="benchmark_snapshot_stale",

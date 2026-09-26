@@ -2280,6 +2280,22 @@ def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_
                 abort_investigation(actor=owner, run_id=handle.run_id)
 
     assert scored_sample_is_frozen(campaign) is True
+
+    original_process_version = process.version
+    ProcessAnalysis.objects.filter(pk=process.pk).update(version=original_process_version + 1)
+    process.refresh_from_db()
+    assert process.version != snapshots["A"].process_version
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        start_investigation(
+            actor=owner,
+            request=StartInvestigationRequest(
+                snapshot_id=snapshots["A"].snapshot_id,
+                idempotency_key="ordinary-stale-snapshot-stays-blocked",
+            ),
+        )
+    assert exc_info.value.code == "process_version_conflict"
+
     validate_evidence_attempt(
         campaign=campaign,
         variant="A",
@@ -2318,13 +2334,54 @@ def test_issue4_post_fix_runs_only_after_frozen_sample_and_never_changes_scored_
         evidence_metadata__phase="post_fix",
     )
     assert post_fix.source_snapshot_id == snapshots["A"].snapshot_id
+    assert post_fix.process_version == snapshots["A"].process_version
+    assert post_fix.process_version != process.version
+    assert post_fix.execution_snapshot["historical_snapshot_replay"] is True
+    assert (
+        post_fix.execution_snapshot["domain_materialization_base"]["process"]["version"]
+        == snapshots["A"].process_version
+    )
     assert post_fix.evidence_metadata == {
         "provider_mode": "real",
         "phase": "post_fix",
         "variant": "A",
         "attempt": 1,
     }
+    with pytest.raises(InvestigationRunError) as exc_info:
+        preview_decision_brief_materialization(actor=owner, run_id=post_fix.pk)
+    assert exc_info.value.code == "historical_snapshot_replay_read_only"
     assert evidence_campaign_report(campaign)["matrix"] == before_matrix
+
+
+@pytest.mark.django_db
+def test_historical_snapshot_replay_flag_is_not_a_general_stale_snapshot_bypass(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Replay guard")
+    write_variant_pack(tmp_path, "A")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(owner=owner, process=process)
+
+    with pytest.raises(InvestigationRunError) as exc_info:
+        start_investigation(
+            actor=owner,
+            request=StartInvestigationRequest(
+                snapshot_id=snapshot.snapshot_id,
+                idempotency_key="replay-guard",
+                evidence_campaign_id=campaign.pk,
+                evidence_metadata={
+                    "provider_mode": "real",
+                    "phase": "scored",
+                    "variant": "A",
+                    "attempt": 1,
+                },
+                allow_historical_snapshot_replay=True,
+            ),
+        )
+
+    assert exc_info.value.code == "historical_snapshot_replay_forbidden"
 
 
 @pytest.mark.django_db
