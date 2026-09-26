@@ -27,7 +27,8 @@ def test_repair_synthesis_requires_explicit_critical_claim_replacement():
 
 
 def test_planner_requires_native_json_transport():
-    assert "echte\nJSON-Objekte" in PLANNER_INSTRUCTION
+    assert "parameters und" in PLANNER_INSTRUCTION
+    assert "clarification_payload sind echte JSON-Objekte" in PLANNER_INSTRUCTION
     assert "niemals als JSON-Text in Strings" in PLANNER_INSTRUCTION
 
 
