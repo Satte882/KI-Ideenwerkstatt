@@ -264,9 +264,17 @@ def _validate_synthesis_package(run: InvestigationRun, payload: Mapping[str, Any
 
     previous_ids = {item["claim_id"] for item in run.claim_register}
     proposed_ids = {str(item.get("claim_id")) for item in claims if isinstance(item, Mapping)}
-    if missing := sorted(previous_ids - proposed_ids):
+    replacement_targets = {
+        str(metadata.get("replaces_claim_id") or "").strip()
+        for item in claims
+        if isinstance(item, Mapping)
+        and isinstance((metadata := item.get("metadata")), Mapping)
+        and str(metadata.get("replaces_claim_id") or "").strip()
+    }
+    if missing := sorted(previous_ids - proposed_ids - replacement_targets):
         raise InvestigationRunError(
-            "Bestehende Claims dürfen nicht verschwinden: " + ", ".join(missing),
+            "Bestehende Claims dürfen nicht ohne expliziten Ersatz verschwinden: "
+            + ", ".join(missing),
             code="invalid_claim",
         )
     normalize_claim_register(run, claims)
