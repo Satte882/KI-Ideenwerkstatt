@@ -1050,8 +1050,7 @@ def decision_blocking_missing_evidence(run: InvestigationRun) -> dict[str, str] 
                 "die darauf gestützte Berechnung ist nicht belastbar."
             ),
             "required_action": (
-                f"{column} ergänzen und die Untersuchung mit derselben Richtungsfrage "
-                "neu bewerten."
+                f"{column} ergänzen und die Untersuchung mit derselben Richtungsfrage neu bewerten."
             ),
         }
     return None
@@ -1171,11 +1170,7 @@ def enforce_claim_guard(
 
     for target_id, replacements in active_replacements.items():
         old = previous_by_id[target_id]
-        if (
-            len(replacements) != 1
-            or not old.get("critical")
-            or target_id in proposed_by_id
-        ):
+        if len(replacements) != 1 or not old.get("critical") or target_id in proposed_by_id:
             raise InvestigationRunError(
                 "Ein kritischer Claim benötigt genau einen expliziten Ersatz.",
                 code="critical_claim_guard",
