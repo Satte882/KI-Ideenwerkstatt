@@ -204,19 +204,21 @@ def qualify_decision_surface(
         if "keine belastbare empfehlung" not in recommendation.casefold():
             raise BlindReviewPackageError("FAILED zeigt eine belastbare Empfehlung an.")
 
-    if clarification_reason == "missing_evidence":
-        if run_status in {InvestigationRun.Status.ABORTED, InvestigationRun.Status.WAITING_HUMAN}:
-            if (
-                "nachweis fehlt" not in finding.casefold()
-                and "information" not in finding.casefold()
-            ):
-                raise BlindReviewPackageError(
-                    "Missing Evidence ist in der Human Surface nicht als Lücke erkennbar."
-                )
-            if "keine belastbare empfehlung" not in recommendation.casefold():
-                raise BlindReviewPackageError(
-                    "Missing Evidence zeigt fälschlich eine belastbare Empfehlung an."
-                )
+    if clarification_reason == "missing_evidence" and run_status in {
+        InvestigationRun.Status.ABORTED,
+        InvestigationRun.Status.WAITING_HUMAN,
+    }:
+        if (
+            "nachweis fehlt" not in finding.casefold()
+            and "information" not in finding.casefold()
+        ):
+            raise BlindReviewPackageError(
+                "Missing Evidence ist in der Human Surface nicht als Lücke erkennbar."
+            )
+        if "keine belastbare empfehlung" not in recommendation.casefold():
+            raise BlindReviewPackageError(
+                "Missing Evidence zeigt fälschlich eine belastbare Empfehlung an."
+            )
 
 
 def _surface_for_run(run: InvestigationRun) -> dict[str, Any]:
@@ -477,7 +479,7 @@ Bitte bewerte keine vermutete Modell- oder Systemarchitektur außerhalb der konk
 def reviewer_form() -> str:
     return """# Bewertungsbogen
 
-Für jeden Fall R01–R09 separat ausfüllen.
+Für jeden Fall R01-R09 separat ausfüllen.
 
 | Feld | Eintrag |
 |---|---|
@@ -493,7 +495,7 @@ Für jeden Fall R01–R09 separat ausfüllen.
 | Zwingende Korrektur vor Richtungsentscheidung | Freitext oder „keine“ |
 | Review-Zeit optional | mm:ss |
 
-## Gesamtfazit nach R01–R09
+## Gesamtfazit nach R01-R09
 
 - Welche wiederkehrenden fachlichen Schwächen treten auf?
 - Gibt es einen Fall, der trotz plausibler Formulierungen nicht entscheidungsfähig ist?
