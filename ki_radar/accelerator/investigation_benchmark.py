@@ -74,6 +74,8 @@ def scored_sample_is_frozen(campaign: InvestigationEvidenceCampaign) -> bool:
         for attempt in attempts
     }
     return set(counts) == expected and all(counts[key] == 1 for key in expected)
+
+
 EXPECTED_ANALYSIS_GROUP = {
     "A": "approver_available",
     "C": "queue_retries",
