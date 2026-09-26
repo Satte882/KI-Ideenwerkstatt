@@ -591,6 +591,84 @@ def test_variant_b_missing_denominator_stays_human_clarification(
 
 
 @pytest.mark.django_db
+def test_failed_decision_surface_quarantines_unverified_analysis(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="FAILED Surface")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="failed-surface-quarantine",
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    brief_payload = {
+        "question_scope": {
+            "question": run.decision_question,
+            "scope": "Unverifizierter Zwischenstand.",
+        },
+        "problem": {
+            "statement": "Ein plausibler Zwischenbefund liegt vor.",
+            "references": [],
+        },
+        "hypotheses": [
+            {
+                "statement": "Eine plausible Ursache wurde noch nicht verifiziert.",
+                "status": "supported",
+                "references": [],
+                "counterevidence_refs": [],
+            }
+        ],
+        "options": [
+            {
+                "name": "Unverifizierter Kandidat",
+                "description": "Darf nach dem technischen Fehlschlag nicht übernommen werden.",
+                "expected_value": "Noch nicht belastbar.",
+                "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+                "non_ai": True,
+                "status_quo": False,
+            }
+        ],
+        "recommendation": {
+            "summary": "Zwischenstand nicht als Entscheidung verwenden.",
+            "rationale": "Die technische Prüfung ist fehlgeschlagen.",
+            "references": [],
+        },
+        "risks_unknowns": ["Verifikation fehlt."],
+    }
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.FAILED,
+        finished_at=timezone.now(),
+        clarification_reason=ReasonCode.TECHNICAL_FAILURE.value,
+        clarification_payload={
+            "impact": "Technischer Lauf nicht konvergiert.",
+            "required_action": "Untersuchung neu starten.",
+        },
+        brief_payload=brief_payload,
+        brief_hash=content_hash(brief_payload),
+    )
+
+    client.force_login(owner)
+    response = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Technische Prüfung fehlgeschlagen" in body
+    assert "Unverifizierten Zwischenstand anzeigen" in body
+    assert "Nicht als Entscheidungsgrundlage verwenden." in body
+    assert "Unverifizierte Lösungskandidaten anzeigen" in body
+    assert "nicht übernommen werden" in body
+    assert "Geprüfte Entwürfe übernehmen" not in body
+
+
+@pytest.mark.django_db
 def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
     owner,
     business_unit,
