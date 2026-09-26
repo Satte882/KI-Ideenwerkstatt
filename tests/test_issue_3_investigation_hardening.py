@@ -1090,8 +1090,11 @@ def test_invalid_provider_response_retries_once_then_fails_closed(
     assert second.status == InvestigationRun.Status.FAILED
     assert provider_calls == 2
     assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "invalid_response"
+    assert run.clarification_payload["error_code"] == "structured_contract_error"
+    assert run.clarification_payload["contract_error_code"] == "invalid_response"
+    assert run.clarification_payload["model_role"] == InvestigationModelCall.Role.PLANNER
     assert run.clarification_payload["attempts"] == 2
+    assert "Provider" not in run.clarification_payload["impact"]
     assert run.usage == {
         "tool_calls": 0,
         "model_calls": 2,
