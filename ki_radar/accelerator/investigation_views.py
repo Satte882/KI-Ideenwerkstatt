@@ -112,6 +112,16 @@ def investigation_authorize(request, process_pk):
         )
         return redirect(process)
 
+    for folder in folders:
+        latest_snapshot = folder.snapshots.prefetch_related("sources").first()
+        folder.product_source_hint = (
+            ", ".join(
+                latest_snapshot.sources.order_by("filename").values_list("filename", flat=True)[:3]
+            )
+            if latest_snapshot is not None
+            else ""
+        )
+
     default_question = (
         f"Welche Lösungsrichtung ist für „{process.name}“ durch die Evidenz gestützt?"
     )
