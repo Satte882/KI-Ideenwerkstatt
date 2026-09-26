@@ -100,7 +100,11 @@ def investigation_authorize(request, process_pk):
     if not _editable_process(request.user, process):
         raise PermissionDenied
 
-    folders = list(process.investigation_source_folders.filter(is_active=True).order_by("name"))
+    folders = list(
+        process.investigation_source_folders.select_related("process_analysis")
+        .filter(is_active=True)
+        .order_by("name")
+    )
     if not folders:
         messages.warning(
             request,
@@ -145,11 +149,11 @@ def investigation_authorize(request, process_pk):
                 messages.success(
                     request,
                     (
-                        f"Quellenrevision {snapshot.revision} und Run-Budget wurden "
-                        "unveränderlich autorisiert."
+                        f"Untersuchungsgrundlage autorisiert (Revision {snapshot.revision}). "
+                        "Sie können die Untersuchung jetzt starten."
                     ),
                 )
-                return redirect(process)
+                return redirect(f"{process.get_absolute_url()}#evidence-investigation")
 
     return render(
         request,
