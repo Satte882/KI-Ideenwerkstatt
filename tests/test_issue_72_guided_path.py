@@ -411,12 +411,7 @@ def test_repo_local_source_path_can_move_between_host_and_container_when_manifes
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     original_root = (
-        tmp_path
-        / "host-repo"
-        / "tests"
-        / "fixtures"
-        / "investigation_source_packs"
-        / "A"
+        tmp_path / "host-repo" / "tests" / "fixtures" / "investigation_source_packs" / "A"
     )
     original_root.mkdir(parents=True)
     (original_root / "notes.txt").write_text("identischer Beleg", encoding="utf-8")
@@ -429,13 +424,7 @@ def test_repo_local_source_path_can_move_between_host_and_container_when_manifes
     first = authorize_snapshot(owner=owner, process=process, folder=folder)
 
     runtime_root = tmp_path / "runtime-repo"
-    runtime_source = (
-        runtime_root
-        / "tests"
-        / "fixtures"
-        / "investigation_source_packs"
-        / "A"
-    )
+    runtime_source = runtime_root / "tests" / "fixtures" / "investigation_source_packs" / "A"
     runtime_source.mkdir(parents=True)
     (runtime_source / "notes.txt").write_text("identischer Beleg", encoding="utf-8")
     settings.BASE_DIR = runtime_root
@@ -464,12 +453,7 @@ def test_repo_local_source_path_remap_rejects_changed_manifest(
 ):
     process = make_process(owner=owner, business_unit=business_unit)
     original_root = (
-        tmp_path
-        / "host-repo"
-        / "tests"
-        / "fixtures"
-        / "investigation_source_packs"
-        / "A"
+        tmp_path / "host-repo" / "tests" / "fixtures" / "investigation_source_packs" / "A"
     )
     original_root.mkdir(parents=True)
     (original_root / "notes.txt").write_text("autorisierter Beleg", encoding="utf-8")
@@ -482,13 +466,7 @@ def test_repo_local_source_path_remap_rejects_changed_manifest(
     authorize_snapshot(owner=owner, process=process, folder=folder)
 
     runtime_root = tmp_path / "runtime-repo"
-    runtime_source = (
-        runtime_root
-        / "tests"
-        / "fixtures"
-        / "investigation_source_packs"
-        / "A"
-    )
+    runtime_source = runtime_root / "tests" / "fixtures" / "investigation_source_packs" / "A"
     runtime_source.mkdir(parents=True)
     (runtime_source / "notes.txt").write_text("veränderter Beleg", encoding="utf-8")
     settings.BASE_DIR = runtime_root
