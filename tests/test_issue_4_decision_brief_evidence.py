@@ -858,7 +858,7 @@ def test_handoff_uses_only_causal_claims_for_process_hypotheses(
             {
                 "statement": "Die hybride Lösung ist die beste Lösungsrichtung.",
                 "status": "supported",
-            }
+            },
         ],
         "calculations": [],
     }
