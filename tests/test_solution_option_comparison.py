@@ -411,7 +411,7 @@ def test_comparison_page_selects_and_shows_history(client, comparison_process, o
     assert "Auswahlhistorie" in history
     assert "Die organisatorische Alternative" in history
     assert f"Prozessversion v{comparison_process.version}" in history
-    assert "Diagnose- und Evidenzstand der Entscheidung" in history
+    assert "Diagnose- und Befundstand der Entscheidung" in history
     assert "KI-Use-Case kann regulär weitergeführt werden" in history
 
 
