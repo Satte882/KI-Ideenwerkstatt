@@ -79,7 +79,6 @@ def test_verifier_rejects_unbacked_recommendation_strengthening():
     assert "kritischer inhaltlicher Fehler" in VERIFIER_INSTRUCTION
 
 
-
 def test_planner_avoids_premature_synthesis_before_useful_counterevidence_search():
     assert "evidence_coverage.counterevidence_search_executed" in PLANNER_INSTRUCTION
     assert "vor der ersten Synthese" in PLANNER_INSTRUCTION
