@@ -3296,7 +3296,6 @@ def test_frozen_tool_parameter_contract_cannot_change_after_run_start(
     assert run.model_calls.count() == 0
 
 
-
 def _prepare_pre_verifier_repair_state(*, owner, business_unit, tmp_path, syntheses=1):
     _process, _snapshot, handle, source = start_csv_run(
         owner=owner,
