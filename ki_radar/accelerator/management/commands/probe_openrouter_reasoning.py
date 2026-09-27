@@ -162,8 +162,7 @@ class Command(BaseCommand):
                 self.stdout.write("")
                 continue
 
-            payload = _validate_probe_content(result.content)
-            self.stdout.write("status=success")
+            self.stdout.write("transport_status=success")
             self.stdout.write(f"returned_model={result.model}")
             self.stdout.write(f"duration_seconds={result.duration_seconds}")
             self.stdout.write(f"headers_seconds={result.headers_seconds}")
@@ -182,6 +181,21 @@ class Command(BaseCommand):
                 "cost",
             ):
                 self.stdout.write(f"{key}={result.usage.get(key, '-')}")
+
+            try:
+                payload = _validate_probe_content(result.content)
+            except CommandError as exc:
+                preview = " ".join(result.content[:500].split())
+                tail = " ".join(result.content[-300:].split())
+                self.stdout.write("schema_valid=no")
+                self.stdout.write(f"schema_error={exc}")
+                self.stdout.write(f"content_chars={len(result.content)}")
+                self.stdout.write(f"content_preview={preview}")
+                self.stdout.write(f"content_tail={tail}")
+                self.stdout.write("")
+                continue
+
+            self.stdout.write("schema_valid=yes")
             self.stdout.write(
                 "schema_result="
                 + json.dumps(
