@@ -833,7 +833,9 @@ def test_invalid_clarification_reason_retry_receives_exact_contract_and_waits_fo
                 "clarification_reason": "missing_evidence",
                 "clarification_payload": {
                     "question": "Welche entscheidungsrelevante Evidenz soll geprüft werden?",
-                    "impact": "Die aktuelle Quelle hat keinen belastbaren Bezug zur Richtungsfrage.",
+                    "impact": (
+                        "Die aktuelle Quelle hat keinen belastbaren Bezug zur Richtungsfrage."
+                    ),
                 },
             }
 
