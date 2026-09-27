@@ -9,7 +9,7 @@ from ki_radar.accelerator.investigation_prompts import (
 
 
 def test_planner_requires_reproducible_quantitative_check_before_synthesis():
-    assert PLANNER_PROMPT_VERSION == "vs1-planner-v17"
+    assert PLANNER_PROMPT_VERSION == "vs1-planner-v18"
     assert "Bevor du action=synthesize wählst" in PLANNER_INSTRUCTION
     assert "quantitativen Beziehung zwischen strukturierten Feldern" in PLANNER_INSTRUCTION
     assert "insbesondere compare_groups" in PLANNER_INSTRUCTION
@@ -23,7 +23,7 @@ def test_quantitative_check_rule_stays_domain_generic():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v10"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v11"
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
     assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
@@ -77,3 +77,17 @@ def test_verifier_rejects_unbacked_recommendation_strengthening():
     assert "am stärksten gestützt" in VERIFIER_INSTRUCTION
     assert "beste" in VERIFIER_INSTRUCTION
     assert "kritischer inhaltlicher Fehler" in VERIFIER_INSTRUCTION
+
+
+def test_planner_avoids_premature_synthesis_before_useful_counterevidence_search():
+    assert "evidence_coverage.counterevidence_search_executed" in PLANNER_INSTRUCTION
+    assert "vor der ersten Synthese" in PLANNER_INSTRUCTION
+    assert "kein universelles READY-Gate" in PLANNER_INSTRUCTION
+
+
+def test_synthesis_prompt_has_focused_pre_verifier_repair_mode():
+    assert "synthesis_mode=pre_verifier_repair" in SYNTHESIS_INSTRUCTION
+    assert "pre_verifier_blockers" in SYNTHESIS_INSTRUCTION
+    assert "genannten deterministischen Paketblocker" in SYNTHESIS_INSTRUCTION
+    assert "nicht stilistisch oder vorsorglich" in SYNTHESIS_INSTRUCTION
+    assert "synthesis_mode=verifier_repair" in SYNTHESIS_INSTRUCTION

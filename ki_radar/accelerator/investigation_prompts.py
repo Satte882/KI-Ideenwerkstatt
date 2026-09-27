@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v17"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v10"
+PLANNER_PROMPT_VERSION = "vs1-planner-v18"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v11"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -151,9 +151,15 @@ serialisiert werden; leer ist {}.
 Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
 lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.
-Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Erfinde keine Fakten,
-Messwerte, Freigaben oder zusätzlichen Scope. Nutze clarification nur für eine echte externe
-entscheidungskritische Evidenzlücke, Permission/Scope oder einen Value-Trade-off; technische
+Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Wenn bereits eine
+relevante Quelle gelesen oder analysiert wurde, evidence_coverage.counterevidence_search_executed
+aber noch false ist und eine sinnvolle Gegenhypothese oder Alternative formulierbar ist, führe
+vor der ersten Synthese eine gezielte search_sources-Suche aus. Das ist eine Planungsregel,
+kein universelles READY-Gate: Wenn keine sinnvolle Gegenbelegsuche formulierbar ist, darfst du
+trotzdem synthetisieren.
+Erfinde keine Fakten, Messwerte, Freigaben oder zusätzlichen Scope. Nutze clarification nur
+für eine echte externe entscheidungskritische Evidenzlücke, Permission/Scope oder einen
+Value-Trade-off; technische
 Fehler, Budget und Verifikation gehören dem Server. Begründe knapp den Prüfpunkt."""
 
 SYNTHESIS_INSTRUCTION = (
@@ -166,8 +172,17 @@ bestehenden claim_id erhalten. Wenn sich die Aussage eines kritischen Claims fac
 ändern muss, verwende dagegen zwingend einen expliziten Ersatz gemäß den Domain-Regeln:
 neue claim_id, metadata.replaces_claim_id=<alte claim_id>, und führe den alten Claim
 nicht zusätzlich weiter. Briefabschnitte dürfen bei einer Reparatur nicht still
-verschwinden. Antworte als ein einziges JSON-Objekt. claim_register ist
-ein echtes JSON-Array; brief_payload, source_relevance und clarification_payload
+verschwinden. Beachte synthesis_mode und pre_verifier_blockers aus dem Kontext.
+Bei synthesis_mode=pre_verifier_repair repariere in genau diesem Durchlauf alle dort
+genannten deterministischen Paketblocker. Verändere bereits valide Claims,
+Quellenklassifikationen und Briefabschnitte nicht stilistisch oder vorsorglich; ändere nur,
+was zur Behebung der konkreten Blocker erforderlich ist. Erzeuge keine neue fachliche
+Hypothese nur um einen technischen Paketblocker zu beseitigen. Bei
+synthesis_mode=verifier_repair adressiere die konkreten Verifier-Findings und bewahre
+unbetroffene Inhalte. Bei synthesis_mode=post_evidence aktualisiere das Paket nur um die
+neu hinzugekommene Quellen-/Toolinformation. Antworte als ein einziges JSON-Objekt.
+claim_register ist ein echtes JSON-Array; brief_payload, source_relevance und
+clarification_payload
 sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
 serialisiert werden.
 Wenn eine entscheidungskritische Evidenzlücke mit den bereits freigegebenen Quellen
