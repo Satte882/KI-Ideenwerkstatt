@@ -468,9 +468,7 @@ def _record_action_state_repeat(
 def _latest_ground_truth_at(run: InvestigationRun):
     timestamps = [run.started_at]
     latest_step = (
-        run.steps.filter(status=InvestigationStep.Status.SUCCESS)
-        .order_by("-finished_at")
-        .first()
+        run.steps.filter(status=InvestigationStep.Status.SUCCESS).order_by("-finished_at").first()
     )
     if latest_step is not None and latest_step.finished_at is not None:
         timestamps.append(latest_step.finished_at)
@@ -633,11 +631,7 @@ def advance_investigation(
         return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
     try:
-        if (
-            _verifier_repair_due(run)
-            or _synthesizer_retry_due(run)
-            or pre_verifier_repair
-        ):
+        if _verifier_repair_due(run) or _synthesizer_retry_due(run) or pre_verifier_repair:
             action = synthesizer(
                 actor=actor,
                 run=run,
