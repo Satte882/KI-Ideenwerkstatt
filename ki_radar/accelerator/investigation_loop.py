@@ -378,7 +378,7 @@ def _handle_provider_failure(
         error_code=error.code,
         impact="Die Untersuchung ist wegen eines technischen Providerfehlers beendet.",
         required_action="Provider-/Transportfehler technisch prüfen.",
-        details={"attempts": failures},
+        details={"attempts": failures, "model_role": failed_role},
     )
     return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
