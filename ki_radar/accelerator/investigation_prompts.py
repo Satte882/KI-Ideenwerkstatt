@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v16"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v8"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v9"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -89,8 +89,12 @@ mit {statement,status,references,counterevidence_refs}, calculations als Liste m
 recommendation={summary,rationale,references}, risks_unknowns als Liste und
 validation_step={step,measurement}. population ist ein Objekt, kein Freitext.
 option_type ist ein gültiger Produkttyp wie no_tech, organizational oder generative_ai;
-non_ai und status_quo sind separate boolesche Felder. Gib die aktuelle Entscheidungsfrage
-im Feld question exakt wieder.
+non_ai und status_quo sind separate boolesche Felder. existing_solution_options enthält den
+beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag einen dort vorhandenen Kandidaten
+fachlich fortschreibt, übernimm dessen id exakt in existing_option_id; erfinde keine ID und
+verwende keine bestehende ID für eine tatsächlich neue Option. Eine neue Formulierung oder
+Präzisierung eines bestehenden Kandidaten macht ihn nicht automatisch zu einer neuen Option.
+Gib die aktuelle Entscheidungsfrage im Feld question exakt wieder.
 
 Eine Quellenreferenz hat {source_id,locator,revision_hash}; locator verwendet bei Text
 {line} und bei CSV {row} mit optionaler column. Ein Analyseergebnis hat

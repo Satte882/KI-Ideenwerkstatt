@@ -205,18 +205,58 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
     )
 
 
-def _solution_proposals(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _solution_proposals(
+    payload: Mapping[str, Any],
+    *,
+    option_bindings: Mapping[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    bindings = {
+        str(name).strip(): str(option_id).strip()
+        for name, option_id in dict(option_bindings or {}).items()
+        if str(name).strip() and str(option_id).strip()
+    }
     proposals: list[dict[str, Any]] = []
+    seen_names: list[str] = []
     for raw_option in (item for item in payload.get("options", []) if isinstance(item, Mapping)):
         proposal = _option_payload(raw_option)
         if not proposal["name"]:
             continue
-        proposal["existing_option_id"] = str(raw_option.get("existing_option_id") or "").strip()
+        name = proposal["name"]
+        seen_names.append(name)
+        explicit_id = str(raw_option.get("existing_option_id") or "").strip()
+        reviewed_id = bindings.get(name, "")
+        if explicit_id and reviewed_id and explicit_id != reviewed_id:
+            raise InvestigationRunError(
+                "Reviewer-Zuordnung widerspricht der im Brief gebundenen Lösungsoption.",
+                code="option_binding_conflict",
+            )
+        proposal["existing_option_id"] = explicit_id or reviewed_id
         proposals.append(proposal)
+
+    unknown = sorted(set(bindings) - set(seen_names))
+    if unknown:
+        raise InvestigationRunError(
+            "Reviewer-Zuordnung verweist auf unbekannte Brief-Optionen: " + ", ".join(unknown),
+            code="option_binding_unknown_proposal",
+        )
+    duplicates = sorted(
+        name for name in set(seen_names) if seen_names.count(name) > 1 and name in bindings
+    )
+    if duplicates:
+        raise InvestigationRunError(
+            "Reviewer-Zuordnung ist wegen doppelter Brief-Optionen mehrdeutig: "
+            + ", ".join(duplicates),
+            code="option_binding_ambiguous_proposal",
+        )
     return proposals
 
 
-def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
+def preview_decision_brief_materialization(
+    *,
+    actor,
+    run_id,
+    option_bindings: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
     """Describe domain-owned draft adoption without writing anything."""
 
     run = read_run(actor=actor, run_id=run_id)
@@ -247,7 +287,10 @@ def preview_decision_brief_materialization(*, actor, run_id) -> dict[str, Any]:
             base_process=_process_base(run),
             base_options=_base_options(run),
             process_fields=_target_process_fields(payload),
-            solution_proposals=_solution_proposals(payload),
+            solution_proposals=_solution_proposals(
+                payload,
+                option_bindings=option_bindings,
+            ),
         )
     except InvestigationDraftAdoptionError as exc:
         raise InvestigationRunError(str(exc), code=exc.code) from exc
@@ -259,6 +302,7 @@ def materialize_decision_brief(
     actor,
     run_id,
     operation_key: str,
+    option_bindings: Mapping[str, str] | None = None,
 ) -> InvestigationMaterialization:
     run = locked_run(actor=actor, run_id=run_id)
     if bool(run.execution_snapshot.get("historical_snapshot_replay")):
@@ -295,7 +339,10 @@ def materialize_decision_brief(
             base_process=_process_base(run),
             base_options=_base_options(run),
             process_fields=_target_process_fields(payload),
-            solution_proposals=_solution_proposals(payload),
+            solution_proposals=_solution_proposals(
+                payload,
+                option_bindings=option_bindings,
+            ),
         )
     except InvestigationDraftAdoptionError as exc:
         raise InvestigationRunError(str(exc), code=exc.code) from exc

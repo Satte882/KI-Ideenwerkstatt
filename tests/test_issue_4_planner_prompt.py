@@ -21,7 +21,7 @@ def test_quantitative_check_rule_stays_domain_generic():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v8"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v9"
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
     assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
@@ -41,3 +41,10 @@ def test_planner_action_specific_fields_may_be_omitted():
     assert "Bei action=clarify sind" in PLANNER_INSTRUCTION
     assert "Bei action=synthesize genügt action" in PLANNER_INSTRUCTION
     assert "inaktive Felder dürfen" in PLANNER_INSTRUCTION
+
+
+def test_synthesis_binds_existing_solution_candidates_explicitly():
+    assert "existing_solution_options" in SYNTHESIS_INSTRUCTION
+    assert "existing_option_id" in SYNTHESIS_INSTRUCTION
+    assert "übernimm dessen id exakt" in SYNTHESIS_INSTRUCTION
+    assert "erfinde keine ID" in SYNTHESIS_INSTRUCTION

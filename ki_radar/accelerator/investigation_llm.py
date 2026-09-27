@@ -444,11 +444,26 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
             "code": previous_call.error_code,
             "detail": str(diagnostics.get("structured_contract_error") or "")[:250],
         }
+    domain_base = run.execution_snapshot.get("domain_materialization_base") or {}
+    existing_solution_options = [
+        {
+            "id": str(item.get("id") or ""),
+            "name": str(item.get("name") or ""),
+            "option_type": str(item.get("option_type") or ""),
+            "description": str(item.get("description") or ""),
+            "expected_value": str(item.get("expected_value") or ""),
+            "recommendation": str(item.get("recommendation") or ""),
+            "evaluation_status": str(item.get("evaluation_status") or ""),
+        }
+        for item in domain_base.get("solution_options", [])
+        if isinstance(item, Mapping) and item.get("id")
+    ]
     return {
         "phase": "investigation",
         "synthesis_investigation_request": pending_investigation,
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
+        "existing_solution_options": existing_solution_options,
         "sources": [
             {
                 "source_id": str(item.source_id),

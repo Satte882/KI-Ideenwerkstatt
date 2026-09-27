@@ -23,6 +23,7 @@ from ki_radar.accelerator.investigation_benchmark import (
     validate_evidence_attempt,
 )
 from ki_radar.accelerator.investigation_brief import (
+    _solution_proposals,
     materialize_decision_brief,
     preview_decision_brief_materialization,
     render_decision_brief_markdown,
@@ -36,6 +37,7 @@ from ki_radar.accelerator.investigation_evidence import (
 from ki_radar.accelerator.investigation_llm import (
     PlannerAction,
     _estimate_tokens,
+    _planner_context,
     _reserve_model_call,
     _structured_provider_call,
 )
@@ -1190,6 +1192,79 @@ def test_architecture_adoption_rejects_red_solution_state_fields(owner, business
         )
 
     assert exc_info.value.code == "unsupported_solution_fields"
+
+
+def test_review_binding_injects_existing_option_id_without_mutating_brief_payload():
+    payload = {
+        "options": [
+            {
+                "name": "Status quo",
+                "option_type": SolutionOption.OptionType.NO_TECH,
+                "description": "Keine Änderung.",
+                "expected_value": "Keine Verbesserung.",
+            }
+        ]
+    }
+
+    proposals = _solution_proposals(
+        payload,
+        option_bindings={"Status quo": "11111111-1111-1111-1111-111111111111"},
+    )
+
+    assert proposals[0]["existing_option_id"] == "11111111-1111-1111-1111-111111111111"
+    assert "existing_option_id" not in payload["options"][0]
+
+
+def test_review_binding_rejects_unknown_brief_option():
+    with pytest.raises(InvestigationRunError) as exc_info:
+        _solution_proposals(
+            {"options": [{"name": "Status quo"}]},
+            option_bindings={"Nicht im Brief": "11111111-1111-1111-1111-111111111111"},
+        )
+
+    assert exc_info.value.code == "option_binding_unknown_proposal"
+
+
+@pytest.mark.django_db
+def test_planner_context_exposes_frozen_solution_option_ids(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Frozen option context")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Status quo beibehalten",
+        option_type=SolutionOption.OptionType.NO_TECH,
+        description="Bestehenden Stand beobachten.",
+        expected_value="Keine unmittelbare Verbesserung.",
+    )
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="frozen-options-context",
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    context = _planner_context(owner, run)
+
+    assert context["existing_solution_options"] == [
+        {
+            "id": str(option.pk),
+            "name": option.name,
+            "option_type": option.option_type,
+            "description": option.description,
+            "expected_value": option.expected_value,
+            "recommendation": option.recommendation,
+            "evaluation_status": option.evaluation_status,
+        }
+    ]
 
 
 @pytest.mark.django_db
