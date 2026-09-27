@@ -17,6 +17,7 @@ from .solution_retirement import retire_solution_option
 from .solution_selection import (
     comparison_blockers,
     diagnosis_readiness_blockers,
+    focus_readiness_blockers,
     ordered_solution_options,
     select_preferred_solution,
 )
@@ -39,6 +40,7 @@ def solution_option_compare(request, pk):
     options = ordered_solution_options(process_analysis)
     blockers = comparison_blockers(options)
     diagnosis_blockers = diagnosis_readiness_blockers(process_analysis)
+    focus_blockers = focus_readiness_blockers(process_analysis)
     incomplete_options = [option for option in options if not option.comparison_complete]
     can_select = can_edit_value_stream(
         request.user,
@@ -98,6 +100,8 @@ def solution_option_compare(request, pk):
             "options": options,
             "blockers": blockers,
             "diagnosis_blockers": diagnosis_blockers,
+            "focus_blockers": focus_blockers,
+            "selection_blocked": bool(blockers or diagnosis_blockers or focus_blockers),
             "incomplete_options": incomplete_options,
             "needs_more_options": len(options) < 2,
             "form": form,

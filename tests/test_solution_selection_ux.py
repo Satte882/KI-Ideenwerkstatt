@@ -1,7 +1,9 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from ki_radar.architecture.focus import ValueStreamFocus
+from ki_radar.architecture.forms import SolutionOptionForm
 from ki_radar.architecture.models import (
     ProcessAnalysis,
     SolutionOption,
@@ -9,6 +11,7 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
+from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 
@@ -164,3 +167,107 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     assert "Die Entscheidung ist in der Auswahlhistorie auditierbar." in content
     selected_value = client.get(url).context["form"]["selected_option"].value()
     assert str(selected_value) == str(assistant.pk)
+
+
+@pytest.mark.django_db
+def test_all_blockers_are_visible_without_misleading_edit_links(client, owner, business_unit):
+    process = make_process(owner, business_unit)
+    process.stage.value_stream.focus.delete()
+    process.confirmed_causes = ""
+    process.save()
+    option = make_option(
+        process, owner, name="Entwurf", option_type="organizational", assessed=False
+    )
+    client.force_login(owner)
+    response = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    content = response.content.decode()
+    assert response.context["selection_blocked"]
+    assert "Fokusfreigabe fehlt" in content
+    assert "Mindestens zwei aktive Optionen erforderlich" in content
+    assert "Noch vollständig zu bewerten" in content
+    assert "bestätigte Ursache" in content
+    assert "Bewertungsstatus: Bewertet" in content
+    assert (
+        reverse("architecture:value_stream_update", args=[process.stage.value_stream_id]) in content
+    )
+    assert reverse("architecture:solution_option_update", args=[option.pk]) not in content
+    assert reverse("architecture:process_analysis_update", args=[process.pk]) not in content
+
+
+@pytest.mark.django_db
+def test_focus_alone_blocks_ui_and_server_selection(client, owner, business_unit):
+    process = make_process(owner, business_unit)
+    process.stage.value_stream.focus.delete()
+    option = make_option(
+        process, owner, name="Organisation", option_type="organizational", assessed=True
+    )
+    make_option(process, owner, name="Assistenz", option_type="assistant", assessed=True)
+    client.force_login(owner)
+    response = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    assert response.context["selection_blocked"]
+    assert 'name="selected_option"' not in response.content.decode()
+    with pytest.raises(ValidationError, match="Fokusentscheidung"):
+        select_preferred_solution(
+            process_analysis=process, selected_option=option, rationale="Vergleich", actor=owner
+        )
+    assert not process.solution_selection_decisions.exists()
+
+
+@pytest.mark.django_db
+def test_assessment_link_opens_fields_and_saves_back_to_comparison(client, owner, business_unit):
+    process = make_process(owner, business_unit)
+    option = make_option(
+        process, owner, name="Organisation", option_type="organizational", assessed=False
+    )
+    client.force_login(owner)
+    compare_url = reverse("architecture:solution_option_compare", args=[process.pk])
+    edit_url = (
+        reverse("architecture:solution_option_update", args=[option.pk]) + "?return_to=comparison"
+    )
+    assert edit_url in client.get(compare_url).content.decode()
+    response = client.get(edit_url)
+    assert response.status_code == 200
+    assert "Noch offene Bewertungsangaben" in response.content.decode()
+    assert 'name="feasibility"' in response.content.decode()
+    assessed = make_option(
+        process, owner, name="Vollständig", option_type="organizational", assessed=True
+    )
+    payload = {field: getattr(assessed, field) for field in SolutionOptionForm.Meta.fields}
+    payload["name"] = option.name
+    response = client.post(edit_url, payload)
+    assert response.status_code == 302
+    assert response.url == compare_url
+    option.refresh_from_db()
+    assert option.comparison_complete
+    assert not client.get(compare_url).context["selection_blocked"]
+
+
+@pytest.mark.django_db
+def test_incomplete_assessment_cannot_be_marked_complete(client, owner, business_unit):
+    process = make_process(owner, business_unit)
+    option = make_option(
+        process, owner, name="Entwurf", option_type="organizational", assessed=False
+    )
+    client.force_login(owner)
+    payload = {field: getattr(option, field) for field in SolutionOptionForm.Meta.fields}
+    payload["evaluation_status"] = "assessed"
+    url = reverse("architecture:solution_option_update", args=[option.pk]) + "?return_to=comparison"
+    response = client.post(url, payload)
+    assert response.status_code == 200
+    assert response.context["form"].errors
+    option.refresh_from_db()
+    assert not option.comparison_complete
+
+
+@pytest.mark.django_db
+def test_retired_option_is_explained_and_does_not_count(client, owner, business_unit):
+    from ki_radar.architecture.solution_retirement import retire_solution_option
+
+    process = make_process(owner, business_unit)
+    make_option(process, owner, name="Organisation", option_type="organizational", assessed=True)
+    retired = make_option(process, owner, name="Alt", option_type="assistant", assessed=True)
+    retire_solution_option(option=retired, actor=owner)
+    client.force_login(owner)
+    response = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    assert response.context["needs_more_options"]
+    assert "zählen aber nicht für die Auswahl" in response.content.decode()

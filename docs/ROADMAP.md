@@ -225,6 +225,10 @@ freigegebene Entscheidungsgrundlage erhält den Übergang zum Decision Brief. Di
 bestehende bewusste Übernahme und der Lösungsvergleich bleiben erhalten. Ein realer
 Produktlauf mit dem vorhandenen Testquellenpaket wurde bis zum geöffneten Brief
 geprüft; dies ersetzt nicht die fachliche Wirksamkeitsabnahme aus Issue #4.
+Der anschließende Lösungsvergleich zeigt alle offenen Auswahlvoraussetzungen
+einschließlich Fokusfreigabe gleichzeitig und nennt fehlende Bewertungsangaben.
+Nach der Bewertung führt Speichern zurück zum Vergleich; fachliche Freigaben
+werden weiterhin ausdrücklich dokumentiert.
 
 **VS1-Stand am 21.09.2026:** Der begrenzte Evidence-to-Decision-Slice verfügt technisch
 über den fallgebundenen Quellenraum, reproduzierbare Tools, adaptiven Planner/Verifier,

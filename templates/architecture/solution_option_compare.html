@@ -29,14 +29,12 @@
 </div>
 {% endif %}
 
-{% for blocker in blockers %}<div class="alert alert-warning">{{ blocker }}</div>{% endfor %}
-
 <div class="app-card mb-4">
   <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <div><strong>Vergleichsmatrix</strong><div class="small text-muted mt-1">Alle aktiven Optionen werden anhand derselben Kriterien gegenübergestellt. Time-to-Value ist ein sichtbarer Trade-off, kein automatischer Sieger-Score. Nicht weiterverfolgte Optionen bleiben auditierbar.</div></div>
     {% if can_select %}
       <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>
+        {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>{% endif %}
         {% if generation_ready %}
           <form method="post" action="{% url 'accelerator:solution_generation_start' process_analysis.pk %}" class="m-0">
             {% csrf_token %}
@@ -97,7 +95,12 @@
           {% for option in options %}
           <td>
             <div class="d-grid gap-2">
-              <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}">Option bearbeiten</a>
+              {% if focus_blockers %}
+                <span class="small text-muted">Bewertung nach Fokusfreigabe möglich</span>
+                <a class="btn btn-sm btn-outline-secondary" href="#solution-selection">Voraussetzungen anzeigen</a>
+              {% else %}
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Option bearbeiten</a>
+              {% endif %}
               {% if option.recommendation == 'preferred' or option.selection_decisions.all or option.use_case_origins.all %}
                 <button class="btn btn-sm btn-outline-secondary" type="button" disabled>Nicht weiterverfolgen</button>
                 <div class="small text-muted">Ausgewählte, bevorzugte oder mit einem Use Case verknüpfte Optionen sind geschützt.</div>
@@ -141,13 +144,25 @@
 
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
 
-    {% if blockers %}
+    {% if selection_blocked %}
       <div class="alert alert-warning mb-0">
         <strong>Auswahl noch gesperrt.</strong>
-        Vor einer bevorzugten Option müssen mindestens zwei gespeicherte Lösungsoptionen vorliegen und alle Optionen vollständig bewertet sein. KI-Entwürfe werden absichtlich zunächst als „Noch nicht bewertet“ übernommen.
+        <p class="mt-2">Die folgenden Voraussetzungen sind noch offen. KI-Entwürfe werden absichtlich zunächst als „Noch nicht bewertet“ übernommen.</p>
+
+        {% if focus_blockers %}
+          <div class="mb-3" data-testid="selection-focus-blocker">
+            <strong>Fokusfreigabe fehlt</strong>
+            <p class="mb-2">{{ focus_blockers|join:" " }} Erst danach können Optionen ergänzt oder bewertet und die Diagnose bearbeitet werden.</p>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:value_stream_update' process_analysis.stage.value_stream_id %}">Screening und Fokusfreigabe abschließen</a>
+          </div>
+        {% endif %}
 
         {% if needs_more_options %}
-          <div class="mt-3"><a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a></div>
+          <div class="mb-3">
+            <strong>Mindestens zwei aktive Optionen erforderlich</strong>
+            <p class="mb-2">Aktuell {{ options|length }} aktive Option(en). Nicht weiterverfolgte Optionen bleiben gespeichert, zählen aber nicht für die Auswahl.</p>
+            {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>{% endif %}
+          </div>
         {% endif %}
 
         {% if incomplete_options %}
@@ -156,18 +171,20 @@
             {% for option in incomplete_options %}
               <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap border border-secondary-subtle rounded p-2">
                 <span>{{ option.name }}</span>
-                <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}">Option vollständig bewerten</a>
+                <span class="small">Fehlt: {{ option.missing_comparison_fields|join:", " }}</span>
+                {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Option vollständig bewerten</a>{% else %}<span class="small text-muted">Bewertung nach Fokusfreigabe möglich</span>{% endif %}
               </div>
             {% endfor %}
           </div>
         {% endif %}
-      </div>
-    {% elif diagnosis_blockers %}
-      <div class="alert alert-warning mb-0">
-        <strong>Auswahl noch gesperrt.</strong>
-        Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache.
-        Es fehlen: {{ diagnosis_blockers|join:", " }}. Lösungsoptionen können weiterhin exploriert und verglichen werden.
-        <div class="mt-3"><a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Diagnose ergänzen</a></div>
+        {% if diagnosis_blockers %}
+          <div class="mt-3" data-testid="selection-diagnosis-blocker">
+            <strong>Diagnose noch unvollständig</strong>
+            <p class="mb-2">Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.</p>
+            <p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächliche Evidenz; eine vermutete Ursache bleibt eine Hypothese.</p>
+            {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Diagnose ergänzen</a>{% endif %}
+          </div>
+        {% endif %}
       </div>
     {% else %}
       <div class="mb-3"><label class="form-label">{{ form.selected_option.label }}</label>{{ form.selected_option }}{{ form.selected_option.errors }}</div>
@@ -175,7 +192,7 @@
     {% endif %}
   </div>
   <div class="card-body border-top border-secondary-subtle text-end">
-    {% if blockers or diagnosis_blockers %}
+    {% if selection_blocked %}
       <button class="btn btn-primary" type="button" disabled>Auswahl noch gesperrt</button>
     {% else %}
       <button class="btn btn-primary" type="submit">Bevorzugte Option auswählen</button>

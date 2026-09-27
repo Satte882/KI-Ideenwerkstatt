@@ -544,27 +544,32 @@ class SolutionOption(TimeStampedModel):
         return self.process_analysis.get_absolute_url()
 
     @property
+    def missing_comparison_fields(self) -> list[str]:
+        missing = []
+        if self.evaluation_status != self.EvaluationStatus.ASSESSED:
+            missing.append("Bewertungsstatus: Bewertet")
+        for field in (
+            "description",
+            "expected_value",
+            "bottleneck_coverage",
+            "data_requirements",
+            "application_impact",
+            "integration_impact",
+            "risks",
+            "architecture_fit",
+        ):
+            if not str(getattr(self, field)).strip():
+                missing.append(str(self._meta.get_field(field).verbose_name))
+        for field in ("feasibility", "integration_effort"):
+            if getattr(self, field) == self.Effort.NOT_ASSESSED:
+                missing.append(str(self._meta.get_field(field).verbose_name))
+        if self.time_to_value == TimeToValue.NOT_ASSESSED:
+            missing.append(str(self._meta.get_field("time_to_value").verbose_name))
+        return missing
+
+    @property
     def comparison_complete(self) -> bool:
-        required = (
-            self.description,
-            self.expected_value,
-            self.bottleneck_coverage,
-            self.data_requirements,
-            self.application_impact,
-            self.integration_impact,
-            self.risks,
-            self.architecture_fit,
-        )
-        assessed_efforts = (
-            self.feasibility,
-            self.integration_effort,
-        )
-        return (
-            self.evaluation_status == self.EvaluationStatus.ASSESSED
-            and all(str(value).strip() for value in required)
-            and all(value != self.Effort.NOT_ASSESSED for value in assessed_efforts)
-            and self.time_to_value != TimeToValue.NOT_ASSESSED
-        )
+        return not self.missing_comparison_fields
 
     @property
     def starts_ai_use_case(self) -> bool:

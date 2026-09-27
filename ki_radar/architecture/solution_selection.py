@@ -37,7 +37,7 @@ def comparison_blockers(options: list[SolutionOption]) -> list[str]:
     blockers: list[str] = []
     if len(options) < 2:
         blockers.append(
-            "Für die spätere Auswahl sind mindestens zwei unterschiedliche, gespeicherte "
+            "Für die spätere Auswahl sind mindestens zwei unterschiedliche, aktive "
             "Lösungsoptionen erforderlich."
         )
     incomplete = [option.name for option in options if not option.comparison_complete]
@@ -46,6 +46,16 @@ def comparison_blockers(options: list[SolutionOption]) -> list[str]:
             "Folgende Optionen sind noch nicht vollständig bewertet: " + ", ".join(incomplete)
         )
     return blockers
+
+
+def focus_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
+    focus = get_value_stream_focus(process_analysis.stage.value_stream)
+    if focus is None or not focus.is_selected:
+        return [
+            "Der Value Stream muss vollständig gescreent und für die Prozessanalyse "
+            "ausgewählt sein."
+        ]
+    return []
 
 
 def diagnosis_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
@@ -120,8 +130,7 @@ def select_preferred_solution(
     process_analysis = ProcessAnalysis.objects.select_for_update().get(pk=process_analysis.pk)
     if not can_edit_value_stream(actor, process_analysis.stage.value_stream):
         raise ValidationError("Für diese Lösungsentscheidung fehlt die Berechtigung.")
-    focus = get_value_stream_focus(process_analysis.stage.value_stream)
-    if focus is None or not focus.is_selected:
+    if focus_readiness_blockers(process_analysis):
         raise ValidationError(
             "Eine bevorzugte Option kann erst nach einer dokumentierten "
             "Fokusentscheidung gewählt werden."

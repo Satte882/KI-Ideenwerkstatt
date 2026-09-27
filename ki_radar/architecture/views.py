@@ -860,9 +860,12 @@ def solution_option_update(request, pk):
         instance=option,
         process_analysis=option.process_analysis,
     )
+    return_to_comparison = request.GET.get("return_to") == "comparison"
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Lösungsoption wurde aktualisiert.")
+        if return_to_comparison:
+            return redirect("architecture:solution_option_compare", pk=option.process_analysis_id)
         return redirect(option.process_analysis)
     return render(
         request,
@@ -873,7 +876,10 @@ def solution_option_update(request, pk):
             "option": option,
             "work_design_source": option.source_work_design_snapshot or None,
             "work_design_task": option.source_work_design_task,
-            "title": "Lösungsoption bearbeiten",
+            "title": "Option vollständig bewerten"
+            if return_to_comparison
+            else "Lösungsoption bearbeiten",
+            "return_to_comparison": return_to_comparison,
         },
     )
 

@@ -10,8 +10,18 @@
     <h1 class="page-title">{{ title }}</h1>
     <p class="page-subtitle">Organisatorische, regelbasierte, klassische Software-, KI- und hybride Optionen vergleichbar dokumentieren.</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Abbrechen</a>
+  {% if return_to_comparison %}<a class="btn btn-outline-secondary" href="{% url 'architecture:solution_option_compare' process_analysis.pk %}">Zurück zum Vergleich</a>{% else %}<a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Abbrechen</a>{% endif %}
 </div>
+
+{% if return_to_comparison %}
+<div class="cr-inline-note mb-4">
+  <div>
+    <strong>{% if option.comparison_complete %}Bewertung vollständig{% else %}Noch offene Bewertungsangaben{% endif %}</strong>
+    {% if not option.comparison_complete %}<span>{{ option.missing_comparison_fields|join:", " }}</span>{% endif %}
+    <p class="mb-0 mt-2">Füllen Sie die Vergleichskriterien aus und setzen Sie den Bewertungsstatus auf „Bewertet“. Nicht zutreffende Anforderungen begründet als solche dokumentieren; bei Time-to-Value ist „Unbekannt“ zulässig. Ein Zwischenstand kann gespeichert werden. Danach gelangen Sie zurück zum Vergleich.</p>
+  </div>
+</div>
+{% endif %}
 
 {% if work_design_source %}
 <section class="cr-section mb-4" data-testid="work-design-solution-source">
@@ -67,7 +77,7 @@
       </div>
     </div>
 
-    <details class="architecture-disclosure work-design-solution-details mt-4" {% if form.errors %}open{% elif option and option.evaluation_status == 'assessed' %}open{% endif %}>
+    <details class="architecture-disclosure work-design-solution-details mt-4" {% if return_to_comparison or form.errors %}open{% elif option and option.evaluation_status == 'assessed' %}open{% endif %}>
       <summary>Vertiefte Lösungsbewertung <span class="text-muted">(optional beim Handoff)</span></summary>
       <div class="pt-3">
         <p class="small text-muted mb-3">Diese Angaben werden für einen belastbaren Vergleich benötigt. Der Entwurf kann zunächst gespeichert und später vervollständigt werden.</p>
@@ -99,7 +109,7 @@
     {% endif %}
   </div>
   <div class="card-body border-top border-secondary-subtle text-end">
-    <button class="btn btn-primary">{% if work_design_source %}{% if option %}Änderungen speichern{% else %}Lösungsoption speichern{% endif %}{% else %}Speichern{% endif %}</button>
+    <button class="btn btn-primary">{% if return_to_comparison %}Bewertung speichern und zum Vergleich{% elif work_design_source %}{% if option %}Änderungen speichern{% else %}Lösungsoption speichern{% endif %}{% else %}Speichern{% endif %}</button>
   </div>
 </form>
 
