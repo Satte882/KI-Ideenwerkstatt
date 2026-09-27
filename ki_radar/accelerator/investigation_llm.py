@@ -621,9 +621,7 @@ def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
         },
         "synthesis_mode": mode,
         "pre_verifier_blockers": (
-            planner_context["pre_verifier_blockers"]
-            if mode == "pre_verifier_repair"
-            else []
+            planner_context["pre_verifier_blockers"] if mode == "pre_verifier_repair" else []
         ),
         "claim_register": run.claim_register if mode != "initial" else [],
         "source_relevance": run.source_relevance if mode != "initial" else {},
@@ -1187,9 +1185,7 @@ def _structured_provider_call(
             "finish_reason": result.finish_reason,
         }
         reasoning_tokens = result.usage.get("reasoning_tokens")
-        if isinstance(reasoning_tokens, (int, float)) and not isinstance(
-            reasoning_tokens, bool
-        ):
+        if isinstance(reasoning_tokens, (int, float)) and not isinstance(reasoning_tokens, bool):
             response_metadata["reasoning_tokens"] = int(reasoning_tokens)
         parameters["response_metadata"] = response_metadata
         current.effective_parameters = parameters
