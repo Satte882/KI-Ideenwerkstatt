@@ -177,7 +177,7 @@ Bei synthesis_mode=initial erzeuge das vollständige Package einmal aus den vorh
 evidence_steps. Bei synthesis_mode=post_evidence aktualisiere das bestehende Package
 nur um die neu hinzugekommene Quellen-/Toolinformation. Bei
 synthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle
-pre_verifier_blockers und übernimm bereits valide Claims, Quellenklassifikationen und
+in pre_verifier_blockers genannten deterministischen Paketblocker und übernimm bereits valide Claims, Quellenklassifikationen und
 Briefabschnitte inhaltlich unverändert. Bei synthesis_mode=verifier_repair adressiere
 nur die konkreten Verifier-Findings und bewahre unbetroffene Inhalte. Bei
 synthesis_mode=contract_retry repariere ausschließlich den dokumentierten
