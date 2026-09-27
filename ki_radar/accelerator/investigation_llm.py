@@ -31,6 +31,7 @@ from .investigation_models import (
 )
 from .investigation_policy import POLICY_VERSION, is_evidence_claim
 from .investigation_prompts import (
+    PLANNER_CLARIFICATION_REASONS,
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
@@ -144,9 +145,10 @@ def _validate_investigation_action(run: InvestigationRun, payload: Mapping[str, 
 
     if action == "clarify":
         reason = str(payload.get("clarification_reason") or "")
-        if reason not in {"missing_evidence", "permission_or_scope", "value_tradeoff"}:
+        if reason not in PLANNER_CLARIFICATION_REASONS:
+            allowed = ", ".join(PLANNER_CLARIFICATION_REASONS)
             raise InvestigationRunError(
-                "Klärung benötigt einen gültigen Klärungsgrund.",
+                f"Klärung benötigt clarification_reason aus: {allowed}.",
                 code="invalid_reason_code",
             )
     if payload.get("action") == "synthesize" and (

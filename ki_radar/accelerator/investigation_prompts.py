@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v16"
+PLANNER_PROMPT_VERSION = "vs1-planner-v17"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v9"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
+
+PLANNER_CLARIFICATION_REASONS = (
+    "missing_evidence",
+    "permission_or_scope",
+    "value_tradeoff",
+)
 
 PLANNER_TOOL_NAMES = (
     "list_sources",
@@ -124,7 +130,13 @@ lösbaren Analysecheck nicht nur in validation_step; bloßes Lesen der Rohzeilen
 Antworte als ein einziges JSON-Objekt. action ist immer Pflicht. Bei action=tool sind
 tool_name und parameters Pflicht; target_claim_id, expected_discriminating_finding und
 rationale sind optional. Bei action=clarify sind clarification_reason und
-clarification_payload Pflicht. Bei action=synthesize genügt action; inaktive Felder dürfen
+clarification_payload Pflicht. clarification_reason ist dabei exakt einer dieser drei
+maschinenlesbaren Werte: missing_evidence, permission_or_scope oder value_tradeoff.
+Verwende keine Synonyme und erfinde keine weiteren Reason-Codes. Wenn gelesene oder
+durchsuchte Quellen keinen entscheidungsrelevanten Bezug zur Entscheidungsfrage liefern
+und die notwendige Evidenz außerhalb des freigegebenen Quellenraums fehlt, verwende
+action=clarify mit clarification_reason=missing_evidence und frage konkret nach der
+entscheidungsrelevanten Evidenz. Bei action=synthesize genügt action; inaktive Felder dürfen
 weggelassen werden und werden serverseitig leer normalisiert. parameters und
 clarification_payload sind echte JSON-Objekte und dürfen niemals als JSON-Text in Strings
 serialisiert werden; leer ist {}.

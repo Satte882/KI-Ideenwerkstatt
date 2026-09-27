@@ -13,7 +13,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from ki_radar.accelerator.investigation_llm import PlannerAction, request_planner_action
-from ki_radar.accelerator.investigation_loop import advance_investigation
+from ki_radar.accelerator.investigation_loop import advance_investigation, run_until_boundary
 from ki_radar.accelerator.investigation_models import (
     InvestigationRun,
     InvestigationSourceFolder,
@@ -787,6 +787,92 @@ def test_planner_clarify_still_requires_reason(
         )
 
     assert exc_info.value.code == "invalid_response"
+
+
+@pytest.mark.django_db
+def test_invalid_clarification_reason_retry_receives_exact_contract_and_waits_for_evidence(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Irrelevante Quelle")
+    (tmp_path / "notes.txt").write_text(
+        "Dieser Text behandelt ein fachfremdes Thema ohne Bezug zur Entscheidungsfrage.",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "irrelevant-source-reason"),
+    )
+    provider_calls = 0
+
+    def fake_provider(**kwargs):
+        nonlocal provider_calls
+        provider_calls += 1
+        context = json.loads(kwargs["messages"][1]["content"])
+
+        if provider_calls == 1:
+            payload = {
+                "action": "clarify",
+                "clarification_reason": "irrelevant_source",
+                "clarification_payload": {
+                    "question": "Bitte entscheidungsrelevante Evidenz bereitstellen.",
+                    "impact": "Die freigegebene Quelle trägt die Richtungsentscheidung nicht.",
+                },
+            }
+        else:
+            error = context["last_planner_error"]
+            assert error["code"] == "invalid_response"
+            assert "missing_evidence" in error["detail"]
+            assert "permission_or_scope" in error["detail"]
+            assert "value_tradeoff" in error["detail"]
+            payload = {
+                "action": "clarify",
+                "clarification_reason": "missing_evidence",
+                "clarification_payload": {
+                    "question": "Welche entscheidungsrelevante Evidenz soll geprüft werden?",
+                    "impact": (
+                        "Die aktuelle Quelle hat keinen belastbaren Bezug zur Richtungsfrage."
+                    ),
+                },
+            }
+
+        content = json.dumps(payload)
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={"prompt_tokens": 20, "completion_tokens": 10},
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        fake_provider,
+    )
+
+    result = run_until_boundary(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+    )
+
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    assert provider_calls == 2
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == "missing_evidence"
+    assert "entscheidungsrelevante Evidenz" in run.clarification_payload["question"]
+
+    calls = list(run.model_calls.order_by("created_at"))
+    assert len(calls) == 2
+    assert calls[0].status == "failed"
+    assert calls[0].error_code == "invalid_response"
+    diagnostics = calls[0].effective_parameters["response_diagnostics"]
+    assert diagnostics["structured_contract_error_code"] == "invalid_reason_code"
+    assert "missing_evidence" in diagnostics["structured_contract_error"]
+    assert calls[1].status == "success"
 
 
 @pytest.mark.django_db
