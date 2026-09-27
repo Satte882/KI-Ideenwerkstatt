@@ -27,9 +27,9 @@ def test_reasoning_probe_compares_only_effort_with_same_transport(monkeypatch):
         effort = kwargs["reasoning_effort"]
         return OpenRouterProbeResult(
             content=(
-                '{"recommendation":"hybrid","reasons":["a","b","c"],'
-                '"human_escalation_required":true,"tested_llm_correct":21,'
-                '"tested_llm_total":25}'
+                '{"recommendation":"hybrid","reason_1":"a","reason_2":"b",'
+                '"reason_3":"c","human_escalation_required":true,'
+                '"tested_llm_correct":21,"tested_llm_total":25}'
             ),
             model="deepseek/deepseek-v4.1-flash",
             usage={
