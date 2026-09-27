@@ -2,7 +2,7 @@ from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v17"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v10"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
@@ -192,8 +192,12 @@ Messplan und muss noch nicht ausgeführt sein. Fordere daher weder Options-Claim
 Evidenz für die bereits erfolgte Durchführung des Validation Plans.
 
 Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
-unbekannt korrekt getrennt sind, ob die Empfehlung durch Evidenz getragen wird und ob
+unbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob
 vorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.
+Prüfe auch die Formulierungsstärke: Wenn die Quellen nur „am stärksten gestützt“,
+„bevorzugter Kandidat“, Pilot- oder Prüfvorbehalte tragen, darf der Brief daraus nicht
+„beste“, „optimale“ oder „eindeutig richtige“ Lösung machen. Eine solche unbelegte
+Verstärkung ist ein kritischer inhaltlicher Fehler und muss vor READY repariert werden.
 Berücksichtige Gegenbelege und relevante offene Punkte. Prüfe jeden als kritisch markierten
 Evidence Claim ausdrücklich und liste seine ID in checked_critical_claims. Fordere zusätzliche
 read_requests nur an, wenn eine konkrete Fundstelle für diese Integritätsprüfung wirklich
