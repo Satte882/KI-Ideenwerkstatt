@@ -586,6 +586,65 @@ def _investigation_context(actor, run: InvestigationRun) -> dict[str, Any]:
     return context
 
 
+def _source_reference_catalog(run: InvestigationRun) -> dict[str, dict[str, str]]:
+    """Bind short wire handles to this run's immutable source revisions only."""
+    return {
+        f"S{index}": {"source_id": str(source.pk), "revision_hash": source.content_sha256}
+        for index, source in enumerate(run.source_snapshot.sources.order_by("pk"), start=1)
+    }
+
+
+def _compact_source_references(value: Any, catalog: Mapping[str, Mapping[str, str]]) -> Any:
+    """Losslessly project canonical source references; never repair invalid provenance."""
+    if isinstance(value, Mapping):
+        if set(value) == {"source_id", "revision_hash", "locator"} and isinstance(
+            value["locator"], Mapping
+        ):
+            for handle, base in catalog.items():
+                if (
+                    value["source_id"] == base["source_id"]
+                    and value["revision_hash"] == base["revision_hash"]
+                ):
+                    return {"source_ref": handle, "locator": value["locator"]}
+        return {key: _compact_source_references(item, catalog) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_compact_source_references(item, catalog) for item in value]
+    return value
+
+
+def _expand_source_references(value: Any, catalog: Mapping[str, Mapping[str, str]]) -> Any:
+    """Decode the wire format before the existing domain validation and persistence.
+
+    Full references remain supported and retain their supplied hash. Unknown or mixed
+    handles fail the structured response contract instead of inferring a source/revision.
+    """
+    if isinstance(value, Mapping):
+        if "source_ref" in value:
+            handle = value["source_ref"]
+            if (
+                set(value) != {"source_ref", "locator"}
+                or not isinstance(handle, str)
+                or handle not in catalog
+                or not isinstance(value["locator"], Mapping)
+            ):
+                raise InvestigationRunError(
+                    "Ungültiges oder mehrdeutiges Quellenkürzel.", code="invalid_source_reference"
+                )
+            return {**catalog[handle], "locator": dict(value["locator"])}
+        return {key: _expand_source_references(item, catalog) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_expand_source_references(item, catalog) for item in value]
+    return value
+
+
+def _compact_package_context(context: dict[str, Any], run: InvestigationRun) -> dict[str, Any]:
+    catalog = _source_reference_catalog(run)
+    context["source_reference_catalog"] = catalog
+    for field in ("claim_register", "brief_payload", "source_relevance"):
+        context[field] = _compact_source_references(context[field], catalog)
+    return context
+
+
 def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
     """Return only the state needed to materialize or repair the Decision Package.
 
@@ -606,7 +665,7 @@ def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
         for item in reversed(planner_context["recent_steps"])
     ]
     context: dict[str, Any] = {
-        "context_profile": "synthesis_compact_v1",
+        "context_profile": "synthesis_compact_v2",
         "decision_question": planner_context["decision_question"],
         "process_context": planner_context["process_context"],
         "existing_solution_options": planner_context["existing_solution_options"],
@@ -631,7 +690,7 @@ def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
         context["latest_verifier"] = planner_context["latest_verifier"]
     if mode == "contract_retry":
         context["last_synthesis_error"] = planner_context["last_planner_error"]
-    return context
+    return _compact_package_context(context, run)
 
 
 def _deterministic_analysis_replays(actor, run: InvestigationRun) -> list[dict[str, Any]]:
@@ -716,7 +775,8 @@ def _verifier_context(
     *,
     analysis_replays: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    return {
+    context = {
+        "context_profile": "verification_compact_v1",
         "decision_question": run.decision_question,
         "process_context": run.source_snapshot.process_context,
         "claim_register": run.claim_register,
@@ -742,6 +802,7 @@ def _verifier_context(
             "brief": run.brief_hash,
         },
     }
+    return _compact_package_context(context, run)
 
 
 @transaction.atomic
@@ -1299,6 +1360,8 @@ def request_planner_action(
 
 def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -> PlannerAction:
     assert_actor_can_edit_run(actor, run)
+    context = _synthesis_context(actor, run)
+    catalog = context["source_reference_catalog"]
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
@@ -1307,10 +1370,15 @@ def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -
         instruction=SYNTHESIS_INSTRUCTION,
         prompt_version=SYNTHESIS_PROMPT_VERSION,
         schema_version=SYNTHESIS_SCHEMA_VERSION,
-        context=_synthesis_context(actor, run),
+        context=context,
         response_format=synthesis_response_format(),
-        payload_validator=lambda response: _validate_synthesis_package(run, response),
+        payload_validator=lambda response: _validate_synthesis_package(
+            run, _expand_source_references(response, catalog)
+        ),
     )
+    # The ModelCall retains the accepted wire payload/hash for exact audit replay;
+    # domain state and READY gates always see the fully expanded canonical package.
+    payload = _expand_source_references(payload, catalog)
     investigation_request = _decode_structured_field(
         payload, "investigation_request", expected_type=Mapping, default={}
     )

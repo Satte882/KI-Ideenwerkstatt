@@ -376,7 +376,7 @@ def test_synthesizer_receives_compact_evidence_context(
 
     context = captured["context"]
     assert action.action == "clarify"
-    assert context["context_profile"] == "synthesis_compact_v1"
+    assert context["context_profile"] == "synthesis_compact_v2"
     assert context["synthesis_mode"] == "initial"
     assert context["claim_register"] == []
     assert context["brief_payload"] == {}
