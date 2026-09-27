@@ -16,7 +16,7 @@
 {% if latest_investigation_materialization %}
 <div class="cr-inline-note mb-4" data-testid="investigation-materialization-origin">
   <div>
-    <strong>Letzte evidenzgestützte Übernahme</strong>
+    <strong>Letzte übernommene Entscheidungsgrundlage</strong>
     <span>
       {{ latest_investigation_materialization.applied_fields|length }} Prozessfeld(er),
       {{ latest_investigation_materialization.created_solution_option_ids|length }} neue und
@@ -75,7 +75,7 @@
       <tbody>
         <tr><th scope="row">Lösungsbeschreibung</th>{% for option in options %}<td class="text-preline">{{ option.description }}</td>{% endfor %}</tr>
         <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Evidenzbasis<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Beleglage<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">KI-Komponente</th>{% for option in options %}<td>{% if option.starts_ai_use_case %}Ja – KI-Use-Case-Pfad möglich{% else %}Nein – kein KI-Use-Case erforderlich{% endif %}</td>{% endfor %}</tr>
         <tr><th scope="row">Bottleneck-Abdeckung und Diagnosebezug<span class="d-block small text-muted mt-1">Problem / bestätigte Ursache</span></th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|default:"–" }}</td>{% endfor %}</tr>
@@ -181,7 +181,7 @@
           <div class="mt-3" data-testid="selection-diagnosis-blocker">
             <strong>Diagnose noch unvollständig</strong>
             <p class="mb-2">Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.</p>
-            <p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächliche Evidenz; eine vermutete Ursache bleibt eine Hypothese.</p>
+            <p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächlichen Befunde und Belege; eine vermutete Ursache bleibt eine Hypothese.</p>
             {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Diagnose ergänzen</a>{% endif %}
           </div>
         {% endif %}
@@ -210,7 +210,7 @@
         <div class="small text-muted mt-1">Entschieden von {{ decision.decided_by|default:"Gelöschter Nutzer" }} · {{ decision.comparison_snapshot|length }} verglichene Optionen{% if decision.process_version %} · Prozessversion v{{ decision.process_version }}{% endif %}</div>
         {% if decision.diagnosis_snapshot %}
           <details class="mt-2">
-            <summary class="small">Diagnose- und Evidenzstand der Entscheidung</summary>
+            <summary class="small">Diagnose- und Befundstand der Entscheidung</summary>
             <dl class="small mt-2 mb-0">
               <dt>Beobachtung / Problem</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.diagnostic_observations }}</dd>
               {% if decision.diagnosis_snapshot.cause_hypotheses %}<dt>Ursachenhypothese</dt><dd class="text-preline">{{ decision.diagnosis_snapshot.cause_hypotheses }}</dd>{% endif %}
