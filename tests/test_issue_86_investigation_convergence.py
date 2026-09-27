@@ -19,7 +19,11 @@ from ki_radar.accelerator.investigation_loop import (
     advance_investigation,
 )
 from ki_radar.accelerator.investigation_models import InvestigationModelCall, InvestigationRun
-from ki_radar.accelerator.investigation_runtime import MODEL_CALL_LIMITS
+from ki_radar.accelerator.investigation_runtime import (
+    MODEL_CALL_LIMITS,
+    apply_planner_state,
+    decision_brief_blockers,
+)
 from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable
 from tests.test_issue_3_investigation_hardening import start_csv_run
 
@@ -374,6 +378,68 @@ def test_synthesizer_receives_compact_evidence_context(
     assert "budget_limits" not in context
     assert "policy_blockers" not in context
     assert "latest_verifier" not in context
+
+
+@pytest.mark.django_db
+def test_invalid_optional_calculation_is_pruned_before_brief_persistence(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="issue86-invalid-optional-calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    execution_snapshot = dict(run.execution_snapshot)
+    execution_snapshot["decision_brief_required"] = True
+    run.execution_snapshot = execution_snapshot
+    run.save(update_fields=["execution_snapshot", "updated_at"])
+
+    source_reference = {
+        "source_id": str(source.source_id),
+        "locator": {"row": 1, "column": "group"},
+        "revision_hash": source.content_sha256,
+    }
+    brief = {
+        "question_scope": {
+            "question": run.decision_question,
+            "scope": "Autorisierter Testfall.",
+        },
+        "problem": {
+            "statement": "Die Quelle enthält den betrachteten Befund.",
+            "references": [source_reference],
+        },
+        "calculations": [
+            {
+                "summary": "Nicht reproduzierbare Modellberechnung.",
+                "reference": source_reference,
+                "population": {"scope": "Testpopulation"},
+                "limits": "Keine reproduzierbare Analyse vorhanden.",
+            }
+        ],
+        "recommendation": {
+            "summary": "Befund als Kandidat weiter prüfen.",
+            "rationale": "Die Quelle stützt die Richtung.",
+            "references": [source_reference],
+        },
+    }
+
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        brief_payload=brief,
+    )
+    run.refresh_from_db()
+
+    assert run.brief_payload["calculations"] == []
+    assert not any(
+        blocker.startswith("decision_brief_calculation_")
+        for blocker in decision_brief_blockers(run)
+    )
 
 
 @pytest.mark.django_db
