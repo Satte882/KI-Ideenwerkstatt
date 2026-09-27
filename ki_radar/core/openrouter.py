@@ -445,7 +445,11 @@ def probe_openrouter_stream(
     request = urllib.request.Request(  # noqa: S310
         _api_url(),
         data=json.dumps(body).encode("utf-8"),
-        headers={**_headers(api_key), "Accept": "text/event-stream"},
+        headers={
+            **_headers(api_key),
+            "Accept": "text/event-stream",
+            "X-OpenRouter-Metadata": "enabled",
+        },
         method="POST",
     )
 
@@ -478,6 +482,7 @@ def probe_openrouter_stream(
                 "_sock",
                 None,
             )
+            response_limit = max_response_bytes()
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
@@ -488,6 +493,16 @@ def probe_openrouter_stream(
                 if not raw_line:
                     break
                 bytes_received += len(raw_line)
+                if bytes_received > response_limit:
+                    raise OpenRouterUnavailable(
+                        "Der OpenRouter-Diagnosestream ist zu groß.",
+                        code="response_too_large",
+                        diagnostics={
+                            "probe_stage": stage,
+                            "bytes_received": bytes_received,
+                            "reasoning_effort": reasoning_effort,
+                        },
+                    )
                 line = raw_line.decode("utf-8").strip()
                 if not line.startswith("data:"):
                     continue
@@ -538,7 +553,7 @@ def probe_openrouter_stream(
             code="provider_error",
             diagnostics=diagnostics,
         ) from exc
-    except (TimeoutError, OSError) as exc:
+    except TimeoutError as exc:
         diagnostics = {
             "probe_stage": stage,
             "elapsed_seconds": round(time.monotonic() - started, 3),
@@ -565,6 +580,30 @@ def probe_openrouter_stream(
             "Der OpenRouter-Diagnoseaufruf hat das Zeitlimit überschritten.",
             code="timeout",
             diagnostics=diagnostics,
+        ) from exc
+    except urllib.error.URLError as exc:
+        reason = getattr(exc, "reason", None)
+        code = "timeout" if isinstance(reason, TimeoutError) else "provider_unavailable"
+        raise OpenRouterUnavailable(
+            "Der OpenRouter-Diagnoseaufruf konnte nicht abgeschlossen werden.",
+            code=code,
+            diagnostics={
+                "probe_stage": stage,
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+                "exception_type": type(reason).__name__ if reason is not None else "",
+                "reasoning_effort": reasoning_effort,
+            },
+        ) from exc
+    except OSError as exc:
+        raise OpenRouterUnavailable(
+            "Der OpenRouter-Diagnosestream wurde transportseitig unterbrochen.",
+            code="provider_unavailable",
+            diagnostics={
+                "probe_stage": stage,
+                "elapsed_seconds": round(time.monotonic() - started, 3),
+                "exception_type": type(exc).__name__,
+                "reasoning_effort": reasoning_effort,
+            },
         ) from exc
 
     finished = time.monotonic()
