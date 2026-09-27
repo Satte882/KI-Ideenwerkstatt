@@ -114,11 +114,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        efforts = [
-            item.strip()
-            for item in str(options["efforts"]).split(",")
-            if item.strip()
-        ]
+        efforts = [item.strip() for item in str(options["efforts"]).split(",") if item.strip()]
         if not efforts:
             raise CommandError("Mindestens ein Reasoning-Effort ist erforderlich.")
         if options["timeout"] < 30:
@@ -196,9 +192,7 @@ class Command(BaseCommand):
                             for field in ("reason_1", "reason_2", "reason_3")
                             if payload.get(field)
                         ),
-                        "human_escalation_required": payload.get(
-                            "human_escalation_required"
-                        ),
+                        "human_escalation_required": payload.get("human_escalation_required"),
                         "tested_llm_correct": payload.get("tested_llm_correct"),
                         "tested_llm_total": payload.get("tested_llm_total"),
                     },
