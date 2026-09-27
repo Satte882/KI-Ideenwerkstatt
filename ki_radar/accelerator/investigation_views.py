@@ -167,11 +167,13 @@ def investigation_authorize(request, process_pk):
                     f"Quellenraum konnte nicht autorisiert werden: {exc}",
                 )
             else:
+                source_count = snapshot.sources.count()
                 messages.success(
                     request,
                     (
-                        f"Untersuchungsgrundlage autorisiert (Revision {snapshot.revision}). "
-                        "Sie können die Untersuchung jetzt starten."
+                        f"Quellenbasis „{folder.product_display_name}“ ist autorisiert "
+                        f"(Revision {snapshot.revision}, {source_count} Datei(en)). "
+                        "Genau diese Grundlage wird beim nächsten Untersuchungsstart verwendet."
                     ),
                 )
                 return redirect(f"{process.get_absolute_url()}#evidence-investigation")
@@ -226,10 +228,14 @@ def investigation_source_upload(request, process_pk):
         messages.error(request, f"Quellenbasis konnte nicht erstellt werden: {exc}")
         return redirect(f"{process.get_absolute_url()}#evidence-investigation")
 
+    uploaded_count = len(request.FILES.getlist("files"))
     messages.success(
         request,
-        f"Quellenbasis „{folder.product_display_name}“ wurde erstellt. "
-        "Legen Sie jetzt die Richtungsfrage fest und autorisieren Sie die Grundlage.",
+        (
+            f"{uploaded_count} Datei(en) wurden hochgeladen und als Quellenbasis "
+            f"„{folder.product_display_name}“ gespeichert. "
+            "Legen Sie jetzt die Richtungsfrage fest und autorisieren Sie diese Grundlage."
+        ),
     )
     authorize_url = reverse(
         "accelerator:investigation_authorize",
@@ -248,17 +254,21 @@ def investigation_start(request, process_pk):
     if not _editable_process(request.user, process):
         raise PermissionDenied
 
-    snapshot = (
-        process.investigation_source_snapshots.select_related("folder")
-        .filter(process_version=process.version, folder__is_active=True)
-        .order_by("-revision")
-        .first()
+    snapshot_id = str(request.POST.get("snapshot_id") or "").strip()
+    snapshots = process.investigation_source_snapshots.select_related("folder").filter(
+        process_version=process.version,
+        folder__is_active=True,
     )
+    if snapshot_id:
+        snapshot = snapshots.filter(pk=snapshot_id).first()
+    else:
+        snapshot = snapshots.order_by("-created_at", "-id").first()
+
     if snapshot is None:
         messages.warning(
             request,
-            "Vor dem Start wird ein aktueller, autorisierter Quellen-Snapshot für diese "
-            "ProcessAnalysis-Version benötigt.",
+            "Die ausgewählte Untersuchungsgrundlage ist nicht mehr aktuell oder nicht "
+            "für diese ProcessAnalysis-Version autorisiert. Bitte die Grundlage erneut festlegen.",
         )
         return redirect(process)
 
