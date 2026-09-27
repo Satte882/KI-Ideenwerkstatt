@@ -104,9 +104,7 @@ def test_run_diagnostic_quantifies_model_time_tokens_and_synthesis_trigger(
     assert report["role_totals"]["planner"]["prompt_tokens"] == 100
     synthesis = report["model_calls"][1]
     assert synthesis["synthesis_trigger"] == "pre_verifier_repair"
-    assert synthesis["pre_verifier_blockers"] == [
-        "decision_brief_recommendation_invalid"
-    ]
+    assert synthesis["pre_verifier_blockers"] == ["decision_brief_recommendation_invalid"]
     assert synthesis["reasoning_effort"] == "low"
 
 
