@@ -235,9 +235,7 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         if call["role"] == InvestigationModelCall.Role.SYNTHESIZER:
             blockers = call["pre_verifier_blockers"]
             if blockers:
-                lines.append(
-                    f"|  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |"
-                )
+                lines.append(f"|  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |")
 
     lines.extend(
         [
