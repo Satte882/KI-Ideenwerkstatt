@@ -2141,7 +2141,9 @@ def test_default_budget_version_uses_generous_global_envelope(
     assert "max_repair_cycles" not in limits
     assert limits["max_output_tokens"] == 500_000
     assert limits["verifier_reserved_output_tokens"] == 2 * 8_192
-    assert limits["verifier_reserved_seconds"] == 2 * MODEL_CALL_LIMITS["verifier"]["timeout_seconds"]
+    assert limits["verifier_reserved_seconds"] == (
+        2 * MODEL_CALL_LIMITS["verifier"]["timeout_seconds"]
+    )
 
 
 @pytest.mark.django_db
