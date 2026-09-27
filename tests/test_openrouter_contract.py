@@ -5,7 +5,11 @@ import json
 import pytest
 from django.conf import settings
 
-from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
+from ki_radar.core.openrouter import (
+    OpenRouterUnavailable,
+    _usage_metadata,
+    request_openrouter,
+)
 
 
 class _FakeResponse:
@@ -177,3 +181,20 @@ def test_streamed_response_obeys_total_wall_clock_deadline(monkeypatch):
     assert exc_info.value.code == "timeout"
     assert response.reads == 3
     assert socket_timeouts == [5.0, 3.0, 1.0]
+
+
+def test_usage_metadata_extracts_reasoning_tokens_from_completion_details():
+    payload = {
+        "usage": {
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+            "total_tokens": 30,
+            "completion_tokens_details": {"reasoning_tokens": 17},
+        }
+    }
+
+    usage = _usage_metadata(payload)
+
+    assert usage["prompt_tokens"] == 10
+    assert usage["completion_tokens"] == 20
+    assert usage["reasoning_tokens"] == 17

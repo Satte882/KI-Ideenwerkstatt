@@ -78,8 +78,20 @@ def _usage_metadata(payload: object) -> dict[str, object]:
     usage = payload.get("usage")
     if not isinstance(usage, dict):
         return {}
+
     allowed = ("prompt_tokens", "completion_tokens", "total_tokens", "cost")
-    return {name: usage.get(name) for name in allowed if usage.get(name) is not None}
+    metadata = {name: usage.get(name) for name in allowed if usage.get(name) is not None}
+
+    reasoning_tokens = usage.get("reasoning_tokens")
+    if reasoning_tokens is None:
+        for container_name in ("completion_tokens_details", "output_tokens_details"):
+            details = usage.get(container_name)
+            if isinstance(details, dict) and details.get("reasoning_tokens") is not None:
+                reasoning_tokens = details.get("reasoning_tokens")
+                break
+    if isinstance(reasoning_tokens, (int, float)) and not isinstance(reasoning_tokens, bool):
+        metadata["reasoning_tokens"] = reasoning_tokens
+    return metadata
 
 
 def _http_error_payload(exc: urllib.error.HTTPError) -> dict[str, Any]:

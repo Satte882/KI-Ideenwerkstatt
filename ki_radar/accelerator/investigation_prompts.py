@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v18"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v11"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v12"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -166,36 +166,47 @@ SYNTHESIS_INSTRUCTION = (
     """Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf
 genau ein vollständiges Decision Package: Claim Register, Decision Brief und
 Relevanzentscheidung für jede Manifestquelle. Verwende nur nachprüfbare Fundstellen.
+
+Du bist der Synthesizer, nicht der Planner. Der Planner hat vor diesem Aufruf bereits
+entschieden, dass Synthese der nächste fachlich sinnvolle Schritt ist. Plane deshalb
+keine allgemeine Quellenstrategie neu und wiederhole keine bereits abgeschlossene
+Untersuchungsplanung. Nutze den kompakten synthesis_context und materialisiere daraus
+den prüfbaren Entscheidungsstand.
+
+Bei synthesis_mode=initial erzeuge das vollständige Package einmal aus den vorhandenen
+evidence_steps. Bei synthesis_mode=post_evidence aktualisiere das bestehende Package
+nur um die neu hinzugekommene Quellen-/Toolinformation. Bei
+synthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle
+in pre_verifier_blockers
+genannten deterministischen Paketblocker und übernimm bereits valide Claims,
+Quellenklassifikationen und Briefabschnitte inhaltlich unverändert. Bei
+synthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und
+bewahre unbetroffene Inhalte. Bei
+synthesis_mode=contract_retry repariere ausschließlich den dokumentierten
+Struktur-/Vertragsfehler.
+
 Kennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine
 Fakten oder Messwerte. Bei einer Reparatur bleiben unveränderte Claims unter ihrer
 bestehenden claim_id erhalten. Wenn sich die Aussage eines kritischen Claims fachlich
-ändern muss, verwende dagegen zwingend einen expliziten Ersatz gemäß den Domain-Regeln:
+ändern muss, verwende zwingend einen expliziten Ersatz gemäß den Domain-Regeln:
 neue claim_id, metadata.replaces_claim_id=<alte claim_id>, und führe den alten Claim
 nicht zusätzlich weiter. Briefabschnitte dürfen bei einer Reparatur nicht still
-verschwinden. Beachte synthesis_mode und pre_verifier_blockers aus dem Kontext.
-Bei synthesis_mode=pre_verifier_repair repariere in genau diesem Durchlauf alle dort
-genannten deterministischen Paketblocker. Verändere bereits valide Claims,
-Quellenklassifikationen und Briefabschnitte nicht stilistisch oder vorsorglich; ändere nur,
-was zur Behebung der konkreten Blocker erforderlich ist. Erzeuge keine neue fachliche
-Hypothese nur um einen technischen Paketblocker zu beseitigen. Bei
-synthesis_mode=verifier_repair adressiere die konkreten Verifier-Findings und bewahre
-unbetroffene Inhalte. Bei synthesis_mode=post_evidence aktualisiere das Paket nur um die
-neu hinzugekommene Quellen-/Toolinformation. Antworte als ein einziges JSON-Objekt.
-claim_register ist ein echtes JSON-Array; brief_payload, source_relevance und
-clarification_payload
-sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
-serialisiert werden.
-Wenn eine entscheidungskritische Evidenzlücke mit den bereits freigegebenen Quellen
-und erlaubten Werkzeugen selbst geschlossen werden kann, setze clarification_reason auf
-den leeren String und liefere investigation_request={goal,reason}; frage den Menschen dafür
-nicht. Der Planner übernimmt danach wieder genau den nächsten Werkzeugschritt. Nur wenn die
-fehlende Information außerhalb des freigegebenen Quellenraums liegt oder eine echte menschliche
-Entscheidung erfordert, setze clarification_reason=missing_evidence, investigation_request={},
-claim_register=[], brief_payload={}, source_relevance={} und formuliere in
-clarification_payload die konkrete Frage und ihren Einfluss auf die Entscheidung.
-Bei einem vollständigen Package setze clarification_reason auf den leeren String,
-investigation_request={} und clarification_payload auf {}.
-"""
+verschwinden. Verändere valide Inhalte nicht stilistisch oder vorsorglich.
+
+Nur wenn beim Materialisieren eine konkrete entscheidungskritische Lücke sichtbar wird,
+die der Planner anhand des bisherigen Stands nicht erkennen konnte, darfst du statt eines
+Packages genau eine Grenze melden: Ist die Lücke innerhalb des freigegebenen Quellenraums
+mit einem erlaubten Werkzeug schließbar, liefere investigation_request={goal,reason}.
+Liegt die Information außerhalb des Quellenraums oder braucht es eine echte menschliche
+Entscheidung, setze clarification_reason=missing_evidence und formuliere in
+clarification_payload die konkrete Frage und ihren Einfluss. Nutze diese Ausnahmen nicht
+für allgemeine Selbstprüfung oder zusätzliche Recherchewünsche.
+
+Antworte als ein einziges JSON-Objekt. claim_register ist ein echtes JSON-Array;
+brief_payload, source_relevance und clarification_payload sind echte JSON-Objekte und
+dürfen niemals als JSON-Text in Strings serialisiert werden. Bei einem vollständigen
+Package setze clarification_reason auf den leeren String, investigation_request={} und
+clarification_payload={}."""
     + _SYNTHESIS_DOMAIN_RULES
 )
 

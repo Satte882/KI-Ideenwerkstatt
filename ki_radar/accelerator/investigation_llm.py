@@ -586,6 +586,54 @@ def _investigation_context(actor, run: InvestigationRun) -> dict[str, Any]:
     return context
 
 
+def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
+    """Return only the state needed to materialize or repair the Decision Package.
+
+    The planner owns investigation strategy, budgets and tool selection. Feeding those
+    controls back into the synthesizer caused it to reconsider planning while also
+    regenerating a full package. Keep synthesis grounded in evidence plus the current
+    package state and explicit repair findings.
+    """
+    planner_context = _planner_context(actor, run)
+    mode = str(planner_context["synthesis_mode"])
+    evidence_steps = [
+        {
+            "sequence": item["sequence"],
+            "tool_name": item["tool_name"],
+            "parameters": item["parameters"],
+            "result_payload": item["result_payload"],
+        }
+        for item in reversed(planner_context["recent_steps"])
+    ]
+    context: dict[str, Any] = {
+        "context_profile": "synthesis_compact_v1",
+        "decision_question": planner_context["decision_question"],
+        "process_context": planner_context["process_context"],
+        "existing_solution_options": planner_context["existing_solution_options"],
+        "sources": planner_context["sources"],
+        "evidence_steps": evidence_steps,
+        "input_revisions": planner_context["input_revisions"],
+        "evidence_coverage": {
+            "data_check_executed": run.data_check_executed,
+            "counterevidence_search_executed": run.counterevidence_search_executed,
+            "counterevidence_hits_processed": run.counterevidence_hits_processed,
+            "source_relevance_complete": run.source_relevance_complete,
+        },
+        "synthesis_mode": mode,
+        "pre_verifier_blockers": (
+            planner_context["pre_verifier_blockers"] if mode == "pre_verifier_repair" else []
+        ),
+        "claim_register": run.claim_register if mode != "initial" else [],
+        "source_relevance": run.source_relevance if mode != "initial" else {},
+        "brief_payload": run.brief_payload if mode != "initial" else {},
+    }
+    if mode == "verifier_repair":
+        context["latest_verifier"] = planner_context["latest_verifier"]
+    if mode == "contract_retry":
+        context["last_synthesis_error"] = planner_context["last_planner_error"]
+    return context
+
+
 def _deterministic_analysis_replays(actor, run: InvestigationRun) -> list[dict[str, Any]]:
     replays: list[dict[str, Any]] = []
     for step in run.steps.filter(
@@ -905,6 +953,8 @@ def _reserve_model_call(
             "policy_blockers": list(context.get("policy_blockers") or []),
             "pre_verifier_blockers": list(context.get("pre_verifier_blockers") or []),
             "synthesis_mode": synthesis_mode,
+            "context_profile": str(context.get("context_profile") or ""),
+            "context_chars": len(canonical_json(context)),
         },
     )
     if run.evidence_campaign_id is not None:
@@ -1129,6 +1179,16 @@ def _structured_provider_call(
         current.completion_tokens = completion_tokens
         current.total_tokens = total_tokens
         current.finished_at = timezone.now()
+        parameters = dict(current.effective_parameters)
+        response_metadata: dict[str, Any] = {
+            "output_chars": result.output_chars,
+            "finish_reason": result.finish_reason,
+        }
+        reasoning_tokens = result.usage.get("reasoning_tokens")
+        if isinstance(reasoning_tokens, (int, float)) and not isinstance(reasoning_tokens, bool):
+            response_metadata["reasoning_tokens"] = int(reasoning_tokens)
+        parameters["response_metadata"] = response_metadata
+        current.effective_parameters = parameters
 
         if stale:
             current.status = InvestigationModelCall.Status.DISCARDED
@@ -1141,6 +1201,7 @@ def _structured_provider_call(
                 "prompt_tokens",
                 "completion_tokens",
                 "total_tokens",
+                "effective_parameters",
                 "finished_at",
                 "updated_at",
             ]
@@ -1178,6 +1239,7 @@ def _structured_provider_call(
                 "prompt_tokens",
                 "completion_tokens",
                 "total_tokens",
+                "effective_parameters",
                 "finished_at",
                 "updated_at",
             ]
@@ -1245,7 +1307,7 @@ def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -
         instruction=SYNTHESIS_INSTRUCTION,
         prompt_version=SYNTHESIS_PROMPT_VERSION,
         schema_version=SYNTHESIS_SCHEMA_VERSION,
-        context=_planner_context(actor, run),
+        context=_synthesis_context(actor, run),
         response_format=synthesis_response_format(),
         payload_validator=lambda response: _validate_synthesis_package(run, response),
     )
