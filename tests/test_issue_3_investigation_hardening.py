@@ -39,6 +39,8 @@ from ki_radar.accelerator.investigation_policy import PolicyOutcome, is_evidence
 from ki_radar.accelerator.investigation_prompts import (
     PLANNER_SCHEMA_VERSION,
     PLANNER_TOOL_NAMES,
+    SYNTHESIS_INSTRUCTION,
+    SYNTHESIS_PROMPT_VERSION,
     TOOL_PARAMETER_CONTRACTS,
     VERIFIER_SCHEMA_VERSION,
     planner_response_format,
@@ -1231,8 +1233,11 @@ def test_post_provider_structured_field_decode_failure_is_capped_by_retry_policy
     assert second.status == InvestigationRun.Status.FAILED
     assert provider_calls == 2
     assert run.clarification_reason == "technical_failure"
-    assert run.clarification_payload["error_code"] == "invalid_response"
+    assert run.clarification_payload["error_code"] == "structured_contract_error"
+    assert run.clarification_payload["contract_error_code"] == "invalid_response"
+    assert run.clarification_payload["model_role"] == InvestigationModelCall.Role.PLANNER
     assert run.clarification_payload["attempts"] == 2
+    assert "Provider" not in run.clarification_payload["impact"]
     assert [(call.status, call.error_code) for call in calls] == [
         (InvestigationModelCall.Status.FAILED, "invalid_response"),
         (InvestigationModelCall.Status.FAILED, "invalid_response"),
@@ -2209,6 +2214,145 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
     assert run.clarification_reason == "budget_exhausted"
     assert run.usage["model_calls"] == 0
     assert run.usage["provider_attempts"] == 0
+
+
+def test_synthesis_prompt_distinguishes_stable_ids_from_explicit_replacements():
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v8"
+    assert "Bei einer Reparatur bleiben vorhandene Claim-IDs" not in SYNTHESIS_INSTRUCTION
+    assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
+    assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
+    assert "führe den alten Claim\nnicht zusätzlich weiter" in SYNTHESIS_INSTRUCTION
+
+
+@pytest.mark.django_db
+def test_failed_synthesizer_contract_retries_synthesizer_not_planner(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="synth-contract-retry-route",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    InvestigationModelCall.objects.create(
+        run=run,
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        status=InvestigationModelCall.Status.FAILED,
+        executor_generation=run.executor_generation,
+        requested_model="test-model",
+        returned_model="test-model",
+        model_revision="test-revision",
+        prompt_version="test-synthesis",
+        prompt_hash="c" * 64,
+        instruction_template="test",
+        schema_version="test-schema",
+        effective_parameters={
+            "response_diagnostics": {
+                "structured_contract_error": (
+                    "Ein kritischer Claim benötigt genau einen expliziten Ersatz."
+                ),
+                "structured_contract_error_code": "critical_claim_guard",
+            }
+        },
+        error_code="invalid_response",
+        finished_at=timezone.now(),
+    )
+
+    def planner_must_not_run(**_kwargs):
+        raise AssertionError("Synthesizer-Vertragsfehler muss beim Synthesizer retryt werden.")
+
+    synth_calls = []
+
+    def retry_synthesizer(**_kwargs):
+        synth_calls.append("called")
+        return planner_action(
+            action="clarify",
+            clarification_reason="missing_evidence",
+            clarification_payload={
+                "impact": "Externer Nachweis fehlt.",
+                "required_input": "Nachweis bereitstellen.",
+            },
+        )
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=planner_must_not_run,
+        synthesizer=retry_synthesizer,
+    )
+    run.refresh_from_db()
+
+    assert synth_calls == ["called"]
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+    assert run.clarification_reason == "missing_evidence"
+
+
+@pytest.mark.django_db
+def test_repeated_structured_contract_failure_is_not_reported_as_provider_failure(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="structured-contract-classification",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    def record_failed_synth(detail):
+        return InvestigationModelCall.objects.create(
+            run=run,
+            role=InvestigationModelCall.Role.SYNTHESIZER,
+            status=InvestigationModelCall.Status.FAILED,
+            executor_generation=run.executor_generation,
+            requested_model="test-model",
+            returned_model="test-model",
+            model_revision="test-revision",
+            prompt_version="test-synthesis",
+            prompt_hash="d" * 64,
+            instruction_template="test",
+            schema_version="test-schema",
+            effective_parameters={
+                "response_diagnostics": {
+                    "structured_contract_error": detail,
+                    "structured_contract_error_code": "critical_claim_guard",
+                }
+            },
+            error_code="invalid_response",
+            finished_at=timezone.now(),
+        )
+
+    detail = "Ein kritischer Claim benötigt genau einen expliziten Ersatz."
+    record_failed_synth(detail)
+
+    def retry_synthesizer(**_kwargs):
+        record_failed_synth(detail)
+        raise InvestigationRunError(detail, code="invalid_response")
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=lambda **_kwargs: (_ for _ in ()).throw(
+            AssertionError("Planner darf beim Synthesizer-Retry nicht laufen.")
+        ),
+        synthesizer=retry_synthesizer,
+    )
+    run.refresh_from_db()
+
+    assert result.status == InvestigationRun.Status.FAILED
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "structured_contract_error"
+    assert run.clarification_payload["model_role"] == InvestigationModelCall.Role.SYNTHESIZER
+    assert run.clarification_payload["contract_error_code"] == "critical_claim_guard"
+    assert run.clarification_payload["attempts"] == 2
+    assert "Provider" not in run.clarification_payload["impact"]
 
 
 @pytest.mark.django_db

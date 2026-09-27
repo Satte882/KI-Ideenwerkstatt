@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v16"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v7"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v8"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -137,8 +137,12 @@ SYNTHESIS_INSTRUCTION = (
 genau ein vollständiges Decision Package: Claim Register, Decision Brief und
 Relevanzentscheidung für jede Manifestquelle. Verwende nur nachprüfbare Fundstellen.
 Kennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine
-Fakten oder Messwerte. Bei einer Reparatur bleiben vorhandene Claim-IDs und
-Briefabschnitte erhalten. Antworte als ein einziges JSON-Objekt. claim_register ist
+Fakten oder Messwerte. Bei einer Reparatur bleiben unveränderte Claims unter ihrer
+bestehenden claim_id erhalten. Wenn sich die Aussage eines kritischen Claims fachlich
+ändern muss, verwende dagegen zwingend einen expliziten Ersatz gemäß den Domain-Regeln:
+neue claim_id, metadata.replaces_claim_id=<alte claim_id>, und führe den alten Claim
+nicht zusätzlich weiter. Briefabschnitte dürfen bei einer Reparatur nicht still
+verschwinden. Antworte als ein einziges JSON-Objekt. claim_register ist
 ein echtes JSON-Array; brief_payload, source_relevance und clarification_payload
 sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
 serialisiert werden.

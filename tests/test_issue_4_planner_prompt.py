@@ -21,8 +21,11 @@ def test_quantitative_check_rule_stays_domain_generic():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v7"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v8"
+    assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
+    assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
+    assert "nicht zusätzlich weiter" in SYNTHESIS_INSTRUCTION
     assert "stale und korrigierter widersprüchlicher Claim" in SYNTHESIS_INSTRUCTION
 
 
