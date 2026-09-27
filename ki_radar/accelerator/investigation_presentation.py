@@ -98,11 +98,7 @@ def present_hypotheses(
     *,
     claim_register: object = None,
 ) -> list[dict[str, Any]]:
-    claims = [
-        item
-        for item in (claim_register or [])
-        if isinstance(item, Mapping)
-    ]
+    claims = [item for item in (claim_register or []) if isinstance(item, Mapping)]
     if claims:
         raw_hypotheses = [
             item
