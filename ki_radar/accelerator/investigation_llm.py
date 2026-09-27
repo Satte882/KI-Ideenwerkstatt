@@ -455,21 +455,19 @@ def _synthesis_mode(run: InvestigationRun) -> str:
     if (
         latest_verifier is not None
         and not latest_verifier.success
-        and (
-            latest_synthesis is None
-            or latest_verifier.created_at > latest_synthesis.created_at
-        )
+        and (latest_synthesis is None or latest_verifier.created_at > latest_synthesis.created_at)
     ):
         return "verifier_repair"
     if latest_synthesis is None:
         return "initial"
 
-    if run.steps.filter(
-        status=InvestigationStep.Status.SUCCESS,
-        finished_at__gt=latest_synthesis.finished_at,
-    ).exists() or run.input_revisions.filter(
-        created_at__gt=latest_synthesis.finished_at
-    ).exists():
+    if (
+        run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            finished_at__gt=latest_synthesis.finished_at,
+        ).exists()
+        or run.input_revisions.filter(created_at__gt=latest_synthesis.finished_at).exists()
+    ):
         return "post_evidence"
 
     if pre_verifier_blockers_for_run(run):
