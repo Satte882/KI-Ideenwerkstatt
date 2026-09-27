@@ -83,9 +83,7 @@ def build_investigation_diagnostic(
             }
         )
         payload = call.accepted_payload if isinstance(call.accepted_payload, Mapping) else {}
-        response_metadata = dict(
-            (call.effective_parameters or {}).get("response_metadata") or {}
-        )
+        response_metadata = dict((call.effective_parameters or {}).get("response_metadata") or {})
         row = {
             "sequence": index + 1,
             "role": call.role,
@@ -232,9 +230,7 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
             f"{call['prompt_tokens'] or 0}/{call['completion_tokens'] or 0}/"
             f"{call['reasoning_tokens'] if call['reasoning_tokens'] is not None else '-'}"
         )
-        visible = (
-            str(call["output_chars"]) if call["output_chars"] is not None else "-"
-        )
+        visible = str(call["output_chars"]) if call["output_chars"] is not None else "-"
         duration = (
             f"{call['duration_seconds']:.1f}s" if call["duration_seconds"] is not None else "-"
         )
@@ -252,9 +248,7 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         if call["role"] == InvestigationModelCall.Role.SYNTHESIZER:
             blockers = call["pre_verifier_blockers"]
             if blockers:
-                lines.append(
-                    f"|  |  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |"
-                )
+                lines.append(f"|  |  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |")
             if call["context_profile"]:
                 lines.append(
                     f"|  |  |  |  |  |  |  | Kontext: {call['context_profile']} "
