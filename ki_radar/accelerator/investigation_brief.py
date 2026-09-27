@@ -239,7 +239,11 @@ def _solution_proposals(
             "Reviewer-Zuordnung verweist auf unbekannte Brief-Optionen: " + ", ".join(unknown),
             code="option_binding_unknown_proposal",
         )
-    duplicates = sorted(name for name in set(seen_names) if seen_names.count(name) > 1 and name in bindings)
+    duplicates = sorted(
+        name
+        for name in set(seen_names)
+        if seen_names.count(name) > 1 and name in bindings
+    )
     if duplicates:
         raise InvestigationRunError(
             "Reviewer-Zuordnung ist wegen doppelter Brief-Optionen mehrdeutig: "
