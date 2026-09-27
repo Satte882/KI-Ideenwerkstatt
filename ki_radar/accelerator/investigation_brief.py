@@ -424,7 +424,7 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
         )
         for reference in hypothesis.get("references", []):
             if isinstance(reference, Mapping):
-                lines.append(f"  - Evidenz: {_reference_label(reference)}")
+                lines.append(f"  - Beleg: {_reference_label(reference)}")
         for reference in hypothesis.get("counterevidence_refs", []):
             if isinstance(reference, Mapping):
                 lines.append(f"  - Gegenbeleg: {_reference_label(reference)}")
