@@ -73,6 +73,7 @@ from .investigation_runtime import (
     locked_run,
     normalize_claim_register,
     normalize_tool_parameters,
+    pre_verifier_blockers_for_run,
     reference_valid,
 )
 from .investigation_tools import (
@@ -428,10 +429,60 @@ def _pending_synthesis_investigation(run: InvestigationRun) -> dict[str, str]:
     }
 
 
+def _latest_successful_synthesis(run: InvestigationRun):
+    return (
+        run.model_calls.filter(
+            role=InvestigationModelCall.Role.SYNTHESIZER,
+            status=InvestigationModelCall.Status.SUCCESS,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+
+
+def _synthesis_mode(run: InvestigationRun) -> str:
+    latest_call = run.model_calls.order_by("-created_at").first()
+    if (
+        latest_call is not None
+        and latest_call.role == InvestigationModelCall.Role.SYNTHESIZER
+        and latest_call.status == InvestigationModelCall.Status.FAILED
+        and latest_call.error_code == "invalid_response"
+    ):
+        return "contract_retry"
+
+    latest_synthesis = _latest_successful_synthesis(run)
+    latest_verifier = run.verifier_reports.order_by("-created_at").first()
+    if (
+        latest_verifier is not None
+        and not latest_verifier.success
+        and (
+            latest_synthesis is None
+            or latest_verifier.created_at > latest_synthesis.created_at
+        )
+    ):
+        return "verifier_repair"
+    if latest_synthesis is None:
+        return "initial"
+
+    if run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS,
+        finished_at__gt=latest_synthesis.finished_at,
+    ).exists() or run.input_revisions.filter(
+        created_at__gt=latest_synthesis.finished_at
+    ).exists():
+        return "post_evidence"
+
+    if pre_verifier_blockers_for_run(run):
+        return "pre_verifier_repair"
+    return "refresh"
+
+
 def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     sources = list_sources(actor=actor, snapshot_id=run.source_snapshot_id)
     pending_investigation = _pending_synthesis_investigation(run)
     latest_verifier = run.verifier_reports.order_by("-revision").first()
+    pre_verifier_blockers = list(pre_verifier_blockers_for_run(run))
+    synthesis_mode = _synthesis_mode(run)
     previous_call = run.model_calls.order_by("-created_at").first()
     last_planner_error: dict[str, str] = {}
     if (
@@ -506,6 +557,8 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
         "usage": run.usage,
         "budget_limits": run.budget_limits,
         "policy_blockers": list(evaluate_run_policy(run).blockers),
+        "pre_verifier_blockers": pre_verifier_blockers,
+        "synthesis_mode": synthesis_mode,
         "latest_verifier": (
             {
                 "success": latest_verifier.success,
@@ -812,6 +865,14 @@ def _reserve_model_call(
     run.usage = usage
     run.save(update_fields=["usage", "updated_at"])
 
+    synthesis_mode = str(context.get("synthesis_mode") or "")
+    reasoning_effort = (
+        "low"
+        if role == InvestigationModelCall.Role.SYNTHESIZER
+        and synthesis_mode == "pre_verifier_repair"
+        else "medium"
+    )
+
     call = InvestigationModelCall.objects.create(
         run=run,
         role=role,
@@ -820,7 +881,7 @@ def _reserve_model_call(
         requested_model=_requested_model(),
         effective_parameters={
             "temperature": 0.1,
-            "reasoning_effort": "medium",
+            "reasoning_effort": reasoning_effort,
             "max_tokens": call_max_tokens,
             "timeout_seconds": call_timeout,
             "provider_policy": dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
@@ -834,6 +895,9 @@ def _reserve_model_call(
             "manifest_hash": run.manifest_hash,
             "register_hash": run.register_hash,
             "brief_hash": run.brief_hash,
+            "policy_blockers": list(context.get("policy_blockers") or []),
+            "pre_verifier_blockers": list(context.get("pre_verifier_blockers") or []),
+            "synthesis_mode": synthesis_mode,
         },
     )
     if run.evidence_campaign_id is not None:
@@ -962,7 +1026,7 @@ def _structured_provider_call(
             temperature=0.1,
             response_format=response_format,
             provider=dict(ISSUE4_INVESTIGATION_PROVIDER_POLICY),
-            reasoning_effort="medium",
+            reasoning_effort=str(call.effective_parameters["reasoning_effort"]),
         )
         if result.finish_reason == "length":
             raise OpenRouterUnavailable(
