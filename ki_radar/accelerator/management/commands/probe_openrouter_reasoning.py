@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from ki_radar.accelerator.investigation_runtime import (
@@ -50,19 +51,18 @@ PROBE_RESPONSE_FORMAT = {
                     "type": "string",
                     "enum": ["rules_only", "llm_only", "hybrid"],
                 },
-                "reasons": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "minItems": 3,
-                    "maxItems": 3,
-                },
+                "reason_1": {"type": "string"},
+                "reason_2": {"type": "string"},
+                "reason_3": {"type": "string"},
                 "human_escalation_required": {"type": "boolean"},
                 "tested_llm_correct": {"type": "integer"},
                 "tested_llm_total": {"type": "integer"},
             },
             "required": [
                 "recommendation",
-                "reasons",
+                "reason_1",
+                "reason_2",
+                "reason_3",
                 "human_escalation_required",
                 "tested_llm_correct",
                 "tested_llm_total",
@@ -82,9 +82,9 @@ def _validate_probe_content(content: str) -> dict:
         raise CommandError("Probe lieferte kein JSON-Objekt.")
     if payload.get("recommendation") not in {"rules_only", "llm_only", "hybrid"}:
         raise CommandError("Probe-Empfehlung verletzt das Schema.")
-    reasons = payload.get("reasons")
-    if not isinstance(reasons, list) or len(reasons) != 3:
-        raise CommandError("Probe-Gründe verletzen das Schema.")
+    for field in ("reason_1", "reason_2", "reason_3"):
+        if not isinstance(payload.get(field), str) or not payload[field].strip():
+            raise CommandError("Probe-Gründe verletzen das Schema.")
     return payload
 
 
@@ -126,8 +126,15 @@ class Command(BaseCommand):
         if options["max_tokens"] < 1024:
             raise CommandError("--max-tokens muss mindestens 1024 betragen.")
 
+        configured_model = str(settings.OPENROUTER_MODEL or "")
+        if configured_model != ENDPOINT_CAPABILITY["model"]:
+            raise CommandError(
+                "Der Probe darf nur gegen den fixierten Investigation-Modellslug laufen: "
+                f"{ENDPOINT_CAPABILITY['model']} (konfiguriert: {configured_model or '-'})"
+            )
+
         self.stdout.write(f"probe_version={PROBE_VERSION}")
-        self.stdout.write(f"model={ENDPOINT_CAPABILITY['model']}")
+        self.stdout.write(f"model={configured_model}")
         self.stdout.write(f"provider={ENDPOINT_CAPABILITY['provider']}")
         self.stdout.write(
             "provider_fallbacks="
@@ -184,7 +191,11 @@ class Command(BaseCommand):
                 + json.dumps(
                     {
                         "recommendation": payload.get("recommendation"),
-                        "reason_count": len(payload.get("reasons") or []),
+                        "reason_count": sum(
+                            1
+                            for field in ("reason_1", "reason_2", "reason_3")
+                            if payload.get(field)
+                        ),
                         "human_escalation_required": payload.get(
                             "human_escalation_required"
                         ),
