@@ -81,7 +81,12 @@ def create_managed_source_folder(
 
     folder_id = uuid.uuid4()
     root = _managed_source_root() / str(process.pk) / str(folder_id)
-    root.mkdir(parents=True, exist_ok=False)
+    try:
+        root.mkdir(parents=True, exist_ok=False)
+    except OSError as exc:
+        raise InvestigationSourceUploadError(
+            "Der verwaltete Quellenbereich konnte nicht angelegt werden."
+        ) from exc
 
     try:
         seen_names: set[str] = set()
@@ -128,6 +133,11 @@ def create_managed_source_folder(
     except (InvestigationSourceUploadError, InvestigationToolError):
         shutil.rmtree(root, ignore_errors=True)
         raise
+    except OSError as exc:
+        shutil.rmtree(root, ignore_errors=True)
+        raise InvestigationSourceUploadError(
+            "Die Quelldateien konnten nicht sicher gespeichert werden."
+        ) from exc
     except Exception:
         shutil.rmtree(root, ignore_errors=True)
         raise
