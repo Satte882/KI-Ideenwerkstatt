@@ -1549,7 +1549,7 @@ def test_fixed_and_adaptive_arms_share_execution_contract(
         ISSUE4_INVESTIGATION_PROVIDER_POLICY
     )
     assert fixed.execution_snapshot["model_transport"]["endpoint_capability"] == {
-        "version": "vs1-openrouter-deepinfra-fp8-v3",
+        "version": "vs1-openrouter-deepinfra-fp8-v4",
         "model": "deepseek/deepseek-v4.1-flash",
         "provider": "deepinfra/fp8",
         "context_tokens": 1_048_576,
@@ -2942,7 +2942,7 @@ def test_campaign_headroom_protects_verification_without_allocating_entire_campa
     campaign.refresh_from_db()
 
     protected_output = 28_884
-    expected_max_tokens = min(131_072, campaign_output - protected_output)
+    expected_max_tokens = min(16_384, campaign_output - protected_output)
     assert call.effective_parameters["max_tokens"] == expected_max_tokens
     assert campaign.usage["provider_calls"] == 1
     assert campaign.usage["reserved_output_tokens"] == expected_max_tokens
