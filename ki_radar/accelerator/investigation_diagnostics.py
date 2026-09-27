@@ -83,6 +83,9 @@ def build_investigation_diagnostic(
             }
         )
         payload = call.accepted_payload if isinstance(call.accepted_payload, Mapping) else {}
+        response_metadata = dict(
+            (call.effective_parameters or {}).get("response_metadata") or {}
+        )
         row = {
             "sequence": index + 1,
             "role": call.role,
@@ -94,6 +97,11 @@ def build_investigation_diagnostic(
             "max_tokens": (call.effective_parameters or {}).get("max_tokens"),
             "timeout_seconds": (call.effective_parameters or {}).get("timeout_seconds"),
             "reasoning_effort": (call.effective_parameters or {}).get("reasoning_effort"),
+            "reasoning_tokens": response_metadata.get("reasoning_tokens"),
+            "output_chars": response_metadata.get("output_chars"),
+            "finish_reason": str(response_metadata.get("finish_reason") or ""),
+            "context_profile": str(context_refs.get("context_profile") or ""),
+            "context_chars": context_refs.get("context_chars"),
             "error_code": call.error_code,
             "action": (
                 _planner_action(call) if call.role == InvestigationModelCall.Role.PLANNER else ""
@@ -212,12 +220,18 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         "",
         "## Modellaufrufe",
         "",
-        "| # | Rolle | Status | Dauer | Tokens in/out | Call-Limit | Aktion / Auslöser |",
-        "|---:|---|---|---:|---:|---|---|",
+        "| # | Rolle | Status | Dauer | Tokens in/out/reasoning | Sichtbar | Call-Limit | Aktion / Auslöser |",
+        "|---:|---|---|---:|---:|---:|---|---|",
     ]
     for call in report["model_calls"]:
         action = call["synthesis_trigger"] or call["action"] or "-"
-        tokens = f"{call['prompt_tokens'] or 0}/{call['completion_tokens'] or 0}"
+        tokens = (
+            f"{call['prompt_tokens'] or 0}/{call['completion_tokens'] or 0}/"
+            f"{call['reasoning_tokens'] if call['reasoning_tokens'] is not None else '-'}"
+        )
+        visible = (
+            str(call["output_chars"]) if call["output_chars"] is not None else "-"
+        )
         duration = (
             f"{call['duration_seconds']:.1f}s" if call["duration_seconds"] is not None else "-"
         )
@@ -230,12 +244,19 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         )
         lines.append(
             f"| {call['sequence']} | {call['role']} | {status} | "
-            f"{duration} | {tokens} | {call_limit} | {action} |"
+            f"{duration} | {tokens} | {visible} | {call_limit} | {action} |"
         )
         if call["role"] == InvestigationModelCall.Role.SYNTHESIZER:
             blockers = call["pre_verifier_blockers"]
             if blockers:
-                lines.append(f"|  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |")
+                lines.append(
+                    f"|  |  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |"
+                )
+            if call["context_profile"]:
+                lines.append(
+                    f"|  |  |  |  |  |  |  | Kontext: {call['context_profile']} "
+                    f"({call['context_chars'] or '-'} Zeichen) |"
+                )
 
     lines.extend(
         [
