@@ -374,7 +374,6 @@ def test_two_supervisors_cannot_claim_same_product(owner, product):
     assert sum(result is not None for result in results) == 1
 
 
-
 def test_activity_client_opens_brief_only_on_running_to_ready_transition():
     script = Path("static/js/investigation-activity.js").read_text(encoding="utf-8")
     assert 'state.status === "running" && next.status === "ready"' in script
