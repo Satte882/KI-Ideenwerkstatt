@@ -209,18 +209,52 @@ def test_stream_probe_measures_first_content_and_usage_without_exposing_reasonin
         fp = None
 
         def __init__(self):
+            events = [
+                {
+                    "id": "gen-body-1",
+                    "model": "deepseek/deepseek-v4.1-flash",
+                    "choices": [
+                        {"delta": {"content": ""}, "finish_reason": None}
+                    ],
+                },
+                {
+                    "choices": [
+                        {
+                            "delta": {
+                                "content": '{"recommendation":"hybrid",'
+                            },
+                            "finish_reason": None,
+                        }
+                    ]
+                },
+                {
+                    "choices": [
+                        {
+                            "delta": {
+                                "content": (
+                                    '"reasons":["a","b","c"],'
+                                    '"human_escalation_required":true,'
+                                    '"tested_llm_correct":21,'
+                                    '"tested_llm_total":25}'
+                                )
+                            },
+                            "finish_reason": "stop",
+                        }
+                    ]
+                },
+                {
+                    "choices": [],
+                    "usage": {
+                        "prompt_tokens": 100,
+                        "completion_tokens": 55,
+                        "total_tokens": 155,
+                        "completion_tokens_details": {"reasoning_tokens": 34},
+                    },
+                },
+            ]
             self.lines = iter(
                 [
-                    b'data: {"id":"gen-body-1","model":"deepseek/deepseek-v4.1-flash",'
-                    b'"choices":[{"delta":{"content":""},"finish_reason":null}]}\n',
-                    b'data: {"choices":[{"delta":{"content":"{\"recommendation\":'
-                    b'\"hybrid\","},"finish_reason":null}]}\n',
-                    b'data: {"choices":[{"delta":{"content":"\"reasons\":[\"a\",'
-                    b'\"b\",\"c\"],\"human_escalation_required\":true,'
-                    b'\"tested_llm_correct\":21,\"tested_llm_total\":25}"},'
-                    b'"finish_reason":"stop"}]}\n',
-                    b'data: {"choices":[],"usage":{"prompt_tokens":100,"completion_tokens":55,'
-                    b'"total_tokens":155,"completion_tokens_details":{"reasoning_tokens":34}}}\n',
+                    *(f"data: {json.dumps(event)}\n".encode() for event in events),
                     b"data: [DONE]\n",
                 ]
             )
