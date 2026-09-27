@@ -240,9 +240,7 @@ def _solution_proposals(
             code="option_binding_unknown_proposal",
         )
     duplicates = sorted(
-        name
-        for name in set(seen_names)
-        if seen_names.count(name) > 1 and name in bindings
+        name for name in set(seen_names) if seen_names.count(name) > 1 and name in bindings
     )
     if duplicates:
         raise InvestigationRunError(
