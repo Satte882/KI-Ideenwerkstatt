@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from pathlib import Path
 from threading import Barrier
 
 import pytest
@@ -371,3 +372,11 @@ def test_two_supervisors_cannot_claim_same_product(owner, product):
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(lambda _: claim(), range(2)))
     assert sum(result is not None for result in results) == 1
+
+
+
+def test_activity_client_opens_brief_only_on_running_to_ready_transition():
+    script = Path("static/js/investigation-activity.js").read_text(encoding="utf-8")
+    assert 'state.status === "running" && next.status === "ready"' in script
+    assert "next.ready && next.brief_url" in script
+    assert "window.location.assign(next.brief_url)" in script
