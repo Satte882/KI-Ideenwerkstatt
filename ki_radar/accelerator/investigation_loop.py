@@ -52,6 +52,7 @@ TRANSIENT_PROVIDER_CODES = frozenset(
 )
 PLANNER_PROGRESS_KINDS = frozenset(item.value for item in InvestigationStep.ProgressKind)
 MAX_IDENTICAL_ACTION_STATE_REPEATS = 3
+MAX_SYNTHESIS_PASSES_WITHOUT_GROUND_TRUTH = 2
 
 
 @dataclass(frozen=True)
@@ -464,6 +465,54 @@ def _record_action_state_repeat(
     return run, repeat_count
 
 
+def _latest_ground_truth_at(run: InvestigationRun):
+    timestamps = [run.started_at]
+    latest_step = (
+        run.steps.filter(status=InvestigationStep.Status.SUCCESS)
+        .order_by("-finished_at")
+        .first()
+    )
+    if latest_step is not None and latest_step.finished_at is not None:
+        timestamps.append(latest_step.finished_at)
+    latest_input = run.input_revisions.order_by("-created_at").first()
+    if latest_input is not None:
+        timestamps.append(latest_input.created_at)
+    latest_verifier = run.verifier_reports.order_by("-created_at").first()
+    if latest_verifier is not None:
+        timestamps.append(latest_verifier.created_at)
+    return max(timestamps)
+
+
+def _successful_syntheses_since_ground_truth(run: InvestigationRun) -> int:
+    ground_truth_at = _latest_ground_truth_at(run)
+    return run.model_calls.filter(
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        status=InvestigationModelCall.Status.SUCCESS,
+        finished_at__gt=ground_truth_at,
+    ).count()
+
+
+def _pre_verifier_repair_due(run: InvestigationRun) -> bool:
+    """Repair an internally invalid package without a ceremonial planner hop.
+
+    Give the planner one opportunity after an early synthesis to request new tool work.
+    Once counterevidence search has happened (or multiple syntheses already happened),
+    repeated package blockers are internal synthesis work, not a new planning problem.
+    """
+    if not pre_verifier_blockers_for_run(run):
+        return False
+    syntheses = run.model_calls.filter(
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        status=InvestigationModelCall.Status.SUCCESS,
+    ).order_by("-finished_at")
+    latest = syntheses.first()
+    if latest is None or latest.finished_at is None:
+        return False
+    if not (run.counterevidence_search_executed or syntheses.count() >= 2):
+        return False
+    return _latest_ground_truth_at(run) <= latest.finished_at
+
+
 def _verifier_repair_due(run: InvestigationRun) -> bool:
     """Route a fresh failed verification to one synthesis repair before replanning.
 
@@ -553,8 +602,42 @@ def advance_investigation(
             executor_token=executor_token,
         )
 
+    pre_verifier_repair = _pre_verifier_repair_due(run)
+    if (
+        pre_verifier_repair
+        and _successful_syntheses_since_ground_truth(run)
+        >= MAX_SYNTHESIS_PASSES_WITHOUT_GROUND_TRUTH
+    ):
+        blockers = pre_verifier_blockers_for_run(run)
+        failed = _set_failed_runtime(
+            actor=actor,
+            run_id=run.pk,
+            executor_token=executor_token,
+            reason=ReasonCode.TECHNICAL_FAILURE.value,
+            error_code="pre_verifier_nonconvergence",
+            impact=(
+                "Das Decision Package erfüllt nach einer fokussierten Reparatur "
+                "weiterhin nicht den deterministischen Prüfvertrag."
+            ),
+            required_action=(
+                "Synthese-/Paketvertrag anhand der dokumentierten Blocker prüfen; "
+                "keine weiteren identischen Reparaturrunden starten."
+            ),
+            details={
+                "pre_verifier_blockers": list(blockers),
+                "synthesis_passes_without_ground_truth": (
+                    _successful_syntheses_since_ground_truth(run)
+                ),
+            },
+        )
+        return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
+
     try:
-        if _verifier_repair_due(run) or _synthesizer_retry_due(run):
+        if (
+            _verifier_repair_due(run)
+            or _synthesizer_retry_due(run)
+            or pre_verifier_repair
+        ):
             action = synthesizer(
                 actor=actor,
                 run=run,
