@@ -29,6 +29,11 @@ urlpatterns = [
         name="investigation_authorize",
     ),
     path(
+        "processes/<uuid:process_pk>/investigation/sources/upload/",
+        investigation_views.investigation_source_upload,
+        name="investigation_source_upload",
+    ),
+    path(
         "processes/<uuid:process_pk>/investigation/start/",
         investigation_views.investigation_start,
         name="investigation_start",
