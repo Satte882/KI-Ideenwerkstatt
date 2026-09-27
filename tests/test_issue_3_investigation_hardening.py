@@ -138,7 +138,15 @@ def snapshot_for_root(*, owner, process, root: Path, run_limits=None):
     return folder, snapshot
 
 
-def start_csv_run(*, owner, business_unit, tmp_path, run_limits=None, key="hardening"):
+def start_csv_run(
+    *,
+    owner,
+    business_unit,
+    tmp_path,
+    run_limits=None,
+    key="hardening",
+    decision_brief_required=False,
+):
     process = make_process(owner=owner, business_unit=business_unit, name=f"Fall {key}")
     (tmp_path / "cases.csv").write_text(
         "group,value,available,unit\nA,10,yes,h\nA,20,yes,h\nB,30,no,h\nB,40,no,h\n",
@@ -152,7 +160,11 @@ def start_csv_run(*, owner, business_unit, tmp_path, run_limits=None, key="harde
     )
     handle = start_investigation(
         actor=owner,
-        request=StartInvestigationRequest(snapshot.snapshot_id, key),
+        request=StartInvestigationRequest(
+            snapshot.snapshot_id,
+            key,
+            decision_brief_required=decision_brief_required,
+        ),
     )
     source = list_sources(actor=owner, snapshot_id=snapshot.snapshot_id).sources[0]
     return process, snapshot, handle, source
@@ -986,8 +998,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v17"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v17"
+    assert run.loop_version == "vs1-agent-loop-v18"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v18"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -2221,7 +2233,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 def test_synthesis_prompt_distinguishes_stable_ids_from_explicit_replacements():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v12"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v13"
     assert "Bei einer Reparatur bleiben vorhandene Claim-IDs" not in SYNTHESIS_INSTRUCTION
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
