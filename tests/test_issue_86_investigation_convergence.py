@@ -9,7 +9,11 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from ki_radar.accelerator.investigation_diagnostics import build_investigation_diagnostic
-from ki_radar.accelerator.investigation_llm import _reserve_model_call
+from ki_radar.accelerator.investigation_llm import (
+    _reserve_model_call,
+    _structured_provider_call,
+    request_synthesis_package,
+)
 from ki_radar.accelerator.investigation_loop import (
     _provider_failures_for_role,
     advance_investigation,
@@ -303,3 +307,139 @@ def test_synthesizer_timeout_retries_same_role_once_without_planner_hop(
     synth_calls = run.model_calls.filter(role=InvestigationModelCall.Role.SYNTHESIZER)
     assert synth_calls.count() == 2
     assert all(call.effective_parameters["timeout_seconds"] == 270 for call in synth_calls)
+
+
+
+@pytest.mark.django_db
+def test_synthesizer_receives_compact_evidence_context(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="issue86-compact-synthesis-context",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    captured = {}
+
+    def fake_openrouter(**kwargs):
+        captured["context"] = json.loads(kwargs["messages"][1]["content"])
+        payload = {
+            "claim_register": [],
+            "brief_payload": {},
+            "source_relevance": {},
+            "clarification_reason": "missing_evidence",
+            "clarification_payload": {
+                "question": "Welche externe Information entscheidet die Richtung?"
+            },
+            "investigation_request": {},
+        }
+        content = json.dumps(payload)
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={
+                "prompt_tokens": 120,
+                "completion_tokens": 40,
+                "reasoning_tokens": 12,
+            },
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        fake_openrouter,
+    )
+
+    action = request_synthesis_package(
+        actor=owner,
+        run=run,
+        executor_token=handle.executor_token,
+    )
+
+    context = captured["context"]
+    assert action.action == "clarify"
+    assert context["context_profile"] == "synthesis_compact_v1"
+    assert context["synthesis_mode"] == "initial"
+    assert context["claim_register"] == []
+    assert context["brief_payload"] == {}
+    assert context["source_relevance"] == {}
+    assert "evidence_steps" in context
+    assert "recent_steps" not in context
+    assert "tool_parameter_contracts" not in context
+    assert "usage" not in context
+    assert "budget_limits" not in context
+    assert "policy_blockers" not in context
+    assert "latest_verifier" not in context
+
+
+@pytest.mark.django_db
+def test_successful_model_call_persists_reasoning_and_visible_output_diagnostics(
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    _process, _snapshot, handle, _source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="issue86-provider-metadata",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    def fake_openrouter(**_kwargs):
+        content = '{"ok":true}'
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={
+                "prompt_tokens": 111,
+                "completion_tokens": 222,
+                "total_tokens": 333,
+                "reasoning_tokens": 180,
+            },
+            output_chars=len(content),
+            finish_reason="stop",
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_llm.request_openrouter",
+        fake_openrouter,
+    )
+
+    _payload, call = _structured_provider_call(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        instruction="Provider metadata test",
+        prompt_version="provider-metadata-test",
+        schema_version="provider-metadata-test",
+        context={
+            "context_profile": "synthesis_compact_v1",
+            "synthesis_mode": "initial",
+        },
+        response_format={"type": "json_object"},
+    )
+
+    call.refresh_from_db()
+    metadata = call.effective_parameters["response_metadata"]
+    assert metadata == {
+        "output_chars": len('{"ok":true}'),
+        "finish_reason": "stop",
+        "reasoning_tokens": 180,
+    }
+    assert call.context_refs["context_profile"] == "synthesis_compact_v1"
+    assert call.context_refs["context_chars"] > 0
+
+    diagnostic = build_investigation_diagnostic(run)
+    row = diagnostic["model_calls"][0]
+    assert row["reasoning_tokens"] == 180
+    assert row["output_chars"] == len('{"ok":true}')
+    assert row["finish_reason"] == "stop"
+    assert row["context_profile"] == "synthesis_compact_v1"
