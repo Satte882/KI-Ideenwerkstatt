@@ -9,6 +9,8 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 
+from ki_radar.accelerator.investigation_execution import execution_health
+
 from .models import SystemJobRun
 
 
@@ -72,7 +74,9 @@ def operational_health(request):
         }
         healthy = healthy and is_fresh
 
+    investigations = execution_health()
+    healthy = healthy and investigations["healthy"]
     return JsonResponse(
-        {"status": "ok" if healthy else "degraded", "jobs": jobs},
+        {"status": "ok" if healthy else "degraded", "jobs": jobs, "investigations": investigations},
         status=200 if healthy else 503,
     )

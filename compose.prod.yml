@@ -15,7 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  app:
+  app: &prod_app
     image: ${KI_RADAR_IMAGE:-ki-radar:local}
     restart: unless-stopped
     environment:
@@ -38,6 +38,15 @@ services:
       - prod_var:/app/var
     networks: [backend]
     depends_on:
+      db: {condition: service_healthy}
+  investigation-worker:
+    <<: *prod_app
+    restart: unless-stopped
+    entrypoint: []
+    command: python manage.py run_investigation_worker
+    ports: []
+    depends_on:
+      app: {condition: service_started}
       db: {condition: service_healthy}
   nginx:
     image: nginx:1.28.0-alpine

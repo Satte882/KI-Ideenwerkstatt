@@ -47,6 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
     attachSubmitGuard(form, {buttonLabel: "Analyse läuft …"});
   });
 
+  document.querySelectorAll('form[action$="/investigation/start/"], form[data-continue-form]').forEach((form) => {
+    attachSubmitGuard(form, {buttonLabel: "Untersuchung wird gestartet …", waitForPaint: true});
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && document.querySelector('form[data-submitted="true"]')) window.location.reload();
+  });
+
   document
     .querySelectorAll('form[action*="/solution-generation/start/"]')
     .forEach((form) => {

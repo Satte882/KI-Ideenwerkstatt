@@ -1695,7 +1695,7 @@ def test_process_workspace_authorizes_visible_source_and_budget_then_starts(
     assert "Untersuchung starten" in body
 
     monkeypatch.setattr(
-        "ki_radar.accelerator.investigation_views.run_until_boundary",
+        "ki_radar.accelerator.investigation_loop.run_until_boundary",
         lambda **_kwargs: None,
     )
     start_url = reverse(
@@ -1740,10 +1740,13 @@ def test_investigation_read_only_views_do_not_require_transaction(
     run.save(update_fields=["brief_payload"])
     client.force_login(owner)
 
-    detail = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    detail = client.get(
+        reverse("accelerator:investigation_detail", args=[handle.run_id]), follow=True
+    )
     assert detail.status_code == 200
     detail_body = detail.content.decode()
-    assert "Konkurrierende Ursachen" in detail_body
+    assert "Untersuchungsverlauf" in detail_body
+    assert "Konkurrierende Ursachen" not in detail_body
     assert str(source.pk) in detail_body
 
     source_detail = client.get(
@@ -1931,7 +1934,9 @@ def test_ready_run_with_current_policy_blockers_is_not_presented_as_decision_rea
     )
     client.force_login(owner)
 
-    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    response = client.get(
+        reverse("accelerator:investigation_detail", args=[handle.run_id]), follow=True
+    )
     body = response.content.decode()
 
     assert response.status_code == 200
@@ -1992,7 +1997,9 @@ def test_aborted_clarification_is_presented_as_open_evidence_question(
     process.save(update_fields=["diagnostic_observations", "updated_at"])
     client.force_login(owner)
 
-    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    response = client.get(
+        reverse("accelerator:investigation_detail", args=[handle.run_id]), follow=True
+    )
     body = response.content.decode()
 
     assert response.status_code == 200
@@ -2043,7 +2050,9 @@ def test_waiting_human_surface_uses_real_continue_contract(
     )
     client.force_login(owner)
 
-    response = client.get(reverse("accelerator:investigation_detail", args=[handle.run_id]))
+    response = client.get(
+        reverse("accelerator:investigation_detail", args=[handle.run_id]), follow=True
+    )
     body = response.content.decode()
 
     assert response.status_code == 200
@@ -2119,7 +2128,9 @@ def test_investigation_tool_results_are_scoped_to_run_references(
     )
     client.force_login(owner)
 
-    detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
+    detail_a = client.get(
+        reverse("accelerator:investigation_detail", args=[run_a.run_id]), follow=True
+    )
     detail_body = detail_a.content.decode()
     assert detail_a.status_code == 200
     assert str(result_a_id) in detail_body
@@ -2161,7 +2172,9 @@ def test_investigation_tool_results_are_scoped_to_run_references(
         },
     )
 
-    detail_a = client.get(reverse("accelerator:investigation_detail", args=[run_a.run_id]))
+    detail_a = client.get(
+        reverse("accelerator:investigation_detail", args=[run_a.run_id]), follow=True
+    )
     assert result_b_url in detail_a.content.decode()
     assert client.get(result_b_url).status_code == 200
 

@@ -218,6 +218,14 @@ Safety-Gates bleiben bestehen; Verbrauch wird weiterhin transparent gemessen.
 
 Die detaillierte Definition of Done und Verifikation stehen in Issue #1.
 
+**Untersuchungsverlauf (#75, umgesetzt am 27.09.2026):** Explizit gestartete
+Produktuntersuchungen laufen unabhängig vom geöffneten Browser weiter. Eine eigene
+Live-Ansicht zeigt gespeicherte Aktivitäten, Rückfragen und Wiederholungen; erst eine
+freigegebene Entscheidungsgrundlage erhält den Übergang zum Decision Brief. Die
+bestehende bewusste Übernahme und der Lösungsvergleich bleiben erhalten. Ein realer
+Produktlauf mit dem vorhandenen Testquellenpaket wurde bis zum geöffneten Brief
+geprüft; dies ersetzt nicht die fachliche Wirksamkeitsabnahme aus Issue #4.
+
 **VS1-Stand am 21.09.2026:** Der begrenzte Evidence-to-Decision-Slice verfügt technisch
 über den fallgebundenen Quellenraum, reproduzierbare Tools, adaptiven Planner/Verifier,
 Stopppolicy, Decision Brief, konfliktgeschützte Materialisierung und eine vorab festgelegte

@@ -17,7 +17,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-  app:
+  app: &local_app
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -61,6 +61,15 @@ services:
     secrets:
       - local_postgres_password
       - local_django_secret_key
+  investigation-worker:
+    <<: *local_app
+    restart: unless-stopped
+    entrypoint: []
+    command: python manage.py run_investigation_worker
+    ports: []
+    depends_on:
+      app: {condition: service_started}
+      db: {condition: service_healthy}
 volumes:
   local_db:
   local_venv:

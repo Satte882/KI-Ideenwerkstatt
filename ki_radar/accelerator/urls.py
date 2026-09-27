@@ -14,6 +14,16 @@ app_name = "accelerator"
 
 urlpatterns = [
     path(
+        "investigations/<uuid:run_id>/activity/",
+        investigation_views.investigation_activity,
+        name="investigation_activity",
+    ),
+    path(
+        "investigations/<uuid:run_id>/activity/status/",
+        investigation_views.investigation_activity_status,
+        name="investigation_activity_status",
+    ),
+    path(
         "processes/<uuid:process_pk>/investigation/authorize/",
         investigation_views.investigation_authorize,
         name="investigation_authorize",

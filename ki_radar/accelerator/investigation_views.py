@@ -7,21 +7,24 @@ from contextlib import suppress
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse
+from django.db import transaction
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream
 from ki_radar.review_export_security import sanitize_external_markdown
 
+from .investigation_activity import build_activity
 from .investigation_brief import (
     freeze_review_revision,
     materialize_decision_brief,
     preview_decision_brief_materialization,
     render_decision_brief_markdown,
 )
-from .investigation_loop import run_until_boundary
+from .investigation_execution import request_execution
 from .investigation_models import (
     InvestigationRun,
     InvestigationSource,
@@ -54,7 +57,7 @@ def _editable_process(user, process: ProcessAnalysis) -> bool:
 
 
 def _run_redirect(run_id):
-    return redirect("accelerator:investigation_detail", run_id=run_id)
+    return redirect("accelerator:investigation_activity", run_id=run_id)
 
 
 def _tool_result_id(value) -> uuid.UUID | None:
@@ -207,20 +210,16 @@ def investigation_start(request, process_pk):
         idempotency_key = f"ui-{uuid.uuid4().hex[:40]}"
 
     try:
-        handle = start_investigation(
-            actor=request.user,
-            request=StartInvestigationRequest(
-                snapshot_id=snapshot.pk,
-                idempotency_key=idempotency_key,
-                decision_brief_required=True,
-            ),
-        )
-        if not handle.reused and handle.status == InvestigationRun.Status.RUNNING:
-            run_until_boundary(
+        with transaction.atomic():
+            handle = start_investigation(
                 actor=request.user,
-                run_id=handle.run_id,
-                executor_token=handle.executor_token,
+                request=StartInvestigationRequest(
+                    snapshot_id=snapshot.pk,
+                    idempotency_key=idempotency_key,
+                    decision_brief_required=True,
+                ),
             )
+            request_execution(actor=request.user, handle=handle)
     except InvestigationRunError as exc:
         if exc.existing_run_id:
             messages.info(request, "Die bereits laufende Untersuchung wird geöffnet.")
@@ -235,6 +234,8 @@ def investigation_start(request, process_pk):
 @require_GET
 def investigation_detail(request, run_id):
     run = read_run(actor=request.user, run_id=run_id)
+    if run.status in InvestigationRun.ACTIVE_STATUSES:
+        return _run_redirect(run.pk)
     policy = evaluate_run_policy(run)
     sources = list(run.source_snapshot.sources.order_by("filename"))
     tool_results = list(_tool_results_for_run(run).order_by("created_at"))
@@ -273,6 +274,39 @@ def investigation_detail(request, run_id):
     )
 
 
+def _activity_context(request, run):
+    activity = build_activity(run)
+    editable = _editable_process(request.user, run.process_analysis)
+    activity["can_continue"] = editable and run.status == "waiting_human"
+    activity["can_abort"] = editable and run.status in InvestigationRun.ACTIVE_STATUSES
+    return activity
+
+
+@login_required
+@require_GET
+@never_cache
+def investigation_activity(request, run_id):
+    run = read_run(actor=request.user, run_id=run_id)
+    return render(
+        request,
+        "accelerator/investigation_activity.html",
+        {
+            "run": run,
+            "activity": _activity_context(request, run),
+            "sources": run.source_snapshot.sources.order_by("filename"),
+            "tool_results": _tool_results_for_run(run).order_by("created_at"),
+        },
+    )
+
+
+@login_required
+@require_GET
+@never_cache
+def investigation_activity_status(request, run_id):
+    run = read_run(actor=request.user, run_id=run_id)
+    return JsonResponse(_activity_context(request, run))
+
+
 @login_required
 @require_POST
 def investigation_abort(request, run_id):
@@ -293,17 +327,13 @@ def investigation_continue(request, run_id):
         messages.warning(request, "Für die offene Klärung wird eine Antwort benötigt.")
         return _run_redirect(run_id)
     try:
-        handle = continue_with_human_input(
-            actor=request.user,
-            run_id=run_id,
-            payload={"answer": answer},
-        )
-        if handle.status == InvestigationRun.Status.RUNNING:
-            run_until_boundary(
+        with transaction.atomic():
+            handle = continue_with_human_input(
                 actor=request.user,
-                run_id=handle.run_id,
-                executor_token=handle.executor_token,
+                run_id=run_id,
+                payload={"answer": answer},
             )
+            request_execution(actor=request.user, handle=handle)
     except InvestigationRunError as exc:
         messages.error(request, f"Untersuchung konnte nicht fortgesetzt werden: {exc}")
     return _run_redirect(run_id)
@@ -320,7 +350,7 @@ def investigation_materialize(request, run_id):
             "Die Entscheidungsgrundlage ist noch nicht vollständig geprüft; "
             "es werden keine Entwürfe übernommen.",
         )
-        return _run_redirect(run_id)
+        return redirect("accelerator:investigation_detail", run_id=run_id)
 
     if request.POST.get("confirm_materialization") != "yes":
         messages.warning(
@@ -328,7 +358,7 @@ def investigation_materialize(request, run_id):
             "Bitte die angezeigten Änderungen ausdrücklich bestätigen, "
             "bevor sie übernommen werden.",
         )
-        return _run_redirect(run_id)
+        return redirect("accelerator:investigation_detail", run_id=run_id)
 
     try:
         result = materialize_decision_brief(
@@ -338,7 +368,7 @@ def investigation_materialize(request, run_id):
         )
     except InvestigationRunError as exc:
         messages.error(request, f"Decision Brief konnte nicht übernommen werden: {exc}")
-        return _run_redirect(run_id)
+        return redirect("accelerator:investigation_detail", run_id=run_id)
 
     if result.conflicts:
         messages.warning(
@@ -346,7 +376,7 @@ def investigation_materialize(request, run_id):
             "Die konfliktfreien Änderungen wurden übernommen. Bestehende menschliche Änderungen "
             "wurden nicht überschrieben; die ausgelassenen Differenzen stehen im Decision Brief.",
         )
-        return _run_redirect(run_id)
+        return redirect("accelerator:investigation_detail", run_id=run_id)
 
     messages.success(
         request,

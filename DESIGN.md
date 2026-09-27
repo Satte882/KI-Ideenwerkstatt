@@ -118,6 +118,10 @@ Es beschreibt Produktqualität, nicht eine austauschbare Landingpage-Ästhetik.
   kurze Hover-, Fokus-, Auswahl- und Statusübergänge.
 - Animationen bevorzugen `opacity` und `transform`; Layout darf nicht springen.
 - Keine dauerlaufenden Animationen, Partikelfelder, Canvas- oder WebGL-Effekte.
+- Ausnahme für Issue #75: Ein kleiner Aktivitätsindikator darf während einer durch
+  aktuelle Worker-Zuordnung bestätigten Untersuchung laufen. Bei Klärung, Fehler,
+  Abbruch oder unbestätigter Verbindung endet er. `prefers-reduced-motion` schaltet
+  ihn auf eine statische, durch Text erkennbare Aktivitätsanzeige um.
 - Kein Effekt darf Textkontrast, Scangeschwindigkeit oder Klickziel verschlechtern.
 - `prefers-reduced-motion` ist verpflichtend.
 

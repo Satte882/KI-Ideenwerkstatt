@@ -11,6 +11,7 @@
     <p class="page-subtitle">Evidenz, Gegenbelege und Berechnungen werden zu einer prüfbaren Richtungsgrundlage verdichtet. Die fachliche Lösungsentscheidung bleibt im bestehenden Lösungsvergleich.</p>
   </div>
   <div class="cr-work-header__actions">
+    <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_activity' run.pk %}">Untersuchungsverlauf öffnen</a>
     {% if run.brief_payload %}
       <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_export' run.pk %}">Markdown exportieren</a>
     {% endif %}

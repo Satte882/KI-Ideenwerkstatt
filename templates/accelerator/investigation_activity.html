@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Untersuchung – KI-Ideenwerkstatt{% endblock %}
+{% block body_class %}page-detail-workspace page-investigation{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/investigation-activity.css' %}">
+{% endblock %}
+{% block content %}
+<div id="investigation-activity" class="investigation-activity" data-status-url="{% url 'accelerator:investigation_activity_status' run.pk %}">
+  <nav class="activity-breadcrumb" aria-label="Untersuchungskontext">
+    <a href="{{ run.process_analysis.get_absolute_url }}">Prozessanalyse</a>
+    <span aria-hidden="true">/</span><span>{{ run.process_analysis.name }}</span>
+    <span aria-hidden="true">/</span><span aria-current="page">Untersuchung</span>
+  </nav>
+  <div class="page-header activity-header">
+    <div><h1 class="page-title"><span class="activity-heading-status activity-heading-status--{{ activity.execution_state }}" data-heading-status aria-hidden="true">{% if activity.ready %}✓{% elif activity.status == 'failed' %}×{% elif activity.status == 'waiting_human' %}!{% elif activity.status == 'aborted' %}–{% else %}●{% endif %}</span> <span data-activity-title>{{ activity.title }}</span></h1>
+      <p class="page-subtitle">{{ activity.question }}</p>
+      <a href="#activity-result" data-result-jump {% if not activity.ready %}hidden{% endif %}>Zum fertigen Ergebnis ↓</a></div>
+    <div class="activity-total"><span data-duration-label>{% if activity.finished_at %}Gesamtdauer seit Start{% else %}Seit Start{% endif %}</span>
+      <strong data-total-duration>{{ activity.duration }}</strong>
+      <span class="small text-muted">Einschließlich möglicher Klärungspausen</span></div>
+  </div>
+  <p class="activity-description" data-activity-description>{{ activity.description }}</p>
+  <div class="activity-connection" role="status" data-connection hidden></div>
+  <div class="visually-hidden" role="status" aria-live="polite" data-announcement></div>
+
+  <section class="activity-attention" data-attention {% if activity.status != 'waiting_human' and activity.status != 'failed' %}hidden{% endif %}>
+    <h2 class="h5" data-attention-title>{% if activity.status == 'waiting_human' %}Entscheidungskritische Klärung{% else %}Technische Prüfung erforderlich{% endif %}</h2>
+    <p data-impact>{{ activity.impact }}</p>
+    <p data-required-action>{{ activity.required_action }}</p>
+    <p data-needed-evidence>{% if activity.needed_evidence %}Benötigt: {{ activity.needed_evidence }}{% endif %}</p>
+    <form method="post" action="{% url 'accelerator:investigation_continue' run.pk %}" data-continue-form {% if not activity.can_continue %}hidden{% endif %}>
+      {% csrf_token %}
+      <label class="form-label" for="investigation-answer" data-clarification-question>{{ activity.clarification_question|default:"Antwort auf die offene Klärung" }}</label>
+      <textarea class="form-control" id="investigation-answer" name="answer" rows="4" required></textarea>
+      <button class="btn btn-primary mt-3" type="submit">Mit dieser Information fortsetzen</button>
+    </form>
+  </section>
+
+  <section class="activity-surface" aria-labelledby="activity-timeline-title">
+    <div class="activity-surface-heading">
+      <h2 class="h6 mb-0" id="activity-timeline-title">Untersuchungsverlauf</h2>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-new-activities hidden>Neue Aktivitäten</button>
+    </div>
+    <ol class="activity-timeline" data-timeline>
+      {% for entry in activity.entries %}
+      <li class="activity-entry activity-entry--{{ entry.status }}" data-entry-id="{{ entry.id }}" data-entry-status="{{ entry.status }}" data-started-at="{{ entry.started_at|default:'' }}">
+        <span class="activity-node" aria-hidden="true" data-node>{% if entry.status == 'success' %}✓{% elif entry.status == 'failed' %}×{% elif entry.status == 'review' %}!{% elif entry.status == 'running' %}●{% else %}–{% endif %}</span>
+        <div class="activity-entry-content">
+          <div class="activity-entry-heading"><strong data-label>{{ entry.label }}</strong><span class="activity-duration" data-entry-duration>{{ entry.duration }}</span></div>
+          <p class="activity-entry-detail" data-detail>{{ entry.detail }}</p>
+          <details class="activity-technical" {% if not entry.technical %}hidden{% endif %}>
+            <summary>Technische Schrittdetails</summary><div data-technical>{{ entry.technical }}</div>
+            <a data-audit-link href="{{ entry.audit_url|default:'#' }}" {% if not entry.audit_url %}hidden{% endif %}>Quelle oder reproduzierbare Analyse öffnen</a>
+          </details>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="activity-result" id="activity-result" data-result {% if not activity.ready %}hidden{% endif %}>
+    <div><h2 class="h5">Decision Brief bereit</h2><p class="mb-0">Die Entscheidungsgrundlage ist verifiziert. Prüfen Sie Befunde, Grenzen und vorgeschlagene Lösungsrichtungen.</p></div>
+    <a class="btn btn-primary" data-brief-link href="{% url 'accelerator:investigation_detail' run.pk %}">Decision Brief öffnen</a>
+  </section>
+  <details class="activity-sources mt-3">
+    <summary>Autorisierte Quellen prüfen</summary>
+    <ul class="mt-2">{% for source in sources %}<li><a href="{% url 'accelerator:investigation_source' run.pk source.pk %}">{{ source.filename }}</a></li>{% endfor %}</ul>
+    <ul>{% for result in tool_results %}<li><a href="{% url 'accelerator:investigation_tool_result' run.pk result.pk %}">{{ result.get_tool_name_display }}</a></li>{% endfor %}</ul>
+  </details>
+  <div class="activity-footer">
+    <a class="btn btn-outline-secondary" href="{{ run.process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
+    <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_activity' run.pk %}">Status aktualisieren</a>
+    <form method="post" action="{% url 'accelerator:investigation_abort' run.pk %}" data-abort-form {% if not activity.can_abort %}hidden{% endif %}>
+      {% csrf_token %}<button class="btn btn-outline-secondary" type="submit">Untersuchung abbrechen</button>
+    </form>
+  </div>
+</div>
+{{ activity|json_script:"investigation-activity-initial" }}
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/investigation-activity.js' %}" defer></script>{% endblock %}

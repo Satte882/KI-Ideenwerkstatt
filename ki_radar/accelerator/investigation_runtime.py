@@ -1822,6 +1822,33 @@ def execute_tool_step(
                     code="retry_exhausted",
                 )
             step = existing
+            history = list(step.attempt_history)
+            if history:
+                history[-1].update(
+                    status=step.status,
+                    finished_at=step.finished_at.isoformat() if step.finished_at else None,
+                    error_code=step.error_code,
+                )
+            else:
+                history.append(
+                    {
+                        "attempt": step.attempts,
+                        "status": step.status,
+                        "started_at": step.started_at.isoformat(),
+                        "finished_at": step.finished_at.isoformat() if step.finished_at else None,
+                        "error_code": step.error_code,
+                    }
+                )
+            history.append(
+                {
+                    "attempt": step.attempts + 1,
+                    "status": "running",
+                    "started_at": timezone.now().isoformat(),
+                    "finished_at": None,
+                    "error_code": "",
+                }
+            )
+            step.attempt_history = history
             step.status = InvestigationStep.Status.RUNNING
             step.attempts += 1
             step.error_code = ""
@@ -1831,6 +1858,7 @@ def execute_tool_step(
                 update_fields=[
                     "status",
                     "attempts",
+                    "attempt_history",
                     "error_code",
                     "finished_at",
                     "executor_generation",

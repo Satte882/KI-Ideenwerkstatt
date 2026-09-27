@@ -431,7 +431,7 @@ def test_repo_local_source_path_can_move_between_host_and_container_when_manifes
 
     InvestigationSourceFolder.objects.filter(pk=folder.pk).update(
         root_path=(
-            r"C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt"
+            r"Z:\unmounted-host\KI-Ideenwerkstatt"
             r"\tests\fixtures\investigation_source_packs\A"
         )
     )
@@ -473,7 +473,7 @@ def test_repo_local_source_path_remap_rejects_changed_manifest(
 
     InvestigationSourceFolder.objects.filter(pk=folder.pk).update(
         root_path=(
-            r"C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt"
+            r"Z:\unmounted-host\KI-Ideenwerkstatt"
             r"\tests\fixtures\investigation_source_packs\A"
         )
     )

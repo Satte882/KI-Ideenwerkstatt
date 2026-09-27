@@ -320,3 +320,23 @@ Der tatsächliche Volumename kann abweichen, wenn beim Start ein anderer Compose
 Ohne `OPENROUTER_API_KEY` werden keine Use-Case-Daten an OpenRouter gesendet. Wird der Review-Copilot ausdrücklich gestartet, überträgt die Anwendung ausgewählte Use-Case-Daten an die konfigurierte OpenRouter-API. Der Copilot ist optional und keine Freigabeinstanz.
 
 Die vollständige Übersicht zu gespeicherten Datenarten, Historie, Nachweislinks, Staging, Produktion, Backups und externen Übertragungen steht in [`docs/DATA_STORAGE.md`](docs/DATA_STORAGE.md).
+## Produktuntersuchungen im Hintergrund (#75)
+
+Nach Migration `0016` benötigt die Live-Untersuchung zusätzlich zum Webserver
+einen laufenden Worker. Docker Compose startet `investigation-worker` in allen
+drei Umgebungen mit derselben Konfiguration und denselben Quellenmounts wie die App.
+Bei nativer Ausführung in einem zweiten Terminal mit derselben Umgebung starten:
+
+```text
+uv run python manage.py run_investigation_worker
+```
+
+Der Worker übernimmt ausschließlich explizit beauftragte adaptive Produktläufe,
+maximal zwei gleichzeitig. EvidenceCampaign-/Benchmarkläufe bleiben unabhängig.
+Ein normales Stoppsignal beendet die Annahme neuer Aufträge und lässt aktive
+Läufe ihre Grenze erreichen. Ein erzwungener Stop wird spätestens nach Ablauf
+der 30-Sekunden-Zuordnung beim nächsten Workerstart als technischer Fehler
+beendet; ungewisse Provideraufrufe werden nicht automatisch wiederholt.
+Die geschützte Betriebsprüfung `/health/operations` meldet unter
+`investigations` ausstehende, überfällige und verwaiste Aufträge.
+Die Live-Seite bleibt nach dem Schließen des Browsers wieder aufrufbar.

@@ -24,6 +24,11 @@
 
       {% if can_edit %}
         <div class="d-flex gap-2 flex-wrap">
+          {% if latest_investigation_run.status == "ready" %}
+            <a class="btn btn-primary" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Decision Brief öffnen</a>
+          {% elif latest_investigation_run.status == "failed" or latest_investigation_run.status == "aborted" %}
+            <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Untersuchungsverlauf öffnen</a>
+          {% endif %}
           {% if active_investigation_folders %}
             <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_authorize' process_analysis.pk %}">
               {% if current_investigation_snapshot %}Untersuchungsgrundlage aktualisieren{% else %}Untersuchungsgrundlage festlegen{% endif %}
@@ -35,12 +40,12 @@
               <form method="post" action="{% url 'accelerator:investigation_start' process_analysis.pk %}" class="m-0">
                 {% csrf_token %}
                 <input type="hidden" name="idempotency_key" value="{{ investigation_start_key }}">
-                <button class="btn btn-primary" type="submit">Untersuchung starten</button>
+                <button class="btn {% if latest_investigation_run.status == "ready" %}btn-outline-secondary{% else %}btn-primary{% endif %}" type="submit">Untersuchung starten</button>
               </form>
             {% elif latest_investigation_run.status == "waiting_human" %}
-              <a class="btn btn-primary" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Klärung fortsetzen</a>
+              <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Klärung fortsetzen</a>
             {% else %}
-              <a class="btn btn-primary" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Untersuchung öffnen</a>
+              <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Untersuchung öffnen</a>
             {% endif %}
           {% endif %}
         </div>

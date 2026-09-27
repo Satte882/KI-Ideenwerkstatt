@@ -340,6 +340,17 @@ class InvestigationRun(TimeStampedModel):
     repair_cycles = models.PositiveSmallIntegerField(default=0)
     executor_token = models.UUIDField(default=uuid.uuid4, editable=False)
     executor_generation = models.PositiveIntegerField(default=1)
+    execution_requested_at = models.DateTimeField(null=True, blank=True)
+    execution_requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_investigation_executions",
+    )
+    execution_generation = models.PositiveIntegerField(default=0)
+    execution_worker_id = models.UUIDField(null=True, blank=True)
+    execution_lease_until = models.DateTimeField(null=True, blank=True)
     clarification_reason = models.CharField(max_length=40, blank=True)
     clarification_payload = models.JSONField(default=dict)
     started_at = models.DateTimeField(default=timezone.now)
@@ -451,6 +462,7 @@ class InvestigationStep(TimeStampedModel):
         db_index=True,
     )
     attempts = models.PositiveSmallIntegerField(default=1)
+    attempt_history = models.JSONField(default=list, blank=True)
     executor_generation = models.PositiveIntegerField()
     result_payload = models.JSONField(default=dict)
     result_hash = models.CharField(max_length=64, blank=True)

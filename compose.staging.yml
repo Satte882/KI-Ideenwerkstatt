@@ -15,7 +15,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  app:
+  app: &staging_app
     image: ${KI_RADAR_IMAGE:-ki-radar:local}
     restart: unless-stopped
     environment:
@@ -37,6 +37,15 @@ services:
     networks: [staging_backend]
     ports: ["127.0.0.1:8001:8000"]
     depends_on:
+      db: {condition: service_healthy}
+  investigation-worker:
+    <<: *staging_app
+    restart: unless-stopped
+    entrypoint: []
+    command: python manage.py run_investigation_worker
+    ports: []
+    depends_on:
+      app: {condition: service_started}
       db: {condition: service_healthy}
 networks:
   staging_backend:
