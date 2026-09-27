@@ -228,6 +228,17 @@ class _ScannedSource:
     columns: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class SourceFolderFile:
+    filename: str
+    source_type: str
+    size_bytes: int
+    content_sha256: str
+    row_count: int | None
+    column_count: int | None
+    columns: tuple[str, ...]
+
+
 def _error(message: str, code: str) -> InvestigationToolError:
     return InvestigationToolError(message, code=code)
 
@@ -448,6 +459,22 @@ def _scan_folder(root_path: str) -> tuple[_ScannedSource, ...]:
             )
         )
     return tuple(scanned)
+
+
+def inspect_source_folder(root_path: str) -> tuple[SourceFolderFile, ...]:
+    """Validate a source folder with the same contract used for snapshots."""
+    return tuple(
+        SourceFolderFile(
+            filename=item.filename,
+            source_type=item.source_type,
+            size_bytes=item.size_bytes,
+            content_sha256=item.content_sha256,
+            row_count=item.row_count,
+            column_count=item.column_count,
+            columns=item.columns,
+        )
+        for item in _scan_folder(root_path)
+    )
 
 
 def _manifest_hash(scanned: tuple[_ScannedSource, ...]) -> str:
