@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v18"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v13"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
@@ -127,6 +127,22 @@ relevant=false benötigt keine künstliche Fundstellenprüfung.
 Verarbeite Gegenbelege, wenn sie für die Entscheidung relevant sind.
 """
 
+_SOURCE_REFERENCE_TRANSPORT_RULES = """
+Kompakte Quellenreferenzen im Modelltransport: source_reference_catalog ordnet jedes
+Quellenkürzel exakt einer unveränderlichen {source_id,revision_hash}-Basis zu.
+{source_ref:"S1",locator:{line:7}} bedeutet dieselbe vollständige Quellenreferenz
+wie diese Basis mit locator={line:7}; bei CSV bleiben row und optionale column erhalten.
+Alle Fundstellen und Aussagen bleiben vollständig; nur die wiederholten IDs/Hashes
+werden durch das Kürzel ersetzt. Verwende ausschließlich vorhandene Katalogkürzel.
+Nutze diese kompakte Form für Quellenreferenzen in Claims, Brief und Quellenrelevanz.
+Der Server expandiert sie vor der fachlichen Validierung und Speicherung verlustfrei.
+Vollständige Referenzen sind ebenfalls lesbar; prüfe deren mitgelieferten revision_hash
+unverändert und korrigiere keine abweichende Quellenrevision durch ein Kürzel.
+Analyse-Referenzen {tool_result_id,revision_hash}, source_relevance-Schlüssel und
+read_requests.source_id verwenden weiterhin ihre vollständigen IDs.
+"""
+
+
 PLANNER_INSTRUCTION = """Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.
 Wähle genau den nächsten fachlich sinnvollen Schritt: Werkzeug, Synthese oder eine wirklich
 entscheidungskritische Rückfrage. Wenn die vorhandene Evidenz für einen reviewfähigen
@@ -216,6 +232,7 @@ dürfen niemals als JSON-Text in Strings serialisiert werden. Bei einem vollstä
 Package setze clarification_reason auf den leeren String, investigation_request={} und
 clarification_payload={}."""
     + _SYNTHESIS_DOMAIN_RULES
+    + _SOURCE_REFERENCE_TRANSPORT_RULES
 )
 
 VERIFIER_INSTRUCTION = """Du bist ein frischer unabhängiger Verifier. Prüfe
@@ -239,6 +256,7 @@ fehlt. Nichtkritische Caveats dürfen READY nicht verhindern: Wenn kein konkrete
 Evidenz-/Integritätsfehler verbleibt, liefere ausschließlich noncritical Findings und
 source_references_valid=true. Erfinde keine Evidenz und triff keine fachliche Freigabe.
 Verwende nur den rekonstruierbaren Arbeitsstand."""
+VERIFIER_INSTRUCTION += _SOURCE_REFERENCE_TRANSPORT_RULES
 
 
 def planner_response_format() -> dict:
