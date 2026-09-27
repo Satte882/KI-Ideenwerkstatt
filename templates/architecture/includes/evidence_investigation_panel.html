@@ -52,7 +52,7 @@
       {% endif %}
     </div>
 
-    {% if can_edit %}
+    {% if can_edit and process_analysis.status == "draft" %}
       <details class="architecture-disclosure mt-3">
         <summary>+ Dateien hinzufügen</summary>
         <form method="post" enctype="multipart/form-data" action="{% url 'accelerator:investigation_source_upload' process_analysis.pk %}" class="pt-3">
