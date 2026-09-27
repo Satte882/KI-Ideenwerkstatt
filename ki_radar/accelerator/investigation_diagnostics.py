@@ -96,9 +96,7 @@ def build_investigation_diagnostic(
             "reasoning_effort": (call.effective_parameters or {}).get("reasoning_effort"),
             "error_code": call.error_code,
             "action": (
-                _planner_action(call)
-                if call.role == InvestigationModelCall.Role.PLANNER
-                else ""
+                _planner_action(call) if call.role == InvestigationModelCall.Role.PLANNER else ""
             ),
             "rationale": str(payload.get("rationale") or ""),
             "synthesis_trigger": (
@@ -119,9 +117,7 @@ def build_investigation_diagnostic(
                 else ""
             ),
             "policy_blockers": list(context_refs.get("policy_blockers") or []),
-            "pre_verifier_blockers": list(
-                context_refs.get("pre_verifier_blockers") or []
-            ),
+            "pre_verifier_blockers": list(context_refs.get("pre_verifier_blockers") or []),
         }
         if call.role == InvestigationModelCall.Role.SYNTHESIZER:
             row["register_changed"] = (
@@ -223,9 +219,7 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         action = call["synthesis_trigger"] or call["action"] or "-"
         tokens = f"{call['prompt_tokens'] or 0}/{call['completion_tokens'] or 0}"
         duration = (
-            f"{call['duration_seconds']:.1f}s"
-            if call["duration_seconds"] is not None
-            else "-"
+            f"{call['duration_seconds']:.1f}s" if call["duration_seconds"] is not None else "-"
         )
         lines.append(
             f"| {call['sequence']} | {call['role']} | {call['status']} | "
@@ -234,9 +228,7 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         if call["role"] == InvestigationModelCall.Role.SYNTHESIZER:
             blockers = call["pre_verifier_blockers"]
             if blockers:
-                lines.append(
-                    f"|  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |"
-                )
+                lines.append(f"|  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |")
 
     lines.extend(
         [
@@ -249,13 +241,10 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
     )
     for step in report["tool_steps"]:
         duration = (
-            f"{step['duration_seconds']:.1f}s"
-            if step["duration_seconds"] is not None
-            else "-"
+            f"{step['duration_seconds']:.1f}s" if step["duration_seconds"] is not None else "-"
         )
         lines.append(
-            f"| {step['sequence']} | {step['tool_name']} | {duration} | "
-            f"`{step['parameters']}` |"
+            f"| {step['sequence']} | {step['tool_name']} | {duration} | `{step['parameters']}` |"
         )
 
     lines.extend(["", "## Exakte doppelte Reads", ""])
