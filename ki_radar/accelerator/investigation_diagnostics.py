@@ -7,6 +7,7 @@ from typing import Any
 from django.utils import timezone
 
 from .investigation_models import InvestigationModelCall, InvestigationRun
+from .investigation_runtime import evaluate_run_policy
 
 
 def _duration_seconds(started_at, finished_at) -> float | None:
@@ -94,7 +95,11 @@ def build_investigation_diagnostic(
             "timeout_seconds": (call.effective_parameters or {}).get("timeout_seconds"),
             "reasoning_effort": (call.effective_parameters or {}).get("reasoning_effort"),
             "error_code": call.error_code,
-            "action": _planner_action(call) if call.role == InvestigationModelCall.Role.PLANNER else "",
+            "action": (
+                _planner_action(call)
+                if call.role == InvestigationModelCall.Role.PLANNER
+                else ""
+            ),
             "rationale": str(payload.get("rationale") or ""),
             "synthesis_trigger": (
                 _synthesis_trigger(calls, index, call)
@@ -195,7 +200,7 @@ def build_investigation_diagnostic(
         "exact_duplicate_reads": exact_duplicate_reads,
         "final_register_hash": run.register_hash,
         "final_brief_hash": run.brief_hash,
-        "final_policy_blockers": list(run.clarification_payload.get("policy_blockers") or []),
+        "final_policy_blockers": list(evaluate_run_policy(run).blockers),
     }
 
 
