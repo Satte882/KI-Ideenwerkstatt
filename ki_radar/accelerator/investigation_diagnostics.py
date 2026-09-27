@@ -220,7 +220,10 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         "",
         "## Modellaufrufe",
         "",
-        "| # | Rolle | Status | Dauer | Tokens in/out/reasoning | Sichtbar | Call-Limit | Aktion / Auslöser |",
+        (
+            "| # | Rolle | Status | Dauer | Tokens in/out/reasoning | Sichtbar | "
+            "Call-Limit | Aktion / Auslöser |"
+        ),
         "|---:|---|---|---:|---:|---:|---|---|",
     ]
     for call in report["model_calls"]:
