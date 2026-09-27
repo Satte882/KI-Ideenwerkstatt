@@ -317,7 +317,10 @@ def build_decision_surface(
         status_tone = "danger"
     elif ready_for_decision:
         status_label = "Entscheidungsgrundlage bereit"
-        status_detail = "Die Quellen und Befunde sind geprüft; die fachliche Lösungsentscheidung ist noch offen."
+        status_detail = (
+            "Die Quellen und Befunde sind geprüft; "
+            "die fachliche Lösungsentscheidung ist noch offen."
+        )
         status_tone = "ready"
     elif clarification_required:
         status_label = "Klärung erforderlich"
