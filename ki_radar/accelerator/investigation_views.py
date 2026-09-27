@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
@@ -25,6 +26,10 @@ from .investigation_brief import (
     render_decision_brief_markdown,
 )
 from .investigation_execution import request_execution
+from .investigation_ingestion import (
+    InvestigationSourceUploadError,
+    create_managed_source_folder,
+)
 from .investigation_models import (
     InvestigationRun,
     InvestigationSource,
@@ -47,6 +52,7 @@ from .investigation_tools import (
     InvestigationToolError,
     SnapshotRequest,
     create_source_snapshot,
+    inspect_source_folder,
 )
 
 
@@ -130,7 +136,9 @@ def investigation_authorize(request, process_pk):
     )
     question = str(request.POST.get("decision_question") or default_question).strip()
     selected_folder_id = str(
-        request.POST.get("folder_id") or (folders[0].pk if len(folders) == 1 else "")
+        request.POST.get("folder_id")
+        or request.GET.get("folder_id")
+        or (folders[0].pk if len(folders) == 1 else "")
     )
 
     if request.method == "POST":
@@ -168,6 +176,21 @@ def investigation_authorize(request, process_pk):
                 )
                 return redirect(f"{process.get_absolute_url()}#evidence-investigation")
 
+    selected_folder = next(
+        (item for item in folders if str(item.pk) == selected_folder_id),
+        None,
+    )
+    selected_folder_files = []
+    if selected_folder is not None:
+        latest_snapshot = selected_folder.snapshots.prefetch_related("sources").first()
+        if latest_snapshot is not None:
+            selected_folder_files = list(latest_snapshot.sources.order_by("filename"))
+        else:
+            try:
+                selected_folder_files = list(inspect_source_folder(selected_folder.root_path))
+            except InvestigationToolError:
+                selected_folder_files = []
+
     return render(
         request,
         "accelerator/investigation_authorize.html",
@@ -175,10 +198,44 @@ def investigation_authorize(request, process_pk):
             "process_analysis": process,
             "folders": folders,
             "selected_folder_id": selected_folder_id,
+            "selected_folder_files": selected_folder_files,
             "decision_question": question,
             "budget": DEFAULT_BUDGET,
         },
     )
+
+
+@login_required
+@require_POST
+def investigation_source_upload(request, process_pk):
+    process = get_object_or_404(
+        ProcessAnalysis.objects.select_related("stage__value_stream"),
+        pk=process_pk,
+    )
+    if not _editable_process(request.user, process):
+        raise PermissionDenied
+
+    try:
+        folder = create_managed_source_folder(
+            actor=request.user,
+            process_analysis_id=process.pk,
+            name=str(request.POST.get("name") or ""),
+            uploads=request.FILES.getlist("files"),
+        )
+    except (InvestigationSourceUploadError, InvestigationToolError) as exc:
+        messages.error(request, f"Quellenbasis konnte nicht erstellt werden: {exc}")
+        return redirect(f"{process.get_absolute_url()}#evidence-investigation")
+
+    messages.success(
+        request,
+        f"Quellenbasis „{folder.product_display_name}“ wurde erstellt. "
+        "Legen Sie jetzt die Richtungsfrage fest und autorisieren Sie die Grundlage.",
+    )
+    authorize_url = reverse(
+        "accelerator:investigation_authorize",
+        kwargs={"process_pk": process.pk},
+    )
+    return redirect(f"{authorize_url}?folder_id={folder.pk}")
 
 
 @login_required

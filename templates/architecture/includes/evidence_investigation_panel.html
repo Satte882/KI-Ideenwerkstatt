@@ -17,8 +17,8 @@
           <div><strong>Untersuchungsgrundlage noch nicht festgelegt.</strong></div>
           <div class="small text-muted mt-1">Legen Sie die fachliche Richtungsfrage und die erlaubte Quellenbasis fest. Technische Schutzgrenzen werden vom System vorgegeben.</div>
         {% else %}
-          <div><strong>Noch keine Quellenbasis registriert.</strong></div>
-          <div class="small text-muted mt-1">Für die optionale evidenzgestützte Vertiefung muss zunächst administrativ eine Quellenbasis registriert werden.</div>
+          <div><strong>Noch keine Quellenbasis vorhanden.</strong></div>
+          <div class="small text-muted mt-1">Fügen Sie Markdown-, Text- oder CSV-Dateien hinzu und erstellen Sie daraus direkt eine Quellenbasis für diese Prozessanalyse.</div>
         {% endif %}
       </div>
 
@@ -51,6 +51,30 @@
         </div>
       {% endif %}
     </div>
+
+    {% if can_edit and process_analysis.status == "draft" %}
+      <details class="architecture-disclosure mt-3">
+        <summary>+ Dateien hinzufügen</summary>
+        <form method="post" enctype="multipart/form-data" action="{% url 'accelerator:investigation_source_upload' process_analysis.pk %}" class="pt-3">
+          {% csrf_token %}
+          <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+              <label class="form-label" for="investigation-source-name">Name der Quellenbasis</label>
+              <input class="form-control" id="investigation-source-name" name="name" maxlength="200" placeholder="z. B. Angebotsvergleich – Ist-Quellen">
+              <div class="form-text">Optional. Ohne Eingabe wird ein Name aus der Prozessanalyse vorgeschlagen.</div>
+            </div>
+            <div class="col-lg-5">
+              <label class="form-label" for="investigation-source-files">Quelldateien</label>
+              <input class="form-control" id="investigation-source-files" type="file" name="files" accept=".md,.txt,.csv" multiple required>
+              <div class="form-text">Unterstützt: .md, .txt und .csv · mehrere Dateien gleichzeitig möglich.</div>
+            </div>
+            <div class="col-lg-2 d-grid">
+              <button class="btn btn-outline-primary" type="submit">Quellenbasis erstellen</button>
+            </div>
+          </div>
+        </form>
+      </details>
+    {% endif %}
 
     {% if current_investigation_snapshot %}
       <details class="architecture-disclosure mt-3">
