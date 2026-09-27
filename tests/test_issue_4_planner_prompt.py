@@ -71,7 +71,6 @@ def test_synthesis_separates_causes_from_solution_judgments_and_preserves_streng
     assert "nicht" in SYNTHESIS_INSTRUCTION
 
 
-
 def test_verifier_rejects_unbacked_recommendation_strengthening():
     assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v5"
     assert "Formulierungsstärke" in VERIFIER_INSTRUCTION
