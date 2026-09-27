@@ -391,12 +391,9 @@ def test_invalid_optional_calculation_is_pruned_before_brief_persistence(
         business_unit=business_unit,
         tmp_path=tmp_path,
         key="issue86-invalid-optional-calculation",
+        decision_brief_required=True,
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    execution_snapshot = dict(run.execution_snapshot)
-    execution_snapshot["decision_brief_required"] = True
-    run.execution_snapshot = execution_snapshot
-    run.save(update_fields=["execution_snapshot", "updated_at"])
 
     source_reference = {
         "source_id": str(source.source_id),
