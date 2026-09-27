@@ -31,8 +31,6 @@ class Command(BaseCommand):
 
         report = build_investigation_diagnostic(run)
         if options["as_json"]:
-            self.stdout.write(
-                json.dumps(report, ensure_ascii=False, indent=2, default=str)
-            )
+            self.stdout.write(json.dumps(report, ensure_ascii=False, indent=2, default=str))
             return
         self.stdout.write(render_investigation_diagnostic_markdown(report))
