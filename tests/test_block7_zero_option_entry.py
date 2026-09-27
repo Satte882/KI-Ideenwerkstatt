@@ -99,6 +99,6 @@ def test_comparison_blocker_is_explicitly_about_later_selection_not_generation()
     blockers = comparison_blockers([])
 
     assert blockers == [
-        "Für die spätere Auswahl sind mindestens zwei unterschiedliche, gespeicherte "
+        "Für die spätere Auswahl sind mindestens zwei unterschiedliche, aktive "
         "Lösungsoptionen erforderlich."
     ]

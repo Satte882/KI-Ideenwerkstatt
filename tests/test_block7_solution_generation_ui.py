@@ -18,6 +18,7 @@ from ki_radar.accelerator.solution_generation_service import (
 from ki_radar.accelerator.solution_generation_sources import (
     build_solution_generation_source_context,
 )
+from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.models import (
     ProcessAnalysis,
     SolutionOption,
@@ -25,6 +26,7 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
+from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 LANE_LABELS = {
     "organizational": "Organisatorischer Entwurf",
@@ -142,6 +144,19 @@ def edit_post_data(run):
 @pytest.mark.django_db
 def test_compare_offers_manual_and_ai_entries_equally(client, owner, business_unit):
     process = make_process(owner, business_unit)
+    ValueStreamFocus.objects.create(
+        value_stream=process.stage.value_stream,
+        business_domain=BusinessDomain.PROCUREMENT,
+        capability="Angebotsvergleich",
+        strategic_impact=ScreeningLevel.HIGH,
+        economic_potential=ScreeningLevel.MEDIUM,
+        pain_intensity=ScreeningLevel.HIGH,
+        data_accessibility=ScreeningLevel.MEDIUM,
+        change_effort=ScreeningLevel.MEDIUM,
+        status=ValueStreamFocus.Status.SELECTED,
+        rationale="Angebotsvergleich vertiefen.",
+        updated_by=owner,
+    )
     client.force_login(owner)
 
     response = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
