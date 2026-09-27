@@ -68,9 +68,9 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v15"
-BUDGET_VERSION = "vs1-budget-v6"
-TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v3"
+LOOP_VERSION = "vs1-agent-loop-v16"
+BUDGET_VERSION = "vs1-budget-v7"
+TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v4"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
 # not live provider metadata: changes require a deliberate transport revision.
 ENDPOINT_CAPABILITY = {
@@ -83,11 +83,29 @@ ENDPOINT_CAPABILITY = {
 # Synthesis and verification use structured outputs. Hidden medium reasoning
 # also consumes completion tokens. A
 # 4096-token completion yielded no visible content, so 8192 is the minimum
-# viable window for reasoning plus structured output, never a per-call ceiling.
+# viable window for reasoning plus structured output. Real-run calibrated
+# per-role ceilings below bound runaway latency and output.
 MIN_PLANNER_COMPLETION_TOKENS = 8_192
 MIN_VERIFIER_COMPLETION_TOKENS = 8_192
 MIN_PLANNER_TIMEOUT_SECONDS = 60
 MIN_VERIFIER_TIMEOUT_SECONDS = 75
+
+# Real-run calibrated role ceilings. They cap a single provider wait without
+# weakening the global run budget or the minimum structured-output capacity.
+MODEL_CALL_LIMITS = {
+    "planner": {
+        "timeout_seconds": 90,
+        "max_output_tokens": 16_384,
+    },
+    "synthesizer": {
+        "timeout_seconds": 270,
+        "max_output_tokens": 32_768,
+    },
+    "verifier": {
+        "timeout_seconds": 120,
+        "max_output_tokens": 16_384,
+    },
+}
 FIXED_ROUTE_VERSION = "vs1-fixed-route-v1"
 TOOL_SCHEMA_VERSION = "vs1-tool-schema-v3"
 ISSUE4_INVESTIGATION_PROVIDER_POLICY = {
@@ -115,7 +133,7 @@ DEFAULT_BUDGET = {
     "verifier_reserved_model_calls": 2,
     "verifier_reserved_input_tokens": 20_000,
     "verifier_reserved_output_tokens": 2 * MIN_VERIFIER_COMPLETION_TOKENS,
-    "verifier_reserved_seconds": 2 * 300,
+    "verifier_reserved_seconds": 2 * MODEL_CALL_LIMITS["verifier"]["timeout_seconds"],
     "max_verifier_reads": 40,
 }
 USAGE_KEYS = (
@@ -379,6 +397,7 @@ def base_execution_snapshot(
             "temperature": 0.1,
             "reasoning_effort": "medium",
             "endpoint_capability": dict(ENDPOINT_CAPABILITY),
+            "role_limits": json.loads(json.dumps(MODEL_CALL_LIMITS)),
         },
         "process_version": snapshot.process_version,
         "planner": {

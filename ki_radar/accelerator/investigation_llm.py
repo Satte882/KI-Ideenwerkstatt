@@ -57,6 +57,7 @@ from .investigation_runtime import (
     MIN_PLANNER_TIMEOUT_SECONDS,
     MIN_VERIFIER_COMPLETION_TOKENS,
     MIN_VERIFIER_TIMEOUT_SECONDS,
+    MODEL_CALL_LIMITS,
     TOOL_SCHEMA_VERSION,
     InvestigationRunError,
     _remaining_synthesis_reserve,
@@ -363,6 +364,7 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         transport.get("requested_model", "") != _requested_model()
         or transport.get("provider_policy") != ISSUE4_INVESTIGATION_PROVIDER_POLICY
         or transport.get("endpoint_capability") != ENDPOINT_CAPABILITY
+        or transport.get("role_limits") != MODEL_CALL_LIMITS
         or (
             transport.get("requested_model")
             and transport.get("requested_model") != ENDPOINT_CAPABILITY["model"]
@@ -797,6 +799,7 @@ def _reserve_model_call(
             "Die Run-Zeit reicht nicht für einen sinnvollen Modellaufruf samt Verifier-Reserve.",
             code="runtime_capacity_exhausted",
         )
+    role_limits = MODEL_CALL_LIMITS[role]
     if role != InvestigationModelCall.Role.VERIFIER:
         remaining_planner_calls = max(
             1,
@@ -804,10 +807,16 @@ def _reserve_model_call(
             - usage["model_calls"]
             - verifier_reserve["model_calls"],
         )
-        call_timeout = max(timeout_floor, remaining_seconds // remaining_planner_calls)
+        dynamic_timeout = max(timeout_floor, remaining_seconds // remaining_planner_calls)
     else:
-        call_timeout = remaining_seconds
-    call_max_tokens = min(ENDPOINT_CAPABILITY["completion_tokens"], context_room, remaining_output)
+        dynamic_timeout = remaining_seconds
+    call_timeout = min(int(role_limits["timeout_seconds"]), dynamic_timeout)
+    call_max_tokens = min(
+        ENDPOINT_CAPABILITY["completion_tokens"],
+        int(role_limits["max_output_tokens"]),
+        context_room,
+        remaining_output,
+    )
     campaign = None
     if run.evidence_campaign_id is not None:
         campaign = InvestigationEvidenceCampaign.objects.select_for_update().get(

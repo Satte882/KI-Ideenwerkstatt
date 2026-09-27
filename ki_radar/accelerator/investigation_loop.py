@@ -271,13 +271,20 @@ def _planner_contract_error(
     return None
 
 
-def _provider_failures(run: InvestigationRun) -> int:
-    """Count consecutive failed calls; a successful response restores retry capacity."""
+def _provider_failures_for_role(run: InvestigationRun, role: str) -> int:
+    """Count consecutive provider failures for one model role.
+
+    Success in another role must not restore retry capacity. A successful call in
+    the same role starts a new retry chain.
+    """
     failures = 0
-    for status in run.model_calls.order_by("-created_at").values_list("status", flat=True):
-        if status == "success":
+    statuses = (
+        run.model_calls.filter(role=role).order_by("-created_at").values_list("status", flat=True)
+    )
+    for status in statuses:
+        if status == InvestigationModelCall.Status.SUCCESS:
             break
-        if status == "failed":
+        if status == InvestigationModelCall.Status.FAILED:
             failures += 1
     return failures
 
@@ -306,7 +313,8 @@ def _synthesizer_retry_due(run: InvestigationRun) -> bool:
         call is not None
         and call.role == InvestigationModelCall.Role.SYNTHESIZER
         and call.status == InvestigationModelCall.Status.FAILED
-        and call.error_code == "invalid_response"
+        and call.error_code in TRANSIENT_PROVIDER_CODES
+        and _provider_failures_for_role(run, InvestigationModelCall.Role.SYNTHESIZER) <= 1
     )
 
 
@@ -318,7 +326,11 @@ def _handle_provider_failure(
     error: InvestigationRunError,
 ) -> AdvanceResult:
     run.refresh_from_db()
-    failures = _provider_failures(run)
+    failed_call = run.model_calls.order_by("-created_at").first()
+    failed_role = (
+        failed_call.role if failed_call is not None else InvestigationModelCall.Role.PLANNER
+    )
+    failures = _provider_failures_for_role(run, failed_role)
     structured_failure = _latest_structured_contract_failure(run)
     if structured_failure is not None:
         call, contract_code, contract_detail = structured_failure
@@ -362,7 +374,7 @@ def _handle_provider_failure(
         error_code=error.code,
         impact="Die Untersuchung ist wegen eines technischen Providerfehlers beendet.",
         required_action="Provider-/Transportfehler technisch prüfen.",
-        details={"attempts": failures},
+        details={"attempts": failures, "model_role": failed_role},
     )
     return AdvanceResult(failed.pk, failed.status, evaluate_run_policy(failed))
 
