@@ -212,8 +212,8 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         "",
         "## Modellaufrufe",
         "",
-        "| # | Rolle | Status | Dauer | Tokens in/out | Aktion / Auslöser |",
-        "|---:|---|---|---:|---:|---|",
+        "| # | Rolle | Status | Dauer | Tokens in/out | Call-Limit | Aktion / Auslöser |",
+        "|---:|---|---|---:|---:|---|---|",
     ]
     for call in report["model_calls"]:
         action = call["synthesis_trigger"] or call["action"] or "-"
@@ -221,14 +221,23 @@ def render_investigation_diagnostic_markdown(report: Mapping[str, Any]) -> str:
         duration = (
             f"{call['duration_seconds']:.1f}s" if call["duration_seconds"] is not None else "-"
         )
+        status = str(call["status"])
+        if call["error_code"]:
+            status = f"{status} ({call['error_code']})"
+        call_limit = (
+            f"{call['timeout_seconds'] or '-'}s / {call['max_tokens'] or '-'} / "
+            f"{call['reasoning_effort'] or '-'}"
+        )
         lines.append(
-            f"| {call['sequence']} | {call['role']} | {call['status']} | "
-            f"{duration} | {tokens} | {action} |"
+            f"| {call['sequence']} | {call['role']} | {status} | "
+            f"{duration} | {tokens} | {call_limit} | {action} |"
         )
         if call["role"] == InvestigationModelCall.Role.SYNTHESIZER:
             blockers = call["pre_verifier_blockers"]
             if blockers:
-                lines.append(f"|  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |")
+                lines.append(
+                    f"|  |  |  |  |  |  | Pre-Verifier: {', '.join(blockers)} |"
+                )
 
     lines.extend(
         [
