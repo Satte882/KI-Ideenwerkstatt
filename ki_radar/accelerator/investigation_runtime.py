@@ -83,7 +83,8 @@ ENDPOINT_CAPABILITY = {
 # Synthesis and verification use structured outputs. Hidden medium reasoning
 # also consumes completion tokens. A
 # 4096-token completion yielded no visible content, so 8192 is the minimum
-# viable window for reasoning plus structured output, never a per-call ceiling.
+# viable window for reasoning plus structured output. Real-run calibrated
+# per-role ceilings below bound runaway latency and output.
 MIN_PLANNER_COMPLETION_TOKENS = 8_192
 MIN_VERIFIER_COMPLETION_TOKENS = 8_192
 MIN_PLANNER_TIMEOUT_SECONDS = 60
