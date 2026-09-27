@@ -183,7 +183,6 @@ def test_streamed_response_obeys_total_wall_clock_deadline(monkeypatch):
     assert socket_timeouts == [5.0, 3.0, 1.0]
 
 
-
 def test_stream_probe_measures_first_content_and_usage_without_exposing_reasoning(
     monkeypatch,
 ):
@@ -214,11 +213,11 @@ def test_stream_probe_measures_first_content_and_usage_without_exposing_reasonin
                 [
                     b'data: {"id":"gen-body-1","model":"deepseek/deepseek-v4.1-flash",'
                     b'"choices":[{"delta":{"content":""},"finish_reason":null}]}\n',
-                    b'data: {"choices":[{"delta":{"content":"{\\\"recommendation\\\":'
-                    b'\\\"hybrid\\\","},"finish_reason":null}]}\n',
-                    b'data: {"choices":[{"delta":{"content":"\\\"reasons\\\":[\\\"a\\\",'
-                    b'\\\"b\\\",\\\"c\\\"],\\\"human_escalation_required\\\":true,'
-                    b'\\\"tested_llm_correct\\\":21,\\\"tested_llm_total\\\":25}"},'
+                    b'data: {"choices":[{"delta":{"content":"{\"recommendation\":'
+                    b'\"hybrid\","},"finish_reason":null}]}\n',
+                    b'data: {"choices":[{"delta":{"content":"\"reasons\":[\"a\",'
+                    b'\"b\",\"c\"],\"human_escalation_required\":true,'
+                    b'\"tested_llm_correct\":21,\"tested_llm_total\":25}"},'
                     b'"finish_reason":"stop"}]}\n',
                     b'data: {"choices":[],"usage":{"prompt_tokens":100,"completion_tokens":55,'
                     b'"total_tokens":155,"completion_tokens_details":{"reasoning_tokens":34}}}\n',
