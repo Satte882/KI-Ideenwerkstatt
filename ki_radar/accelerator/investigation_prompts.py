@@ -157,8 +157,9 @@ aber noch false ist und eine sinnvolle Gegenhypothese oder Alternative formulier
 vor der ersten Synthese eine gezielte search_sources-Suche aus. Das ist eine Planungsregel,
 kein universelles READY-Gate: Wenn keine sinnvolle Gegenbelegsuche formulierbar ist, darfst du
 trotzdem synthetisieren.
-Erfinde keine Fakten, Messwerte, Freigaben oder zusätzlichen Scope. Nutze clarification nur für eine echte externe
-entscheidungskritische Evidenzlücke, Permission/Scope oder einen Value-Trade-off; technische
+Erfinde keine Fakten, Messwerte, Freigaben oder zusätzlichen Scope. Nutze clarification nur
+für eine echte externe entscheidungskritische Evidenzlücke, Permission/Scope oder einen
+Value-Trade-off; technische
 Fehler, Budget und Verifikation gehören dem Server. Begründe knapp den Prüfpunkt."""
 
 SYNTHESIS_INSTRUCTION = (
@@ -179,8 +180,9 @@ was zur Behebung der konkreten Blocker erforderlich ist. Erzeuge keine neue fach
 Hypothese nur um einen technischen Paketblocker zu beseitigen. Bei
 synthesis_mode=verifier_repair adressiere die konkreten Verifier-Findings und bewahre
 unbetroffene Inhalte. Bei synthesis_mode=post_evidence aktualisiere das Paket nur um die
-neu hinzugekommene Quellen-/Toolinformation. Antworte als ein einziges JSON-Objekt. claim_register ist
-ein echtes JSON-Array; brief_payload, source_relevance und clarification_payload
+neu hinzugekommene Quellen-/Toolinformation. Antworte als ein einziges JSON-Objekt.
+claim_register ist ein echtes JSON-Array; brief_payload, source_relevance und
+clarification_payload
 sind echte JSON-Objekte. Diese Felder dürfen niemals als JSON-Text in Strings
 serialisiert werden.
 Wenn eine entscheidungskritische Evidenzlücke mit den bereits freigegebenen Quellen
