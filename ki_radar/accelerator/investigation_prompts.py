@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v18"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v12"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v13"
 VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -102,6 +102,11 @@ mit {statement,status,references,counterevidence_refs}, calculations als Liste m
 {name,description,expected_value,option_type,non_ai,status_quo},
 recommendation={summary,rationale,references}, risks_unknowns als Liste und
 validation_step={step,measurement}. population ist ein Objekt, kein Freitext.
+calculations ist optional. Nimm dort nur reproduzierbare Analyseergebnisse auf, deren
+reference eine tatsächlich vorhandene {tool_result_id,revision_hash}-Referenz aus den
+Werkzeugresultaten ist. Eine reine Quellenreferenz mit source_id ist für calculations
+unzulässig. Wenn kein gültiges Analyseergebnis vorliegt, setze calculations=[] und erfinde
+weder Berechnung noch Analyse-Referenz.
 option_type ist ein gültiger Produkttyp wie no_tech, organizational oder generative_ai;
 non_ai und status_quo sind separate boolesche Felder. existing_solution_options enthält den
 beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag einen dort vorhandenen Kandidaten
@@ -179,7 +184,10 @@ nur um die neu hinzugekommene Quellen-/Toolinformation. Bei
 synthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle
 in pre_verifier_blockers
 genannten deterministischen Paketblocker und übernimm bereits valide Claims,
-Quellenklassifikationen und Briefabschnitte inhaltlich unverändert. Bei
+Quellenklassifikationen und Briefabschnitte inhaltlich unverändert. Bei einem
+decision_brief_calculation_* Blocker behalte nur reproduzierbare calculations mit gültiger
+tool_result_id-Referenz; nicht reproduzierbare optionale Berechnungen werden entfernt, nicht
+durch erfundene Referenzen ersetzt. Bei
 synthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und
 bewahre unbetroffene Inhalte. Bei
 synthesis_mode=contract_retry repariere ausschließlich den dokumentierten
