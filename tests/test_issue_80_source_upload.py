@@ -223,7 +223,6 @@ def test_source_upload_requires_process_edit_permission(
     assert InvestigationSourceFolder.objects.filter(process_analysis=process).count() == 0
 
 
-
 @pytest.mark.django_db
 def test_latest_authorized_folder_is_displayed_and_started_when_revisions_tie(
     client,
@@ -268,7 +267,7 @@ def test_latest_authorized_folder_is_displayed_and_started_when_revisions_tie(
                         "neu.txt",
                         b"Neue reale Quelle\n",
                         content_type="text/plain",
-                    )
+                    ),
                 ],
             },
         )
