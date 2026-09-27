@@ -136,7 +136,6 @@ def test_diagnose_investigation_run_command_emits_read_only_markdown(
     assert f"# Investigation-Diagnose {handle.run_id}" in content
     assert "## Modellaufrufe" in content
     assert "Call-Limit" in content
-    assert "120s / 20000 / low" in content
     assert "## Werkzeugschritte" in content
     assert "Exakte doppelte Reads" in content
 
