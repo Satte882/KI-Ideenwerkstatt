@@ -180,7 +180,8 @@ synthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle
 in pre_verifier_blockers
 genannten deterministischen Paketblocker und übernimm bereits valide Claims,
 Quellenklassifikationen und Briefabschnitte inhaltlich unverändert. Bei
-synthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und bewahre unbetroffene Inhalte. Bei
+synthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und
+bewahre unbetroffene Inhalte. Bei
 synthesis_mode=contract_retry repariere ausschließlich den dokumentierten
 Struktur-/Vertragsfehler.
 
