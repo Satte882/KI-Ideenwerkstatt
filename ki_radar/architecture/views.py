@@ -394,7 +394,7 @@ def process_analysis_detail(request, pk):
             process_version=process_analysis.version,
             folder__is_active=True,
         )
-        .order_by("-revision")
+        .order_by("-created_at", "-id")
         .first()
     )
     investigation_effective_budget = None

@@ -40,6 +40,7 @@
               <form method="post" action="{% url 'accelerator:investigation_start' process_analysis.pk %}" class="m-0">
                 {% csrf_token %}
                 <input type="hidden" name="idempotency_key" value="{{ investigation_start_key }}">
+                <input type="hidden" name="snapshot_id" value="{{ current_investigation_snapshot.pk }}">
                 <button class="btn {% if latest_investigation_run.status == "ready" %}btn-outline-secondary{% else %}btn-primary{% endif %}" type="submit">Untersuchung starten</button>
               </form>
             {% elif latest_investigation_run.status == "waiting_human" %}

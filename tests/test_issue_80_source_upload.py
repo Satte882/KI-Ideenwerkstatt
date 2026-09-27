@@ -8,9 +8,11 @@ from django.test import override_settings
 from django.urls import reverse
 
 from ki_radar.accelerator.investigation_models import (
+    InvestigationRun,
     InvestigationSourceFolder,
     InvestigationSourceSnapshot,
 )
+from ki_radar.accelerator.investigation_tools import SnapshotRequest, create_source_snapshot
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
 
 
@@ -219,3 +221,102 @@ def test_source_upload_requires_process_edit_permission(
 
     assert response.status_code == 403
     assert InvestigationSourceFolder.objects.filter(process_analysis=process).count() == 0
+
+
+@pytest.mark.django_db
+def test_latest_authorized_folder_is_displayed_and_started_when_revisions_tie(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    client.force_login(owner)
+
+    old_root = tmp_path / "old"
+    old_root.mkdir()
+    (old_root / "old.txt").write_text("Alte Entwicklungsquelle\n", encoding="utf-8")
+    old_folder = InvestigationSourceFolder.objects.create(
+        process_analysis=process,
+        name="Alte Quellenbasis",
+        root_path=str(old_root),
+        registered_by=owner,
+    )
+    old_snapshot = create_source_snapshot(
+        actor=owner,
+        request=SnapshotRequest(
+            process_analysis_id=process.pk,
+            folder_id=old_folder.pk,
+            decision_question="Welche Richtung stützt die alte Quelle?",
+            run_limits={},
+        ),
+    )
+
+    upload_root = tmp_path / "managed"
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=upload_root):
+        uploaded = client.post(
+            reverse(
+                "accelerator:investigation_source_upload",
+                kwargs={"process_pk": process.pk},
+            ),
+            {
+                "name": "Neue Quellenbasis",
+                "files": [
+                    SimpleUploadedFile(
+                        "neu.txt",
+                        b"Neue reale Quelle\n",
+                        content_type="text/plain",
+                    ),
+                ],
+            },
+        )
+
+        new_folder = (
+            InvestigationSourceFolder.objects.filter(process_analysis=process)
+            .exclude(pk=old_folder.pk)
+            .get()
+        )
+        authorized = client.post(
+            reverse(
+                "accelerator:investigation_authorize",
+                kwargs={"process_pk": process.pk},
+            ),
+            {
+                "folder_id": str(new_folder.pk),
+                "decision_question": "Welche Richtung stützt die neue Quelle?",
+            },
+        )
+
+    assert uploaded.status_code == 302
+    assert authorized.status_code == 302
+
+    new_snapshot = InvestigationSourceSnapshot.objects.get(folder=new_folder)
+    assert old_snapshot.revision == new_snapshot.revision == 1
+
+    detail = client.get(process.get_absolute_url())
+    assert detail.status_code == 200
+    assert detail.context["current_investigation_snapshot"].pk == new_snapshot.pk
+    detail_content = detail.content.decode()
+    assert "Neue Quellenbasis" in detail_content
+    assert "neu.txt" in detail_content
+
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_views.request_execution",
+        lambda **_kwargs: None,
+    )
+    started = client.post(
+        reverse(
+            "accelerator:investigation_start",
+            kwargs={"process_pk": process.pk},
+        ),
+        {
+            "snapshot_id": str(new_snapshot.pk),
+            "idempotency_key": "ui-new-source-snapshot",
+        },
+    )
+
+    assert started.status_code == 302
+    run = InvestigationRun.objects.get(process_analysis=process)
+    assert run.source_snapshot_id == new_snapshot.pk
+    assert list(run.source_snapshot.sources.values_list("filename", flat=True)) == ["neu.txt"]
