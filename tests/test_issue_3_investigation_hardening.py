@@ -2217,7 +2217,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 def test_synthesis_prompt_distinguishes_stable_ids_from_explicit_replacements():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v10"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v11"
     assert "Bei einer Reparatur bleiben vorhandene Claim-IDs" not in SYNTHESIS_INSTRUCTION
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
@@ -3294,3 +3294,151 @@ def test_frozen_tool_parameter_contract_cannot_change_after_run_start(
         request_planner_action(actor=owner, run=run, executor_token=handle.executor_token)
     assert old_exc.value.code == "execution_version_unavailable"
     assert run.model_calls.count() == 0
+
+
+
+def _prepare_pre_verifier_repair_state(*, owner, business_unit, tmp_path, syntheses=1):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key=f"pre-verifier-repair-{syntheses}",
+    )
+    execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="search_sources",
+        parameters={"query": "counter-never-present", "cursor": 0, "limit": 20},
+        target_claim_id="counter-check",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    for index in range(syntheses):
+        InvestigationModelCall.objects.create(
+            run=run,
+            role=InvestigationModelCall.Role.SYNTHESIZER,
+            status=InvestigationModelCall.Status.SUCCESS,
+            executor_generation=run.executor_generation,
+            requested_model="test-model",
+            returned_model="test-model",
+            model_revision="test-revision",
+            prompt_version=f"test-synthesis-{index}",
+            prompt_hash=str(index + 1) * 64,
+            instruction_template="test",
+            schema_version="test-schema",
+            accepted_payload={
+                "claim_register": [],
+                "brief_payload": {},
+                "source_relevance": {},
+            },
+            accepted_payload_hash=str(index + 2) * 64,
+            finished_at=timezone.now(),
+        )
+    run.refresh_from_db()
+    return run, handle, source
+
+
+@pytest.mark.django_db
+def test_pre_verifier_repair_skips_ceremonial_planner_hop(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    run, handle, _source = _prepare_pre_verifier_repair_state(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        syntheses=1,
+    )
+    context = _planner_context(owner, run)
+    assert context["synthesis_mode"] == "pre_verifier_repair"
+    assert context["pre_verifier_blockers"]
+
+    def planner_must_not_run(**_kwargs):
+        raise AssertionError("Interne Paket-Reparatur darf keinen Planner-Umweg erzeugen.")
+
+    repair_calls = []
+
+    def focused_repair(**_kwargs):
+        repair_calls.append("called")
+        return planner_action(
+            action="clarify",
+            clarification_reason="missing_evidence",
+            clarification_payload={
+                "impact": "Externer Nachweis fehlt.",
+                "required_input": "Nachweis bereitstellen.",
+            },
+        )
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=planner_must_not_run,
+        synthesizer=focused_repair,
+    )
+
+    assert repair_calls == ["called"]
+    assert result.status == InvestigationRun.Status.WAITING_HUMAN
+
+
+@pytest.mark.django_db
+def test_pre_verifier_repair_uses_low_reasoning_and_persists_blocker_trace(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    run, handle, _source = _prepare_pre_verifier_repair_state(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        syntheses=1,
+    )
+    context = _planner_context(owner, run)
+
+    call = _reserve_model_call(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        role=InvestigationModelCall.Role.SYNTHESIZER,
+        instruction="Focused repair",
+        prompt_version="repair-test",
+        schema_version="repair-test",
+        context=context,
+    )
+
+    assert call.effective_parameters["reasoning_effort"] == "low"
+    assert call.context_refs["synthesis_mode"] == "pre_verifier_repair"
+    assert call.context_refs["pre_verifier_blockers"] == context["pre_verifier_blockers"]
+
+
+@pytest.mark.django_db
+def test_pre_verifier_model_only_churn_fails_fast_after_one_focused_repair(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    run, handle, _source = _prepare_pre_verifier_repair_state(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        syntheses=2,
+    )
+
+    def forbidden(**_kwargs):
+        raise AssertionError("Nach ausgeschöpfter Reparatur darf kein weiterer Modellcall starten.")
+
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=forbidden,
+        synthesizer=forbidden,
+    )
+    run.refresh_from_db()
+
+    assert result.status == InvestigationRun.Status.FAILED
+    assert run.clarification_reason == "technical_failure"
+    assert run.clarification_payload["error_code"] == "pre_verifier_nonconvergence"
+    assert run.clarification_payload["pre_verifier_blockers"]
+    assert run.clarification_payload["synthesis_passes_without_ground_truth"] == 2
