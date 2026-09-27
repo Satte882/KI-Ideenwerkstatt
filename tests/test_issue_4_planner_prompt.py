@@ -59,7 +59,6 @@ def test_planner_clarification_contract_names_exact_reason_codes():
     assert "clarification_reason=missing_evidence" in PLANNER_INSTRUCTION
 
 
-
 def test_synthesis_separates_causes_from_solution_judgments_and_preserves_strength():
     assert "ausschließlich Ursachen oder Erklärungen" in SYNTHESIS_INSTRUCTION
     assert "Aussagen über Lösungsoptionen" in SYNTHESIS_INSTRUCTION
