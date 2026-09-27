@@ -213,16 +213,12 @@ def test_stream_probe_measures_first_content_and_usage_without_exposing_reasonin
                 {
                     "id": "gen-body-1",
                     "model": "deepseek/deepseek-v4.1-flash",
-                    "choices": [
-                        {"delta": {"content": ""}, "finish_reason": None}
-                    ],
+                    "choices": [{"delta": {"content": ""}, "finish_reason": None}],
                 },
                 {
                     "choices": [
                         {
-                            "delta": {
-                                "content": '{"recommendation":"hybrid",'
-                            },
+                            "delta": {"content": '{"recommendation":"hybrid",'},
                             "finish_reason": None,
                         }
                     ]
