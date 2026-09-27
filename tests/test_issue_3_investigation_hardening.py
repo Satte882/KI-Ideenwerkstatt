@@ -49,6 +49,7 @@ from ki_radar.accelerator.investigation_prompts import (
 from ki_radar.accelerator.investigation_runtime import (
     BUDGET_VERSION,
     ISSUE4_INVESTIGATION_PROVIDER_POLICY,
+    MODEL_CALL_LIMITS,
     InvestigationRunError,
     StartInvestigationRequest,
     apply_planner_state,
@@ -2125,13 +2126,13 @@ def test_default_budget_version_uses_generous_global_envelope(
         owner=owner,
         business_unit=business_unit,
         tmp_path=tmp_path,
-        key="budget-v6",
+        key="budget-v7",
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
     limits = run.budget_limits
 
-    assert BUDGET_VERSION == "vs1-budget-v6"
-    assert run.execution_snapshot["budget_version"] == "vs1-budget-v6"
+    assert BUDGET_VERSION == "vs1-budget-v7"
+    assert run.execution_snapshot["budget_version"] == "vs1-budget-v7"
     assert limits["max_model_calls"] == 40
     assert limits["max_tool_calls"] == 40
     assert limits["max_verifier_calls"] == limits["max_model_calls"]
@@ -2140,6 +2141,7 @@ def test_default_budget_version_uses_generous_global_envelope(
     assert "max_repair_cycles" not in limits
     assert limits["max_output_tokens"] == 500_000
     assert limits["verifier_reserved_output_tokens"] == 2 * 8_192
+    assert limits["verifier_reserved_seconds"] == 2 * MODEL_CALL_LIMITS["verifier"]["timeout_seconds"]
 
 
 @pytest.mark.django_db
@@ -3123,10 +3125,11 @@ def test_later_planner_gets_time_without_consuming_verifier_reserve(owner, busin
         context={},
     )
     assert run.budget_limits["max_runtime_seconds"] == 12_000
-    assert run.budget_limits["verifier_reserved_seconds"] == 600
-    # The planner is no longer squeezed by a repair state machine. It shares the
-    # global frame while a small independent-review reserve remains protected.
-    assert call.effective_parameters["timeout_seconds"] >= 300
+    assert run.budget_limits["verifier_reserved_seconds"] == 240
+    # The global frame remains generous, but one planner call may not wait for
+    # several minutes when real successful planner calls complete much faster.
+    assert call.effective_parameters["timeout_seconds"] == 90
+    assert call.effective_parameters["max_tokens"] == 16_384
 
 
 @pytest.mark.django_db
@@ -3169,8 +3172,8 @@ def test_verifier_receives_its_reserved_time_share(owner, business_unit, tmp_pat
         schema_version="verifier-time-test",
         context={},
     )
-    assert call.effective_parameters["timeout_seconds"] >= 300
-    assert call.effective_parameters["timeout_seconds"] <= run.budget_limits["max_runtime_seconds"]
+    assert call.effective_parameters["timeout_seconds"] == 120
+    assert call.effective_parameters["max_tokens"] == 16_384
 
 
 @pytest.mark.django_db
