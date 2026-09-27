@@ -3,6 +3,8 @@ from ki_radar.accelerator.investigation_prompts import (
     PLANNER_PROMPT_VERSION,
     SYNTHESIS_INSTRUCTION,
     SYNTHESIS_PROMPT_VERSION,
+    VERIFIER_INSTRUCTION,
+    VERIFIER_PROMPT_VERSION,
 )
 
 
@@ -67,3 +69,12 @@ def test_synthesis_separates_causes_from_solution_judgments_and_preserves_streng
     assert "beste" in SYNTHESIS_INSTRUCTION
     assert "optimale" in SYNTHESIS_INSTRUCTION
     assert "nicht" in SYNTHESIS_INSTRUCTION
+
+
+
+def test_verifier_rejects_unbacked_recommendation_strengthening():
+    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v5"
+    assert "Formulierungsstärke" in VERIFIER_INSTRUCTION
+    assert "am stärksten gestützt" in VERIFIER_INSTRUCTION
+    assert "beste" in VERIFIER_INSTRUCTION
+    assert "kritischer inhaltlicher Fehler" in VERIFIER_INSTRUCTION
