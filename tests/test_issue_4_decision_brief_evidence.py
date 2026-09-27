@@ -820,7 +820,11 @@ def test_handoff_uses_only_causal_claims_for_process_hypotheses(
     business_unit,
     tmp_path,
 ):
-    process = make_process(owner=owner, business_unit=business_unit, name="Causal handoff")
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="Causal handoff",
+    )
     (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
     _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
     handle = start_investigation(
