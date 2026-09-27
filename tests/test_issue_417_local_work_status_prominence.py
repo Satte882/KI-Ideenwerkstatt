@@ -27,7 +27,7 @@ def test_issue_417_uses_one_prominent_pattern_across_all_four_workspaces():
     assert TEMPLATE.count("Auf dieser Seite ·") == 4
     assert "Bewertung, Governance, Freigabe und Metrik" in TEMPLATE
     assert "Readiness-Sektionen dieses Delivery Packages" in TEMPLATE
-    assert "Prozessanalyse, Validierung, Arbeitsgestaltung und Lösungsoptionen" in TEMPLATE
+    assert "Ist-Prozess, Quellen, Validierung und Lösungsoptionen" in TEMPLATE
     assert "Wirkungsmessung, Delivery und Scale Review" in TEMPLATE
 
 
