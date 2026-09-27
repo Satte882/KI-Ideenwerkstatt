@@ -3078,7 +3078,7 @@ def test_completion_and_timeout_floors_prevent_provider_attempt(
         run.usage = usage
         run.save(update_fields=["usage", "updated_at"])
     else:
-        protected = 900 if role == "planner" else 0
+        protected = 540 if role == "planner" else 0
         floor = 60 if role == "planner" else 75
         elapsed = run.budget_limits["max_runtime_seconds"] - protected - floor + 1
         InvestigationRun.objects.filter(pk=run.pk).update(
