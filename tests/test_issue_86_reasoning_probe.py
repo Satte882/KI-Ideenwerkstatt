@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from io import StringIO
 
+import pytest
 from django.conf import settings
 from django.core.management import call_command
-import pytest
 
 from ki_radar.accelerator.management.commands.probe_openrouter_reasoning import (
     PROBE_RESPONSE_FORMAT,
 )
 from ki_radar.core.openrouter import OpenRouterProbeResult
+
 
 @pytest.mark.django_db
 def test_reasoning_probe_compares_only_effort_with_same_transport(monkeypatch):
