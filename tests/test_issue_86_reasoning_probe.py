@@ -11,7 +11,6 @@ from ki_radar.accelerator.management.commands.probe_openrouter_reasoning import 
 )
 from ki_radar.core.openrouter import OpenRouterProbeResult
 
-
 @pytest.mark.django_db
 def test_reasoning_probe_compares_only_effort_with_same_transport(monkeypatch):
     monkeypatch.setattr(
