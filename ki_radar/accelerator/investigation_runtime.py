@@ -68,7 +68,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v18"
+LOOP_VERSION = "vs1-agent-loop-v19"
 BUDGET_VERSION = "vs1-budget-v7"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v4"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
