@@ -7,7 +7,7 @@ from ki_radar.accelerator.investigation_prompts import (
 
 
 def test_planner_requires_reproducible_quantitative_check_before_synthesis():
-    assert PLANNER_PROMPT_VERSION == "vs1-planner-v16"
+    assert PLANNER_PROMPT_VERSION == "vs1-planner-v17"
     assert "Bevor du action=synthesize wählst" in PLANNER_INSTRUCTION
     assert "quantitativen Beziehung zwischen strukturierten Feldern" in PLANNER_INSTRUCTION
     assert "insbesondere compare_groups" in PLANNER_INSTRUCTION
@@ -48,3 +48,13 @@ def test_synthesis_binds_existing_solution_candidates_explicitly():
     assert "existing_option_id" in SYNTHESIS_INSTRUCTION
     assert "übernimm dessen id exakt" in SYNTHESIS_INSTRUCTION
     assert "erfinde keine ID" in SYNTHESIS_INSTRUCTION
+
+
+
+def test_planner_clarification_contract_names_exact_reason_codes():
+    assert "missing_evidence" in PLANNER_INSTRUCTION
+    assert "permission_or_scope" in PLANNER_INSTRUCTION
+    assert "value_tradeoff" in PLANNER_INSTRUCTION
+    assert "Verwende keine Synonyme" in PLANNER_INSTRUCTION
+    assert "keinen entscheidungsrelevanten Bezug" in PLANNER_INSTRUCTION
+    assert "clarification_reason=missing_evidence" in PLANNER_INSTRUCTION
