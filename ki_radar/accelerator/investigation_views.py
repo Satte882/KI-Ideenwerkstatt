@@ -167,7 +167,7 @@ def investigation_authorize(request, process_pk):
                     f"Quellenraum konnte nicht autorisiert werden: {exc}",
                 )
             else:
-                source_count = snapshot.sources.count()
+                source_count = snapshot.source_count
                 messages.success(
                     request,
                     (
