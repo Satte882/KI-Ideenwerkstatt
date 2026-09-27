@@ -13,8 +13,8 @@ from ki_radar.architecture.permissions import can_edit_value_stream
 
 from .investigation_models import InvestigationSourceFolder
 from .investigation_tools import (
-    MAX_FILES,
     MAX_FILE_BYTES,
+    MAX_FILES,
     MAX_TOTAL_BYTES,
     InvestigationToolError,
     inspect_source_folder,
@@ -73,7 +73,7 @@ def create_managed_source_folder(
             f"Eine Quellenbasis darf höchstens {MAX_FILES} Dateien enthalten."
         )
 
-    display_name = str(name or "").strip() or f"Quellenbasis – {process.name}"
+    display_name = str(name or "").strip() or f"Quellenbasis - {process.name}"
     if len(display_name) > 200:
         raise InvestigationSourceUploadError(
             "Der Name der Quellenbasis darf höchstens 200 Zeichen lang sein."
