@@ -34,6 +34,16 @@
           {% endfor %}
         </select>
         <div class="form-text">Aus dieser registrierten Grundlage wird beim Bestätigen ein unveränderlicher Quellen-Snapshot erzeugt. Einzeldateien oder Werkzeuge werden nicht manuell ausgewählt.</div>
+        {% if selected_folder_files %}
+          <div class="mt-3">
+            <div class="small fw-semibold mb-2">Enthaltene Quellen</div>
+            <ul class="list-unstyled small mb-0">
+              {% for source in selected_folder_files %}
+                <li class="mb-1">✓ {{ source.filename }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
       </div>
     </section>
 
