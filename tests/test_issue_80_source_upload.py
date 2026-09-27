@@ -85,7 +85,7 @@ def test_source_upload_creates_managed_folder_and_reuses_snapshot_flow(
                 kwargs={"process_pk": process.pk},
             ),
             {
-                "name": "Angebotsvergleich – Ist-Quellen",
+                "name": "Angebotsvergleich - Ist-Quellen",
                 "files": [
                     SimpleUploadedFile(
                         "interview.md",
@@ -115,7 +115,7 @@ def test_source_upload_creates_managed_folder_and_reuses_snapshot_flow(
             )
             + f"?folder_id={folder.pk}"
         )
-        assert folder.name == "Angebotsvergleich – Ist-Quellen"
+        assert folder.name == "Angebotsvergleich - Ist-Quellen"
         assert folder.registered_by == owner
         assert Path(folder.root_path).is_relative_to(upload_root.resolve())
         assert sorted(path.name for path in Path(folder.root_path).iterdir()) == [
