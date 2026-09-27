@@ -309,7 +309,6 @@ def test_synthesizer_timeout_retries_same_role_once_without_planner_hop(
     assert all(call.effective_parameters["timeout_seconds"] == 270 for call in synth_calls)
 
 
-
 @pytest.mark.django_db
 def test_synthesizer_receives_compact_evidence_context(
     owner,
