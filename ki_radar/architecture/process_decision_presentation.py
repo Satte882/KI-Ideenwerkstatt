@@ -23,6 +23,21 @@ def _first_supported_hypothesis(payload: Mapping[str, Any]) -> str:
     return ""
 
 
+def _first_supported_cause_claim(run) -> str:
+    claims = [item for item in run.claim_register if isinstance(item, Mapping)]
+    for item in claims:
+        if str(item.get("area") or "") != "competing_hypotheses":
+            continue
+        if str(item.get("claim_kind") or "") != "hypothesis":
+            continue
+        if str(item.get("status") or "") != "supported":
+            continue
+        statement = humanize_process_text(item.get("statement"))
+        if statement:
+            return statement
+    return ""
+
+
 def _first_calculation(payload: Mapping[str, Any]) -> str:
     for item in payload.get("calculations", []):
         if not isinstance(item, Mapping):
@@ -53,7 +68,10 @@ def build_process_decision_surface(
         situation = humanize_process_text(process_analysis.bottlenecks)
 
     finding = humanize_process_text(process_analysis.confirmed_causes)
-    if not finding:
+    run = latest_materialization.run
+    if not finding and run.claim_register:
+        finding = _first_supported_cause_claim(run)
+    if not finding and not run.claim_register:
         finding = _first_supported_hypothesis(payload)
     if not finding:
         finding = _first_calculation(payload)
@@ -63,7 +81,7 @@ def build_process_decision_surface(
     recommendation_summary = humanize_process_text(recommendation.get("summary"))
     if not recommendation_summary:
         recommendation_summary = (
-            "Noch keine evidenzbasierte Empfehlung aus einem übernommenen Decision Brief."
+            "Noch keine belastbare Empfehlung aus einem übernommenen Decision Brief."
         )
     recommendation_rationale = humanize_process_text(recommendation.get("rationale"))
 
