@@ -183,7 +183,6 @@ def test_streamed_response_obeys_total_wall_clock_deadline(monkeypatch):
     assert socket_timeouts == [5.0, 3.0, 1.0]
 
 
-
 def test_usage_metadata_extracts_reasoning_tokens_from_completion_details():
     payload = {
         "usage": {
