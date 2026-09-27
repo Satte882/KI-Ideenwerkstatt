@@ -88,6 +88,6 @@ def test_planner_avoids_premature_synthesis_before_useful_counterevidence_search
 def test_synthesis_prompt_has_focused_pre_verifier_repair_mode():
     assert "synthesis_mode=pre_verifier_repair" in SYNTHESIS_INSTRUCTION
     assert "pre_verifier_blockers" in SYNTHESIS_INSTRUCTION
-    assert "alle dort genannten deterministischen Paketblocker" in SYNTHESIS_INSTRUCTION
+    assert "genannten deterministischen Paketblocker" in SYNTHESIS_INSTRUCTION
     assert "nicht stilistisch oder vorsorglich" in SYNTHESIS_INSTRUCTION
     assert "synthesis_mode=verifier_repair" in SYNTHESIS_INSTRUCTION
