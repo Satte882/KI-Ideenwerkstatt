@@ -73,6 +73,12 @@ def test_source_upload_creates_managed_folder_and_reuses_snapshot_flow(
     upload_root = tmp_path / "managed"
 
     with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=upload_root):
+        detail = client.get(process.get_absolute_url())
+        detail_content = detail.content.decode()
+        assert detail.status_code == 200
+        assert "+ Dateien hinzufügen" in detail_content
+        assert "administrativ eine Quellenbasis registriert" not in detail_content
+
         response = client.post(
             reverse(
                 "accelerator:investigation_source_upload",
