@@ -5,7 +5,11 @@ import json
 import pytest
 from django.conf import settings
 
-from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
+from ki_radar.core.openrouter import (
+    OpenRouterUnavailable,
+    probe_openrouter_stream,
+    request_openrouter,
+)
 
 
 class _FakeResponse:
@@ -177,3 +181,184 @@ def test_streamed_response_obeys_total_wall_clock_deadline(monkeypatch):
     assert exc_info.value.code == "timeout"
     assert response.reads == 3
     assert socket_timeouts == [5.0, 3.0, 1.0]
+
+
+def test_stream_probe_measures_first_content_and_usage_without_exposing_reasoning(
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-key", raising=False)
+    monkeypatch.setattr(
+        settings,
+        "OPENROUTER_MODEL",
+        "deepseek/deepseek-v4.1-flash",
+        raising=False,
+    )
+    monkeypatch.setattr(settings, "OPENROUTER_REASONING_EXCLUDE", True, raising=False)
+    clock = {"now": 0.0}
+    captured = {}
+
+    class Headers:
+        def get(self, name):
+            return {
+                "X-Generation-Id": "gen-header-1",
+                "X-Request-Id": "req-1",
+            }.get(name)
+
+    class FakeStreamResponse:
+        headers = Headers()
+        fp = None
+
+        def __init__(self):
+            events = [
+                {
+                    "id": "gen-body-1",
+                    "model": "deepseek/deepseek-v4.1-flash",
+                    "choices": [{"delta": {"content": ""}, "finish_reason": None}],
+                },
+                {
+                    "choices": [
+                        {
+                            "delta": {"content": '{"recommendation":"hybrid",'},
+                            "finish_reason": None,
+                        }
+                    ]
+                },
+                {
+                    "choices": [
+                        {
+                            "delta": {
+                                "content": (
+                                    '"reasons":["a","b","c"],'
+                                    '"human_escalation_required":true,'
+                                    '"tested_llm_correct":21,'
+                                    '"tested_llm_total":25}'
+                                )
+                            },
+                            "finish_reason": "stop",
+                        }
+                    ]
+                },
+                {
+                    "choices": [],
+                    "usage": {
+                        "prompt_tokens": 100,
+                        "completion_tokens": 55,
+                        "total_tokens": 155,
+                        "completion_tokens_details": {"reasoning_tokens": 34},
+                    },
+                },
+            ]
+            self.lines = iter(
+                [
+                    *(f"data: {json.dumps(event)}\n".encode() for event in events),
+                    b"data: [DONE]\n",
+                ]
+            )
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def readline(self):
+            clock["now"] += 2.0
+            return next(self.lines, b"")
+
+    def fake_urlopen(request, **_kwargs):
+        captured["body"] = json.loads(request.data)
+        return FakeStreamResponse()
+
+    monkeypatch.setattr(
+        "ki_radar.core.openrouter.urllib.request.urlopen",
+        fake_urlopen,
+    )
+    monkeypatch.setattr("ki_radar.core.openrouter.time.monotonic", lambda: clock["now"])
+
+    result = probe_openrouter_stream(
+        messages=[{"role": "user", "content": "probe"}],
+        max_tokens=8192,
+        timeout_seconds=30,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "probe",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+            },
+        },
+        provider={
+            "order": ["deepinfra/fp8"],
+            "allow_fallbacks": False,
+            "require_parameters": True,
+        },
+        reasoning_effort="low",
+    )
+
+    assert captured["body"]["stream"] is True
+    assert captured["body"]["stream_options"] == {"include_usage": True}
+    assert captured["body"]["reasoning"] == {"effort": "low", "exclude": True}
+    assert captured["body"]["provider"]["order"] == ["deepinfra/fp8"]
+    assert captured["body"]["response_format"]["type"] == "json_schema"
+    assert result.first_event_seconds == 2.0
+    assert result.first_content_seconds == 4.0
+    assert result.duration_seconds == 10.0
+    assert result.event_count == 4
+    assert result.generation_id == "gen-header-1"
+    assert result.request_id == "req-1"
+    assert result.usage["prompt_tokens"] == 100
+    assert result.usage["completion_tokens"] == 55
+    assert result.usage["reasoning_tokens"] == 34
+    assert "reasoning" not in result.content
+
+
+def test_stream_probe_timeout_reports_transport_progress(monkeypatch):
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "test-key", raising=False)
+    clock = {"now": 0.0}
+
+    class Headers:
+        def get(self, _name):
+            return ""
+
+    class SlowStreamResponse:
+        headers = Headers()
+        fp = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def readline(self):
+            clock["now"] += 6.0
+            return b": keepalive\n"
+
+    monkeypatch.setattr(
+        "ki_radar.core.openrouter.urllib.request.urlopen",
+        lambda *_args, **_kwargs: SlowStreamResponse(),
+    )
+    monkeypatch.setattr("ki_radar.core.openrouter.time.monotonic", lambda: clock["now"])
+
+    with pytest.raises(OpenRouterUnavailable) as exc_info:
+        probe_openrouter_stream(
+            messages=[{"role": "user", "content": "probe"}],
+            max_tokens=8192,
+            timeout_seconds=5,
+            response_format={"type": "json_object"},
+            provider={"order": ["deepinfra/fp8"]},
+            reasoning_effort="medium",
+        )
+
+    error = exc_info.value
+    assert error.code == "timeout"
+    assert error.diagnostics["probe_stage"] == "stream"
+    assert error.diagnostics["headers_seconds"] == 0.0
+    assert error.diagnostics["first_event_seconds"] is None
+    assert error.diagnostics["first_content_seconds"] is None
+    assert error.diagnostics["bytes_received"] > 0
+    assert error.diagnostics["reasoning_effort"] == "medium"
