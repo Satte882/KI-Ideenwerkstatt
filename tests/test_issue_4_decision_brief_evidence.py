@@ -1193,6 +1193,125 @@ def test_architecture_adoption_rejects_red_solution_state_fields(owner, business
 
 
 @pytest.mark.django_db
+def test_architecture_adoption_resolves_omitted_existing_id_from_frozen_base_name(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Implicit option binding")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Schulungs-/Wissensmaßnahme",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        description="Alter Entwurf.",
+        expected_value="Alter Nutzen.",
+    )
+    base_updated_at = option.updated_at.isoformat()
+    proposal = {
+        "name": "Schulungs-/Wissensmaßnahme",
+        "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+        "description": "Durch Evidenz nicht gestützt.",
+        "expected_value": "Nicht priorisieren.",
+        "bottleneck_coverage": "",
+        "data_requirements": "",
+        "application_impact": "",
+        "integration_impact": "",
+        "risks": "",
+        "architecture_fit": "",
+        "evidence_basis": option.evidence_basis,
+    }
+    kwargs = {
+        "actor": owner,
+        "process_analysis_id": process.pk,
+        "expected_process_version": process.version,
+        "base_process": {},
+        "base_options": {
+            str(option.pk): {
+                "id": str(option.pk),
+                "name": option.name,
+                "updated_at": base_updated_at,
+            }
+        },
+        "process_fields": {},
+        "solution_proposals": [proposal],
+    }
+
+    preview = preview_investigation_draft_adoption(**kwargs)
+    assert preview["conflicts"] == []
+    assert preview["solution_changes"] == [
+        {
+            "action": "update",
+            "action_label": "Vorhandenen Entwurf aktualisieren",
+            "option_id": str(option.pk),
+            **proposal,
+        }
+    ]
+
+    result = adopt_investigation_drafts(**kwargs)
+    option.refresh_from_db()
+
+    assert result.conflicts == ()
+    assert result.created_solution_option_ids == ()
+    assert result.updated_solution_option_ids == (str(option.pk),)
+    assert process.solution_options.count() == 1
+    assert option.description == "Durch Evidenz nicht gestützt."
+    assert option.expected_value == "Nicht priorisieren."
+
+
+@pytest.mark.django_db
+def test_architecture_adoption_implicit_base_name_binding_still_blocks_changed_option(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="Implicit conflict guard")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Schulungs-/Wissensmaßnahme",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        description="Ausgangsentwurf.",
+        expected_value="Ausgangsnutzen.",
+    )
+    base_updated_at = option.updated_at.isoformat()
+    option.description = "Vom Menschen nach Run-Start geändert."
+    option.save()
+
+    proposal = {
+        "name": "Schulungs-/Wissensmaßnahme",
+        "option_type": SolutionOption.OptionType.ORGANIZATIONAL,
+        "description": "Agentisch vorgeschlagene Änderung.",
+        "expected_value": "Neue Nutzenhypothese.",
+        "bottleneck_coverage": "",
+        "data_requirements": "",
+        "application_impact": "",
+        "integration_impact": "",
+        "risks": "",
+        "architecture_fit": "",
+        "evidence_basis": option.evidence_basis,
+    }
+    kwargs = {
+        "actor": owner,
+        "process_analysis_id": process.pk,
+        "expected_process_version": process.version,
+        "base_process": {},
+        "base_options": {
+            str(option.pk): {
+                "id": str(option.pk),
+                "name": option.name,
+                "updated_at": base_updated_at,
+            }
+        },
+        "process_fields": {},
+        "solution_proposals": [proposal],
+    }
+
+    preview = preview_investigation_draft_adoption(**kwargs)
+
+    assert [item["type"] for item in preview["conflicts"]] == ["solution_option_changed"]
+    assert preview["solution_changes"] == []
+
+
+@pytest.mark.django_db
 def test_architecture_adoption_never_resets_decided_solution_option(owner, business_unit):
     process = make_process(owner=owner, business_unit=business_unit, name="Decision boundary")
     option = SolutionOption.objects.create(

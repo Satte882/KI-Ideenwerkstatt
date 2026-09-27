@@ -142,13 +142,33 @@ def _build_plan(
     current_name_map: dict[str, SolutionOption | None] = {
         option.name.strip().casefold(): option for option in current_options
     }
+    base_name_ids: dict[str, list[str]] = {}
+    for option_id, base in base_options.items():
+        base_name = str(base.get("name") or "").strip().casefold()
+        if base_name:
+            base_name_ids.setdefault(base_name, []).append(str(option_id))
 
     for proposal in solution_proposals:
         fields = _option_fields(proposal)
         name = str(fields.get("name") or "").strip()
         if not name:
             continue
+        key = name.casefold()
         existing_option_id = str(proposal.get("existing_option_id") or "").strip()
+        if not existing_option_id:
+            base_matches = base_name_ids.get(key, [])
+            if len(base_matches) == 1:
+                existing_option_id = base_matches[0]
+            elif len(base_matches) > 1:
+                conflicts.append(
+                    {
+                        "type": "solution_option_base_name_ambiguous",
+                        "label": name,
+                        "base_option_ids": base_matches,
+                        "proposed": fields,
+                    }
+                )
+                continue
         if existing_option_id:
             current = current_by_id.get(existing_option_id)
             base = base_options.get(existing_option_id)
@@ -199,7 +219,6 @@ def _build_plan(
             )
             continue
 
-        key = name.casefold()
         collision = current_name_map.get(key)
         if key in current_name_map:
             conflicts.append(
