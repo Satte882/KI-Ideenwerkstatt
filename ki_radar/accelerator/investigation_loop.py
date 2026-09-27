@@ -279,9 +279,7 @@ def _provider_failures_for_role(run: InvestigationRun, role: str) -> int:
     """
     failures = 0
     statuses = (
-        run.model_calls.filter(role=role)
-        .order_by("-created_at")
-        .values_list("status", flat=True)
+        run.model_calls.filter(role=role).order_by("-created_at").values_list("status", flat=True)
     )
     for status in statuses:
         if status == InvestigationModelCall.Status.SUCCESS:
@@ -330,9 +328,7 @@ def _handle_provider_failure(
     run.refresh_from_db()
     failed_call = run.model_calls.order_by("-created_at").first()
     failed_role = (
-        failed_call.role
-        if failed_call is not None
-        else InvestigationModelCall.Role.PLANNER
+        failed_call.role if failed_call is not None else InvestigationModelCall.Role.PLANNER
     )
     failures = _provider_failures_for_role(run, failed_role)
     structured_failure = _latest_structured_contract_failure(run)
