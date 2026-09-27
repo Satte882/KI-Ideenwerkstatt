@@ -907,6 +907,9 @@ def normalize_decision_brief_payload(
     remains available on InvestigationModelCall for audit/diagnostics.
     """
     normalized = dict(payload)
+    if not bool(run.execution_snapshot.get("decision_brief_required")):
+        return normalized
+
     raw_calculations = normalized.get("calculations")
     if raw_calculations is None:
         return normalized
