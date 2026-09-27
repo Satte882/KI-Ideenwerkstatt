@@ -68,7 +68,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v17"
+LOOP_VERSION = "vs1-agent-loop-v18"
 BUDGET_VERSION = "vs1-budget-v7"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v4"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -894,6 +894,47 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
     return False
 
 
+def normalize_decision_brief_payload(
+    run: InvestigationRun,
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Drop invalid optional calculation rows before persisting a Decision Brief.
+
+    Calculations are a benchmark-quality signal, not a universal READY requirement.
+    Persisting an unsupported calculation would still be unsafe, so malformed or
+    ungrounded calculation rows are removed deterministically instead of spending
+    another model pass trying to repair an optional section. The raw model payload
+    remains available on InvestigationModelCall for audit/diagnostics.
+    """
+    normalized = dict(payload)
+    if not bool(run.execution_snapshot.get("decision_brief_required")):
+        return normalized
+
+    raw_calculations = normalized.get("calculations")
+    if raw_calculations is None:
+        return normalized
+    if not isinstance(raw_calculations, list):
+        normalized["calculations"] = []
+        return normalized
+
+    valid_calculations: list[dict[str, Any]] = []
+    for calculation in raw_calculations:
+        if not isinstance(calculation, Mapping):
+            continue
+        reference = calculation.get("reference")
+        if (
+            str(calculation.get("summary") or "").strip()
+            and isinstance(reference, Mapping)
+            and reference.get("tool_result_id")
+            and reference_valid(run, reference)
+            and isinstance(calculation.get("population"), Mapping)
+            and str(calculation.get("limits") or "").strip()
+        ):
+            valid_calculations.append(dict(calculation))
+    normalized["calculations"] = valid_calculations
+    return normalized
+
+
 def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     """Hard integrity contract for a reviewable Decision Package.
 
@@ -1383,7 +1424,7 @@ def apply_planner_state(
             run.register_hash = register_hash(run, normalized)
 
     if brief_payload is not None:
-        normalized_brief = dict(brief_payload)
+        normalized_brief = normalize_decision_brief_payload(run, brief_payload)
         new_hash = brief_hash(normalized_brief)
         if new_hash != run.brief_hash:
             run.brief_payload = normalized_brief
