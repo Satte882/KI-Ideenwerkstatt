@@ -1181,6 +1181,18 @@ def _structured_provider_call(
         current.completion_tokens = completion_tokens
         current.total_tokens = total_tokens
         current.finished_at = timezone.now()
+        parameters = dict(current.effective_parameters)
+        response_metadata: dict[str, Any] = {
+            "output_chars": result.output_chars,
+            "finish_reason": result.finish_reason,
+        }
+        reasoning_tokens = result.usage.get("reasoning_tokens")
+        if isinstance(reasoning_tokens, (int, float)) and not isinstance(
+            reasoning_tokens, bool
+        ):
+            response_metadata["reasoning_tokens"] = int(reasoning_tokens)
+        parameters["response_metadata"] = response_metadata
+        current.effective_parameters = parameters
 
         if stale:
             current.status = InvestigationModelCall.Status.DISCARDED
@@ -1193,6 +1205,7 @@ def _structured_provider_call(
                 "prompt_tokens",
                 "completion_tokens",
                 "total_tokens",
+                "effective_parameters",
                 "finished_at",
                 "updated_at",
             ]
@@ -1230,6 +1243,7 @@ def _structured_provider_call(
                 "prompt_tokens",
                 "completion_tokens",
                 "total_tokens",
+                "effective_parameters",
                 "finished_at",
                 "updated_at",
             ]
