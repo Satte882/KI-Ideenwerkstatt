@@ -140,7 +140,6 @@ def test_diagnose_investigation_run_command_emits_read_only_markdown(
     assert "Exakte doppelte Reads" in content
 
 
-
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ("role", "timeout_seconds", "max_output_tokens"),
@@ -231,10 +230,7 @@ def test_success_in_other_role_does_not_reset_synthesizer_failure_chain(
             finished_at=timezone.now(),
         )
 
-    assert (
-        _provider_failures_for_role(run, InvestigationModelCall.Role.SYNTHESIZER)
-        == 2
-    )
+    assert _provider_failures_for_role(run, InvestigationModelCall.Role.SYNTHESIZER) == 2
     assert _provider_failures_for_role(run, InvestigationModelCall.Role.PLANNER) == 0
 
 
@@ -306,7 +302,4 @@ def test_synthesizer_timeout_retries_same_role_once_without_planner_hop(
     assert run.clarification_payload["model_role"] == "synthesizer"
     synth_calls = run.model_calls.filter(role=InvestigationModelCall.Role.SYNTHESIZER)
     assert synth_calls.count() == 2
-    assert all(
-        call.effective_parameters["timeout_seconds"] == 270
-        for call in synth_calls
-    )
+    assert all(call.effective_parameters["timeout_seconds"] == 270 for call in synth_calls)
