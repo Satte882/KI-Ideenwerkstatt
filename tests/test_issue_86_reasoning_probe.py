@@ -87,7 +87,6 @@ def test_reasoning_probe_compares_only_effort_with_same_transport(monkeypatch):
     assert "schema_result=" in output
 
 
-
 @pytest.mark.django_db
 def test_reasoning_probe_keeps_metrics_when_schema_is_invalid(monkeypatch):
     monkeypatch.setattr(
