@@ -50,7 +50,6 @@ def test_synthesis_binds_existing_solution_candidates_explicitly():
     assert "erfinde keine ID" in SYNTHESIS_INSTRUCTION
 
 
-
 def test_planner_clarification_contract_names_exact_reason_codes():
     assert "missing_evidence" in PLANNER_INSTRUCTION
     assert "permission_or_scope" in PLANNER_INSTRUCTION
