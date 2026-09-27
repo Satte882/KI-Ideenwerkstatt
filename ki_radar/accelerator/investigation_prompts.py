@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v17"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v9"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v4"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v10"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v5"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
@@ -68,13 +68,21 @@ metadata.replaces_claim_id=<alte claim_id>. Der alte Claim wird dann nicht zusä
 weitergeführt; stale und korrigierter widersprüchlicher Claim dürfen nicht parallel aktiv
 bleiben. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit
 area=competing_hypotheses und claim_kind=hypothesis geführt werden, wenn die Evidenzlage
-mehr als eine plausible Erklärung trägt.
+mehr als eine plausible Erklärung trägt. brief_payload.hypotheses und diese
+competing_hypotheses-Claims dürfen ausschließlich Ursachen oder Erklärungen für die
+beobachtete Problemsituation enthalten. Aussagen über Lösungsoptionen, ihre Bewertung,
+Priorisierung oder Empfehlung sind keine Ursachenhypothesen und gehören ausschließlich in
+brief_payload.options bzw. recommendation.
 
 Solution Options sind Kandidaten und gehören ausschließlich in brief_payload.options, nicht
 in claim_register. Der zukünftige Validation Plan gehört ausschließlich in
 brief_payload.validation_step und ist kein Evidence Claim. Dass ein Pilot oder Messschritt
 noch nicht ausgeführt wurde, ist daher kein Evidenzmangel. Eine Empfehlung kann als
 Evidence Claim geführt werden, wenn ihre Evidenzbasis explizit referenziert wird.
+Die Formulierungsstärke der recommendation muss der Quellen- und Befundlage entsprechen:
+„am stärksten gestützt“, „bevorzugter Kandidat“, Pilot-/Prüfvorbehalte und andere
+Qualifizierungen dürfen nicht zu „beste“, „optimale“ oder „eindeutig richtige“ Lösung
+verstärkt werden, sofern die Quellen diese stärkere Aussage nicht ausdrücklich tragen.
 Unbekannte Punkte werden ehrlich als offen bzw. in risks_unknowns ausgewiesen und dürfen
 nicht als bestätigte Tatsachen oder Empfehlungspremissen verwendet werden.
 
@@ -184,8 +192,12 @@ Messplan und muss noch nicht ausgeführt sein. Fordere daher weder Options-Claim
 Evidenz für die bereits erfolgte Durchführung des Validation Plans.
 
 Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
-unbekannt korrekt getrennt sind, ob die Empfehlung durch Evidenz getragen wird und ob
+unbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob
 vorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.
+Prüfe auch die Formulierungsstärke: Wenn die Quellen nur „am stärksten gestützt“,
+„bevorzugter Kandidat“, Pilot- oder Prüfvorbehalte tragen, darf der Brief daraus nicht
+„beste“, „optimale“ oder „eindeutig richtige“ Lösung machen. Eine solche unbelegte
+Verstärkung ist ein kritischer inhaltlicher Fehler und muss vor READY repariert werden.
 Berücksichtige Gegenbelege und relevante offene Punkte. Prüfe jeden als kritisch markierten
 Evidence Claim ausdrücklich und liste seine ID in checked_critical_claims. Fordere zusätzliche
 read_requests nur an, wenn eine konkrete Fundstelle für diese Integritätsprüfung wirklich

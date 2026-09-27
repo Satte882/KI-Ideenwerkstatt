@@ -132,7 +132,8 @@ def investigation_authorize(request, process_pk):
         )
 
     default_question = (
-        f"Welche Lösungsrichtung ist für „{process.name}“ durch die Evidenz gestützt?"
+        f"Welche Lösungsrichtung wird für „{process.name}“ durch die vorliegenden "
+        "Quellen und Befunde am stärksten gestützt?"
     )
     question = str(request.POST.get("decision_question") or default_question).strip()
     selected_folder_id = str(

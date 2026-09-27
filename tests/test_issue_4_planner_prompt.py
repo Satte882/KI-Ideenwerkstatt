@@ -3,6 +3,8 @@ from ki_radar.accelerator.investigation_prompts import (
     PLANNER_PROMPT_VERSION,
     SYNTHESIS_INSTRUCTION,
     SYNTHESIS_PROMPT_VERSION,
+    VERIFIER_INSTRUCTION,
+    VERIFIER_PROMPT_VERSION,
 )
 
 
@@ -21,7 +23,7 @@ def test_quantitative_check_rule_stays_domain_generic():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v9"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v10"
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
     assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
@@ -57,3 +59,21 @@ def test_planner_clarification_contract_names_exact_reason_codes():
     assert "Verwende keine Synonyme" in PLANNER_INSTRUCTION
     assert "keinen entscheidungsrelevanten Bezug" in PLANNER_INSTRUCTION
     assert "clarification_reason=missing_evidence" in PLANNER_INSTRUCTION
+
+
+def test_synthesis_separates_causes_from_solution_judgments_and_preserves_strength():
+    assert "ausschließlich Ursachen oder Erklärungen" in SYNTHESIS_INSTRUCTION
+    assert "Aussagen über Lösungsoptionen" in SYNTHESIS_INSTRUCTION
+    assert "sind keine Ursachenhypothesen" in SYNTHESIS_INSTRUCTION
+    assert "am stärksten gestützt" in SYNTHESIS_INSTRUCTION
+    assert "beste" in SYNTHESIS_INSTRUCTION
+    assert "optimale" in SYNTHESIS_INSTRUCTION
+    assert "nicht" in SYNTHESIS_INSTRUCTION
+
+
+def test_verifier_rejects_unbacked_recommendation_strengthening():
+    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v5"
+    assert "Formulierungsstärke" in VERIFIER_INSTRUCTION
+    assert "am stärksten gestützt" in VERIFIER_INSTRUCTION
+    assert "beste" in VERIFIER_INSTRUCTION
+    assert "kritischer inhaltlicher Fehler" in VERIFIER_INSTRUCTION

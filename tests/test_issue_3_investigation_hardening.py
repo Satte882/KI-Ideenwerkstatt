@@ -2217,7 +2217,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 def test_synthesis_prompt_distinguishes_stable_ids_from_explicit_replacements():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v9"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v10"
     assert "Bei einer Reparatur bleiben vorhandene Claim-IDs" not in SYNTHESIS_INSTRUCTION
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION

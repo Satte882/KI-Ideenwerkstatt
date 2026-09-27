@@ -35,7 +35,7 @@ _PROGRESS_LABELS = {
     InvestigationStep.ProgressKind.EVIDENCE: "Neuer Beleg",
     InvestigationStep.ProgressKind.REFUTATION: "Alternative Erklärung geschwächt",
     InvestigationStep.ProgressKind.CONTRADICTION: "Widerspruch entdeckt",
-    InvestigationStep.ProgressKind.COVERAGE: "Weitere Evidenz abgedeckt",
+    InvestigationStep.ProgressKind.COVERAGE: "Weitere Quellenbefunde abgedeckt",
 }
 
 
@@ -83,28 +83,43 @@ def population_summary(population: object) -> str:
 def _hypothesis_status(item: Mapping[str, Any]) -> tuple[str, str]:
     status = str(item.get("status") or "open")
     if status == "supported":
-        return "Durch aktuelle Evidenz gestützt", "ready"
+        return "Durch die Befunde gestützt", "ready"
     if status == "refuted" and item.get("counterevidence_refs"):
         return "Gegenbeleg vorhanden", "review"
     if status == "refuted":
-        return "Durch aktuelle Evidenz nicht gestützt", "review"
+        return "Durch die Befunde nicht gestützt", "review"
     if status == "conflicting":
-        return "Widersprüchliche Evidenz", "review"
+        return "Widersprüchliche Befunde", "review"
     return "Noch offen", "neutral"
 
 
-def present_hypotheses(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+def present_hypotheses(
+    payload: Mapping[str, Any],
+    *,
+    claim_register: object = None,
+) -> list[dict[str, Any]]:
+    claims = [item for item in (claim_register or []) if isinstance(item, Mapping)]
+    if claims:
+        raw_hypotheses = [
+            item
+            for item in claims
+            if str(item.get("area") or "") == "competing_hypotheses"
+            and str(item.get("claim_kind") or "") == "hypothesis"
+        ]
+    else:
+        raw_hypotheses = [
+            item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)
+        ]
+
     result: list[dict[str, Any]] = []
-    for raw in payload.get("hypotheses", []):
-        if not isinstance(raw, Mapping):
-            continue
+    for raw in raw_hypotheses:
         label, tone = _hypothesis_status(raw)
         result.append(
             {
                 "statement": humanize_investigation_text(raw.get("statement")),
                 "status_label": label,
                 "tone": tone,
-                "references": list(raw.get("references") or []),
+                "references": list(raw.get("references") or raw.get("evidence_refs") or []),
                 "counterevidence_refs": list(raw.get("counterevidence_refs") or []),
                 "raw_status": str(raw.get("status") or ""),
             }
@@ -220,7 +235,7 @@ def build_decision_surface(
         payload.get("recommendation") if isinstance(payload.get("recommendation"), Mapping) else {}
     )
 
-    hypotheses = present_hypotheses(payload)
+    hypotheses = present_hypotheses(payload, claim_register=run.claim_register)
     calculations = present_calculations(payload)
     options = present_options(payload)
     risks = [
@@ -272,7 +287,7 @@ def build_decision_surface(
         finding = "Kein verifizierter Befund aus diesem Lauf."
 
     status_label = "Untersuchung läuft"
-    status_detail = "Die Evidenzprüfung ist noch nicht abgeschlossen."
+    status_detail = "Die Prüfung der Quellen und Befunde ist noch nicht abgeschlossen."
     status_tone = "neutral"
     technical_status_label = {
         InvestigationRun.Status.RUNNING: "Technische Untersuchung läuft",
@@ -298,7 +313,10 @@ def build_decision_surface(
         status_tone = "danger"
     elif ready_for_decision:
         status_label = "Entscheidungsgrundlage bereit"
-        status_detail = "Die Evidenz ist geprüft; die fachliche Lösungsentscheidung ist noch offen."
+        status_detail = (
+            "Die Quellen und Befunde sind geprüft; "
+            "die fachliche Lösungsentscheidung ist noch offen."
+        )
         status_tone = "ready"
     elif clarification_required:
         status_label = "Klärung erforderlich"

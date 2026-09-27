@@ -24,6 +24,7 @@ from ki_radar.accelerator.investigation_benchmark import (
 )
 from ki_radar.accelerator.investigation_brief import (
     _solution_proposals,
+    _target_process_fields,
     materialize_decision_brief,
     preview_decision_brief_materialization,
     render_decision_brief_markdown,
@@ -814,6 +815,63 @@ def test_future_validation_plan_and_open_options_do_not_block_pre_verifier(
 
 
 @pytest.mark.django_db
+def test_handoff_uses_only_causal_claims_for_process_hypotheses(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(
+        owner=owner,
+        business_unit=business_unit,
+        name="Causal handoff",
+    )
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="causal-handoff",
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    run.claim_register = [
+        {
+            "claim_id": "cause-1",
+            "statement": "Manuelle Vorqualifizierung erzeugt den beobachteten Rückstau.",
+            "area": "competing_hypotheses",
+            "claim_kind": "hypothesis",
+            "status": "supported",
+        },
+        {
+            "claim_id": "recommendation-1",
+            "statement": "Die hybride Lösung wird am stärksten gestützt.",
+            "area": "recommendation_validation",
+            "claim_kind": "recommendation",
+            "status": "supported",
+        },
+    ]
+    payload = {
+        "problem": {"statement": "Bei hohem Anfragevolumen entsteht Rückstau."},
+        "hypotheses": [
+            {
+                "statement": "Die hybride Lösung ist die beste Lösungsrichtung.",
+                "status": "supported",
+            },
+        ],
+        "calculations": [],
+    }
+
+    fields = _target_process_fields(run, payload)
+
+    assert "Manuelle Vorqualifizierung" in fields["cause_hypotheses"]
+    assert "Durch Befunde gestützt" in fields["cause_hypotheses"]
+    assert "hybride Lösung" not in fields["cause_hypotheses"].lower()
+    assert "beste Lösungsrichtung" not in fields["cause_hypotheses"]
+
+
+@pytest.mark.django_db
 def test_materialization_preview_is_read_only_and_describes_domain_changes(
     owner,
     business_unit,
@@ -965,8 +1023,8 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     assert run.materializations.count() == 1
 
     process.refresh_from_db()
-    assert "Durch Evidenz gestützt:" in process.cause_hypotheses
-    assert "Durch Evidenz nicht gestützt:" in process.cause_hypotheses
+    assert "Durch Befunde gestützt:" in process.cause_hypotheses
+    assert "Durch Befunde nicht gestützt:" in process.cause_hypotheses
     assert "[supported]" not in process.cause_hypotheses
     assert "[refuted]" not in process.cause_hypotheses
     assert "Datenbasis: 4 Datensätze" in process.baseline_metrics
@@ -979,12 +1037,8 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     assert process_page.status_code == 200
     assert 'data-testid="process-decision-surface"' in process_body
     assert process_body.index("1 · Situation") < process_body.index("2 · Wichtigster Befund")
-    assert process_body.index("2 · Wichtigster Befund") < process_body.index(
-        "3 · Evidenzbasierte Empfehlung"
-    )
-    assert process_body.index("3 · Evidenzbasierte Empfehlung") < process_body.index(
-        "4 · Nächster Schritt"
-    )
+    assert process_body.index("2 · Wichtigster Befund") < process_body.index("3 · Empfehlung")
+    assert process_body.index("3 · Empfehlung") < process_body.index("4 · Nächster Schritt")
     assert payload["recommendation"]["summary"] in process_body
     assert "setzt keine bevorzugte Lösungsoption" in process_body
     assert "Rohdaten und Herkunft anzeigen" in process_body
@@ -992,7 +1046,7 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     comparison = client.get(response.url)
     body = comparison.content.decode()
     assert comparison.status_code == 200
-    assert "Letzte evidenzgestützte Übernahme" in body
+    assert "Letzte übernommene Entscheidungsgrundlage" in body
     assert reverse("accelerator:investigation_detail", args=[run.pk]) in body
 
     detail = client.get(reverse("accelerator:investigation_detail", args=[run.pk]))
@@ -1863,7 +1917,7 @@ def test_decision_surface_prioritizes_human_decision_over_technical_audit(
     assert body.index("3 · Empfehlung") < body.index("4 · Nächster Schritt")
     assert "Entscheidungsgrundlage bereit" in body
     assert "READY_FOR_DECISION" not in body
-    assert "Durch aktuelle Evidenz gestützt" in body
+    assert "Durch die Befunde gestützt" in body
     assert "Gegenbeleg vorhanden" in body
     assert "Freigabedauer (Stunden)" in body
     assert "Freigeber verfügbar" in body

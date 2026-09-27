@@ -108,15 +108,33 @@ def _process_base(run: InvestigationRun) -> dict[str, Any]:
     return dict(process) if isinstance(process, Mapping) else {}
 
 
-def _target_process_fields(payload: Mapping[str, Any]) -> dict[str, str]:
+def _materializable_cause_hypotheses(
+    run: InvestigationRun,
+    payload: Mapping[str, Any],
+) -> list[Mapping[str, Any]]:
+    claim_register = [item for item in run.claim_register if isinstance(item, Mapping)]
+    if claim_register:
+        return [
+            item
+            for item in claim_register
+            if str(item.get("area") or "") == "competing_hypotheses"
+            and str(item.get("claim_kind") or "") == "hypothesis"
+        ]
+    return [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
+
+
+def _target_process_fields(
+    run: InvestigationRun,
+    payload: Mapping[str, Any],
+) -> dict[str, str]:
     problem = payload.get("problem")
-    hypotheses = [item for item in payload.get("hypotheses", []) if isinstance(item, Mapping)]
+    hypotheses = _materializable_cause_hypotheses(run, payload)
     calculations = [item for item in payload.get("calculations", []) if isinstance(item, Mapping)]
 
     hypothesis_labels = {
-        "supported": "Durch Evidenz gestützt",
-        "refuted": "Durch Evidenz nicht gestützt",
-        "conflicting": "Widersprüchliche Evidenz",
+        "supported": "Durch Befunde gestützt",
+        "refuted": "Durch Befunde nicht gestützt",
+        "conflicting": "Widersprüchliche Befunde",
         "open": "Noch offen",
     }
     hypothesis_lines = []
@@ -286,7 +304,7 @@ def preview_decision_brief_materialization(
             expected_process_version=run.process_version,
             base_process=_process_base(run),
             base_options=_base_options(run),
-            process_fields=_target_process_fields(payload),
+            process_fields=_target_process_fields(run, payload),
             solution_proposals=_solution_proposals(
                 payload,
                 option_bindings=option_bindings,
@@ -338,7 +356,7 @@ def materialize_decision_brief(
             expected_process_version=run.process_version,
             base_process=_process_base(run),
             base_options=_base_options(run),
-            process_fields=_target_process_fields(payload),
+            process_fields=_target_process_fields(run, payload),
             solution_proposals=_solution_proposals(
                 payload,
                 option_bindings=option_bindings,
@@ -406,7 +424,7 @@ def render_decision_brief_markdown(revision: InvestigationBriefRevision) -> str:
         )
         for reference in hypothesis.get("references", []):
             if isinstance(reference, Mapping):
-                lines.append(f"  - Evidenz: {_reference_label(reference)}")
+                lines.append(f"  - Beleg: {_reference_label(reference)}")
         for reference in hypothesis.get("counterevidence_refs", []):
             if isinstance(reference, Mapping):
                 lines.append(f"  - Gegenbeleg: {_reference_label(reference)}")

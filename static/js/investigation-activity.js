@@ -51,6 +51,8 @@
     return node;
   };
   const render = (next) => {
+    const openReadyBrief =
+      state.status === "running" && next.status === "ready" && next.ready && next.brief_url;
     const added = [];
     const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 120;
     const existing = new Map([...timeline.children].map((node) => [node.dataset.entryId, node]));
@@ -107,6 +109,9 @@
     receivedAt = performance.now();
     stopped = !isActive(next.status);
     clock();
+    if (openReadyBrief) {
+      window.location.assign(next.brief_url);
+    }
   };
   const schedule = () => {
     clearTimeout(timer);
