@@ -20,10 +20,10 @@ def test_primary_analysis_headings_are_task_oriented():
     solution_form = _template("solution_option_form.html")
 
     assert "<strong>Zielbild und Leitplanken</strong>" in value_stream
-    assert '<h2 class="h6 mb-0">Ist-Prozess und Ursachen</h2>' in process_analysis
-    assert "<h2>Vertiefende Analyseinformationen</h2>" in process_analysis
+    assert "<h2>Ist-Prozess und Diagnose</h2>" in process_analysis
+    assert "<h3>Regeln, Systeme und Zusammenarbeit</h3>" in process_analysis
     assert "<summary>Systeme und Daten</summary>" in process_analysis
-    assert "<strong>Lösungsoptionen vergleichen</strong>" in process_analysis
+    assert "<h2>Lösungsoptionen vergleichen</h2>" in process_analysis
     assert "<strong>Lösungsoption bewerten</strong>" in solution_form
 
     assert "<strong>TOGAF-light: Architecture Vision</strong>" not in value_stream
