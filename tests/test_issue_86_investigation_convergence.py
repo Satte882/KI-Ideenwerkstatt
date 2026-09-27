@@ -12,6 +12,7 @@ from ki_radar.accelerator.investigation_diagnostics import build_investigation_d
 from ki_radar.accelerator.investigation_llm import (
     _reserve_model_call,
     _structured_provider_call,
+    _verifier_context,
     request_synthesis_package,
 )
 from ki_radar.accelerator.investigation_loop import (
@@ -23,9 +24,18 @@ from ki_radar.accelerator.investigation_runtime import (
     MODEL_CALL_LIMITS,
     apply_planner_state,
     decision_brief_blockers,
+    execute_tool_step,
+    mark_counterevidence_processed,
+    set_source_relevance,
 )
 from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable
-from tests.test_issue_3_investigation_hardening import start_csv_run
+from tests.test_issue_3_investigation_hardening import (
+    critical_ids,
+    planner_action,
+    ready_claims,
+    source_ref,
+    start_csv_run,
+)
 
 
 @pytest.mark.django_db
@@ -505,3 +515,169 @@ def test_successful_model_call_persists_reasoning_and_visible_output_diagnostics
     assert row["output_chars"] == len('{"ok":true}')
     assert row["finish_reason"] == "stop"
     assert row["context_profile"] == "synthesis_compact_v1"
+
+
+def _prepare_verification(*, owner, business_unit, tmp_path):
+    _process, _snapshot, handle, source = start_csv_run(
+        owner=owner,
+        business_unit=business_unit,
+        tmp_path=tmp_path,
+        key="issue86-verifier-recovery",
+        decision_brief_required=True,
+    )
+    for tool, parameters in [
+        ("read_source", {"source_id": str(source.source_id)}),
+        ("search_sources", {"query": "A"}),
+    ]:
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name=tool,
+            parameters=parameters,
+            target_claim_id="problem",
+        )
+    mark_counterevidence_processed(
+        actor=owner, run_id=handle.run_id, executor_token=handle.executor_token
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    brief = {
+        "question_scope": {"question": run.decision_question, "scope": "Testfall."},
+        "problem": {"statement": "Gruppen unterscheiden sich.", "references": [source_ref(source)]},
+        "recommendation": {
+            "summary": "Option prüfen.",
+            "rationale": "Evidenz trägt diese Richtung.",
+            "references": [source_ref(source)],
+        },
+    }
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        claim_register=ready_claims(source),
+        brief_payload=brief,
+    )
+    set_source_relevance(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        relevance={str(source.source_id): {"relevant": True}},
+    )
+    run.refresh_from_db()
+    return run, handle
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("retry_error", ["", "timeout", "provider_unavailable"])
+def test_verifier_transport_failure_retries_directly_and_never_regenerates_package(
+    owner, business_unit, tmp_path, monkeypatch, retry_error
+):
+    run, handle = _prepare_verification(owner=owner, business_unit=business_unit, tmp_path=tmp_path)
+    original = (run.register_hash, run.brief_hash, run.claim_register, run.brief_payload)
+    contexts = []
+
+    def provider(**kwargs):
+        contexts.append(json.loads(kwargs["messages"][1]["content"]))
+        assert kwargs["timeout_seconds"] == 120
+        assert kwargs["max_tokens"] == 16_384
+        if len(contexts) == 1 or retry_error:
+            raise OpenRouterUnavailable("Transport failure", code=retry_error or "timeout")
+        payload = {
+            "read_requests": [],
+            "findings": [],
+            "source_references_valid": True,
+            "checked_critical_claims": critical_ids(run.claim_register),
+        }
+        content = json.dumps(payload)
+        return OpenRouterResult(
+            content=content,
+            model="test-model",
+            usage={"prompt_tokens": 100, "completion_tokens": 30},
+            output_chars=len(content),
+        )
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+
+    def initial(**_kwargs):
+        return planner_action(
+            action="synthesize",
+            tool_name="",
+            parameters={},
+            claim_register=tuple(run.claim_register),
+            brief_payload=run.brief_payload,
+        )
+
+    first = advance_investigation(
+        actor=owner, run_id=run.pk, executor_token=handle.executor_token, planner=initial
+    )
+    assert first.status == InvestigationRun.Status.RUNNING
+    assert run.verifier_reports.count() == 0
+
+    def forbidden(**_kwargs):
+        raise AssertionError("Verifier recovery must not invoke planner or synthesizer")
+
+    second = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=forbidden,
+        synthesizer=forbidden,
+    )
+    run.refresh_from_db()
+    assert contexts[0] == contexts[1]
+    assert original == (run.register_hash, run.brief_hash, run.claim_register, run.brief_payload)
+    assert list(run.model_calls.values_list("role", flat=True)) == ["verifier", "verifier"]
+    if retry_error:
+        assert second.status == InvestigationRun.Status.FAILED
+        assert run.clarification_reason == "technical_failure"
+        assert run.clarification_payload["attempts"] == 2
+        assert run.clarification_payload["model_role"] == "verifier"
+        assert run.clarification_payload["error_code"] == retry_error
+        assert run.finished_at is not None
+        assert run.executor_token != handle.executor_token
+        assert run.verifier_reports.count() == 0
+    else:
+        assert second.status == InvestigationRun.Status.READY
+        assert run.verifier_reports.get().success
+
+
+@pytest.mark.django_db
+def test_unchanged_complete_synthesis_goes_to_verifier_without_refresh(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    run, handle = _prepare_verification(owner=owner, business_unit=business_unit, tmp_path=tmp_path)
+    InvestigationModelCall.objects.create(
+        run=run,
+        role="synthesizer",
+        status="success",
+        executor_generation=run.executor_generation,
+        finished_at=timezone.now(),
+    )
+
+    def forbidden(**_kwargs):
+        raise AssertionError("No ground truth changed; refresh must not run")
+
+    def provider(**kwargs):
+        assert json.loads(kwargs["messages"][1]["content"]) == _verifier_context(run)
+        payload = {
+            "read_requests": [],
+            "findings": [],
+            "source_references_valid": True,
+            "checked_critical_claims": critical_ids(run.claim_register),
+        }
+        content = json.dumps(payload)
+        return OpenRouterResult(content=content, model="test", usage={}, output_chars=len(content))
+
+    monkeypatch.setattr("ki_radar.accelerator.investigation_llm.request_openrouter", provider)
+    result = advance_investigation(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        planner=forbidden,
+        synthesizer=forbidden,
+    )
+    assert result.status == InvestigationRun.Status.READY
+    assert list(run.model_calls.order_by("created_at").values_list("role", flat=True)) == [
+        "synthesizer",
+        "verifier",
+    ]

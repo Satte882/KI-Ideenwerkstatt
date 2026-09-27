@@ -318,6 +318,42 @@ def _synthesizer_retry_due(run: InvestigationRun) -> bool:
     )
 
 
+def _verifier_retry_due(run: InvestigationRun) -> bool:
+    call = run.model_calls.order_by("-created_at").first()
+    return bool(
+        call is not None
+        and call.role == InvestigationModelCall.Role.VERIFIER
+        and call.status == InvestigationModelCall.Status.FAILED
+        and call.error_code in TRANSIENT_PROVIDER_CODES
+        and _provider_failures_for_role(run, InvestigationModelCall.Role.VERIFIER) <= 1
+    )
+
+
+def _verification_due(run: InvestigationRun) -> bool:
+    """Review an unchanged complete package instead of generating a refresh."""
+    if pre_verifier_blockers_for_run(run):
+        return False
+    if not {"verifier_missing", "verifier_stale"}.intersection(evaluate_run_policy(run).blockers):
+        return False
+    synthesis = (
+        run.model_calls.filter(
+            role=InvestigationModelCall.Role.SYNTHESIZER,
+            status=InvestigationModelCall.Status.SUCCESS,
+        )
+        .order_by("-finished_at")
+        .first()
+    )
+    if synthesis is None or synthesis.finished_at is None:
+        return False
+    return not (
+        run.steps.filter(
+            status=InvestigationStep.Status.SUCCESS,
+            finished_at__gt=synthesis.finished_at,
+        ).exists()
+        or run.input_revisions.filter(created_at__gt=synthesis.finished_at).exists()
+    )
+
+
 def _handle_provider_failure(
     *,
     actor,
@@ -568,6 +604,81 @@ def _try_mark_counterevidence_processed(
             raise
 
 
+def _advance_verification(
+    *,
+    actor,
+    run: InvestigationRun,
+    executor_token,
+    verifier: Callable[..., InvestigationVerifierReport],
+) -> AdvanceResult:
+    # The verifier is runtime-owned. A complete technical package triggers it
+    # automatically; the synthesizer never requests verification.
+    try:
+        report = verifier(
+            actor=actor,
+            run=run,
+            executor_token=executor_token,
+        )
+    except InvestigationRunError as exc:
+        if exc.code in {
+            "budget_exhausted",
+            "completion_budget_exhausted",
+            "input_budget_exhausted",
+            "context_capacity_exhausted",
+            "runtime_capacity_exhausted",
+            "evidence_budget_exhausted",
+        }:
+            run.refresh_from_db()
+            return _handle_budget_exhaustion(
+                actor=actor,
+                run=run,
+                executor_token=executor_token,
+                error_code=exc.code,
+            )
+        if exc.code in TRANSIENT_PROVIDER_CODES | {
+            "invalid_response",
+            "provider_error",
+            "provider_schema_unsupported",
+            "output_truncated",
+        }:
+            return _handle_provider_failure(
+                actor=actor,
+                run=run,
+                executor_token=executor_token,
+                error=exc,
+            )
+        raise
+
+    run.refresh_from_db()
+    decision = evaluate_run_policy(run)
+    if decision.outcome == PolicyOutcome.READY_FOR_DECISION:
+        ready = _set_ready(
+            actor=actor,
+            run_id=run.pk,
+            executor_token=executor_token,
+        )
+        return AdvanceResult(ready.pk, ready.status, decision)
+
+    if not report.success:
+        # Concrete verifier findings are runtime work. The next iteration routes
+        # once through the synthesizer so claim/brief references can be repaired
+        # before the generic planner is allowed to request more evidence.
+        return AdvanceResult(
+            run.pk,
+            InvestigationRun.Status.RUNNING,
+            evaluate_run_policy(run),
+        )
+
+    # A nominally successful verifier with a remaining deterministic blocker
+    # stays inside the runtime loop; the generic fingerprint/budget guards
+    # handle true non-convergence without inventing a new workflow state.
+    return AdvanceResult(
+        run.pk,
+        InvestigationRun.Status.RUNNING,
+        evaluate_run_policy(run),
+    )
+
+
 def advance_investigation(
     *,
     actor,
@@ -610,6 +721,14 @@ def advance_investigation(
             actor=actor,
             run=run,
             executor_token=executor_token,
+        )
+
+    if _verifier_retry_due(run) or (_verification_due(run) and not _verifier_repair_due(run)):
+        return _advance_verification(
+            actor=actor,
+            run=run,
+            executor_token=executor_token,
+            verifier=verifier,
         )
 
     pre_verifier_repair = _pre_verifier_repair_due(run)
@@ -786,71 +905,11 @@ def advance_investigation(
                 evaluate_run_policy(run),
             )
 
-        # The verifier is runtime-owned. A complete technical package triggers it
-        # automatically; the synthesizer never requests verification.
-        try:
-            report = verifier(
-                actor=actor,
-                run=run,
-                executor_token=executor_token,
-            )
-        except InvestigationRunError as exc:
-            if exc.code in {
-                "budget_exhausted",
-                "completion_budget_exhausted",
-                "input_budget_exhausted",
-                "context_capacity_exhausted",
-                "runtime_capacity_exhausted",
-                "evidence_budget_exhausted",
-            }:
-                run.refresh_from_db()
-                return _handle_budget_exhaustion(
-                    actor=actor,
-                    run=run,
-                    executor_token=executor_token,
-                    error_code=exc.code,
-                )
-            if exc.code in TRANSIENT_PROVIDER_CODES | {
-                "invalid_response",
-                "provider_error",
-                "provider_schema_unsupported",
-                "output_truncated",
-            }:
-                return _handle_provider_failure(
-                    actor=actor,
-                    run=run,
-                    executor_token=executor_token,
-                    error=exc,
-                )
-            raise
-
-        run.refresh_from_db()
-        decision = evaluate_run_policy(run)
-        if decision.outcome == PolicyOutcome.READY_FOR_DECISION:
-            ready = _set_ready(
-                actor=actor,
-                run_id=run.pk,
-                executor_token=executor_token,
-            )
-            return AdvanceResult(ready.pk, ready.status, decision)
-
-        if not report.success:
-            # Concrete verifier findings are runtime work. The next iteration routes
-            # once through the synthesizer so claim/brief references can be repaired
-            # before the generic planner is allowed to request more evidence.
-            return AdvanceResult(
-                run.pk,
-                InvestigationRun.Status.RUNNING,
-                evaluate_run_policy(run),
-            )
-
-        # A nominally successful verifier with a remaining deterministic blocker
-        # stays inside the runtime loop; the generic fingerprint/budget guards
-        # handle true non-convergence without inventing a new workflow state.
-        return AdvanceResult(
-            run.pk,
-            InvestigationRun.Status.RUNNING,
-            evaluate_run_policy(run),
+        return _advance_verification(
+            actor=actor,
+            run=run,
+            executor_token=executor_token,
+            verifier=verifier,
         )
 
     if action.action == "clarify":
