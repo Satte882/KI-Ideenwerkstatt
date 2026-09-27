@@ -359,7 +359,6 @@ def _read_bounded(response, *, deadline: float | None = None) -> bytes:
     return payload
 
 
-
 def _safe_response_header(response, name: str) -> str:
     headers = getattr(response, "headers", None)
     if headers is None:
@@ -557,18 +556,12 @@ def probe_openrouter_stream(
         diagnostics = {
             "probe_stage": stage,
             "elapsed_seconds": round(time.monotonic() - started, 3),
-            "headers_seconds": (
-                round(headers_at - started, 3) if headers_at is not None else None
-            ),
+            "headers_seconds": (round(headers_at - started, 3) if headers_at is not None else None),
             "first_event_seconds": (
-                round(first_event_at - started, 3)
-                if first_event_at is not None
-                else None
+                round(first_event_at - started, 3) if first_event_at is not None else None
             ),
             "first_content_seconds": (
-                round(first_content_at - started, 3)
-                if first_content_at is not None
-                else None
+                round(first_content_at - started, 3) if first_content_at is not None else None
             ),
             "event_count": event_count,
             "bytes_received": bytes_received,
@@ -641,6 +634,7 @@ def probe_openrouter_stream(
         generation_id=generation_id,
         request_id=request_id,
     )
+
 
 def request_openrouter(
     *,
