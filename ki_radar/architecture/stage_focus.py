@@ -90,7 +90,9 @@ def save_stage_focus_decision(
     if not can_edit_value_stream(actor, value_stream):
         raise ValidationError("Für die Fokusentscheidung fehlt die Berechtigung.")
     if selected_stage.value_stream_id != value_stream.pk:
-        raise ValidationError({"selected_stage": "Die Fokusphase gehört nicht zu diesem Value Stream."})
+        raise ValidationError(
+            {"selected_stage": "Die Fokusphase gehört nicht zu diesem Value Stream."}
+        )
 
     rationale_text = str(rationale or "").strip()
     if not rationale_text:
