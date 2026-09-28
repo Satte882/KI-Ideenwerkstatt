@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.decorators.debug import sensitive_post_parameters
 
@@ -207,10 +208,13 @@ def autonomous_discovery_start(request):
 @sensitive_post_parameters()
 @login_required
 def autonomous_discovery_review(request, session_id):
-    session = get_owned_autonomous_capture_session(
-        actor=request.user,
-        session_id=session_id,
-    )
+    try:
+        session = get_owned_autonomous_capture_session(
+            actor=request.user,
+            session_id=session_id,
+        )
+    except CaptureSession.DoesNotExist as exc:
+        raise Http404 from exc
     latest = _latest_analysis(session)
     snapshot = _latest_snapshot(session)
 
