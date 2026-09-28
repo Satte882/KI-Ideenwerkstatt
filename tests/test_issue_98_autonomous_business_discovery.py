@@ -544,6 +544,43 @@ def test_contract_repair_consumes_the_single_repair_budget(owner, tmp_path, monk
 
 
 @pytest.mark.django_db
+def test_verifier_finding_is_retained_if_repair_provider_fails(owner, tmp_path, monkeypatch):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    verifier = _verifier(
+        "repair",
+        repair_instructions="Process Scope enger und quellengebunden formulieren.",
+    )
+    calls = [_result(_draft()), _result(verifier)]
+
+    def fake_call(**kwargs):
+        if len(calls) == 0:
+            raise DiscoveryAnalysisError(
+                "Die OpenRouter-Anfrage hat das Zeitlimit überschritten.",
+                code="timeout",
+            )
+        return calls.pop(0)
+
+    monkeypatch.setattr(architect_service, "_provider_call", fake_call)
+
+    with pytest.raises(DiscoveryAnalysisError, match="Zeitlimit"):
+        execute_autonomous_business_discovery(
+            actor=owner,
+            session_id=session.pk,
+            snapshot_id=snapshot.pk,
+        )
+
+    failed = CaptureAnalysis.objects.get(session=session)
+    assert failed.status == CaptureAnalysis.Status.FAILED
+    assert failed.error_code == "timeout"
+    assert failed.verification_payload["status"] == "repair"
+    assert (
+        failed.verification_payload["repair_instructions"]
+        == "Process Scope enger und quellengebunden formulieren."
+    )
+    assert failed.result_payload["draft"]["process_analysis"]
+
+
+@pytest.mark.django_db
 def test_discovery_has_one_bounded_repair_and_independent_reverification(
     owner, tmp_path, monkeypatch
 ):
