@@ -4,6 +4,18 @@
 **Repository:** `Satte882/KI-Ideenwerkstatt`  
 **Übergeordnetes Ziel:** GitHub Issue #1 – „10x: Autonomes Evidence-to-Decision-System“
 
+## Verwendung und Änderungsregel
+
+Dieses Dokument ist die **führende Ziel- und Umsetzungsgrundlage für Issue #1**.
+
+- Die Arbeitspakete werden in der dokumentierten Reihenfolge umgesetzt.
+- Pro Arbeitspaket wird genau ein primäres GitHub-Issue angelegt. Das nächste Arbeitspaket wird erst konkretisiert und angelegt, nachdem das vorherige abgeschlossen und ausgewertet wurde.
+- Das jeweilige Issue konkretisiert den betreffenden Planabschnitt, ersetzt oder verändert dessen Ziel, Architekturprinzipien oder Paketgrenzen aber nicht stillschweigend.
+- Während eines laufenden Arbeitspakets wird dieser Plan nicht geändert. Neue Erkenntnisse, Fehler und Abweichungen werden im laufenden Issue dokumentiert.
+- Nach Abschluss eines Arbeitspakets wird vor dem nächsten geprüft, ob reale Code-, Test- oder E2E-Befunde eine dauerhafte Änderung von Ziel, Architektur, Reihenfolge, Aufwand oder Paketgrenzen erfordern. Nur dann wird der Plan versioniert aktualisiert.
+- Code, Tests und reale E2E-Befunde entscheiden darüber, ob die Abnahmekriterien erfüllt sind; der vereinbarte Zielmaßstab wird dabei nicht nachträglich still verändert.
+- Jedes neue AP-Issue nennt den Commit dieses Plans, auf dessen Grundlage es erstellt wurde.
+
 ---
 
 # 1. Ziel des Umbaus
