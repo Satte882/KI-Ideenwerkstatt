@@ -73,12 +73,17 @@ class CaptureProviderPayload:
     payload: dict[str, Any]
 
 
-def log_capture_analysis(analysis: CaptureAnalysis) -> None:
+def log_capture_analysis(
+    analysis: CaptureAnalysis,
+    *,
+    purpose: str = "capture_extraction",
+) -> None:
     logger.info(
-        "llm_request purpose=capture_extraction provider=%s model=%s "
+        "llm_request purpose=%s provider=%s model=%s "
         "object_type=capture_session object_id=%s analysis_id=%s status=%s "
         "error_code=%s duration_ms=%s input_chars=%s output_chars=%s "
         "prompt_tokens=%s completion_tokens=%s total_tokens=%s cost=%s",
+        purpose,
         analysis.provider,
         analysis.model_name or "provider-default",
         analysis.session_id,
