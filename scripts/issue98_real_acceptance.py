@@ -25,6 +25,7 @@ django.setup()
 
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import override_settings
 from django.urls import reverse
 from playwright.sync_api import sync_playwright
@@ -243,6 +244,10 @@ def run() -> None:
         raise RuntimeError(
             "OPENROUTER_API_KEY fehlt. Der reale AP1-Nachweis darf nicht als Mock ausgegeben werden."
         )
+
+    # Keep the acceptance harness self-contained: it deliberately uses the isolated
+    # SQLite test database and must not depend on a manually prepared local schema.
+    call_command("migrate", interactive=False, verbosity=0)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     owner = _prepare_owner()
