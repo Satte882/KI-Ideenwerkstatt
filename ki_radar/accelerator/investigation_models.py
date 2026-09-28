@@ -38,7 +38,7 @@ class InvestigationSourceFolder(TimeStampedModel):
     )
     capture_session = models.ForeignKey(
         "accelerator.CaptureSession",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="discovery_source_folders",
         null=True,
         blank=True,
@@ -141,7 +141,7 @@ class InvestigationSourceSnapshot(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     folder = models.ForeignKey(
         InvestigationSourceFolder,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         related_name="snapshots",
     )
     process_analysis = models.ForeignKey(
@@ -153,7 +153,7 @@ class InvestigationSourceSnapshot(TimeStampedModel):
     )
     capture_session = models.ForeignKey(
         "accelerator.CaptureSession",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="discovery_source_snapshots",
         null=True,
         blank=True,
