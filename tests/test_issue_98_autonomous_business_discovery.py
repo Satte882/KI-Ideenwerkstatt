@@ -723,7 +723,8 @@ def test_case_b_human_clarification_continues_on_same_snapshot(
     assert approved.status == CaptureAnalysis.Status.SUCCESS
     assert approved.source_revision == session.revision
     assert approved.result_payload["discovery_snapshot_id"] == str(snapshot.pk)
-    assert InvestigationSourceSnapshot.objects.get(pk=snapshot.pk).manifest_hash == snapshot.manifest_hash
+    stored_snapshot = InvestigationSourceSnapshot.objects.get(pk=snapshot.pk)
+    assert stored_snapshot.manifest_hash == snapshot.manifest_hash
 
 
 @pytest.mark.django_db
