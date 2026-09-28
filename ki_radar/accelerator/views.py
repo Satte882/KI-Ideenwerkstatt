@@ -210,8 +210,12 @@ def start_capture(request, capture_type: str):
 @login_required
 def capture_step(request, session_id, step: int):
     session = _load_ui_session(actor=request.user, session_id=session_id)
+    if session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
     if session.status != CaptureSession.Status.DRAFT:
-        return redirect("accelerator:capture_review", session_id=session.pk)
+        if session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
+    return redirect("accelerator:capture_review", session_id=session.pk)
     try:
         catalog = get_capture_catalog(session.capture_type, session.catalog_version)
     except UnsupportedCaptureCatalog:
@@ -293,6 +297,8 @@ def capture_step(request, session_id, step: int):
 @login_required
 def capture_review(request, session_id):
     session = _load_ui_session(actor=request.user, session_id=session_id)
+    if session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
     completion_errors: tuple[str, ...] = ()
     conflict_message = ""
     response_status = 200
@@ -350,6 +356,8 @@ def capture_review(request, session_id):
 @require_POST
 def capture_analyze(request, session_id):
     session = _load_ui_session(actor=request.user, session_id=session_id)
+    if session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
     try:
         analysis = execute_capture_analysis(actor=request.user, session_id=session.pk)
     except (
@@ -371,6 +379,11 @@ def analysis_detail(request, analysis_id):
         session__owner=request.user,
     )
     _load_ui_session(actor=request.user, session_id=analysis.session_id)
+    if analysis.session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect(
+            "accelerator:autonomous_discovery_review",
+            session_id=analysis.session_id,
+        )
     try:
         catalog = get_capture_catalog(analysis.capture_type, analysis.catalog_version)
     except UnsupportedCaptureCatalog:
