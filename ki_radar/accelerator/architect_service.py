@@ -204,7 +204,7 @@ def _provider_call(
                     "schema": schema,
                 },
             },
-            provider={"require_parameters": True},
+            provider={"require_parameters": True, "sort": "throughput"},
         )
     except OpenRouterUnavailable as exc:
         raise DiscoveryAnalysisError(str(exc), code=exc.code) from exc

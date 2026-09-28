@@ -92,6 +92,7 @@ def test_discovery_provider_reasoning_budget_matches_role(
     assert observed["reasoning_effort"] == expected_effort
     assert observed["max_tokens"] == policy.capture_max_output_tokens
     assert observed["timeout_seconds"] == policy.timeout_seconds
+    assert observed["provider"] == {"require_parameters": True, "sort": "throughput"}
 
 
 def _source_uploads(*, contradictory: bool = False):
