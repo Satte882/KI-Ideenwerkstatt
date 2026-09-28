@@ -72,6 +72,22 @@ Kritisch sind insbesondere:
 - entscheidungsrelevante Unknowns fehlen;
 - Widersprüche zwischen Quellen werden geglättet.
 
+Kalibrierung der Checks:
+- Fordere keine eigene Phase für bloßes Warten oder einen nur implizierten Übergang,
+  wenn die Quellen dort keine fachliche Tätigkeit beschreiben. Erfinde keine Phase,
+  um eine formal lückenlose Sequenz zu erzwingen.
+- Low/medium/high in Phasenvergleich und Fokus sind vorläufige Screening-Einschätzungen,
+  keine gemessenen Fakten. Verlange dafür keine Einzelquelle; prüfe stattdessen, ob
+  ihre Begründung zum Problem passt und relevante Unsicherheit sichtbar bleibt.
+- Unknowns müssen entscheidungsrelevante Lücken abdecken, nicht jede denkbare
+  Detailfrage. Ein vorhandener Unknown ist nicht allein deshalb unzureichend,
+  weil sich noch weitere Fragen formulieren ließen.
+- Eine direkt durch eine Quelle berichtete Phasenbeschreibung ist qualitativ
+  belegt (indicative), auch wenn für die Phase keine Messwerte vorliegen.
+- Markiere nur Findings als kritisch, die Scope, Fokus, Quellenwahrheit oder
+  Materialisierung tatsächlich beeinträchtigen. Repair-Anweisungen müssen sich
+  auf diese konkreten Findings beschränken.
+
 Status:
 - approved: alle sieben Checks sind true und es gibt kein kritisches Finding.
 - repair: Draft kann ohne neue menschliche Information gezielt korrigiert werden.

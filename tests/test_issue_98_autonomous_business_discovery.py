@@ -55,6 +55,14 @@ from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 
+def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
+    prompt = architect_service.VERIFIER_SYSTEM_PROMPT
+    assert "Fordere keine eigene Phase für bloßes Warten" in prompt
+    assert "keine gemessenen Fakten" in prompt
+    assert "nicht jede denkbare" in prompt
+    assert "belegt (indicative)" in prompt.replace("\n  ", " ")
+
+
 @pytest.mark.parametrize(
     ("schema_name", "expected_effort"),
     [
