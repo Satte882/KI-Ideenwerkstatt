@@ -20,7 +20,7 @@ from .focus import ValueStreamFocus
 from .models import ProcessAnalysis, ValueStream, ValueStreamStage
 from .permissions import can_manage_architecture
 from .provenance import build_process_source_snapshot
-from .stage_focus import StageFocusDecision
+from .stage_focus import save_stage_focus_decision
 
 
 class DiscoveryMaterializationError(RuntimeError):
@@ -104,32 +104,30 @@ def _existing_result(session: CaptureSession, analysis_id) -> DiscoveryMateriali
 
 def _criteria_snapshot(stages: list[ValueStreamStage], stage_drafts: list[dict]) -> dict:
     draft_by_key = {str(item["key"]): item for item in stage_drafts}
-    return {
-        str(stage.pk): {
+    snapshot = {}
+    for stage in stages:
+        draft = draft_by_key[getattr(stage, "_discovery_key", "")]
+        snapshot[str(stage.pk)] = {
             "sequence": stage.sequence,
             "name": stage.name,
-            "impact": "",
-            "pain_intensity": "",
-            "improvement_potential": "",
-            "data_accessibility": "",
-            "change_effort": "",
-            "time_to_value": "not_assessed",
-            "evidence_basis": (
-                "indicative"
-                if draft_by_key.get(getattr(stage, "_discovery_key", ""), {}).get("evidence_refs")
-                else "hypothesis"
-            ),
+            "impact": draft["impact"],
+            "pain_intensity": draft["pain_intensity"],
+            "improvement_potential": draft["improvement_potential"],
+            "data_accessibility": draft["data_accessibility"],
+            "change_effort": draft["change_effort"],
+            "time_to_value": draft["time_to_value"],
+            "evidence_basis": draft["evidence_basis"],
             "indicators": {
+                "description": stage.description,
                 "pain_points": stage.pain_points,
                 "baseline_metrics": stage.baseline_metrics,
-                "evidence_refs": draft_by_key.get(
-                    getattr(stage, "_discovery_key", ""),
-                    {},
-                ).get("evidence_refs", []),
+                "actors": stage.actors,
+                "systems": stage.systems,
+                "documents": stage.documents,
+                "evidence_refs": list(draft.get("evidence_refs") or []),
             },
         }
-        for stage in stages
-    }
+    return snapshot
 
 
 @transaction.atomic
@@ -228,6 +226,16 @@ def materialize_discovery_and_start_investigation(
             code="invalid_focus_stage",
         )
 
+    recommended_key = str((draft.get("focus") or {}).get("recommended_stage_key") or "")
+    if selected_key != recommended_key:
+        raise DiscoveryMaterializationError(
+            (
+                "Die gewählte Fokusphase weicht vom geprüften Process-Scope ab. "
+                "Der Draft muss zuerst auf die menschliche Fokusentscheidung neu ausgerichtet werden."
+            ),
+            code="focus_draft_mismatch",
+        )
+
     value_draft = dict(draft.get("value_stream") or {})
     focus_draft = dict(draft.get("focus") or {})
     process_draft = dict(draft.get("process_analysis") or {})
@@ -305,22 +313,14 @@ def materialize_discovery_and_start_investigation(
     focus.full_clean()
     focus.save()
 
-    recommended_key = str(focus_draft.get("recommended_stage_key") or "")
-    if selected_key == recommended_key:
-        decision_rationale = focus.rationale
-    else:
-        decision_rationale = (
-            f"Im Scope-/Fokus-Review wurde „{selected_stage.name}“ statt der "
-            "vorgeschlagenen Fokusphase ausgewählt."
-        )
-    StageFocusDecision.objects.create(
+    save_stage_focus_decision(
         value_stream=value_stream,
         selected_stage=selected_stage,
         criteria_snapshot=_criteria_snapshot(stages, stage_drafts),
-        rationale=decision_rationale,
+        rationale=focus.rationale,
+        actor=actor,
         is_short_path=False,
         short_path_reason="",
-        selected_by=actor,
     )
 
     process = ProcessAnalysis(
