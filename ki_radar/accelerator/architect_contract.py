@@ -313,7 +313,12 @@ def _validate_numbers(payload: dict[str, Any], evidence_text: str, errors: list[
     candidates: list[tuple[str, str]] = []
     process = payload.get("process_analysis")
     if isinstance(process, dict):
-        candidates.append(("process_analysis.baseline_metrics", str(process.get("baseline_metrics") or "")))
+        candidates.append(
+            (
+                "process_analysis.baseline_metrics",
+                str(process.get("baseline_metrics") or ""),
+            )
+        )
     stages = payload.get("stages")
     if isinstance(stages, list):
         for index, stage in enumerate(stages):
@@ -348,9 +353,19 @@ def validate_discovery_payload(
     if root.get("schema_version") != DISCOVERY_SCHEMA_VERSION:
         errors.append("schema_version: Falsche Discovery-Schema-Version.")
 
-    value_stream = _exact_fields(root.get("value_stream"), _VALUE_STREAM_FIELDS, "value_stream", errors)
+    value_stream = _exact_fields(
+        root.get("value_stream"),
+        _VALUE_STREAM_FIELDS,
+        "value_stream",
+        errors,
+    )
     focus = _exact_fields(root.get("focus"), _FOCUS_FIELDS, "focus", errors)
-    process = _exact_fields(root.get("process_analysis"), _PROCESS_FIELDS, "process_analysis", errors)
+    process = _exact_fields(
+        root.get("process_analysis"),
+        _PROCESS_FIELDS,
+        "process_analysis",
+        errors,
+    )
 
     for path, value in (
         ("value_stream.name", value_stream.get("name")),
@@ -370,9 +385,19 @@ def validate_discovery_payload(
         if not isinstance(value, str) or not value.strip():
             errors.append(f"{path}: Nichtleerer Text erforderlich.")
 
-    _validate_refs(value_stream.get("evidence_refs"), allowed_refs, "value_stream.evidence_refs", errors)
+    _validate_refs(
+        value_stream.get("evidence_refs"),
+        allowed_refs,
+        "value_stream.evidence_refs",
+        errors,
+    )
     _validate_refs(focus.get("evidence_refs"), allowed_refs, "focus.evidence_refs", errors)
-    _validate_refs(process.get("evidence_refs"), allowed_refs, "process_analysis.evidence_refs", errors)
+    _validate_refs(
+        process.get("evidence_refs"),
+        allowed_refs,
+        "process_analysis.evidence_refs",
+        errors,
+    )
 
     stages = root.get("stages")
     stage_keys: list[str] = []
@@ -390,7 +415,12 @@ def validate_discovery_payload(
         stage_keys.append(key)
         if stage.get("sequence") != index + 1:
             errors.append(f"stages[{index}].sequence: Phasen müssen lückenlos ab 1 sortiert sein.")
-        _validate_refs(stage.get("evidence_refs"), allowed_refs, f"stages[{index}].evidence_refs", errors)
+        _validate_refs(
+            stage.get("evidence_refs"),
+            allowed_refs,
+            f"stages[{index}].evidence_refs",
+            errors,
+        )
     if len(stage_keys) != len(set(stage_keys)):
         errors.append("stages: Phasenschlüssel müssen eindeutig sein.")
     if focus.get("recommended_stage_key") not in stage_keys:
@@ -429,7 +459,8 @@ def validate_discovery_payload(
                 refs = item.get("evidence_refs")
                 if isinstance(refs, list) and len(set(refs)) < 2:
                     errors.append(
-                        f"{list_name}[{index}].evidence_refs: Widerspruch braucht mindestens zwei Quellen."
+                        f"{list_name}[{index}].evidence_refs: "
+                        "Widerspruch braucht mindestens zwei Quellen."
                     )
 
     for list_name in ("unknowns", "clarifications"):
