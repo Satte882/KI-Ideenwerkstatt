@@ -165,6 +165,35 @@ def test_copilot_uses_shared_timeout_output_limit_and_returned_model(monkeypatch
 @override_settings(
     OPENROUTER_API_KEY="test-key",
     OPENROUTER_API_URL="https://openrouter.example/v1/chat/completions",
+    OPENROUTER_MODEL="test/global-model",
+)
+def test_openrouter_model_override_is_local_to_one_request(monkeypatch):
+    requested_models = []
+
+    def fake_urlopen(request, timeout):
+        requested_models.append(json.loads(request.data.decode("utf-8"))["model"])
+        return FakeResponse(_success_payload())
+
+    monkeypatch.setattr(openrouter.urllib.request, "urlopen", fake_urlopen)
+
+    openrouter.request_openrouter(
+        messages=[{"role": "user", "content": "discovery"}],
+        max_tokens=400,
+        timeout_seconds=15,
+        model_override="test/discovery-model",
+    )
+    openrouter.request_openrouter(
+        messages=[{"role": "user", "content": "investigation"}],
+        max_tokens=400,
+        timeout_seconds=15,
+    )
+
+    assert requested_models == ["test/discovery-model", "test/global-model"]
+
+
+@override_settings(
+    OPENROUTER_API_KEY="test-key",
+    OPENROUTER_API_URL="https://openrouter.example/v1/chat/completions",
     **VALID_LIMITS,
 )
 def test_copilot_classifies_rate_limit(monkeypatch):

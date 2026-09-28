@@ -6,6 +6,7 @@ import logging
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -232,6 +233,7 @@ def _provider_call(
                 timeout_seconds=policy.timeout_seconds,
                 temperature=policy.capture_temperature,
                 reasoning_effort="medium",
+                model_override=settings.ACCELERATOR_DISCOVERY_MODEL or None,
                 response_format={
                     "type": "json_schema",
                     "json_schema": {

@@ -364,6 +364,7 @@ def request_openrouter(
     response_format: dict[str, Any] | None = None,
     provider: dict[str, Any] | None = None,
     reasoning_effort: str | None = None,
+    model_override: str | None = None,
 ) -> OpenRouterResult:
     api_key = _setting("OPENROUTER_API_KEY")
     if not api_key:
@@ -372,7 +373,7 @@ def request_openrouter(
             code="not_configured",
         )
 
-    model = _setting("OPENROUTER_MODEL")
+    model = model_override or _setting("OPENROUTER_MODEL")
     body: dict[str, Any] = {"max_tokens": max_tokens, "messages": messages}
     reasoning: dict[str, Any] = {}
     if reasoning_effort is not None:

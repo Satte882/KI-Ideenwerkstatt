@@ -83,6 +83,7 @@ def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
         "autonomous_business_discovery_verifier_v1",
     ],
 )
+@override_settings(ACCELERATOR_DISCOVERY_MODEL="test/discovery-model")
 def test_discovery_provider_retains_quality_reasoning_effort(monkeypatch, schema_name):
     observed = {}
     monkeypatch.setattr(architect_service, "reserve_accelerator_quotas", lambda **_: None)
@@ -108,6 +109,7 @@ def test_discovery_provider_retains_quality_reasoning_effort(monkeypatch, schema
     )
 
     assert observed["reasoning_effort"] == "medium"
+    assert observed["model_override"] == "test/discovery-model"
     assert observed["max_tokens"] == policy.capture_max_output_tokens
     assert observed["timeout_seconds"] == policy.timeout_seconds
     assert observed["provider"] == {"require_parameters": True, "sort": "throughput"}
