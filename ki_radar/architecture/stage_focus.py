@@ -7,6 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from ki_radar.core.models import TimeStampedModel
+from ki_radar.core.taxonomy import ScreeningLevel
 
 CRITERIA_KEYS = (
     "impact",
@@ -70,6 +71,93 @@ class StageFocusDecision(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.value_stream}: {self.selected_stage}"
+
+
+def save_stage_focus_decision(
+    *,
+    value_stream,
+    selected_stage,
+    criteria_snapshot: dict,
+    rationale: str,
+    actor,
+    is_short_path: bool = False,
+    short_path_reason: str = "",
+) -> StageFocusDecision:
+    """Persist a focus decision through one domain-level invariant boundary."""
+    from .models import EvidenceBasis, TimeToValue
+    from .permissions import can_edit_value_stream
+
+    if not can_edit_value_stream(actor, value_stream):
+        raise ValidationError("Für die Fokusentscheidung fehlt die Berechtigung.")
+    if selected_stage.value_stream_id != value_stream.pk:
+        raise ValidationError({"selected_stage": "Die Fokusphase gehört nicht zu diesem Value Stream."})
+
+    rationale_text = str(rationale or "").strip()
+    if not rationale_text:
+        raise ValidationError({"rationale": "Die Auswahl der Fokusphase muss begründet werden."})
+
+    short_reason = str(short_path_reason or "").strip()
+    if is_short_path:
+        if not short_reason:
+            raise ValidationError(
+                {"short_path_reason": "Der bewusste Kurzpfad muss begründet werden."}
+            )
+    else:
+        allowed_levels = set(ScreeningLevel.values)
+        allowed_time_to_value = {
+            TimeToValue.UNKNOWN,
+            TimeToValue.SHORT,
+            TimeToValue.MEDIUM,
+            TimeToValue.LONG,
+        }
+        allowed_evidence_basis = set(EvidenceBasis.values)
+        errors: dict[str, str] = {}
+        for stage in value_stream.stages.all():
+            row = criteria_snapshot.get(str(stage.pk))
+            if not isinstance(row, dict):
+                errors[str(stage.pk)] = (
+                    f"Für die Phase „{stage.name}“ fehlt die vollständige Kriterienbewertung."
+                )
+                continue
+
+            for criterion in CRITERIA_KEYS:
+                value = str(row.get(criterion) or "").strip()
+                if not value:
+                    errors[f"{stage.pk}:{criterion}"] = (
+                        f"Für „{stage.name}“ fehlt die Einordnung {criterion}."
+                    )
+                    continue
+                if criterion == "time_to_value":
+                    if value not in allowed_time_to_value:
+                        errors[f"{stage.pk}:{criterion}"] = (
+                            f"Ungültige Time-to-Value-Einordnung für „{stage.name}“."
+                        )
+                elif value not in allowed_levels:
+                    errors[f"{stage.pk}:{criterion}"] = (
+                        f"Ungültige Screening-Einordnung für „{stage.name}“."
+                    )
+
+            evidence_basis = str(row.get(EVIDENCE_BASIS_KEY) or "").strip()
+            if evidence_basis not in allowed_evidence_basis:
+                errors[f"{stage.pk}:{EVIDENCE_BASIS_KEY}"] = (
+                    f"Ungültige Evidenzbasis für „{stage.name}“."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    decision, _created = StageFocusDecision.objects.update_or_create(
+        value_stream=value_stream,
+        defaults={
+            "selected_stage": selected_stage,
+            "criteria_snapshot": criteria_snapshot,
+            "rationale": rationale_text,
+            "is_short_path": is_short_path,
+            "short_path_reason": short_reason,
+            "selected_by": actor,
+        },
+    )
+    return decision
 
 
 def get_stage_focus_decision(value_stream) -> StageFocusDecision | None:
