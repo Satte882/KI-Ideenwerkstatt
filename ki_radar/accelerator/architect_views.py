@@ -277,12 +277,84 @@ def autonomous_discovery_review(request, session_id):
                 stage_choices=stage_choices,
             )
             if confirm_form.is_valid() and latest is not None:
+                selected_stage_key = confirm_form.cleaned_data["selected_stage_key"]
+                recommended_stage_key = str(
+                    presentation.get("focus", {}).get("recommended_stage_key") or ""
+                )
+                if selected_stage_key != recommended_stage_key:
+                    selected_stage = next(
+                        (
+                            stage
+                            for stage in presentation.get("stages", [])
+                            if str(stage.get("key") or "") == selected_stage_key
+                        ),
+                        {},
+                    )
+                    selected_name = str(selected_stage.get("name") or selected_stage_key)
+                    recommended_stage = next(
+                        (
+                            stage
+                            for stage in presentation.get("stages", [])
+                            if str(stage.get("key") or "") == recommended_stage_key
+                        ),
+                        {},
+                    )
+                    recommended_name = str(
+                        recommended_stage.get("name") or recommended_stage_key
+                    )
+                    correction = (
+                        "Scope-/Fokus-Review: Die Fokusphase soll "
+                        f"„{selected_name}“ statt „{recommended_name}“ sein. "
+                        "Richte Fokusvorschlag und ProcessAnalysis-Scope auf diese "
+                        "menschliche Entscheidung aus. Erfinde keine fehlende Evidenz; "
+                        "fehlende Details bleiben Unknowns."
+                    )
+                    try:
+                        session = add_autonomous_discovery_correction(
+                            actor=request.user,
+                            session_id=session.pk,
+                            expected_revision=confirm_form.cleaned_data["revision"],
+                            correction=correction,
+                        )
+                    except (
+                        CaptureRevisionConflict,
+                        CaptureStateError,
+                        ValidationError,
+                    ) as exc:
+                        messages.error(request, str(exc))
+                    else:
+                        snapshot = _latest_snapshot(session)
+                        if snapshot is None:
+                            messages.error(
+                                request,
+                                "Für diese Discovery fehlt ein autorisierter Quellenstand.",
+                            )
+                        else:
+                            analysis = _run_analysis(
+                                request,
+                                session=session,
+                                snapshot=snapshot,
+                            )
+                            if analysis is not None:
+                                messages.info(
+                                    request,
+                                    (
+                                        "Die alternative Fokusphase wurde als menschliche "
+                                        "Entscheidung übernommen. Process Scope und Fokus "
+                                        "wurden neu abgeleitet und müssen erneut geprüft werden."
+                                    ),
+                                )
+                    return redirect(
+                        "accelerator:autonomous_discovery_review",
+                        session_id=session.pk,
+                    )
+
                 try:
                     result = materialize_discovery_and_start_investigation(
                         actor=request.user,
                         session_id=session.pk,
                         analysis_id=latest.pk,
-                        selected_stage_key=confirm_form.cleaned_data["selected_stage_key"],
+                        selected_stage_key=selected_stage_key,
                         expected_revision=confirm_form.cleaned_data["revision"],
                     )
                 except DiscoveryMaterializationError as exc:
