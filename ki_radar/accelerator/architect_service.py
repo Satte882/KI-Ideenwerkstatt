@@ -51,7 +51,12 @@ Regeln:
   unterschiedlichen Handles enthalten. Mit nur einer tragenden Quelle ist es kein Widerspruch.
 - Zahlen in Fakten und Baselines dürfen nur vorkommen, wenn sie im Input tatsächlich genannt sind.
 - Der Value Stream ist End-to-End breiter als der vorgeschlagene Process Scope.
+- value_stream.scope_in/scope_out beschreiben die Grenze des gesamten Value Streams,
+  nicht die engere Process-Analysis-Grenze. Jede aufgeführte Value-Stream-Phase muss
+  zur Value-Stream-Grenze und zu ihrem Trigger/Outcome passen.
 - Phasen bilden eine plausible lückenlose Reihenfolge; Unsicherheit bleibt sichtbar.
+- Wenn process_analysis.current_flow Phasenschlüssel nennt, müssen diese exakt
+  den Schlüsseln und Namen der erzeugten Phasen entsprechen.
 - Bewerte für jede Phase Impact, Problemintensität, Verbesserungspotenzial,
   Datenzugänglichkeit und Veränderungsaufwand mit low/medium/high sowie Time-to-Value
   mit unknown/short/medium/long. Diese Werte sind Screening-Einschätzungen, keine Messwerte.
@@ -69,6 +74,8 @@ Prüfe gegen den vollständigen autorisierten Input und nicht gegen Plausibilit�
 
 Kritisch sind insbesondere:
 - tragende Aussagen ohne Quelle;
+- U0 ist der autorisierte Input-Handle für problem_statement, business_context
+  und corrections. Diese Feldnamen selbst sind keine zulässigen Evidence-Refs.
 - erfundene Zahlen oder Fakten;
 - Value-Stream-Grenzen, die nur den Einzelprozess wiederholen;
 - unplausible oder lückenhafte Phasenfolge;
@@ -107,7 +114,10 @@ den ursprünglichen autorisierten Input. Erfinde keine fehlende Information. Wen
 belegt ist, verschiebe es in Hypothesen/Unknowns oder lasse ein Detailfeld leer. Bei einem
 Widerspruch müssen mindestens zwei unterschiedliche Input-Handles die gegensätzlichen Aussagen
 tragen; andernfalls entferne den Widerspruch oder ordne die Aussage korrekt als Hypothese/Unknown
-ein. Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
+ein. U0 ist der autorisierte Handle für problem_statement, business_context und corrections;
+die Feldnamen selbst sind keine gültigen Evidence-Refs. Falls ein Verifier-Finding das anders
+behauptet, behalte U0 und korrigiere nur die tatsächlich fehlerhafte Quellenzuordnung.
+Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
 
 
 class DiscoveryAnalysisError(RuntimeError):
@@ -159,6 +169,7 @@ def _source_document(*, session: CaptureSession, snapshot) -> tuple[dict[str, An
             }
         )
     document = {
+        "input_ref": "U0",
         "capture_session_id": str(session.pk),
         "capture_revision": session.revision,
         "business_unit": session.owner.business_unit.name,

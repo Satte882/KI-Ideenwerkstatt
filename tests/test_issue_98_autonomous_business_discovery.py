@@ -61,7 +61,12 @@ def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
     assert "keine gemessenen Fakten" in prompt
     assert "nicht jede denkbare" in prompt
     assert "belegt (indicative)" in prompt.replace("\n  ", " ")
+    assert "U0 ist der autorisierte Input-Handle" in prompt
     assert "Ordne Aussagen aus" in architect_service.DISCOVERY_SYSTEM_PROMPT
+    assert "value_stream.scope_in/scope_out" in architect_service.DISCOVERY_SYSTEM_PROMPT
+    assert "die Feldnamen selbst sind keine gültigen Evidence-Refs" in (
+        architect_service.REPAIR_SYSTEM_PROMPT
+    )
 
 
 @pytest.mark.parametrize(
@@ -483,6 +488,20 @@ def test_discovery_snapshot_uses_existing_source_contract_and_is_capture_bound(o
     assert snapshot.sources.get().filename == "interview.md"
     assert snapshot.sources.get().content_sha256
     assert snapshot.manifest_hash
+
+
+@pytest.mark.django_db
+def test_discovery_input_exposes_authorized_u0_handle_to_all_model_roles(owner, tmp_path):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+
+    document, allowed_refs, _evidence_text = architect_service._source_document(
+        session=session,
+        snapshot=snapshot,
+    )
+
+    assert document["input_ref"] == "U0"
+    assert allowed_refs == {"U0", "S1"}
+    assert document["sources"][0]["ref"] == "S1"
 
 
 @pytest.mark.django_db
