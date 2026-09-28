@@ -170,7 +170,12 @@ def _provider_call(
     schema_name: str,
     schema: dict[str, Any],
 ) -> OpenRouterResult:
-    reserve_accelerator_quotas(actor=actor, session=session, policy=policy)
+    reserve_accelerator_quotas(
+        actor=actor,
+        session=session,
+        policy=policy,
+        include_context=False,
+    )
     try:
         return request_openrouter(
             messages=messages,
