@@ -60,8 +60,10 @@ Regeln:
 - Bewerte für jede Phase Impact, Problemintensität, Verbesserungspotenzial,
   Datenzugänglichkeit und Veränderungsaufwand mit low/medium/high sowie Time-to-Value
   mit unknown/short/medium/long. Diese Werte sind Screening-Einschätzungen, keine Messwerte.
-- evidence_basis ist hypothesis, indicative oder measured. Nutze indicative/measured nur,
-  wenn die autorisierten Quellen diese Stärke tragen; sonst hypothesis.
+- evidence_basis bewertet die Beschreibung der jeweiligen Phase, nicht ihre
+  Screening-Ratings: Direkt in einer autorisierten Quelle berichtete qualitative
+  Phasentätigkeit ist indicative, auch ohne Messwert. Nur abgeleitete oder vermutete
+  Tätigkeiten sind hypothesis. measured verlangt einen tatsächlichen Messbeleg.
 - Die Fokusphase muss zum Problem und zum vollständigen Phasenvergleich passen.
 - Lösungsoffen bleiben: keine KI-Lösung, Automatisierung oder Software vorwegnehmen.
 - Eine Clarification ist nur blocking=true, wenn Scope/Fokus ohne die Antwort nicht
@@ -117,6 +119,9 @@ tragen; andernfalls entferne den Widerspruch oder ordne die Aussage korrekt als 
 ein. U0 ist der autorisierte Handle für problem_statement, business_context und corrections;
 die Feldnamen selbst sind keine gültigen Evidence-Refs. Falls ein Verifier-Finding das anders
 behauptet, behalte U0 und korrigiere nur die tatsächlich fehlerhafte Quellenzuordnung.
+Für evidence_basis gilt: direkt berichtete qualitative Phasentätigkeit = indicative;
+nur abgeleitete Tätigkeit = hypothesis; measured nur mit Messbeleg. Die Einschätzung
+bezieht sich auf die Phasenbeschreibung, nicht auf low/medium/high-Screening-Ratings.
 Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
 
 
