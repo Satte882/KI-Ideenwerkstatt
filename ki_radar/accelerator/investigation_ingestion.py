@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
 from ki_radar.architecture.models import ProcessAnalysis
-from ki_radar.architecture.permissions import can_edit_value_stream
+from ki_radar.architecture.permissions import can_edit_value_stream, can_manage_architecture
 
 from .investigation_models import InvestigationSourceFolder
 from .investigation_tools import (
@@ -19,6 +19,7 @@ from .investigation_tools import (
     InvestigationToolError,
     inspect_source_folder,
 )
+from .models import CaptureSession
 
 
 class InvestigationSourceUploadError(RuntimeError):
@@ -53,18 +54,28 @@ def _assert_editable(actor, process: ProcessAnalysis) -> None:
         raise PermissionDenied("Die Quellenbasis ist nicht bearbeitbar.")
 
 
-def create_managed_source_folder(
+def _assert_autonomous_capture_editable(actor, session: CaptureSession) -> None:
+    if (
+        actor is None
+        or getattr(actor, "pk", None) is None
+        or session.owner_id != actor.pk
+        or session.capture_type != CaptureSession.CaptureType.VALUE_STREAM
+        or session.mode != CaptureSession.Mode.AUTONOMOUS
+        or session.status != CaptureSession.Status.DRAFT
+        or not can_manage_architecture(actor)
+    ):
+        raise PermissionDenied("Die Discovery-Quellenbasis ist nicht bearbeitbar.")
+
+
+def _store_managed_folder(
     *,
     actor,
-    process_analysis_id,
-    name: str,
+    owner_path: str,
+    display_name: str,
     uploads,
+    process: ProcessAnalysis | None = None,
+    capture_session: CaptureSession | None = None,
 ) -> InvestigationSourceFolder:
-    process = ProcessAnalysis.objects.select_related("stage__value_stream").get(
-        pk=process_analysis_id
-    )
-    _assert_editable(actor, process)
-
     upload_list = list(uploads or [])
     if not upload_list:
         raise InvestigationSourceUploadError("Bitte mindestens eine Quelldatei auswählen.")
@@ -72,15 +83,13 @@ def create_managed_source_folder(
         raise InvestigationSourceUploadError(
             f"Eine Quellenbasis darf höchstens {MAX_FILES} Dateien enthalten."
         )
-
-    display_name = str(name or "").strip() or f"Quellenbasis - {process.name}"
     if len(display_name) > 200:
         raise InvestigationSourceUploadError(
             "Der Name der Quellenbasis darf höchstens 200 Zeichen lang sein."
         )
 
     folder_id = uuid.uuid4()
-    root = _managed_source_root() / str(process.pk) / str(folder_id)
+    root = _managed_source_root() / owner_path / str(folder_id)
     try:
         root.mkdir(parents=True, exist_ok=False)
     except OSError as exc:
@@ -91,7 +100,6 @@ def create_managed_source_folder(
     try:
         seen_names: set[str] = set()
         total_bytes = 0
-
         for upload in upload_list:
             filename = _safe_upload_name(getattr(upload, "name", ""))
             key = filename.casefold()
@@ -117,7 +125,7 @@ def create_managed_source_folder(
                         )
                     handle.write(chunk)
 
-        # Authoritative validation is shared with the existing snapshot path:
+        # One authoritative validation path for ProcessAnalysis and Discovery:
         # UTF-8, allowed suffixes, CSV shape/limits and filesystem safety.
         inspect_source_folder(str(root))
 
@@ -125,6 +133,7 @@ def create_managed_source_folder(
             return InvestigationSourceFolder.objects.create(
                 id=folder_id,
                 process_analysis=process,
+                capture_session=capture_session,
                 name=display_name,
                 root_path=str(root),
                 is_active=True,
@@ -141,3 +150,43 @@ def create_managed_source_folder(
     except Exception:
         shutil.rmtree(root, ignore_errors=True)
         raise
+
+
+def create_managed_source_folder(
+    *,
+    actor,
+    process_analysis_id,
+    name: str,
+    uploads,
+) -> InvestigationSourceFolder:
+    process = ProcessAnalysis.objects.select_related("stage__value_stream").get(
+        pk=process_analysis_id
+    )
+    _assert_editable(actor, process)
+    display_name = str(name or "").strip() or f"Quellenbasis - {process.name}"
+    return _store_managed_folder(
+        actor=actor,
+        owner_path=str(process.pk),
+        display_name=display_name,
+        uploads=uploads,
+        process=process,
+    )
+
+
+def create_managed_discovery_source_folder(
+    *,
+    actor,
+    capture_session_id,
+    name: str,
+    uploads,
+) -> InvestigationSourceFolder:
+    session = CaptureSession.objects.select_related("owner").get(pk=capture_session_id)
+    _assert_autonomous_capture_editable(actor, session)
+    display_name = str(name or "").strip() or f"Discovery-Quellen - {session.working_title}"
+    return _store_managed_folder(
+        actor=actor,
+        owner_path=f"capture-{session.pk}",
+        display_name=display_name,
+        uploads=uploads,
+        capture_session=session,
+    )
