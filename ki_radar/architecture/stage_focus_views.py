@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .focus import get_value_stream_focus
 from .models import ValueStream
 from .permissions import can_edit_value_stream
-from .stage_focus import StageFocusDecision, get_stage_focus_decision
+from .stage_focus import get_stage_focus_decision, save_stage_focus_decision
 from .stage_focus_forms import StageFocusForm
 
 
@@ -45,16 +45,14 @@ def stage_focus_select(request, pk):
         decision=decision,
     )
     if request.method == "POST" and form.is_valid():
-        StageFocusDecision.objects.update_or_create(
+        save_stage_focus_decision(
             value_stream=value_stream,
-            defaults={
-                "selected_stage": form.cleaned_data["selected_stage"],
-                "criteria_snapshot": form.criteria_snapshot(),
-                "rationale": form.cleaned_data["rationale"],
-                "is_short_path": form.cleaned_data["is_short_path"],
-                "short_path_reason": form.cleaned_data.get("short_path_reason", ""),
-                "selected_by": request.user,
-            },
+            selected_stage=form.cleaned_data["selected_stage"],
+            criteria_snapshot=form.criteria_snapshot(),
+            rationale=form.cleaned_data["rationale"],
+            actor=request.user,
+            is_short_path=form.cleaned_data["is_short_path"],
+            short_path_reason=form.cleaned_data.get("short_path_reason", ""),
         )
         messages.success(
             request,
