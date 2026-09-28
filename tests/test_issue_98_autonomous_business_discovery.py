@@ -453,9 +453,7 @@ def test_case_c_contradictory_sources_remain_visible(owner, tmp_path, monkeypatc
 
 
 @pytest.mark.django_db
-def test_discovery_repairs_one_deterministic_contract_violation(
-    owner, tmp_path, monkeypatch
-):
+def test_discovery_repairs_one_deterministic_contract_violation(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     invalid = _draft()
     invalid["contradictions"] = [
