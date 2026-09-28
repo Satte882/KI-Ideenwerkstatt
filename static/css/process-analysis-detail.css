@@ -14,3 +14,249 @@
   margin-bottom: 0;
   padding: 9px 0;
 }
+
+.ui-control-room.page-process-analysis .cr-next-action {
+  margin-top: 16px;
+}
+
+.ui-control-room.page-process-analysis .cr-next-action p,
+.ui-control-room.page-process-analysis .cr-next-action li {
+  max-width: 90ch;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.ui-control-room.page-process-analysis .cr-next-action ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+}
+
+.ui-control-room.page-process-analysis .process-focus-status {
+  margin: 10px 0 0;
+  color: var(--warning);
+}
+
+.ui-control-room.page-process-analysis .process-focus-context {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis .process-focus-context > p {
+  color: var(--muted);
+}
+
+.ui-control-room.page-process-analysis .process-context-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+}
+
+.ui-control-room.page-process-analysis .process-context-facts dt {
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 500;
+}
+
+.ui-control-room.page-process-analysis .process-context-facts dd {
+  margin: 2px 0 0;
+}
+
+.ui-control-room.page-process-analysis .cr-section {
+  margin-top: 28px;
+}
+
+.ui-control-room.page-process-analysis .cr-section-heading h2 {
+  font-size: 1.15rem;
+  font-weight: 680;
+}
+
+.ui-control-room.page-process-analysis h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: .95rem;
+  font-weight: 650;
+}
+
+.ui-control-room.page-process-analysis .cr-section-heading p,
+.ui-control-room.page-process-analysis .process-work-design-empty p {
+  max-width: 85ch;
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.ui-control-room.page-process-analysis .process-core-body,
+.ui-control-room.page-process-analysis .solution-space-body {
+  padding-top: 18px;
+}
+
+.ui-control-room.page-process-analysis .process-core .text-preline,
+.ui-control-room.page-process-analysis .solution-option-card p {
+  max-width: 85ch;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.ui-control-room.page-process-analysis .process-frame,
+.ui-control-room.page-process-analysis .process-details,
+.ui-control-room.page-process-analysis .process-decision-surface {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface {
+  margin: 0 0 24px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__body {
+  margin-top: 12px;
+  grid-template-columns: 1fr;
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__section {
+  padding: 12px 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis .process-decision-surface__recommendation {
+  background: transparent;
+}
+
+.ui-control-room.page-process-analysis .process-investigation-panel > .card-body {
+  padding: 0;
+}
+
+.ui-control-room.page-process-analysis .process-validation-state {
+  padding: 12px 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ui-control-room.page-process-analysis .process-validation-state strong {
+  color: var(--warning);
+}
+
+.ui-control-room.page-process-analysis .work-design-entry {
+  padding: 18px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  background: transparent;
+}
+
+.ui-control-room.page-process-analysis .process-work-design-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 16px 0;
+  border-block: 1px solid var(--line-soft);
+}
+
+.ui-control-room.page-process-analysis .process-work-design-empty p {
+  margin: 5px 0 0;
+  color: var(--muted);
+}
+
+.ui-control-room.page-process-analysis .process-work-design-empty .btn {
+  flex-shrink: 0;
+}
+
+.ui-control-room.page-process-analysis .process-export {
+  margin-top: 24px;
+}
+
+.ui-control-room.page-process-analysis section[id] {
+  scroll-margin-top: 20px;
+}
+
+/* Fachliche Einheiten statt eines durchgehenden Feldkatalogs. */
+.ui-control-room.page-process-analysis .process-analysis-surface {
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+
+.ui-control-room.page-process-analysis .process-findings {
+  border-top: 2px solid var(--ice);
+  background: var(--surface-2);
+}
+
+.ui-control-room.page-process-analysis .process-findings h3,
+.ui-control-room.page-process-analysis .process-frame h3 {
+  font-size: 1.05rem;
+}
+
+.ui-control-room.page-process-analysis .process-findings-facts {
+  margin-bottom: 16px;
+}
+
+.ui-control-room.page-process-analysis .process-findings-facts > section + section {
+  border-left: 1px solid var(--line);
+  padding-left: 24px;
+}
+
+.ui-control-room.page-process-analysis .process-cause-status {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.ui-control-room.page-process-analysis .process-frame {
+  margin-top: 18px;
+}
+
+.ui-control-room.page-process-analysis .process-boundaries {
+  font-size: .875rem;
+}
+
+.ui-control-room.page-process-analysis .process-flow {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.ui-control-room.page-process-analysis .process-core-body > .architecture-disclosure {
+  margin-inline: 24px;
+}
+
+.ui-control-room.page-process-analysis .process-details {
+  margin-top: 20px;
+  padding: 18px 24px 0;
+}
+
+.ui-control-room.page-process-analysis .process-details > .cr-section-heading {
+  border: 0;
+  padding: 0;
+}
+
+.ui-control-room.page-process-analysis #process-validation .process-validation-state {
+  padding-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .ui-control-room.page-process-analysis .process-findings-facts > section + section {
+    border-left: 0;
+    padding-left: calc(var(--bs-gutter-x) * .5);
+  }
+
+  .ui-control-room.page-process-analysis .process-work-design-empty {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ui-control-room.page-process-analysis .cr-next-action ul {
+    display: block;
+  }
+
+  .ui-control-room.page-process-analysis .process-context-facts {
+    grid-template-columns: 1fr;
+  }
+}

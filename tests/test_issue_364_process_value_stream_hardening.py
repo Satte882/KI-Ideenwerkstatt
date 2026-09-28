@@ -24,19 +24,19 @@ def test_process_analysis_follows_source_diagnosis_validation_and_export():
     header = PROCESS_DETAIL.index('class="cr-page-header cr-work-header"')
     local_navigation = PROCESS_DETAIL.index("includes/local_work_status.html")
     next_action = PROCESS_DETAIL.index('id="next-action"')
-    focus_source = PROCESS_DETAIL.index('data-testid="process-stage-focus-source"')
     process_frame = PROCESS_DETAIL.index('data-testid="process-frame"')
     diagnosis = PROCESS_DETAIL.index('id="prozessanalyse"')
     findings = PROCESS_DETAIL.index("process_findings_summary process_analysis")
     secondary = PROCESS_DETAIL.index('id="prozessdetails"')
+    investigation = PROCESS_DETAIL.index('id="evidence-investigation"')
     validation = PROCESS_DETAIL.index('id="process-validation"')
     work_design = PROCESS_DETAIL.index('id="arbeitsgestaltung"')
     solutions = PROCESS_DETAIL.index('id="loesungsoptionen"')
     export = PROCESS_DETAIL.index('data-testid="llm-review-export-notice"')
 
-    assert lifecycle < header < local_navigation < next_action < focus_source
-    assert focus_source < process_frame < diagnosis < findings < secondary
-    assert secondary < validation < work_design < solutions < export
+    assert lifecycle < local_navigation < header < next_action < diagnosis
+    assert diagnosis < findings < process_frame < secondary < investigation
+    assert investigation < validation < solutions < work_design < export
 
 
 def test_process_validation_keeps_current_readiness_visible_and_metadata_secondary():

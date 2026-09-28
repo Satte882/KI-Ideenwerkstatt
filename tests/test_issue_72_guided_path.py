@@ -607,7 +607,10 @@ def test_evidence_materialization_does_not_switch_product_workspace_to_audit_mod
 
     assert response.status_code == 200
     assert "Der fachliche Kern wurde bereits übernommen." not in body
-    assert "Evidenzgestützte Vertiefung" in body
+    assert "Quellen und Untersuchung" in body
+    assert (
+        '<section class="cr-section process-analysis-surface" id="evidence-investigation"' in body
+    )
     assert "Untersuchung starten" in body
 
     comparison = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))

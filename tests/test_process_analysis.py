@@ -306,9 +306,9 @@ def test_process_detail_renders_task_oriented_headings_and_methodology(
 
     assert response.status_code == 200
     content = response.content.decode()
-    assert "Ist-Prozess und Ursachen" in content
+    assert "Ist-Prozess und Diagnose" in content
     assert "Methodik: Business Architecture (ADM Phase B)." in content
-    assert "Vertiefende Analyseinformationen" in content
+    assert "Regeln, Systeme und Zusammenarbeit" in content
     assert "Methodik: Information Systems &amp; Technology (ADM Phasen C/D)." in content
     assert "Lösungsoptionen vergleichen" in content
     assert "Methodik: Opportunities &amp; Solutions (ADM Phase E)." in content

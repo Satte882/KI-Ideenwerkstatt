@@ -1,4 +1,4 @@
-<div class="app-card mt-3">
+<div class="process-investigation-panel mt-3">
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
       <div>
@@ -7,6 +7,11 @@
           <div class="small text-muted mt-1">Richtungsfrage: {{ latest_investigation_run.decision_question }}</div>
           {% if latest_investigation_run.status == "waiting_human" %}
             <div class="small mt-2"><strong>Offene Klärung:</strong> Die Untersuchung benötigt eine entscheidungsrelevante Eingabe, bevor sie fortgesetzt werden kann.</div>
+          {% endif %}
+          {% if latest_investigation_run.status == "ready" %}
+            <p class="small mt-2 mb-0">Befunde, offene Fragen und Empfehlung im Decision Brief prüfen.</p>
+          {% elif latest_investigation_run.status == "running" %}
+            <p class="small mt-2 mb-0">Die Untersuchung läuft im Hintergrund. Der Verlauf zeigt den Fortschritt; Sie können diese Seite verlassen.</p>
           {% endif %}
         {% elif current_investigation_snapshot %}
           <div><strong>Untersuchungsgrundlage autorisiert.</strong></div>
@@ -18,17 +23,25 @@
           <div class="small text-muted mt-1">Legen Sie die fachliche Richtungsfrage und die erlaubte Quellenbasis fest. Technische Schutzgrenzen werden vom System vorgegeben.</div>
         {% else %}
           <div><strong>Noch keine Quellenbasis vorhanden.</strong></div>
-          <div class="small text-muted mt-1">Fügen Sie Markdown-, Text- oder CSV-Dateien hinzu und erstellen Sie daraus direkt eine Quellenbasis für diese Prozessanalyse.</div>
+          {% if can_edit and process_analysis.status == "draft" %}
+            <div class="small text-muted mt-1">Fügen Sie Markdown-, Text- oder CSV-Dateien hinzu und erstellen Sie daraus direkt eine Quellenbasis für diese Prozessanalyse.</div>
+          {% else %}
+            <div class="small text-muted mt-1">Für diese Prozessanalyse sind noch keine Quelldateien hinterlegt.</div>
+          {% endif %}
         {% endif %}
       </div>
 
-      {% if can_edit %}
         <div class="d-flex gap-2 flex-wrap">
           {% if latest_investigation_run.status == "ready" %}
             <a class="btn btn-primary" href="{% url 'accelerator:investigation_detail' latest_investigation_run.pk %}">Decision Brief öffnen</a>
           {% elif latest_investigation_run.status == "failed" or latest_investigation_run.status == "aborted" %}
             <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Untersuchungsverlauf öffnen</a>
+          {% elif latest_investigation_run.status == "waiting_human" %}
+            <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Klärung fortsetzen</a>
+          {% elif latest_investigation_run %}
+            <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Untersuchung öffnen</a>
           {% endif %}
+          {% if can_edit %}
           {% if active_investigation_folders %}
             <a class="btn btn-outline-secondary" href="{% url 'accelerator:investigation_authorize' process_analysis.pk %}">
               {% if current_investigation_snapshot %}Untersuchungsgrundlage aktualisieren{% else %}Untersuchungsgrundlage festlegen{% endif %}
@@ -43,14 +56,10 @@
                 <input type="hidden" name="snapshot_id" value="{{ current_investigation_snapshot.pk }}">
                 <button class="btn {% if latest_investigation_run.status == "ready" %}btn-outline-secondary{% else %}btn-primary{% endif %}" type="submit">Untersuchung starten</button>
               </form>
-            {% elif latest_investigation_run.status == "waiting_human" %}
-              <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Klärung fortsetzen</a>
-            {% else %}
-              <a class="btn btn-primary" href="{% url 'accelerator:investigation_activity' latest_investigation_run.pk %}">Untersuchung öffnen</a>
             {% endif %}
           {% endif %}
+          {% endif %}
         </div>
-      {% endif %}
     </div>
 
     {% if can_edit and process_analysis.status == "draft" %}

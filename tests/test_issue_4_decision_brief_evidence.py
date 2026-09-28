@@ -1038,7 +1038,9 @@ def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comp
     assert 'data-testid="process-decision-surface"' in process_body
     assert process_body.index("1 · Situation") < process_body.index("2 · Wichtigster Befund")
     assert process_body.index("2 · Wichtigster Befund") < process_body.index("3 · Empfehlung")
-    assert process_body.index("3 · Empfehlung") < process_body.index("4 · Nächster Schritt")
+    assert process_body.index('data-testid="primary-next-action"') < process_body.index(
+        'data-testid="process-core-diagnosis"'
+    )
     assert payload["recommendation"]["summary"] in process_body
     assert "setzt keine bevorzugte Lösungsoption" in process_body
     assert "Rohdaten und Herkunft anzeigen" in process_body

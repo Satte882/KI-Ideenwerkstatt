@@ -53,6 +53,8 @@
     const requestedStep = new URLSearchParams(window.location.search).get("analysis_step");
     const definition = stepTargets[requestedStep];
     if (!definition) return;
+    // Focus navigation opens the page header; explicit focus anchors still jump.
+    if (requestedStep === "focus" && window.location.hash !== `#${definition.id}`) return;
 
     const target = document.getElementById(definition.id);
     if (!target) return;

@@ -1,8 +1,8 @@
 {% if process_decision_surface %}
-<section class="app-card decision-panel process-decision-surface mb-4" data-testid="process-decision-surface">
-  <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+<section class="process-decision-surface" data-testid="process-decision-surface">
+  <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <div>
-      <strong>Entscheidungskern</strong>
+      <h3>Übernommene Entscheidungsgrundlage</h3>
       <div class="small text-muted mt-1">Verdichtete fachliche Sicht auf den übernommenen Decision Brief. Die verbindliche Lösungswahl erfolgt ausschließlich im Lösungsvergleich.</div>
     </div>
     <a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:investigation_detail' process_decision_surface.run_id %}">Decision Brief / Herkunft öffnen</a>

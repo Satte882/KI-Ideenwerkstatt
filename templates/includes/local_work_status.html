@@ -50,7 +50,7 @@
       <span class="cr-local-work-status__kicker">Auf dieser Seite ·</span>
       <strong class="cr-local-work-status__title">Arbeitsbereiche</strong>
     </div>
-    <span class="cr-local-work-status__hint">Prozessanalyse, Validierung, Arbeitsgestaltung und Lösungsoptionen</span>
+    <span class="cr-local-work-status__hint">Ist-Prozess, Quellen, Validierung und Lösungsoptionen</span>
   </div>
   <div class="cr-local-work-status__items">
     {% for step in journey.steps %}
@@ -62,15 +62,15 @@
       </a>
       {% endif %}
     {% endfor %}
+    <a class="cr-local-work-status__item" href="#evidence-investigation" data-work-target="evidence-investigation" data-work-state="{% if latest_investigation_run.status == 'ready' %}done{% elif latest_investigation_run.status == 'failed' or latest_investigation_run.status == 'aborted' %}blocked{% elif latest_investigation_run %}open{% else %}optional{% endif %}">
+      <span class="cr-local-work-status__marker" aria-hidden="true">{% if latest_investigation_run.status == 'ready' %}✓{% else %}○{% endif %}</span>
+      <span class="cr-local-work-status__label">Quellen und Untersuchung</span>
+      <span class="cr-local-work-status__state">{% if latest_investigation_run.status == 'ready' %}Bereit{% elif latest_investigation_run.status == 'running' %}Läuft{% elif latest_investigation_run.status == 'waiting_human' %}Klärung offen{% elif latest_investigation_run %}{{ latest_investigation_run.get_status_display }}{% else %}Optional{% endif %}</span>
+    </a>
     <a class="cr-local-work-status__item" href="#process-validation" data-work-target="process-validation" data-work-state="{% if latest_validation and latest_validation.process_version == process_analysis.version %}done{% else %}open{% endif %}">
       <span class="cr-local-work-status__marker" aria-hidden="true">{% if latest_validation and latest_validation.process_version == process_analysis.version %}✓{% else %}○{% endif %}</span>
       <span class="cr-local-work-status__label">Validierung</span>
       <span class="cr-local-work-status__state">{% if latest_validation and latest_validation.process_version == process_analysis.version %}Nachgewiesen{% else %}Offen{% endif %}</span>
-    </a>
-    <a class="cr-local-work-status__item" href="#arbeitsgestaltung" data-work-target="arbeitsgestaltung" data-work-state="optional">
-      <span class="cr-local-work-status__marker" aria-hidden="true">–</span>
-      <span class="cr-local-work-status__label">Arbeitsgestaltung</span>
-      <span class="cr-local-work-status__state">Optional</span>
     </a>
     {% for step in journey.steps %}
       {% if step.key == 'solution' %}
@@ -81,6 +81,11 @@
       </a>
       {% endif %}
     {% endfor %}
+    <a class="cr-local-work-status__item" href="#arbeitsgestaltung" data-work-target="arbeitsgestaltung" data-work-state="optional">
+      <span class="cr-local-work-status__marker" aria-hidden="true">–</span>
+      <span class="cr-local-work-status__label">Arbeitsgestaltung</span>
+      <span class="cr-local-work-status__state">Optional</span>
+    </a>
   </div>
 </nav>
 {% elif request.resolver_match.namespace == 'reporting' and request.resolver_match.url_name == 'outcome_workspace' and selected_use_case %}
