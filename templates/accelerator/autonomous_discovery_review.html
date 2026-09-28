@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Discovery prüfen – KI-Radar{% endblock %}
+{% block body_class %}page-detail-workspace page-autonomous-discovery-review{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Discovery · Scope- und Fokusentscheidung</div>
+    <h1 class="page-title">{{ session.working_title }}</h1>
+    <p class="page-subtitle">Prüfen Sie die fachliche Abgrenzung und Fokusphase. Einzelne Formularfelder müssen nicht bestätigt werden.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
+</div>
+
+{% if session.status == 'completed' and materialization %}
+<div class="alert alert-success" role="status">
+  <strong>Discovery übernommen.</strong> Die kanonischen Business-Architecture-Objekte wurden erzeugt und die bestehende Investigation gestartet.
+  <div class="mt-2 d-flex gap-2 flex-wrap">
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_detail' pk=materialization.process_analysis_id %}">ProcessAnalysis öffnen</a>
+    <a class="btn btn-sm btn-primary" href="{% url 'accelerator:investigation_activity' run_id=materialization.investigation_run_id %}">Investigation öffnen</a>
+  </div>
+</div>
+{% endif %}
+
+{% if not analysis %}
+<div class="app-card">
+  <div class="card-body">
+    <div class="section-title mb-2">Noch kein auswertbarer Discovery-Lauf</div>
+    <p class="text-muted mb-3">Der autorisierte Quellenstand bleibt erhalten. Die Analyse kann erneut gestartet werden.</p>
+    {% if session.status == 'draft' %}
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="retry"><button class="btn btn-primary" type="submit">Analyse erneut starten</button></form>
+    {% endif %}
+  </div>
+</div>
+{% elif analysis_failed %}
+<div class="alert alert-danger" role="alert">
+  <strong>Discovery konnte nicht abgeschlossen werden.</strong> Fehlercode: <code>{{ analysis.error_code }}</code>. Es wurden keine Business-Architecture-Objekte materialisiert.
+</div>
+{% if session.status == 'draft' %}
+<form method="post" class="mb-4">{% csrf_token %}<input type="hidden" name="action" value="retry"><button class="btn btn-primary" type="submit">Analyse erneut starten</button></form>
+{% endif %}
+{% endif %}
+
+{% if waiting_human %}
+<div class="alert alert-warning" role="alert">
+  <strong>Eine Scope-/Fokus-Klärung ist erforderlich.</strong>
+  <div class="mt-2">{{ presentation.verifier.human_question }}</div>
+</div>
+{% endif %}
+
+{% if presentation.draft %}
+<section class="app-card mb-4" aria-labelledby="value-stream-heading">
+  <div class="card-header"><div class="section-title" id="value-stream-heading">Vorgeschlagener Value Stream</div></div>
+  <div class="card-body">
+    <h2 class="h5 mb-2">{{ presentation.value_stream.name }}</h2>
+    {% if presentation.value_stream.description %}<p>{{ presentation.value_stream.description }}</p>{% endif %}
+    <dl class="row mb-0">
+      <dt class="col-md-3">Trigger</dt><dd class="col-md-9">{{ presentation.value_stream.trigger }}</dd>
+      <dt class="col-md-3">Outcome</dt><dd class="col-md-9">{{ presentation.value_stream.outcome }}</dd>
+      <dt class="col-md-3">Im Scope</dt><dd class="col-md-9">{{ presentation.value_stream.scope_in }}</dd>
+      <dt class="col-md-3">Außerhalb</dt><dd class="col-md-9">{{ presentation.value_stream.scope_out|default:"Nicht explizit benannt" }}</dd>
+      <dt class="col-md-3">Strategisches Ziel</dt><dd class="col-md-9">{{ presentation.value_stream.strategic_objective|default:"Nicht belegt" }}</dd>
+      <dt class="col-md-3">Stakeholder</dt><dd class="col-md-9">{{ presentation.value_stream.stakeholders|default:"Nicht belegt" }}</dd>
+      <dt class="col-md-3">Constraints</dt><dd class="col-md-9">{{ presentation.value_stream.constraints|default:"Keine belegten Constraints" }}</dd>
+    </dl>
+    <div class="small text-muted mt-3">Belege: {% for item in presentation.value_stream.evidence_labels %}<span class="badge text-bg-secondary me-1">{{ item.ref }} · {{ item.label }}</span>{% empty %}keine{% endfor %}</div>
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="stages-heading">
+  <div class="card-header"><div class="section-title" id="stages-heading">Phasen und Fokusvorschlag</div></div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Phase</th><th>Aktivität / Problem</th><th>Belege</th><th>Fokus</th></tr></thead>
+        <tbody>
+          {% for stage in presentation.stages %}
+          <tr>
+            <td><strong>{{ stage.sequence }}. {{ stage.name }}</strong></td>
+            <td>{{ stage.description|default:"–" }}{% if stage.pain_points %}<div class="small text-muted mt-1">{{ stage.pain_points }}</div>{% endif %}</td>
+            <td class="small">{% for item in stage.evidence_labels %}{{ item.ref }}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</td>
+            <td>{% if stage.is_recommended %}<span class="badge state-ready">Empfohlen</span>{% else %}<span class="text-muted">Alternative</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-footer">
+    <strong>{{ presentation.focus.capability }}</strong> · {{ presentation.focus.rationale }}
+    {% if presentation.focus.uncertainties %}<div class="small text-muted mt-2">Unsicherheiten: {{ presentation.focus.uncertainties|join:" · " }}</div>{% endif %}
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="process-heading">
+  <div class="card-header"><div class="section-title" id="process-heading">Vorgeschlagener Process Scope</div></div>
+  <div class="card-body">
+    <h2 class="h5 mb-3">{{ presentation.process.name }}</h2>
+    <dl class="row mb-0">
+      <dt class="col-md-3">Start</dt><dd class="col-md-9">{{ presentation.process.scope_start }}</dd>
+      <dt class="col-md-3">Ende</dt><dd class="col-md-9">{{ presentation.process.scope_end }}</dd>
+      <dt class="col-md-3">Ist-Ablauf</dt><dd class="col-md-9">{{ presentation.process.current_flow }}</dd>
+      <dt class="col-md-3">Bottlenecks</dt><dd class="col-md-9">{{ presentation.process.bottlenecks }}</dd>
+      <dt class="col-md-3">Rollen</dt><dd class="col-md-9">{{ presentation.process.roles|default:"Nicht belegt" }}</dd>
+      <dt class="col-md-3">Systeme</dt><dd class="col-md-9">{{ presentation.process.systems|default:"Nicht belegt" }}</dd>
+      <dt class="col-md-3">Daten / Dokumente</dt><dd class="col-md-9">{{ presentation.process.data_objects|default:"Nicht belegt" }}</dd>
+      <dt class="col-md-3">Baseline</dt><dd class="col-md-9">{{ presentation.process.baseline_metrics|default:"Nicht belegt" }}</dd>
+    </dl>
+    <div class="small text-muted mt-3">Belege: {% for item in presentation.process.evidence_labels %}<span class="badge text-bg-secondary me-1">{{ item.ref }} · {{ item.label }}</span>{% empty %}keine{% endfor %}</div>
+  </div>
+</section>
+
+<details class="architecture-disclosure mb-4">
+  <summary>Evidenz, Hypothesen, Unknowns und Widersprüche prüfen</summary>
+  <div class="pt-3">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <h3 class="h6">Berichtete Fakten</h3>
+        <ul>{% for item in presentation.facts %}<li>{{ item.statement }} <span class="small text-muted">({% for ref in item.evidence_labels %}{{ ref.ref }}{% if not forloop.last %}, {% endif %}{% endfor %})</span></li>{% empty %}<li>Keine als Fakt geführte Aussage.</li>{% endfor %}</ul>
+        <h3 class="h6">Hypothesen</h3>
+        <ul>{% for item in presentation.hypotheses %}<li>{{ item.statement }}</li>{% empty %}<li>Keine Hypothesen.</li>{% endfor %}</ul>
+      </div>
+      <div class="col-lg-6">
+        <h3 class="h6">Unknowns</h3>
+        <ul>{% for item in presentation.unknowns %}<li>{{ item.statement }} <span class="small text-muted">– {{ item.impact }}</span></li>{% empty %}<li>Keine wesentlichen Unknowns.</li>{% endfor %}</ul>
+        <h3 class="h6">Widersprüche</h3>
+        <ul>{% for item in presentation.contradictions %}<li>{{ item.statement }} <span class="small text-muted">({% for ref in item.evidence_labels %}{{ ref.ref }}{% if not forloop.last %}, {% endif %}{% endfor %})</span></li>{% empty %}<li>Keine Widersprüche erkannt.</li>{% endfor %}</ul>
+      </div>
+    </div>
+    {% if presentation.verifier %}
+    <hr>
+    <div class="small"><strong>Unabhängiger Review:</strong> {{ analysis.get_status_display }}{% if presentation.verifier.critical_findings %} · {{ presentation.verifier.critical_findings|length }} kritische Findings{% endif %}</div>
+    {% endif %}
+  </div>
+</details>
+
+{% if session.status == 'draft' %}
+<section class="app-card mb-4" aria-labelledby="correction-heading">
+  <div class="card-header"><div class="section-title" id="correction-heading">{% if waiting_human %}Klärung beantworten{% else %}Fachliche Korrektur geben{% endif %}</div></div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {{ correction_form.revision }}
+      <label class="form-label" for="{{ correction_form.correction.id_for_label }}">{{ correction_form.correction.label }}</label>
+      {{ correction_form.correction }}
+      <div class="form-text">Der bestehende Quellen-Snapshot bleibt unverändert; die neue Analyse erhält die Korrektur als expliziten Nutzerinput.</div>
+    </div>
+    <div class="card-footer text-end"><button class="btn btn-outline-secondary" type="submit" name="action" value="correct">Mit Korrektur neu analysieren</button></div>
+  </form>
+</section>
+{% endif %}
+
+{% if can_confirm %}
+<section class="app-card" aria-labelledby="decision-heading">
+  <div class="card-header"><div class="section-title" id="decision-heading">Scope-/Fokus-Entscheidung</div></div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {{ confirm_form.revision }}
+      <p class="mb-3">Bestätigen Sie den fachlichen Scope und wählen Sie die Fokusphase. Erst danach werden die kanonischen Domain-Objekte erzeugt.</p>
+      {{ confirm_form.selected_stage_key }}
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
+      <span class="small text-muted">Nach der Bestätigung startet die bestehende Investigation automatisch mit exakt demselben autorisierten Quelleninhalt.</span>
+      <button class="btn btn-primary" type="submit" name="action" value="confirm">Scope &amp; Fokus übernehmen</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}
