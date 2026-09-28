@@ -40,6 +40,9 @@ Regeln:
 - Erfinde keine Fakten, Messwerte, Rollen, Systeme oder Prozessschritte.
 - Quellenreferenzen dürfen nur die gelieferten Handles U0, S1, S2 ... verwenden.
 - Trenne berichtete Fakten, Hypothesen, Unknowns, Clarifications und Widersprüche explizit.
+- Ein Widerspruch ist nur zulässig, wenn mindestens zwei unterschiedliche Input-Handles
+  einander widersprechende Aussagen tragen; evidence_refs muss dann mindestens diese beiden
+  unterschiedlichen Handles enthalten. Mit nur einer tragenden Quelle ist es kein Widerspruch.
 - Zahlen in Fakten und Baselines dürfen nur vorkommen, wenn sie im Input tatsächlich genannt sind.
 - Der Value Stream ist End-to-End breiter als der vorgeschlagene Process Scope.
 - Phasen bilden eine plausible lückenlose Reihenfolge; Unsicherheit bleibt sichtbar.
@@ -77,9 +80,12 @@ Status:
 Gib ausschließlich das verlangte JSON-Objekt zurück."""
 
 REPAIR_SYSTEM_PROMPT = """Du reparierst einen Business-Discovery-Draft anhand eines unabhängigen
-Verifier-Findings. Verwende nur den ursprünglichen autorisierten Input. Erfinde keine fehlende
-Information. Wenn etwas nicht belegt ist, verschiebe es in Hypothesen/Unknowns oder lasse ein
-Detailfeld leer. Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
+Verifier-Findings oder einer deterministischen serverseitigen Contract-Verletzung. Verwende nur
+den ursprünglichen autorisierten Input. Erfinde keine fehlende Information. Wenn etwas nicht
+belegt ist, verschiebe es in Hypothesen/Unknowns oder lasse ein Detailfeld leer. Bei einem
+Widerspruch müssen mindestens zwei unterschiedliche Input-Handles die gegensätzlichen Aussagen
+tragen; andernfalls entferne den Widerspruch oder ordne die Aussage korrekt als Hypothese/Unknown
+ein. Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
 
 
 class DiscoveryAnalysisError(RuntimeError):
@@ -351,11 +357,45 @@ def execute_autonomous_business_discovery(
         )
         results.append(producer)
         last_result = producer
-        draft = validate_discovery_payload(
-            _decode_json(producer, code="invalid_discovery_response"),
-            allowed_refs=allowed_refs,
-            evidence_text=evidence_text,
-        )
+        producer_payload = _decode_json(producer, code="invalid_discovery_response")
+        repair_used = False
+        try:
+            draft = validate_discovery_payload(
+                producer_payload,
+                allowed_refs=allowed_refs,
+                evidence_text=evidence_text,
+            )
+        except DiscoveryContractError as contract_exc:
+            contract_repair_document = {
+                "input": document,
+                "draft": producer_payload,
+                "contract_errors": list(contract_exc.errors),
+            }
+            contract_repair_messages = _prompt_payload(
+                REPAIR_SYSTEM_PROMPT,
+                contract_repair_document,
+            )
+            if _input_chars(contract_repair_messages) > policy.max_input_chars:
+                raise DiscoveryAnalysisError(
+                    "Der Contract-Repair überschreitet das Eingabelimit.",
+                    code="repair_input_too_large",
+                ) from contract_exc
+            repair_result = _provider_call(
+                actor=actor,
+                session=session,
+                policy=policy,
+                messages=contract_repair_messages,
+                schema_name="autonomous_business_discovery_repair_v1",
+                schema=build_discovery_json_schema(),
+            )
+            results.append(repair_result)
+            last_result = repair_result
+            draft = validate_discovery_payload(
+                _decode_json(repair_result, code="invalid_repair_response"),
+                allowed_refs=allowed_refs,
+                evidence_text=evidence_text,
+            )
+            repair_used = True
 
         verifier_document = {"input": document, "draft": draft}
         verifier_messages = _prompt_payload(VERIFIER_SYSTEM_PROMPT, verifier_document)
@@ -379,6 +419,11 @@ def execute_autonomous_business_discovery(
         )
 
         if verifier["status"] == "repair":
+            if repair_used:
+                raise DiscoveryAnalysisError(
+                    "Der Discovery-Draft benötigt nach dem einmaligen Repair weitere Korrekturen.",
+                    code="verification_not_converged",
+                )
             repair_document = {
                 "input": document,
                 "draft": draft,
