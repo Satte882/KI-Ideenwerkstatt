@@ -336,9 +336,7 @@ def test_autonomous_capture_requires_active_user_business_unit(owner):
 
 
 @pytest.mark.django_db
-def test_discovery_snapshot_uses_existing_source_contract_and_is_capture_bound(
-    owner, tmp_path
-):
+def test_discovery_snapshot_uses_existing_source_contract_and_is_capture_bound(owner, tmp_path):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
 
     assert snapshot.capture_session == session
@@ -377,9 +375,7 @@ def test_case_a_clear_scope_finishes_ready_for_scope_review(owner, tmp_path, mon
 
 
 @pytest.mark.django_db
-def test_case_b_real_ambiguity_waits_for_one_precise_human_question(
-    owner, tmp_path, monkeypatch
-):
+def test_case_b_real_ambiguity_waits_for_one_precise_human_question(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     draft = _draft()
     draft["focus"]["uncertainties"] = [

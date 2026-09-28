@@ -908,10 +908,14 @@ def bind_discovery_snapshot_to_process(
             process_analysis_id=process.pk,
             for_update=True,
         )
-        locked_discovery = InvestigationSourceSnapshot.objects.select_for_update().select_related(
-            "folder",
-            "capture_session",
-        ).get(pk=discovery.pk)
+        locked_discovery = (
+            InvestigationSourceSnapshot.objects.select_for_update()
+            .select_related(
+                "folder",
+                "capture_session",
+            )
+            .get(pk=discovery.pk)
+        )
         if (
             locked_discovery.capture_session_id != discovery.capture_session_id
             or locked_discovery.manifest_hash != discovery.manifest_hash

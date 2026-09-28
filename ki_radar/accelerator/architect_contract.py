@@ -337,9 +337,7 @@ def _validate_numbers(payload: dict[str, Any], evidence_text: str, errors: list[
         for raw in _NUMBER_RE.findall(value):
             normalized = raw.casefold().replace(",", ".").replace(" ", "")
             if normalized and normalized not in evidence_compact.replace(" ", ""):
-                errors.append(
-                    f"{path}: Zahl {raw!r} ist im autorisierten Input nicht belegt."
-                )
+                errors.append(f"{path}: Zahl {raw!r} ist im autorisierten Input nicht belegt.")
 
 
 def validate_discovery_payload(

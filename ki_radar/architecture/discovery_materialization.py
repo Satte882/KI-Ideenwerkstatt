@@ -371,9 +371,7 @@ def materialize_discovery_and_start_investigation(
         actor=actor,
         request=StartInvestigationRequest(
             snapshot_id=snapshot_result.snapshot_id,
-            idempotency_key=(
-                f"ap1-{session.pk.hex[:12]}-{analysis.pk.hex[:12]}"
-            ),
+            idempotency_key=(f"ap1-{session.pk.hex[:12]}-{analysis.pk.hex[:12]}"),
         ),
     )
     request_execution(actor=actor, handle=handle)

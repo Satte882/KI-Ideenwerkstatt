@@ -212,9 +212,7 @@ def _input_chars(messages: list[dict[str, str]]) -> int:
 
 
 def _analysis_source_hash(snapshot, session: CaptureSession) -> str:
-    return hashlib.sha256(
-        f"{snapshot.manifest_hash}:{session.revision}".encode()
-    ).hexdigest()
+    return hashlib.sha256(f"{snapshot.manifest_hash}:{session.revision}".encode()).hexdigest()
 
 
 def _store_terminal_analysis(

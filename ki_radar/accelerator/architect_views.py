@@ -80,8 +80,8 @@ def _presentation(analysis: CaptureAnalysis | None) -> dict:
     for stage in list(draft.get("stages") or []):
         item = dict(stage)
         item["evidence_labels"] = _evidence_labels(item.get("evidence_refs"), source_labels)
-        item["is_recommended"] = (
-            str(item.get("key") or "") == str(focus.get("recommended_stage_key") or "")
+        item["is_recommended"] = str(item.get("key") or "") == str(
+            focus.get("recommended_stage_key") or ""
         )
         stages.append(item)
 
@@ -336,11 +336,7 @@ def autonomous_discovery_review(request, session_id):
                 and latest.status == CaptureAnalysis.Status.SUCCESS
                 and session.status == CaptureSession.Status.DRAFT
             ),
-            "waiting_human": bool(
-                latest and latest.status == CaptureAnalysis.Status.WAITING_HUMAN
-            ),
-            "analysis_failed": bool(
-                latest and latest.status == CaptureAnalysis.Status.FAILED
-            ),
+            "waiting_human": bool(latest and latest.status == CaptureAnalysis.Status.WAITING_HUMAN),
+            "analysis_failed": bool(latest and latest.status == CaptureAnalysis.Status.FAILED),
         },
     )

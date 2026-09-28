@@ -104,8 +104,7 @@ def create_autonomous_capture_session(
         raise ValidationError(
             {
                 "business_unit": (
-                    "Für die autonome Discovery ist eine aktive "
-                    "Organisationseinheit erforderlich."
+                    "Für die autonome Discovery ist eine aktive Organisationseinheit erforderlich."
                 )
             }
         )
@@ -118,19 +117,11 @@ def create_autonomous_capture_session(
         )
     if len(problem) > 4000:
         raise ValidationError(
-            {
-                "problem_statement": (
-                    "Das Geschäftsproblem darf höchstens 4000 Zeichen enthalten."
-                )
-            }
+            {"problem_statement": ("Das Geschäftsproblem darf höchstens 4000 Zeichen enthalten.")}
         )
     if len(context) > 8000:
         raise ValidationError(
-            {
-                "business_context": (
-                    "Der Geschäftskontext darf höchstens 8000 Zeichen enthalten."
-                )
-            }
+            {"business_context": ("Der Geschäftskontext darf höchstens 8000 Zeichen enthalten.")}
         )
 
     catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
@@ -181,16 +172,10 @@ def add_autonomous_discovery_correction(
 
     text = str(correction or "").strip()
     if not text:
-        raise ValidationError(
-            {"correction": "Bitte einen konkreten Korrekturhinweis angeben."}
-        )
+        raise ValidationError({"correction": "Bitte einen konkreten Korrekturhinweis angeben."})
     if len(text) > 4000:
         raise ValidationError(
-            {
-                "correction": (
-                    "Der Korrekturhinweis darf höchstens 4000 Zeichen enthalten."
-                )
-            }
+            {"correction": ("Der Korrekturhinweis darf höchstens 4000 Zeichen enthalten.")}
         )
 
     answers = dict(session.answers or {})
