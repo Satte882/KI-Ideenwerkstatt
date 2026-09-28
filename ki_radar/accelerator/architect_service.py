@@ -289,6 +289,36 @@ def _store_terminal_analysis(
     return analysis
 
 
+def _store_failure_diagnostics(
+    *,
+    analysis_id,
+    draft: dict[str, Any],
+    verifier: dict[str, Any],
+    snapshot_id,
+) -> None:
+    """Persist the last validated draft/reviewer finding before fail-closed termination."""
+    with transaction.atomic():
+        analysis = CaptureAnalysis.objects.select_for_update().get(pk=analysis_id)
+        if analysis.status != CaptureAnalysis.Status.RUNNING:
+            return
+        analysis.open_questions = list(draft.get("clarifications") or [])
+        analysis.contradictions = list(draft.get("contradictions") or [])
+        analysis.result_payload = {
+            "draft": draft,
+            "discovery_snapshot_id": str(snapshot_id),
+        }
+        analysis.verification_payload = verifier
+        analysis.save(
+            update_fields=[
+                "open_questions",
+                "contradictions",
+                "result_payload",
+                "verification_payload",
+                "updated_at",
+            ]
+        )
+
+
 @sensitive_variables("document", "producer_messages", "verifier_document", "repair_document")
 def execute_autonomous_business_discovery(
     *,
@@ -420,6 +450,12 @@ def execute_autonomous_business_discovery(
 
         if verifier["status"] == "repair":
             if repair_used:
+                _store_failure_diagnostics(
+                    analysis_id=analysis.pk,
+                    draft=draft,
+                    verifier=verifier,
+                    snapshot_id=snapshot.pk,
+                )
                 raise DiscoveryAnalysisError(
                     "Der Discovery-Draft benötigt nach dem einmaligen Repair weitere Korrekturen.",
                     code="verification_not_converged",
@@ -478,6 +514,12 @@ def execute_autonomous_business_discovery(
                 _decode_json(second_verifier_result, code="invalid_verifier_response")
             )
             if verifier["status"] == "repair":
+                _store_failure_diagnostics(
+                    analysis_id=analysis.pk,
+                    draft=draft,
+                    verifier=verifier,
+                    snapshot_id=snapshot.pk,
+                )
                 raise DiscoveryAnalysisError(
                     "Der Discovery-Draft konvergiert nach dem begrenzten Repair nicht.",
                     code="verification_not_converged",
