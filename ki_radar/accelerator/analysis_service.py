@@ -194,6 +194,16 @@ def _reserve_quotas(
         )
 
 
+def reserve_accelerator_quotas(*, actor, session: CaptureSession, policy) -> None:
+    """Reserve one bounded provider call using the existing Accelerator quota contract."""
+    _reserve_quotas(
+        actor=actor,
+        session=session,
+        policy=policy,
+        quota_date=timezone.localdate(),
+    )
+
+
 def _duration_ms(analysis: CaptureAnalysis, finished_at) -> int:
     return max(0, round((finished_at - analysis.started_at).total_seconds() * 1000))
 
