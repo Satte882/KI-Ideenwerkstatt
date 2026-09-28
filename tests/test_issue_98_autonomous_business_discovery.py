@@ -14,7 +14,6 @@ from ki_radar.accelerator import architect_service, architect_views
 from ki_radar.accelerator.architect_contract import (
     DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
-    DISCOVERY_VERIFIER_PROMPT_VERSION,
     DISCOVERY_VERIFIER_SCHEMA_VERSION,
     DiscoveryContractError,
     validate_discovery_payload,
@@ -42,7 +41,7 @@ from ki_radar.architecture.discovery_materialization import (
     materialize_discovery_and_start_investigation,
 )
 from ki_radar.architecture.focus import ValueStreamFocus
-from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
+from ki_radar.architecture.models import ProcessAnalysis, ValueStream
 from ki_radar.architecture.stage_focus import StageFocusDecision
 from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
@@ -107,7 +106,9 @@ def _draft(*, contradiction: bool = False):
                 "key": "compare",
                 "sequence": 2,
                 "name": "Angebote vergleichen",
-                "description": "Angebote werden manuell verglichen und die Entscheidung vorbereitet.",
+                "description": (
+                    "Angebote werden manuell verglichen und die Entscheidung vorbereitet."
+                ),
                 "roles": "Einkauf und Fachbereich",
                 "systems": "E-Mail",
                 "documents": "Lieferantenangebote",
@@ -144,7 +145,9 @@ def _draft(*, contradiction: bool = False):
             "handoffs": "",
             "bottlenecks": "Manueller Angebotsvergleich",
             "observations": "Der Vergleich ist der geschilderte Engpass.",
-            "cause_hypotheses": "Uneinheitliche Angebotsstruktur könnte den manuellen Aufwand erhöhen.",
+            "cause_hypotheses": (
+                "Uneinheitliche Angebotsstruktur könnte den manuellen Aufwand erhöhen."
+            ),
             "constraints": "",
             "exceptions": "",
             "baseline_metrics": "",
@@ -158,14 +161,18 @@ def _draft(*, contradiction: bool = False):
         ],
         "hypotheses": [
             {
-                "statement": "Uneinheitliche Angebotsstrukturen könnten den manuellen Aufwand erhöhen.",
+                "statement": (
+                    "Uneinheitliche Angebotsstrukturen könnten den manuellen Aufwand erhöhen."
+                ),
                 "evidence_refs": ["S1"],
             }
         ],
         "unknowns": [
             {
                 "statement": "Eine belastbare Zeitbaseline ist nicht genannt.",
-                "impact": "Der Scope kann entschieden werden; der spätere Nutzen braucht Messwerte.",
+                "impact": (
+                    "Der Scope kann entschieden werden; der spätere Nutzen braucht Messwerte."
+                ),
             }
         ],
         "clarifications": [],
@@ -245,7 +252,9 @@ def _session_and_snapshot(*, owner, tmp_path, contradictory=False):
             "Die Bearbeitung von Lieferantenangeboten dauert zu lange. "
             "Angebote werden manuell verglichen."
         ),
-        business_context="Der Einkauf bereitet mit dem Fachbereich die Lieferantenentscheidung vor.",
+        business_context=(
+            "Der Einkauf bereitet mit dem Fachbereich die Lieferantenentscheidung vor."
+        ),
     )
     with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
         folder = create_managed_discovery_source_folder(
