@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ki_radar.architecture.models import EvidenceBasis, TimeToValue
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 DISCOVERY_SCHEMA_VERSION = "ap1-discovery-v1"
@@ -21,6 +22,13 @@ _STAGE_FIELDS = frozenset(
         "documents",
         "pain_points",
         "baseline_metrics",
+        "impact",
+        "pain_intensity",
+        "improvement_potential",
+        "data_accessibility",
+        "change_effort",
+        "time_to_value",
+        "evidence_basis",
         "evidence_refs",
     }
 )
@@ -150,6 +158,39 @@ def build_discovery_json_schema() -> dict[str, Any]:
             "documents": _text_schema(),
             "pain_points": _text_schema(),
             "baseline_metrics": _text_schema(),
+            "impact": {
+                "type": "string",
+                "enum": [choice for choice, _label in ScreeningLevel.choices],
+            },
+            "pain_intensity": {
+                "type": "string",
+                "enum": [choice for choice, _label in ScreeningLevel.choices],
+            },
+            "improvement_potential": {
+                "type": "string",
+                "enum": [choice for choice, _label in ScreeningLevel.choices],
+            },
+            "data_accessibility": {
+                "type": "string",
+                "enum": [choice for choice, _label in ScreeningLevel.choices],
+            },
+            "change_effort": {
+                "type": "string",
+                "enum": [choice for choice, _label in ScreeningLevel.choices],
+            },
+            "time_to_value": {
+                "type": "string",
+                "enum": [
+                    TimeToValue.UNKNOWN,
+                    TimeToValue.SHORT,
+                    TimeToValue.MEDIUM,
+                    TimeToValue.LONG,
+                ],
+            },
+            "evidence_basis": {
+                "type": "string",
+                "enum": [choice for choice, _label in EvidenceBasis.choices],
+            },
             "evidence_refs": _ref_list_schema(),
         }
     )
@@ -413,6 +454,27 @@ def validate_discovery_payload(
         stage_keys.append(key)
         if stage.get("sequence") != index + 1:
             errors.append(f"stages[{index}].sequence: Phasen müssen lückenlos ab 1 sortiert sein.")
+        allowed_stage_levels = set(ScreeningLevel.values)
+        for criterion in (
+            "impact",
+            "pain_intensity",
+            "improvement_potential",
+            "data_accessibility",
+            "change_effort",
+        ):
+            if stage.get(criterion) not in allowed_stage_levels:
+                errors.append(
+                    f"stages[{index}].{criterion}: Ungültige Screening-Stufe."
+                )
+        if stage.get("time_to_value") not in {
+            TimeToValue.UNKNOWN,
+            TimeToValue.SHORT,
+            TimeToValue.MEDIUM,
+            TimeToValue.LONG,
+        }:
+            errors.append(f"stages[{index}].time_to_value: Ungültige Einordnung.")
+        if stage.get("evidence_basis") not in set(EvidenceBasis.values):
+            errors.append(f"stages[{index}].evidence_basis: Ungültige Evidenzbasis.")
         _validate_refs(
             stage.get("evidence_refs"),
             allowed_refs,
