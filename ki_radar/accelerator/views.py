@@ -213,9 +213,7 @@ def capture_step(request, session_id, step: int):
     if session.mode == CaptureSession.Mode.AUTONOMOUS:
         return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
     if session.status != CaptureSession.Status.DRAFT:
-        if session.mode == CaptureSession.Mode.AUTONOMOUS:
-        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
-    return redirect("accelerator:capture_review", session_id=session.pk)
+        return redirect("accelerator:capture_review", session_id=session.pk)
     try:
         catalog = get_capture_catalog(session.capture_type, session.catalog_version)
     except UnsupportedCaptureCatalog:
@@ -420,4 +418,6 @@ def capture_discard(request, session_id):
         messages.error(request, str(exc))
     else:
         messages.success(request, "Die Erfassung wurde verworfen.")
+    if session.mode == CaptureSession.Mode.AUTONOMOUS:
+        return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
     return redirect("accelerator:capture_review", session_id=session.pk)
