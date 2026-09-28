@@ -142,7 +142,7 @@ def materialize_discovery_and_start_investigation(
     try:
         session = (
             CaptureSession.objects.select_for_update()
-            .select_related("owner__business_unit")
+            .select_related("owner")
             .get(pk=session_id, owner=actor)
         )
     except (CaptureSession.DoesNotExist, ValueError) as exc:
