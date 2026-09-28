@@ -70,16 +70,14 @@ def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
 
 
 @pytest.mark.parametrize(
-    ("schema_name", "expected_effort"),
+    "schema_name",
     [
-        ("autonomous_business_discovery_v1", "low"),
-        ("autonomous_business_discovery_repair_v1", "low"),
-        ("autonomous_business_discovery_verifier_v1", "medium"),
+        "autonomous_business_discovery_v1",
+        "autonomous_business_discovery_repair_v1",
+        "autonomous_business_discovery_verifier_v1",
     ],
 )
-def test_discovery_provider_reasoning_budget_matches_role(
-    monkeypatch, schema_name, expected_effort
-):
+def test_discovery_provider_retains_quality_reasoning_effort(monkeypatch, schema_name):
     observed = {}
     monkeypatch.setattr(architect_service, "reserve_accelerator_quotas", lambda **_: None)
 
@@ -103,7 +101,7 @@ def test_discovery_provider_reasoning_budget_matches_role(
         schema={"type": "object"},
     )
 
-    assert observed["reasoning_effort"] == expected_effort
+    assert observed["reasoning_effort"] == "medium"
     assert observed["max_tokens"] == policy.capture_max_output_tokens
     assert observed["timeout_seconds"] == policy.timeout_seconds
     assert observed["provider"] == {"require_parameters": True, "sort": "throughput"}

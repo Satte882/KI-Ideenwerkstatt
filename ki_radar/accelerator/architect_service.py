@@ -221,17 +221,12 @@ def _provider_call(
                 policy=policy,
                 include_context=False,
             )
-            # The large discovery schema needs output room, but producer/repair
-            # should spend that room on the draft instead of extended reasoning.
-            reasoning_effort = (
-                "medium" if schema_name == "autonomous_business_discovery_verifier_v1" else "low"
-            )
             return request_openrouter(
                 messages=messages,
                 max_tokens=policy.capture_max_output_tokens,
                 timeout_seconds=policy.timeout_seconds,
                 temperature=policy.capture_temperature,
-                reasoning_effort=reasoning_effort,
+                reasoning_effort="medium",
                 response_format={
                     "type": "json_schema",
                     "json_schema": {
