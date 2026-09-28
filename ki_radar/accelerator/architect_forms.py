@@ -26,7 +26,9 @@ class AutonomousDiscoveryStartForm(forms.Form):
             attrs={
                 "rows": 4,
                 "class": "form-control",
-                "placeholder": "Optional: relevante Organisation, Ziele oder feste Randbedingungen.",
+                "placeholder": (
+                    "Optional: relevante Organisation, Ziele oder feste Randbedingungen."
+                ),
             }
         ),
     )
