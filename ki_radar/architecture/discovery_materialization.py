@@ -231,7 +231,8 @@ def materialize_discovery_and_start_investigation(
         raise DiscoveryMaterializationError(
             (
                 "Die gewählte Fokusphase weicht vom geprüften Process-Scope ab. "
-                "Der Draft muss zuerst auf die menschliche Fokusentscheidung neu ausgerichtet werden."
+                "Der Draft muss zuerst auf die menschliche Fokusentscheidung "
+                "neu ausgerichtet werden."
             ),
             code="focus_draft_mismatch",
         )
