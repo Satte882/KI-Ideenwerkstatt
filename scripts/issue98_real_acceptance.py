@@ -30,7 +30,10 @@ from django.test import override_settings
 from django.urls import reverse
 from playwright.sync_api import sync_playwright
 
-from ki_radar.accelerator.architect_service import execute_autonomous_business_discovery
+from ki_radar.accelerator.architect_service import (
+    DiscoveryAnalysisError,
+    execute_autonomous_business_discovery,
+)
 from ki_radar.accelerator.investigation_ingestion import create_managed_discovery_source_folder
 from ki_radar.accelerator.investigation_tools import (
     DiscoverySnapshotRequest,
@@ -100,11 +103,33 @@ def _case(
             ),
         )
     snapshot = session.discovery_source_snapshots.get(pk=snapshot_result.snapshot_id)
-    analysis = execute_autonomous_business_discovery(
-        actor=owner,
-        session_id=session.pk,
-        snapshot_id=snapshot.pk,
-    )
+    try:
+        analysis = execute_autonomous_business_discovery(
+            actor=owner,
+            session_id=session.pk,
+            snapshot_id=snapshot.pk,
+        )
+    except DiscoveryAnalysisError:
+        failed = session.analyses.order_by("-created_at").first()
+        if failed is not None:
+            print(
+                json.dumps(
+                    {
+                        "case": key,
+                        "failed_analysis": {
+                            "analysis_id": str(failed.pk),
+                            "status": failed.status,
+                            "error_code": failed.error_code,
+                            "verification_payload": failed.verification_payload,
+                            "contradiction_count": len(failed.contradictions or []),
+                            "clarification_count": len(failed.open_questions or []),
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+        raise
     return session, snapshot, analysis
 
 
