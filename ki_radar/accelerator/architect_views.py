@@ -299,9 +299,7 @@ def autonomous_discovery_review(request, session_id):
                         ),
                         {},
                     )
-                    recommended_name = str(
-                        recommended_stage.get("name") or recommended_stage_key
-                    )
+                    recommended_name = str(recommended_stage.get("name") or recommended_stage_key)
                     correction = (
                         "Scope-/Fokus-Review: Die Fokusphase soll "
                         f"„{selected_name}“ statt „{recommended_name}“ sein. "

@@ -463,9 +463,7 @@ def validate_discovery_payload(
             "change_effort",
         ):
             if stage.get(criterion) not in allowed_stage_levels:
-                errors.append(
-                    f"stages[{index}].{criterion}: Ungültige Screening-Stufe."
-                )
+                errors.append(f"stages[{index}].{criterion}: Ungültige Screening-Stufe.")
         if stage.get("time_to_value") not in {
             TimeToValue.UNKNOWN,
             TimeToValue.SHORT,

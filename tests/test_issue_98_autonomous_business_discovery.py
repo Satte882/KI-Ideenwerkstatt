@@ -664,9 +664,7 @@ def test_start_post_creates_capture_snapshot_without_guided_questions(
 
 
 @pytest.mark.django_db
-def test_case_b_human_clarification_continues_on_same_snapshot(
-    owner, tmp_path, monkeypatch
-):
+def test_case_b_human_clarification_continues_on_same_snapshot(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     ambiguous = _draft()
     ambiguous["clarifications"] = [
@@ -728,9 +726,7 @@ def test_case_b_human_clarification_continues_on_same_snapshot(
 
 
 @pytest.mark.django_db
-def test_materialization_rejects_focus_that_does_not_match_reviewed_process_scope(
-    owner, tmp_path
-):
+def test_materialization_rejects_focus_that_does_not_match_reviewed_process_scope(owner, tmp_path):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     analysis = _approved_analysis(session=session, snapshot=snapshot)
 
@@ -789,9 +785,7 @@ def test_alternative_focus_in_review_triggers_reanalysis_before_materialization(
 
 
 @pytest.mark.django_db
-def test_expired_autonomous_capture_can_be_purged_with_temporary_evidence(
-    owner, tmp_path
-):
+def test_expired_autonomous_capture_can_be_purged_with_temporary_evidence(owner, tmp_path):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     folder_id = snapshot.folder_id
     snapshot_id = snapshot.pk
