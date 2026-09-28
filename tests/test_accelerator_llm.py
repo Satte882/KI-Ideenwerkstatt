@@ -61,6 +61,7 @@ def test_policy_parses_valid_settings():
 
     assert policy.timeout_seconds == 15
     assert policy.max_input_chars == 5000
+    assert policy.discovery_max_input_chars == 40000
     assert policy.max_output_tokens == 400
     assert policy.max_calls_per_context == 3
     assert policy.solution_critic_max_input_chars == 100000
@@ -71,6 +72,7 @@ def test_policy_parses_valid_settings():
     [
         ("ACCELERATOR_LLM_TIMEOUT_SECONDS", "nicht-numerisch", "ganze Zahl"),
         ("ACCELERATOR_LLM_MAX_INPUT_CHARS", "0", "zwischen"),
+        ("ACCELERATOR_DISCOVERY_MAX_INPUT_CHARS", "100001", "zwischen"),
         ("ACCELERATOR_SOLUTION_CRITIC_MAX_INPUT_CHARS", "100001", "zwischen"),
         ("ACCELERATOR_LLM_MAX_OUTPUT_TOKENS", "5000", "zwischen"),
     ],

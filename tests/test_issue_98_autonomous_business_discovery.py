@@ -445,6 +445,37 @@ def test_case_a_clear_scope_finishes_ready_for_scope_review(owner, tmp_path, mon
 
 
 @pytest.mark.django_db
+@override_settings(
+    ACCELERATOR_LLM_MAX_INPUT_CHARS="12000",
+    ACCELERATOR_DISCOVERY_MAX_INPUT_CHARS="40000",
+)
+def test_discovery_verifier_accepts_full_draft_above_generic_input_limit(
+    owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    draft = _draft()
+    draft["value_stream"]["description"] += "x" * 13000
+    calls = iter([_result(draft), _result(_verifier())])
+    observed_messages = []
+
+    def fake_call(**kwargs):
+        observed_messages.append(kwargs["messages"])
+        return next(calls)
+
+    monkeypatch.setattr(architect_service, "_provider_call", fake_call)
+
+    analysis = execute_autonomous_business_discovery(
+        actor=owner,
+        session_id=session.pk,
+        snapshot_id=snapshot.pk,
+    )
+
+    assert analysis.status == CaptureAnalysis.Status.SUCCESS
+    assert len(observed_messages[1][1]["content"]) > 12000
+    assert len(observed_messages[1][1]["content"]) < 40000
+
+
+@pytest.mark.django_db
 def test_case_b_real_ambiguity_waits_for_one_precise_human_question(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     draft = _draft()

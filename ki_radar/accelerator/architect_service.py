@@ -368,7 +368,7 @@ def execute_autonomous_business_discovery(
     document, allowed_refs, evidence_text = _source_document(session=session, snapshot=snapshot)
     producer_messages = _prompt_payload(DISCOVERY_SYSTEM_PROMPT, document)
     chars = _input_chars(producer_messages)
-    if chars > policy.max_input_chars:
+    if chars > policy.discovery_max_input_chars:
         raise DiscoveryAnalysisError(
             "Die autorisierten Quellen überschreiten das Discovery-Eingabelimit. "
             "Bitte den Quellenraum auf die entscheidungsrelevanten Dateien begrenzen.",
@@ -426,7 +426,7 @@ def execute_autonomous_business_discovery(
                 REPAIR_SYSTEM_PROMPT,
                 contract_repair_document,
             )
-            if _input_chars(contract_repair_messages) > policy.max_input_chars:
+            if _input_chars(contract_repair_messages) > policy.discovery_max_input_chars:
                 raise DiscoveryAnalysisError(
                     "Der Contract-Repair überschreitet das Eingabelimit.",
                     code="repair_input_too_large",
@@ -450,7 +450,7 @@ def execute_autonomous_business_discovery(
 
         verifier_document = {"input": document, "draft": draft}
         verifier_messages = _prompt_payload(VERIFIER_SYSTEM_PROMPT, verifier_document)
-        if _input_chars(verifier_messages) > policy.max_input_chars:
+        if _input_chars(verifier_messages) > policy.discovery_max_input_chars:
             raise DiscoveryAnalysisError(
                 "Der Discovery-Draft überschreitet zusammen mit den Quellen das Verifier-Limit.",
                 code="verifier_input_too_large",
@@ -487,7 +487,7 @@ def execute_autonomous_business_discovery(
                 "verifier": verifier,
             }
             repair_messages = _prompt_payload(REPAIR_SYSTEM_PROMPT, repair_document)
-            if _input_chars(repair_messages) > policy.max_input_chars:
+            if _input_chars(repair_messages) > policy.discovery_max_input_chars:
                 raise DiscoveryAnalysisError(
                     "Der gezielte Discovery-Repair überschreitet das Eingabelimit.",
                     code="repair_input_too_large",
@@ -513,7 +513,7 @@ def execute_autonomous_business_discovery(
                 VERIFIER_SYSTEM_PROMPT,
                 second_verifier_document,
             )
-            if _input_chars(second_verifier_messages) > policy.max_input_chars:
+            if _input_chars(second_verifier_messages) > policy.discovery_max_input_chars:
                 raise DiscoveryAnalysisError(
                     (
                         "Der reparierte Draft überschreitet zusammen mit den Quellen "
