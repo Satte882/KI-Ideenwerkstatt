@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Autonome Business Discovery – KI-Radar{% endblock %}
+{% block body_class %}page-form-workspace page-autonomous-discovery{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="eyebrow mb-2">Discovery · Autonomer Business Architect</div>
+    <h1 class="page-title">Business Discovery starten</h1>
+    <p class="page-subtitle">Beschreiben Sie das Geschäftsproblem in wenigen Sätzen und geben Sie die bereits vorhandenen Quellen frei. Das System erarbeitet Value Stream, Fokusphase und Process Scope als prüfbaren Entwurf.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="cr-work-form app-card">
+  {% csrf_token %}
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+    <section class="form-section" aria-labelledby="problem-title">
+      <div class="section-title mb-3" id="problem-title">1. Problem und Ziel</div>
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.problem_statement.id_for_label }}">{{ form.problem_statement.label }} *</label>
+        {{ form.problem_statement }}
+        {% if form.problem_statement.errors %}<div class="field-attention-message" role="alert">{{ form.problem_statement.errors }}</div>{% endif %}
+        <div class="form-text">Kein Fragebogen: Beschreiben Sie Ausgangslage und gewünschte Verbesserung so, wie Sie sie fachlich kennen.</div>
+      </div>
+      <div>
+        <label class="form-label" for="{{ form.business_context.id_for_label }}">{{ form.business_context.label }}</label>
+        {{ form.business_context }}
+        {% if form.business_context.errors %}<div class="field-attention-message" role="alert">{{ form.business_context.errors }}</div>{% endif %}
+      </div>
+    </section>
+
+    <section class="form-section mb-0" aria-labelledby="sources-title">
+      <div class="section-title mb-3" id="sources-title">2. Vorhandene Quellen</div>
+      <label class="form-label" for="discovery-sources">Autorisierte Quellen *</label>
+      <input class="form-control" id="discovery-sources" name="sources" type="file" accept=".md,.txt,.csv,text/markdown,text/plain,text/csv" multiple required>
+      <div class="form-text">Unterstützt werden bewusst nur .md, .txt und .csv. Der beim Start erzeugte Quellenstand wird unveränderlich eingefroren und später identisch an die Investigation übergeben.</div>
+    </section>
+  </div>
+  <div class="card-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
+    <span class="small text-muted">Fehlende Information wird als Unknown oder Klärungsbedarf ausgewiesen, nicht erfunden.</span>
+    <button class="btn btn-primary" type="submit">Analyse starten</button>
+  </div>
+</form>
+{% endblock %}
