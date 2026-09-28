@@ -15,9 +15,9 @@ remote verändert werden. Alle Arbeiten erfolgen ausschließlich in Satte882/KI-
 Vor fachlichen Produktänderungen müssen mindestens gelesen werden:
 
 1. GitHub Issue #1;
-2. [`docs/ROADMAP.md`](docs/ROADMAP.md);
-3. relevante Architecture Decision Records unter [`docs/adr/`](docs/adr/);
-4. die zum aktuellen Arbeitspaket gehörenden Anforderungen und Akzeptanzkriterien.
+2. [`docs/Arbeitsplan_Autonomer_AI_Business_Architect/Arbeitsplan_Autonomer_AI_Business_Architect.md`](docs/Arbeitsplan_Autonomer_AI_Business_Architect/Arbeitsplan_Autonomer_AI_Business_Architect.md);
+3. das aktuell freigegebene AP-Issue;
+4. relevante Architecture Decision Records unter [`docs/adr/`](docs/adr/) sowie bei Bedarf [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Vor Änderungen an Benutzeroberflächen muss zusätzlich [`DESIGN.md`](DESIGN.md)
 vollständig gelesen werden.
@@ -38,6 +38,10 @@ Diese Grenzen dürfen durch die 10x-Transformation nicht stillschweigend aufgeho
   Entscheidungs-/Quell-Snapshots dürfen nicht umgangen oder stillschweigend entwertet werden.
 
 ## Arbeitsweise für Issue #1
+
+- Der Arbeitsplan ist die führende Ziel- und Umsetzungsgrundlage. AP-Issues werden daraus nacheinander abgeleitet; das nächste AP wird erst nach Abschluss und Auswertung des vorherigen angelegt.
+- Während eines laufenden AP wird der Arbeitsplan nicht geändert. Befunde und Abweichungen bleiben im Issue; dauerhafte Planänderungen werden erst zwischen zwei APs entschieden.
+- Jedes AP-Issue nennt den zugrunde liegenden Plan-Commit.
 
 - Vorhandene Domain-Objekte und Provenance als Arbeitsgedächtnis und Source of Truth
   weiterverwenden; keinen parallelen zweiten Workflow bauen.
