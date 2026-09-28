@@ -910,10 +910,7 @@ def bind_discovery_snapshot_to_process(
         )
         locked_discovery = (
             InvestigationSourceSnapshot.objects.select_for_update()
-            .select_related(
-                "folder",
-                "capture_session",
-            )
+            .select_related("folder")
             .get(pk=discovery.pk)
         )
         if (
