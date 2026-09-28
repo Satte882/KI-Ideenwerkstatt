@@ -450,6 +450,94 @@ def test_case_c_contradictory_sources_remain_visible(owner, tmp_path, monkeypatc
 
 
 @pytest.mark.django_db
+def test_discovery_repairs_one_deterministic_contract_violation(
+    owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    invalid = _draft()
+    invalid["contradictions"] = [
+        {
+            "statement": "Die Rollenfolge sei widersprüchlich.",
+            "evidence_refs": ["S1"],
+        }
+    ]
+    repaired = copy.deepcopy(invalid)
+    repaired["contradictions"] = []
+    calls = [
+        _result(invalid),
+        _result(repaired),
+        _result(_verifier()),
+    ]
+    observed = []
+
+    def fake_call(**kwargs):
+        observed.append(kwargs["schema_name"])
+        return calls[len(observed) - 1]
+
+    monkeypatch.setattr(architect_service, "_provider_call", fake_call)
+
+    analysis = execute_autonomous_business_discovery(
+        actor=owner,
+        session_id=session.pk,
+        snapshot_id=snapshot.pk,
+    )
+
+    assert analysis.status == CaptureAnalysis.Status.SUCCESS
+    assert observed == [
+        "autonomous_business_discovery_v1",
+        "autonomous_business_discovery_repair_v1",
+        "autonomous_business_discovery_verifier_v1",
+    ]
+    assert analysis.result_payload["draft"]["contradictions"] == []
+
+
+@pytest.mark.django_db
+def test_contract_repair_consumes_the_single_repair_budget(
+    owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    invalid = _draft()
+    invalid["contradictions"] = [
+        {
+            "statement": "Die Rollenfolge sei widersprüchlich.",
+            "evidence_refs": ["S1"],
+        }
+    ]
+    repaired = copy.deepcopy(invalid)
+    repaired["contradictions"] = []
+    calls = [
+        _result(invalid),
+        _result(repaired),
+        _result(
+            _verifier(
+                "repair",
+                repair_instructions="Noch eine weitere fachliche Reparatur wäre nötig.",
+            )
+        ),
+    ]
+    observed = []
+
+    def fake_call(**kwargs):
+        observed.append(kwargs["schema_name"])
+        return calls[len(observed) - 1]
+
+    monkeypatch.setattr(architect_service, "_provider_call", fake_call)
+
+    with pytest.raises(DiscoveryAnalysisError, match="einmaligen Repair"):
+        execute_autonomous_business_discovery(
+            actor=owner,
+            session_id=session.pk,
+            snapshot_id=snapshot.pk,
+        )
+
+    assert observed == [
+        "autonomous_business_discovery_v1",
+        "autonomous_business_discovery_repair_v1",
+        "autonomous_business_discovery_verifier_v1",
+    ]
+
+
+@pytest.mark.django_db
 def test_discovery_has_one_bounded_repair_and_independent_reverification(
     owner, tmp_path, monkeypatch
 ):
