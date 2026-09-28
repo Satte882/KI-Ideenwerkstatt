@@ -495,9 +495,7 @@ def test_discovery_repairs_one_deterministic_contract_violation(
 
 
 @pytest.mark.django_db
-def test_contract_repair_consumes_the_single_repair_budget(
-    owner, tmp_path, monkeypatch
-):
+def test_contract_repair_consumes_the_single_repair_budget(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     invalid = _draft()
     invalid["contradictions"] = [
@@ -538,6 +536,11 @@ def test_contract_repair_consumes_the_single_repair_budget(
         "autonomous_business_discovery_repair_v1",
         "autonomous_business_discovery_verifier_v1",
     ]
+    failed = CaptureAnalysis.objects.get(session=session)
+    assert failed.status == CaptureAnalysis.Status.FAILED
+    assert failed.error_code == "verification_not_converged"
+    assert failed.verification_payload["status"] == "repair"
+    assert failed.result_payload["draft"]["contradictions"] == []
 
 
 @pytest.mark.django_db
