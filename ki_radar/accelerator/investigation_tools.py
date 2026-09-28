@@ -22,13 +22,13 @@ from django.db.models import Max
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream, can_manage_architecture
 
-from .models import CaptureSession
 from .investigation_models import (
     InvestigationSource,
     InvestigationSourceFolder,
     InvestigationSourceSnapshot,
     InvestigationToolResult,
 )
+from .models import CaptureSession
 
 TOOL_VERSION = "vs1-source-tools-v1"
 MAX_FILES = 12
@@ -749,7 +749,10 @@ def create_discovery_source_snapshot(
     )
     problem = str(session.answers.get("problem_statement") or "").strip()
     if not problem:
-        raise _error("Für die autonome Discovery ist ein Geschäftsproblem erforderlich.", "missing_problem")
+        raise _error(
+            "Für die autonome Discovery ist ein Geschäftsproblem erforderlich.",
+            "missing_problem",
+        )
     try:
         folder = InvestigationSourceFolder.objects.get(pk=request.folder_id)
     except (InvestigationSourceFolder.DoesNotExist, ValueError) as exc:
@@ -773,7 +776,9 @@ def create_discovery_source_snapshot(
                 is_active=True,
             )
         except InvestigationSourceFolder.DoesNotExist as exc:
-            raise PermissionDenied("Der Discovery-Quellenraum wurde vor dem Commit entzogen.") from exc
+            raise PermissionDenied(
+                "Der Discovery-Quellenraum wurde vor dem Commit entzogen."
+            ) from exc
 
         current_revision = (
             InvestigationSourceSnapshot.objects.filter(folder=locked_folder).aggregate(
