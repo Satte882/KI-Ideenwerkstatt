@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from datetime import timedelta
+from types import SimpleNamespace
 
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -52,6 +53,45 @@ from ki_radar.architecture.models import ProcessAnalysis, ValueStream
 from ki_radar.architecture.stage_focus import StageFocusDecision
 from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+
+
+@pytest.mark.parametrize(
+    ("schema_name", "expected_effort"),
+    [
+        ("autonomous_business_discovery_v1", "low"),
+        ("autonomous_business_discovery_repair_v1", "low"),
+        ("autonomous_business_discovery_verifier_v1", "medium"),
+    ],
+)
+def test_discovery_provider_reasoning_budget_matches_role(
+    monkeypatch, schema_name, expected_effort
+):
+    observed = {}
+    monkeypatch.setattr(architect_service, "reserve_accelerator_quotas", lambda **_: None)
+
+    def fake_request(**kwargs):
+        observed.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(architect_service, "request_openrouter", fake_request)
+    policy = SimpleNamespace(
+        capture_max_output_tokens=32768,
+        timeout_seconds=120,
+        capture_temperature=None,
+    )
+
+    architect_service._provider_call(
+        actor=object(),
+        session=object(),
+        policy=policy,
+        messages=[{"role": "user", "content": "input"}],
+        schema_name=schema_name,
+        schema={"type": "object"},
+    )
+
+    assert observed["reasoning_effort"] == expected_effort
+    assert observed["max_tokens"] == policy.capture_max_output_tokens
+    assert observed["timeout_seconds"] == policy.timeout_seconds
 
 
 def _source_uploads(*, contradictory: bool = False):
