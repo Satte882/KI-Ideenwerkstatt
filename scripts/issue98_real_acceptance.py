@@ -211,7 +211,7 @@ def _capture_browser(owner: User, sessions: dict[str, CaptureSession], *, label:
                     if (
                         key == "B"
                         and label == "waiting"
-                        and "Fachliche Klärung erforderlich" not in body
+                        and "Scope-/Fokus-Klärung ist erforderlich" not in body
                     ):
                         raise AssertionError("B: WAITING_HUMAN ist im Browser nicht sichtbar.")
                     if key == "C" and "Widersprüche" not in body:
