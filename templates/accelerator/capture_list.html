@@ -40,13 +40,15 @@
             <strong>{{ session.working_title|default:session.get_capture_type_display }}</strong>
             <div class="text-muted small">{{ session.pk|stringformat:"s"|slice:":8" }}</div>
           </td>
-          <td data-label="Art">{{ session.get_capture_type_display }}</td>
+          <td data-label="Art">{{ session.get_capture_type_display }} · {{ session.get_mode_display }}</td>
           <td data-label="Status"><span class="badge {% if session.status == 'completed' %}state-ready{% elif session.status == 'draft' %}state-review{% else %}state-blocked{% endif %}">{{ session.get_status_display }}</span></td>
-          <td data-label="Fortschritt">{{ session.answered_required_count }} / {{ session.required_question_count }} Pflichtantworten · {{ session.progress_percent }} %</td>
+          <td data-label="Fortschritt">{% if session.mode == 'autonomous' %}Scope-/Fokus-Review{% else %}{{ session.answered_required_count }} / {{ session.required_question_count }} Pflichtantworten · {{ session.progress_percent }} %{% endif %}</td>
           <td data-label="Letzte Änderung"><time datetime="{{ session.updated_at|date:'c' }}">{{ session.updated_at|date:"d.m.Y H:i" }}</time></td>
           <td data-label="Ablauf"><time datetime="{{ session.expires_at|date:'c' }}">{{ session.expires_at|date:"d.m.Y" }}</time></td>
           <td data-label="Nächste Aktion" class="text-end">
-            {% if session.status == 'draft' %}
+            {% if session.mode == 'autonomous' %}
+            <a class="btn btn-sm {% if session.status == 'draft' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{% url 'accelerator:autonomous_discovery_review' session.pk %}">{% if session.status == 'draft' %}Prüfen{% else %}Ansehen{% endif %}</a>
+            {% elif session.status == 'draft' %}
             <a class="btn btn-sm btn-primary" href="{% url 'accelerator:capture_step' session.pk 1 %}">Fortsetzen</a>
             {% else %}
             <a class="btn btn-sm btn-outline-secondary" href="{% url 'accelerator:capture_review' session.pk %}">Ansehen</a>
