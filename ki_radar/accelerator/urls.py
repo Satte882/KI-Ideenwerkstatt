@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import (
     adoption_views,
+    architect_views,
     investigation_views,
     methodology_views,
     solution_generation_views,
@@ -74,6 +75,16 @@ urlpatterns = [
         name="investigation_tool_result",
     ),
     path("my-captures/", views.capture_session_list, name="capture_list"),
+    path(
+        "value-stream/autonomous/start/",
+        architect_views.autonomous_discovery_start,
+        name="autonomous_discovery_start",
+    ),
+    path(
+        "value-stream/autonomous/<uuid:session_id>/review/",
+        architect_views.autonomous_discovery_review,
+        name="autonomous_discovery_review",
+    ),
     path(
         "value-stream/start/",
         views.start_capture,
