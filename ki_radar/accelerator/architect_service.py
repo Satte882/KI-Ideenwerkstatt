@@ -449,13 +449,13 @@ def execute_autonomous_business_discovery(
         )
 
         if verifier["status"] == "repair":
+            _store_failure_diagnostics(
+                analysis_id=analysis.pk,
+                draft=draft,
+                verifier=verifier,
+                snapshot_id=snapshot.pk,
+            )
             if repair_used:
-                _store_failure_diagnostics(
-                    analysis_id=analysis.pk,
-                    draft=draft,
-                    verifier=verifier,
-                    snapshot_id=snapshot.pk,
-                )
                 raise DiscoveryAnalysisError(
                     "Der Discovery-Draft benötigt nach dem einmaligen Repair weitere Korrekturen.",
                     code="verification_not_converged",
