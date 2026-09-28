@@ -16,6 +16,10 @@ class CaptureSession(TimeStampedModel):
         VALUE_STREAM = "value_stream", "Value Stream"
         USE_CASE = "use_case", "Use Case"
 
+    class Mode(models.TextChoices):
+        GUIDED = "guided", "Geführt"
+        AUTONOMOUS = "autonomous", "Autonom"
+
     class Status(models.TextChoices):
         DRAFT = "draft", "Entwurf"
         COMPLETED = "completed", "Abgeschlossen"
@@ -29,6 +33,12 @@ class CaptureSession(TimeStampedModel):
         related_name="capture_sessions",
     )
     capture_type = models.CharField(max_length=20, choices=CaptureType.choices, db_index=True)
+    mode = models.CharField(
+        max_length=20,
+        choices=Mode.choices,
+        default=Mode.GUIDED,
+        db_index=True,
+    )
     working_title = models.CharField(max_length=200, blank=True)
     catalog_version = models.CharField(max_length=20)
     schema_version = models.CharField(max_length=20)
@@ -122,6 +132,7 @@ class CaptureAnalysis(TimeStampedModel):
     class Status(models.TextChoices):
         RUNNING = "running", "Läuft"
         SUCCESS = "success", "Erfolgreich"
+        WAITING_HUMAN = "waiting_human", "Klärung erforderlich"
         FAILED = "failed", "Fehlgeschlagen"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -164,6 +175,8 @@ class CaptureAnalysis(TimeStampedModel):
     cost = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
     open_questions = models.JSONField(default=list, blank=True)
     contradictions = models.JSONField(default=list, blank=True)
+    result_payload = models.JSONField(default=dict, blank=True)
+    verification_payload = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -186,7 +199,10 @@ class CaptureAnalysis(TimeStampedModel):
             models.CheckConstraint(
                 condition=(
                     models.Q(status="running", finished_at__isnull=True)
-                    | models.Q(status__in=["success", "failed"], finished_at__isnull=False)
+                    | models.Q(
+                        status__in=["success", "waiting_human", "failed"],
+                        finished_at__isnull=False,
+                    )
                 ),
                 name="analysis_status_finished_valid",
             ),
