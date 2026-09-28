@@ -215,6 +215,26 @@ def _capture_browser(owner: User, sessions: dict[str, CaptureSession], *, label:
                     if response is None or response.status != 200:
                         raise AssertionError(f"{key}: Review-Surface nicht erreichbar.")
                     body = page.locator("body").inner_text()
+                    for heading_id in (
+                        "value-stream-heading",
+                        "stages-heading",
+                        "process-heading",
+                    ):
+                        if page.locator(f"#{heading_id}").count() != 1:
+                            raise AssertionError(f"{key}: Review-Bereich {heading_id} fehlt.")
+                    if (key != "B" or label == "resolved") and page.locator(
+                        "#decision-heading"
+                    ).count() != 1:
+                        raise AssertionError(f"{key}: Scope-/Fokus-Entscheidung fehlt.")
+                    if key == "C":
+                        page.locator("details.architecture-disclosure > summary").click()
+                        contradiction = (
+                            page.locator("h3", has_text="Widersprüche")
+                            .locator("xpath=following-sibling::ul[1]/li")
+                            .first.inner_text()
+                        )
+                        if "S1" not in contradiction or "S2" not in contradiction:
+                            raise AssertionError("C: Widerspruch mit beiden Quellen fehlt.")
                     metrics = page.evaluate(
                         """
                         () => ({
@@ -232,18 +252,12 @@ def _capture_browser(owner: User, sessions: dict[str, CaptureSession], *, label:
                     )
                     if metrics["scrollWidth"] > metrics["viewportWidth"] + 1:
                         raise AssertionError(f"{key}: horizontaler Overflow.")
-                    if "Scope-/Fokus-Review" not in body:
-                        raise AssertionError(f"{key}: Scope-/Fokus-Review fehlt.")
                     if (
                         key == "B"
                         and label == "waiting"
                         and "Scope-/Fokus-Klärung ist erforderlich" not in body
                     ):
                         raise AssertionError("B: WAITING_HUMAN ist im Browser nicht sichtbar.")
-                    if key == "C" and "Widersprüche" not in body:
-                        raise AssertionError(
-                            "C: Widerspruchsbereich ist im Browser nicht sichtbar."
-                        )
                     screenshot = OUTPUT_DIR / f"{label}-{key}.png"
                     page.screenshot(path=str(screenshot), full_page=True)
                     report[key] = {

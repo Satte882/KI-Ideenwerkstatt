@@ -935,6 +935,32 @@ def test_start_surface_is_minimal_and_accepts_only_current_source_scope(client, 
 
 
 @pytest.mark.django_db
+def test_review_surface_has_browser_markers_and_renders_contradiction(client, owner, tmp_path):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path, contradictory=True)
+    _approved_analysis(session=session, snapshot=snapshot, draft=_draft(contradiction=True))
+    client.force_login(owner)
+
+    response = client.get(
+        reverse(
+            "accelerator:autonomous_discovery_review",
+            kwargs={"session_id": session.pk},
+        )
+    )
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    for heading_id in (
+        "value-stream-heading",
+        "stages-heading",
+        "process-heading",
+        "decision-heading",
+    ):
+        assert f'id="{heading_id}"' in content
+    assert "Interview und Prozessnotiz beschreiben die Rollenfolge" in content
+    assert "S1, S2" in content
+
+
+@pytest.mark.django_db
 def test_start_post_creates_capture_snapshot_without_guided_questions(
     client, owner, tmp_path, monkeypatch
 ):
