@@ -199,14 +199,38 @@ def _reserve_quotas(
         )
 
 
-def reserve_accelerator_quotas(*, actor, session: CaptureSession, policy) -> None:
-    """Reserve one bounded provider call using the existing Accelerator quota contract."""
-    _reserve_quotas(
-        actor=actor,
-        session=session,
-        policy=policy,
-        quota_date=timezone.localdate(),
-    )
+def reserve_accelerator_quotas(
+    *,
+    actor,
+    session: CaptureSession,
+    policy,
+    include_context: bool = True,
+) -> None:
+    """Reserve one provider call against the shared Accelerator quota contract.
+
+    Autonomous discovery is a bounded multi-call workflow. It keeps its hard
+    per-run call ceiling in the discovery service and therefore reuses the
+    user/global daily quotas without consuming the legacy single-call Capture
+    Session quota for every internal review step.
+    """
+    quota_date = timezone.localdate()
+    scopes = [
+        (AcceleratorLLMQuota.Scope.USER, policy.max_calls_per_user_day),
+        (AcceleratorLLMQuota.Scope.GLOBAL, policy.max_calls_global_day),
+    ]
+    if include_context:
+        scopes.insert(
+            0,
+            (AcceleratorLLMQuota.Scope.CONTEXT, policy.max_calls_per_context),
+        )
+    for scope, limit in scopes:
+        _increment_quota(
+            scope=scope,
+            actor=actor,
+            session=session,
+            quota_date=quota_date,
+            limit=limit,
+        )
 
 
 def _duration_ms(analysis: CaptureAnalysis, finished_at) -> int:
