@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from datetime import timedelta
 
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -33,11 +34,14 @@ from ki_radar.accelerator.investigation_tools import (
     get_discovery_source_snapshot,
 )
 from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
+from ki_radar.accelerator.retention import purge_terminal_capture_sessions
 from ki_radar.accelerator.services import (
+    add_autonomous_discovery_correction,
     create_autonomous_capture_session,
     create_capture_session,
 )
 from ki_radar.architecture.discovery_materialization import (
+    DiscoveryMaterializationError,
     materialize_discovery_and_start_investigation,
 )
 from ki_radar.architecture.focus import ValueStreamFocus
@@ -100,6 +104,13 @@ def _draft(*, contradiction: bool = False):
                 "documents": "Lieferantenangebote",
                 "pain_points": "",
                 "baseline_metrics": "",
+                "impact": ScreeningLevel.MEDIUM,
+                "pain_intensity": ScreeningLevel.LOW,
+                "improvement_potential": ScreeningLevel.MEDIUM,
+                "data_accessibility": ScreeningLevel.MEDIUM,
+                "change_effort": ScreeningLevel.MEDIUM,
+                "time_to_value": "medium",
+                "evidence_basis": "indicative",
                 "evidence_refs": ["S1"],
             },
             {
@@ -114,6 +125,13 @@ def _draft(*, contradiction: bool = False):
                 "documents": "Lieferantenangebote",
                 "pain_points": "Manueller Vergleich",
                 "baseline_metrics": "",
+                "impact": ScreeningLevel.HIGH,
+                "pain_intensity": ScreeningLevel.HIGH,
+                "improvement_potential": ScreeningLevel.HIGH,
+                "data_accessibility": ScreeningLevel.MEDIUM,
+                "change_effort": ScreeningLevel.MEDIUM,
+                "time_to_value": "short",
+                "evidence_basis": "indicative",
                 "evidence_refs": ["U0", "S1"],
             },
         ],
@@ -517,6 +535,15 @@ def test_scope_confirmation_materializes_canonical_domain_and_starts_existing_in
     assert focus.status == ValueStreamFocus.Status.SELECTED
     assert focus.is_selected
     assert stage_focus.selected_stage == process.stage
+    for stage in stream.stages.all():
+        criteria = stage_focus.criteria_for(stage)
+        assert criteria["impact"] in ScreeningLevel.values
+        assert criteria["pain_intensity"] in ScreeningLevel.values
+        assert criteria["improvement_potential"] in ScreeningLevel.values
+        assert criteria["data_accessibility"] in ScreeningLevel.values
+        assert criteria["change_effort"] in ScreeningLevel.values
+        assert criteria["time_to_value"] in {"unknown", "short", "medium", "long"}
+        assert criteria["evidence_basis"] in {"hypothesis", "indicative", "measured"}
     assert process.status == ProcessAnalysis.Status.DRAFT
     assert process.stage.name == "Angebote vergleichen"
     assert run.process_analysis == process
@@ -634,3 +661,148 @@ def test_start_post_creates_capture_snapshot_without_guided_questions(
     assert InvestigationSourceFolder.objects.get(capture_session=session)
     assert InvestigationSourceSnapshot.objects.get(capture_session=session)
     assert session.answered_required_count == 0
+
+
+@pytest.mark.django_db
+def test_case_b_human_clarification_continues_on_same_snapshot(
+    owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    ambiguous = _draft()
+    ambiguous["clarifications"] = [
+        {
+            "question": "Beginnt der Prozess erst, wenn alle Angebote vorliegen?",
+            "impact": "Die Antwort bestimmt die Scope-Startgrenze.",
+            "blocking": True,
+        }
+    ]
+    first_calls = iter(
+        [
+            _result(ambiguous),
+            _result(
+                _verifier(
+                    "waiting_human",
+                    human_question="Beginnt der Prozess erst, wenn alle Angebote vorliegen?",
+                )
+            ),
+        ]
+    )
+    monkeypatch.setattr(
+        architect_service,
+        "_provider_call",
+        lambda **_kwargs: next(first_calls),
+    )
+
+    waiting = execute_autonomous_business_discovery(
+        actor=owner,
+        session_id=session.pk,
+        snapshot_id=snapshot.pk,
+    )
+    assert waiting.status == CaptureAnalysis.Status.WAITING_HUMAN
+
+    session = add_autonomous_discovery_correction(
+        actor=owner,
+        session_id=session.pk,
+        expected_revision=session.revision,
+        correction="Ja. Der Process Scope beginnt erst, wenn alle Angebote vorliegen.",
+    )
+    resolved = _draft()
+    second_calls = iter([_result(resolved), _result(_verifier())])
+    monkeypatch.setattr(
+        architect_service,
+        "_provider_call",
+        lambda **_kwargs: next(second_calls),
+    )
+
+    approved = execute_autonomous_business_discovery(
+        actor=owner,
+        session_id=session.pk,
+        snapshot_id=snapshot.pk,
+    )
+
+    assert approved.status == CaptureAnalysis.Status.SUCCESS
+    assert approved.source_revision == session.revision
+    assert approved.result_payload["discovery_snapshot_id"] == str(snapshot.pk)
+    assert InvestigationSourceSnapshot.objects.get(pk=snapshot.pk).manifest_hash == snapshot.manifest_hash
+
+
+@pytest.mark.django_db
+def test_materialization_rejects_focus_that_does_not_match_reviewed_process_scope(
+    owner, tmp_path
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    analysis = _approved_analysis(session=session, snapshot=snapshot)
+
+    with pytest.raises(DiscoveryMaterializationError, match="Process-Scope"):
+        materialize_discovery_and_start_investigation(
+            actor=owner,
+            session_id=session.pk,
+            analysis_id=analysis.pk,
+            selected_stage_key="offers",
+            expected_revision=session.revision,
+        )
+
+    assert not ValueStream.objects.exists()
+    assert not ProcessAnalysis.objects.exists()
+    assert not InvestigationRun.objects.exists()
+
+
+@pytest.mark.django_db
+def test_alternative_focus_in_review_triggers_reanalysis_before_materialization(
+    client, owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    _approved_analysis(session=session, snapshot=snapshot)
+    observed = {}
+
+    def fake_run(_request, *, session, snapshot):
+        observed["revision"] = session.revision
+        observed["snapshot_id"] = snapshot.pk
+        observed["correction"] = session.answers["corrections"][-1]["text"]
+        return None
+
+    monkeypatch.setattr(architect_views, "_run_analysis", fake_run)
+    client.force_login(owner)
+
+    response = client.post(
+        reverse(
+            "accelerator:autonomous_discovery_review",
+            kwargs={"session_id": session.pk},
+        ),
+        {
+            "action": "confirm",
+            "revision": session.revision,
+            "selected_stage_key": "offers",
+        },
+    )
+
+    session.refresh_from_db()
+    assert response.status_code == 302
+    assert observed["revision"] == session.revision
+    assert observed["snapshot_id"] == snapshot.pk
+    assert "Angebote einholen" in observed["correction"]
+    assert "Angebote vergleichen" in observed["correction"]
+    assert not ValueStream.objects.exists()
+    assert not ProcessAnalysis.objects.exists()
+    assert not InvestigationRun.objects.exists()
+
+
+@pytest.mark.django_db
+def test_expired_autonomous_capture_can_be_purged_with_temporary_evidence(
+    owner, tmp_path
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    folder_id = snapshot.folder_id
+    snapshot_id = snapshot.pk
+    now = timezone.now()
+    CaptureSession.objects.filter(pk=session.pk).update(
+        status=CaptureSession.Status.EXPIRED,
+        expired_at=now - timedelta(days=8),
+    )
+
+    deleted = purge_terminal_capture_sessions(now=now)
+
+    assert deleted == 1
+    assert not CaptureSession.objects.filter(pk=session.pk).exists()
+    assert not InvestigationSourceFolder.objects.filter(pk=folder_id).exists()
+    assert not InvestigationSourceSnapshot.objects.filter(pk=snapshot_id).exists()
