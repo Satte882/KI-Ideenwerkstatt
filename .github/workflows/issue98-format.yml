@@ -1,0 +1,44 @@
+name: Issue 98 formatter
+
+on:
+  push:
+    branches:
+      - feature/issue-98-autonomous-business-discovery
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/issue-98-autonomous-business-discovery
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+      - run: uv sync --frozen --dev
+      - name: Format #98 files
+        run: >
+          uv run ruff format
+          ki_radar/accelerator/architect_service.py
+          scripts/issue98_real_acceptance.py
+          tests/test_issue_98_autonomous_business_discovery.py
+      - name: Commit formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No formatting changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ki_radar/accelerator/architect_service.py scripts/issue98_real_acceptance.py tests/test_issue_98_autonomous_business_discovery.py
+          git commit -m "#98 apply Ruff formatting"
+          git push origin HEAD:feature/issue-98-autonomous-business-discovery
