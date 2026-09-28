@@ -6,8 +6,18 @@ from ki_radar.architecture.analysis_navigation import (
     analysis_step_url,
     build_analysis_navigation,
 )
+from ki_radar.architecture.permissions import can_edit_value_stream
 
 register = template.Library()
+
+
+def _focus_navigation_url(context, value_stream):
+    request = context.get("request")
+    user = getattr(request, "user", None)
+    if user is not None and can_edit_value_stream(user, value_stream):
+        edit_url = reverse("architecture:value_stream_update", args=[value_stream.pk])
+        return f"{edit_url}#fokus-bearbeiten"
+    return analysis_step_url(value_stream.get_absolute_url(), "focus")
 
 
 def _first_process_analysis(value_stream):
@@ -79,7 +89,7 @@ def _process_context_from_context(context):
     return {
         "active_key": active_key,
         "value_stream_url": analysis_step_url(value_stream_url, "value_stream"),
-        "focus_url": analysis_step_url(value_stream_url, "focus"),
+        "focus_url": _focus_navigation_url(context, value_stream),
         "process_url": analysis_step_url(process_url, "process"),
         "solution_url": analysis_step_url(process_url, "solution"),
         "decision_brief_url": (
@@ -116,6 +126,7 @@ def _navigation_from_context(context):
         process_analysis=process_analysis,
         requested_step=request.GET.get("analysis_step"),
         default_step=default_step,
+        focus_url=_focus_navigation_url(context, value_stream),
     )
 
 

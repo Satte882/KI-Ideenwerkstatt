@@ -3,11 +3,13 @@ from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
+from django.urls import reverse
 
 from ki_radar.architecture.analysis_navigation import (
     analysis_step_url,
     build_analysis_navigation,
 )
+from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
 
 
 class AbsoluteUrlObject:
@@ -24,15 +26,71 @@ def journey(*states):
     )
 
 
-def test_analysis_step_url_preserves_query_and_adds_fragment():
+def test_focus_navigation_preserves_query_and_opens_at_page_top():
     url = analysis_step_url(
         "/architecture/value-streams/7/?source=portfolio",
         "focus",
     )
 
-    assert url == (
-        "/architecture/value-streams/7/?source=portfolio&analysis_step=focus#fokus-priorisierung"
+    assert url == ("/architecture/value-streams/7/?source=portfolio&analysis_step=focus")
+
+
+@pytest.mark.django_db
+def test_focus_sidebar_opens_editor_for_owner_and_overview_for_reader(
+    client, owner, reader, business_unit
+):
+    stream = ValueStream.objects.create(
+        name="Fokusnavigation",
+        business_unit=business_unit,
+        owner=owner,
+        created_by=owner,
+        trigger="Anfrage liegt vor",
+        outcome="Entscheidung ist dokumentiert",
+        scope_in="Anfrage prüfen",
+        status=ValueStream.Status.ACTIVE,
     )
+    stage = ValueStreamStage.objects.create(
+        value_stream=stream,
+        sequence=1,
+        name="Prüfung",
+        pain_points="Rückfragen",
+        baseline_metrics="Zwei Tage",
+    )
+    process = ProcessAnalysis.objects.create(
+        stage=stage,
+        name="Anfrage prüfen",
+        scope_start="Anfrage liegt vor",
+        scope_end="Entscheidung liegt vor",
+        trigger="Anfrage geht ein",
+        outcome="Entscheidung",
+        current_flow="Fachbereich prüft die Anfrage.",
+        roles="Fachbereich",
+        systems="Dateiablage",
+        data_objects="Anfrage",
+        bottlenecks="Rückfragen",
+        baseline_metrics="Zwei Tage",
+        analyzed_by=owner,
+    )
+    edit_url = reverse("architecture:value_stream_update", args=[stream.pk])
+
+    client.force_login(owner)
+    owner_page = client.get(stream.get_absolute_url()).content.decode()
+    assert f'<a href="{edit_url}#fokus-bearbeiten" class="sidebar-local-step' in owner_page
+    owner_process_page = client.get(process.get_absolute_url()).content.decode()
+    assert f'<a href="{edit_url}#fokus-bearbeiten" class="sidebar-local-step' in owner_process_page
+    edit_page = client.get(edit_url)
+    assert edit_page.status_code == 200
+    assert "2. Fokus &amp; Priorisierung" in edit_page.content.decode()
+    assert 'id="fokus-bearbeiten"' in edit_page.content.decode()
+    assert 'name="business_domain"' in edit_page.content.decode()
+
+    client.force_login(reader)
+    reader_page = client.get(stream.get_absolute_url()).content.decode()
+    overview_url = analysis_step_url(stream.get_absolute_url(), "focus")
+    assert f'<a href="{overview_url}" class="sidebar-local-step' in reader_page
+    reader_process_page = client.get(process.get_absolute_url()).content.decode()
+    assert f'<a href="{overview_url}" class="sidebar-local-step' in reader_process_page
+    assert client.get(edit_url).status_code == 403
 
 
 def test_analysis_step_url_rejects_unknown_step():
@@ -56,7 +114,7 @@ def test_navigation_uses_canonical_targets_and_active_step():
     steps = {step.key: step for step in navigation.steps}
     assert navigation.active_key == "focus"
     assert steps["focus"].is_active is True
-    assert steps["focus"].url.endswith("?analysis_step=focus#fokus-priorisierung")
+    assert steps["focus"].url.endswith("?analysis_step=focus")
     assert steps["process"].url.endswith("?analysis_step=process#prozessanalyse")
     assert steps["solution"].url.endswith("?analysis_step=solution#loesungsoptionen")
     assert navigation.previous.key == "value_stream"
@@ -130,9 +188,7 @@ def test_process_context_navigation_marks_decision_brief_inside_process_analysis
     assert navigation["value_stream_url"] == (
         "/architecture/value-streams/7/?analysis_step=value_stream#value-stream"
     )
-    assert navigation["focus_url"] == (
-        "/architecture/value-streams/7/?analysis_step=focus#fokus-priorisierung"
-    )
+    assert navigation["focus_url"] == ("/architecture/value-streams/7/?analysis_step=focus")
     assert navigation["process_url"] == (
         f"/architecture/processes/{process_id}/?analysis_step=process#prozessanalyse"
     )

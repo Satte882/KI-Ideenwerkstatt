@@ -39,13 +39,14 @@ def analysis_step_url(base_url: str, step_key: str) -> str:
     parts = urlsplit(base_url)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query[ANALYSIS_STEP_PARAMETER] = step_key
+    # Enter the focus workspace at the page header instead of its lower decision panel.
     return urlunsplit(
         (
             parts.scheme,
             parts.netloc,
             parts.path,
             urlencode(query),
-            fragments[step_key],
+            "" if step_key == "focus" else fragments[step_key],
         )
     )
 
@@ -57,6 +58,7 @@ def build_analysis_navigation(
     process_analysis=None,
     requested_step: str | None = None,
     default_step: str = "value_stream",
+    focus_url: str | None = None,
 ) -> AnalysisNavigation:
     journey_steps = {step.key: step for step in getattr(journey, "steps", ())}
     value_stream_url = value_stream.get_absolute_url()
@@ -64,7 +66,7 @@ def build_analysis_navigation(
 
     target_urls = {
         "value_stream": analysis_step_url(value_stream_url, "value_stream"),
-        "focus": analysis_step_url(value_stream_url, "focus"),
+        "focus": focus_url or analysis_step_url(value_stream_url, "focus"),
         "process": analysis_step_url(process_url, "process") if process_url else None,
         "solution": analysis_step_url(process_url, "solution") if process_url else None,
     }
