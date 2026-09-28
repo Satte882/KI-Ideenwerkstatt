@@ -43,8 +43,12 @@ Regeln:
 - Zahlen in Fakten und Baselines dürfen nur vorkommen, wenn sie im Input tatsächlich genannt sind.
 - Der Value Stream ist End-to-End breiter als der vorgeschlagene Process Scope.
 - Phasen bilden eine plausible lückenlose Reihenfolge; Unsicherheit bleibt sichtbar.
-- Die Fokusphase muss zum Problem passen. Screening-Level sind fachliche Einschätzungen,
-  keine gemessenen Fakten.
+- Bewerte für jede Phase Impact, Problemintensität, Verbesserungspotenzial,
+  Datenzugänglichkeit und Veränderungsaufwand mit low/medium/high sowie Time-to-Value
+  mit unknown/short/medium/long. Diese Werte sind Screening-Einschätzungen, keine Messwerte.
+- evidence_basis ist hypothesis, indicative oder measured. Nutze indicative/measured nur,
+  wenn die autorisierten Quellen diese Stärke tragen; sonst hypothesis.
+- Die Fokusphase muss zum Problem und zum vollständigen Phasenvergleich passen.
 - Lösungsoffen bleiben: keine KI-Lösung, Automatisierung oder Software vorwegnehmen.
 - Eine Clarification ist nur blocking=true, wenn Scope/Fokus ohne die Antwort nicht
   verantwortbar entschieden werden kann.
