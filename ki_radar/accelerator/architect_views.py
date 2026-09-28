@@ -143,7 +143,12 @@ def autonomous_discovery_start(request):
                     business_context=form.cleaned_data["business_context"],
                 )
             except ValidationError as exc:
-                for field, errors in getattr(exc, "message_dict", {"__all__": exc.messages}).items():
+                error_map = getattr(
+                    exc,
+                    "message_dict",
+                    {"__all__": exc.messages},
+                )
+                for field, errors in error_map.items():
                     target = field if field in form.fields else None
                     for error in errors:
                         form.add_error(target, error)
@@ -222,9 +227,15 @@ def autonomous_discovery_review(request, session_id):
         action = str(request.POST.get("action") or "").strip()
         if action == "retry":
             if session.status != CaptureSession.Status.DRAFT:
-                messages.error(request, "Eine abgeschlossene Discovery kann nicht erneut analysiert werden.")
+                messages.error(
+                    request,
+                    "Eine abgeschlossene Discovery kann nicht erneut analysiert werden.",
+                )
             elif snapshot is None:
-                messages.error(request, "Für diese Discovery fehlt ein autorisierter Quellenstand.")
+                messages.error(
+                    request,
+                    "Für diese Discovery fehlt ein autorisierter Quellenstand.",
+                )
             else:
                 _run_analysis(request, session=session, snapshot=snapshot)
             return redirect("accelerator:autonomous_discovery_review", session_id=session.pk)
@@ -279,7 +290,10 @@ def autonomous_discovery_review(request, session_id):
                 else:
                     messages.success(
                         request,
-                        "Scope und Fokus wurden übernommen. Die bestehende Investigation wurde gestartet.",
+                        (
+                            "Scope und Fokus wurden übernommen. "
+                            "Die bestehende Investigation wurde gestartet."
+                        ),
                     )
                     return redirect(
                         "accelerator:investigation_activity",
