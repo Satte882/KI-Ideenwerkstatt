@@ -51,7 +51,7 @@ from ki_radar.architecture.discovery_materialization import (
 from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream
 from ki_radar.architecture.stage_focus import StageFocusDecision
-from ki_radar.core.openrouter import OpenRouterResult
+from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 
@@ -61,6 +61,7 @@ def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
     assert "keine gemessenen Fakten" in prompt
     assert "nicht jede denkbare" in prompt
     assert "belegt (indicative)" in prompt.replace("\n  ", " ")
+    assert "Ordne Aussagen aus" in architect_service.DISCOVERY_SYSTEM_PROMPT
 
 
 @pytest.mark.parametrize(
@@ -101,6 +102,72 @@ def test_discovery_provider_reasoning_budget_matches_role(
     assert observed["max_tokens"] == policy.capture_max_output_tokens
     assert observed["timeout_seconds"] == policy.timeout_seconds
     assert observed["provider"] == {"require_parameters": True, "sort": "throughput"}
+
+
+def test_discovery_retries_one_transport_timeout_without_extra_semantic_repair(monkeypatch):
+    attempts = []
+    reservations = []
+    expected = object()
+    monkeypatch.setattr(
+        architect_service,
+        "reserve_accelerator_quotas",
+        lambda **kwargs: reservations.append(kwargs),
+    )
+
+    def fake_request(**kwargs):
+        attempts.append(kwargs)
+        if len(attempts) == 1:
+            raise OpenRouterUnavailable("Timed out", code="timeout")
+        return expected
+
+    monkeypatch.setattr(architect_service, "request_openrouter", fake_request)
+    policy = SimpleNamespace(
+        capture_max_output_tokens=32768,
+        timeout_seconds=120,
+        capture_temperature=None,
+    )
+
+    result = architect_service._provider_call(
+        actor=object(),
+        session=object(),
+        policy=policy,
+        messages=[{"role": "user", "content": "input"}],
+        schema_name="autonomous_business_discovery_repair_v1",
+        schema={"type": "object"},
+    )
+
+    assert result is expected
+    assert len(attempts) == len(reservations) == 2
+    assert attempts[0] == attempts[1]
+
+
+def test_discovery_stops_after_second_transport_timeout(monkeypatch):
+    calls = []
+    monkeypatch.setattr(architect_service, "reserve_accelerator_quotas", lambda **_: None)
+
+    def fake_request(**kwargs):
+        calls.append(kwargs)
+        raise OpenRouterUnavailable("Timed out", code="timeout")
+
+    monkeypatch.setattr(architect_service, "request_openrouter", fake_request)
+    policy = SimpleNamespace(
+        capture_max_output_tokens=32768,
+        timeout_seconds=120,
+        capture_temperature=None,
+    )
+
+    with pytest.raises(DiscoveryAnalysisError) as exc_info:
+        architect_service._provider_call(
+            actor=object(),
+            session=object(),
+            policy=policy,
+            messages=[{"role": "user", "content": "input"}],
+            schema_name="autonomous_business_discovery_repair_v1",
+            schema={"type": "object"},
+        )
+
+    assert exc_info.value.code == "timeout"
+    assert len(calls) == 2
 
 
 def _source_uploads(*, contradictory: bool = False):

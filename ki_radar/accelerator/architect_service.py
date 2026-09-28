@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -32,6 +33,8 @@ from .investigation_tools import get_discovery_source_snapshot
 from .models import CaptureAnalysis, CaptureSession
 from .services import get_owned_autonomous_capture_session
 
+logger = logging.getLogger(__name__)
+
 DISCOVERY_SYSTEM_PROMPT = """Du arbeitest als autonomer Business Architect.
 Erzeuge ausschließlich aus dem bereitgestellten Problem, Geschäftskontext, Nutzerkorrekturen
 und den autorisierten Quellen einen strukturierten Business-Discovery-Entwurf.
@@ -39,6 +42,9 @@ und den autorisierten Quellen einen strukturierten Business-Discovery-Entwurf.
 Regeln:
 - Erfinde keine Fakten, Messwerte, Rollen, Systeme oder Prozessschritte.
 - Quellenreferenzen dürfen nur die gelieferten Handles U0, S1, S2 ... verwenden.
+- U0 steht für Problem, Geschäftskontext und Nutzerkorrekturen. Ordne Aussagen aus
+  diesen Eingaben U0 zu, nicht pauschal einer Quelldatei S1/S2. Bei einem Objekt,
+  das Aussagen aus U0 und einer Datei kombiniert, nenne beide tragenden Handles.
 - Trenne berichtete Fakten, Hypothesen, Unknowns, Clarifications und Widersprüche explizit.
 - Ein Widerspruch ist nur zulässig, wenn mindestens zwei unterschiedliche Input-Handles
   einander widersprechende Aussagen tragen; evidence_refs muss dann mindestens diese beiden
@@ -194,38 +200,45 @@ def _provider_call(
     schema_name: str,
     schema: dict[str, Any],
 ) -> OpenRouterResult:
-    reserve_accelerator_quotas(
-        actor=actor,
-        session=session,
-        policy=policy,
-        include_context=False,
-    )
-    try:
-        # The large discovery schema needs output room, but producer/repair should
-        # spend that room on the structured draft instead of extended reasoning.
-        reasoning_effort = (
-            "medium" if schema_name == "autonomous_business_discovery_verifier_v1" else "low"
-        )
-        return request_openrouter(
-            messages=messages,
-            max_tokens=policy.capture_max_output_tokens,
-            timeout_seconds=policy.timeout_seconds,
-            temperature=policy.capture_temperature,
-            reasoning_effort=reasoning_effort,
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema_name,
-                    "strict": True,
-                    "schema": schema,
+    # A timed-out provider response has no usable draft. Investigation already
+    # allows one transport retry; keep the same bounded rule for Discovery.
+    for attempt in range(2):
+        try:
+            reserve_accelerator_quotas(
+                actor=actor,
+                session=session,
+                policy=policy,
+                include_context=False,
+            )
+            # The large discovery schema needs output room, but producer/repair
+            # should spend that room on the draft instead of extended reasoning.
+            reasoning_effort = (
+                "medium" if schema_name == "autonomous_business_discovery_verifier_v1" else "low"
+            )
+            return request_openrouter(
+                messages=messages,
+                max_tokens=policy.capture_max_output_tokens,
+                timeout_seconds=policy.timeout_seconds,
+                temperature=policy.capture_temperature,
+                reasoning_effort=reasoning_effort,
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": schema_name,
+                        "strict": True,
+                        "schema": schema,
+                    },
                 },
-            },
-            provider={"require_parameters": True, "sort": "throughput"},
-        )
-    except OpenRouterUnavailable as exc:
-        raise DiscoveryAnalysisError(str(exc), code=exc.code) from exc
-    except CaptureAnalysisQuotaExceeded as exc:
-        raise DiscoveryAnalysisError(str(exc), code=exc.code) from exc
+                provider={"require_parameters": True, "sort": "throughput"},
+            )
+        except OpenRouterUnavailable as exc:
+            if exc.code == "timeout" and attempt == 0:
+                logger.warning("discovery_provider_retry schema=%s code=timeout", schema_name)
+                continue
+            raise DiscoveryAnalysisError(str(exc), code=exc.code) from exc
+        except CaptureAnalysisQuotaExceeded as exc:
+            raise DiscoveryAnalysisError(str(exc), code=exc.code) from exc
+    raise AssertionError("Discovery-Provider-Retry-Budget wurde unerwartet überschritten.")
 
 
 def _prompt_payload(system_prompt: str, document: dict[str, Any]) -> list[dict[str, str]]:
