@@ -285,7 +285,7 @@ def _authorized_process(*, actor, process_analysis_id, for_update: bool = False)
 
 
 def _authorized_discovery_capture(*, actor, capture_session_id, for_update: bool = False):
-    queryset = CaptureSession.objects.select_related("owner", "owner__business_unit")
+    queryset = CaptureSession.objects.select_related("owner")
     if for_update:
         queryset = queryset.select_for_update()
     try:
