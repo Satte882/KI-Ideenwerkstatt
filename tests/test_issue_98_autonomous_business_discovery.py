@@ -19,7 +19,10 @@ from ki_radar.accelerator.architect_contract import (
     DiscoveryContractError,
     validate_discovery_payload,
 )
-from ki_radar.accelerator.architect_service import execute_autonomous_business_discovery
+from ki_radar.accelerator.architect_service import (
+    DiscoveryAnalysisError,
+    execute_autonomous_business_discovery,
+)
 from ki_radar.accelerator.investigation_ingestion import (
     create_managed_discovery_source_folder,
 )
