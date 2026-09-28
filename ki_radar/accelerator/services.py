@@ -92,6 +92,100 @@ def create_capture_session(*, actor, capture_type: str, working_title: str = "")
     )
 
 
+def create_autonomous_capture_session(
+    *,
+    actor,
+    problem_statement: str,
+    business_context: str = "",
+) -> CaptureSession:
+    _assert_capture_permission(actor, CaptureSession.CaptureType.VALUE_STREAM)
+    business_unit = getattr(actor, "business_unit", None)
+    if business_unit is None or not business_unit.is_active:
+        raise ValidationError(
+            {"business_unit": "Für die autonome Discovery ist eine aktive Organisationseinheit erforderlich."}
+        )
+
+    problem = str(problem_statement or "").strip()
+    context = str(business_context or "").strip()
+    if not problem:
+        raise ValidationError({"problem_statement": "Bitte das Geschäftsproblem oder Ziel beschreiben."})
+    if len(problem) > 4000:
+        raise ValidationError({"problem_statement": "Das Geschäftsproblem darf höchstens 4000 Zeichen enthalten."})
+    if len(context) > 8000:
+        raise ValidationError({"business_context": "Der Geschäftskontext darf höchstens 8000 Zeichen enthalten."})
+
+    catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
+    title = problem.splitlines()[0].strip()[:120] or "Autonome Business Discovery"
+    return CaptureSession.objects.create(
+        owner=actor,
+        capture_type=CaptureSession.CaptureType.VALUE_STREAM,
+        mode=CaptureSession.Mode.AUTONOMOUS,
+        working_title=title,
+        catalog_version=catalog.version,
+        schema_version=catalog.schema_version,
+        required_question_count=0,
+        answers={
+            "problem_statement": problem,
+            "business_context": context,
+            "corrections": [],
+        },
+        expires_at=_draft_expiry(),
+    )
+
+
+def get_owned_autonomous_capture_session(*, actor, session_id) -> CaptureSession:
+    session = get_owned_capture_session(actor=actor, session_id=session_id)
+    if (
+        session.capture_type != CaptureSession.CaptureType.VALUE_STREAM
+        or session.mode != CaptureSession.Mode.AUTONOMOUS
+    ):
+        raise PermissionDenied("Diese Erfassung ist keine autonome Business Discovery.")
+    return session
+
+
+@transaction.atomic
+def add_autonomous_discovery_correction(
+    *,
+    actor,
+    session_id,
+    expected_revision: int,
+    correction: str,
+) -> CaptureSession:
+    session = _locked_owned_session(actor=actor, session_id=session_id)
+    if (
+        session.capture_type != CaptureSession.CaptureType.VALUE_STREAM
+        or session.mode != CaptureSession.Mode.AUTONOMOUS
+    ):
+        raise PermissionDenied("Diese Erfassung ist keine autonome Business Discovery.")
+    _assert_editable(session)
+    _assert_revision(session, expected_revision)
+
+    text = str(correction or "").strip()
+    if not text:
+        raise ValidationError({"correction": "Bitte einen konkreten Korrekturhinweis angeben."})
+    if len(text) > 4000:
+        raise ValidationError({"correction": "Der Korrekturhinweis darf höchstens 4000 Zeichen enthalten."})
+
+    answers = dict(session.answers or {})
+    corrections = list(answers.get("corrections") or [])
+    corrections.append({"text": text, "revision": session.revision + 1})
+    answers["corrections"] = corrections
+    session.answers = answers
+    session.revision += 1
+    session.save_count += 1
+    session.expires_at = _draft_expiry()
+    session.save(
+        update_fields=[
+            "answers",
+            "revision",
+            "save_count",
+            "expires_at",
+            "updated_at",
+        ]
+    )
+    return session
+
+
 def get_owned_capture_session(*, actor, session_id) -> CaptureSession:
     session = CaptureSession.objects.get(pk=session_id, owner=actor)
     _assert_capture_permission(actor, session.capture_type)
