@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501, I001, RUF001, S105, S310
+# ruff: noqa: E402, E501, S105, S310
 from __future__ import annotations
 
 import json
@@ -311,7 +311,7 @@ def run() -> None:
             ],
         )
 
-        c_session, c_snapshot, c_analysis = _case(
+        c_session, _c_snapshot, c_analysis = _case(
             owner=owner,
             source_root=root / "c",
             key="C",
