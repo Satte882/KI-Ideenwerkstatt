@@ -208,10 +208,16 @@ def _capture_browser(owner: User, sessions: dict[str, CaptureSession], *, label:
                         raise AssertionError(f"{key}: horizontaler Overflow.")
                     if "Scope-/Fokus-Review" not in body:
                         raise AssertionError(f"{key}: Scope-/Fokus-Review fehlt.")
-                    if key == "B" and label == "waiting" and "Fachliche Klärung erforderlich" not in body:
+                    if (
+                        key == "B"
+                        and label == "waiting"
+                        and "Fachliche Klärung erforderlich" not in body
+                    ):
                         raise AssertionError("B: WAITING_HUMAN ist im Browser nicht sichtbar.")
                     if key == "C" and "Widersprüche" not in body:
-                        raise AssertionError("C: Widerspruchsbereich ist im Browser nicht sichtbar.")
+                        raise AssertionError(
+                            "C: Widerspruchsbereich ist im Browser nicht sichtbar."
+                        )
                     screenshot = OUTPUT_DIR / f"{label}-{key}.png"
                     page.screenshot(path=str(screenshot), full_page=True)
                     report[key] = {
@@ -351,9 +357,7 @@ def run() -> None:
         if a_analysis.status != CaptureAnalysis.Status.SUCCESS:
             raise AssertionError(f"A muss SUCCESS sein, ist {a_analysis.status}.")
         if b_waiting.status != CaptureAnalysis.Status.WAITING_HUMAN:
-            raise AssertionError(
-                f"B muss zunächst WAITING_HUMAN sein, ist {b_waiting.status}."
-            )
+            raise AssertionError(f"B muss zunächst WAITING_HUMAN sein, ist {b_waiting.status}.")
         human_question = str(b_waiting.verification_payload.get("human_question") or "").strip()
         if not human_question:
             raise AssertionError("B benötigt eine präzise menschliche Klärungsfrage.")
