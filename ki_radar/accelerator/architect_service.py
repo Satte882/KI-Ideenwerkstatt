@@ -22,8 +22,6 @@ from .analysis_service import (
 from .architect_contract import (
     DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
-    DISCOVERY_VERIFIER_PROMPT_VERSION,
-    DISCOVERY_VERIFIER_SCHEMA_VERSION,
     DiscoveryContractError,
     build_discovery_json_schema,
     build_discovery_verifier_schema,
@@ -215,7 +213,7 @@ def _input_chars(messages: list[dict[str, str]]) -> int:
 
 def _analysis_source_hash(snapshot, session: CaptureSession) -> str:
     return hashlib.sha256(
-        f"{snapshot.manifest_hash}:{session.revision}".encode("utf-8")
+        f"{snapshot.manifest_hash}:{session.revision}".encode()
     ).hexdigest()
 
 
@@ -413,7 +411,10 @@ def execute_autonomous_business_discovery(
             )
             if _input_chars(second_verifier_messages) > policy.max_input_chars:
                 raise DiscoveryAnalysisError(
-                    "Der reparierte Draft überschreitet zusammen mit den Quellen das Verifier-Limit.",
+                    (
+                        "Der reparierte Draft überschreitet zusammen mit den Quellen "
+                        "das Verifier-Limit."
+                    ),
                     code="verifier_input_too_large",
                 )
             second_verifier_result = _provider_call(
