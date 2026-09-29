@@ -23,6 +23,7 @@ from ki_radar.use_cases.ap2_metric_pilot import (
     generate_and_apply_ap2_metric_pilot,
     validate_ap2_metric_pilot_payload,
 )
+from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 
