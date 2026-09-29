@@ -1029,6 +1029,13 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
         else []
     )
     allowed_option_types = {choice for choice, _label in SolutionOption.OptionType.choices}
+    allowed_efforts = {
+        SolutionOption.Effort.LOW,
+        SolutionOption.Effort.MEDIUM,
+        SolutionOption.Effort.HIGH,
+    }
+    allowed_time_to_value = {"unknown", "short", "medium", "long"}
+    allowed_evidence_basis = {"hypothesis", "indicative", "measured"}
     for index, option in enumerate(options):
         if (
             not str(option.get("name") or "").strip()
@@ -1037,6 +1044,29 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
             or str(option.get("option_type") or "") not in allowed_option_types
         ):
             blockers.append(f"decision_brief_option_invalid:{index}")
+            continue
+        for field_name in ("feasibility", "integration_effort"):
+            if field_name in option and option.get(field_name) not in allowed_efforts:
+                blockers.append(
+                    f"decision_brief_option_{field_name}_invalid:{index}"
+                )
+        if (
+            "time_to_value" in option
+            and option.get("time_to_value") not in allowed_time_to_value
+        ):
+            blockers.append(f"decision_brief_option_time_to_value_invalid:{index}")
+        if (
+            "evidence_basis" in option
+            and option.get("evidence_basis") not in allowed_evidence_basis
+        ):
+            blockers.append(f"decision_brief_option_evidence_basis_invalid:{index}")
+        if "contains_ai_component" in option and not isinstance(
+            option.get("contains_ai_component"),
+            bool,
+        ):
+            blockers.append(
+                f"decision_brief_option_contains_ai_component_invalid:{index}"
+            )
 
     recommendation = payload.get("recommendation")
     if not isinstance(recommendation, Mapping):
