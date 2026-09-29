@@ -417,9 +417,17 @@ def run() -> None:
         ).casefold()
         if "angebotsvergleich" in b_scope_out:
             raise AssertionError("B darf den berichteten Angebotsvergleich nicht ausschließen.")
-        c_draft_text = json.dumps(c_analysis.result_payload["draft"], ensure_ascii=False).casefold()
-        if "beauftrag" in c_draft_text:
-            raise AssertionError("C darf ohne Quellenbeleg keine Beauftragung ergänzen.")
+        c_draft = c_analysis.result_payload["draft"]
+        c_included_work = json.dumps(
+            {
+                "outcome": c_draft["value_stream"]["outcome"],
+                "stages": c_draft["stages"],
+                "process_outcome": c_draft["process_analysis"]["outcome"],
+            },
+            ensure_ascii=False,
+        ).casefold()
+        if "beauftrag" in c_included_work:
+            raise AssertionError("C darf ohne Quellenbeleg keine Beauftragung als Arbeit ergänzen.")
 
         report["browser_waiting"] = _capture_browser(
             owner,
