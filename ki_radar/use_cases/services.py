@@ -9,12 +9,12 @@ from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
 
-from ki_radar.accelerator.role_defaults import resolve_use_case_business_owner
 from ki_radar.accounts.permissions import (
     GROUP_COORDINATOR,
     GROUP_TECH_ADMIN,
     is_coordinator,
 )
+from ki_radar.accelerator.role_defaults import resolve_use_case_business_owner
 from ki_radar.core.taxonomy import BusinessDomain
 from ki_radar.delivery.handover import recorded_handover_package
 from ki_radar.governance.services import (
@@ -135,7 +135,12 @@ def persist_optional_origin(*, candidate: UseCase, stored: dict) -> None:
 
 @transaction.atomic
 def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSolutionUseCaseResult:
-    from ki_radar.architecture.models import SolutionOption, SolutionSelectionDecision, UseCaseOrigin
+    from ki_radar.architecture.models import (
+        SolutionOption,
+        SolutionSelectionDecision,
+        UseCaseOrigin,
+    )
+
     from .permissions import can_create_use_case
 
     if not can_create_use_case(actor):
@@ -157,7 +162,9 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
     value_stream = stage.value_stream
 
     if option.recommendation != SolutionOption.Recommendation.PREFERRED:
-        raise ValidationError("Nur die menschlich bevorzugte Lösungsoption darf weitergeführt werden.")
+        raise ValidationError(
+            "Nur die menschlich bevorzugte Lösungsoption darf weitergeführt werden."
+        )
     if not option.starts_ai_use_case:
         raise ValidationError("Die bevorzugte Lösung enthält keine KI-Komponente.")
 
