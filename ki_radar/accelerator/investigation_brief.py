@@ -11,7 +11,12 @@ from ki_radar.architecture.investigation_adoption import (
     adopt_investigation_drafts,
     preview_investigation_draft_adoption,
 )
-from ki_radar.architecture.models import EvidenceBasis, ProcessAnalysis, SolutionOption
+from ki_radar.architecture.models import (
+    EvidenceBasis,
+    ProcessAnalysis,
+    SolutionOption,
+    TimeToValue,
+)
 
 from .investigation_models import (
     InvestigationBriefRevision,
@@ -173,25 +178,66 @@ def _target_process_fields(
     }
 
 
+def _enum_or_default(value: object, *, allowed: set[str], default: str) -> str:
+    normalized = str(value or "").strip()
+    return normalized if normalized in allowed else default
+
+
 def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
-    evidence_basis = str(option.get("evidence_basis") or EvidenceBasis.HYPOTHESIS)
-    if evidence_basis not in {choice for choice, _label in EvidenceBasis.choices}:
-        evidence_basis = EvidenceBasis.HYPOTHESIS
+    evidence_basis = _enum_or_default(
+        option.get("evidence_basis"),
+        allowed={choice for choice, _label in EvidenceBasis.choices},
+        default=EvidenceBasis.HYPOTHESIS,
+    )
     allowed_types = {choice for choice, _label in SolutionOption.OptionType.choices}
-    option_type = str(option.get("option_type") or SolutionOption.OptionType.OTHER)
-    if option_type not in allowed_types:
-        option_type = SolutionOption.OptionType.OTHER
+    option_type = _enum_or_default(
+        option.get("option_type"),
+        allowed=allowed_types,
+        default=SolutionOption.OptionType.OTHER,
+    )
+    feasibility = _enum_or_default(
+        option.get("feasibility"),
+        allowed={choice for choice, _label in SolutionOption.Effort.choices},
+        default=SolutionOption.Effort.NOT_ASSESSED,
+    )
+    integration_effort = _enum_or_default(
+        option.get("integration_effort"),
+        allowed={choice for choice, _label in SolutionOption.Effort.choices},
+        default=SolutionOption.Effort.NOT_ASSESSED,
+    )
+    time_to_value = _enum_or_default(
+        option.get("time_to_value"),
+        allowed={choice for choice, _label in TimeToValue.choices},
+        default=TimeToValue.NOT_ASSESSED,
+    )
+
+    fixed_ai = option_type in SolutionOption.fixed_ai_option_types()
+    fixed_non_ai = option_type in SolutionOption.fixed_non_ai_option_types()
+    if fixed_ai:
+        contains_ai_component = True
+    elif fixed_non_ai:
+        contains_ai_component = False
+    elif isinstance(option.get("contains_ai_component"), bool):
+        contains_ai_component = bool(option["contains_ai_component"])
+    else:
+        contains_ai_component = not bool(option.get("non_ai"))
+
     return {
         "name": str(option.get("name") or "").strip()[:200],
         "option_type": option_type,
+        "contains_ai_component": contains_ai_component,
         "description": str(option.get("description") or "").strip(),
         "expected_value": str(option.get("expected_value") or "").strip(),
         "bottleneck_coverage": str(option.get("bottleneck_coverage") or "").strip(),
+        "feasibility": feasibility,
         "data_requirements": str(option.get("data_requirements") or "").strip(),
         "application_impact": str(option.get("application_impact") or "").strip(),
+        "integration_effort": integration_effort,
         "integration_impact": str(option.get("integration_impact") or "").strip(),
+        "technology_constraints": str(option.get("technology_constraints") or "").strip(),
         "risks": str(option.get("risks") or "").strip(),
         "architecture_fit": str(option.get("architecture_fit") or "").strip(),
+        "time_to_value": time_to_value,
         "evidence_basis": evidence_basis,
     }
 
