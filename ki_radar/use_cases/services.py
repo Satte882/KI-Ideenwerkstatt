@@ -9,12 +9,12 @@ from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
 
+from ki_radar.accelerator.role_defaults import resolve_use_case_business_owner
 from ki_radar.accounts.permissions import (
     GROUP_COORDINATOR,
     GROUP_TECH_ADMIN,
     is_coordinator,
 )
-from ki_radar.accelerator.role_defaults import resolve_use_case_business_owner
 from ki_radar.core.taxonomy import BusinessDomain
 from ki_radar.delivery.handover import recorded_handover_package
 from ki_radar.governance.services import (
