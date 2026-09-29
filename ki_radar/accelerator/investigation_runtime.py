@@ -1047,13 +1047,8 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
             continue
         for field_name in ("feasibility", "integration_effort"):
             if field_name in option and option.get(field_name) not in allowed_efforts:
-                blockers.append(
-                    f"decision_brief_option_{field_name}_invalid:{index}"
-                )
-        if (
-            "time_to_value" in option
-            and option.get("time_to_value") not in allowed_time_to_value
-        ):
+                blockers.append(f"decision_brief_option_{field_name}_invalid:{index}")
+        if "time_to_value" in option and option.get("time_to_value") not in allowed_time_to_value:
             blockers.append(f"decision_brief_option_time_to_value_invalid:{index}")
         if (
             "evidence_basis" in option
@@ -1064,9 +1059,7 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
             option.get("contains_ai_component"),
             bool,
         ):
-            blockers.append(
-                f"decision_brief_option_contains_ai_component_invalid:{index}"
-            )
+            blockers.append(f"decision_brief_option_contains_ai_component_invalid:{index}")
 
     recommendation = payload.get("recommendation")
     if not isinstance(recommendation, Mapping):

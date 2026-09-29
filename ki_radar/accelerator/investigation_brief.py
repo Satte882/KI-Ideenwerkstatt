@@ -229,9 +229,7 @@ def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
             default=TimeToValue.NOT_ASSESSED,
         )
     if "technology_constraints" in option:
-        payload["technology_constraints"] = str(
-            option.get("technology_constraints") or ""
-        ).strip()
+        payload["technology_constraints"] = str(option.get("technology_constraints") or "").strip()
 
     if option_type not in (
         SolutionOption.fixed_ai_option_types() | SolutionOption.fixed_non_ai_option_types()
@@ -242,6 +240,7 @@ def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
             payload["contains_ai_component"] = not bool(option.get("non_ai"))
 
     return payload
+
 
 def _current_domain_hash(process: ProcessAnalysis) -> str:
     options = [

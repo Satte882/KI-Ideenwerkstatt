@@ -1063,12 +1063,10 @@ def test_ap2_complete_ready_brief_materializes_comparable_candidates(
     assert len(options) == 2
     assert all(option.comparison_complete for option in options)
     assert all(
-        option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED
-        for option in options
+        option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED for option in options
     )
     assert all(
-        option.recommendation == SolutionOption.Recommendation.CANDIDATE
-        for option in options
+        option.recommendation == SolutionOption.Recommendation.CANDIDATE for option in options
     )
     assert not process.solution_options.filter(
         recommendation=SolutionOption.Recommendation.PREFERRED
