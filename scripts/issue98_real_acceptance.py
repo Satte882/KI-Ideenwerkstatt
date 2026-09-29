@@ -412,6 +412,14 @@ def run() -> None:
             raise AssertionError("C muss mindestens einen Widerspruch sichtbar erhalten.")
         if not any(len(set(item.get("evidence_refs") or [])) >= 2 for item in contradictions):
             raise AssertionError("C-Widerspruch muss auf mindestens zwei Quellen verweisen.")
+        b_scope_out = str(
+            b_waiting.result_payload["draft"]["value_stream"].get("scope_out") or ""
+        ).casefold()
+        if "angebotsvergleich" in b_scope_out:
+            raise AssertionError("B darf den berichteten Angebotsvergleich nicht ausschließen.")
+        c_draft_text = json.dumps(c_analysis.result_payload["draft"], ensure_ascii=False).casefold()
+        if "beauftrag" in c_draft_text:
+            raise AssertionError("C darf ohne Quellenbeleg keine Beauftragung ergänzen.")
 
         report["browser_waiting"] = _capture_browser(
             owner,

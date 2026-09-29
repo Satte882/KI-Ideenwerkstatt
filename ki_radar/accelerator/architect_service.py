@@ -56,6 +56,10 @@ Regeln:
 - value_stream.scope_in/scope_out beschreiben die Grenze des gesamten Value Streams,
   nicht die engere Process-Analysis-Grenze. Jede aufgeführte Value-Stream-Phase muss
   zur Value-Stream-Grenze und zu ihrem Trigger/Outcome passen.
+- scope_out darf keine Tätigkeit nennen, die als Phase im Value Stream enthalten ist.
+  Das Outcome endet beim letzten durch Quellen belegten Schritt: Die Vorbereitung
+  einer Entscheidung ist nicht die getroffene Entscheidung oder Beauftragung.
+  Ergänze nachgelagerte Schritte nur, wenn der autorisierte Input sie ausdrücklich nennt.
 - Phasen bilden eine plausible lückenlose Reihenfolge; Unsicherheit bleibt sichtbar.
 - Wenn process_analysis.current_flow Phasenschlüssel nennt, müssen diese exakt
   den Schlüsseln und Namen der erzeugten Phasen entsprechen.
@@ -83,6 +87,8 @@ Kritisch sind insbesondere:
   und corrections. Diese Feldnamen selbst sind keine zulässigen Evidence-Refs.
 - erfundene Zahlen oder Fakten;
 - Value-Stream-Grenzen, die nur den Einzelprozess wiederholen;
+- scope_out schließt eine aufgeführte Phase aus oder Outcome/Phasen reichen über
+  den letzten ausdrücklich berichteten Quellenschritt hinaus;
 - unplausible oder lückenhafte Phasenfolge;
 - Fokusphase passt nicht zum Problem;
 - Process Scope ist nicht enger als der Value Stream oder fachlich unklar;
@@ -123,6 +129,9 @@ tragen; andernfalls entferne den Widerspruch oder ordne die Aussage korrekt als 
 ein. U0 ist der autorisierte Handle für problem_statement, business_context und corrections;
 die Feldnamen selbst sind keine gültigen Evidence-Refs. Falls ein Verifier-Finding das anders
 behauptet, behalte U0 und korrigiere nur die tatsächlich fehlerhafte Quellenzuordnung.
+scope_out darf keine aufgeführte Phase ausschließen. Outcome und Phasen dürfen nur bis
+zum letzten belegten Quellenschritt reichen; Entscheidungsvorbereitung ist keine
+getroffene Entscheidung oder Beauftragung.
 Für evidence_basis gilt: direkt berichtete qualitative Phasentätigkeit = indicative;
 nur abgeleitete Tätigkeit = hypothesis; measured nur mit Messbeleg. Die Einschätzung
 bezieht sich auf die Phasenbeschreibung, nicht auf low/medium/high-Screening-Ratings.

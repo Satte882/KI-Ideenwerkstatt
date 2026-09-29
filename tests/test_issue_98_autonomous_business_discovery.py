@@ -70,6 +70,9 @@ def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
     assert "U0 ist der autorisierte Input-Handle" in prompt
     assert "Ordne Aussagen aus" in architect_service.DISCOVERY_SYSTEM_PROMPT
     assert "value_stream.scope_in/scope_out" in architect_service.DISCOVERY_SYSTEM_PROMPT
+    assert "scope_out darf keine Tätigkeit" in architect_service.DISCOVERY_SYSTEM_PROMPT
+    assert "Outcome/Phasen reichen über" in prompt
+    assert "scope_out darf keine aufgeführte Phase" in architect_service.REPAIR_SYSTEM_PROMPT
     assert "Phasentätigkeit ist indicative" in architect_service.DISCOVERY_SYSTEM_PROMPT.replace(
         "\n  ", " "
     )
