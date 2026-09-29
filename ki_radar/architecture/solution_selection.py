@@ -178,10 +178,7 @@ def confirm_diagnosis_and_select_solution(
             process_version=process.version,
             validated_by=actor,
             validator_role=process_validator_role(actor),
-            note=(
-                "Kernbefund im kombinierten Diagnose- und Lösungsreview "
-                "fachlich bestätigt."
-            ),
+            note=("Kernbefund im kombinierten Diagnose- und Lösungsreview fachlich bestätigt."),
         )
         if process.status in {
             ProcessAnalysis.Status.DRAFT,
