@@ -13,6 +13,7 @@ from ki_radar.architecture.models import (
 )
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.models import UseCase
 
 
 def make_process(owner, business_unit):
@@ -161,10 +162,13 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     assistant.refresh_from_db()
     assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
     assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+    use_case = UseCase.objects.get()
 
     content = client.get(url).content.decode()
     assert "Aktuell bevorzugt: KI-Assistenz" in content
     assert "Die Entscheidung ist in der Auswahlhistorie auditierbar." in content
+    assert use_case.short_id in content
+    assert "direkt aus der bestätigten Lösungsentscheidung erzeugt" in content
     selected_value = client.get(url).context["form"]["selected_option"].value()
     assert str(selected_value) == str(assistant.pk)
 
@@ -229,6 +233,45 @@ def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
     assert process.validations.filter(process_version=process.version).exists()
     assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
     assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+
+
+@pytest.mark.django_db
+def test_non_ai_preferred_selection_is_visible_end_state_without_use_case(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    organizational = make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+
+    response = client.post(
+        url,
+        {
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Lösung reicht fachlich aus.",
+        },
+    )
+
+    assert response.status_code == 302
+    assert not UseCase.objects.exists()
+    content = client.get(url).content.decode()
+    assert "gültiger Non-AI-Endzustand" in content
+    assert "kein KI-Use-Case erzeugt" in content
 
 
 @pytest.mark.django_db
