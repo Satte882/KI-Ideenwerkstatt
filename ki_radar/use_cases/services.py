@@ -27,6 +27,7 @@ from ki_radar.governance.services import (
 from .models import ApprovalDecision, DecisionAssessment, UseCase
 from .transition_policy import APPROVED_DECISION_STATUSES
 
+
 @dataclass(frozen=True)
 class SelectedSolutionUseCaseResult:
     use_case: UseCase
