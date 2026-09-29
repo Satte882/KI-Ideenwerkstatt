@@ -104,9 +104,7 @@ def _comparison_assessment_ready(fields: Mapping[str, Any]) -> bool:
         SolutionOption.Effort.NOT_ASSESSED,
     }:
         return False
-    if fields.get("time_to_value") in {None, "", "not_assessed"}:
-        return False
-    return True
+    return fields.get("time_to_value") not in {None, "", "not_assessed"}
 
 
 def _build_plan(
@@ -387,14 +385,18 @@ def adopt_investigation_drafts(
     current_by_id = {str(option.pk): option for option in current_options}
     for change in plan["solution_changes"]:
         fields = {key: change[key] for key in _ALLOWED_SOLUTION_FIELDS if key in change}
-        assessment_ready = _comparison_assessment_ready(fields)
         if change["action"] == "update":
             option = current_by_id[change["option_id"]]
             for field_name, value in fields.items():
                 setattr(option, field_name, value)
+            resultant_fields = {
+                field_name: getattr(option, field_name)
+                for field_name in _ALLOWED_SOLUTION_FIELDS
+                if hasattr(option, field_name)
+            }
             option.evaluation_status = (
                 SolutionOption.EvaluationStatus.ASSESSED
-                if assessment_ready
+                if _comparison_assessment_ready(resultant_fields)
                 else SolutionOption.EvaluationStatus.DRAFT
             )
             try:
@@ -414,7 +416,7 @@ def adopt_investigation_drafts(
             recommendation=SolutionOption.Recommendation.CANDIDATE,
             evaluation_status=(
                 SolutionOption.EvaluationStatus.ASSESSED
-                if assessment_ready
+                if _comparison_assessment_ready(fields)
                 else SolutionOption.EvaluationStatus.DRAFT
             ),
             **fields,
