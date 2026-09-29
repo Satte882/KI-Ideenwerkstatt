@@ -26,7 +26,6 @@ from ki_radar.use_cases.ap2_metric_pilot import (
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
-
 pytestmark = pytest.mark.django_db
 
 
