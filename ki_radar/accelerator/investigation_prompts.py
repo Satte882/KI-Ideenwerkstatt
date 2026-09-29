@@ -134,8 +134,9 @@ Lösungskomponente und halte Unsicherheit in risks/technology_constraints sichtb
 technology_constraints beschreibt belegte oder als Annahme erkennbare technische Leitplanken;
 fehlende Leitplanken dürfen nicht als bestätigte Abwesenheit erfunden werden.
 Diese Felder dürfen keine Rangfolge oder recommendation=PREFERRED vorwegnehmen.
-existing_solution_options enthält den beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag einen dort vorhandenen Kandidaten
-fachlich fortschreibt, übernimm dessen id exakt in existing_option_id; erfinde keine ID und
+existing_solution_options enthält den beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag
+einen dort vorhandenen Kandidaten fachlich fortschreibt, übernimm dessen id exakt in
+existing_option_id; erfinde keine ID und
 verwende keine bestehende ID für eine tatsächlich neue Option. Eine neue Formulierung oder
 Präzisierung eines bestehenden Kandidaten macht ihn nicht automatisch zu einer neuen Option.
 Gib die aktuelle Entscheidungsfrage im Feld question exakt wieder.
