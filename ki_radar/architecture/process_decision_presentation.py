@@ -38,6 +38,22 @@ def _first_supported_cause_claim(run) -> str:
     return ""
 
 
+def suggested_confirmed_cause(
+    *,
+    process_analysis: ProcessAnalysis,
+    latest_materialization,
+) -> str:
+    current = humanize_process_text(process_analysis.confirmed_causes)
+    if current or latest_materialization is None:
+        return current
+
+    payload = _payload_mapping(latest_materialization.brief_revision.payload)
+    run = latest_materialization.run
+    if run.claim_register:
+        return _first_supported_cause_claim(run)
+    return _first_supported_hypothesis(payload)
+
+
 def _first_calculation(payload: Mapping[str, Any]) -> str:
     for item in payload.get("calculations", []):
         if not isinstance(item, Mapping):
@@ -67,12 +83,11 @@ def build_process_decision_surface(
     if not situation:
         situation = humanize_process_text(process_analysis.bottlenecks)
 
-    finding = humanize_process_text(process_analysis.confirmed_causes)
+    finding = suggested_confirmed_cause(
+        process_analysis=process_analysis,
+        latest_materialization=latest_materialization,
+    )
     run = latest_materialization.run
-    if not finding and run.claim_register:
-        finding = _first_supported_cause_claim(run)
-    if not finding and not run.claim_register:
-        finding = _first_supported_hypothesis(payload)
     if not finding:
         finding = _first_calculation(payload)
     if not finding:
