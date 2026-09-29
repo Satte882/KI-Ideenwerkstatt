@@ -35,12 +35,14 @@ from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
+    LEGACY_SYNTHESIS_INSTRUCTION_HASH,
     LEGACY_SYNTHESIS_PROMPT_VERSION,
     LEGACY_SYNTHESIS_SCHEMA_VERSION,
     SYNTHESIS_INSTRUCTION,
     SYNTHESIS_PROMPT_VERSION,
     SYNTHESIS_SCHEMA_VERSION,
     TOOL_PARAMETER_CONTRACTS,
+    LEGACY_VERIFIER_INSTRUCTION_HASH,
     LEGACY_VERIFIER_PROMPT_VERSION,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
@@ -354,10 +356,10 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     legacy_synthesizer = (
         synthesizer.get("prompt_version") == LEGACY_SYNTHESIS_PROMPT_VERSION
         and synthesizer.get("schema_version") == LEGACY_SYNTHESIS_SCHEMA_VERSION
+        and synthesizer.get("instruction_hash") == LEGACY_SYNTHESIS_INSTRUCTION_HASH
         and isinstance(synthesizer.get("instruction_template"), str)
-        and bool(synthesizer.get("instruction_template"))
-        and synthesizer.get("instruction_hash")
-        == _instruction_hash(str(synthesizer.get("instruction_template")))
+        and _instruction_hash(str(synthesizer.get("instruction_template")))
+        == LEGACY_SYNTHESIS_INSTRUCTION_HASH
     )
     current_verifier = (
         verifier.get("prompt_version") == VERIFIER_PROMPT_VERSION
@@ -367,10 +369,10 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     legacy_verifier = (
         verifier.get("prompt_version") == LEGACY_VERIFIER_PROMPT_VERSION
         and verifier.get("schema_version") == VERIFIER_SCHEMA_VERSION
+        and verifier.get("instruction_hash") == LEGACY_VERIFIER_INSTRUCTION_HASH
         and isinstance(verifier.get("instruction_template"), str)
-        and bool(verifier.get("instruction_template"))
-        and verifier.get("instruction_hash")
-        == _instruction_hash(str(verifier.get("instruction_template")))
+        and _instruction_hash(str(verifier.get("instruction_template")))
+        == LEGACY_VERIFIER_INSTRUCTION_HASH
     )
     if (
         planner.get("prompt_version") != PLANNER_PROMPT_VERSION
