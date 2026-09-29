@@ -26,9 +26,13 @@ _ALLOWED_SOLUTION_FIELDS = frozenset(
         "data_requirements",
         "application_impact",
         "integration_impact",
+        "integration_effort",
+        "technology_constraints",
         "risks",
         "architecture_fit",
+        "time_to_value",
         "evidence_basis",
+        "contains_ai_component",
     }
 )
 
@@ -77,6 +81,32 @@ def _validate_contract(
 
 def _option_fields(proposal: Mapping[str, Any]) -> dict[str, Any]:
     return {key: proposal[key] for key in _ALLOWED_SOLUTION_FIELDS if key in proposal}
+
+
+def _comparison_assessment_ready(fields: Mapping[str, Any]) -> bool:
+    required_text = (
+        "description",
+        "expected_value",
+        "bottleneck_coverage",
+        "data_requirements",
+        "application_impact",
+        "integration_impact",
+        "risks",
+        "architecture_fit",
+    )
+    if any(not str(fields.get(name) or "").strip() for name in required_text):
+        return False
+    if fields.get("feasibility") in {None, "", SolutionOption.Effort.NOT_ASSESSED}:
+        return False
+    if fields.get("integration_effort") in {
+        None,
+        "",
+        SolutionOption.Effort.NOT_ASSESSED,
+    }:
+        return False
+    if fields.get("time_to_value") in {None, "", "not_assessed"}:
+        return False
+    return True
 
 
 def _build_plan(
@@ -357,10 +387,16 @@ def adopt_investigation_drafts(
     current_by_id = {str(option.pk): option for option in current_options}
     for change in plan["solution_changes"]:
         fields = {key: change[key] for key in _ALLOWED_SOLUTION_FIELDS if key in change}
+        assessment_ready = _comparison_assessment_ready(fields)
         if change["action"] == "update":
             option = current_by_id[change["option_id"]]
             for field_name, value in fields.items():
                 setattr(option, field_name, value)
+            option.evaluation_status = (
+                SolutionOption.EvaluationStatus.ASSESSED
+                if assessment_ready
+                else SolutionOption.EvaluationStatus.DRAFT
+            )
             try:
                 option.full_clean()
             except ValidationError as exc:
@@ -376,7 +412,11 @@ def adopt_investigation_drafts(
             process_analysis=process,
             created_by=actor,
             recommendation=SolutionOption.Recommendation.CANDIDATE,
-            evaluation_status=SolutionOption.EvaluationStatus.DRAFT,
+            evaluation_status=(
+                SolutionOption.EvaluationStatus.ASSESSED
+                if assessment_ready
+                else SolutionOption.EvaluationStatus.DRAFT
+            ),
             **fields,
         )
         try:
