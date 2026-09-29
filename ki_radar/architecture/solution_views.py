@@ -13,9 +13,11 @@ from ki_radar.accelerator.solution_generation_entry import (
 from .forms import SolutionSelectionForm
 from .models import ProcessAnalysis, SolutionOption
 from .permissions import can_edit_value_stream
+from .process_decision_presentation import suggested_confirmed_cause
 from .solution_retirement import retire_solution_option
 from .solution_selection import (
     comparison_blockers,
+    confirm_diagnosis_and_select_solution,
     diagnosis_readiness_blockers,
     focus_readiness_blockers,
     ordered_solution_options,
@@ -50,7 +52,7 @@ def solution_option_compare(request, pk):
     selection_history = process_analysis.solution_selection_decisions.all()
     latest_selection = selection_history.first()
     latest_investigation_materialization = (
-        InvestigationMaterialization.objects.select_related("run")
+        InvestigationMaterialization.objects.select_related("run", "brief_revision")
         .filter(
             run__process_analysis=process_analysis,
             run__evidence_campaign__isnull=True,
@@ -59,9 +61,17 @@ def solution_option_compare(request, pk):
         .first()
     )
 
+    diagnosis_confirmation_required = diagnosis_blockers == ["bestätigte Ursache"]
+    confirmed_cause_candidate = suggested_confirmed_cause(
+        process_analysis=process_analysis,
+        latest_materialization=latest_investigation_materialization,
+    )
     form = SolutionSelectionForm(
         request.POST or None,
         options=options,
+        confirmed_causes_initial=confirmed_cause_candidate,
+        process_version=process_analysis.version,
+        require_diagnosis_confirmation=diagnosis_confirmation_required,
         initial={
             "selected_option": latest_selection.selected_option_id,
         }
@@ -73,18 +83,32 @@ def solution_option_compare(request, pk):
             raise PermissionDenied
         if form.is_valid():
             try:
-                select_preferred_solution(
-                    process_analysis=process_analysis,
-                    selected_option=form.cleaned_data["selected_option"],
-                    rationale=form.cleaned_data["rationale"],
-                    actor=request.user,
-                )
+                if diagnosis_confirmation_required:
+                    confirm_diagnosis_and_select_solution(
+                        process_analysis=process_analysis,
+                        selected_option=form.cleaned_data["selected_option"],
+                        confirmed_causes=form.cleaned_data["confirmed_causes"],
+                        rationale=form.cleaned_data["rationale"],
+                        expected_process_version=form.cleaned_data["process_version"],
+                        actor=request.user,
+                    )
+                else:
+                    select_preferred_solution(
+                        process_analysis=process_analysis,
+                        selected_option=form.cleaned_data["selected_option"],
+                        rationale=form.cleaned_data["rationale"],
+                        actor=request.user,
+                    )
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
                 messages.success(
                     request,
-                    "Die bevorzugte Lösungsoption wurde auditierbar ausgewählt.",
+                    (
+                        "Kernbefund und bevorzugte Lösungsoption wurden auditierbar bestätigt."
+                        if diagnosis_confirmation_required
+                        else "Die bevorzugte Lösungsoption wurde auditierbar ausgewählt."
+                    ),
                 )
                 comparison_url = reverse(
                     "architecture:solution_option_compare",
@@ -101,7 +125,13 @@ def solution_option_compare(request, pk):
             "blockers": blockers,
             "diagnosis_blockers": diagnosis_blockers,
             "focus_blockers": focus_blockers,
-            "selection_blocked": bool(blockers or diagnosis_blockers or focus_blockers),
+            "selection_blocked": bool(
+                blockers
+                or focus_blockers
+                or (diagnosis_blockers and not diagnosis_confirmation_required)
+            ),
+            "diagnosis_confirmation_required": diagnosis_confirmation_required,
+            "confirmed_cause_candidate": confirmed_cause_candidate,
             "incomplete_options": incomplete_options,
             "needs_more_options": len(options) < 2,
             "form": form,
