@@ -226,9 +226,7 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
     )
     focus = getattr(value_stream, "focus", None)
     use_case._classification_payload = {
-        "business_domain": (
-            focus.business_domain if focus is not None else BusinessDomain.OTHER
-        ),
+        "business_domain": (focus.business_domain if focus is not None else BusinessDomain.OTHER),
         "capability": focus.capability if focus is not None else "",
         "process_area": process.name,
     }
