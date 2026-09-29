@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from datetime import timedelta
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -1143,15 +1144,54 @@ def test_expired_autonomous_capture_can_be_purged_with_temporary_evidence(owner,
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     folder_id = snapshot.folder_id
     snapshot_id = snapshot.pk
+    source_path = Path(snapshot.folder.root_path)
+    assert (source_path / "interview.md").is_file()
     now = timezone.now()
     CaptureSession.objects.filter(pk=session.pk).update(
         status=CaptureSession.Status.EXPIRED,
         expired_at=now - timedelta(days=8),
     )
 
-    deleted = purge_terminal_capture_sessions(now=now)
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        deleted = purge_terminal_capture_sessions(now=now)
 
     assert deleted == 1
     assert not CaptureSession.objects.filter(pk=session.pk).exists()
     assert not InvestigationSourceFolder.objects.filter(pk=folder_id).exists()
     assert not InvestigationSourceSnapshot.objects.filter(pk=snapshot_id).exists()
+    assert not source_path.exists()
+
+
+@pytest.mark.django_db
+def test_capture_purge_preserves_materialized_investigation_sources(owner, tmp_path):
+    session, discovery_snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    analysis = _approved_analysis(session=session, snapshot=discovery_snapshot)
+    source_path = Path(discovery_snapshot.folder.root_path)
+    source_content = (source_path / "interview.md").read_bytes()
+
+    result = materialize_discovery_and_start_investigation(
+        actor=owner,
+        session_id=session.pk,
+        analysis_id=analysis.pk,
+        selected_stage_key="compare",
+        expected_revision=session.revision,
+    )
+    process_snapshot = InvestigationSourceSnapshot.objects.get(pk=result.investigation_snapshot_id)
+    process_folder_id = process_snapshot.folder_id
+    assert process_snapshot.folder.root_path == str(source_path)
+
+    now = timezone.now()
+    CaptureSession.objects.filter(pk=session.pk).update(
+        status=CaptureSession.Status.EXPIRED,
+        expired_at=now - timedelta(days=8),
+    )
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        deleted = purge_terminal_capture_sessions(now=now)
+
+    assert deleted == 1
+    assert not CaptureSession.objects.filter(pk=session.pk).exists()
+    assert not InvestigationSourceSnapshot.objects.filter(pk=discovery_snapshot.pk).exists()
+    assert InvestigationSourceFolder.objects.filter(pk=process_folder_id).exists()
+    assert InvestigationSourceSnapshot.objects.filter(pk=process_snapshot.pk).exists()
+    assert InvestigationRun.objects.filter(pk=result.investigation_run_id).exists()
+    assert (source_path / "interview.md").read_bytes() == source_content
