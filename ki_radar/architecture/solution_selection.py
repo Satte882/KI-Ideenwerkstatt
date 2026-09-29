@@ -202,8 +202,17 @@ def select_preferred_solution(
     selected_option: SolutionOption,
     rationale: str,
     actor,
+    expected_process_version: int | None = None,
 ) -> SolutionSelectionDecision:
     process_analysis = ProcessAnalysis.objects.select_for_update().get(pk=process_analysis.pk)
+    if (
+        expected_process_version is not None
+        and process_analysis.version != expected_process_version
+    ):
+        raise ValidationError(
+            "Die Prozessanalyse wurde seit dem Review geändert. "
+            "Bitte den aktuellen Stand erneut prüfen; es wurde nichts überschrieben."
+        )
     if not can_edit_value_stream(actor, process_analysis.stage.value_stream):
         raise ValidationError("Für diese Lösungsentscheidung fehlt die Berechtigung.")
     if focus_readiness_blockers(process_analysis):

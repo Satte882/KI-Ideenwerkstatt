@@ -30,6 +30,47 @@ from .solution_selection import (
 )
 
 
+def _continue_selected_ai_solution(*, request, decision):
+    try:
+        use_case_result = create_use_case_from_selected_solution(
+            decision=decision,
+            actor=request.user,
+        )
+    except (PermissionDenied, ValidationError) as exc:
+        messages.warning(
+            request,
+            "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
+            f"Handoff benötigt noch Klärung: {exc}",
+        )
+        return
+
+    verb = "erzeugt" if use_case_result.created else "wiederverwendet"
+    messages.success(
+        request,
+        f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
+        f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
+    )
+    if use_case_result.use_case.ap2_planning_provenance:
+        return
+    try:
+        planning = generate_and_apply_ap2_metric_pilot(
+            use_case=use_case_result.use_case,
+            actor=request.user,
+        )
+    except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
+        messages.warning(
+            request,
+            "Der AI-Use-Case ist gespeichert; Metrik/Pilot konnte "
+            f"noch nicht vorbereitet werden: {exc}",
+        )
+    else:
+        messages.success(
+            request,
+            "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
+            f"({len(planning.changed_fields)} Felder ergänzt).",
+        )
+
+
 @login_required
 def solution_option_compare(request, pk):
     process_analysis = get_object_or_404(
@@ -86,6 +127,15 @@ def solution_option_compare(request, pk):
     if request.method == "POST":
         if not can_select:
             raise PermissionDenied
+        if request.POST.get("continue_ai_handoff") == "1":
+            if latest_selection is None or not latest_selection.selected_option.starts_ai_use_case:
+                raise PermissionDenied
+            _continue_selected_ai_solution(request=request, decision=latest_selection)
+            comparison_url = reverse(
+                "architecture:solution_option_compare",
+                kwargs={"pk": process_analysis.pk},
+            )
+            return redirect(f"{comparison_url}#selection-result")
         if form.is_valid():
             try:
                 if diagnosis_confirmation_required:
@@ -103,47 +153,13 @@ def solution_option_compare(request, pk):
                         selected_option=form.cleaned_data["selected_option"],
                         rationale=form.cleaned_data["rationale"],
                         actor=request.user,
+                        expected_process_version=form.cleaned_data["process_version"],
                     )
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
                 if decision.selected_option.starts_ai_use_case:
-                    try:
-                        use_case_result = create_use_case_from_selected_solution(
-                            decision=decision,
-                            actor=request.user,
-                        )
-                    except (PermissionDenied, ValidationError) as exc:
-                        messages.warning(
-                            request,
-                            "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
-                            "Handoff benötigt noch Klärung: " + " ".join(exc.messages),
-                        )
-                    else:
-                        verb = "erzeugt" if use_case_result.created else "wiederverwendet"
-                        messages.success(
-                            request,
-                            f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
-                            f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
-                        )
-                        if not use_case_result.use_case.ap2_planning_provenance:
-                            try:
-                                planning = generate_and_apply_ap2_metric_pilot(
-                                    use_case=use_case_result.use_case,
-                                    actor=request.user,
-                                )
-                            except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
-                                messages.warning(
-                                    request,
-                                    "Der AI-Use-Case ist gespeichert; Metrik/Pilot konnte "
-                                    f"noch nicht vorbereitet werden: {exc}",
-                                )
-                            else:
-                                messages.success(
-                                    request,
-                                    "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
-                                    f"({len(planning.changed_fields)} Felder ergänzt).",
-                                )
+                    _continue_selected_ai_solution(request=request, decision=decision)
                 else:
                     messages.success(
                         request,

@@ -658,8 +658,6 @@ class SolutionSelectionForm(forms.Form):
 
     def clean_process_version(self):
         submitted = self.cleaned_data.get("process_version")
-        if self.is_bound and "process_version" not in self.data:
-            submitted = self.process_version_initial
-        if self.require_diagnosis_confirmation and submitted is None:
+        if submitted is None:
             raise forms.ValidationError("Der geprüfte Prozessstand fehlt.")
         return submitted

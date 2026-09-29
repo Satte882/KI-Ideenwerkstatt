@@ -504,6 +504,73 @@ def test_ai_selection_creates_one_idempotent_use_case_with_origin(
 
 
 @pytest.mark.django_db
+def test_ai_handoff_rejects_process_change_after_human_selection(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den Engpass ab.",
+        actor=owner,
+    )
+    ProcessAnalysis.objects.filter(pk=comparison_process.pk).update(
+        version=comparison_process.version + 1,
+        diagnostic_observations="Zwischenzeitlich fachlich korrigiert.",
+    )
+
+    with pytest.raises(ValidationError, match="Prozessstand"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+
+
+@pytest.mark.django_db
+def test_ai_handoff_rejects_changed_option_after_human_selection(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den Engpass ab.",
+        actor=owner,
+    )
+    SolutionOption.objects.filter(pk=assistant.pk).update(
+        description="Nach der Auswahl fachlich veränderte Lösung."
+    )
+
+    with pytest.raises(ValidationError, match="Lösungsstand"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+
+
+@pytest.mark.django_db
 def test_non_ai_selection_does_not_create_fake_ai_use_case(
     comparison_process,
     owner,
@@ -589,6 +656,7 @@ def test_comparison_page_selects_and_shows_history(client, comparison_process, o
     response = client.post(
         url,
         {
+            "process_version": comparison_process.version,
             "selected_option": assistant.pk,
             "rationale": "Die organisatorische Alternative deckt die Extraktionsarbeit nicht ab.",
         },

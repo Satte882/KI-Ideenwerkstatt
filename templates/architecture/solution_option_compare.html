@@ -123,7 +123,7 @@
 {% if can_select %}
 <form method="post" class="app-card mb-4" id="solution-selection">
   {% csrf_token %}
-  {% if diagnosis_confirmation_required %}{{ form.process_version }}{% endif %}
+  {{ form.process_version }}
   <div class="card-header">
     <strong>Bevorzugte Option auswählen</strong>
     <div class="small text-muted mt-1">Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.</div>
@@ -143,6 +143,12 @@
               wurde direkt aus der bestätigten Lösungsentscheidung erzeugt.
             {% endif %}
           </div>
+          {% if not selected_use_case or not selected_use_case.ap2_planning_provenance %}
+            <button class="btn btn-sm btn-outline-secondary mt-2" type="submit"
+                    name="continue_ai_handoff" value="1" formnovalidate>
+              AI-Handoff und Metrik-/Pilotentwurf fortsetzen
+            </button>
+          {% endif %}
         {% else %}
           <div class="small mt-2">
             <strong>Journey-Ausgang:</strong>

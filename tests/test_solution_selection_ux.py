@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -13,6 +15,7 @@ from ki_radar.architecture.models import (
 )
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.ap2_metric_pilot import AP2MetricPilotError
 from ki_radar.use_cases.models import UseCase
 
 
@@ -151,6 +154,7 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     response = client.post(
         url,
         {
+            "process_version": process.version,
             "selected_option": assistant.pk,
             "rationale": "Die Assistenz deckt den Engpass besser ab.",
         },
@@ -171,6 +175,68 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     assert "direkt aus der bestätigten Lösungsentscheidung erzeugt" in content
     selected_value = client.get(url).context["form"]["selected_option"].value()
     assert str(selected_value) == str(assistant.pk)
+
+
+@pytest.mark.django_db
+def test_failed_metric_draft_can_resume_without_second_solution_decision(
+    client,
+    owner,
+    business_unit,
+    monkeypatch,
+):
+    process = make_process(owner, business_unit)
+    make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    attempts = 0
+
+    def draft(*, use_case, actor):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise AP2MetricPilotError("Provider vorübergehend nicht verfügbar.", code="provider")
+        use_case.ap2_planning_provenance = {"generated_by": "system"}
+        use_case.save(update_fields=["ap2_planning_provenance", "updated_at"])
+        return SimpleNamespace(changed_fields=("metric_name",))
+
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_and_apply_ap2_metric_pilot",
+        draft,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    first = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz deckt den Engpass ab.",
+        },
+    )
+    assert first.status_code == 302
+    use_case = UseCase.objects.get()
+    assert use_case.ap2_planning_provenance == {}
+    assert process.solution_selection_decisions.count() == 1
+    assert "AI-Handoff und Metrik-/Pilotentwurf fortsetzen" in client.get(url).content.decode()
+
+    retry = client.post(url, {"continue_ai_handoff": "1"})
+    assert retry.status_code == 302
+    use_case.refresh_from_db()
+    assert use_case.ap2_planning_provenance["generated_by"] == "system"
+    assert process.solution_selection_decisions.count() == 1
+    assert UseCase.objects.count() == 1
+    assert attempts == 2
 
 
 @pytest.mark.django_db
@@ -264,6 +330,7 @@ def test_non_ai_preferred_selection_is_visible_end_state_without_use_case(
     response = client.post(
         url,
         {
+            "process_version": process.version,
             "selected_option": organizational.pk,
             "rationale": "Die organisatorische Lösung reicht fachlich aus.",
         },
@@ -274,6 +341,62 @@ def test_non_ai_preferred_selection_is_visible_end_state_without_use_case(
     content = client.get(url).content.decode()
     assert "gültiger Non-AI-Endzustand" in content
     assert "kein KI-Use-Case erzeugt" in content
+
+
+@pytest.mark.django_db
+def test_selection_rejects_stale_process_after_page_was_opened(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    organizational = make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    response = client.get(url)
+    reviewed_version = response.context["form"]["process_version"].value()
+    assert 'name="process_version"' in response.content.decode()
+
+    ProcessAnalysis.objects.filter(pk=process.pk).update(
+        version=process.version + 1,
+        diagnostic_observations="Der fachliche Befund wurde inzwischen korrigiert.",
+    )
+    response = client.post(
+        url,
+        {
+            "process_version": reviewed_version,
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Änderung deckt den Engpass ab.",
+        },
+    )
+
+    assert response.status_code == 200
+    assert not process.solution_selection_decisions.exists()
+    organizational.refresh_from_db()
+    assert organizational.recommendation == SolutionOption.Recommendation.CANDIDATE
+
+    missing_version = client.post(
+        url,
+        {
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Änderung deckt den Engpass ab.",
+        },
+    )
+    assert missing_version.status_code == 200
+    assert not process.solution_selection_decisions.exists()
 
 
 @pytest.mark.django_db

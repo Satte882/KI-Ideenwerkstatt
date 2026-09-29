@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -73,6 +74,7 @@ from ki_radar.accelerator.investigation_tools import (
     create_source_snapshot,
 )
 from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
+from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.investigation_adoption import (
     InvestigationDraftAdoptionError,
     adopt_investigation_drafts,
@@ -85,7 +87,9 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
-from ki_radar.core.openrouter import OpenRouterUnavailable
+from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable
+from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.models import UseCase
 
 
 def make_process(*, owner, business_unit, name="VS1/3 Fall"):
@@ -1071,6 +1075,182 @@ def test_ap2_complete_ready_brief_materializes_comparable_candidates(
     assert not process.solution_options.filter(
         recommendation=SolutionOption.Recommendation.PREFERRED
     ).exists()
+
+
+@pytest.mark.django_db
+def test_ap2_ready_brief_to_human_ai_selection_and_metric_pilot_draft(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 decision flow")
+    ValueStreamFocus.objects.create(
+        value_stream=process.stage.value_stream,
+        business_domain=BusinessDomain.PROCUREMENT,
+        capability="Freigaben steuern",
+        strategic_impact=ScreeningLevel.HIGH,
+        economic_potential=ScreeningLevel.HIGH,
+        pain_intensity=ScreeningLevel.HIGH,
+        data_accessibility=ScreeningLevel.MEDIUM,
+        change_effort=ScreeningLevel.MEDIUM,
+        status=ValueStreamFocus.Status.SELECTED,
+        rationale="Für den Deep Dive ausgewählt.",
+        updated_by=owner,
+    )
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-decision-flow",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(snapshot_id=snapshot.snapshot_id)
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    payload["options"].append(
+        {
+            "name": "AI-Assistenz für Freigaben",
+            "option_type": SolutionOption.OptionType.ASSISTANT,
+            "description": "Fachliche Freigaben mit menschlicher Kontrolle vorbereiten.",
+            "expected_value": "Wartezeit bei der Prüfung reduzieren.",
+            "bottleneck_coverage": "Adressiert die beobachtete Wartezeit.",
+            "data_requirements": "Freigabedaten und Fallunterlagen.",
+            "application_impact": "Assistenz im bestehenden Workflow.",
+            "integration_impact": "Lesender Zugriff auf den Workflow.",
+            "risks": "Falsche Vorschläge brauchen fachliche Prüfung.",
+            "architecture_fit": "Assistenz mit menschlicher Entscheidung.",
+            "contains_ai_component": True,
+            "non_ai": False,
+            "status_quo": False,
+        }
+    )
+    for option in payload["options"]:
+        option.update(
+            feasibility="medium",
+            integration_effort="medium",
+            time_to_value="unknown",
+            evidence_basis="hypothesis",
+            technology_constraints="Bestehender Workflow bleibt führend.",
+        )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+
+    materialization = materialize_decision_brief(
+        actor=owner,
+        run_id=run.pk,
+        operation_key="ap2-decision-flow-materialization",
+    )
+    assert materialization.outcome == materialization.Outcome.APPLIED
+    process.refresh_from_db()
+    options = list(process.solution_options.all())
+    assert len(options) == 3
+    assert all(option.comparison_complete for option in options)
+    assert all(
+        option.recommendation == SolutionOption.Recommendation.CANDIDATE for option in options
+    )
+    assert process.confirmed_causes == ""
+
+    metric_values = {
+        "metric_name": "Wartezeit je Freigabe",
+        "metric_type": UseCase.MetricType.DURATION,
+        "metric_direction": UseCase.MetricDirection.LOWER,
+        "metric_unit": "Stunden",
+        "metric_measurement_method": "Zeit zwischen Eingang und fachlicher Entscheidung messen.",
+        "metric_measurement_population": "Freigabefälle im bestätigten Prozessscope.",
+        "metric_measurement_period": "Ein regulärer Geschäftszyklus.",
+        "pilot_scope": "Ein abgegrenzter Freigabetyp mit Prüfung jedes Vorschlags.",
+        "pilot_review_criteria": "Wartezeit, Korrektheit und manuellen Aufwand prüfen.",
+        "pilot_abort_criteria": "Bei unbemerkten fachlichen Fehlern unterbrechen.",
+    }
+
+    def provider(_prepared, **_kwargs):
+        content = json.dumps(
+            {
+                **{
+                    name: {
+                        "value": value,
+                        "source_ids": ["UC.benefit"],
+                        "evidence_basis": "hypothesis",
+                    }
+                    for name, value in metric_values.items()
+                },
+                "unknowns": ["Numerische Baseline und Zielwert sind nicht belegt."],
+            }
+        )
+        return OpenRouterResult(
+            content=content,
+            model="test/model",
+            usage={"prompt_tokens": 100, "completion_tokens": 200, "total_tokens": 300, "cost": 0},
+            output_chars=len(content),
+            finish_reason="stop",
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        provider,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    review = client.get(url)
+    assert review.status_code == 200
+    assert review.context["selection_blocked"] is False
+    assert review.context["diagnosis_confirmation_required"] is True
+    ai_option = next(option for option in options if option.starts_ai_use_case)
+    response = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "confirmed_causes": "Freigeberverfügbarkeit beeinflusst die Wartezeit.",
+            "selected_option": ai_option.pk,
+            "rationale": "Die Assistenz deckt die verbleibende Prüfung besser ab.",
+        },
+    )
+    assert response.status_code == 302
+    process.refresh_from_db()
+    assert process.confirmed_causes == "Freigeberverfügbarkeit beeinflusst die Wartezeit."
+    assert process.validations.filter(process_version=process.version).exists()
+    decision = process.solution_selection_decisions.get()
+    assert decision.selected_option == ai_option
+    use_case = UseCase.objects.get()
+    assert use_case.architecture_origin.process_analysis == process
+    assert use_case.architecture_origin.solution_option == ai_option
+    assert use_case.metric_name == metric_values["metric_name"]
+    assert use_case.pilot_scope == metric_values["pilot_scope"]
+    assert use_case.metric_baseline is None
+    assert use_case.metric_target is None
+    assert use_case.pilot_start is None
+    assert use_case.ap2_planning_provenance["generated_by"] == "system"
 
 
 @pytest.mark.django_db
