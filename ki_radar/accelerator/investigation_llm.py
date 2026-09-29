@@ -35,6 +35,8 @@ from .investigation_prompts import (
     PLANNER_INSTRUCTION,
     PLANNER_PROMPT_VERSION,
     PLANNER_SCHEMA_VERSION,
+    LEGACY_SYNTHESIS_PROMPT_VERSION,
+    LEGACY_SYNTHESIS_SCHEMA_VERSION,
     SYNTHESIS_INSTRUCTION,
     SYNTHESIS_PROMPT_VERSION,
     SYNTHESIS_SCHEMA_VERSION,
@@ -343,13 +345,24 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
     planner = frozen.get("planner") or {}
     synthesizer = frozen.get("synthesizer") or {}
     verifier = frozen.get("verifier") or {}
+    current_synthesizer = (
+        synthesizer.get("prompt_version") == SYNTHESIS_PROMPT_VERSION
+        and synthesizer.get("instruction_hash") == _instruction_hash(SYNTHESIS_INSTRUCTION)
+        and synthesizer.get("schema_version") == SYNTHESIS_SCHEMA_VERSION
+    )
+    legacy_synthesizer = (
+        synthesizer.get("prompt_version") == LEGACY_SYNTHESIS_PROMPT_VERSION
+        and synthesizer.get("schema_version") == LEGACY_SYNTHESIS_SCHEMA_VERSION
+        and isinstance(synthesizer.get("instruction_template"), str)
+        and bool(synthesizer.get("instruction_template"))
+        and synthesizer.get("instruction_hash")
+        == _instruction_hash(str(synthesizer.get("instruction_template")))
+    )
     if (
         planner.get("prompt_version") != PLANNER_PROMPT_VERSION
         or planner.get("instruction_hash") != _instruction_hash(PLANNER_INSTRUCTION)
         or planner.get("schema_version") != PLANNER_SCHEMA_VERSION
-        or synthesizer.get("prompt_version") != SYNTHESIS_PROMPT_VERSION
-        or synthesizer.get("instruction_hash") != _instruction_hash(SYNTHESIS_INSTRUCTION)
-        or synthesizer.get("schema_version") != SYNTHESIS_SCHEMA_VERSION
+        or not (current_synthesizer or legacy_synthesizer)
         or verifier.get("prompt_version") != VERIFIER_PROMPT_VERSION
         or verifier.get("instruction_hash") != _instruction_hash(VERIFIER_INSTRUCTION)
         or verifier.get("schema_version") != VERIFIER_SCHEMA_VERSION
@@ -1362,14 +1375,18 @@ def request_synthesis_package(*, actor, run: InvestigationRun, executor_token) -
     assert_actor_can_edit_run(actor, run)
     context = _synthesis_context(actor, run)
     catalog = context["source_reference_catalog"]
+    frozen_synthesizer = run.execution_snapshot.get("synthesizer") or {}
+    instruction = str(frozen_synthesizer.get("instruction_template") or "")
+    prompt_version = str(frozen_synthesizer.get("prompt_version") or "")
+    schema_version = str(frozen_synthesizer.get("schema_version") or "")
     payload, _call = _structured_provider_call(
         actor=actor,
         run_id=run.pk,
         executor_token=executor_token,
         role=InvestigationModelCall.Role.SYNTHESIZER,
-        instruction=SYNTHESIS_INSTRUCTION,
-        prompt_version=SYNTHESIS_PROMPT_VERSION,
-        schema_version=SYNTHESIS_SCHEMA_VERSION,
+        instruction=instruction,
+        prompt_version=prompt_version,
+        schema_version=schema_version,
         context=context,
         response_format=synthesis_response_format(),
         payload_validator=lambda response: _validate_synthesis_package(
