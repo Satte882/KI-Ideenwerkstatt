@@ -214,9 +214,10 @@ def test_grounded_metric_pilot_draft_fills_only_non_numeric_plan_fields(
     assert use_case.pilot_start is None
     assert use_case.ap2_planning_provenance["generated_by"] == "system"
     assert use_case.ap2_planning_provenance["run_id"] == result.run_id
-    assert "UC.benefit" in use_case.ap2_planning_provenance["field_sources"]["metric_name"][
-        "source_ids"
-    ]
+    assert (
+        "UC.benefit"
+        in use_case.ap2_planning_provenance["field_sources"]["metric_name"]["source_ids"]
+    )
     assert LLMTaskRun.objects.get(pk=result.run_id).status == LLMTaskRun.Status.SUCCESS
 
 
