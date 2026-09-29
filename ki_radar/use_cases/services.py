@@ -148,7 +148,7 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
         raise PermissionDenied("Für die Use-Case-Erzeugung fehlt die Berechtigung.")
 
     locked_decision = (
-        SolutionSelectionDecision.objects.select_for_update()
+        SolutionSelectionDecision.objects.select_for_update(of=("self",))
         .select_related(
             "selected_option",
             "process_analysis__stage__value_stream__business_unit",
