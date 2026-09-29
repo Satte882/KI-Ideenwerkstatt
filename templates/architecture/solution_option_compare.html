@@ -134,9 +134,21 @@
         <strong>Aktuell bevorzugt: {{ latest_selection.selected_option.name }}</strong>
         <div class="small mt-1">Entschieden am {{ latest_selection.decided_at|date:"d.m.Y H:i" }}. Die Entscheidung ist in der Auswahlhistorie auditierbar.</div>
         {% if latest_selection.selected_option.starts_ai_use_case %}
-          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Die Lösung enthält eine KI-Komponente; ein KI-Use-Case kann regulär weitergeführt werden.</div>
+          <div class="small mt-2">
+            <strong>Journey-Ausgang:</strong>
+            Die Lösung enthält eine KI-Komponente; ein KI-Use-Case kann regulär weitergeführt werden.
+            {% if selected_use_case %}
+              Der kanonische Use Case
+              <a href="{{ selected_use_case.get_absolute_url }}">{{ selected_use_case.short_id }}</a>
+              wurde direkt aus der bestätigten Lösungsentscheidung erzeugt.
+            {% endif %}
+          </div>
         {% else %}
-          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Kein KI-Use-Case erforderlich. Die Analyseentscheidung bleibt als gültiges Ergebnis erhalten.</div>
+          <div class="small mt-2">
+            <strong>Journey-Ausgang:</strong>
+            Kein KI-Use-Case erforderlich. Die Analyseentscheidung bleibt als gültiger
+            Non-AI-Endzustand erhalten.
+          </div>
         {% endif %}
       </div>
     {% else %}
