@@ -303,9 +303,13 @@ def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, objec
             "bottleneck_coverage": option.bottleneck_coverage,
             "data_requirements": option.data_requirements,
             "application_impact": option.application_impact,
+            "integration_effort": option.integration_effort,
             "integration_impact": option.integration_impact,
+            "technology_constraints": option.technology_constraints,
             "risks": option.risks,
             "architecture_fit": option.architecture_fit,
+            "time_to_value": option.time_to_value,
+            "contains_ai_component": option.contains_ai_component,
         }
         for option in process.solution_options.order_by("id")
     ]
