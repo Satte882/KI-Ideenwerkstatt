@@ -635,6 +635,7 @@ class SolutionSelectionForm(forms.Form):
     ):
         super().__init__(*args, **kwargs)
         self.confirmed_causes_initial = str(confirmed_causes_initial or "").strip()
+        self.process_version_initial = process_version
         self.require_diagnosis_confirmation = bool(require_diagnosis_confirmation)
         if not self.is_bound:
             self.initial["confirmed_causes"] = self.confirmed_causes_initial
@@ -653,4 +654,12 @@ class SolutionSelectionForm(forms.Form):
             raise forms.ValidationError(
                 "Bitte den Kernbefund fachlich bestätigen oder korrigieren."
             )
+        return submitted
+
+    def clean_process_version(self):
+        submitted = self.cleaned_data.get("process_version")
+        if self.is_bound and "process_version" not in self.data:
+            submitted = self.process_version_initial
+        if self.require_diagnosis_confirmation and submitted is None:
+            raise forms.ValidationError("Der geprüfte Prozessstand fehlt.")
         return submitted
