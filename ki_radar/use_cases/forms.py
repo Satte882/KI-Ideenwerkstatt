@@ -80,8 +80,12 @@ class UseCaseForm(forms.ModelForm):
             "metric_baseline",
             "metric_target",
             "metric_measurement_method",
-            "metric_actual",
+            "metric_measurement_population",
             "metric_measurement_period",
+            "pilot_scope",
+            "pilot_review_criteria",
+            "pilot_abort_criteria",
+            "metric_actual",
             "metric_measured_at",
             "metric_evidence_url",
             "baseline",
@@ -117,6 +121,11 @@ class UseCaseForm(forms.ModelForm):
             "summary": forms.Textarea(attrs={"rows": 2}),
             "expected_benefit": forms.Textarea(attrs={"rows": 3}),
             "metric_measurement_method": forms.Textarea(attrs={"rows": 2}),
+            "metric_measurement_population": forms.Textarea(attrs={"rows": 2}),
+            "metric_measurement_period": forms.Textarea(attrs={"rows": 2}),
+            "pilot_scope": forms.Textarea(attrs={"rows": 3}),
+            "pilot_review_criteria": forms.Textarea(attrs={"rows": 3}),
+            "pilot_abort_criteria": forms.Textarea(attrs={"rows": 3}),
             "baseline": forms.Textarea(attrs={"rows": 2}),
             "success_criterion": forms.Textarea(attrs={"rows": 2}),
             "realized_result": forms.Textarea(attrs={"rows": 2}),
@@ -126,9 +135,14 @@ class UseCaseForm(forms.ModelForm):
         help_texts = {
             "metric_name": "Genau eine primäre Kennzahl, an der der Pilot bewertet wird.",
             "metric_unit": "Zum Beispiel Minuten je Rechnung, Prozent, Euro oder Fälle pro Woche.",
-            "metric_measurement_method": (
-                "Wie und mit welcher Stichprobe wird die Kennzahl erhoben?"
+            "metric_measurement_method": "Wie wird die Kennzahl erhoben?",
+            "metric_measurement_population": (
+                "Welche Population oder Stichprobe bildet die Messung ab?"
             ),
+            "metric_measurement_period": "Über welchen fachlich sinnvollen Zeitraum wird gemessen?",
+            "pilot_scope": "Kleinster fachlich sinnvoller Pilot; noch kein Pilotstart.",
+            "pilot_review_criteria": "Welche Befunde werden beim Pilot-Review geprüft?",
+            "pilot_abort_criteria": "Welche Befunde führen zur Unterbrechung oder Neubewertung?",
             "metric_actual": "Erst zum Pilotabschluss eintragen.",
             "metric_evidence_url": "Link auf die freigegebene Auswertung oder den Messnachweis.",
         }
