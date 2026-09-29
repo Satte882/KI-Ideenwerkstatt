@@ -73,12 +73,17 @@ class CaptureProviderPayload:
     payload: dict[str, Any]
 
 
-def log_capture_analysis(analysis: CaptureAnalysis) -> None:
+def log_capture_analysis(
+    analysis: CaptureAnalysis,
+    *,
+    purpose: str = "capture_extraction",
+) -> None:
     logger.info(
-        "llm_request purpose=capture_extraction provider=%s model=%s "
+        "llm_request purpose=%s provider=%s model=%s "
         "object_type=capture_session object_id=%s analysis_id=%s status=%s "
         "error_code=%s duration_ms=%s input_chars=%s output_chars=%s "
         "prompt_tokens=%s completion_tokens=%s total_tokens=%s cost=%s",
+        purpose,
         analysis.provider,
         analysis.model_name or "provider-default",
         analysis.session_id,
@@ -185,6 +190,40 @@ def _reserve_quotas(
         (AcceleratorLLMQuota.Scope.USER, policy.max_calls_per_user_day),
         (AcceleratorLLMQuota.Scope.GLOBAL, policy.max_calls_global_day),
     ):
+        _increment_quota(
+            scope=scope,
+            actor=actor,
+            session=session,
+            quota_date=quota_date,
+            limit=limit,
+        )
+
+
+def reserve_accelerator_quotas(
+    *,
+    actor,
+    session: CaptureSession,
+    policy,
+    include_context: bool = True,
+) -> None:
+    """Reserve one provider call against the shared Accelerator quota contract.
+
+    Autonomous discovery is a bounded multi-call workflow. It keeps its hard
+    per-run call ceiling in the discovery service and therefore reuses the
+    user/global daily quotas without consuming the legacy single-call Capture
+    Session quota for every internal review step.
+    """
+    quota_date = timezone.localdate()
+    scopes = [
+        (AcceleratorLLMQuota.Scope.USER, policy.max_calls_per_user_day),
+        (AcceleratorLLMQuota.Scope.GLOBAL, policy.max_calls_global_day),
+    ]
+    if include_context:
+        scopes.insert(
+            0,
+            (AcceleratorLLMQuota.Scope.CONTEXT, policy.max_calls_per_context),
+        )
+    for scope, limit in scopes:
         _increment_quota(
             scope=scope,
             actor=actor,

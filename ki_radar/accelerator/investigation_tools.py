@@ -20,7 +20,7 @@ from django.db import transaction
 from django.db.models import Max
 
 from ki_radar.architecture.models import ProcessAnalysis
-from ki_radar.architecture.permissions import can_edit_value_stream
+from ki_radar.architecture.permissions import can_edit_value_stream, can_manage_architecture
 
 from .investigation_models import (
     InvestigationSource,
@@ -28,6 +28,7 @@ from .investigation_models import (
     InvestigationSourceSnapshot,
     InvestigationToolResult,
 )
+from .models import CaptureSession
 
 TOOL_VERSION = "vs1-source-tools-v1"
 MAX_FILES = 12
@@ -81,7 +82,13 @@ class SnapshotResult:
     manifest_hash: str
     source_count: int
     total_bytes: int
-    process_version: int
+    process_version: int | None
+
+
+@dataclass(frozen=True)
+class DiscoverySnapshotRequest:
+    capture_session_id: UUID | str
+    folder_id: UUID | str
 
 
 @dataclass(frozen=True)
@@ -277,6 +284,45 @@ def _authorized_process(*, actor, process_analysis_id, for_update: bool = False)
     return process
 
 
+def _authorized_discovery_capture(*, actor, capture_session_id, for_update: bool = False):
+    queryset = CaptureSession.objects.select_related("owner")
+    if for_update:
+        queryset = queryset.select_for_update()
+    try:
+        session = queryset.get(pk=capture_session_id, owner=actor)
+    except (CaptureSession.DoesNotExist, ValueError) as exc:
+        raise PermissionDenied("Die autonome Discovery ist nicht zugänglich.") from exc
+    if (
+        session.capture_type != CaptureSession.CaptureType.VALUE_STREAM
+        or session.mode != CaptureSession.Mode.AUTONOMOUS
+        or session.status != CaptureSession.Status.DRAFT
+        or not can_manage_architecture(actor)
+    ):
+        raise PermissionDenied("Die autonome Discovery ist nicht bearbeitbar.")
+    return session
+
+
+def _authorized_discovery_snapshot(*, actor, snapshot_id) -> InvestigationSourceSnapshot:
+    try:
+        snapshot = InvestigationSourceSnapshot.objects.select_related(
+            "folder",
+            "capture_session__owner",
+        ).get(pk=snapshot_id)
+    except (InvestigationSourceSnapshot.DoesNotExist, ValueError) as exc:
+        raise PermissionDenied("Der Discovery-Snapshot ist nicht zugänglich.") from exc
+    if snapshot.capture_session_id is None or snapshot.process_analysis_id is not None:
+        raise PermissionDenied("Der Snapshot gehört nicht zu einer autonomen Discovery.")
+    session = _authorized_discovery_capture(
+        actor=actor,
+        capture_session_id=snapshot.capture_session_id,
+    )
+    if not snapshot.folder.is_active:
+        raise PermissionDenied("Der Quellenraum wurde entzogen.")
+    if snapshot.folder.capture_session_id != session.pk:
+        raise PermissionDenied("Der Quellenraum gehört nicht zu dieser Discovery.")
+    return snapshot
+
+
 def _authorized_snapshot(*, actor, snapshot_id) -> InvestigationSourceSnapshot:
     try:
         snapshot = InvestigationSourceSnapshot.objects.select_related(
@@ -286,6 +332,8 @@ def _authorized_snapshot(*, actor, snapshot_id) -> InvestigationSourceSnapshot:
     except (InvestigationSourceSnapshot.DoesNotExist, ValueError) as exc:
         raise PermissionDenied("Der Quellen-Snapshot ist nicht zugänglich.") from exc
     process = snapshot.process_analysis
+    if process is None:
+        raise PermissionDenied("Der Quellen-Snapshot ist nicht für eine Investigation freigegeben.")
     if process.status != ProcessAnalysis.Status.DRAFT:
         raise PermissionDenied("Der gebundene ProcessAnalysis-Entwurf ist nicht mehr bearbeitbar.")
     if not snapshot.folder.is_active:
@@ -687,6 +735,280 @@ def create_source_snapshot(*, actor, request: SnapshotRequest) -> SnapshotResult
         source_count=len(scanned),
         total_bytes=sum(item.size_bytes for item in scanned),
         process_version=snapshot.process_version,
+    )
+
+
+def create_discovery_source_snapshot(
+    *,
+    actor,
+    request: DiscoverySnapshotRequest,
+) -> SnapshotResult:
+    session = _authorized_discovery_capture(
+        actor=actor,
+        capture_session_id=request.capture_session_id,
+    )
+    problem = str(session.answers.get("problem_statement") or "").strip()
+    if not problem:
+        raise _error(
+            "Für die autonome Discovery ist ein Geschäftsproblem erforderlich.",
+            "missing_problem",
+        )
+    try:
+        folder = InvestigationSourceFolder.objects.get(pk=request.folder_id)
+    except (InvestigationSourceFolder.DoesNotExist, ValueError) as exc:
+        raise PermissionDenied("Der Discovery-Quellenordner ist nicht registriert.") from exc
+    if folder.capture_session_id != session.pk or not folder.is_active:
+        raise PermissionDenied("Der Quellenordner ist für diese Discovery nicht freigegeben.")
+
+    scanned = _scan_registered_folder(folder)
+    manifest_hash = _manifest_hash(scanned)
+    with transaction.atomic():
+        locked_session = _authorized_discovery_capture(
+            actor=actor,
+            capture_session_id=session.pk,
+            for_update=True,
+        )
+        try:
+            locked_folder = InvestigationSourceFolder.objects.select_for_update().get(
+                pk=folder.pk,
+                capture_session=locked_session,
+                process_analysis__isnull=True,
+                is_active=True,
+            )
+        except InvestigationSourceFolder.DoesNotExist as exc:
+            raise PermissionDenied(
+                "Der Discovery-Quellenraum wurde vor dem Commit entzogen."
+            ) from exc
+
+        current_revision = (
+            InvestigationSourceSnapshot.objects.filter(folder=locked_folder).aggregate(
+                maximum=Max("revision")
+            )["maximum"]
+            or 0
+        )
+        snapshot = InvestigationSourceSnapshot.objects.create(
+            folder=locked_folder,
+            capture_session=locked_session,
+            process_analysis=None,
+            revision=current_revision + 1,
+            process_version=None,
+            decision_question=problem,
+            run_limits={},
+            process_context={
+                "capture_session_id": str(locked_session.pk),
+                "capture_revision": locked_session.revision,
+                "problem_statement": problem,
+                "business_context": str(
+                    locked_session.answers.get("business_context") or ""
+                ).strip(),
+                "claim_semantics": (
+                    "Quellenaussagen sind berichtete Evidenz; Hypothesen und Unknowns "
+                    "werden separat geführt."
+                ),
+            },
+            manifest_hash=manifest_hash,
+            captured_by=actor,
+        )
+        first_by_hash: dict[str, InvestigationSource] = {}
+        for item in scanned:
+            duplicate_of = first_by_hash.get(item.content_sha256)
+            source = InvestigationSource.objects.create(
+                snapshot=snapshot,
+                filename=item.filename,
+                source_type=item.source_type,
+                size_bytes=item.size_bytes,
+                content_sha256=item.content_sha256,
+                captured_mtime=item.captured_mtime,
+                content=item.content,
+                row_count=item.row_count,
+                column_count=item.column_count,
+                columns=list(item.columns),
+                duplicate_of=duplicate_of,
+            )
+            first_by_hash.setdefault(item.content_sha256, source)
+
+    return SnapshotResult(
+        snapshot_id=snapshot.pk,
+        revision=snapshot.revision,
+        manifest_hash=snapshot.manifest_hash,
+        source_count=len(scanned),
+        total_bytes=sum(item.size_bytes for item in scanned),
+        process_version=None,
+    )
+
+
+def get_discovery_source_snapshot(*, actor, snapshot_id) -> InvestigationSourceSnapshot:
+    return _authorized_discovery_snapshot(actor=actor, snapshot_id=snapshot_id)
+
+
+def _stored_manifest_hash(snapshot: InvestigationSourceSnapshot) -> str:
+    manifest = [
+        {
+            "filename": source.filename,
+            "source_type": source.source_type,
+            "size_bytes": source.size_bytes,
+            "content_sha256": source.content_sha256,
+            "row_count": source.row_count,
+            "column_count": source.column_count,
+            "columns": list(source.columns),
+        }
+        for source in snapshot.sources.order_by("filename", "id")
+    ]
+    payload = json.dumps(
+        manifest,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def bind_discovery_snapshot_to_process(
+    *,
+    actor,
+    discovery_snapshot_id,
+    process_analysis_id,
+    decision_question: str,
+) -> SnapshotResult:
+    question = str(decision_question or "").strip()
+    if not question:
+        raise _error("Eine Problem- oder Entscheidungsfrage ist erforderlich.", "missing_question")
+
+    discovery = _authorized_discovery_snapshot(actor=actor, snapshot_id=discovery_snapshot_id)
+    process = _authorized_process(actor=actor, process_analysis_id=process_analysis_id)
+    if _stored_manifest_hash(discovery) != discovery.manifest_hash:
+        raise _error(
+            "Der eingefrorene Discovery-Snapshot stimmt nicht mit seinem Manifest überein.",
+            "discovery_manifest_mismatch",
+        )
+
+    existing = (
+        InvestigationSourceSnapshot.objects.filter(
+            process_analysis=process,
+            process_version=process.version,
+            manifest_hash=discovery.manifest_hash,
+            process_context__discovery_snapshot_id=str(discovery.pk),
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if existing is not None:
+        return SnapshotResult(
+            snapshot_id=existing.pk,
+            revision=existing.revision,
+            manifest_hash=existing.manifest_hash,
+            source_count=existing.sources.count(),
+            total_bytes=sum(existing.sources.values_list("size_bytes", flat=True)),
+            process_version=existing.process_version,
+        )
+
+    with transaction.atomic():
+        locked_process = _authorized_process(
+            actor=actor,
+            process_analysis_id=process.pk,
+            for_update=True,
+        )
+        locked_discovery = (
+            InvestigationSourceSnapshot.objects.select_for_update()
+            .select_related("folder")
+            .get(pk=discovery.pk)
+        )
+        if (
+            locked_discovery.capture_session_id != discovery.capture_session_id
+            or locked_discovery.manifest_hash != discovery.manifest_hash
+            or locked_discovery.process_analysis_id is not None
+        ):
+            raise PermissionDenied("Der Discovery-Snapshot hat seinen Fallbezug geändert.")
+
+        folder, _created = InvestigationSourceFolder.objects.get_or_create(
+            process_analysis=locked_process,
+            capture_session=None,
+            root_path=locked_discovery.folder.root_path,
+            defaults={
+                "name": locked_discovery.folder.name,
+                "is_active": True,
+                "registered_by": actor,
+            },
+        )
+        if not folder.is_active:
+            raise PermissionDenied("Der übernommene Quellenraum wurde entzogen.")
+
+        existing = (
+            InvestigationSourceSnapshot.objects.filter(
+                folder=folder,
+                process_analysis=locked_process,
+                process_version=locked_process.version,
+                manifest_hash=locked_discovery.manifest_hash,
+                process_context__discovery_snapshot_id=str(locked_discovery.pk),
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if existing is not None:
+            return SnapshotResult(
+                snapshot_id=existing.pk,
+                revision=existing.revision,
+                manifest_hash=existing.manifest_hash,
+                source_count=existing.sources.count(),
+                total_bytes=sum(existing.sources.values_list("size_bytes", flat=True)),
+                process_version=existing.process_version,
+            )
+
+        current_revision = (
+            InvestigationSourceSnapshot.objects.filter(folder=folder).aggregate(
+                maximum=Max("revision")
+            )["maximum"]
+            or 0
+        )
+        process_snapshot = InvestigationSourceSnapshot.objects.create(
+            folder=folder,
+            process_analysis=locked_process,
+            capture_session=None,
+            revision=current_revision + 1,
+            process_version=locked_process.version,
+            decision_question=question,
+            run_limits={},
+            process_context={
+                **_process_context(locked_process),
+                "discovery_snapshot_id": str(locked_discovery.pk),
+                "discovery_capture_session_id": str(locked_discovery.capture_session_id),
+                "discovery_manifest_hash": locked_discovery.manifest_hash,
+            },
+            manifest_hash=locked_discovery.manifest_hash,
+            captured_by=actor,
+        )
+
+        first_by_hash: dict[str, InvestigationSource] = {}
+        for source in locked_discovery.sources.order_by("filename", "id"):
+            duplicate_of = first_by_hash.get(source.content_sha256)
+            cloned = InvestigationSource.objects.create(
+                snapshot=process_snapshot,
+                filename=source.filename,
+                source_type=source.source_type,
+                size_bytes=source.size_bytes,
+                content_sha256=source.content_sha256,
+                captured_mtime=source.captured_mtime,
+                content=source.content,
+                row_count=source.row_count,
+                column_count=source.column_count,
+                columns=list(source.columns),
+                duplicate_of=duplicate_of,
+            )
+            first_by_hash.setdefault(source.content_sha256, cloned)
+
+        if _stored_manifest_hash(process_snapshot) != locked_discovery.manifest_hash:
+            raise _error(
+                "Discovery und Investigation besitzen nicht denselben Quellenstand.",
+                "handoff_manifest_mismatch",
+            )
+
+    return SnapshotResult(
+        snapshot_id=process_snapshot.pk,
+        revision=process_snapshot.revision,
+        manifest_hash=process_snapshot.manifest_hash,
+        source_count=process_snapshot.sources.count(),
+        total_bytes=sum(process_snapshot.sources.values_list("size_bytes", flat=True)),
+        process_version=process_snapshot.process_version,
     )
 
 

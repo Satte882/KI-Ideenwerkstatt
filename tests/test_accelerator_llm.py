@@ -61,6 +61,7 @@ def test_policy_parses_valid_settings():
 
     assert policy.timeout_seconds == 15
     assert policy.max_input_chars == 5000
+    assert policy.discovery_max_input_chars == 40000
     assert policy.max_output_tokens == 400
     assert policy.max_calls_per_context == 3
     assert policy.solution_critic_max_input_chars == 100000
@@ -71,6 +72,7 @@ def test_policy_parses_valid_settings():
     [
         ("ACCELERATOR_LLM_TIMEOUT_SECONDS", "nicht-numerisch", "ganze Zahl"),
         ("ACCELERATOR_LLM_MAX_INPUT_CHARS", "0", "zwischen"),
+        ("ACCELERATOR_DISCOVERY_MAX_INPUT_CHARS", "100001", "zwischen"),
         ("ACCELERATOR_SOLUTION_CRITIC_MAX_INPUT_CHARS", "100001", "zwischen"),
         ("ACCELERATOR_LLM_MAX_OUTPUT_TOKENS", "5000", "zwischen"),
     ],
@@ -158,6 +160,35 @@ def test_copilot_uses_shared_timeout_output_limit_and_returned_model(monkeypatch
     assert captured["body"]["reasoning"] == {"exclude": True}
     assert "provider" not in captured["body"]
     assert "response_format" not in captured["body"]
+
+
+@override_settings(
+    OPENROUTER_API_KEY="test-key",
+    OPENROUTER_API_URL="https://openrouter.example/v1/chat/completions",
+    OPENROUTER_MODEL="test/global-model",
+)
+def test_openrouter_model_override_is_local_to_one_request(monkeypatch):
+    requested_models = []
+
+    def fake_urlopen(request, timeout):
+        requested_models.append(json.loads(request.data.decode("utf-8"))["model"])
+        return FakeResponse(_success_payload())
+
+    monkeypatch.setattr(openrouter.urllib.request, "urlopen", fake_urlopen)
+
+    openrouter.request_openrouter(
+        messages=[{"role": "user", "content": "discovery"}],
+        max_tokens=400,
+        timeout_seconds=15,
+        model_override="test/discovery-model",
+    )
+    openrouter.request_openrouter(
+        messages=[{"role": "user", "content": "investigation"}],
+        max_tokens=400,
+        timeout_seconds=15,
+    )
+
+    assert requested_models == ["test/discovery-model", "test/global-model"]
 
 
 @override_settings(

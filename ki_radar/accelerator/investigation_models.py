@@ -33,6 +33,15 @@ class InvestigationSourceFolder(TimeStampedModel):
         "architecture.ProcessAnalysis",
         on_delete=models.PROTECT,
         related_name="investigation_source_folders",
+        null=True,
+        blank=True,
+    )
+    capture_session = models.ForeignKey(
+        "accelerator.CaptureSession",
+        on_delete=models.CASCADE,
+        related_name="discovery_source_folders",
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=200)
     root_path = models.TextField()
@@ -51,7 +60,18 @@ class InvestigationSourceFolder(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["process_analysis", "root_path"],
                 name="uniq_investigation_folder_process_path",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["capture_session", "root_path"],
+                name="uniq_investigation_folder_capture_path",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(process_analysis__isnull=False, capture_session__isnull=True)
+                    | models.Q(process_analysis__isnull=True, capture_session__isnull=False)
+                ),
+                name="investigation_folder_owner_valid",
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -61,12 +81,16 @@ class InvestigationSourceFolder(TimeStampedModel):
                 .objects.filter(pk=self.pk)
                 .values(
                     "process_analysis_id",
+                    "capture_session_id",
                     "root_path",
                 )
                 .first()
             )
             if current and self.snapshots.exists():
-                if current["process_analysis_id"] != self.process_analysis_id:
+                if (
+                    current["process_analysis_id"] != self.process_analysis_id
+                    or current["capture_session_id"] != self.capture_session_id
+                ):
                     raise ValidationError(
                         "Der Fallbezug eines verwendeten Quellenordners ist unveränderlich."
                     )
@@ -97,7 +121,7 @@ class InvestigationSourceFolder(TimeStampedModel):
             "vs1/#4 variant b",
             "vs1/#4 variant c",
         }
-        if normalized in benchmark_labels:
+        if normalized in benchmark_labels and self.process_analysis_id:
             data_objects = str(self.process_analysis.data_objects or "").strip()
             if data_objects:
                 return data_objects
@@ -105,7 +129,8 @@ class InvestigationSourceFolder(TimeStampedModel):
         return self.name
 
     def __str__(self) -> str:
-        return f"{self.process_analysis_id}: {self.name}"
+        owner_id = self.process_analysis_id or self.capture_session_id
+        return f"{owner_id}: {self.name}"
 
 
 class InvestigationSourceSnapshot(TimeStampedModel):
@@ -116,16 +141,25 @@ class InvestigationSourceSnapshot(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     folder = models.ForeignKey(
         InvestigationSourceFolder,
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,
         related_name="snapshots",
     )
     process_analysis = models.ForeignKey(
         "architecture.ProcessAnalysis",
         on_delete=models.PROTECT,
         related_name="investigation_source_snapshots",
+        null=True,
+        blank=True,
+    )
+    capture_session = models.ForeignKey(
+        "accelerator.CaptureSession",
+        on_delete=models.CASCADE,
+        related_name="discovery_source_snapshots",
+        null=True,
+        blank=True,
     )
     revision = models.PositiveIntegerField()
-    process_version = models.PositiveIntegerField()
+    process_version = models.PositiveIntegerField(null=True, blank=True)
     decision_question = models.TextField()
     run_limits = models.JSONField(default=dict)
     process_context = models.JSONField(default=dict)
@@ -145,7 +179,14 @@ class InvestigationSourceSnapshot(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["folder", "revision"],
                 name="uniq_investigation_folder_revision",
-            )
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(process_analysis__isnull=False, capture_session__isnull=True)
+                    | models.Q(process_analysis__isnull=True, capture_session__isnull=False)
+                ),
+                name="investigation_snapshot_owner_valid",
+            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -157,7 +198,8 @@ class InvestigationSourceSnapshot(TimeStampedModel):
         raise ValidationError("Quellen-Snapshots sind unveränderlich und nicht direkt löschbar.")
 
     def __str__(self) -> str:
-        return f"{self.process_analysis_id}: Quellenrevision {self.revision}"
+        owner_id = self.process_analysis_id or self.capture_session_id
+        return f"{owner_id}: Quellenrevision {self.revision}"
 
 
 class InvestigationSource(TimeStampedModel):

@@ -15,6 +15,7 @@ class LLMConfigurationError(RuntimeError):
 class AcceleratorLLMPolicy:
     timeout_seconds: int
     max_input_chars: int
+    discovery_max_input_chars: int
     max_output_tokens: int
     capture_max_output_tokens: int
     capture_temperature: float | None
@@ -43,6 +44,7 @@ class LLMTaskPolicy:
 _SETTING_BOUNDS = {
     "ACCELERATOR_LLM_TIMEOUT_SECONDS": (1, 120),
     "ACCELERATOR_LLM_MAX_INPUT_CHARS": (1, 100_000),
+    "ACCELERATOR_DISCOVERY_MAX_INPUT_CHARS": (1, 100_000),
     "ACCELERATOR_LLM_MAX_OUTPUT_TOKENS": (1, 4_096),
     "ACCELERATOR_CAPTURE_MAX_OUTPUT_TOKENS": (1, 32_768),
     "ACCELERATOR_LLM_MAX_CALLS_PER_CONTEXT": (1, 50),
@@ -177,6 +179,7 @@ def get_accelerator_llm_policy() -> AcceleratorLLMPolicy:
     return AcceleratorLLMPolicy(
         timeout_seconds=values["ACCELERATOR_LLM_TIMEOUT_SECONDS"],
         max_input_chars=values["ACCELERATOR_LLM_MAX_INPUT_CHARS"],
+        discovery_max_input_chars=values["ACCELERATOR_DISCOVERY_MAX_INPUT_CHARS"],
         max_output_tokens=values["ACCELERATOR_LLM_MAX_OUTPUT_TOKENS"],
         capture_max_output_tokens=values["ACCELERATOR_CAPTURE_MAX_OUTPUT_TOKENS"],
         capture_temperature=_optional_temperature(
