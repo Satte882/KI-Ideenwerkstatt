@@ -3,7 +3,8 @@ from __future__ import annotations
 PLANNER_PROMPT_VERSION = "vs1-planner-v18"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v15"
 LEGACY_SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v7"
+LEGACY_VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
 SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v5"
 LEGACY_SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
@@ -263,6 +264,13 @@ Evidenz für die bereits erfolgte Durchführung des Validation Plans.
 Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
 unbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob
 vorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.
+Wenn Lösungsoptionen bereits feasibility, integration_effort, time_to_value, evidence_basis,
+technology_constraints oder contains_ai_component enthalten, prüfe deren innere Konsistenz und
+ob die Aussagekraft zur Evidenzbasis passt. Qualitative Einschätzungen mit
+evidence_basis=hypothesis sind zulässig; fehlende Vergleichsfelder allein sind kein kritischer
+Investigation-Fehler und dürfen READY nicht blockieren. Kritisch ist dagegen eine erfundene
+Zahl, eine als gemessen ausgegebene unbelegte Einordnung oder eine widersprüchliche
+AI-/Non-AI-Klassifikation, wenn sie die Empfehlung materiell verzerrt.
 Prüfe auch die Formulierungsstärke: Wenn die Quellen nur „am stärksten gestützt“,
 „bevorzugter Kandidat“, Pilot- oder Prüfvorbehalte tragen, darf der Brief daraus nicht
 „beste“, „optimale“ oder „eindeutig richtige“ Lösung machen. Eine solche unbelegte
