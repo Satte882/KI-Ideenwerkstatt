@@ -18,9 +18,9 @@ from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 from ki_radar.use_cases.ap2_metric_pilot import (
     AP2MetricPilotError,
+    TARGET_FIELDS,
     build_ap2_metric_pilot_context,
     generate_and_apply_ap2_metric_pilot,
-    TARGET_FIELDS,
     validate_ap2_metric_pilot_payload,
 )
 from ki_radar.use_cases.models import UseCase
