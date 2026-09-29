@@ -270,7 +270,7 @@ def build_discovery_json_schema() -> dict[str, Any]:
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         **_object_schema(
             {
-                "schema_version": {"type": "string", "const": DISCOVERY_SCHEMA_VERSION},
+                "schema_version": {"type": "string", "enum": [DISCOVERY_SCHEMA_VERSION]},
                 "value_stream": value_stream,
                 "stages": {
                     "type": "array",
@@ -313,7 +313,7 @@ def build_discovery_verifier_schema() -> dict[str, Any]:
             {
                 "schema_version": {
                     "type": "string",
-                    "const": DISCOVERY_VERIFIER_SCHEMA_VERSION,
+                    "enum": [DISCOVERY_VERIFIER_SCHEMA_VERSION],
                 },
                 "status": {
                     "type": "string",

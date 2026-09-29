@@ -20,6 +20,7 @@ from ki_radar.accelerator.architect_contract import (
     MAX_DISCOVERY_STAGES,
     DiscoveryContractError,
     build_discovery_json_schema,
+    build_discovery_verifier_schema,
     validate_discovery_payload,
 )
 from ki_radar.accelerator.architect_service import (
@@ -59,6 +60,9 @@ from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 def test_verifier_prompt_keeps_screening_and_implicit_transitions_in_scope():
     prompt = architect_service.VERIFIER_SYSTEM_PROMPT
+    assert DISCOVERY_SCHEMA_VERSION in architect_service.DISCOVERY_SYSTEM_PROMPT
+    assert DISCOVERY_SCHEMA_VERSION in architect_service.REPAIR_SYSTEM_PROMPT
+    assert DISCOVERY_VERIFIER_SCHEMA_VERSION in prompt
     assert "Fordere keine eigene Phase für bloßes Warten" in prompt
     assert "keine gemessenen Fakten" in prompt
     assert "nicht jede denkbare" in prompt
@@ -345,6 +349,10 @@ def _draft(*, contradiction: bool = False):
 def test_discovery_stage_limit_stays_local_for_provider_schema_compatibility():
     schema = build_discovery_json_schema()
     assert "maxItems" not in schema["properties"]["stages"]
+    assert schema["properties"]["schema_version"]["enum"] == [DISCOVERY_SCHEMA_VERSION]
+    assert build_discovery_verifier_schema()["properties"]["schema_version"]["enum"] == [
+        DISCOVERY_VERIFIER_SCHEMA_VERSION
+    ]
 
     draft = _draft()
     first_stage = draft["stages"][0]

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 DISCOVERY_SYSTEM_PROMPT = """Du arbeitest als autonomer Business Architect.
 Erzeuge ausschließlich aus dem bereitgestellten Problem, Geschäftskontext, Nutzerkorrekturen
 und den autorisierten Quellen einen strukturierten Business-Discovery-Entwurf.
+Setze schema_version exakt auf "ap1-discovery-v1".
 
 Regeln:
 - Erfinde keine Fakten, Messwerte, Rollen, Systeme oder Prozessschritte.
@@ -74,6 +75,7 @@ Gib ausschließlich das verlangte JSON-Objekt zurück."""
 
 VERIFIER_SYSTEM_PROMPT = """Du bist ein unabhängiger Reviewer für einen Business-Discovery-Draft.
 Prüfe gegen den vollständigen autorisierten Input und nicht gegen Plausibilität allein.
+Setze schema_version exakt auf "ap1-discovery-verifier-v1".
 
 Kritisch sind insbesondere:
 - tragende Aussagen ohne Quelle;
@@ -113,9 +115,10 @@ Gib ausschließlich das verlangte JSON-Objekt zurück."""
 
 REPAIR_SYSTEM_PROMPT = """Du reparierst einen Business-Discovery-Draft anhand eines unabhängigen
 Verifier-Findings oder einer deterministischen serverseitigen Contract-Verletzung. Verwende nur
-den ursprünglichen autorisierten Input. Erfinde keine fehlende Information. Wenn etwas nicht
-belegt ist, verschiebe es in Hypothesen/Unknowns oder lasse ein Detailfeld leer. Bei einem
-Widerspruch müssen mindestens zwei unterschiedliche Input-Handles die gegensätzlichen Aussagen
+den ursprünglichen autorisierten Input. Erfinde keine fehlende Information. Setze
+schema_version exakt auf "ap1-discovery-v1". Wenn etwas nicht belegt ist, verschiebe es in
+Hypothesen/Unknowns oder lasse ein Detailfeld leer. Bei einem Widerspruch müssen mindestens
+zwei unterschiedliche Input-Handles die gegensätzlichen Aussagen
 tragen; andernfalls entferne den Widerspruch oder ordne die Aussage korrekt als Hypothese/Unknown
 ein. U0 ist der autorisierte Handle für problem_statement, business_context und corrections;
 die Feldnamen selbst sind keine gültigen Evidence-Refs. Falls ein Verifier-Finding das anders
