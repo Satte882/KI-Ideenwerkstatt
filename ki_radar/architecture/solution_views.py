@@ -9,6 +9,7 @@ from ki_radar.accelerator.investigation_models import InvestigationMaterializati
 from ki_radar.accelerator.solution_generation_entry import (
     build_solution_generation_entry_context,
 )
+from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 from .forms import SolutionSelectionForm
 from .models import ProcessAnalysis, SolutionOption
@@ -84,7 +85,7 @@ def solution_option_compare(request, pk):
         if form.is_valid():
             try:
                 if diagnosis_confirmation_required:
-                    confirm_diagnosis_and_select_solution(
+                    decision = confirm_diagnosis_and_select_solution(
                         process_analysis=process_analysis,
                         selected_option=form.cleaned_data["selected_option"],
                         confirmed_causes=form.cleaned_data["confirmed_causes"],
@@ -93,7 +94,7 @@ def solution_option_compare(request, pk):
                         actor=request.user,
                     )
                 else:
-                    select_preferred_solution(
+                    decision = select_preferred_solution(
                         process_analysis=process_analysis,
                         selected_option=form.cleaned_data["selected_option"],
                         rationale=form.cleaned_data["rationale"],
@@ -102,19 +103,52 @@ def solution_option_compare(request, pk):
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
-                messages.success(
-                    request,
-                    (
-                        "Kernbefund und bevorzugte Lösungsoption wurden auditierbar bestätigt."
-                        if diagnosis_confirmation_required
-                        else "Die bevorzugte Lösungsoption wurde auditierbar ausgewählt."
-                    ),
-                )
+                if decision.selected_option.starts_ai_use_case:
+                    try:
+                        use_case_result = create_use_case_from_selected_solution(
+                            decision=decision,
+                            actor=request.user,
+                        )
+                    except (PermissionDenied, ValidationError) as exc:
+                        messages.warning(
+                            request,
+                            "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
+                            "Handoff benötigt noch Klärung: "
+                            + " ".join(exc.messages),
+                        )
+                    else:
+                        verb = "erzeugt" if use_case_result.created else "wiederverwendet"
+                        messages.success(
+                            request,
+                            f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
+                            f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
+                        )
+                else:
+                    messages.success(
+                        request,
+                        "Non-AI-Lösung verbindlich ausgewählt; es wurde bewusst kein "
+                        "KI-Use-Case erzeugt.",
+                    )
+                if diagnosis_confirmation_required:
+                    messages.success(
+                        request,
+                        "Kernbefund und bevorzugte Lösungsoption wurden auditierbar bestätigt.",
+                    )
                 comparison_url = reverse(
                     "architecture:solution_option_compare",
                     kwargs={"pk": process_analysis.pk},
                 )
                 return redirect(f"{comparison_url}#selection-result")
+
+    selected_use_case = None
+    if latest_selection is not None:
+        selected_origin = (
+            latest_selection.selected_option.use_case_origins.select_related("use_case")
+            .order_by("-created_at")
+            .first()
+        )
+        if selected_origin is not None:
+            selected_use_case = selected_origin.use_case
 
     return render(
         request,
@@ -138,6 +172,7 @@ def solution_option_compare(request, pk):
             "can_select": can_select,
             "selection_history": selection_history,
             "latest_selection": latest_selection,
+            "selected_use_case": selected_use_case,
             "latest_investigation_materialization": latest_investigation_materialization,
             **generation_entry,
         },
