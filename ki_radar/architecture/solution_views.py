@@ -117,8 +117,7 @@ def solution_option_compare(request, pk):
                         messages.warning(
                             request,
                             "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
-                            "Handoff benötigt noch Klärung: "
-                            + " ".join(exc.messages),
+                            "Handoff benötigt noch Klärung: " + " ".join(exc.messages),
                         )
                     else:
                         verb = "erzeugt" if use_case_result.created else "wiederverwendet"
