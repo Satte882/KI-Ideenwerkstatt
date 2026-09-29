@@ -831,6 +831,7 @@ def test_taskshift_e2e_selects_task_then_compares_real_solution_options(
         compare_url,
         {
             "selected_option": assistant_option.pk,
+            "process_version": process.version,
             "rationale": (
                 "Die Assistenzoption deckt auch nicht vollständig kodifizierbare "
                 "Vertragsabweichungen ab, während die formale Legal-Freigabe erhalten bleibt."
