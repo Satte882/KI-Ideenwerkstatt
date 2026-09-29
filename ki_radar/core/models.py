@@ -42,6 +42,10 @@ class LLMTaskRun(TimeStampedModel):
             "ap2_metric_pilot_draft",
             "AP2 Metrik- und Pilotentwurf",
         )
+        AP2_ARCHITECTURE_INPUTS = (
+            "ap2_architecture_inputs",
+            "AP2 Architecture-Advisor-Eingaben",
+        )
         ORIGIN_CONSISTENCY_REVIEW = (
             "origin_consistency_review",
             "Herkunfts-Konsistenzprüfung",
