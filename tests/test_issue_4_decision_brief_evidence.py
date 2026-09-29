@@ -61,6 +61,7 @@ from ki_radar.accelerator.investigation_runtime import (
     apply_planner_state,
     canonical_json,
     content_hash,
+    decision_brief_blockers,
     evaluate_run_policy,
     execute_tool_step,
     pre_verifier_blockers_for_run,
@@ -936,6 +937,142 @@ def test_materialization_preview_is_read_only_and_describes_domain_changes(
     }
     assert [item["action"] for item in preview["solution_changes"]] == ["create", "create"]
     assert preview["conflicts"] == []
+
+
+@pytest.mark.django_db
+def test_ap2_comparison_fields_are_not_a_new_investigation_ready_gate(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 legacy READY")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-legacy-ready",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    run.brief_payload = payload
+
+    assert decision_brief_blockers(run) == ()
+
+
+@pytest.mark.django_db
+def test_ap2_complete_ready_brief_materializes_comparable_candidates(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 READY handoff")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-complete-ready",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    for option in payload["options"]:
+        option.update(
+            {
+                "feasibility": "medium",
+                "integration_effort": "medium",
+                "technology_constraints": "Bestehende Prozessgrenzen beachten.",
+                "time_to_value": "unknown",
+                "evidence_basis": "indicative",
+                "contains_ai_component": False,
+            }
+        )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+
+    materialization = materialize_decision_brief(
+        actor=owner,
+        run_id=run.pk,
+        operation_key="ap2-comparable-handoff",
+    )
+
+    options = list(process.solution_options.order_by("name"))
+    assert materialization.outcome == materialization.Outcome.APPLIED
+    assert len(options) == 2
+    assert all(option.comparison_complete for option in options)
+    assert all(
+        option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED
+        for option in options
+    )
+    assert all(
+        option.recommendation == SolutionOption.Recommendation.CANDIDATE
+        for option in options
+    )
+    assert not process.solution_options.filter(
+        recommendation=SolutionOption.Recommendation.PREFERRED
+    ).exists()
 
 
 @pytest.mark.django_db
