@@ -195,52 +195,53 @@ def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
         allowed=allowed_types,
         default=SolutionOption.OptionType.OTHER,
     )
-    feasibility = _enum_or_default(
-        option.get("feasibility"),
-        allowed={choice for choice, _label in SolutionOption.Effort.choices},
-        default=SolutionOption.Effort.NOT_ASSESSED,
-    )
-    integration_effort = _enum_or_default(
-        option.get("integration_effort"),
-        allowed={choice for choice, _label in SolutionOption.Effort.choices},
-        default=SolutionOption.Effort.NOT_ASSESSED,
-    )
-    time_to_value = _enum_or_default(
-        option.get("time_to_value"),
-        allowed={choice for choice, _label in TimeToValue.choices},
-        default=TimeToValue.NOT_ASSESSED,
-    )
 
-    fixed_ai = option_type in SolutionOption.fixed_ai_option_types()
-    fixed_non_ai = option_type in SolutionOption.fixed_non_ai_option_types()
-    if fixed_ai:
-        contains_ai_component = True
-    elif fixed_non_ai:
-        contains_ai_component = False
-    elif isinstance(option.get("contains_ai_component"), bool):
-        contains_ai_component = bool(option["contains_ai_component"])
-    else:
-        contains_ai_component = not bool(option.get("non_ai"))
-
-    return {
+    payload: dict[str, Any] = {
         "name": str(option.get("name") or "").strip()[:200],
         "option_type": option_type,
-        "contains_ai_component": contains_ai_component,
         "description": str(option.get("description") or "").strip(),
         "expected_value": str(option.get("expected_value") or "").strip(),
         "bottleneck_coverage": str(option.get("bottleneck_coverage") or "").strip(),
-        "feasibility": feasibility,
         "data_requirements": str(option.get("data_requirements") or "").strip(),
         "application_impact": str(option.get("application_impact") or "").strip(),
-        "integration_effort": integration_effort,
         "integration_impact": str(option.get("integration_impact") or "").strip(),
-        "technology_constraints": str(option.get("technology_constraints") or "").strip(),
         "risks": str(option.get("risks") or "").strip(),
         "architecture_fit": str(option.get("architecture_fit") or "").strip(),
-        "time_to_value": time_to_value,
         "evidence_basis": evidence_basis,
     }
 
+    if "feasibility" in option:
+        payload["feasibility"] = _enum_or_default(
+            option.get("feasibility"),
+            allowed={choice for choice, _label in SolutionOption.Effort.choices},
+            default=SolutionOption.Effort.NOT_ASSESSED,
+        )
+    if "integration_effort" in option:
+        payload["integration_effort"] = _enum_or_default(
+            option.get("integration_effort"),
+            allowed={choice for choice, _label in SolutionOption.Effort.choices},
+            default=SolutionOption.Effort.NOT_ASSESSED,
+        )
+    if "time_to_value" in option:
+        payload["time_to_value"] = _enum_or_default(
+            option.get("time_to_value"),
+            allowed={choice for choice, _label in TimeToValue.choices},
+            default=TimeToValue.NOT_ASSESSED,
+        )
+    if "technology_constraints" in option:
+        payload["technology_constraints"] = str(
+            option.get("technology_constraints") or ""
+        ).strip()
+
+    if option_type not in (
+        SolutionOption.fixed_ai_option_types() | SolutionOption.fixed_non_ai_option_types()
+    ):
+        if isinstance(option.get("contains_ai_component"), bool):
+            payload["contains_ai_component"] = bool(option["contains_ai_component"])
+        elif "non_ai" in option:
+            payload["contains_ai_component"] = not bool(option.get("non_ai"))
+
+    return payload
 
 def _current_domain_hash(process: ProcessAnalysis) -> str:
     options = [
@@ -250,6 +251,19 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
             "name": option.name,
             "description": option.description,
             "expected_value": option.expected_value,
+            "bottleneck_coverage": option.bottleneck_coverage,
+            "feasibility": option.feasibility,
+            "data_requirements": option.data_requirements,
+            "application_impact": option.application_impact,
+            "integration_effort": option.integration_effort,
+            "integration_impact": option.integration_impact,
+            "technology_constraints": option.technology_constraints,
+            "risks": option.risks,
+            "architecture_fit": option.architecture_fit,
+            "time_to_value": option.time_to_value,
+            "evidence_basis": option.evidence_basis,
+            "contains_ai_component": option.contains_ai_component,
+            "evaluation_status": option.evaluation_status,
             "recommendation": option.recommendation,
         }
         for option in process.solution_options.order_by("id")
