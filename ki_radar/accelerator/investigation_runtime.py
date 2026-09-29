@@ -301,6 +301,7 @@ def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, objec
             "description": option.description,
             "expected_value": option.expected_value,
             "bottleneck_coverage": option.bottleneck_coverage,
+            "feasibility": option.feasibility,
             "data_requirements": option.data_requirements,
             "application_impact": option.application_impact,
             "integration_effort": option.integration_effort,
