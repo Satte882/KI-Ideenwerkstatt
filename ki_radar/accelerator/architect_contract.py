@@ -10,6 +10,7 @@ DISCOVERY_SCHEMA_VERSION = "ap1-discovery-v1"
 DISCOVERY_PROMPT_VERSION = "ap1-discovery-v1"
 DISCOVERY_VERIFIER_SCHEMA_VERSION = "ap1-discovery-verifier-v1"
 DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-discovery-verifier-v1"
+MAX_DISCOVERY_STAGES = 12
 
 _STAGE_FIELDS = frozenset(
     {
@@ -274,7 +275,6 @@ def build_discovery_json_schema() -> dict[str, Any]:
                 "stages": {
                     "type": "array",
                     "minItems": 1,
-                    "maxItems": 12,
                     "items": stage,
                 },
                 "focus": focus,
@@ -443,6 +443,8 @@ def validate_discovery_payload(
     if not isinstance(stages, list) or not stages:
         errors.append("stages: Mindestens eine Phase erforderlich.")
         stages = []
+    if len(stages) > MAX_DISCOVERY_STAGES:
+        errors.append(f"stages: Höchstens {MAX_DISCOVERY_STAGES} Phasen erlaubt.")
     for index, raw_stage in enumerate(stages):
         stage = _exact_fields(raw_stage, _STAGE_FIELDS, f"stages[{index}]", errors)
         key = str(stage.get("key") or "").strip()

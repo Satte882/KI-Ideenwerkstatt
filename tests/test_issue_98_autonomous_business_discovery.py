@@ -17,7 +17,9 @@ from ki_radar.accelerator.architect_contract import (
     DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
     DISCOVERY_VERIFIER_SCHEMA_VERSION,
+    MAX_DISCOVERY_STAGES,
     DiscoveryContractError,
+    build_discovery_json_schema,
     validate_discovery_payload,
 )
 from ki_radar.accelerator.architect_service import (
@@ -338,6 +340,20 @@ def _draft(*, contradiction: bool = False):
             else []
         ),
     }
+
+
+def test_discovery_stage_limit_stays_local_for_provider_schema_compatibility():
+    schema = build_discovery_json_schema()
+    assert "maxItems" not in schema["properties"]["stages"]
+
+    draft = _draft()
+    first_stage = draft["stages"][0]
+    draft["stages"] = [
+        {**first_stage, "key": f"stage-{index}", "sequence": index}
+        for index in range(1, MAX_DISCOVERY_STAGES + 2)
+    ]
+    with pytest.raises(DiscoveryContractError, match="Höchstens 12 Phasen"):
+        validate_discovery_payload(draft, allowed_refs={"U0", "S1"}, evidence_text="")
 
 
 def _verifier(status="approved", *, human_question="", repair_instructions=""):
