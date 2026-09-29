@@ -1390,6 +1390,152 @@ def test_architecture_adoption_resolves_omitted_existing_id_from_frozen_base_nam
 
 
 @pytest.mark.django_db
+def test_ap2_architecture_adoption_materializes_complete_comparison_as_assessed(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 comparison")
+    proposal = {
+        "name": "Regelbasierte Vorprüfung",
+        "option_type": SolutionOption.OptionType.RULE_AUTOMATION,
+        "description": "Formale Pflichtangaben vorprüfen.",
+        "expected_value": "Manuelle Prüfschritte reduzieren.",
+        "bottleneck_coverage": "Adressiert die wiederholte manuelle Vorprüfung.",
+        "feasibility": SolutionOption.Effort.MEDIUM,
+        "data_requirements": "Strukturierte Angebotsdaten und Kriterien.",
+        "application_impact": "Ergänzung im bestehenden Workflow.",
+        "integration_effort": SolutionOption.Effort.MEDIUM,
+        "integration_impact": "Anbindung an den vorhandenen Angebotsprozess.",
+        "technology_constraints": "Bestehende ERP-Schnittstellen weiterverwenden.",
+        "risks": "Regeln müssen bei Änderungen gepflegt werden.",
+        "architecture_fit": "Deterministische Regeln reichen für die Vorprüfung.",
+        "time_to_value": "unknown",
+        "evidence_basis": "indicative",
+    }
+
+    result = adopt_investigation_drafts(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={},
+        base_options={},
+        process_fields={},
+        solution_proposals=[proposal],
+    )
+
+    option = SolutionOption.objects.get(pk=result.created_solution_option_ids[0])
+    assert option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED
+    assert option.comparison_complete is True
+    assert option.recommendation == SolutionOption.Recommendation.CANDIDATE
+    assert option.feasibility == SolutionOption.Effort.MEDIUM
+    assert option.integration_effort == SolutionOption.Effort.MEDIUM
+    assert option.time_to_value == "unknown"
+    assert option.technology_constraints == "Bestehende ERP-Schnittstellen weiterverwenden."
+    assert option.contains_ai_component is False
+
+
+@pytest.mark.django_db
+def test_old_ready_brief_does_not_overwrite_absent_ap2_comparison_fields(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 old brief")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Bestehende Option",
+        option_type=SolutionOption.OptionType.CUSTOM_SOFTWARE,
+        contains_ai_component=True,
+        description="Ausgangsentwurf.",
+        expected_value="Nutzenhypothese.",
+        feasibility=SolutionOption.Effort.HIGH,
+        integration_effort=SolutionOption.Effort.MEDIUM,
+        time_to_value="long",
+        technology_constraints="Vom Menschen dokumentierte Leitplanke.",
+    )
+    base_updated_at = option.updated_at.isoformat()
+    proposal = _solution_proposals(
+        {
+            "options": [
+                {
+                    "name": option.name,
+                    "existing_option_id": str(option.pk),
+                    "option_type": option.option_type,
+                    "description": "Evidenzgestützt präzisierter Entwurf.",
+                    "expected_value": "Präzisierte Nutzenhypothese.",
+                    "non_ai": False,
+                }
+            ]
+        }
+    )[0]
+
+    assert "feasibility" not in proposal
+    assert "integration_effort" not in proposal
+    assert "time_to_value" not in proposal
+    assert "technology_constraints" not in proposal
+
+    adopt_investigation_drafts(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={},
+        base_options={
+            str(option.pk): {
+                "id": str(option.pk),
+                "name": option.name,
+                "updated_at": base_updated_at,
+            }
+        },
+        process_fields={},
+        solution_proposals=[proposal],
+    )
+
+    option.refresh_from_db()
+    assert option.description == "Evidenzgestützt präzisierter Entwurf."
+    assert option.feasibility == SolutionOption.Effort.HIGH
+    assert option.integration_effort == SolutionOption.Effort.MEDIUM
+    assert option.time_to_value == "long"
+    assert option.technology_constraints == "Vom Menschen dokumentierte Leitplanke."
+    assert option.contains_ai_component is True
+    assert option.evaluation_status == SolutionOption.EvaluationStatus.DRAFT
+
+
+def test_ap2_solution_proposal_accepts_optional_comparison_fields_without_preference():
+    payload = {
+        "options": [
+            {
+                "name": "Assistenz",
+                "option_type": SolutionOption.OptionType.ASSISTANT,
+                "description": "Vorschlag assistierend vorbereiten.",
+                "expected_value": "Prüfaufwand reduzieren.",
+                "bottleneck_coverage": "Adressiert die manuelle Vorbereitung.",
+                "feasibility": "medium",
+                "data_requirements": "Freigegebene Vorgangsdaten.",
+                "application_impact": "Assistenzoberfläche.",
+                "integration_effort": "low",
+                "integration_impact": "Lesender Zugriff auf Vorgangsdaten.",
+                "technology_constraints": "Keine autonome Freigabe.",
+                "risks": "Vorschläge können fachlich falsch sein.",
+                "architecture_fit": "Human-in-the-loop Assistenz.",
+                "time_to_value": "short",
+                "evidence_basis": "hypothesis",
+                "non_ai": False,
+                "status_quo": False,
+            }
+        ]
+    }
+
+    proposal = _solution_proposals(payload)[0]
+
+    assert proposal["feasibility"] == SolutionOption.Effort.MEDIUM
+    assert proposal["integration_effort"] == SolutionOption.Effort.LOW
+    assert proposal["time_to_value"] == "short"
+    assert proposal["technology_constraints"] == "Keine autonome Freigabe."
+    assert "recommendation" not in proposal
+    assert proposal.get("contains_ai_component") is None
+
+
+@pytest.mark.django_db
 def test_architecture_adoption_implicit_base_name_binding_still_blocks_changed_option(
     owner,
     business_unit,
