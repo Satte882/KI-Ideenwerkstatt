@@ -14,8 +14,9 @@ from ki_radar.architecture.models import (
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 from ki_radar.use_cases.classification import UseCaseClassification
 from ki_radar.use_cases.intake import ProcessStepForm
-from ki_radar.use_cases.intake_views import SESSION_KEY, _persist_optional_origin
+from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import persist_optional_origin
 
 
 def make_value_stream(*, business_unit, owner, name="Beschaffung bis Zahlung"):
@@ -272,7 +273,7 @@ def test_discovery_origin_has_precedence_over_manual_session_value(owner, busine
         affected_process=process.name,
     )
 
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={
             "source_stage_id": str(stage.pk),
@@ -296,7 +297,7 @@ def test_origin_rejects_business_unit_changed_after_process_selection(owner, bus
     )
 
     with pytest.raises(ValidationError, match="Organisationseinheit"):
-        _persist_optional_origin(
+        persist_optional_origin(
             candidate=use_case,
             stored={"process_analysis": str(process.pk)},
         )
@@ -317,7 +318,7 @@ def test_origin_derives_strategy_in_detail_without_redundant_use_case_fields(
         owner=owner,
         affected_process=process.name,
     )
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={"process_analysis": str(process.pk)},
     )
@@ -347,7 +348,7 @@ def test_origin_protects_linked_process_from_deletion(owner, business_unit):
         owner=owner,
         affected_process=process.name,
     )
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={"process_analysis": str(process.pk)},
     )
