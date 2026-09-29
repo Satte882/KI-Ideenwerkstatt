@@ -17,7 +17,7 @@ from ki_radar.core.taxonomy import BusinessDomain
 from .lean_intake import WIZARD_STEPS
 from .models import UseCase
 from .permissions import can_create_use_case
-from .services import intake_blockers
+from .services import intake_blockers, persist_optional_origin
 
 SESSION_KEY = "use_case_intake"
 IDEA_CANDIDATE_SESSION_KEY = "use_case_intake_idea_candidate"
@@ -165,106 +165,6 @@ def _build_use_case(*, stored: dict, user, business_owner) -> UseCase:
     return candidate
 
 
-def _persist_optional_origin(*, candidate: UseCase, stored: dict) -> None:
-    source_stage_id = stored.get("source_stage_id")
-    source_process_id = stored.get("source_process_analysis_id")
-    selected_process_id = stored.get("process_analysis")
-    source_option_id = stored.get("source_solution_option_id")
-    if not any((source_stage_id, source_process_id, selected_process_id, source_option_id)):
-        return
-
-    from ki_radar.architecture.models import (
-        ProcessAnalysis,
-        SolutionOption,
-        UseCaseOrigin,
-        ValueStreamStage,
-    )
-    from ki_radar.architecture.provenance import build_use_case_source_snapshot
-
-    stage = None
-    process_analysis = None
-
-    if source_process_id:
-        process_analysis = (
-            ProcessAnalysis.objects.select_related("stage__value_stream")
-            .filter(pk=source_process_id)
-            .first()
-        )
-        if process_analysis is None:
-            raise ValidationError(
-                "Der aus Discovery übernommene Ursprungsprozess ist nicht mehr verfügbar."
-            )
-        stage = process_analysis.stage
-        if source_stage_id and str(stage.pk) != str(source_stage_id):
-            raise ValidationError(
-                "Der Discovery-Ursprungsprozess gehört nicht mehr zur erwarteten "
-                "Value-Stream-Phase."
-            )
-    elif selected_process_id:
-        process_analysis = (
-            ProcessAnalysis.objects.select_related("stage__value_stream")
-            .filter(pk=selected_process_id)
-            .first()
-        )
-        if process_analysis is None:
-            raise ValidationError("Der gewählte Ursprungsprozess ist nicht mehr verfügbar.")
-        stage = process_analysis.stage
-        if source_stage_id and str(stage.pk) != str(source_stage_id):
-            raise ValidationError(
-                "Der gewählte Ursprungsprozess gehört nicht zur Discovery-Phase dieses Intake."
-            )
-    elif source_stage_id:
-        stage = (
-            ValueStreamStage.objects.select_related("value_stream")
-            .filter(pk=source_stage_id)
-            .first()
-        )
-        if stage is None:
-            raise ValidationError(
-                "Die aus Discovery übernommene Value-Stream-Phase ist nicht mehr verfügbar."
-            )
-
-    if stage is None:
-        raise ValidationError("Der Ursprung des Use Cases ist nicht konsistent auflösbar.")
-    if stage.value_stream.business_unit_id != candidate.business_unit_id:
-        raise ValidationError(
-            "Der Ursprungsprozess gehört nicht zur gewählten Organisationseinheit. "
-            "Bitte prüfen Sie Prozess und Organisationseinheit."
-        )
-    if process_analysis is not None and candidate.affected_process != process_analysis.name:
-        raise ValidationError(
-            "Der betroffene Prozess stimmt nicht mit dem gewählten Ursprungsprozess überein."
-        )
-
-    solution_option = None
-    if source_option_id:
-        if process_analysis is None:
-            raise ValidationError(
-                "Die Discovery-Lösungsoption kann ohne Ursprungsprozess nicht übernommen werden."
-            )
-        solution_option = SolutionOption.objects.filter(
-            pk=source_option_id,
-            process_analysis=process_analysis,
-        ).first()
-        if solution_option is None:
-            raise ValidationError(
-                "Die aus Discovery übernommene Lösungsoption gehört nicht mehr zum "
-                "Ursprungsprozess."
-            )
-
-    UseCaseOrigin.objects.create(
-        use_case=candidate,
-        stage=stage,
-        process_analysis=process_analysis,
-        solution_option=solution_option,
-        source_snapshot=build_use_case_source_snapshot(
-            stage=stage,
-            process_analysis=process_analysis,
-            solution_option=solution_option,
-        ),
-    )
-
-
 def _lock_idea_candidate_for_promotion(request):
     idea_candidate_id = request.session.get(IDEA_CANDIDATE_SESSION_KEY)
     if not idea_candidate_id:
@@ -327,7 +227,7 @@ def use_case_intake(request, step: int = 1):
                         idea = _lock_idea_candidate_for_promotion(request)
                         candidate._history_user = request.user
                         candidate.save()
-                        _persist_optional_origin(candidate=candidate, stored=stored)
+                        persist_optional_origin(candidate=candidate, stored=stored)
                         if idea is not None:
                             from .idea_models import IdeaCandidate
 
