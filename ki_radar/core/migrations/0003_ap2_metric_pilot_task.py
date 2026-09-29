@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("delivery_field_draft", "Delivery-Feldentwurf"),
                     ("ap2_metric_pilot_draft", "AP2 Metrik- und Pilotentwurf"),
+                    ("ap2_architecture_inputs", "AP2 Architecture-Advisor-Eingaben"),
                     (
                         "origin_consistency_review",
                         "Herkunfts-Konsistenzprüfung",
@@ -31,6 +32,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("delivery_field_draft", "Delivery-Feldentwurf"),
                     ("ap2_metric_pilot_draft", "AP2 Metrik- und Pilotentwurf"),
+                    ("ap2_architecture_inputs", "AP2 Architecture-Advisor-Eingaben"),
                     (
                         "origin_consistency_review",
                         "Herkunfts-Konsistenzprüfung",
