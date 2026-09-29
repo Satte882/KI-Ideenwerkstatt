@@ -199,6 +199,27 @@ class UseCase(TimeStampedModel):
     metric_measurement_period = models.CharField(
         max_length=200, blank=True, verbose_name="Messzeitraum"
     )
+    metric_measurement_population = models.TextField(
+        blank=True,
+        verbose_name="Messpopulation / Stichprobe",
+    )
+    pilot_scope = models.TextField(
+        blank=True,
+        verbose_name="Kleinster sinnvoller Pilot",
+    )
+    pilot_review_criteria = models.TextField(
+        blank=True,
+        verbose_name="Pilot-Reviewkriterien",
+    )
+    pilot_abort_criteria = models.TextField(
+        blank=True,
+        verbose_name="Pilot-Abbruchkriterien",
+    )
+    ap2_planning_provenance = models.JSONField(
+        default=dict,
+        blank=True,
+        editable=False,
+    )
     metric_measured_at = models.DateField(null=True, blank=True, verbose_name="Messdatum")
     metric_evidence_url = models.URLField(blank=True, verbose_name="Messnachweis")
 
