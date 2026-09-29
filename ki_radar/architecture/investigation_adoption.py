@@ -23,6 +23,7 @@ _ALLOWED_SOLUTION_FIELDS = frozenset(
         "description",
         "expected_value",
         "bottleneck_coverage",
+        "feasibility",
         "data_requirements",
         "application_impact",
         "integration_impact",
