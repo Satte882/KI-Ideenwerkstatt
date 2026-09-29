@@ -7,6 +7,7 @@ from ki_radar.architecture.forms import SolutionOptionForm
 from ki_radar.architecture.models import (
     EvidenceBasis,
     ProcessAnalysis,
+    ProcessValidation,
     SolutionOption,
     SolutionSelectionDecision,
     TimeToValue,
@@ -15,6 +16,7 @@ from ki_radar.architecture.models import (
 )
 from ki_radar.architecture.solution_selection import (
     comparison_blockers,
+    confirm_diagnosis_and_select_solution,
     ordered_solution_options,
     select_preferred_solution,
 )
@@ -342,6 +344,104 @@ def test_selection_is_auditable_and_updates_statuses(comparison_process, owner):
         decision.save()
     with pytest.raises(ValidationError):
         decision.delete()
+
+
+@pytest.mark.django_db
+def test_combined_review_confirms_diagnosis_validates_version_and_selects_option(
+    comparison_process,
+    owner,
+):
+    comparison_process.confirmed_causes = ""
+    comparison_process.status = ProcessAnalysis.Status.REVIEW_REQUIRED
+    comparison_process.save(update_fields=["confirmed_causes", "status", "updated_at"])
+    expected_version = comparison_process.version
+
+    organizational = make_option(
+        comparison_process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+
+    decision = confirm_diagnosis_and_select_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        confirmed_causes="Uneinheitliche Formate erzwingen manuelle Übertragung.",
+        rationale="Die Assistenz adressiert die verbleibende unstrukturierte Extraktionsarbeit.",
+        expected_process_version=expected_version,
+        actor=owner,
+    )
+
+    comparison_process.refresh_from_db()
+    organizational.refresh_from_db()
+    assistant.refresh_from_db()
+    validation = ProcessValidation.objects.get(process_analysis=comparison_process)
+
+    assert comparison_process.confirmed_causes == (
+        "Uneinheitliche Formate erzwingen manuelle Übertragung."
+    )
+    assert comparison_process.version == expected_version + 1
+    assert comparison_process.status == ProcessAnalysis.Status.VALIDATED
+    assert validation.process_version == comparison_process.version
+    assert validation.validated_by == owner
+    assert validation.validator_role == "Business Owner"
+    assert decision.process_version == comparison_process.version
+    assert decision.diagnosis_snapshot["confirmed_causes"] == comparison_process.confirmed_causes
+    assert decision.diagnosis_snapshot["validation"]["process_version"] == (
+        comparison_process.version
+    )
+    assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
+    assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+
+
+@pytest.mark.django_db
+def test_combined_review_rejects_stale_process_without_partial_write(
+    comparison_process,
+    owner,
+):
+    comparison_process.confirmed_causes = ""
+    comparison_process.save(update_fields=["confirmed_causes", "updated_at"])
+    reviewed_version = comparison_process.version
+    first = make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    make_option(
+        comparison_process,
+        owner,
+        name="Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+
+    ProcessAnalysis.objects.filter(pk=comparison_process.pk).update(
+        version=reviewed_version + 1,
+        diagnostic_observations="Zwischenzeitlich fachlich geändert.",
+    )
+
+    with pytest.raises(ValidationError, match="seit dem Review geändert"):
+        confirm_diagnosis_and_select_solution(
+            process_analysis=comparison_process,
+            selected_option=first,
+            confirmed_causes="Veralteter Kernbefund.",
+            rationale="Veraltete Auswahl.",
+            expected_process_version=reviewed_version,
+            actor=owner,
+        )
+
+    comparison_process.refresh_from_db()
+    first.refresh_from_db()
+    assert comparison_process.confirmed_causes == ""
+    assert not comparison_process.validations.exists()
+    assert not comparison_process.solution_selection_decisions.exists()
+    assert first.recommendation == SolutionOption.Recommendation.CANDIDATE
 
 
 @pytest.mark.django_db
