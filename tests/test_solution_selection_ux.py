@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -15,6 +16,7 @@ from ki_radar.architecture.models import (
 )
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.ap2_decision_governance import GOVERNANCE_FIELDS
 from ki_radar.use_cases.ap2_metric_pilot import AP2MetricPilotError
 from ki_radar.use_cases.models import UseCase
 
@@ -214,6 +216,14 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
         "ki_radar.architecture.solution_views.generate_and_apply_ap2_metric_pilot",
         draft,
     )
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_ap2_architecture_inputs",
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_ap2_decision_governance",
+        lambda **_kwargs: None,
+    )
     client.force_login(owner)
     url = reverse("architecture:solution_option_compare", args=[process.pk])
     first = client.post(
@@ -228,7 +238,9 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     use_case = UseCase.objects.get()
     assert use_case.ap2_planning_provenance == {}
     assert process.solution_selection_decisions.count() == 1
-    assert "AI-Handoff und Metrik-/Pilotentwurf fortsetzen" in client.get(url).content.decode()
+    assert (
+        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
+    )
 
     retry = client.post(url, {"continue_ai_handoff": "1"})
     assert retry.status_code == 302
@@ -237,6 +249,113 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     assert process.solution_selection_decisions.count() == 1
     assert UseCase.objects.count() == 1
     assert attempts == 2
+
+
+@pytest.mark.django_db
+def test_selected_ai_solution_continues_to_architecture_assessment_and_decision_surface(
+    client, owner, business_unit, monkeypatch
+):
+    process = make_process(owner, business_unit)
+    make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+
+    def metric_draft(*, use_case, actor):
+        use_case.ap2_planning_provenance = {"generated_by": "system"}
+        use_case.save(update_fields=["ap2_planning_provenance", "updated_at"])
+        return SimpleNamespace(changed_fields=())
+
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_and_apply_ap2_metric_pilot",
+        metric_draft,
+    )
+    architecture_answers = {
+        name: {
+            "value": value,
+            "source_ids": ["SO.description"],
+            "rationale": "Aus dem Lösungsfall abgeleitet.",
+        }
+        for name, value in {
+            "simpler_solution_sufficient": "no",
+            "semantic_reasoning_required": "yes",
+            "multiple_known_ai_steps_required": "no",
+            "dynamic_orchestration_required": "no",
+        }.items()
+    }
+    monkeypatch.setattr(
+        "ki_radar.architecture.ap2_architecture.request_llm_task_provider",
+        lambda _prepared, **_kwargs: SimpleNamespace(content=json.dumps(architecture_answers)),
+    )
+    assessment_values = {
+        "business_value": "medium",
+        "strategic_fit": "medium",
+        "technical_feasibility": "medium",
+        "data_readiness": "medium",
+        "risk_complexity": "medium",
+        "evidence_recency": "limited",
+        "evidence_coverage": "limited",
+        "independent_review": "critical",
+        "assumptions_resolved": "limited",
+        "recommendation": "deferred",
+        "rationale": "present",
+    }
+    decision_payload = {
+        "assessment": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Konservative Analyse des Falles.",
+            }
+            for name, value in assessment_values.items()
+        },
+        "governance": {
+            name: {
+                "value": "unknown",
+                "source_ids": ["UC.problem"],
+                "rationale": "Nicht sicher belegt.",
+                "evidence_quote": "",
+            }
+            for name in GOVERNANCE_FIELDS
+        },
+    }
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: SimpleNamespace(content=json.dumps(decision_payload)),
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    selected = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz deckt den Engpass besser ab.",
+        },
+    )
+    assert selected.status_code == 302
+    continued = client.post(url, {"continue_ai_handoff": "1"})
+    assert continued.status_code == 302
+    use_case = UseCase.objects.get()
+    assert assistant.architecture_assessment.architecture_mode == "controlled_llm"
+    assert use_case.decision_assessments.count() == 1
+    assert use_case.ap2_governance_draft["generated_by"] == "system"
+    surface = client.get(reverse("use_cases:ap2_decision_surface", args=[use_case.pk]))
+    assert surface.status_code == 200
+    content = surface.content.decode()
+    assert "Controlled LLM" in content
+    assert "Systemgenerierte Analyse" in content
+    assert "Governance-Entwurf vorhanden" in content
 
 
 @pytest.mark.django_db

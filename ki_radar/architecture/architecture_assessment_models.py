@@ -45,9 +45,11 @@ class SolutionArchitectureAssessment(TimeStampedModel):
     assessed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="solution_architecture_assessments",
     )
+    ap2_provenance = models.JSONField(default=dict, blank=True, editable=False)
 
     class Meta:
         app_label = "architecture"

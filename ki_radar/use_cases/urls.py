@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import (
+    ap2_views,
     decision_views,
     idea_views,
     intake_views,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("new/step/<int:step>/", intake_views.use_case_intake, name="intake_step"),
     path("export.csv", views.export_csv, name="export_csv"),
     path("<uuid:pk>/", views.use_case_detail, name="detail"),
+    path("<uuid:pk>/ap2-decision/", ap2_views.ap2_decision_surface, name="ap2_decision_surface"),
     path("<uuid:pk>/edit/", views.use_case_edit, name="edit"),
     path("<uuid:pk>/assessment/new/", decision_views.assessment_create, name="assessment_create"),
     path(

@@ -3,6 +3,8 @@ from decimal import Decimal
 
 import pytest
 
+from ki_radar.architecture.ap2_architecture import generate_ap2_architecture_inputs
+from ki_radar.architecture.architecture_assessment_models import SolutionArchitectureAssessment
 from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.models import (
     EvidenceBasis,
@@ -16,6 +18,12 @@ from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.models import LLMTaskRun
 from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
+from ki_radar.use_cases.ap2_decision_governance import (
+    ASSESSMENT_FIELDS,
+    GOVERNANCE_FIELDS,
+    generate_ap2_decision_governance,
+)
 from ki_radar.use_cases.ap2_metric_pilot import (
     TARGET_FIELDS,
     AP2MetricPilotError,
@@ -23,7 +31,7 @@ from ki_radar.use_cases.ap2_metric_pilot import (
     generate_and_apply_ap2_metric_pilot,
     validate_ap2_metric_pilot_payload,
 )
-from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseCase
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 pytestmark = pytest.mark.django_db
@@ -183,6 +191,212 @@ def _provider_result(payload):
         output_chars=len(content),
         finish_reason="stop",
     )
+
+
+def _architecture_payload():
+    return {
+        name: {
+            "value": value,
+            "source_ids": ["SO.description"],
+            "rationale": "Aus dem beschriebenen Assistenzfall abgeleitet.",
+        }
+        for name, value in {
+            "simpler_solution_sufficient": "no",
+            "semantic_reasoning_required": "yes",
+            "multiple_known_ai_steps_required": "no",
+            "dynamic_orchestration_required": "no",
+        }.items()
+    }
+
+
+def _decision_governance_payload():
+    values = {
+        "business_value": "medium",
+        "strategic_fit": "medium",
+        "technical_feasibility": "medium",
+        "data_readiness": "medium",
+        "risk_complexity": "medium",
+        "evidence_recency": "limited",
+        "evidence_coverage": "limited",
+        "independent_review": "critical",
+        "assumptions_resolved": "limited",
+        "recommendation": "deferred",
+        "rationale": "present",
+    }
+    assert set(values) == set(ASSESSMENT_FIELDS)
+    facts = {name: "unknown" for name in GOVERNANCE_FIELDS}
+    return {
+        "assessment": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Analyse mit offener Evidenzgrenze.",
+            }
+            for name, value in values.items()
+        },
+        "governance": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Im Fallkontext geprüft; Unbekanntes bleibt offen.",
+                "evidence_quote": "",
+            }
+            for name, value in facts.items()
+        },
+    }
+
+
+def test_ap2_architecture_uses_deterministic_advisor_and_preserves_human_input(
+    owner, business_unit, monkeypatch
+):
+    use_case = _ai_use_case(owner, business_unit)
+    monkeypatch.setattr(
+        "ki_radar.architecture.ap2_architecture.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(_architecture_payload()),
+    )
+    architecture = generate_ap2_architecture_inputs(use_case=use_case, actor=owner)
+    assert architecture.architecture_mode == "controlled_llm"
+    assert architecture.assessed_by is None
+    assert architecture.ap2_provenance["generated_by"] == "system"
+    assert SolutionArchitectureAssessment.objects.count() == 1
+    assert generate_ap2_architecture_inputs(use_case=use_case, actor=owner).pk == architecture.pk
+    architecture.ap2_provenance = {}
+    architecture.assessed_by = owner
+    architecture.save(update_fields=["ap2_provenance", "assessed_by"])
+    assert generate_ap2_architecture_inputs(use_case=use_case, actor=owner).assessed_by == owner
+
+
+def test_ap2_decision_governance_unknown_stays_unmaterialized_until_human_answer(
+    owner, business_unit, monkeypatch, client
+):
+    use_case = _ai_use_case(owner, business_unit)
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(_decision_governance_payload()),
+    )
+    assert generate_ap2_decision_governance(use_case=use_case, actor=owner) is None
+    use_case.refresh_from_db()
+    assessment = DecisionAssessment.objects.get(use_case=use_case)
+    assert assessment.assessed_by is None
+    assert assessment.ap2_provenance["generated_by"] == "system"
+    assert assessment.evidence_quality == DecisionAssessment.EvidenceQuality.EXPERT_OPINION
+    assert not ApprovalDecision.objects.exists()
+    assert not GovernanceAssessment.objects.exists()
+    assert use_case.ap2_governance_draft["facts"]["personal_data"]["value"] == "unknown"
+
+    client.force_login(owner)
+    surface = client.get(f"{use_case.get_absolute_url()}ap2-decision/")
+    assert surface.status_code == 200
+    assert "Werden personenbezogene Daten verarbeitet?" in surface.content.decode()
+    assert "Systemgenerierte Analyse" in surface.content.decode()
+
+    answer_response = client.post(
+        f"{use_case.get_absolute_url()}ap2-decision/",
+        {
+            "source_hash": use_case.ap2_governance_draft["source_hash"],
+            **{name: "no" for name in GOVERNANCE_FIELDS},
+            "personal_data": "yes",
+            "external_ai_or_cloud": "yes",
+            "human_oversight_planned": "yes",
+        },
+    )
+    assert answer_response.status_code == 302
+    screening = GovernanceAssessment.objects.get(use_case=use_case)
+    assert screening is not None
+    assert screening.reviewer is None
+    assert screening.personal_data is True
+    assert screening.privacy_review_required is True
+    assert screening.security_review_required is True
+    assert screening.legal_review_required is False
+    statuses = dict(GovernanceReview.objects.values_list("review_type", "status"))
+    assert statuses == {
+        "privacy": GovernanceReview.Status.OPEN,
+        "security": GovernanceReview.Status.OPEN,
+        "legal": GovernanceReview.Status.NOT_RELEVANT,
+    }
+    assert GovernanceReview.objects.filter(result="passed").count() == 0
+    assert ApprovalDecision.objects.count() == 0
+    assert generate_ap2_decision_governance(use_case=use_case, actor=owner).pk == screening.pk
+    assert DecisionAssessment.objects.filter(use_case=use_case).count() == 1
+
+
+def test_ap2_governance_materializes_only_quoted_yes_no_evidence(owner, business_unit, monkeypatch):
+    use_case = _ai_use_case(owner, business_unit)
+    facts = {name: "no" for name in GOVERNANCE_FIELDS}
+    facts["external_ai_or_cloud"] = "yes"
+    facts["human_oversight_planned"] = "yes"
+    use_case.problem_statement = "Governance-Angaben: " + "; ".join(
+        f"{name}={value}" for name, value in facts.items()
+    )
+    use_case.save(update_fields=["problem_statement", "updated_at"])
+    payload = _decision_governance_payload()
+    for name, value in facts.items():
+        payload["governance"][name].update(value=value, evidence_quote=f"{name}={value}")
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+    screening = generate_ap2_decision_governance(use_case=use_case, actor=owner)
+    assert screening is not None
+    assert screening.security_review_required is True
+    assert screening.privacy_review_required is False
+    assert screening.legal_review_required is False
+    assert GovernanceReview.objects.filter(status=GovernanceReview.Status.OPEN).count() == 1
+    assert GovernanceReview.objects.filter(status=GovernanceReview.Status.NOT_RELEVANT).count() == 2
+
+
+def test_ap2_governance_rejects_unquoted_negative_assertion(owner, business_unit, monkeypatch):
+    from ki_radar.use_cases.ap2_decision_governance import AP2DecisionGovernanceError
+
+    use_case = _ai_use_case(owner, business_unit)
+    payload = _decision_governance_payload()
+    payload["governance"]["personal_data"].update(
+        value="no", evidence_quote="Keine personenbezogenen Daten"
+    )
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+    with pytest.raises(AP2DecisionGovernanceError, match="wörtlichen Quellenbeleg"):
+        generate_ap2_decision_governance(use_case=use_case, actor=owner)
+    assert not GovernanceAssessment.objects.exists()
+    assert not DecisionAssessment.objects.exists()
+
+
+def test_ap2_governance_conflicting_person_data_is_kept_unknown():
+    from ki_radar.use_cases.ap2_decision_governance import _preserve_governance_conflicts
+
+    facts = _decision_governance_payload()["governance"]
+    facts["personal_data"].update(value="no", evidence_quote="keine Personendaten")
+    facts["employee_data"].update(value="yes", evidence_quote="Beschäftigtendaten")
+    normalized = _preserve_governance_conflicts(facts)
+    assert normalized["personal_data"]["value"] == "unknown"
+    assert normalized["personal_data"]["evidence_quote"] == ""
+    assert "Widerspruch" in normalized["personal_data"]["rationale"]
+
+
+def test_ap2_governance_does_not_apply_answers_after_process_changes(
+    owner, business_unit, monkeypatch, client
+):
+    use_case = _ai_use_case(owner, business_unit)
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(_decision_governance_payload()),
+    )
+    generate_ap2_decision_governance(use_case=use_case, actor=owner)
+    use_case.refresh_from_db()
+    process = use_case.architecture_origin.process_analysis
+    ProcessAnalysis.objects.filter(pk=process.pk).update(version=process.version + 1)
+    client.force_login(owner)
+    response = client.post(
+        f"{use_case.get_absolute_url()}ap2-decision/",
+        {
+            "source_hash": use_case.ap2_governance_draft["source_hash"],
+            **{name: "no" for name in GOVERNANCE_FIELDS},
+        },
+    )
+    assert response.status_code == 302
+    assert not GovernanceAssessment.objects.exists()
 
 
 def test_grounded_metric_pilot_draft_fills_only_non_numeric_plan_fields(

@@ -46,6 +46,10 @@ class LLMTaskRun(TimeStampedModel):
             "ap2_architecture_inputs",
             "AP2 Architecture-Advisor-Eingaben",
         )
+        AP2_DECISION_GOVERNANCE_DRAFT = (
+            "ap2_decision_governance_draft",
+            "AP2 Entscheidungs- und Governance-Entwurf",
+        )
         ORIGIN_CONSISTENCY_REVIEW = (
             "origin_consistency_review",
             "Herkunfts-Konsistenzprüfung",

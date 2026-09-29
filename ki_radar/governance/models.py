@@ -24,6 +24,7 @@ class GovernanceAssessment(TimeStampedModel):
     reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="governance_reviews",
     )
@@ -100,6 +101,7 @@ class GovernanceReview(TimeStampedModel):
     reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="completed_governance_reviews",
     )

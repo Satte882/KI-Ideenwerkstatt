@@ -9,12 +9,17 @@ from ki_radar.accelerator.investigation_models import InvestigationMaterializati
 from ki_radar.accelerator.solution_generation_entry import (
     build_solution_generation_entry_context,
 )
+from ki_radar.use_cases.ap2_decision_governance import (
+    AP2DecisionGovernanceError,
+    generate_ap2_decision_governance,
+)
 from ki_radar.use_cases.ap2_metric_pilot import (
     AP2MetricPilotError,
     generate_and_apply_ap2_metric_pilot,
 )
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
+from .ap2_architecture import AP2ArchitectureError, generate_ap2_architecture_inputs
 from .forms import SolutionSelectionForm
 from .models import ProcessAnalysis, SolutionOption
 from .permissions import can_edit_value_stream
@@ -30,7 +35,7 @@ from .solution_selection import (
 )
 
 
-def _continue_selected_ai_solution(*, request, decision):
+def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
     try:
         use_case_result = create_use_case_from_selected_solution(
             decision=decision,
@@ -50,25 +55,30 @@ def _continue_selected_ai_solution(*, request, decision):
         f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
         f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
     )
-    if use_case_result.use_case.ap2_planning_provenance:
-        return
-    try:
-        planning = generate_and_apply_ap2_metric_pilot(
-            use_case=use_case_result.use_case,
-            actor=request.user,
-        )
-    except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
-        messages.warning(
-            request,
-            "Der AI-Use-Case ist gespeichert; Metrik/Pilot konnte "
-            f"noch nicht vorbereitet werden: {exc}",
-        )
-    else:
-        messages.success(
-            request,
-            "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
-            f"({len(planning.changed_fields)} Felder ergänzt).",
-        )
+    use_case = use_case_result.use_case
+    if not use_case.ap2_planning_provenance:
+        try:
+            planning = generate_and_apply_ap2_metric_pilot(
+                use_case=use_case,
+                actor=request.user,
+            )
+        except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Metrik-/Pilotentwurf ist noch offen: {exc}")
+        else:
+            messages.success(
+                request,
+                "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
+                f"({len(planning.changed_fields)} Felder ergänzt).",
+            )
+    if complete_ap2:
+        try:
+            generate_ap2_architecture_inputs(use_case=use_case, actor=request.user)
+        except (AP2ArchitectureError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Architecture-Advisor-Eingaben sind noch offen: {exc}")
+        try:
+            generate_ap2_decision_governance(use_case=use_case, actor=request.user)
+        except (AP2DecisionGovernanceError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Entscheidungs-/Governance-Entwurf ist noch offen: {exc}")
 
 
 @login_required
@@ -130,7 +140,11 @@ def solution_option_compare(request, pk):
         if request.POST.get("continue_ai_handoff") == "1":
             if latest_selection is None or not latest_selection.selected_option.starts_ai_use_case:
                 raise PermissionDenied
-            _continue_selected_ai_solution(request=request, decision=latest_selection)
+            _continue_selected_ai_solution(
+                request=request,
+                decision=latest_selection,
+                complete_ap2=True,
+            )
             comparison_url = reverse(
                 "architecture:solution_option_compare",
                 kwargs={"pk": process_analysis.pk},

@@ -22,9 +22,12 @@ def save_solution_architecture_assessment(
     solution_option: SolutionOption,
     answers: dict[str, str],
     actor,
+    generated_provenance: dict | None = None,
 ) -> SolutionArchitectureAssessment:
-    option = SolutionOption.objects.select_related("process_analysis__stage__value_stream").get(
-        pk=solution_option.pk
+    option = (
+        SolutionOption.objects.select_for_update()
+        .select_related("process_analysis__stage__value_stream")
+        .get(pk=solution_option.pk)
     )
     if not can_edit_value_stream(actor, option.process_analysis.stage.value_stream):
         raise ValidationError("Für diese Architektur-Einschätzung fehlt die Berechtigung.")
@@ -33,6 +36,11 @@ def save_solution_architecture_assessment(
     result = classify_architecture(**normalized_answers)
 
     assessment = SolutionArchitectureAssessment.objects.filter(solution_option=option).first()
+    if generated_provenance and assessment is not None:
+        if not assessment.ap2_provenance:
+            return assessment
+        if assessment.ap2_provenance.get("source_hash") == generated_provenance.get("source_hash"):
+            return assessment
     if assessment is None:
         return SolutionArchitectureAssessment.objects.create(
             solution_option=option,
@@ -41,7 +49,8 @@ def save_solution_architecture_assessment(
             reason_codes=list(result.reason_codes),
             ruleset_version=RULESET_VERSION,
             version=1,
-            assessed_by=actor,
+            assessed_by=None if generated_provenance else actor,
+            ap2_provenance=generated_provenance or {},
         )
 
     for field_name, value in normalized_answers.items():
@@ -50,7 +59,8 @@ def save_solution_architecture_assessment(
     assessment.reason_codes = list(result.reason_codes)
     assessment.ruleset_version = RULESET_VERSION
     assessment.version += 1
-    assessment.assessed_by = actor
+    assessment.assessed_by = None if generated_provenance else actor
+    assessment.ap2_provenance = generated_provenance or {}
     assessment.save(
         update_fields=[
             *ANSWER_FIELD_NAMES,
@@ -59,6 +69,7 @@ def save_solution_architecture_assessment(
             "ruleset_version",
             "version",
             "assessed_by",
+            "ap2_provenance",
             "updated_at",
         ]
     )

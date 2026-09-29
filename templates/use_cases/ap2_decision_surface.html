@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Entscheidungsgrundlage – {{ use_case.short_id }}{% endblock %}
+{% block body_class %}page-use-case{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ use_case.short_id }} · AP2 · Vor formaler Freigabe</div>
+    <h1 class="cr-page-header__title">Entscheidungsgrundlage: {{ use_case.title }}</h1>
+    <p class="cr-work-header__summary">Konsolidierter Stand aus Prozess, menschlicher Lösungsentscheidung und kanonischem Use Case. Systemanalyse ist keine Approval.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Use Case öffnen</a>
+</header>
+
+{% if not selection_is_current %}<div class="alert alert-warning">Diese frühere AI-Auswahl ist nicht mehr die aktuelle menschliche Lösungsentscheidung. Bitte den aktuellen Vergleich prüfen; die automatische Fortsetzung und Freigabe sind hier gesperrt.</div>{% endif %}
+
+<section class="app-card mb-4" aria-labelledby="basis-title">
+  <div class="card-header"><h2 class="h5 mb-0" id="basis-title">Problem, Ursache und Lösungswahl</h2></div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-md-3">Prozess und Problem</dt><dd class="col-md-9">{{ process.name }} · {{ process.diagnostic_observations|default:use_case.problem_statement }}</dd>
+      <dt class="col-md-3">Bestätigte Ursachen</dt><dd class="col-md-9">{{ process.confirmed_causes|default:"Noch nicht bestätigt" }}</dd>
+      <dt class="col-md-3">Menschlich gewählte Lösung</dt><dd class="col-md-9"><strong>{{ option.name }}</strong>{% if selection_is_current %} · {{ selection.rationale }}{% else %} · historischer Ursprung{% endif %}</dd>
+      <dt class="col-md-3">AI-/Non-AI-Abgrenzung</dt><dd class="col-md-9">Die gewählte Option enthält eine KI-Komponente. Die unten aufgeführten Non-AI-Alternativen bleiben Teil des Vergleichs; aus ihnen entsteht kein KI-Use-Case.</dd>
+    </dl>
+    <h3 class="h6 mt-3">Betrachtete Alternativen</h3>
+    <ul>{% for candidate in options %}<li>{{ candidate.name }} · {{ candidate.get_option_type_display }} · {{ candidate.get_recommendation_display }}</li>{% endfor %}</ul>
+    <a href="{% url 'architecture:solution_option_compare' process.pk %}">Vollständigen Vergleich und Entscheidungsverlauf öffnen</a>
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="architecture-title">
+  <div class="card-header"><h2 class="h5 mb-0" id="architecture-title">Architektur und Use Case</h2></div>
+  <div class="card-body">
+    <p><strong>Architecture Mode:</strong> {% if architecture %}{{ architecture.get_architecture_mode_display }}{% else %}Noch offen{% endif %}</p>
+    <p><strong>Use Case:</strong> <a href="{{ use_case.get_absolute_url }}">{{ use_case.short_id }}</a> · {{ use_case.get_solution_type_display }}</p>
+    <p><strong>Intended Purpose:</strong> {{ use_case.intended_purpose }}</p>
+    <p><strong>Human Oversight:</strong> {{ use_case.human_oversight }}</p>
+    {% if architecture %}<details><summary>Advisor-Antworten und Systemherkunft anzeigen</summary><div class="mt-2 small">
+      <p>Einfachere Lösung ausreichend: {{ architecture.get_simpler_solution_sufficient_display }} · Semantisches Reasoning nötig: {{ architecture.get_semantic_reasoning_required_display }}</p>
+      <p>Mehrere bekannte KI-Schritte: {{ architecture.get_multiple_known_ai_steps_required_display }} · Dynamische Orchestrierung: {{ architecture.get_dynamic_orchestration_required_display }}</p>
+      <p>Regelversion: {{ architecture.ruleset_version }} · {% if architecture.ap2_provenance %}Systemgeneriert, Run {{ architecture.ap2_provenance.run_id }}{% else %}Menschlich erfasst{% endif %}</p>
+    </div></details>{% endif %}
+    {% if architecture_open_points %}<div class="alert alert-warning mt-3"><strong>Offene Architekturfragen</strong><ul class="mb-0">{% for point in architecture_open_points %}<li>{{ point }}</li>{% endfor %}</ul></div>{% endif %}
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="value-title">
+  <div class="card-header"><h2 class="h5 mb-0" id="value-title">Nutzen, Messung und Pilot</h2></div>
+  <div class="card-body">
+    <p><strong>Nutzenhypothese:</strong> {{ use_case.expected_benefit }}</p>
+    <p><strong>Erfolgsmetrik:</strong> {{ use_case.metric_name|default:"Noch offen" }}{% if use_case.metric_unit %} ({{ use_case.metric_unit }}){% endif %} · {{ use_case.metric_measurement_method|default:"Messmethode offen" }}</p>
+    <p><strong>Baseline/Ziel:</strong> {% if use_case.metric_baseline is not None %}{{ use_case.metric_baseline }}{% else %}unbekannt{% endif %} / {% if use_case.metric_target is not None %}{{ use_case.metric_target }}{% else %}unbekannt{% endif %}</p>
+    <p><strong>Messpopulation und Zeitraum:</strong> {{ use_case.metric_measurement_population|default:"offen" }} · {{ use_case.metric_measurement_period|default:"offen" }}</p>
+    <p><strong>Kleinster Pilot:</strong> {{ use_case.pilot_scope|default:"Noch offen" }}</p>
+    <p><strong>Review-/Abbruchkriterien:</strong> {{ use_case.pilot_review_criteria|default:"offen" }} · {{ use_case.pilot_abort_criteria|default:"offen" }}</p>
+    <p class="small text-muted">Pilotkonzept vorbereitet; kein Pilotstart erfolgt.</p>
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="assessment-title">
+  <div class="card-header"><h2 class="h5 mb-0" id="assessment-title">Bewertung und Risiken</h2></div>
+  <div class="card-body">
+    {% if assessment %}<p><strong>Unverbindliche Empfehlung:</strong> {{ assessment.get_recommendation_display }} · Confidence {{ assessment.confidence_label }}</p><p>{{ assessment.rationale }}</p><p class="small text-muted">{% if assessment.ap2_provenance %}Systemgenerierte Analyse, Run {{ assessment.ap2_provenance.run_id }}{% else %}Menschliche Bewertung{% endif %}. Keine formale Freigabe.</p>
+    <details><summary>Bewertungsdimensionen und Evidenzqualität anzeigen</summary><dl class="row mt-2 small">
+      <dt class="col-md-3">Business Value</dt><dd class="col-md-9">{{ assessment.get_business_value_display }}</dd>
+      <dt class="col-md-3">Strategic Fit</dt><dd class="col-md-9">{{ assessment.get_strategic_fit_display }}</dd>
+      <dt class="col-md-3">Technical Feasibility</dt><dd class="col-md-9">{{ assessment.get_technical_feasibility_display }}</dd>
+      <dt class="col-md-3">Data Readiness</dt><dd class="col-md-9">{{ assessment.get_data_readiness_display }}</dd>
+      <dt class="col-md-3">Risk Complexity</dt><dd class="col-md-9">{{ assessment.get_risk_complexity_display }}</dd>
+      <dt class="col-md-3">Evidence Quality</dt><dd class="col-md-9">{{ assessment.get_evidence_quality_display }}</dd>
+      <dt class="col-md-3">Evidence Recency / Coverage</dt><dd class="col-md-9">{{ assessment.get_evidence_recency_display }} / {{ assessment.get_evidence_coverage_display }}</dd>
+      <dt class="col-md-3">Independent Review / Assumptions</dt><dd class="col-md-9">{{ assessment.get_independent_review_display }} / {{ assessment.get_assumptions_resolved_display }}</dd>
+    </dl></details>
+    {% else %}<p>Strukturierte Bewertung noch offen.</p>{% endif %}
+    <p><strong>Lösungsrisiken:</strong> {{ option.risks|default:"Noch nicht dokumentiert" }}</p>
+  </div>
+</section>
+
+<section class="app-card mb-4" aria-labelledby="governance-title">
+  <div class="card-header"><h2 class="h5 mb-0" id="governance-title">Governance und offene Pflichtprüfungen</h2></div>
+  <div class="card-body">
+    {% if governance.has_screening %}<p>Screening vorbereitet: {{ governance.screening.get_result_display }}. Formale Prüfungen bleiben menschlich.</p>{% elif draft %}<p>Governance-Entwurf vorhanden; boolesches Screening wartet auf geklärte Fakten.</p>{% else %}<p>Governance-Entwurf noch offen.</p>{% endif %}
+    {% if governance_facts %}<details><summary>Governance-Fakten und Quellen anzeigen</summary><ul class="mt-2">{% for fact in governance_facts %}<li><strong>{{ fact.question }}</strong> {{ fact.value_label }} · {{ fact.rationale }} <span class="small text-muted">Quellen: {{ fact.source_ids|join:", " }}</span></li>{% endfor %}</ul></details>{% endif %}
+    <ul>{% for review in governance.reviews %}<li>{{ review.definition.label }}: {% if review.review %}{{ review.review.display_status }}{% elif governance.has_screening %}{% if review.required %}Offen{% else %}Nicht relevant{% endif %}{% else %}Bedarf noch unbekannt{% endif %}{% if review.required and not review.completed %} · <a href="{% url 'governance:review' use_case.pk review.definition.review_type %}">Prüfung öffnen</a>{% endif %}</li>{% endfor %}</ul>
+    {% if unknowns %}<h3 class="h6">Entscheidungsrelevante Unknowns</h3><ul>{% for item in unknowns %}<li>{{ item.question }} <span class="small text-muted">{{ item.rationale }}</span></li>{% endfor %}</ul>
+      {% if can_answer and selection_is_current %}<form method="post" class="mt-3">{% csrf_token %}<input type="hidden" name="source_hash" value="{{ draft.source_hash }}">
+      {% for item in unknowns %}<div class="mb-3"><label class="form-label" for="gov-{{ item.name }}">{{ item.question }}</label><select class="form-select" id="gov-{{ item.name }}" name="{{ item.name }}" required><option value="">Bitte wählen</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>{% endfor %}
+      <button class="btn btn-primary" type="submit">Governance-Fakten bestätigen</button></form>{% endif %}
+    {% endif %}
+    {% if planning_unknowns %}<h3 class="h6 mt-3">Weitere Mess-/Pilot-Unknowns</h3><ul>{% for item in planning_unknowns %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+</section>
+
+{% if selection_is_current and use_case.status == 'review' and assessment and governance.has_screening %}<a class="btn btn-primary mb-4" href="{% url 'use_cases:approval_decision_create' use_case.pk %}">Formale Entscheidung prüfen</a>{% else %}<p class="small text-muted mb-4">Die formale Approval bleibt ein eigener menschlicher Schritt im bestehenden Lifecycle.</p>{% endif %}
+{% endblock %}
