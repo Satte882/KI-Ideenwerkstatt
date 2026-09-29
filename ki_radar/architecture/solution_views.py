@@ -9,6 +9,10 @@ from ki_radar.accelerator.investigation_models import InvestigationMaterializati
 from ki_radar.accelerator.solution_generation_entry import (
     build_solution_generation_entry_context,
 )
+from ki_radar.use_cases.ap2_metric_pilot import (
+    AP2MetricPilotError,
+    generate_and_apply_ap2_metric_pilot,
+)
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 from .forms import SolutionSelectionForm
@@ -123,6 +127,24 @@ def solution_option_compare(request, pk):
                             f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
                             f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
                         )
+                        if not use_case_result.use_case.ap2_planning_provenance:
+                            try:
+                                planning = generate_and_apply_ap2_metric_pilot(
+                                    use_case=use_case_result.use_case,
+                                    actor=request.user,
+                                )
+                            except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
+                                messages.warning(
+                                    request,
+                                    "Der AI-Use-Case ist gespeichert; Metrik/Pilot konnte "
+                                    f"noch nicht vorbereitet werden: {exc}",
+                                )
+                            else:
+                                messages.success(
+                                    request,
+                                    "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
+                                    f"({len(planning.changed_fields)} Felder ergänzt).",
+                                )
                 else:
                     messages.success(
                         request,
