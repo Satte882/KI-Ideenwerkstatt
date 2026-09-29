@@ -41,6 +41,7 @@ from .investigation_prompts import (
     SYNTHESIS_PROMPT_VERSION,
     SYNTHESIS_SCHEMA_VERSION,
     TOOL_PARAMETER_CONTRACTS,
+    LEGACY_VERIFIER_PROMPT_VERSION,
     VERIFIER_INSTRUCTION,
     VERIFIER_PROMPT_VERSION,
     VERIFIER_SCHEMA_VERSION,
@@ -358,14 +359,25 @@ def _assert_frozen_execution_contract(run: InvestigationRun) -> None:
         and synthesizer.get("instruction_hash")
         == _instruction_hash(str(synthesizer.get("instruction_template")))
     )
+    current_verifier = (
+        verifier.get("prompt_version") == VERIFIER_PROMPT_VERSION
+        and verifier.get("instruction_hash") == _instruction_hash(VERIFIER_INSTRUCTION)
+        and verifier.get("schema_version") == VERIFIER_SCHEMA_VERSION
+    )
+    legacy_verifier = (
+        verifier.get("prompt_version") == LEGACY_VERIFIER_PROMPT_VERSION
+        and verifier.get("schema_version") == VERIFIER_SCHEMA_VERSION
+        and isinstance(verifier.get("instruction_template"), str)
+        and bool(verifier.get("instruction_template"))
+        and verifier.get("instruction_hash")
+        == _instruction_hash(str(verifier.get("instruction_template")))
+    )
     if (
         planner.get("prompt_version") != PLANNER_PROMPT_VERSION
         or planner.get("instruction_hash") != _instruction_hash(PLANNER_INSTRUCTION)
         or planner.get("schema_version") != PLANNER_SCHEMA_VERSION
         or not (current_synthesizer or legacy_synthesizer)
-        or verifier.get("prompt_version") != VERIFIER_PROMPT_VERSION
-        or verifier.get("instruction_hash") != _instruction_hash(VERIFIER_INSTRUCTION)
-        or verifier.get("schema_version") != VERIFIER_SCHEMA_VERSION
+        or not (current_verifier or legacy_verifier)
     ):
         raise InvestigationRunError(
             "Ein fixierter Prompt-/Schema-Vertrag hat sich geändert.",
@@ -1530,14 +1542,15 @@ def request_verifier_report(
     context = _verifier_context(run, analysis_replays=analysis_replays)
 
     while True:
+        frozen_verifier = run.execution_snapshot.get("verifier") or {}
         payload, call = _structured_provider_call(
             actor=actor,
             run_id=run.pk,
             executor_token=executor_token,
             role=InvestigationModelCall.Role.VERIFIER,
-            instruction=VERIFIER_INSTRUCTION,
-            prompt_version=VERIFIER_PROMPT_VERSION,
-            schema_version=VERIFIER_SCHEMA_VERSION,
+            instruction=str(frozen_verifier.get("instruction_template") or ""),
+            prompt_version=str(frozen_verifier.get("prompt_version") or ""),
+            schema_version=str(frozen_verifier.get("schema_version") or ""),
             context=context,
             response_format=verifier_response_format(),
         )
