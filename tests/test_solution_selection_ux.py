@@ -216,7 +216,9 @@ def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
         url,
         {
             "process_version": reviewed_version,
-            "confirmed_causes": "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten.",
+            "confirmed_causes": (
+                "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten."
+            ),
             "selected_option": assistant.pk,
             "rationale": "Die Assistenz adressiert die verbleibende Extraktionsarbeit.",
         },
