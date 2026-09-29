@@ -87,7 +87,6 @@ def build_process_decision_surface(
         process_analysis=process_analysis,
         latest_materialization=latest_materialization,
     )
-    run = latest_materialization.run
     if not finding:
         finding = _first_calculation(payload)
     if not finding:
