@@ -4,8 +4,13 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from .focus import get_value_stream_focus
-from .models import ProcessAnalysis, SolutionOption, SolutionSelectionDecision
-from .permissions import can_edit_value_stream
+from .models import (
+    ProcessAnalysis,
+    ProcessValidation,
+    SolutionOption,
+    SolutionSelectionDecision,
+)
+from .permissions import can_edit_value_stream, process_validator_role
 from .solution_retirement import active_solution_options
 
 OPTION_TYPE_PRIORITY = {
@@ -117,6 +122,80 @@ def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
             else None
         ),
     }
+
+
+@transaction.atomic
+def confirm_diagnosis_and_select_solution(
+    *,
+    process_analysis: ProcessAnalysis,
+    selected_option: SolutionOption,
+    confirmed_causes: str,
+    rationale: str,
+    expected_process_version: int,
+    actor,
+) -> SolutionSelectionDecision:
+    process = (
+        ProcessAnalysis.objects.select_for_update()
+        .select_related("stage__value_stream")
+        .get(pk=process_analysis.pk)
+    )
+    if not can_edit_value_stream(actor, process.stage.value_stream):
+        raise ValidationError("Für diese Diagnose- und Lösungsentscheidung fehlt die Berechtigung.")
+    if process.version != expected_process_version:
+        raise ValidationError(
+            "Die Prozessanalyse wurde seit dem Review geändert. "
+            "Bitte den aktuellen Stand erneut prüfen; es wurde nichts überschrieben."
+        )
+
+    cause = confirmed_causes.strip()
+    if not cause:
+        raise ValidationError("Für die Bestätigung ist ein fachlicher Kernbefund erforderlich.")
+
+    current_cause = process.confirmed_causes.strip()
+    if current_cause and current_cause != cause:
+        raise ValidationError(
+            "Die bestätigte Ursache wurde zwischenzeitlich geändert. "
+            "Bitte den aktuellen Stand erneut prüfen; es wurde nichts überschrieben."
+        )
+
+    if not current_cause:
+        process.confirmed_causes = cause
+        process.version += 1
+        update_fields = ["confirmed_causes", "version", "updated_at"]
+        if process.status in {
+            ProcessAnalysis.Status.DRAFT,
+            ProcessAnalysis.Status.REVIEW_REQUIRED,
+        }:
+            process.status = ProcessAnalysis.Status.VALIDATED
+            update_fields.append("status")
+        process.full_clean()
+        process.save(update_fields=update_fields)
+
+    validation = process.validations.filter(process_version=process.version).first()
+    if validation is None:
+        ProcessValidation.objects.create(
+            process_analysis=process,
+            process_version=process.version,
+            validated_by=actor,
+            validator_role=process_validator_role(actor),
+            note=(
+                "Kernbefund im kombinierten Diagnose- und Lösungsreview "
+                "fachlich bestätigt."
+            ),
+        )
+        if process.status in {
+            ProcessAnalysis.Status.DRAFT,
+            ProcessAnalysis.Status.REVIEW_REQUIRED,
+        }:
+            process.status = ProcessAnalysis.Status.VALIDATED
+            process.save(update_fields=["status", "updated_at"])
+
+    return select_preferred_solution(
+        process_analysis=process,
+        selected_option=selected_option,
+        rationale=rationale,
+        actor=actor,
+    )
 
 
 @transaction.atomic
