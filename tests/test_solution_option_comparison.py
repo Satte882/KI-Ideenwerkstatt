@@ -11,6 +11,7 @@ from ki_radar.architecture.models import (
     SolutionOption,
     SolutionSelectionDecision,
     TimeToValue,
+    UseCaseOrigin,
     ValueStream,
     ValueStreamStage,
 )
@@ -21,6 +22,8 @@ from ki_radar.architecture.solution_selection import (
     select_preferred_solution,
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 
 @pytest.fixture
@@ -442,6 +445,93 @@ def test_combined_review_rejects_stale_process_without_partial_write(
     assert not comparison_process.validations.exists()
     assert not comparison_process.solution_selection_decisions.exists()
     assert first.recommendation == SolutionOption.Recommendation.CANDIDATE
+
+
+@pytest.mark.django_db
+def test_ai_selection_creates_one_idempotent_use_case_with_origin(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        evidence_basis=EvidenceBasis.INDICATIVE,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den verbleibenden Extraktionsschritt ab.",
+        actor=owner,
+    )
+
+    first = create_use_case_from_selected_solution(decision=decision, actor=owner)
+    second = create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert first.created is True
+    assert second.created is False
+    assert first.use_case.pk == second.use_case.pk
+    assert UseCase.objects.count() == 1
+
+    use_case = first.use_case
+    origin = UseCaseOrigin.objects.get(use_case=use_case)
+    assert use_case.title == assistant.name
+    assert use_case.business_unit == comparison_process.stage.value_stream.business_unit
+    assert use_case.business_owner == owner
+    assert use_case.problem_statement == comparison_process.diagnostic_observations
+    assert use_case.affected_process == comparison_process.name
+    assert use_case.source_systems == comparison_process.systems
+    assert use_case.data_sources == assistant.data_requirements
+    assert use_case.interface_description == assistant.integration_impact
+    assert use_case.intended_purpose == assistant.description
+    assert use_case.expected_benefit == assistant.expected_value
+    assert use_case.solution_type == UseCase.SolutionType.ASSISTANT
+    assert use_case.status == UseCase.Status.IDEA
+    assert use_case.decision_status == UseCase.DecisionStatus.READY
+    assert "bleiben beim Menschen" in use_case.human_oversight
+    assert origin.process_analysis == comparison_process
+    assert origin.solution_option == assistant
+    assert origin.stage == comparison_process.stage
+    assert use_case.classification.business_domain == BusinessDomain.PROCUREMENT
+    assert use_case.classification.capability == "Source-to-Pay"
+
+
+@pytest.mark.django_db
+def test_non_ai_selection_does_not_create_fake_ai_use_case(
+    comparison_process,
+    owner,
+):
+    organizational = make_option(
+        comparison_process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=organizational,
+        rationale="Die organisatorische Lösung adressiert den Engpass ohne KI.",
+        actor=owner,
+    )
+
+    with pytest.raises(ValidationError, match="keine KI-Komponente"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+    assert not UseCaseOrigin.objects.exists()
 
 
 @pytest.mark.django_db
