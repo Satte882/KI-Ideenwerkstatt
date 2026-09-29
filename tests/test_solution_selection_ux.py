@@ -170,6 +170,68 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
 
 
 @pytest.mark.django_db
+def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    process.confirmed_causes = ""
+    process.status = ProcessAnalysis.Status.REVIEW_REQUIRED
+    process.save(update_fields=["confirmed_causes", "status", "updated_at"])
+    reviewed_version = process.version
+    organizational = make_option(
+        process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+
+    response = client.get(url)
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert response.context["selection_blocked"] is False
+    assert response.context["diagnosis_confirmation_required"] is True
+    assert 'data-testid="combined-diagnosis-selection"' in content
+    assert "Kernbefund fachlich bestätigen" in content
+    assert "Diagnose bestätigen und bevorzugte Option auswählen" in content
+    assert reverse("architecture:process_analysis_update", args=[process.pk]) not in content
+
+    response = client.post(
+        url,
+        {
+            "process_version": reviewed_version,
+            "confirmed_causes": "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten.",
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz adressiert die verbleibende Extraktionsarbeit.",
+        },
+    )
+
+    assert response.status_code == 302
+    process.refresh_from_db()
+    organizational.refresh_from_db()
+    assistant.refresh_from_db()
+    assert process.confirmed_causes == (
+        "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten."
+    )
+    assert process.version == reviewed_version + 1
+    assert process.validations.filter(process_version=process.version).exists()
+    assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
+    assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+
+
+@pytest.mark.django_db
 def test_all_blockers_are_visible_without_misleading_edit_links(client, owner, business_unit):
     process = make_process(owner, business_unit)
     process.stage.value_stream.focus.delete()
