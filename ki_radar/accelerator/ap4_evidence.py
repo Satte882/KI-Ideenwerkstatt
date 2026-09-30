@@ -54,6 +54,7 @@ REQUIRED_TARGETS = frozenset(
         "human_rework_ratio_max",
     }
 )
+TEXT_SOURCE_SUFFIXES = frozenset({".csv", ".json", ".md", ".txt", ".yaml", ".yml"})
 TIME_KEYS = (
     "active_input_seconds",
     "navigation_seconds",
@@ -94,6 +95,7 @@ class FrozenManifest:
 class FrozenValidation:
     manifest: FrozenManifest
     source_hashes: Mapping[str, str]
+    accepted_source_hashes: Mapping[str, frozenset[str]]
 
 
 def current_contract_versions() -> dict[str, str]:
@@ -228,8 +230,7 @@ def _pack_files(root: Path) -> tuple[str, ...]:
     )
 
 
-def source_pack_hash(root: str | Path, expected_files: Iterable[str]) -> str:
-    root_path = Path(root)
+def _validate_pack_file_set(root_path: Path, expected_files: Iterable[str]) -> tuple[str, ...]:
     if not root_path.is_dir():
         raise AP4EvidenceError(f"missing source pack: {root_path}")
 
@@ -239,15 +240,48 @@ def source_pack_hash(root: str | Path, expected_files: Iterable[str]) -> str:
         raise AP4EvidenceError(
             f"source pack file set changed for {root_path}: expected={expected}, actual={actual}"
         )
+    return expected
 
+
+def _normalized_source_bytes(relative: str, data: bytes) -> bytes:
+    if Path(relative).suffix.casefold() not in TEXT_SOURCE_SUFFIXES:
+        return data
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def _source_pack_hash(
+    root_path: Path,
+    expected: Iterable[str],
+    *,
+    windows_legacy: bool,
+) -> str:
     digest = hashlib.sha256()
     for relative in expected:
-        data = (root_path / relative).read_bytes()
+        data = _normalized_source_bytes(relative, (root_path / relative).read_bytes())
+        if windows_legacy and Path(relative).suffix.casefold() in TEXT_SOURCE_SUFFIXES:
+            data = data.replace(b"\n", b"\r\n")
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
         digest.update(len(data).to_bytes(8, "big"))
         digest.update(data)
     return digest.hexdigest()
+
+
+def source_pack_hash(root: str | Path, expected_files: Iterable[str]) -> str:
+    root_path = Path(root)
+    expected = _validate_pack_file_set(root_path, expected_files)
+    return _source_pack_hash(root_path, expected, windows_legacy=False)
+
+
+def _accepted_source_pack_hashes(root: str | Path, expected_files: Iterable[str]) -> frozenset[str]:
+    root_path = Path(root)
+    expected = _validate_pack_file_set(root_path, expected_files)
+    return frozenset(
+        {
+            _source_pack_hash(root_path, expected, windows_legacy=False),
+            _source_pack_hash(root_path, expected, windows_legacy=True),
+        }
+    )
 
 
 def validate_frozen_manifest(
@@ -272,11 +306,19 @@ def validate_frozen_manifest(
         )
 
     base = Path(repo_root)
-    hashes = {
-        case.case_id: source_pack_hash(base / case.source_pack, case.files)
+    accepted_hashes = {
+        case.case_id: _accepted_source_pack_hashes(base / case.source_pack, case.files)
         for case in manifest.cases
     }
-    return FrozenValidation(manifest=manifest, source_hashes=hashes)
+    hashes = {
+        case_id: sorted(values)[0]
+        for case_id, values in accepted_hashes.items()
+    }
+    return FrozenValidation(
+        manifest=manifest,
+        source_hashes=hashes,
+        accepted_source_hashes=accepted_hashes,
+    )
 
 
 def normalize_record(
@@ -320,7 +362,7 @@ def normalize_record(
         normalized_versions = dict(validation.manifest.versions)
 
     source_hash = _require_text("source_pack_hash", raw.get("source_pack_hash"))
-    if source_hash != validation.source_hashes[case_id]:
+    if source_hash not in validation.accepted_source_hashes[case_id]:
         raise AP4EvidenceError(f"{case_id}: source pack hash differs from frozen pack")
 
     times_raw = raw.get("times")
