@@ -681,10 +681,7 @@ def render_summary_markdown(summary: Mapping[str, Any]) -> str:
             f"{', '.join(population['paired_baseline_cases']) or 'keine'}**"
         ),
         f"- Dokumentierte Post-Fix-Runs: **{population['post_fix_runs']}**",
-        (
-            "- Post-Hardening-Fälle: **"
-            f"{', '.join(population['post_hardening_cases']) or 'keine'}**"
-        ),
+        (f"- Post-Hardening-Fälle: **{', '.join(population['post_hardening_cases']) or 'keine'}**"),
         "",
         "## Initial scored result",
         "",
