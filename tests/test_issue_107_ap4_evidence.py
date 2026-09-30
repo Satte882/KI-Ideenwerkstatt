@@ -240,6 +240,7 @@ def test_ap4_summary_uses_fresh_paired_baseline_and_frozen_targets():
         "provenance": True,
         "hallucinations": True,
         "cross_domain_consistency": True,
+        "expected_outcome": True,
         "human_rework": True,
     }
 
