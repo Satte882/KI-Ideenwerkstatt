@@ -1,0 +1,7 @@
+case_id,receipt_present,category,amount_eur,limit_eur,manual_review
+E01,true,hotel,120,150,false
+E02,true,hotel,180,150,true
+E03,false,taxi,35,80,true
+E04,true,taxi,45,80,false
+E05,true,meal,30,35,false
+E06,true,meal,42,35,true
