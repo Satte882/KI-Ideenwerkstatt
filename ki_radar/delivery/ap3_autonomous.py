@@ -946,7 +946,10 @@ def evaluate_ap3_consistency(package: DeliveryPackage) -> tuple[AP3ConsistencyFi
         )
 
     decision = package.generated_from_decision
-    if decision.conditions and decision.conditions.casefold() not in package.handover_notes.casefold():
+    if (
+        decision.conditions
+        and decision.conditions.casefold() not in package.handover_notes.casefold()
+    ):
         findings.append(
             AP3ConsistencyFinding(
                 "APPROVAL_CONDITIONS_MISSING",
@@ -954,14 +957,17 @@ def evaluate_ap3_consistency(package: DeliveryPackage) -> tuple[AP3ConsistencyFi
             )
         )
 
-    if use_case.metric_name and package.measurement_plan:
-        if use_case.metric_name.casefold() not in package.measurement_plan.casefold():
-            findings.append(
-                AP3ConsistencyFinding(
-                    "METRIC_MISMATCH",
-                    "Delivery-Messplan referenziert nicht die primäre Use-Case-Metrik.",
-                )
+    if (
+        use_case.metric_name
+        and package.measurement_plan
+        and use_case.metric_name.casefold() not in package.measurement_plan.casefold()
+    ):
+        findings.append(
+            AP3ConsistencyFinding(
+                "METRIC_MISMATCH",
+                "Delivery-Messplan referenziert nicht die primäre Use-Case-Metrik.",
             )
+        )
     return tuple(findings)
 
 
@@ -1354,18 +1360,3 @@ def prepare_autonomous_delivery_package(
         verification=verification,
     )
 
-
-__all__ = [
-    "AP3ConsistencyFinding",
-    "AP3DeliveryError",
-    "AP3DeliveryResult",
-    "AP3SourceContext",
-    "AP3Verification",
-    "ARCHITECTURE_TARGET_SECTIONS",
-    "PACKAGE_TARGET_SECTIONS",
-    "TARGET_FIELDS",
-    "build_ap3_source_context",
-    "evaluate_ap3_consistency",
-    "prepare_autonomous_delivery_package",
-    "validate_synthesis_payload",
-]
