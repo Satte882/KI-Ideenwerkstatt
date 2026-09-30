@@ -281,12 +281,12 @@ def test_ap4_hardening_map_references_existing_tests():
             assert f"def {test_name}(" in source
 
 
-def test_ap4_management_command_validates_contract_without_records():
+def test_ap4_management_command_validates_contract_without_records(tmp_path):
     output = io.StringIO()
 
     call_command(
         "ap4_evidence",
-        records="/tmp/ap4-evidence-does-not-exist.jsonl",
+        records=str(tmp_path / "ap4-evidence-does-not-exist.jsonl"),
         stdout=output,
     )
 
