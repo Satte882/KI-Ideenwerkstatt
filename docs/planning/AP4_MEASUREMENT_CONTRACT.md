@@ -83,6 +83,10 @@ active_input
 
 Systemwartezeit wird nicht eingerechnet.
 
+Jeder Record trägt zusätzlich `human_time_measured`. Nur wenn die menschliche Zeit tatsächlich gemessen wurde, darf sie in Human-Work- oder Nacharbeits-Metriken eingehen. Fehlende bzw. scripted Operator-Zeit bleibt **offen** und darf nicht als numerische `0` automatisch PASS erzeugen.
+
+Für die bereits eingefrorene AP4-Evidence gilt rückwärtskompatibel: manuelle Baselines sind gemessen; autonome Records ohne explizites Kennzeichen gelten als **nicht gemessen**.
+
 Authority Decisions bleiben sichtbar, sind aber keine vermeidbaren Rückfragen oder vermeidbare Nacharbeit.
 
 ## Manuelle Feldpflege
