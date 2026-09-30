@@ -411,6 +411,19 @@ def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass():
     assert summary["post_hardening_pass"]["human_rework"] is False
 
 
+def test_ap4_source_pack_hash_is_stable_across_text_line_endings(tmp_path):
+    from ki_radar.accelerator.ap4_evidence import source_pack_hash
+
+    lf = tmp_path / "lf"
+    crlf = tmp_path / "crlf"
+    lf.mkdir()
+    crlf.mkdir()
+    (lf / "source.md").write_bytes(b"alpha\nbeta\n")
+    (crlf / "source.md").write_bytes(b"alpha\r\nbeta\r\n")
+
+    assert source_pack_hash(lf, ["source.md"]) == source_pack_hash(crlf, ["source.md"])
+
+
 def test_ap4_source_pack_hash_rejects_unfrozen_file(tmp_path):
     validation = _validation()
     case = _case(validation, "AP4-01")
