@@ -522,9 +522,7 @@ def _summary_view(
         bool(record["human_time_measured"]) for record in autonomous
     )
     active_values = (
-        [_active_human_seconds(record) for record in autonomous]
-        if human_time_complete
-        else []
+        [_active_human_seconds(record) for record in autonomous] if human_time_complete else []
     )
     question_values = [int(record["avoidable_questions"]) for record in autonomous]
 
