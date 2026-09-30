@@ -19,6 +19,7 @@ from ki_radar.core.llm_tasks import (
 from ki_radar.core.models import LLMTaskRun
 from ki_radar.governance.review_need import FACT_FIELDS
 from ki_radar.governance.services import current_governance_status, required_governance_blockers
+from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.permissions import can_edit_use_case
 
 from .architecture_artifacts import get_delivery_architecture_artifacts
@@ -29,6 +30,7 @@ from .mapping_integration import (
 )
 from .mapping_refresh import is_legacy_placeholder
 from .models import DeliveryPackage
+from .readiness import is_generic_placeholder
 from .services import (
     create_delivery_package,
     current_delivery_package,
@@ -123,7 +125,12 @@ wesentlicher Planinhalt fehlt. Reine Stilfragen sind noncritical.
 Prüfe insbesondere: Requirements passen zur Lösung; MVP adressiert Engpass und Scope; keine
 erfundenen Systeme/Schnittstellen/Zahlen; NFRs sind fallbezogen; Governance-Auflagen und unknown
 bleiben korrekt; Tests decken kritische Risiken; Acceptance passt zu Requirements/Metrik; Backlog
-passt zum MVP; Annahmen und offene Fakten sind sichtbar. JSON only."""
+passt zum MVP; Annahmen und offene Fakten sind sichtbar.
+
+Beantworte dabei ausdrücklich auch semantisch: Adressiert die Lösung die bestätigte Diagnose?
+Passt der MVP zum erwarteten Wirkmechanismus? Widerspricht die Delivery-Architektur der gewählten
+Architecture-Klasse? Fehlen entscheidungsrelevante Risiken? Wird schwache Evidenz irgendwo als
+starke Tatsache dargestellt? JSON only."""
 
 
 REPAIR_SYSTEM_PROMPT = """Du reparierst ausschließlich die vom unabhängigen Verifier genannten
@@ -614,6 +621,11 @@ def _validate_statement(
             f"{field_name}: leeres Feld muss als unknown markiert sein.",
             code="invalid_contract",
         )
+    if value and is_generic_placeholder(value):
+        raise AP3DeliveryError(
+            f"{field_name}: generischer Delivery-Platzhalter ist nicht zulässig.",
+            code="generic_placeholder",
+        )
     if value:
         _validate_quantitative_claims(value, context=context, field_name=field_name)
     return {"value": value, "source_ids": tuple(source_ids), "basis": basis}
@@ -874,6 +886,16 @@ def _apply_synthesis(
     return tuple([*package_changes, *architecture_changes])
 
 
+def _expected_solution_type(option) -> str:
+    return {
+        option.OptionType.RULE_AUTOMATION: UseCase.SolutionType.AUTOMATION,
+        option.OptionType.STANDARD_SOFTWARE: UseCase.SolutionType.STANDARD,
+        option.OptionType.CUSTOM_SOFTWARE: UseCase.SolutionType.CUSTOM,
+        option.OptionType.ANALYTICS_ML: UseCase.SolutionType.ANALYTICS,
+        option.OptionType.GENERATIVE_AI: UseCase.SolutionType.GENERATIVE,
+        option.OptionType.ASSISTANT: UseCase.SolutionType.ASSISTANT,
+    }.get(option.option_type, UseCase.SolutionType.OTHER)
+
 def evaluate_ap3_consistency(package: DeliveryPackage) -> tuple[AP3ConsistencyFinding, ...]:
     findings: list[AP3ConsistencyFinding] = []
     use_case = package.use_case
@@ -910,6 +932,18 @@ def evaluate_ap3_consistency(package: DeliveryPackage) -> tuple[AP3ConsistencyFi
                 AP3ConsistencyFinding(
                     "SELECTION_MISMATCH",
                     "UseCaseOrigin ist nicht durch die bindende Lösungsentscheidung gedeckt.",
+                )
+            )
+        expected_solution_type = _expected_solution_type(origin.solution_option)
+        if use_case.solution_type != expected_solution_type:
+            findings.append(
+                AP3ConsistencyFinding(
+                    "SOLUTION_TYPE_MISMATCH",
+                    (
+                        "Use-Case-Lösungstyp widerspricht der ausgewählten SolutionOption: "
+                        f"{use_case.get_solution_type_display()} statt "
+                        f"{origin.solution_option.get_option_type_display()}."
+                    ),
                 )
             )
         try:
