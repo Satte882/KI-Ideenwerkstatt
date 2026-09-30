@@ -50,6 +50,10 @@ class LLMTaskRun(TimeStampedModel):
             "ap2_decision_governance_draft",
             "AP2 Entscheidungs- und Governance-Entwurf",
         )
+        AP3_DELIVERY_PACKAGE = (
+            "ap3_delivery_package",
+            "AP3 Delivery Package",
+        )
         ORIGIN_CONSISTENCY_REVIEW = (
             "origin_consistency_review",
             "Herkunfts-Konsistenzprüfung",
