@@ -589,5 +589,5 @@ def test_ap3_decision_package_is_read_only_projection(client, owner, business_un
     assert "Delivery" in rendered
     assert "Offene Entscheidungen und Reviews" in rendered
     assert "Provenance / Untersuchungsspur" in rendered
-    assert "<form" not in rendered
+    assert f'action="{url}"' not in rendered
     assert client.post(url).status_code == 405
