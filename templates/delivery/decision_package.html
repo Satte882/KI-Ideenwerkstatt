@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Decision Package {{ use_case.short_id }} – KI-Radar{% endblock %}
+{% block body_class %}page-delivery-package{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">
+<link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">
+{% endblock %}
+{% block content %}
+<header class="cr-page-header cr-work-header">
+  <div class="cr-page-header__copy">
+    <div class="eyebrow mb-2">{{ use_case.short_id }} · Decision Package · Delivery v{{ package.version }}</div>
+    <h1 class="cr-page-header__title">{{ use_case.title }}</h1>
+    <p class="cr-work-header__summary">Read-only Projektion der kanonischen Entscheidungs- und Delivery-Grundlage.</p>
+  </div>
+  <div class="cr-work-header__actions">
+    <a class="btn btn-outline-secondary" href="{{ package.get_absolute_url }}">Delivery Package öffnen</a>
+    <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Use Case öffnen</a>
+    <a class="btn btn-outline-secondary" href="{% url 'use_cases:ap2_decision_surface' use_case.pk %}">AP2-Entscheidungsgrundlage</a>
+  </div>
+</header>
+
+<section class="cr-section decision-panel" aria-labelledby="decision-core-title">
+  <header class="cr-section-heading">
+    <div>
+      <h2 id="decision-core-title">Entscheidungskern</h2>
+      <p>Problem, gewählte Lösung, Nutzen, Risiko und nächste menschliche Entscheidung auf einen Blick.</p>
+    </div>
+    <span class="badge {% if delivery_status.code == 'ready' or delivery_status.code == 'handed_over' %}state-ready{% else %}state-review{% endif %}">{{ delivery_status.label }}</span>
+  </header>
+  <div class="architecture-artifact-grid">
+    <section><div class="section-title">Problem</div><div class="text-preline">{{ package.problem_context }}</div></section>
+    <section><div class="section-title">Bestätigte Ursache</div><div class="text-preline">{% if process and process.confirmed_causes %}{{ process.confirmed_causes }}{% elif process %}{{ process.bottlenecks }}{% else %}–{% endif %}</div></section>
+    <section><div class="section-title">Gewählte Lösung</div><div class="text-preline">{% if option %}<strong>{{ option.name }}</strong><br>{{ option.description }}{% else %}–{% endif %}</div></section>
+    <section><div class="section-title">Erwarteter Nutzen</div><div class="text-preline">{{ use_case.expected_benefit }}</div></section>
+    <section><div class="section-title">Warum AI / Lösungsentscheidung</div><div class="text-preline">{% if option %}{{ option.get_option_type_display }}{% if architecture %} · {{ architecture.get_architecture_mode_display }}{% endif %}{% endif %}{% if selection %}<br>{{ selection.rationale }}{% endif %}</div></section>
+    <section><div class="section-title">Wichtigstes dokumentiertes Risiko</div><div class="text-preline">{% if package.risks %}{{ package.risks }}{% elif option %}{{ option.risks|default:"–" }}{% else %}–{% endif %}</div></section>
+    <section><div class="section-title">Nächste Entscheidung</div><div class="text-preline">{% if primary_readiness_finding %}<strong>{{ primary_readiness_finding.title }}</strong><br>{{ primary_readiness_finding.cause }}{% if primary_readiness_finding.url %}<br><a href="{{ primary_readiness_finding.url }}">{{ primary_readiness_finding.action_label }} →</a>{% endif %}{% elif package.status == 'ready' %}Menschliche Übergabe an Delivery{% elif package.status == 'handed_over' %}Delivery übergeben; Pilotstart bleibt menschlich{% else %}Keine zusätzliche Systementscheidung abgeleitet{% endif %}</div></section>
+  </div>
+</section>
+
+<section class="cr-section" aria-labelledby="business-process-title">
+  <header class="cr-section-heading"><div><h2 id="business-process-title">Business und Prozess</h2><p>Kanonischer fachlicher Kontext aus Value Stream, Prozessanalyse und Use Case.</p></div></header>
+  <div class="architecture-artifact-grid">
+    <section><div class="section-title">Value Stream</div><div>{% if origin %}{{ origin.stage.value_stream.name }}{% else %}–{% endif %}</div></section>
+    <section><div class="section-title">Prozess</div><div>{% if process %}{{ process.name }}{% else %}{{ use_case.affected_process }}{% endif %}</div></section>
+    <section><div class="section-title">Bottleneck</div><div class="text-preline">{% if process %}{{ process.bottlenecks }}{% else %}–{% endif %}</div></section>
+    <section><div class="section-title">Scope</div><div class="text-preline"><strong>In:</strong> {{ package.in_scope }}<br><strong>Out:</strong> {{ package.out_of_scope }}</div></section>
+    <section><div class="section-title">Nutzer</div><div class="text-preline">{{ package.users_and_scenarios }}</div></section>
+    <section><div class="section-title">Zielbild</div><div class="text-preline">{{ package.target_outcome }}</div></section>
+  </div>
+</section>
+
+<section class="cr-section" aria-labelledby="sources-title">
+  <header class="cr-section-heading"><div><h2 id="sources-title">Quellen und Befunde</h2><p>Die Arbeitsfassung bleibt von ihren kanonischen Quellen und späteren Änderungen unterscheidbar.</p></div></header>
+  {% if process %}
+  <div class="architecture-artifact-grid mb-3">
+    <section><div class="section-title">Diagnostischer Befund</div><div class="text-preline">{{ process.diagnostic_observations|default:process.bottlenecks }}</div></section>
+    <section><div class="section-title">Randbedingungen</div><div class="text-preline">{{ process.constraints|default:"–" }}</div></section>
+    <section><div class="section-title">Ausnahmen</div><div class="text-preline">{{ process.exceptions|default:"–" }}</div></section>
+  </div>
+  {% endif %}
+  {% if delivery_source_rows %}
+  <details class="source-disclosure">
+    <summary>Delivery-Quellenstände anzeigen</summary>
+    <div class="pt-3">
+      {% for row in delivery_source_rows %}
+      <div class="mb-3">
+        <strong>{{ row.package_label }}</strong> · {{ row.source_label }}
+        <div class="small text-muted">{{ row.source_field }}{% if row.changed %} · Quelle später geändert{% endif %}</div>
+        <div class="text-preline">{{ row.snapshot|default:"–" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+</section>
+
+<section class="cr-section" aria-labelledby="alternatives-title">
+  <header class="cr-section-heading"><div><h2 id="alternatives-title">Alternativen und Lösungsentscheidung</h2><p>Die menschliche Auswahl bleibt von der vorgelagerten Alternativenbewertung getrennt.</p></div></header>
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Option</th><th>Typ</th><th>Erwarteter Beitrag</th><th>Auswahl</th></tr></thead>
+      <tbody>
+        {% for candidate in options %}
+        <tr>
+          <td>{{ candidate.name }}</td>
+          <td>{{ candidate.get_option_type_display }}</td>
+          <td>{{ candidate.expected_value }}</td>
+          <td>{% if option and candidate.pk == option.pk %}<span class="badge state-ready">Menschlich gewählt</span>{% else %}–{% endif %}</td>
+        </tr>
+        {% empty %}<tr><td colspan="4">Keine Alternativen im aktuellen Ursprung verfügbar.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if selection %}<p><strong>Auswahlbegründung:</strong> {{ selection.rationale }}</p>{% endif %}
+</section>
+
+<section class="cr-section" aria-labelledby="use-case-title">
+  <header class="cr-section-heading"><div><h2 id="use-case-title">Use Case und Architecture Mode</h2><p>Delivery baut auf dem freigegebenen Use Case und der deterministisch ermittelten Architekturklasse auf.</p></div></header>
+  <div class="architecture-artifact-grid">
+    <section><div class="section-title">Use Case</div><div>{{ use_case.short_id }} · {{ use_case.title }}<br>{{ use_case.intended_purpose }}</div></section>
+    <section><div class="section-title">Solution Type</div><div>{{ use_case.get_solution_type_display }}</div></section>
+    <section><div class="section-title">Architecture Mode</div><div>{% if architecture %}{{ architecture.get_architecture_mode_display }}{% else %}Nicht verfügbar{% endif %}</div></section>
+    <section><div class="section-title">Systeme</div><div class="text-preline">{{ use_case.source_systems|default:"–" }}</div></section>
+    <section><div class="section-title">Daten</div><div class="text-preline">{{ use_case.data_sources|default:"–" }}</div></section>
+    <section><div class="section-title">Human Oversight</div><div class="text-preline">{{ use_case.human_oversight|default:"–" }}</div></section>
+  </div>
+</section>
+
+<section class="cr-section" aria-labelledby="governance-title">
+  <header class="cr-section-heading"><div><h2 id="governance-title">Governance</h2><p>Kanonisches Screening einschließlich erhaltenem Tri-State und formaler Review-Authority.</p></div></header>
+  {% if governance.screening %}
+  <details class="source-disclosure mb-3">
+    <summary>Governance-Fakten anzeigen</summary>
+    <div class="table-responsive pt-3">
+      <table class="table table-sm">
+        <thead><tr><th>Fakt</th><th>Wert</th></tr></thead>
+        <tbody>{% for fact in governance_facts %}<tr><td>{{ fact.label }}</td><td>{{ fact.value_label }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </details>
+  <div class="table-responsive">
+    <table class="table table-sm">
+      <thead><tr><th>Formale Prüfung</th><th>Erforderlich</th><th>Status</th><th>Ergebnis</th></tr></thead>
+      <tbody>
+        {% for state in governance.reviews %}
+        <tr>
+          <td>{{ state.definition.label }}</td>
+          <td>{% if state.required %}Ja{% else %}Nein{% endif %}</td>
+          <td>{% if state.review %}{{ state.review.get_status_display }}{% elif state.legacy_completed %}Legacy abgeschlossen{% else %}–{% endif %}</td>
+          <td>{% if state.review and state.review.result %}{{ state.review.get_result_display }}{% else %}–{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p>Kein Governance-Screening vorhanden.</p>{% endif %}
+</section>
+
+<section class="cr-section" aria-labelledby="metric-pilot-title">
+  <header class="cr-section-heading"><div><h2 id="metric-pilot-title">Pilot und Messung</h2><p>Unbelegte Baselines oder Zielwerte bleiben offen statt erfunden zu werden.</p></div></header>
+  <div class="architecture-artifact-grid">
+    <section><div class="section-title">Primäre Metrik</div><div>{{ use_case.metric_name|default:"Offen" }}{% if use_case.metric_unit %} · {{ use_case.metric_unit }}{% endif %}</div></section>
+    <section><div class="section-title">Baseline</div><div>{{ use_case.metric_baseline|default_if_none:"Offen" }}</div></section>
+    <section><div class="section-title">Zielwert</div><div>{{ use_case.metric_target|default_if_none:"Offen" }}</div></section>
+    <section><div class="section-title">Messmethode</div><div class="text-preline">{{ use_case.metric_measurement_method|default:"Offen" }}</div></section>
+    <section><div class="section-title">Pilot</div><div class="text-preline">{{ use_case.pilot_scope|default:"Offen" }}</div></section>
+    <section><div class="section-title">Review / Abbruch</div><div class="text-preline"><strong>Review:</strong> {{ use_case.pilot_review_criteria|default:"Offen" }}<br><strong>Abbruch:</strong> {{ use_case.pilot_abort_criteria|default:"Offen" }}</div></section>
+  </div>
+</section>
+
+<section class="cr-section" aria-labelledby="delivery-title">
+  <header class="cr-section-heading"><div><h2 id="delivery-title">Delivery</h2><p>Umsetzungspaket aus deterministisch übernommenen Quellen und gezielter Synthese.</p></div></header>
+  <div class="architecture-artifact-grid">
+    <section><div class="section-title">MVP / Must</div><div class="text-preline">{{ package.mvp_scope|default:"Offen" }}</div></section>
+    <section><div class="section-title">Requirements</div><div class="text-preline">{{ package.functional_requirements|default:"Offen" }}</div></section>
+    <section><div class="section-title">NFRs</div><div class="text-preline">{{ package.non_functional_requirements|default:"Offen" }}</div></section>
+    <section><div class="section-title">Tests</div><div class="text-preline">{{ package.test_scenarios|default:"Offen" }}</div></section>
+    <section><div class="section-title">Akzeptanz</div><div class="text-preline">{{ package.acceptance_criteria|default:"Offen" }}</div></section>
+    <section><div class="section-title">Initial Backlog</div><div class="text-preline">{{ package.initial_backlog|default:"Offen" }}</div></section>
+  </div>
+  {% if package.architecture_artifacts %}
+  <details class="architecture-disclosure mt-3">
+    <summary>Architektur-, Daten- und Integrationsdetails anzeigen</summary>
+    <div class="architecture-artifact-grid pt-3">
+      <section><div class="section-title">Systemverantwortlichkeiten</div><div class="text-preline">{{ package.architecture_artifacts.system_responsibilities|default:"Offen" }}</div></section>
+      <section><div class="section-title">Datenqualität / Zugriff</div><div class="text-preline">{{ package.architecture_artifacts.data_quality_and_access|default:"Offen" }}</div></section>
+      <section><div class="section-title">Integration Contracts</div><div class="text-preline">{{ package.architecture_artifacts.integration_contracts|default:"Offen" }}</div></section>
+      <section><div class="section-title">Integration Operations</div><div class="text-preline">{{ package.architecture_artifacts.integration_operations|default:"Offen" }}</div></section>
+    </div>
+  </details>
+  {% endif %}
+</section>
+
+<section class="cr-section" aria-labelledby="open-title">
+  <header class="cr-section-heading"><div><h2 id="open-title">Offene Entscheidungen und Reviews</h2><p>Nur bestehende fachliche Gates und Readiness-Findings; keine zusätzliche AP3-Freigabeschicht.</p></div></header>
+  {% if readiness_findings %}
+  <div class="blocker-actions">
+    {% for finding in readiness_findings %}
+    <div class="blocker-action {% if finding.severity == 'blocker' %}blocker-data{% else %}blocker-process{% endif %}">
+      <div><strong>{{ finding.title }}</strong><div class="small text-muted">{{ finding.cause }}</div></div>
+      <span class="status-badge">{{ finding.severity }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<p>Keine offenen Delivery-Readiness-Findings.</p>{% endif %}
+</section>
+
+<details class="cr-section source-disclosure" id="provenance">
+  <summary><strong>Provenance / Untersuchungsspur anzeigen</strong></summary>
+  <div class="pt-3">
+    <dl>
+      <dt>Finale Approval</dt><dd>{{ approval.get_decision_status_display }} · {{ approval.finalized_at|date:"d.m.Y H:i" }}</dd>
+      {% if assessment %}<dt>Decision Assessment</dt><dd>v{{ assessment.version }} · {{ assessment.get_recommendation_display }}</dd>{% endif %}
+      {% if selection %}<dt>Lösungsentscheidung</dt><dd>{{ selection.decided_at|date:"d.m.Y H:i" }} · {{ selection.rationale }}</dd>{% endif %}
+    </dl>
+    {% for review in section_reviews %}
+    <details class="source-disclosure mb-2">
+      <summary>{{ review.get_section_key_display|default:review.section_key }} · Quellenstand</summary>
+      <div class="pt-2 small">
+        {% if review.source_manifest.field_sources %}
+          {% for field_name, source in review.source_manifest.field_sources.items %}
+          <div><strong>{{ field_name }}</strong> ← {{ source.label }} · {{ source.field }}</div>
+          {% endfor %}
+        {% endif %}
+        {% if review.source_manifest.ap3_synthesis %}
+        <div class="mt-2">AP3 Synthese · Prompt {{ review.source_manifest.ap3_synthesis.prompt_version }} · Source Hash {{ review.source_manifest.ap3_synthesis.source_hash }}</div>
+        {% endif %}
+        {% if review.source_manifest.ap3_verifier %}
+        <div>AP3 Verifier · {{ review.source_manifest.ap3_verifier.verdict }} · Run {{ review.source_manifest.ap3_verifier.run_id }}</div>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+</details>
+{% endblock %}
