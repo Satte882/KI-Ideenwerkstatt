@@ -30,7 +30,6 @@ from ki_radar.accelerator.investigation_runtime import (
 from ki_radar.delivery import ap3_autonomous
 from ki_radar.use_cases import ap2_decision_governance, ap2_metric_pilot
 
-
 REQUIRED_CATEGORIES = frozenset(
     {
         "organizational_non_ai",
@@ -287,9 +286,7 @@ def normalize_record(
         raise AP4EvidenceError(
             f"{case_id}: scored autonomous run must use frozen slot {case.run_slot}"
         )
-    if phase == "post_fix" and not _require_text(
-        "pre_fix_record_id", raw.get("pre_fix_record_id")
-    ):
+    if phase == "post_fix" and not _require_text("pre_fix_record_id", raw.get("pre_fix_record_id")):
         raise AP4EvidenceError("post_fix run requires pre_fix_record_id")
 
     source_hash = _require_text("source_pack_hash", raw.get("source_pack_hash"))
@@ -443,9 +440,7 @@ def _active_human_seconds(record: Mapping[str, Any]) -> float:
 
 def _post_draft_rework_seconds(record: Mapping[str, Any]) -> float:
     times = record["times"]
-    return float(times["post_draft_review_seconds"]) + float(
-        times["post_draft_correction_seconds"]
-    )
+    return float(times["post_draft_review_seconds"]) + float(times["post_draft_correction_seconds"])
 
 
 def summarize_records(
@@ -480,9 +475,7 @@ def summarize_records(
 
     baseline_fields = sum(int(base["manual_fields_changed"]) for base, _new in paired)
     autonomous_fields = sum(int(new["manual_fields_changed"]) for _base, new in paired)
-    field_reduction = (
-        1.0 - (autonomous_fields / baseline_fields) if baseline_fields > 0 else None
-    )
+    field_reduction = 1.0 - (autonomous_fields / baseline_fields) if baseline_fields > 0 else None
 
     baseline_active = sum(_active_human_seconds(base) for base, _new in paired)
     rework_seconds = sum(_post_draft_rework_seconds(new) for _base, new in paired)
@@ -532,9 +525,7 @@ def summarize_records(
             "provenance": provenance_ratio >= targets["provenance_ratio_min"],
             "hallucinations": hallucinations <= targets["hallucinated_facts_max"],
             "cross_domain_consistency": bool(autonomous)
-            and all(
-                bool(record["quality"]["cross_domain_consistent"]) for record in autonomous
-            ),
+            and all(bool(record["quality"]["cross_domain_consistent"]) for record in autonomous),
             "human_rework": rework_ratio is not None
             and rework_ratio <= targets["human_rework_ratio_max"],
         },

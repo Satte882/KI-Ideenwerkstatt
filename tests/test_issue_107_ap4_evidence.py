@@ -17,7 +17,6 @@ from ki_radar.accelerator.ap4_evidence import (
     validate_frozen_manifest,
 )
 
-
 MANIFEST = Path(settings.BASE_DIR) / "tests/fixtures/ap4_case_manifest_v1.json"
 
 
@@ -267,9 +266,7 @@ def test_ap4_hardening_map_references_existing_tests():
     payload = json.loads(path.read_text(encoding="utf-8"))
 
     assert len(payload["scenarios"]) == 12
-    partial = {
-        item["scenario"] for item in payload["scenarios"] if item["coverage"] == "partial"
-    }
+    partial = {item["scenario"] for item in payload["scenarios"] if item["coverage"] == "partial"}
     assert partial == {"concurrent_runs", "irrelevant_source"}
 
     for item in payload["scenarios"]:
