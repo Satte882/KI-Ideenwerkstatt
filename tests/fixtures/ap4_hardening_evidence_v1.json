@@ -47,13 +47,14 @@
     },
     {
       "scenario": "concurrent_runs",
-      "coverage": "partial",
+      "coverage": "covered",
       "evidence": [
         "tests/test_issue_3_investigation_runtime.py::test_parallel_starts_create_exactly_one_active_run",
-        "tests/test_issue_3_investigation_hardening.py::test_parallel_materialization_creates_exactly_one_revision"
+        "tests/test_issue_3_investigation_hardening.py::test_parallel_materialization_creates_exactly_one_revision",
+        "tests/test_issue_4_decision_brief_evidence.py::test_campaign_reservation_is_atomic_for_parallel_provider_attempts",
+        "tests/test_issue_4_decision_brief_evidence.py::test_campaign_parallel_reservations_do_not_starve_when_budget_is_sufficient"
       ],
-      "gap": "Current tests cover duplicate run/materialization prevention; quota reservation fairness/starvation under simultaneous active work remains an AP4 check.",
-      "ap4_action": "targeted_concurrency_test"
+      "ap4_action": "reuse_current_regression"
     },
     {
       "scenario": "version_conflict",
