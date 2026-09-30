@@ -44,6 +44,16 @@ REQUIRED_CATEGORIES = frozenset(
 )
 VALID_PHASES = frozenset({"scored", "post_fix"})
 VALID_PATHS = frozenset({"manual", "autonomous"})
+REQUIRED_TARGETS = frozenset(
+    {
+        "active_human_work_median_seconds_max",
+        "manual_field_reduction_min",
+        "avoidable_questions_median_max",
+        "provenance_ratio_min",
+        "hallucinated_facts_max",
+        "human_rework_ratio_max",
+    }
+)
 TIME_KEYS = (
     "active_input_seconds",
     "navigation_seconds",
@@ -191,6 +201,12 @@ def load_frozen_manifest(path: str | Path) -> FrozenManifest:
     versions = payload.get("versions")
     if not isinstance(targets, dict) or not isinstance(versions, dict):
         raise AP4EvidenceError("metric_targets and versions must be objects")
+    if set(targets) != REQUIRED_TARGETS:
+        raise AP4EvidenceError(
+            "metric_targets differ from frozen AP4 contract: "
+            f"missing={sorted(REQUIRED_TARGETS - set(targets))}, "
+            f"extra={sorted(set(targets) - REQUIRED_TARGETS)}"
+        )
 
     return FrozenManifest(
         contract_version=_require_text("contract_version", payload.get("contract_version")),
@@ -526,6 +542,8 @@ def summarize_records(
             "hallucinations": hallucinations <= targets["hallucinated_facts_max"],
             "cross_domain_consistency": bool(autonomous)
             and all(bool(record["quality"]["cross_domain_consistent"]) for record in autonomous),
+            "expected_outcome": bool(autonomous)
+            and all(bool(record["quality"]["expected_outcome_pass"]) for record in autonomous),
             "human_rework": rework_ratio is not None
             and rework_ratio <= targets["human_rework_ratio_max"],
         },
@@ -592,6 +610,11 @@ def render_summary_markdown(summary: Mapping[str, Any]) -> str:
             "| Cross-Domain-Konsistenz | "
             f"{display(metrics['cross_domain_consistency_all_pass'])} | "
             f"{'PASS' if checks['cross_domain_consistency'] else 'OPEN/FAIL'} |"
+        ),
+        (
+            "| Fachlich erwarteter Endzustand | "
+            f"{display(metrics['expected_outcome_all_pass'])} | "
+            f"{'PASS' if checks['expected_outcome'] else 'OPEN/FAIL'} |"
         ),
         (
             "| Menschliche Nacharbeit | "
