@@ -520,9 +520,7 @@ def test_ap3_does_not_record_pass_for_human_change_during_verification(
     )
 
 
-def test_ap3_rejects_generic_delivery_placeholder(
-    owner, business_unit, monkeypatch
-):
+def test_ap3_rejects_generic_delivery_placeholder(owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
     payload = _synthesis_payload()
     payload["functional_requirements"]["value"] = (
@@ -540,9 +538,7 @@ def test_ap3_rejects_generic_delivery_placeholder(
     assert exc_info.value.code == "generic_placeholder"
 
 
-def test_ap3_detects_solution_type_drift_before_provider_call(
-    owner, business_unit, monkeypatch
-):
+def test_ap3_detects_solution_type_drift_before_provider_call(owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
     use_case.solution_type = UseCase.SolutionType.STANDARD
     use_case.save(update_fields=["solution_type", "updated_at"])
@@ -562,9 +558,7 @@ def test_ap3_detects_solution_type_drift_before_provider_call(
     assert "Lösungstyp" in str(exc_info.value)
 
 
-def test_ap3_decision_package_is_read_only_projection(
-    client, owner, business_unit, monkeypatch
-):
+def test_ap3_decision_package_is_read_only_projection(client, owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
 
     def fake_provider(_prepared, *, response_format):

@@ -896,6 +896,7 @@ def _expected_solution_type(option) -> str:
         option.OptionType.ASSISTANT: UseCase.SolutionType.ASSISTANT,
     }.get(option.option_type, UseCase.SolutionType.OTHER)
 
+
 def evaluate_ap3_consistency(package: DeliveryPackage) -> tuple[AP3ConsistencyFinding, ...]:
     findings: list[AP3ConsistencyFinding] = []
     use_case = package.use_case
