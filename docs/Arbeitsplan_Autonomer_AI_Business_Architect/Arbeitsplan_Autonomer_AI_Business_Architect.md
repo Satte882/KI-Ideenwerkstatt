@@ -1,6 +1,6 @@
 # Arbeitsplan – Autonomer AI Business Architect
 
-**Stand:** 28.09.2026  
+**Stand:** 30.09.2026  
 **Repository:** `Satte882/KI-Ideenwerkstatt`  
 **Übergeordnetes Ziel:** GitHub Issue #1 – „10x: Autonomes Evidence-to-Decision-System“
 
@@ -1846,42 +1846,39 @@ OCR wäre eine **weitere separate Entscheidung** und gehört nicht automatisch d
 
 ---
 
-# 40. Separate Architekturentscheidung B – Governance Tri-State
+# 40. Separate Architekturentscheidung B – Governance Tri-State (durch #103 umgesetzt)
 
-Die heutigen Governance-Booleans werden **nicht vorsorglich migriert**.
+Der reale AP2-Fall D hat die im ursprünglichen Plan definierte Triggerbedingung erfüllt: Der boolesche kanonische Governance-Zustand hätte entweder eine fachlich unbelegte Negation oder eine unnötige menschliche Pflichtschleife erzwungen.
 
-Im Core-Pfad arbeitet der autonome Architect vor der Materialisierung mit:
+Die Tri-State-Migration wurde deshalb als separates Arbeitspaket #103 umgesetzt und vor Abschluss von AP2 real abgenommen.
+
+Der kanonische Zustand kann für Governance-Fakten nun tragen:
 
 ```text
-yes
-no
-unknown
+true
+false
+NULL = unknown
 ```
 
-Ein `GovernanceAssessment` wird erst erzeugt, wenn entscheidungskritische Unknowns ausreichend geklärt sind.
+Der Review-Bedarf wird deterministisch aus diesen Fakten abgeleitet:
 
-## Eine echte Tri-State-Migration wird nur durchgeführt, wenn reale AP2-Fälle zeigen:
+- entscheidungskritische Unknowns bleiben Klärungsbedarf;
+- nicht mehr entscheidungsrelevante Unknowns dürfen sichtbar und auditierbar erhalten bleiben;
+- erforderliche Governance Reviews entstehen höchstens `OPEN`;
+- nicht erforderliche Reviews können `NOT_RELEVANT` sein;
+- Privacy/Security/Legal werden niemals automatisch als bestanden markiert.
 
-- der aktuelle boolesche Canonical State zwingt das System zu einer fachlich falschen Aussage;
-- oder relevante Unknowns können nicht sauber außerhalb des canonical Assessment gehalten werden;
-- oder dadurch entstehen wiederholt unnötige menschliche Klärungen bzw. falsche Gate-Entscheidungen.
+Dauerhafte Invariante für AP3 und folgende Pakete:
 
-Dann wird die Migration als **eigenes Arbeitspaket** behandelt.
+```text
+unknown ≠ false
+```
 
-Sie benötigt:
+Delivery, Cross-Domain-Prüfung und spätere Projektionen müssen diesen kanonischen Zustand erhalten und dürfen Unknowns weder als Negation noch als Freigabe interpretieren.
 
-- Datenmigration;
-- Backward Compatibility;
-- Form-/UI-Anpassung;
-- Governance-Service-Anpassung;
-- Approval-/Pilot-/Go-live-Gate-Regression;
-- Tests aller Bestandsfälle.
+Die menschliche Authority für formale Reviews, Approval, Risikoakzeptanz, Pilotstart und Go-live bleibt unverändert.
 
-### Erwarteter Aufwand bei Bedarf
-
-**4–7 fokussierte Arbeitstage.**
-
-Nicht in AP2 verstecken.
+Diese reale Architekturentscheidung ändert **Ziel, Reihenfolge und Paketgrenze von AP3 nicht**.
 
 ---
 
@@ -2115,20 +2112,23 @@ Erst dann ist aus KI-Ideenwerkstatt nicht nur ein Workflow mit KI-Unterstützung
 
 # 46. Primäre nächste Aktion
 
-**Nicht AP1 starten, solange die aktuelle VS1/#86-Härtung nicht abgeschlossen ist.**
+AP1 und AP2 sind abgeschlossen und in `main` integriert.
 
-Danach:
+Die nächste planmäßige Einheit ist:
 
-> **AP1 – Autonome Business Discovery bis ProcessAnalysis als erster neuer #1-Vertical-Slice.**
+> **AP3 – Vom positiven menschlichen Approval zum delivery-ready Umsetzungspaket.**
 
-Der erste reale Zielnachweis lautet dann bewusst noch nicht „kompletter Business Architect“, sondern:
+AP3 startet auf dem jetzt kanonischen Stand aus Discovery, Investigation, menschlicher Lösungsentscheidung, Use Case, Architecture Assessment, Decision Assessment, Governance und Pilot-/Messkonzept.
+
+Der erste reale Zielnachweis für AP3 lautet:
 
 ```text
-wenige Sätze + Quellen
-→ autonom rekonstruierter Business-/Process-Kontext
-→ eine menschliche Scope-Entscheidung
-→ valide ProcessAnalysis
-→ bestehende Investigation startet automatisch
+positive menschliche Approval
+→ bestehende Evidenz deterministisch übernehmen
+→ nur echte Synthesearbeit erzeugen
+→ konkretes DeliveryPackage mit MVP/Requirements/Tests/Backlog
+→ Cross-Domain-Konsistenz prüfen
+→ menschliche Delivery-/Handover-Grenzen erhalten
 ```
 
-Wenn dieser Übergang robust funktioniert, existiert zum ersten Mal eine durchgehende autonome Strecke **vor** dem heutigen VS1. Erst dann ist es sinnvoll, den Agenten nach VS1 weiter bis Use Case, Governance und Delivery zu verlängern.
+Keine neue Approval-Automatisierung und kein paralleler Delivery-Lifecycle.
