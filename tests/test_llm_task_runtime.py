@@ -23,6 +23,11 @@ TASK_SETTINGS = {
     "LLM_DELIVERY_FIELD_DRAFT_MAX_INPUT_CHARS": "12000",
     "LLM_DELIVERY_FIELD_DRAFT_MAX_OUTPUT_TOKENS": "16384",
     "LLM_DELIVERY_FIELD_DRAFT_REASONING_EFFORT": "low",
+    "LLM_AP3_DELIVERY_MAX_INPUT_CHARS": "50000",
+    "LLM_AP3_DELIVERY_TIMEOUT_SECONDS": "120",
+    "LLM_AP3_DELIVERY_MAX_OUTPUT_TOKENS": "32768",
+    "LLM_AP3_DELIVERY_REASONING_EFFORT": "medium",
+    "LLM_AP3_DELIVERY_MAX_CALLS_PER_CONTEXT_DAY": "4",
     "LLM_ORIGIN_CONSISTENCY_REVIEW_MAX_INPUT_CHARS": "16000",
     "LLM_ORIGIN_CONSISTENCY_REVIEW_MAX_OUTPUT_TOKENS": "4096",
     "LLM_ORIGIN_CONSISTENCY_REVIEW_REASONING_EFFORT": "medium",
@@ -97,6 +102,19 @@ def test_first_wave_task_policies_are_explicit_and_separate():
     assert delivery.max_calls_per_user_day == 20
     assert delivery.max_calls_global_day == 100
     assert delivery.run_retention_days == 90
+
+
+@override_settings(**TASK_SETTINGS)
+def test_ap3_delivery_policy_allows_only_synthesis_verify_repair_and_reverify():
+    policy = get_llm_task_policy(LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE)
+
+    assert policy.max_input_chars == 50000
+    assert policy.timeout_seconds == 120
+    assert policy.max_output_tokens == 32768
+    assert policy.reasoning_effort == "medium"
+    assert policy.max_calls_per_context_day == 4
+    assert policy.max_calls_per_user_day == 20
+    assert policy.max_calls_global_day == 100
 
 
 @override_settings(**TASK_SETTINGS)

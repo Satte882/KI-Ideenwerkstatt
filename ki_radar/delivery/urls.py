@@ -9,6 +9,7 @@ urlpatterns = [
     path("methodology/download/", views.methodology_download, name="methodology_download"),
     path("use-cases/<uuid:use_case_id>/new/", views.package_create, name="package_create"),
     path("<uuid:pk>/", views.package_detail, name="package_detail"),
+    path("<uuid:pk>/decision-package/", views.package_decision_package, name="decision_package"),
     path("<uuid:pk>/edit/", views.package_update, name="package_update"),
     path(
         "<uuid:pk>/ai/mvp-scope/generate/",

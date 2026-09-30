@@ -4,14 +4,17 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
+from ki_radar.architecture.architecture_assessment_models import SolutionArchitectureAssessment
 from ki_radar.core.navigation import requested_return_to
+from ki_radar.governance.review_need import FACT_FIELDS
+from ki_radar.governance.services import current_governance_status
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.workflow import build_delivery_package_journey
 
@@ -317,6 +320,74 @@ def package_detail(request, pk):
                 else None
             ),
             "role_source_decisions": package.role_source_decisions.all(),
+        },
+    )
+
+
+@login_required
+@require_GET
+def package_decision_package(request, pk):
+    package = get_object_or_404(_package_queryset(), pk=pk)
+    if not can_view_package(request.user, package):
+        raise PermissionDenied
+
+    use_case = package.use_case
+    try:
+        origin = use_case.architecture_origin
+    except ObjectDoesNotExist:
+        origin = None
+    process = origin.process_analysis if origin is not None else None
+    option = origin.solution_option if origin is not None else None
+    selection = (
+        process.solution_selection_decisions.order_by("-decided_at").first()
+        if process is not None
+        else None
+    )
+    options = list(process.solution_options.order_by("name")) if process is not None else []
+    architecture = (
+        SolutionArchitectureAssessment.objects.filter(solution_option=option).first()
+        if option is not None
+        else None
+    )
+    governance = current_governance_status(use_case)
+    screening = governance.screening
+    governance_facts = []
+    if screening is not None:
+        for field_name in FACT_FIELDS:
+            value = getattr(screening, field_name)
+            governance_facts.append(
+                {
+                    "label": str(screening._meta.get_field(field_name).verbose_name),
+                    "value": value,
+                    "value_label": (
+                        "Ja" if value is True else "Nein" if value is False else "Unbekannt"
+                    ),
+                }
+            )
+
+    readiness_findings = build_actionable_findings(package, request.user)
+    primary_finding = primary_delivery_action(package, request.user)
+    return render(
+        request,
+        "delivery/decision_package.html",
+        {
+            "package": package,
+            "use_case": use_case,
+            "origin": origin,
+            "process": process,
+            "option": option,
+            "selection": selection,
+            "options": options,
+            "architecture": architecture,
+            "assessment": package.generated_from_decision.assessment,
+            "approval": package.generated_from_decision,
+            "governance": governance,
+            "governance_facts": governance_facts,
+            "delivery_status": delivery_status_snapshot(package),
+            "readiness_findings": readiness_findings,
+            "primary_readiness_finding": primary_finding,
+            "delivery_source_rows": delivery_source_differences(package),
+            "section_reviews": package.section_reviews.all(),
         },
     )
 
