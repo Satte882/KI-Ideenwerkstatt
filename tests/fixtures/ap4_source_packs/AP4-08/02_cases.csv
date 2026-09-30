@@ -1,0 +1,9 @@
+case_id,team,part_available,duration_hours,unit
+M01,A,true,4,h
+M02,A,false,12,h
+M03,A,true,5,h
+M04,B,false,11,h
+M05,B,true,4,h
+M06,B,false,13,h
+M07,C,true,6,h
+M08,C,false,12,h
