@@ -319,6 +319,9 @@ def normalize_record(
     consistency_pass = quality_raw.get("cross_domain_consistent")
     if not isinstance(consistency_pass, bool):
         raise AP4EvidenceError("cross_domain_consistent must be boolean")
+    expected_outcome_pass = quality_raw.get("expected_outcome_pass")
+    if not isinstance(expected_outcome_pass, bool):
+        raise AP4EvidenceError("expected_outcome_pass must be boolean")
 
     return {
         "record_id": record_id,
@@ -348,7 +351,7 @@ def normalize_record(
                 "hallucinated_facts", quality_raw.get("hallucinated_facts", 0)
             ),
             "cross_domain_consistent": consistency_pass,
-            "expected_outcome_pass": bool(quality_raw.get("expected_outcome_pass", False)),
+            "expected_outcome_pass": expected_outcome_pass,
         },
         "pre_fix_record_id": str(raw.get("pre_fix_record_id") or "").strip(),
         "notes": str(raw.get("notes") or "").strip(),
