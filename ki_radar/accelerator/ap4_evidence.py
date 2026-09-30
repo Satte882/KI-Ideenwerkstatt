@@ -3,9 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import statistics
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 from ki_radar.accelerator.architect_contract import (
     DISCOVERY_PROMPT_VERSION,
@@ -559,8 +560,14 @@ def render_summary_markdown(summary: Mapping[str, Any]) -> str:
         "",
         f"- Eingefrorene Fälle: **{population['frozen_cases']}**",
         f"- Gewertete autonome Fälle: **{population['scored_autonomous_cases']}**",
-        f"- Fehlende gewertete Slots: **{', '.join(population['missing_scored_cases']) or 'keine'}**",
-        f"- Gepaarte E2E-Baselines: **{', '.join(population['paired_baseline_cases']) or 'keine'}**",
+        (
+            "- Fehlende gewertete Slots: **"
+            f"{', '.join(population['missing_scored_cases']) or 'keine'}**"
+        ),
+        (
+            "- Gepaarte E2E-Baselines: **"
+            f"{', '.join(population['paired_baseline_cases']) or 'keine'}**"
+        ),
         f"- Dokumentierte Post-Fix-Runs: **{population['post_fix_runs']}**",
         "",
         "| Kriterium | Ergebnis | Status |",
