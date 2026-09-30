@@ -24,7 +24,9 @@ from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 from ki_radar.delivery.ap3_autonomous import (
     TARGET_FIELDS,
     AP3DeliveryError,
+    AP3SourceContext,
     prepare_autonomous_delivery_package,
+    validate_synthesis_payload,
 )
 from ki_radar.delivery.models import DeliveryPackage, DeliverySectionReview
 from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
@@ -298,6 +300,70 @@ def _repair_payload():
         ],
         "unknowns": [],
     }
+
+
+def test_ap3_normalizes_provider_unknown_literals_and_exact_sourced_values():
+    context = AP3SourceContext(
+        sources=(
+            {
+                "source_id": "SRC.pilot",
+                "label": "Pilot",
+                "source_ref": "test:pilot",
+                "value": "Pilot auf einen Vorgangstyp begrenzt.",
+            },
+        ),
+        source_hash="test-source-hash",
+    )
+    payload = {
+        field_name: {
+            "value": "Pilot auf einen Vorgangstyp begrenzt.",
+            "source_ids": ["SRC.pilot"],
+            "basis": "derived",
+        }
+        for field_name in TARGET_FIELDS
+    }
+    payload["mvp_scope"]["basis"] = "unknown"
+    payload["should_scope"] = {
+        "value": "unknown",
+        "source_ids": [],
+        "basis": "unknown",
+    }
+    payload["unknowns"] = ["Should-Scope ist nicht belegt."]
+
+    fields, unknowns = validate_synthesis_payload(payload, context=context)
+
+    assert fields["mvp_scope"]["basis"] == "derived"
+    assert fields["mvp_scope"]["value"] == "Pilot auf einen Vorgangstyp begrenzt."
+    assert fields["should_scope"]["basis"] == "unknown"
+    assert fields["should_scope"]["value"] == ""
+    assert unknowns == ("Should-Scope ist nicht belegt.",)
+
+
+def test_ap3_normalizes_duplicate_source_ids_and_ignores_requirement_identifiers():
+    context = AP3SourceContext(
+        sources=(
+            {
+                "source_id": "SRC.requirement",
+                "label": "Anforderung",
+                "source_ref": "test:requirement",
+                "value": "Ein fachlich kontrollierter Vorschlag ist erforderlich.",
+            },
+        ),
+        source_hash="test-source-hash",
+    )
+    payload = {
+        field_name: {
+            "value": "REQ-01: Ein fachlich kontrollierter Vorschlag ist erforderlich.",
+            "source_ids": ["SRC.requirement", "SRC.requirement"],
+            "basis": "derived",
+        }
+        for field_name in TARGET_FIELDS
+    }
+    payload["unknowns"] = []
+
+    fields, _unknowns = validate_synthesis_payload(payload, context=context)
+
+    assert fields["functional_requirements"]["source_ids"] == ("SRC.requirement",)
 
 
 def test_ap3_prepares_one_canonical_package_with_mapper_synthesis_and_verifier(

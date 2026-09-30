@@ -42,7 +42,7 @@ from .services import (
 
 TASK_TYPE = LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE
 FIELD_KEY = "autonomous_delivery"
-PROMPT_VERSION = "1.0"
+PROMPT_VERSION = "1.1"
 SCHEMA_VERSION = "1.0"
 SYNTHESIS_MANIFEST_KEY = "ap3_synthesis"
 VERIFIER_MANIFEST_KEY = "ap3_verifier"
@@ -90,7 +90,7 @@ INHERITED_CONTEXT_FIELDS = (
 )
 
 _QUANTITATIVE_TOKEN_RE = re.compile(
-    r"(?<![\w])[-+]?\d+(?:[.,]\d+)?(?:\s*%)?(?![\w])",
+    r"(?<![\w-])[-+]?\d+(?:[.,]\d+)?(?:\s*%)?(?![\w])",
     re.UNICODE,
 )
 
@@ -112,8 +112,18 @@ Governance-Befunden, Logging/Audit, Betrieb, Akzeptanz, Tests, Messplan, Abhäng
 Annahmen, Architekturentscheidungen, Backlog sowie die fehlenden technischen Architekturfelder.
 Triff keine Approval-, Review-, Handover-, Pilotstart- oder Go-live-Entscheidung.
 
+Der Vertrag für jedes Feld ist strikt: basis="derived" bedeutet, dass value aus den genannten
+source_ids abgeleitet ist; basis="assumption" kennzeichnet eine ausdrücklich formulierte Annahme;
+basis="unknown" verlangt value="". Schreibe niemals das Wort "unknown" als value. Ein wörtlich
+aus einer Quelle übernommener Inhalt ist derived und niemals unknown.
+
 Verwende für Listen Spiegelstriche statt nummerierter Listen. Keine generischen Platzhalter wie
 "konkretisieren", "festlegen" oder "prüfen" ohne fallbezogene Aussage. JSON only."""
+
+
+_UNKNOWN_VALUE_LITERALS = frozenset(
+    {"unknown", "unbekannt", "offen", "noch offen", "nicht bekannt"}
+)
 
 
 VERIFY_SYSTEM_PROMPT = """Du bist der unabhängige Delivery-Verifier. Prüfe den gelieferten
@@ -603,12 +613,23 @@ def _validate_statement(
     value = _clean(raw.get("value"))
     source_ids = raw.get("source_ids")
     basis = raw.get("basis")
-    if not isinstance(source_ids, list) or len(source_ids) != len(set(source_ids)):
+    if not isinstance(source_ids, list) or any(not isinstance(item, str) for item in source_ids):
         raise AP3DeliveryError(f"{field_name}: ungültige Quellen.", code="invalid_contract")
+    source_ids = list(dict.fromkeys(source_ids))
     if any(source_id not in context.source_ids for source_id in source_ids):
         raise AP3DeliveryError(f"{field_name}: unbekannte Quelle.", code="invalid_contract")
     if basis not in {"derived", "assumption", "unknown"}:
         raise AP3DeliveryError(f"{field_name}: ungültige Basis.", code="invalid_contract")
+    if basis == "unknown" and value.casefold() in _UNKNOWN_VALUE_LITERALS:
+        value = ""
+    if basis == "unknown" and value and source_ids:
+        cited_values = {
+            _clean(source["value"])
+            for source in context.sources
+            if source["source_id"] in source_ids
+        }
+        if value in cited_values:
+            basis = "derived"
     if value and not source_ids:
         raise AP3DeliveryError(f"{field_name}: Inhalt ohne Quellenbezug.", code="invalid_contract")
     if basis == "unknown" and value:
