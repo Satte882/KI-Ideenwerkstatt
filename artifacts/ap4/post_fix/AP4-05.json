@@ -1,0 +1,35 @@
+{
+  "case_id": "AP4-05",
+  "run_slot": "AP4-05-S1",
+  "phase": "post_fix",
+  "provider_mode": "real",
+  "source_pack_hash": "7247736f6b04b2bdd556ec282a605c9b1ef4a18fe4d5162a8227302c986d0357",
+  "expected_branch": "waiting_human",
+  "started_at_epoch": 1790790816.208967,
+  "status": "failed",
+  "system_wait_seconds": 39.62990970001556,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized"
+  ],
+  "capture_session_id": "8457f685-d035-4b34-bd94-d4a071ded3fa",
+  "discovery_snapshot_id": "9d5ce412-7e3f-410a-8135-6b505f175dd4",
+  "discovery_manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+  "discovery": {
+    "analysis_id": "3cd69279-7f10-4235-bcfe-99d666b3622f",
+    "status": "failed",
+    "error_code": "user_quota_exceeded",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 1233,
+    "completion_tokens": 5824,
+    "cost": "0.022765",
+    "facts": [],
+    "hypotheses": [],
+    "unknowns": [],
+    "contradictions": [],
+    "clarifications": [],
+    "source_relevance": [],
+    "verifier": {}
+  },
+  "terminal_stage": "discovery",
+  "finished_at_epoch": 1790790856.309109
+}

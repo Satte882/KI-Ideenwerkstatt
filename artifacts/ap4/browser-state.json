@@ -1,0 +1,356 @@
+{
+  "AP4-01": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/e09ff567-af0d-4368-8829-9797bbefe9c7/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Reklamationen dauern unnötig lange und durchlaufen mehrere interne Freigaben. Welche Änderung adressiert den tatsächlich",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-01-discovery.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/89ce937f-7631-4edc-931d-318ff9552bea/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-01-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/5d8fc785-a1a5-482d-8709-c648730f1398/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-01-solution.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": true
+      }
+    }
+  },
+  "AP4-02": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/1390e172-1b22-4a5a-bcf6-50e587a332b8/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Spesenprüfungen erzeugen manuellen Aufwand. Prüfe, ob eine regelbasierte Automatisierung statt KI ausreicht.",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-02-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/b3dde968-ed40-47b6-8872-17b9add759b2/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-02-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/91b29e16-d01f-4b86-9d93-b503d7cdf9bc/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-02-solution.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": true,
+        "provenance": true
+      }
+    }
+  },
+  "AP4-03": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/a0d9856a-95fc-48dd-ba3d-475e714f783c/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Kundenanfragen in Freitext sollen schneller vorbereitet werden, ohne dass Antworten autonom versendet werden.",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-03-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/7de6ea26-5bbd-4a4f-8de7-f348ef3a582d/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-03-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/a972f841-696c-432f-94a9-7a7263626cf1/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-03-solution.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": true,
+        "provenance": true
+      }
+    },
+    "ap2-decision": {
+      "url": "http://127.0.0.1:8000/use-cases/90bb08a8-6cd0-4b42-802e-3b529ba4ab27/ap2-decision/",
+      "title": "Entscheidungsgrundlage – KI-0001",
+      "h1": "Entscheidungsgrundlage: KI-gestützte Entwurfsvorbereitung mit menschlicher Freigabe",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-03-ap2-decision.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": false,
+        "provenance": false
+      }
+    }
+  },
+  "AP4-04": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/480a973e-2894-4fe5-8a9e-0cb2d0cda666/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Rechnungsabweichungen sollen durch deterministische Prüfungen und begrenzte Freitextanalyse schneller geklärt werden.",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-04-discovery.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/38e94b6d-482e-4b1d-8cb1-2e1819a5a4ff/activity/",
+      "title": "Untersuchung – KI-Ideenwerkstatt",
+      "h1": "! Klärung erforderlich",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-04-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/fe445714-1cb0-4051-8de1-35c72d2839a9/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-04-solution.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    }
+  },
+  "AP4-05": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/0cbf136c-eddc-437f-8edb-7a1c5c584a2b/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Ein Freigabeprozess soll beschleunigt werden, aber zentrale Angaben zu Entscheidungshoheit und Ausnahmen fehlen.",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-05-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/23c0e245-75eb-4bf2-a070-e524945ee192/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-05-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/1fcfa880-d984-4694-ad0f-41ba708ad395/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-05-solution.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": true
+      }
+    }
+  },
+  "AP4-06": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/72c05527-033b-41bc-b3be-edc0b7efbac2/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Serviceeskalationen bleiben liegen. Zwei freigegebene Quellen widersprechen sich bei der Zuständigkeit.",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-06-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/a7b18fe4-e4d4-4412-a079-c8d269d9f14d/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-06-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/09800180-e45f-4a2c-9225-da78a66bdc58/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-06-solution.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": true,
+        "provenance": true
+      }
+    }
+  },
+  "AP4-07": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/c4ff09e2-7f96-4e8a-bcfe-76e4c01bf28e/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Bewerbungsunterlagen sollen semantisch vorstrukturiert werden. Prüfe Lösung, Governance und menschliche Entscheidungshoh",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-07-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/ea3d84d7-8fe0-44f2-8370-e3ec027e3814/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-07-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/ae2c3422-7eeb-48b2-b8ec-9eb24ceb5c4e/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-07-solution.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": true
+      }
+    }
+  },
+  "AP4-08": {
+    "discovery": {
+      "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/ef23b59c-cad9-4657-875d-3c1e1112ecf9/review/",
+      "title": "Discovery prüfen – KI-Radar",
+      "h1": "Wartungsfälle weisen stark unterschiedliche Durchlaufzeiten auf. Ermittle den belegten Engpass aus Text- und CSV-Evidenz",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-08-discovery.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": false,
+        "provenance": false
+      }
+    },
+    "investigation": {
+      "url": "http://127.0.0.1:8000/accelerator/investigations/4ad81718-80d8-4d59-a9f7-c230a5cd0e01/",
+      "title": "Decision Brief – KI-Radar",
+      "h1": "Decision Brief",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-08-investigation.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": true,
+        "provenance": false
+      }
+    },
+    "solution": {
+      "url": "http://127.0.0.1:8000/architecture/processes/4ddd4b2a-8449-407e-b766-881276e60bc8/options/compare/",
+      "title": "Lösungsoptionen vergleichen – KI-Radar",
+      "h1": "Lösungsoptionen vergleichen",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-08-solution.png",
+      "visible_markers": {
+        "waiting_human": false,
+        "decision_brief": true,
+        "provenance": true
+      }
+    },
+    "ap2-decision": {
+      "url": "http://127.0.0.1:8000/use-cases/29c05f92-345f-44c3-ba89-429342b3f2c8/ap2-decision/",
+      "title": "Entscheidungsgrundlage – KI-0002",
+      "h1": "Entscheidungsgrundlage: KI-gestützte Ersatzteilbedarfsprognose",
+      "viewport_width": 1440,
+      "scroll_width": 1440,
+      "screenshot": "artifacts/ap4/browser/AP4-08-ap2-decision.png",
+      "visible_markers": {
+        "waiting_human": true,
+        "decision_brief": false,
+        "provenance": false
+      }
+    }
+  }
+}

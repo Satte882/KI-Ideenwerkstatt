@@ -254,10 +254,11 @@ def validate_frozen_manifest(
     manifest_path: str | Path,
     *,
     repo_root: str | Path,
+    require_current_versions: bool = True,
 ) -> FrozenValidation:
     manifest = load_frozen_manifest(manifest_path)
     current_versions = current_contract_versions()
-    if dict(manifest.versions) != current_versions:
+    if require_current_versions and dict(manifest.versions) != current_versions:
         missing = sorted(set(current_versions) - set(manifest.versions))
         extra = sorted(set(manifest.versions) - set(current_versions))
         changed = sorted(
@@ -304,6 +305,19 @@ def normalize_record(
         )
     if phase == "post_fix" and not _require_text("pre_fix_record_id", raw.get("pre_fix_record_id")):
         raise AP4EvidenceError("post_fix run requires pre_fix_record_id")
+
+    contract_versions = raw.get("contract_versions")
+    if phase == "post_fix":
+        if not isinstance(contract_versions, dict):
+            raise AP4EvidenceError("post_fix run requires contract_versions")
+        expected_versions = current_contract_versions()
+        normalized_versions = {str(key): str(value) for key, value in contract_versions.items()}
+        if normalized_versions != expected_versions:
+            raise AP4EvidenceError(
+                "post_fix contract_versions must match the code used for the rerun"
+            )
+    else:
+        normalized_versions = dict(validation.manifest.versions)
 
     source_hash = _require_text("source_pack_hash", raw.get("source_pack_hash"))
     if source_hash != validation.source_hashes[case_id]:
@@ -368,6 +382,7 @@ def normalize_record(
             "expected_outcome_pass": expected_outcome_pass,
         },
         "pre_fix_record_id": str(raw.get("pre_fix_record_id") or "").strip(),
+        "contract_versions": normalized_versions,
         "notes": str(raw.get("notes") or "").strip(),
     }
 

@@ -1,0 +1,469 @@
+{
+  "case_id": "AP4-04",
+  "run_slot": "AP4-04-S1",
+  "phase": "post_fix",
+  "provider_mode": "real",
+  "source_pack_hash": "57b00b148742098356f85ccb82b6bc840a635ed276fd612879f35f637eee72e2",
+  "expected_branch": "llm_workflow",
+  "started_at_epoch": 1790790441.842594,
+  "status": "ready_for_human_solution_selection",
+  "system_wait_seconds": 335.02125870005693,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "3491dfcd-7202-4420-8448-4529958cff8b",
+  "discovery_snapshot_id": "f4406197-6bb5-4bef-ac73-131ae723aebf",
+  "discovery_manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+  "discovery": {
+    "analysis_id": "e8dfd98f-d815-4e7f-b7f0-2f65f88ab0be",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4784,
+    "completion_tokens": 7245,
+    "cost": "0.03075675",
+    "facts": [
+      {
+        "statement": "Rechnungsnummer, Bestellnummer, Betrag und Lieferant werden deterministisch gegen Bestellung und Wareneingang geprüft.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Bei formalen Übereinstimmungen ist keine semantische Interpretation notwendig.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Bei Abweichungen enthalten Rechnungen und Bearbeitungsnotizen Freitext, dessen Bedeutung heute manuell zusammengefasst wird.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Sachbearbeitung entscheidet weiterhin über Klärung, Buchung oder Rückgabe.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "In der vorliegenden Stichprobe von 5 Fällen führen 2 Fälle mit formal_match=true zu 'standard' und 3 Fälle mit formal_match=false zu 'manual_review'.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Rechnungsabweichungen sollen durch deterministische Prüfungen und begrenzte Freitextanalyse schneller geklärt werden.",
+        "evidence_refs": [
+          "U0"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Eine strukturierte Aufbereitung von Freitextnotizen reduziert die Bearbeitungszeit in der Sachbearbeitung bei Rechnungsabweichungen.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Gesamtzahl der monatlich eingehenden Rechnungen und der genaue Prozentanteil von Rechnungen mit Freitextabweichungen.",
+        "impact": "Erschwert die genaue betriebswirtschaftliche Potenzialrechnung."
+      },
+      {
+        "statement": "Spezifische IT-Systeme, in denen die Rechnungsdaten und Notizen erfasst und verwaltet werden.",
+        "impact": "Relevant für die spätere technische Anbindung und Systemarchitektur."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche konkreten ERP- oder Workflow-Systeme werden für die Durchführung der Prüfungen und Buchungen eingesetzt?",
+        "impact": "Erforderlich für die spätere Lösungsgestaltung, aber nicht blockierend für die initiale Discovery.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "1dc9eac2-b0f1-44de-97d7-d92597368268",
+  "investigation_run_id": "01678c35-c68e-43fb-b95e-e57dac3f3806",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 4,
+      "model_calls": 8,
+      "verifier_calls": 1,
+      "input_tokens": 30411,
+      "output_tokens": 24517,
+      "verifier_reads": 0,
+      "provider_attempts": 8,
+      "action_state_fingerprint": "1fe7d4b6c1a86bbef2a7b8834c79cd0208b141e3c632d6c677e93567227b153a",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Analyse der Freitextauswertung bei Rechnungsabweichungen“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Autorisierte Quellen: 01_invoice_process.md und 02_exceptions.csv; Prozessausschnitt von formaler Rechnungsabweichung bis Bereitstellung zusammengefasster Freitextinformationen für die Sachbearbeitung."
+      },
+      "problem": {
+        "statement": "Bei formalen Rechnungsabweichungen enthalten Rechnungen und Bearbeitungsnotizen Freitext, dessen Bedeutung heute manuell zusammengefasst wird; die Sachbearbeitung entscheidet weiterhin über Klärung, Buchung oder Rückgabe.",
+        "references": [
+          {
+            "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+            "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+            "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 2,
+              "column": "free_text_note"
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 3,
+              "column": "free_text_note"
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 5,
+              "column": "free_text_note"
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Die manuelle Zusammenfassung ist erforderlich, weil Freitextnotizen unstrukturiert sind und daher zeitintensive manuelle Durchsicht und Erfassung erfordern.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+              "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+              "locator": {
+                "line": 4
+              }
+            },
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 2,
+                "column": "free_text_note"
+              }
+            },
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 3,
+                "column": "free_text_note"
+              }
+            },
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 5,
+                "column": "free_text_note"
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Die manuelle Prüfung ist erforderlich, weil die Abweichungsgründe vielfältig sind (Mengenabweichung, telefonische Zusatzvereinbarung, Preisänderung/Nachtrag) und jeweils fachliche Klärung benötigen.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 2,
+                "column": "free_text_note"
+              }
+            },
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 3,
+                "column": "free_text_note"
+              }
+            },
+            {
+              "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+              "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+              "locator": {
+                "row": 5,
+                "column": "free_text_note"
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [
+        {
+          "summary": "In den 5 Beispielfällen sind 3 Fälle formal_match=false (manual_review) und 2 Fälle formal_match=true (standard).",
+          "reference": {
+            "tool_result_id": "b8915c0b-975d-49ae-855d-5256fb78f8b8",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+          },
+          "population": {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "rows_total": 5,
+            "included_rows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "group_counts": {
+              "false": 3,
+              "true": 2
+            }
+          },
+          "limits": "Nur 5 Beispielfälle; keine Aussage über Grundgesamtheit oder Häufigkeit im Produktivbetrieb."
+        }
+      ],
+      "options": [
+        {
+          "name": "Status quo: manuelle Freitextzusammenfassung",
+          "description": "Die Sachbearbeitung sichtet und fasst Freitextnotizen weiterhin manuell zusammen und entscheidet über Klärung, Buchung oder Rückgabe.",
+          "expected_value": "Erhält die bestehende Letztentscheidung und vermeidet Einführungsaufwand; der belegte manuelle Aufwand bleibt bestehen.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Deckt den Engpass aktuell ab, automatisiert ihn aber nicht.",
+          "feasibility": "high",
+          "data_requirements": "Keine zusätzlichen Datenanforderungen belegt.",
+          "application_impact": "Keine Veränderung der Anwendung.",
+          "integration_effort": "low",
+          "integration_impact": "Keine Integration.",
+          "technology_constraints": "Keine neuen technischen Leitplanken belegt.",
+          "risks": "Manueller Aufwand und Abhängigkeit von individueller Zusammenfassung bleiben.",
+          "architecture_fit": "Entspricht dem beschriebenen Ist-Prozess.",
+          "time_to_value": "short",
+          "evidence_basis": "indicative",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Regelbasierte Strukturierung der Abweichungsgründe",
+          "description": "Abweichungsgründe werden über Kategorien oder Pflichtfelder strukturiert erfasst, um Freitextnotizen zu reduzieren oder zu ergänzen.",
+          "expected_value": "Kann die Vielfalt der Abweichungsgründe sichtbarer machen und die manuelle Zusammenfassung erleichtern.",
+          "option_type": "rule_automation",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert die Heterogenität der Abweichungsgründe, ersetzt aber keine semantische Zusammenfassung bestehender Freitexte.",
+          "feasibility": "medium",
+          "data_requirements": "Kategorienkatalog und fachliche Regeln; nicht in den Quellen belegt.",
+          "application_impact": "Ändert Erfassung und ggf. Oberflächen in der Sachbearbeitung.",
+          "integration_effort": "medium",
+          "integration_impact": "Erfordert Anpassung der Erfassung und Prozessschulung.",
+          "technology_constraints": "Nicht in autorisierten Quellen belegt; Annahme: Integration in bestehende Erfassung erforderlich.",
+          "risks": "Akzeptanz, Pflegeaufwand, Informationsverlust durch feste Kategorien.",
+          "architecture_fit": "Nicht belegt; hängt von nicht dokumentierten Systemen ab.",
+          "time_to_value": "medium",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "KI-gestützte Freitextzusammenfassung",
+          "description": "Ein generatives oder assistierendes System fasst Freitextnotizen und Rechnungsfreitexte für die Sachbearbeitung zusammen.",
+          "expected_value": "Kann den belegten manuellen Zusammenfassungsaufwand reduzieren und die Entscheidungsvorbereitung unterstützen.",
+          "option_type": "generative_ai",
+          "non_ai": false,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert direkt die manuelle Zusammenfassung unstrukturierter Freitexte.",
+          "feasibility": "medium",
+          "data_requirements": "Beispiele realer Freitexte, fachliche Kriterien, Datenschutz- und Governance-Anforderungen; nicht in den Quellen belegt.",
+          "application_impact": "Unterstützt die Sachbearbeitung, automatisiert die Letztentscheidung nicht.",
+          "integration_effort": "high",
+          "integration_impact": "Erfordert Integration in den Rechnungsprüfungsprozess und Qualitätssicherung.",
+          "technology_constraints": "Nicht in autorisierten Quellen belegt; Annahme: Modell- und Integrationsentscheidungen sind offen.",
+          "risks": "Fehlinterpretation, Halluzination, Nachvollziehbarkeit, Datenschutz, unklare Akzeptanz.",
+          "architecture_fit": "Nicht belegt; Systeme sind in den Quellen nicht dokumentiert.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": true
+        },
+        {
+          "name": "Hybrid: regelbasierte Strukturierung plus KI-gestützte Zusammenfassung",
+          "description": "Abweichungsgründe werden strukturiert erfasst und zusätzlich durch KI-gestützte Zusammenfassung für die Sachbearbeitung aufbereitet.",
+          "expected_value": "Kombiniert Standardisierung mit Unterstützung bei verbleibendem Freitext.",
+          "option_type": "hybrid",
+          "non_ai": false,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert sowohl Vielfalt der Gründe als auch manuelle Zusammenfassung.",
+          "feasibility": "medium",
+          "data_requirements": "Kategorien, Freitextbeispiele, Governance; nicht in den Quellen belegt.",
+          "application_impact": "Unterstützt die Sachbearbeitung, Entscheidung bleibt manuell.",
+          "integration_effort": "high",
+          "integration_impact": "Erfordert mehrere Integrations- und Abstimmungsschritte.",
+          "technology_constraints": "Nicht in autorisierten Quellen belegt; Kombination ist Annahme.",
+          "risks": "Höhere Komplexität, Governance, Akzeptanz, Informationsverlust durch Kategorien.",
+          "architecture_fit": "Nicht belegt.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": true
+        }
+      ],
+      "recommendation": {
+        "summary": "Als bevorzugter Kandidat erscheint eine unterstützende Freitextzusammenfassung, die den belegten manuellen Zusammenfassungsaufwand adressiert und die Letztentscheidung bei der Sachbearbeitung belässt; die Quellen tragen keine eindeutige Technologieentscheidung.",
+        "rationale": "Die Quellen belegen, dass bei Abweichungen Freitext manuell zusammengefasst wird und die Sachbearbeitung entscheidet. Sie belegen weder konkrete Systeme noch eine bestimmte KI-Lösung. Daher ist die Richtung gestützt, die Technologiewahl aber offen.",
+        "references": [
+          {
+            "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+            "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+            "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 2,
+              "column": "free_text_note"
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 3,
+              "column": "free_text_note"
+            }
+          },
+          {
+            "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+            "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+            "locator": {
+              "row": 5,
+              "column": "free_text_note"
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Die eingesetzten Systeme und Integrationspunkte sind in den autorisierten Quellen nicht belegt.",
+        "Häufigkeit und Volumen der Freitextabweichungen im Produktivbetrieb sind aus 5 Beispielfällen nicht ableitbar.",
+        "Qualität, Variabilität und Datenschutzanforderungen der Freitexte sind nicht belegt.",
+        "Wirtschaftlichkeit und Aufwand der Optionen sind nicht gemessen.",
+        "Die Letztentscheidung muss bei der Sachbearbeitung bleiben; der Automatisierungsgrad ist offen."
+      ],
+      "validation_step": {
+        "step": "Pilot zur unterstützten Freitextzusammenfassung mit einer Stichprobe realer Abweichungsfälle.",
+        "measurement": "Anteil korrekt zusammengefasster Fälle, Bearbeitungszeit pro Fall, Anzahl notwendiger Korrekturen durch Sachbearbeitung; Vergleich gegen manuelle Baseline, sofern diese erhoben wird."
+      }
+    },
+    "source_relevance": {
+      "5744ab89-e219-4194-8c0d-2c8cf5c61dc9": {
+        "relevant": true,
+        "reason": "Enthält 5 Beispielfälle mit formal_match, decision und free_text_note; gelesen und für die Gruppenberechnung genutzt.",
+        "reference": {
+          "source_id": "5744ab89-e219-4194-8c0d-2c8cf5c61dc9",
+          "revision_hash": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62",
+          "locator": {
+            "row": 1
+          }
+        }
+      },
+      "5c142b10-b162-4713-95a5-48027e9d785d": {
+        "relevant": true,
+        "reason": "Beschreibt Prozess, formale Prüfung, Freitext bei Abweichungen und Sachbearbeitungsentscheidung; gelesen.",
+        "reference": {
+          "source_id": "5c142b10-b162-4713-95a5-48027e9d785d",
+          "revision_hash": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+          "locator": {
+            "line": 1
+          }
+        }
+      }
+    },
+    "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+    "register_hash": "5dcb183b10946045acfed79ca86d478b644d8ef9946c8755566c4b0e5402dca9",
+    "brief_hash": "b895a71b3bdb01bbf1e3647300fec8329870cba789708d212669e696983b5cf1"
+  },
+  "materialization_id": "814c062c-7d22-4773-b217-ecb15abfbace",
+  "solution_options": [
+    {
+      "id": "6ba442df-4136-4454-b4cb-570d7ffb028f",
+      "name": "Hybrid: regelbasierte Strukturierung plus KI-gestützte Zusammenfassung",
+      "type": "hybrid",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "972984bc-dfcb-4214-b889-4f133919a507",
+      "name": "KI-gestützte Freitextzusammenfassung",
+      "type": "generative_ai",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "ca07e55c-629d-4646-b777-64d7d61ada52",
+      "name": "Regelbasierte Strukturierung der Abweichungsgründe",
+      "type": "rule_automation",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "99a37a89-82c0-4c5c-885e-3d85a510a8b1",
+      "name": "Status quo: manuelle Freitextzusammenfassung",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "indicative"
+    }
+  ],
+  "terminal_stage": "solution_selection",
+  "finished_at_epoch": 1790790777.9354508
+}

@@ -1,0 +1,129 @@
+{
+  "case_id": "AP4-04",
+  "run_slot": "AP4-04-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "57b00b148742098356f85ccb82b6bc840a635ed276fd612879f35f637eee72e2",
+  "expected_branch": "llm_workflow",
+  "started_at_epoch": 1790780832.132809,
+  "status": "waiting_human",
+  "system_wait_seconds": 125.15501729992684,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "480a973e-2894-4fe5-8a9e-0cb2d0cda666",
+  "discovery_snapshot_id": "049d6334-1f0f-44f2-98f6-d12572e43fbc",
+  "discovery_manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+  "discovery": {
+    "analysis_id": "213b9155-7b9c-4112-b1f2-559ff6b9137d",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4747,
+    "completion_tokens": 7623,
+    "cost": "0.0321465",
+    "facts": [
+      {
+        "statement": "Rechnungsnummer, Bestellnummer, Betrag und Lieferant werden deterministisch gegen Bestellung und Wareneingang geprüft.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Bei formalen Übereinstimmungen ist keine semantische Interpretation notwendig.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Bei Abweichungen enthalten Rechnungen und Bearbeitungsnotizen Freitext, dessen Bedeutung manuell zusammengefasst wird.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Sachbearbeitung entscheidet weiterhin über Klärung, Buchung oder Rückgabe.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Im bereitgestellten Datensatz von 5 Fällen weisen 3 Fälle eine formale Abweichung mit Freitextnotizen auf.",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Eine strukturierte Zusammenfassung von Freitexten beschleunigt den Klärungsprozess der Sachbearbeitung maßgeblich.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Durchschnittliche manuelle Bearbeitungszeit pro Rechnungsabweichung.",
+        "impact": "Erschwert die exakte Messung des Zeitersparnispotenzials."
+      },
+      {
+        "statement": "Gesamtes monatliches Rechnungsverarbeitungsvolumen.",
+        "impact": "Erschwert die Hochrechnung des wirtschaftlichen Gesamtnutzens."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Wie hoch ist die durchschnittliche Dauer für die manuelle Zusammenfassung einer Freitextnotiz?",
+        "impact": "Erlaubt präzisere Baseline-Messungen, ist jedoch für die Fokusentscheidung nicht blockierend.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "fe445714-1cb0-4051-8de1-35c72d2839a9",
+  "investigation_run_id": "38e94b6d-482e-4b1d-8cb1-2e1819a5a4ff",
+  "investigation": {
+    "status": "waiting_human",
+    "clarification_reason": "missing_evidence",
+    "clarification_payload": {
+      "question": "Bitte autorisierte Quellen bereitstellen, die Lösungsrichtungen oder Verbesserungsmaßnahmen für den Abweichungsklärungsprozess belegen.",
+      "needed_evidence": "Lösungsrichtungen, z. B. Automatisierung der Freitextauswertung, strukturierte Zusatzinformationen oder Prozessanpassungen."
+    },
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 4,
+      "verifier_calls": 0,
+      "input_tokens": 11081,
+      "output_tokens": 6413,
+      "verifier_reads": 0,
+      "provider_attempts": 4
+    },
+    "brief_payload": {},
+    "source_relevance": {},
+    "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+    "register_hash": "66f23ad7bf740cba082c736b720408d1dbc0b9e0848286c1f3107e97098ece86",
+    "brief_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "terminal_stage": "investigation",
+  "finished_at_epoch": 1790780957.5772734
+}

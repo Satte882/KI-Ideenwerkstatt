@@ -1,0 +1,408 @@
+{
+  "case_id": "AP4-03",
+  "run_slot": "AP4-03-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "37ae189c94d4cfd43b1740fa496acec545ab65d79eba28ae26fc76e74cbf237a",
+  "expected_branch": "controlled_llm",
+  "started_at_epoch": 1790780409.418602,
+  "status": "waiting_human",
+  "system_wait_seconds": 369.7276094999397,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed",
+    "diagnosis confirmed and solution selected by human authority"
+  ],
+  "capture_session_id": "a0d9856a-95fc-48dd-ba3d-475e714f783c",
+  "discovery_snapshot_id": "48e099ab-65f5-4f37-807d-83d436846ca8",
+  "discovery_manifest_hash": "33d8419382266facb69cb64ad642e762fbed46d1d9fe2fe0b51cd56247730ba4",
+  "discovery": {
+    "analysis_id": "90455c29-ef70-462d-a273-89525f1e08dc",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4646,
+    "completion_tokens": 11861,
+    "cost": "0.04796325",
+    "facts": [
+      {
+        "statement": "Anfragen erreichen den Kundenservice per E-Mail in freier Sprache.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Mitarbeitende lesen die Nachricht, ordnen das Anliegen einer bekannten Kategorie zu und formulieren einen Antwortentwurf.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Vor jedem externen Versand prüft ein Servicemitarbeiter den Entwurf und entscheidet über die tatsächliche Antwort.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Das Ziel ist weniger Vorbereitungszeit bei der Erstellung von Antworten, nicht eine autonome Kundenkommunikation.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      },
+      {
+        "statement": "Das CRM ist das führende System für Kunden- und Vorgangsdaten.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "E-Mail-Inhalte dürfen für die Bearbeitung gelesen werden.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Ein vorgeschlagener Entwurf darf nicht ohne menschliche Freigabe versendet werden.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Eine direkte Schreibschnittstelle in das CRM ist für den ersten Pilot nicht zugesagt.",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die manuelle Formulierung von Antwortentwürfen stellt den zeitintensivsten Schritt in der Bearbeitung dar.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Das genaue Mengengerüst und die durchschnittliche Bearbeitungszeit pro Freitext-Anfrage.",
+        "impact": "Erschwert die exakte Bestimmung des quantitativen Zeiteinsparungspotenzials."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Über welche Oberfläche oder Schnittstelle sollen aufbereitete Entwürfe den Servicemitarbeitenden ohne direkte CRM-Schreibschnittstelle im Pilot bereitgestellt werden?",
+        "impact": "Bestimmt die technische Integration und Benutzerführung während der Pilotphase.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "a972f841-696c-432f-94a9-7a7263626cf1",
+  "investigation_run_id": "7de6ea26-5bbd-4a4f-8de7-f348ef3a582d",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 6,
+      "verifier_calls": 1,
+      "input_tokens": 20602,
+      "output_tokens": 15223,
+      "verifier_reads": 0,
+      "provider_attempts": 6,
+      "action_state_fingerprint": "13a2aff278f4897084d07e46a6bafe1c56e56f678222f7eb6d6892d90a5a304f",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Vorbereitung und Prüfung von Kundenantworten“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Anfrageeingang per E-Mail bis Prüfung und Freigabe der Antwort durch den Servicemitarbeiter."
+      },
+      "problem": {
+        "statement": "Der Service bearbeitet Freitext-E-Mails, indem Mitarbeitende die Nachricht lesen, das Anliegen kategorisieren und einen Antwortentwurf formulieren; vor jedem externen Versand prüft ein Servicemitarbeiter den Entwurf und entscheidet über die tatsächliche Antwort. Das Ziel ist weniger Vorbereitungszeit, nicht autonome Kundenkommunikation.",
+        "references": [
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "60d206f5-f611-40de-9244-11097466d6e3",
+            "revision_hash": "f8aca74a1335f440cc122195922cca0b061ccd8e9b16413f42aed6a9f0cca80d",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Der Vorbereitungsaufwand entsteht insbesondere durch manuelles Lesen, Zuordnen und Formulieren von Antwortentwürfen.",
+          "status": "supported",
+          "references": [
+            {
+              "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+              "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+              "locator": {
+                "line": 3
+              }
+            },
+            {
+              "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+              "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+              "locator": {
+                "line": 5
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [],
+      "options": [
+        {
+          "name": "KI-gestützte Entwurfsvorbereitung mit menschlicher Freigabe",
+          "description": "Ein generatives KI-System liest die Freitext-E-Mail, ordnet sie einer Kategorie zu und erstellt einen Antwortentwurf; ein Servicemitarbeiter prüft und entscheidet vor Versand.",
+          "expected_value": "Reduzierung des manuellen Formulierungsaufwands; keine gemessene Wirkung in den Quellen belegt.",
+          "option_type": "generative_ai",
+          "non_ai": false,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert direkt das manuelle Lesen, Zuordnen und Formulieren von Antwortentwürfen.",
+          "feasibility": "medium",
+          "data_requirements": "E-Mail-Inhalte dürfen gelesen werden; CRM ist führend für Kunden- und Vorgangsdaten; keine direkte CRM-Schreibschnittstelle für den ersten Pilot zugesagt.",
+          "application_impact": "Entwurfsvorbereitung; menschliche Freigabe bleibt erhalten.",
+          "integration_effort": "medium",
+          "integration_impact": "Begrenzte Integration, da keine CRM-Schreibschnittstelle zugesagt ist; Ausgabe muss an bestehenden Prüfprozess angebunden werden.",
+          "technology_constraints": "Keine autonome Kundenkommunikation; Entwurf darf nicht ohne menschliche Freigabe versendet werden.",
+          "risks": "Qualitäts- und Halluzinationsrisiko; Datenschutz- und Vertraulichkeitsanforderungen nicht in den Quellen spezifiziert; keine gemessene Entlastung.",
+          "architecture_fit": "Passt zum dokumentierten Human-in-the-loop-Prozess.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": true
+        },
+        {
+          "name": "Status quo: rein manuelle Vorbereitung und Prüfung",
+          "description": "Der bestehende Ablauf bleibt unverändert: Mitarbeitende lesen, kategorisieren, formulieren und prüfen Antworten manuell.",
+          "expected_value": "Keine Änderung des Vorbereitungsaufwands; volle menschliche Kontrolle.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Deckt den Engpass nicht ab; der manuelle Aufwand bleibt bestehen.",
+          "feasibility": "high",
+          "data_requirements": "Keine zusätzlichen Datenanforderungen.",
+          "application_impact": "Keine Entlastung bei der Entwurfsvorbereitung.",
+          "integration_effort": "low",
+          "integration_impact": "Keine Integration erforderlich.",
+          "technology_constraints": "Keine neuen technischen Leitplanken erforderlich.",
+          "risks": "Vorbereitungszeit bleibt hoch; keine Skalierung.",
+          "architecture_fit": "Entspricht dem aktuellen dokumentierten Ablauf.",
+          "time_to_value": "short",
+          "evidence_basis": "indicative",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Regelbasierte Kategorisierung und Vorlagen",
+          "description": "Regeln oder Vorlagen unterstützen die Zuordnung zu bekannten Kategorien und stellen Textbausteine bereit; die Formulierung bleibt manuell.",
+          "expected_value": "Teilweise Entlastung bei Kategorisierung und Standardfällen; freie Formulierung bleibt manuell.",
+          "option_type": "rule_automation",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert Kategorisierung, nicht die vollständige Entwurfsformulierung.",
+          "feasibility": "medium",
+          "data_requirements": "Anliegenkategorien und Vorlagen; E-Mail-Inhalte dürfen gelesen werden.",
+          "application_impact": "Beschleunigung bei wiederkehrenden Kategorien.",
+          "integration_effort": "medium",
+          "integration_impact": "Muss in bestehenden E-Mail-/CRM-Kontext eingebunden werden; keine CRM-Schreibschnittstelle zugesagt.",
+          "technology_constraints": "Keine autonome Kommunikation; menschliche Prüfung bleibt erforderlich.",
+          "risks": "Regeln decken freie Sprache nur begrenzt ab; Pflegeaufwand.",
+          "architecture_fit": "Ergänzt den bestehenden Prozess, ersetzt aber nicht die Entwurfsformulierung.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Organisatorische Prozessoptimierung mit Checklisten",
+          "description": "Der Serviceprozess wird durch Checklisten, Rollenklärung und Vorlagen standardisiert, ohne neue KI-Komponente.",
+          "expected_value": "Reduzierung von Rückfragen und Nacharbeit; begrenzte Entlastung bei der Formulierung.",
+          "option_type": "organizational",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Teilweise, da Standardisierung den manuellen Aufwand senken kann, aber die Entwurfserstellung nicht automatisiert.",
+          "feasibility": "high",
+          "data_requirements": "Prozessdokumentation und Kategorien.",
+          "application_impact": "Verbesserte Prozessklarheit.",
+          "integration_effort": "low",
+          "integration_impact": "Geringe technische Integration.",
+          "technology_constraints": "Keine neuen technischen Leitplanken erforderlich.",
+          "risks": "Wirkung nicht gemessen; freie Formulierung bleibt manuell.",
+          "architecture_fit": "Passt zum bestehenden Prozess.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        }
+      ],
+      "recommendation": {
+        "summary": "Bevorzugter Kandidat ist die KI-gestützte Entwurfsvorbereitung mit menschlicher Freigabe.",
+        "rationale": "Sie setzt direkt am manuellen Formulierungsaufwand an und hält die dokumentierte Freigabepflicht ein. Die Quellen belegen jedoch keine gemessene Wirkung; die Empfehlung ist daher qualifiziert.",
+        "references": [
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+            "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "60d206f5-f611-40de-9244-11097466d6e3",
+            "revision_hash": "f8aca74a1335f440cc122195922cca0b061ccd8e9b16413f42aed6a9f0cca80d",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Keine Baseline oder gemessene Vorbereitungszeit in den autorisierten Quellen belegt.",
+        "Keine gemessene Wirkung oder Genauigkeit für KI-Entwürfe belegt.",
+        "Datenschutz-, Vertraulichkeits- und Aufbewahrungsanforderungen für E-Mail-Inhalte sind nicht spezifiziert.",
+        "Keine direkte CRM-Schreibschnittstelle für den ersten Pilot zugesagt.",
+        "Kosten, Fristen und Integrationsaufwand sind nicht belegt.",
+        "Qualitäts- und Freigabekriterien für Entwürfe sind nicht dokumentiert."
+      ],
+      "validation_step": {
+        "step": "Pilot mit menschlicher Freigabe für eine begrenzte Kategorie von Freitext-E-Mails; KI erstellt Entwürfe, Servicemitarbeiter prüft und entscheidet.",
+        "measurement": "Vor und während des Pilots Vorbereitungszeit pro Anfrage, Änderungsaufwand am Entwurf, Freigabequote und Fehlerquote erfassen; keine Zielwerte erfinden."
+      }
+    },
+    "source_relevance": {
+      "736f53da-ff48-46c2-b4fa-474388e79685": {
+        "relevant": true,
+        "reason": "Serviceprozess gelesen; beschreibt Ablauf, Engpass und Ziel.",
+        "reference": {
+          "source_id": "736f53da-ff48-46c2-b4fa-474388e79685",
+          "revision_hash": "2eb9aeecdea470108b78b33c56f077efef34b825fea6aae10aad5779d2aa3892",
+          "locator": {
+            "line": 3
+          }
+        }
+      },
+      "60d206f5-f611-40de-9244-11097466d6e3": {
+        "relevant": true,
+        "reason": "Systemhinweis gelesen; enthält Freigabepflicht und CRM-Rahmenbedingungen.",
+        "reference": {
+          "source_id": "60d206f5-f611-40de-9244-11097466d6e3",
+          "revision_hash": "f8aca74a1335f440cc122195922cca0b061ccd8e9b16413f42aed6a9f0cca80d",
+          "locator": {
+            "line": 4
+          }
+        }
+      }
+    },
+    "manifest_hash": "33d8419382266facb69cb64ad642e762fbed46d1d9fe2fe0b51cd56247730ba4",
+    "register_hash": "da02ba38b9b839e6546c242ad7582cdf14f38989bc0c182504cd21279592b936",
+    "brief_hash": "82a549f14637fd7f527712402b2f7d9915ad65673fab5df9bff53995daff0d7f"
+  },
+  "materialization_id": "47a91090-7b0e-4bdd-bddb-539d33447b88",
+  "solution_options": [
+    {
+      "id": "dd297a64-0efd-4658-98c5-03fbcba5cc53",
+      "name": "KI-gestützte Entwurfsvorbereitung mit menschlicher Freigabe",
+      "type": "generative_ai",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "42f8c143-8822-49d4-a3c4-3b61a5e14b45",
+      "name": "Organisatorische Prozessoptimierung mit Checklisten",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "c59deb7b-47a8-49a4-b5e5-f1295836a715",
+      "name": "Regelbasierte Kategorisierung und Vorlagen",
+      "type": "rule_automation",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "371b38db-d14f-4e42-a26f-61bab4115474",
+      "name": "Status quo: rein manuelle Vorbereitung und Prüfung",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "indicative"
+    }
+  ],
+  "solution_decision_id": "2",
+  "selected_solution": {
+    "id": "dd297a64-0efd-4658-98c5-03fbcba5cc53",
+    "name": "KI-gestützte Entwurfsvorbereitung mit menschlicher Freigabe",
+    "type": "generative_ai",
+    "contains_ai": true
+  },
+  "use_case_id": "90bb08a8-6cd0-4b42-802e-3b529ba4ab27",
+  "ap2_completed": [
+    "metric_pilot",
+    "architecture",
+    "decision_governance"
+  ],
+  "terminal_stage": "governance",
+  "blocking_governance_facts": [
+    "personal_data",
+    "employee_data",
+    "biometric_data",
+    "regulated_product",
+    "external_ai_or_cloud"
+  ],
+  "finished_at_epoch": 1790780780.3170485
+}

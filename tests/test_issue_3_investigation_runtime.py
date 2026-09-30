@@ -28,6 +28,7 @@ from ki_radar.accelerator.investigation_runtime import (
     execute_tool_step,
     mark_counterevidence_processed,
     materialize_brief_revision,
+    read_run,
     recover_investigation,
     set_source_relevance,
     start_investigation,
@@ -405,6 +406,32 @@ def test_process_version_conflict_and_permission_revocation_fail_closed(
     folder.is_active = False
     folder.save(update_fields=["is_active", "updated_at"])
     with pytest.raises(PermissionDenied):
+        execute_tool_step(
+            actor=owner,
+            run_id=handle.run_id,
+            executor_token=handle.executor_token,
+            tool_name="list_sources",
+            parameters={},
+        )
+
+
+@pytest.mark.django_db
+def test_terminal_investigation_remains_readable_after_process_validation(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit)
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(snapshot.snapshot_id, "read-after-validation"),
+    )
+    ProcessAnalysis.objects.filter(pk=process.pk).update(status=ProcessAnalysis.Status.VALIDATED)
+
+    assert read_run(actor=owner, run_id=handle.run_id).pk == handle.run_id
+    with pytest.raises(PermissionDenied, match="nicht mehr bearbeitbar"):
         execute_tool_step(
             actor=owner,
             run_id=handle.run_id,

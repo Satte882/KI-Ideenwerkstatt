@@ -51,7 +51,7 @@ class Command(BaseCommand):
             records_path = root / records_path
 
         try:
-            validation = validate_frozen_manifest(manifest_path, repo_root=root)
+            raw = None
             if options["append_record"]:
                 record_path = Path(options["append_record"])
                 if not record_path.is_absolute():
@@ -59,6 +59,16 @@ class Command(BaseCommand):
                 raw = json.loads(record_path.read_text(encoding="utf-8"))
                 if not isinstance(raw, dict):
                     raise AP4EvidenceError("append record file must contain one JSON object")
+
+            require_current_versions = bool(options["show_contract"])
+            if raw is not None and raw.get("phase") == "scored":
+                require_current_versions = True
+            validation = validate_frozen_manifest(
+                manifest_path,
+                repo_root=root,
+                require_current_versions=require_current_versions,
+            )
+            if raw is not None:
                 append_record(records_path, raw, validation=validation)
 
             records = load_records(records_path, validation=validation)

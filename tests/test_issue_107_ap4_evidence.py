@@ -11,6 +11,7 @@ from django.core.management import call_command
 from ki_radar.accelerator.ap4_evidence import (
     AP4EvidenceError,
     append_record,
+    current_contract_versions,
     load_records,
     normalize_record,
     summarize_records,
@@ -21,7 +22,11 @@ MANIFEST = Path(settings.BASE_DIR) / "tests/fixtures/ap4_case_manifest_v1.json"
 
 
 def _validation():
-    return validate_frozen_manifest(MANIFEST, repo_root=settings.BASE_DIR)
+    return validate_frozen_manifest(
+        MANIFEST,
+        repo_root=settings.BASE_DIR,
+        require_current_versions=False,
+    )
 
 
 def _case(validation, case_id):
@@ -60,7 +65,7 @@ def _record(
     else:
         run_slot = f"{case_id}-PF-{record_id}"
 
-    return {
+    record = {
         "record_id": record_id,
         "case_id": case_id,
         "run_slot": run_slot,
@@ -90,6 +95,31 @@ def _record(
         "pre_fix_record_id": pre_fix_record_id,
         "notes": "",
     }
+    if phase == "post_fix":
+        record["contract_versions"] = current_contract_versions()
+    return record
+
+
+def test_ap4_frozen_scored_contract_rejects_changed_runtime_version():
+    with pytest.raises(AP4EvidenceError, match="versions no longer match"):
+        validate_frozen_manifest(MANIFEST, repo_root=settings.BASE_DIR)
+
+
+def test_ap4_post_fix_binds_current_contract_versions():
+    validation = _validation()
+    normalized = normalize_record(
+        _record(
+            validation,
+            case_id="AP4-04",
+            path="autonomous",
+            record_id="AP4-04-post-fix",
+            phase="post_fix",
+            pre_fix_record_id="AP4-04-scored",
+        ),
+        validation=validation,
+    )
+
+    assert normalized["contract_versions"] == current_contract_versions()
 
 
 def test_ap4_manifest_freezes_exactly_eight_distinct_cases_and_versions():

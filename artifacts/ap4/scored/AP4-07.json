@@ -1,0 +1,295 @@
+{
+  "case_id": "AP4-07",
+  "run_slot": "AP4-07-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "895e07e02843d99c4df6c043ad574687af694d35931196b01b6a133354b4ce12",
+  "expected_branch": "ai_with_governance_review",
+  "started_at_epoch": 1790781418.880434,
+  "status": "waiting_human",
+  "system_wait_seconds": 201.24308929988183,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "c4ff09e2-7f96-4e8a-bcfe-76e4c01bf28e",
+  "discovery_snapshot_id": "1287027d-e57d-4bd7-b001-27f27b2c22d4",
+  "discovery_manifest_hash": "943e5eeb5e8e55fa008295c18b8bdccff713dda43d5fe7b82ec776070b556032",
+  "discovery": {
+    "analysis_id": "5c92c5ef-876d-467c-8827-48eb251deb3e",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4628,
+    "completion_tokens": 6883,
+    "cost": "0.02928225",
+    "facts": [
+      {
+        "statement": "Bewerbungen enthalten Namen, Kontaktdaten, Lebensläufe, Berufserfahrung und Freitextangaben.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Recruiting möchte eingehende Unterlagen nach veröffentlichten Stellenkriterien vorstrukturieren und relevante Passagen hervorheben.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Entscheidung über Einladung oder Ablehnung wird ausschließlich von Recruiting und Fachbereich getroffen.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Das System soll keine Bewerber automatisch bewerten oder ablehnen.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Für den geplanten Pilot wird ein externer Cloud-KI-Dienst geprüft, an den Bewerbungsunterlagen übermittelt würden.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Datenschutz-, Security- und Legal-Prüfung sind noch nicht abgeschlossen.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Human Oversight ist verpflichtend vorgesehen.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Problemstellung fordert semantische Vorstrukturierung sowie Prüfung von Lösung, Governance und menschlicher Entscheidungshoheit.",
+        "evidence_refs": [
+          "U0"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die semantische Vorstrukturierung entlastet Recruiting und Fachbereich bei der Vorbereitung von Auswahlentscheidungen.",
+        "evidence_refs": [
+          "S1"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Ergebnis der ausstehenden Datenschutz-, Security- und Legal-Prüfung für den externen Cloud-KI-Dienst.",
+        "impact": "Bestimmt, ob Bewerbungsunterlagen an den externen Cloud-Dienst übermittelt werden dürfen."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche konkreten Bedingungen und Auflagen ergeben sich aus der Datenschutz-, Security- und Legal-Prüfung für den Einsatz des externen Dienstes?",
+        "impact": "Entscheidet über die Zulässigkeit und Ausgestaltung der Datenübermittlung im Pilotbetrieb.",
+        "blocking": true
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "ae2c3422-7eeb-48b2-b8ec-9eb24ceb5c4e",
+  "investigation_run_id": "ea3d84d7-8fe0-44f2-8370-e3ec027e3814",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 6,
+      "verifier_calls": 1,
+      "input_tokens": 20299,
+      "output_tokens": 13569,
+      "verifier_reads": 0,
+      "provider_attempts": 6,
+      "action_state_fingerprint": "fdc7e869a02051569243085bd3d65a95fcf633da6309b3cee334359e76acf023",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Prozessanalyse der semantischen Vorstrukturierung von Bewerbungsunterlagen“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Eingang der Unterlagen zur Vorstrukturierung bis Bereitstellung der vorstrukturierten Unterlagen für Recruiting und Fachbereich."
+      },
+      "problem": {
+        "statement": "Bewerbungsunterlagen müssen nach Stellenkriterien vorstrukturiert und relevante Passagen hervorgehoben werden, ohne automatische Bewertung oder Ablehnung; der geplante externe Cloud-KI-Dienst ist wegen ausstehender Datenschutz-, Security- und Legal-Prüfung nicht freigegeben.",
+        "references": [
+          {
+            "source_id": "4c282915-fceb-487f-8ba3-c184526a08e4",
+            "revision_hash": "c830cd4b83224d42c7f4b6922f9c29e0fb5dd83726a3ed35f529b47b4467aeb5",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "4c282915-fceb-487f-8ba3-c184526a08e4",
+            "revision_hash": "c830cd4b83224d42c7f4b6922f9c29e0fb5dd83726a3ed35f529b47b4467aeb5",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "6bd67700-f8fd-433e-8b3b-30a38607014f",
+            "revision_hash": "95f4bfbbca9d1a9851f2743b49ee4641ef38120f621d249e20daccb4e8c4efa9",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Die manuelle Sichtung unstrukturierter Unterlagen ist aufwendig und motiviert die angestrebte automatisierte Vorstrukturierung.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "4c282915-fceb-487f-8ba3-c184526a08e4",
+              "revision_hash": "c830cd4b83224d42c7f4b6922f9c29e0fb5dd83726a3ed35f529b47b4467aeb5",
+              "locator": {
+                "line": 3
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [],
+      "options": [
+        {
+          "name": "Externer Cloud-KI-Dienst für semantische Vorstrukturierung",
+          "description": "Pilot eines extern betriebenen Cloud-KI-Dienstes zur Vorstrukturierung und Hervorhebung relevanter Passagen in Bewerbungsunterlagen.",
+          "expected_value": "Entlastung bei der Vorstrukturierung; konkreter Nutzen nicht gemessen.",
+          "option_type": "generative_ai",
+          "non_ai": false,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert die Vorstrukturierung, aber nicht die ausstehenden rechtlichen, Datenschutz- und Security-Prüfungen.",
+          "feasibility": "low",
+          "data_requirements": "Bewerbungsunterlagen (Namen, Kontaktdaten, Lebensläufe, Berufserfahrung, Freitextangaben) und Stellenkriterien.",
+          "application_impact": "Unterstützung bei Vorstrukturierung; Entscheidung bleibt bei Recruiting und Fachbereich.",
+          "integration_effort": "medium",
+          "integration_impact": "Erfordert Anbindung an Bewerbungseingang und Übergabe an Recruiting/Fachbereich; Details offen.",
+          "technology_constraints": "Externe Datenübermittlung; Datenschutz-, Security- und Legal-Prüfung ausstehend; Human Oversight verpflichtend.",
+          "risks": "Übermittlung von Bewerberdaten an externen Dienst ohne abgeschlossene Prüfungen; keine automatische Bewertung oder Ablehnung erlaubt.",
+          "architecture_fit": "Nicht bewertet; externe Cloud-Komponente in Prüfung.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": true
+        },
+        {
+          "name": "Manuelle Vorstrukturierung durch Recruiting/Fachbereich",
+          "description": "Beibehaltung einer manuellen oder organisatorischen Vorstrukturierung ohne externen KI-Dienst.",
+          "expected_value": "Vermeidet externe Datenübermittlung; Aufwand nicht gemessen.",
+          "option_type": "organizational",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Adressiert Vorstrukturierung ohne externe Übermittlung, aber ohne Automatisierungsnutzen.",
+          "feasibility": "high",
+          "data_requirements": "Bewerbungsunterlagen und Stellenkriterien; keine externe Übermittlung.",
+          "application_impact": "Entscheidungsunterstützung durch manuelle Hervorhebung; keine automatische Bewertung.",
+          "integration_effort": "low",
+          "integration_impact": "Keine technische Integration; organisatorische Prozessanpassung.",
+          "technology_constraints": "Keine externe KI; Human Oversight bleibt.",
+          "risks": "Manueller Aufwand bleibt; Skalierung unklar.",
+          "architecture_fit": "Passt zu bestehendem Prozess ohne externe Systeme.",
+          "time_to_value": "short",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        }
+      ],
+      "recommendation": {
+        "summary": "Vor einer Entscheidung für den externen Cloud-KI-Dienst müssen Datenschutz-, Security- und Legal-Prüfung abgeschlossen sein; bis dahin ist die Übermittlung von Bewerberdaten zu unterlassen. Als status-quo-nahe Option bleibt die manuelle oder organisatorische Vorstrukturierung.",
+        "rationale": "S2 dokumentiert ausstehende Prüfungen und verpflichtendes Human Oversight; S1 schließt automatische Bewertung oder Ablehnung aus. Der Cloud-Dienst ist der einzige konkret dokumentierte Lösungsansatz, aber nicht freigegeben.",
+        "references": [
+          {
+            "source_id": "6bd67700-f8fd-433e-8b3b-30a38607014f",
+            "revision_hash": "95f4bfbbca9d1a9851f2743b49ee4641ef38120f621d249e20daccb4e8c4efa9",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "4c282915-fceb-487f-8ba3-c184526a08e4",
+            "revision_hash": "c830cd4b83224d42c7f4b6922f9c29e0fb5dd83726a3ed35f529b47b4467aeb5",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "6bd67700-f8fd-433e-8b3b-30a38607014f",
+            "revision_hash": "95f4bfbbca9d1a9851f2743b49ee4641ef38120f621d249e20daccb4e8c4efa9",
+            "locator": {
+              "line": 5
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Ob die manuelle Sichtung tatsächlich der Haupttreiber ist, ist nicht belegt.",
+        "Kosten, Aufwände, Zeit bis Freigabe und Messwerte fehlen.",
+        "Ob der externe Cloud-KI-Dienst die semantische Vorstrukturierung leisten kann, ist nicht belegt.",
+        "Rechtliche Zulässigkeit der Übermittlung von Bewerberdaten an einen externen Dienst ist offen."
+      ],
+      "validation_step": {
+        "step": "Datenschutz-, Security- und Legal-Prüfung für den externen Cloud-KI-Dienst abschließen und Freigabeentscheidung dokumentieren.",
+        "measurement": "Vorliegen einer dokumentierten Freigabe oder Ablehnung; bis dahin keine Übermittlung von Bewerberdaten."
+      }
+    },
+    "source_relevance": {
+      "4c282915-fceb-487f-8ba3-c184526a08e4": {
+        "relevant": true,
+        "reason": "Beschreibt Recruiting-Prozess, Datenobjekte und Human-Entscheidungsvorbehalt."
+      },
+      "6bd67700-f8fd-433e-8b3b-30a38607014f": {
+        "relevant": true,
+        "reason": "Dokumentiert geplanten externen Cloud-KI-Dienst, ausstehende Prüfungen und Human Oversight."
+      }
+    },
+    "manifest_hash": "943e5eeb5e8e55fa008295c18b8bdccff713dda43d5fe7b82ec776070b556032",
+    "register_hash": "f43f2bf9471b6824926fe52e23a37aea1cd4aee3bf9c18f37ca9ceff72ade4c2",
+    "brief_hash": "9a85cd500547b7656a0b7b70cfd651d01b6b745597d6def9b9424a99c5c5c034"
+  },
+  "materialization_id": "859a8c89-b84d-4c5c-8ae2-5045a82a834f",
+  "solution_options": [
+    {
+      "id": "edee4382-8969-4d41-9258-61ceccb2656e",
+      "name": "Externer Cloud-KI-Dienst für semantische Vorstrukturierung",
+      "type": "generative_ai",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "50a58822-a492-49ff-9aab-4583fd133976",
+      "name": "Manuelle Vorstrukturierung durch Recruiting/Fachbereich",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    }
+  ],
+  "terminal_stage": "solution_selection",
+  "blocking_question": "Which cause can a human confirm from the evidence?",
+  "finished_at_epoch": 1790781620.4564152
+}

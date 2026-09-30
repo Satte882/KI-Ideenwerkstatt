@@ -1,0 +1,431 @@
+{
+  "case_id": "AP4-02",
+  "run_slot": "AP4-02-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "acef9532fcc6d9e31417f2a057920921cb7aae6af48ecc7718fd106231d5cc7f",
+  "expected_branch": "rule_automation",
+  "started_at_epoch": 1790779966.8911145,
+  "status": "non_ai_selected",
+  "system_wait_seconds": 394.7386921000434,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed",
+    "diagnosis confirmed and solution selected by human authority"
+  ],
+  "capture_session_id": "1390e172-1b22-4a5a-bcf6-50e587a332b8",
+  "discovery_snapshot_id": "d45a5d46-9507-44bb-a474-3bba321be5fe",
+  "discovery_manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+  "discovery": {
+    "analysis_id": "7d33866d-d183-46b9-9897-513a0c940c10",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4640,
+    "completion_tokens": 7248,
+    "cost": "0.03066000",
+    "facts": [
+      {
+        "statement": "Spesenprüfungen erzeugen manuellen Aufwand.",
+        "evidence_refs": [
+          "U0"
+        ]
+      },
+      {
+        "statement": "Belege müssen vorhanden sein; fehlt ein Beleg oder wird eine Kostenart-Grenze überschritten, ist eine manuelle Prüfung erforderlich.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Regeln zur Spesenprüfung sind tabellarisch definiert und ändern sich nur nach veröffentlichter Richtlinienänderung.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Der Datensatz S2 enthält 6 Beispielfälle (E01 bis E06).",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "In den Fällen E02 (180 EUR bei 150 EUR Limit), E03 (kein Beleg) und E06 (42 EUR bei 35 EUR Limit) ist eine manuelle Prüfung erforderlich (manual_review = true).",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "In den Fällen E01 (120 EUR bei 150 EUR Limit), E04 (45 EUR bei 80 EUR Limit) und E05 (30 EUR bei 35 EUR Limit) ist keine manuelle Prüfung erforderlich (manual_review = false).",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Eine regelbasierte Prüfung auf Basis der tabellarischen Kostenart-Grenzen und Belegpräsenz reicht aus, um die formale Spesenprüfung ohne KI zu automatisieren.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Prozentualer Anteil der Spesenabrechnungen im Gesamtbetrieb, die wegen fehlender Belege oder Limitüberschreitungen manuell geprüft werden müssen.",
+        "impact": "Einfluss auf das Gesamteinsparpotenzial."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Liegen die Spesendaten und Beleginformationen bereits strukturiert vor oder müssen diese vor der Regelprüfung erst erfasst werden?",
+        "impact": "Bestimmt den Aufwand der Datenerfassung vor der eigentlichen Regelprüfung.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "91b29e16-d01f-4b86-9d93-b503d7cdf9bc",
+  "investigation_run_id": "b3dde968-ed40-47b6-8872-17b9add759b2",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 5,
+      "model_calls": 9,
+      "verifier_calls": 2,
+      "input_tokens": 29611,
+      "output_tokens": 20522,
+      "verifier_reads": 0,
+      "provider_attempts": 9,
+      "action_state_fingerprint": "1bac76535060df12141dc934b22e1a44f90e5431a5dc37f016999769a1decafc",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Formale Spesenprüfung“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Formale Spesenprüfung von der Erfassung bis zur Entscheidung über automatische Verarbeitung oder manuelle Nachprüfung; autorisierte Quellen S1 und S2."
+      },
+      "problem": {
+        "statement": "Die formale Spesenprüfung erfordert manuelle Prüfung, wenn ein Beleg fehlt oder eine Kostenart-Grenze überschritten wird; in der Stichprobe S2 betrifft das 3 von 6 Fällen.",
+        "references": [
+          {
+            "source_id": "71bb4b1a-e19e-426e-9c3f-26d7d7699897",
+            "revision_hash": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 2
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 3
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 6
+            }
+          },
+          {
+            "tool_result_id": "a5e8ab84-5548-4079-995f-984693534258",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Fehlende Belege sind die Hauptursache für manuelle Prüfung.",
+          "status": "conflicting",
+          "references": [
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 3
+              }
+            }
+          ],
+          "counterevidence_refs": [
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 2
+              }
+            },
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 6
+              }
+            }
+          ]
+        },
+        {
+          "statement": "Limitüberschreitungen sind die Hauptursache für manuelle Prüfung.",
+          "status": "conflicting",
+          "references": [
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 2
+              }
+            },
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 6
+              }
+            }
+          ],
+          "counterevidence_refs": [
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 3
+              }
+            }
+          ]
+        },
+        {
+          "statement": "Manuelle Prüfung wird durch das Zusammentreffen der Regelbedingungen ausgelöst: fehlender Beleg oder Überschreitung der Kostenart-Grenze.",
+          "status": "supported",
+          "references": [
+            {
+              "source_id": "71bb4b1a-e19e-426e-9c3f-26d7d7699897",
+              "revision_hash": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+              "locator": {
+                "line": 4
+              }
+            },
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 2
+              }
+            },
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 3
+              }
+            },
+            {
+              "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+              "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+              "locator": {
+                "row": 6
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [
+        {
+          "summary": "In der Stichprobe von 6 Fällen erfordern 3 manuelle Prüfung; davon 2 mit Beleg und 1 ohne Beleg.",
+          "reference": {
+            "tool_result_id": "a5e8ab84-5548-4079-995f-984693534258",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+          },
+          "population": {
+            "rows_total": 6,
+            "filter_matched_rows": 3,
+            "included_rows": [
+              2,
+              3,
+              6
+            ]
+          },
+          "limits": "Nur Stichprobe S2 mit 6 Fällen; keine Generalisierung."
+        }
+      ],
+      "options": [
+        {
+          "name": "Regelbasierte automatische Vorprüfung",
+          "description": "Automatische Prüfung, ob ein Beleg vorhanden ist und ob der Betrag innerhalb der Kostenart-Grenze liegt; nur Ausnahmen werden zur manuellen Prüfung weitergeleitet.",
+          "expected_value": "Reduziert manuelle Prüfung auf Fälle mit fehlendem Beleg oder Limitüberschreitung; keine gemessene Wirkung in den Quellen.",
+          "option_type": "rule_automation",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert den manuellen Prüfaufwand bei fehlenden Belegen und Limitüberschreitungen.",
+          "feasibility": "medium",
+          "data_requirements": "case_id, receipt_present, category, amount_eur, limit_eur, manual_review",
+          "application_impact": "medium",
+          "integration_effort": "medium",
+          "integration_impact": "medium",
+          "technology_constraints": "Regeln sind tabellarisch definiert und ändern sich nur nach veröffentlichter Richtlinienänderung; Regelpflege erforderlich.",
+          "risks": "Regeländerungen, Sonderfälle, Datenqualität; keine Messung der Wirkung in den Quellen.",
+          "architecture_fit": "Passt zur formalen Spesenprüfung als Vorstufe zur manuellen Nachprüfung.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Status quo: manuelle Prüfung",
+          "description": "Beibehaltung der aktuellen manuellen Prüfung bei fehlendem Beleg oder Limitüberschreitung.",
+          "expected_value": "Keine Änderung des beobachteten manuellen Aufwands.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Deckt den Engpass nicht ab; der manuelle Aufwand bleibt.",
+          "feasibility": "high",
+          "data_requirements": "Keine zusätzlichen Daten über die vorhandenen Fallattribute hinaus.",
+          "application_impact": "low",
+          "integration_effort": "low",
+          "integration_impact": "low",
+          "technology_constraints": "Keine neuen technischen Leitplanken belegt.",
+          "risks": "Manueller Aufwand bleibt; Skalierung unklar.",
+          "architecture_fit": "Entspricht dem beobachteten Ist-Prozess.",
+          "time_to_value": "short",
+          "evidence_basis": "measured",
+          "contains_ai_component": false
+        }
+      ],
+      "recommendation": {
+        "summary": "Der bevorzugte Kandidat ist eine regelbasierte automatische Vorprüfung, die Belegpräsenz und Limitvergleich prüft und nur Ausnahmen manuell weiterleitet.",
+        "rationale": "Die Richtlinie definiert deterministische Regeln; die Stichprobe zeigt, dass manuelle Fälle mit fehlendem Beleg oder Limitüberschreitung auftreten. Eine gemessene Wirkung liegt nicht vor.",
+        "references": [
+          {
+            "source_id": "71bb4b1a-e19e-426e-9c3f-26d7d7699897",
+            "revision_hash": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "71bb4b1a-e19e-426e-9c3f-26d7d7699897",
+            "revision_hash": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 2
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 3
+            }
+          },
+          {
+            "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+            "locator": {
+              "row": 6
+            }
+          },
+          {
+            "tool_result_id": "a5e8ab84-5548-4079-995f-984693534258",
+            "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Die Stichprobe umfasst nur 6 Testfälle; Verallgemeinerung ist nicht belegt.",
+        "Rollen und Systeme sind in den autorisierten Quellen nicht belegt.",
+        "Kosten, Zeit bis zur Umsetzung und erwartete Einsparung sind nicht belegt.",
+        "Regeländerungen erfordern Pflege; Auswirkungen nicht quantifiziert."
+      ],
+      "validation_step": {
+        "step": "Pilot mit größerer Stichprobe: regelbasierte Vorprüfung gegen manuelle Entscheidung vergleichen.",
+        "measurement": "Anzahl korrekt als verarbeitbar oder manuell eingestufter Fälle, Fehlklassifikationen und verbleibende manuelle Nacharbeit."
+      }
+    },
+    "source_relevance": {
+      "71bb4b1a-e19e-426e-9c3f-26d7d7699897": {
+        "relevant": true,
+        "reason": "Enthält die Spesenrichtlinie mit Belegpflicht und Grenzwertregeln.",
+        "reference": {
+          "source_id": "71bb4b1a-e19e-426e-9c3f-26d7d7699897",
+          "revision_hash": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+          "locator": {
+            "line": 1
+          }
+        }
+      },
+      "edaf6f53-e60e-4b43-bfe4-281d1a477082": {
+        "relevant": true,
+        "reason": "Enthält die 6 Testfälle mit Belegstatus, Betrag, Limit und manueller Prüfung.",
+        "reference": {
+          "source_id": "edaf6f53-e60e-4b43-bfe4-281d1a477082",
+          "revision_hash": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813",
+          "locator": {
+            "row": 1
+          }
+        }
+      }
+    },
+    "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+    "register_hash": "098917df30ae065d263e24da498a5ad1499f0544819e7b21ec17e47cb9fecaa7",
+    "brief_hash": "cb5bae0fd8497384b10d8bfc2a2328c3d5ab1d147a8d07ad26e13850ad34dbac"
+  },
+  "materialization_id": "21050a8c-7e83-4710-914d-aabc2f65d328",
+  "solution_options": [
+    {
+      "id": "5f42e7d3-49c9-47dd-b24f-34ffd5b642c2",
+      "name": "Regelbasierte automatische Vorprüfung",
+      "type": "rule_automation",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "dda6583a-6d29-46c2-ba02-34707fda13e4",
+      "name": "Status quo: manuelle Prüfung",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "measured"
+    }
+  ],
+  "solution_decision_id": "1",
+  "selected_solution": {
+    "id": "5f42e7d3-49c9-47dd-b24f-34ffd5b642c2",
+    "name": "Regelbasierte automatische Vorprüfung",
+    "type": "rule_automation",
+    "contains_ai": false
+  },
+  "terminal_stage": "solution_selection",
+  "finished_at_epoch": 1790780362.715051
+}

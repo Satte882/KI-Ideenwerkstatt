@@ -30,6 +30,12 @@ Ein fehlgeschlagener scored Run bleibt scored Evidence. Er darf nicht gelöscht 
 
 Nach einem Root-Cause-Fix ist nur ein eigener `post_fix`-Record mit Verweis auf den unmittelbar vorherigen Record desselben Falls/Pfads zulässig. Post-Fix-Ketten sind linear; parallele „bessere“ Zweige sind verboten.
 
+Ein `post_fix`-Record bindet zusätzlich die tatsächlich verwendeten aktuellen
+Prompt-/Schema-/Runtime-Versionen in `contract_versions`. Der eingefrorene scored Vertrag
+und seine Records werden dadurch nicht umgeschrieben. Neue scored Records werden weiterhin
+strikt gegen die eingefrorenen Versionen abgelehnt, sobald sich der Codevertrag geändert hat;
+historische Auswertung und linear verkettete Post-Fix-Evidence bleiben dennoch lesbar.
+
 Die Auswertung zeigt zwei getrennte Sichten:
 - **Initial scored result**: ausschließlich die unveränderlichen ursprünglichen scored Runs;
 - **Current post-hardening result**: je Fall der letzte linear verkettete Stand nach echten Root-Cause-Fixes.

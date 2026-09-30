@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-PLANNER_PROMPT_VERSION = "vs1-planner-v18"
+PLANNER_PROMPT_VERSION = "vs1-planner-v19"
 SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v15"
 LEGACY_SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
 LEGACY_SYNTHESIS_INSTRUCTION_HASH = (
@@ -198,6 +198,14 @@ serialisiert werden; leer ist {}.
 Wenn synthesis_investigation_request gesetzt ist, schließe diese vom Synthesizer erkannte
 Evidenzlücke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums
 lösbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuführen.
+Solution Options sind Kandidaten und müssen nicht bereits als fertige Lösungsvorschläge in
+den Quellen stehen. Wenn Problem, Scope und tragende Evidenz ausreichen, leite plausible
+Optionen als Hypothesen ab und synthetisiere; frage nicht allein deshalb nach weiteren
+Quellen, weil diese noch keine Lösungsrichtungen oder Verbesserungsmaßnahmen formulieren.
+Wenn die Quellen dagegen ausdrücklich offenlassen, wer die Entscheidungshoheit trägt oder
+wer entscheidungsrelevante Ausnahmen verantwortet, ist das keine intern schließbare
+Analyselücke. Verwende dann action=clarify mit clarification_reason=permission_or_scope und
+frage präzise nach der fehlenden menschlichen Zuständigkeitsentscheidung.
 Eine Suche nach möglichen Gegenbelegen gehört zur Untersuchung. Wenn bereits eine
 relevante Quelle gelesen oder analysiert wurde, evidence_coverage.counterevidence_search_executed
 aber noch false ist und eine sinnvolle Gegenhypothese oder Alternative formulierbar ist, führe
