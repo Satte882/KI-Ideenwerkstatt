@@ -345,9 +345,7 @@ def test_ap2_governance_materializes_only_quoted_yes_no_evidence(owner, business
     assert GovernanceReview.objects.filter(status=GovernanceReview.Status.NOT_RELEVANT).count() == 2
 
 
-def test_ap2_governance_rejects_unquoted_negative_assertion(owner, business_unit, monkeypatch):
-    from ki_radar.use_cases.ap2_decision_governance import AP2DecisionGovernanceError
-
+def test_ap2_governance_downgrades_unquoted_negative_assertion(owner, business_unit, monkeypatch):
     use_case = _ai_use_case(owner, business_unit)
     payload = _decision_governance_payload()
     payload["governance"]["personal_data"].update(
@@ -357,10 +355,13 @@ def test_ap2_governance_rejects_unquoted_negative_assertion(owner, business_unit
         "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
         lambda _prepared, **_kwargs: _provider_result(payload),
     )
-    with pytest.raises(AP2DecisionGovernanceError, match="wörtlichen Quellenbeleg"):
-        generate_ap2_decision_governance(use_case=use_case, actor=owner)
+    assert generate_ap2_decision_governance(use_case=use_case, actor=owner) is None
+    use_case.refresh_from_db()
+    fact = use_case.ap2_governance_draft["facts"]["personal_data"]
+    assert fact["value"] == "unknown"
+    assert "keinen wörtlich nachvollziehbaren Beleg" in fact["rationale"]
     assert not GovernanceAssessment.objects.exists()
-    assert not DecisionAssessment.objects.exists()
+    assert DecisionAssessment.objects.count() == 1
 
 
 def test_ap2_governance_conflicting_person_data_is_kept_unknown():

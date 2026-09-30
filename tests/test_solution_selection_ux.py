@@ -220,9 +220,14 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
         "ki_radar.architecture.solution_views.generate_ap2_architecture_inputs",
         lambda **_kwargs: None,
     )
+
+    def governance_draft(*, use_case, actor):
+        use_case.ap2_governance_draft = {"generated_by": "system", "facts": {}}
+        use_case.save(update_fields=["ap2_governance_draft", "updated_at"])
+
     monkeypatch.setattr(
         "ki_radar.architecture.solution_views.generate_ap2_decision_governance",
-        lambda **_kwargs: None,
+        governance_draft,
     )
     client.force_login(owner)
     url = reverse("architecture:solution_option_compare", args=[process.pk])
@@ -249,6 +254,9 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     assert process.solution_selection_decisions.count() == 1
     assert UseCase.objects.count() == 1
     assert attempts == 2
+    assert (
+        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
+    )
 
 
 @pytest.mark.django_db

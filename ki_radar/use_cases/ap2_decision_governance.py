@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from ki_radar.accelerator.investigation_models import InvestigationMaterialization
 from ki_radar.architecture.architecture_assessment_models import SolutionArchitectureAssessment
 from ki_radar.architecture.models import EvidenceBasis
 from ki_radar.core.llm_tasks import (
@@ -198,6 +199,39 @@ def _context(use_case):
                     "value": str(value),
                 }
             )
+    # Preserve bounded, immutable Investigation evidence for explicit yes/no screening.
+    # The metric/pilot context contains canonical summaries but not the source documents,
+    # so it cannot reliably substantiate negative Governance facts on its own.
+    materialization = (
+        InvestigationMaterialization.objects.select_related("run__source_snapshot")
+        .filter(
+            run__process_analysis=use_case.architecture_origin.process_analysis,
+            outcome=InvestigationMaterialization.Outcome.APPLIED,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if materialization is not None:
+        snapshot = materialization.run.source_snapshot
+        room = max(0, 14_000 - len(json.dumps(sources, ensure_ascii=False)))
+        remaining = min(room, 6_000)
+        for source in snapshot.sources.order_by("filename", "pk"):
+            if remaining <= 0:
+                break
+            if source.source_type not in {"txt", "md"}:
+                continue
+            excerpt = source.content[: min(3_000, remaining)].strip()
+            if not excerpt:
+                continue
+            sources.append(
+                {
+                    "source_id": f"INV.source.{source.pk}",
+                    "label": source.filename,
+                    "version": f"snapshot:{snapshot.manifest_hash}:{source.content_sha256}",
+                    "value": excerpt,
+                }
+            )
+            remaining -= len(excerpt)
     encoded = json.dumps(sources, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return tuple(sources), hashlib.sha256(encoded.encode()).hexdigest()
 
@@ -211,7 +245,9 @@ def _validate_section(raw, names, allowed, sources, *, governance=False):
         if governance:
             required.add("evidence_quote")
         if not isinstance(item, dict) or set(item) != required:
-            raise AP2DecisionGovernanceError("Ungültiges Analysefeld.", code="invalid_contract")
+            raise AP2DecisionGovernanceError(
+                f"{name}: ungültiges Analysefeld.", code="invalid_contract"
+            )
         refs = item["source_ids"]
         if (
             item["value"] not in allowed[name]
@@ -222,23 +258,25 @@ def _validate_section(raw, names, allowed, sources, *, governance=False):
             or not item["rationale"].strip()
         ):
             raise AP2DecisionGovernanceError(
-                "Analysefeld ohne gültige Evidenz.", code="invalid_contract"
+                f"{name}: Analysefeld ohne gültige Evidenz.", code="invalid_contract"
             )
         if governance:
             quote = item["evidence_quote"]
-            if (
-                not isinstance(quote, str)
-                or (item["value"] == "unknown" and quote.strip())
-                or (
-                    item["value"] != "unknown"
-                    and (
-                        not quote.strip() or not any(quote.strip() in sources[ref] for ref in refs)
-                    )
-                )
-            ):
+            if not isinstance(quote, str):
                 raise AP2DecisionGovernanceError(
-                    "Governance-Ja/Nein benötigt einen wörtlichen Quellenbeleg.",
-                    code="invalid_contract",
+                    f"{name}: ungültiger Quellenbeleg.", code="invalid_contract"
+                )
+            if item["value"] == "unknown":
+                item["evidence_quote"] = ""
+            elif not quote.strip() or not any(
+                " ".join(quote.split()).casefold() in " ".join(sources[ref].split()).casefold()
+                for ref in refs
+            ):
+                item["value"] = "unknown"
+                item["evidence_quote"] = ""
+                item["rationale"] = (
+                    "Systemische Quellenprüfung: Ja/Nein hatte keinen wörtlich "
+                    f"nachvollziehbaren Beleg. {item['rationale']}"
                 )
     return raw
 

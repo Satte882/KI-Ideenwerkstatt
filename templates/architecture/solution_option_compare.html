@@ -144,12 +144,10 @@
               <a href="{% url 'use_cases:ap2_decision_surface' selected_use_case.pk %}">Entscheidungsgrundlage ansehen</a>.
             {% endif %}
           </div>
-          {% if not selected_use_case or not selected_use_case.ap2_planning_provenance or not selected_use_case.ap2_governance_draft %}
-            <button class="btn btn-sm btn-outline-secondary mt-2" type="submit"
-                    name="continue_ai_handoff" value="1" formnovalidate>
-              AI-Entscheidungsgrundlage vorbereiten oder fortsetzen
-            </button>
-          {% endif %}
+          <button class="btn btn-sm btn-outline-secondary mt-2" type="submit"
+                  name="continue_ai_handoff" value="1" formnovalidate>
+            AI-Entscheidungsgrundlage vorbereiten oder fortsetzen
+          </button>
         {% else %}
           <div class="small mt-2">
             <strong>Journey-Ausgang:</strong>
