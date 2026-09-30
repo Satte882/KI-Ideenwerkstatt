@@ -696,7 +696,7 @@ def _field_label(package: DeliveryPackage, field_name: str) -> str:
     return str(package._meta.get_field(field_name).verbose_name)
 
 
-def _is_generic_placeholder(value: str) -> bool:
+def is_generic_placeholder(value: str) -> bool:
     normalized = value.casefold()
     return any(fragment in normalized for fragment in GENERIC_PLACEHOLDER_FRAGMENTS)
 
@@ -893,7 +893,7 @@ def evaluate_delivery_readiness(package: DeliveryPackage) -> list[ReadinessFindi
                         f"Pflichtangabe fehlt: {label}.",
                     )
                 )
-            elif _is_generic_placeholder(value):
+            elif is_generic_placeholder(value):
                 findings.append(
                     ReadinessFinding(
                         section_key,
@@ -928,7 +928,7 @@ def evaluate_delivery_readiness(package: DeliveryPackage) -> list[ReadinessFindi
                         f"Pflichtangabe fehlt: {label}.",
                     )
                 )
-            elif _is_generic_placeholder(value):
+            elif is_generic_placeholder(value):
                 findings.append(
                     ReadinessFinding(
                         "architecture_and_data",
