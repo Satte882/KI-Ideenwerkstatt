@@ -28,7 +28,13 @@ Jeder autonome Fall besitzt genau **einen scored Slot**.
 
 Ein fehlgeschlagener scored Run bleibt scored Evidence. Er darf nicht gelöscht oder durch einen späteren besseren Run ersetzt werden.
 
-Nach einem Root-Cause-Fix ist nur ein eigener `post_fix`-Record mit Verweis auf den früheren Record zulässig.
+Nach einem Root-Cause-Fix ist nur ein eigener `post_fix`-Record mit Verweis auf den unmittelbar vorherigen Record desselben Falls/Pfads zulässig. Post-Fix-Ketten sind linear; parallele „bessere“ Zweige sind verboten.
+
+Die Auswertung zeigt zwei getrennte Sichten:
+- **Initial scored result**: ausschließlich die unveränderlichen ursprünglichen scored Runs;
+- **Current post-hardening result**: je Fall der letzte linear verkettete Stand nach echten Root-Cause-Fixes.
+
+Damit bleibt jeder ursprüngliche Fehlversuch sichtbar, während gleichzeitig der finale gehärtete Produktstand gegen die #1-Ziele bewertet werden kann.
 
 ## Frische E2E-Baseline
 
