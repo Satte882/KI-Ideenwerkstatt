@@ -331,6 +331,16 @@ def normalize_record(
         raise AP4EvidenceError(f"unknown time keys: {sorted(unknown_time_keys)}")
     times = {key: _nonnegative_number(key, times_raw.get(key, 0)) for key in TIME_KEYS}
 
+    human_time_measured_raw = raw.get("human_time_measured")
+    if human_time_measured_raw is None:
+        # Backward-compatible interpretation for the already frozen AP4 evidence:
+        # manual baselines were timed; scripted autonomous acceptance was explicitly not.
+        human_time_measured = path == "manual"
+    elif isinstance(human_time_measured_raw, bool):
+        human_time_measured = human_time_measured_raw
+    else:
+        raise AP4EvidenceError("human_time_measured must be boolean")
+
     quality_raw = raw.get("quality")
     if not isinstance(quality_raw, dict):
         raise AP4EvidenceError("quality must be an object")
@@ -360,6 +370,7 @@ def normalize_record(
         "status": _require_text("status", raw.get("status")),
         "source_pack_hash": source_hash,
         "times": times,
+        "human_time_measured": human_time_measured,
         "manual_fields_changed": _nonnegative_int(
             "manual_fields_changed", raw.get("manual_fields_changed", 0)
         ),
@@ -507,7 +518,14 @@ def _summary_view(
     ]
 
     targets = validation.manifest.metric_targets
-    active_values = [_active_human_seconds(record) for record in autonomous]
+    human_time_complete = bool(autonomous) and all(
+        bool(record["human_time_measured"]) for record in autonomous
+    )
+    active_values = (
+        [_active_human_seconds(record) for record in autonomous]
+        if human_time_complete
+        else []
+    )
     question_values = [int(record["avoidable_questions"]) for record in autonomous]
 
     source_claims = sum(int(record["quality"]["source_derived_claims"]) for record in autonomous)
@@ -520,9 +538,25 @@ def _summary_view(
     autonomous_fields = sum(int(new["manual_fields_changed"]) for _base, new in paired)
     field_reduction = 1.0 - (autonomous_fields / baseline_fields) if baseline_fields > 0 else None
 
-    baseline_active = sum(_active_human_seconds(base) for base, _new in paired)
-    rework_seconds = sum(_post_draft_rework_seconds(new) for _base, new in paired)
-    rework_ratio = rework_seconds / baseline_active if baseline_active > 0 else None
+    paired_human_time_complete = bool(paired) and all(
+        bool(base["human_time_measured"]) and bool(new["human_time_measured"])
+        for base, new in paired
+    )
+    baseline_active = (
+        sum(_active_human_seconds(base) for base, _new in paired)
+        if paired_human_time_complete
+        else 0
+    )
+    rework_seconds = (
+        sum(_post_draft_rework_seconds(new) for _base, new in paired)
+        if paired_human_time_complete
+        else 0
+    )
+    rework_ratio = (
+        rework_seconds / baseline_active
+        if paired_human_time_complete and baseline_active > 0
+        else None
+    )
 
     provenance_ratio = resolved_claims / source_claims if source_claims else 1.0
     active_median = statistics.median(active_values) if active_values else None
@@ -548,6 +582,8 @@ def _summary_view(
         if autonomous
         else False,
         "human_rework_ratio": rework_ratio,
+        "human_time_measured_all": human_time_complete,
+        "paired_human_time_measured_all": paired_human_time_complete,
     }
     checks = {
         "active_human_work": active_median is not None
