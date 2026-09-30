@@ -395,6 +395,22 @@ def test_ap4_unmeasured_autonomous_human_time_stays_open():
     assert summary["pass"]["human_rework"] is False
 
 
+def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass():
+    validation = _validation()
+    evidence_path = Path(settings.BASE_DIR) / "artifacts/ap4/evidence.jsonl"
+    summary = summarize_records(
+        load_records(evidence_path, validation=validation),
+        validation=validation,
+    )
+
+    assert summary["metrics"]["active_human_work_median_seconds"] is None
+    assert summary["metrics"]["human_rework_ratio"] is None
+    assert summary["pass"]["active_human_work"] is False
+    assert summary["pass"]["human_rework"] is False
+    assert summary["post_hardening_pass"]["active_human_work"] is False
+    assert summary["post_hardening_pass"]["human_rework"] is False
+
+
 def test_ap4_source_pack_hash_rejects_unfrozen_file(tmp_path):
     validation = _validation()
     case = _case(validation, "AP4-01")
