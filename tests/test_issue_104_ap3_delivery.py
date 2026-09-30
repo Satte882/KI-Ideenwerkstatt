@@ -20,8 +20,8 @@ from ki_radar.core.models import LLMTaskRun
 from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.delivery.ap3_autonomous import (
     AP3DeliveryError,
-    TARGET_FIELDS,
     prepare_autonomous_delivery_package,
+    TARGET_FIELDS,
 )
 from ki_radar.delivery.models import DeliveryPackage, DeliverySectionReview
 from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
