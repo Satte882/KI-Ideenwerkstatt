@@ -11,7 +11,7 @@ Branch: `feature/issue-107-ap4-evidence`
 - Vier frische geführte Referenzpfade wurden für AP4-01 bis AP4-04 gegen exakt dieselben eingefrorenen Problemstellungen und Source Packs erfasst.
 - Acht autonome scored Slots wurden jeweils genau einmal mit einem echten OpenRouter-Provider ausgeführt. Kein scored Failure wurde wiederholt oder ersetzt.
 - Die Providerläufe nutzten Discovery mit `google/gemini-3.6-flash`; nachgelagerte AP2-Schritte nutzten die konfigurierte reale Providerstrecke. Mocks waren nicht aktiv.
-- Die geführten Baselines und die scripted Acceptance-Operator-Aktionen sind keine unabhängige Human Review. Nicht gemessene menschliche Zeit wurde als `0`, nicht als Schätzwert, erfasst. Die Blind Human Review bleibt deshalb ausdrücklich offen.
+- Die geführten Baselines und die scripted Acceptance-Operator-Aktionen sind keine unabhängige Human Review. Nicht gemessene menschliche Zeit wird im Evidence-Aggregator jetzt ausdrücklich als **offen** behandelt und nicht mehr als numerische `0` gewertet. Die Blind Human Review bleibt ausdrücklich offen.
 
 ## Frische Baselines
 
@@ -35,9 +35,11 @@ Die Baseline-Artefakte nennen keine erfundenen Baselines, Zielwerte, Kosten oder
 | AP4-05 | Investigation fachlich `READY`, Runner danach fail-closed | FAIL – offene Entscheidungshoheit und Ausnahmeverantwortung hätten eine präzise menschliche Rückfrage erzwingen müssen |
 | AP4-06 | Investigation fachlich `READY`, Runner vor Auswahl gestoppt | PASS – beide widersprüchlichen Quellen sichtbar; keine Quelle still bevorzugt; offene Authority-Entscheidung bleibt sichtbar |
 | AP4-07 | `waiting_human` an Solution Selection | PASS – keine Ursache erfunden; Cloud-/AI-Richtung bleibt von Privacy-, Security- und Legal-Review abhängig |
-| AP4-08 | `waiting_human` in Governance | FAIL – Investigation und Berechnungen korrekt, aber der Acceptance-Runner wählte entgegen seiner eigenen organisatorischen Empfehlung Analytics/ML; Cross-Domain-State dadurch inkonsistent |
+| AP4-08 | `waiting_human` in Governance | FAIL der ursprünglichen Acceptance-Wertung – Investigation und Berechnungen korrekt; der scripted Acceptance-Operator wählte Analytics/ML entgegen der Empfehlung. Der scored Failure bleibt unverändert erhalten. |
 
-Die AP4-08-Gruppenrechnung ist reproduzierbar: `parts_available=false` 12,00 h (n=4), `true` 4,75 h (n=4), Differenz 7,25 h. Der Brief behauptet daraus keine Kausalität. Der Fehler liegt in der nachfolgenden Test-Authority-Auswahl, nicht in dieser Berechnung.
+Die AP4-08-Gruppenrechnung ist reproduzierbar: `parts_available=false` 12,00 h (n=4), `true` 4,75 h (n=4), Differenz 7,25 h. Der Brief behauptet daraus keine Kausalität.
+
+Die Produktlogik bindet nachgelagerte AP2-Schritte an die **tatsächlich menschlich ausgewählte** `SolutionSelectionDecision.selected_option`: `require_current_selected_use_case()` lehnt Use Cases ab, deren `UseCaseOrigin.solution_option` nicht der aktuellen menschlichen Lösungswahl entspricht. Eine menschliche Auswahl entgegen der Empfehlung ist daher nicht selbst ein Cross-Domain-Produktfehler. Offen bleibt nur der explizite Human-Authority-Nachweis für AP4-08; der ursprüngliche scored Failure wird nicht umgeschrieben.
 
 ## Gefundene Bugs und gezielte Fixes
 
@@ -50,22 +52,22 @@ Die AP4-08-Gruppenrechnung ist reproduzierbar: `parts_available=false` 12,00 h (
 
 - AP4-04: PASS im separaten echten Providerlauf; Browser zeigt den Decision Brief, vier Optionen und das unveränderte menschliche Solution-Gate.
 - AP4-05: OPEN/FAIL im separaten Providerlauf wegen `user_quota_exceeded`; kein Retry, keine Ersetzung.
-- AP4-08: unverändert FAIL; kein Produktfix aus einem Fehler der Test-Authority abgeleitet.
+- AP4-08: ursprünglicher scored Failure bleibt erhalten. Codeprüfung bestätigt jedoch, dass der Downstream an die bindende menschliche `SolutionSelectionDecision` gekoppelt ist; **kein Produktfix** ist daraus abzuleiten. Offen bleibt nur ein expliziter Human-Authority-Folgenachweis.
 
 ## Kennzahlen
 
 | Kriterium | Initial scored | Post-Hardening | Ziel |
 |---|---:|---:|---:|
-| aktive Human Work, Median | 0 s* | 0 s* | ≤ 1.200 s |
+| aktive Human Work, Median | offen / nicht gemessen* | offen / nicht gemessen* | ≤ 1.200 s |
 | Reduktion manueller Feldpflege | 91,58 % | 91,58 % | ≥ 90 % |
 | vermeidbare Rückfragen, Median | 0 | 0 | ≤ 3 |
 | Provenance | 98,55 % | 100 % | 100 % |
 | halluzinierte Fakten/Messwerte | 0 | 0 | 0 |
 | Cross-Domain-Konsistenz, alle Fälle | FAIL | FAIL | alle PASS |
 | erwarteter Endzustand, alle Fälle | FAIL | FAIL | alle PASS |
-| menschliche Nacharbeit / Baseline | 0 %* | 0 %* | ≤ 20 % |
+| menschliche Nacharbeit / Baseline | offen / nicht gemessen* | offen / nicht gemessen* | ≤ 20 % |
 
-\* Nur tatsächlich gemessene aktive menschliche Zeit wird gezählt. Scripted Acceptance-Operator-Aktionen und die noch ausstehende Blind Human Review wurden nicht in erfundene Zeitwerte umgerechnet. Diese beiden Zeitmetriken sind deshalb technisch innerhalb des Grenzwerts, aber noch keine vollständige Human-Validierung.
+\* Nur tatsächlich gemessene aktive menschliche Zeit wird gezählt. Scripted Acceptance-Operator-Aktionen werden nicht in erfundene Zeitwerte umgerechnet. Diese beiden Zeitmetriken bleiben deshalb ausdrücklich **offen** und erzeugen keinen PASS, bis echte menschliche Zeit vorliegt.
 
 ## Browser- und Domain-State-Evidence
 
@@ -80,5 +82,5 @@ Die AP4-08-Gruppenrechnung ist reproduzierbar: `parts_available=false` 12,00 h (
 
 - Unabhängige Blind Human Review der neutralisierten Decision Packages ist nicht erfolgt und kann nicht durch diese technische/LLM-gestützte Abnahme ersetzt werden.
 - AP4-05 benötigt nach verfügbarem Providerkontingent einen linear anschließenden, nicht den Failure ersetzenden Post-Fix-Run.
-- AP4-08 benötigt eine neue, ausdrücklich menschliche Authority-Entscheidung in einem separaten Folgepfad; der scored Failure bleibt unverändert.
+- AP4-08 benötigt nur noch einen kleinen, ausdrücklich menschlichen Authority-Folgenachweis. Die Codeprüfung zeigt bereits, dass UseCase/AP2 an die tatsächlich ausgewählte Option gebunden bleiben; ein Produktfix ist aktuell nicht angezeigt. Der scored Failure bleibt unverändert.
 - Wegen der offenen Qualitätskriterien ist Issue #107 nicht abnahmefähig zu schließen. PR #108 bleibt Draft und wird nicht gemergt.
