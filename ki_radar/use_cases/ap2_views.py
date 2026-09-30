@@ -15,6 +15,8 @@ from .ap2_decision_governance import (
     QUESTION_LABELS,
     AP2DecisionGovernanceError,
     answer_ap2_governance_unknowns,
+    ap2_governance_review_resolution,
+    critical_ap2_governance_unknowns,
 )
 from .models import UseCase
 from .permissions import can_edit_use_case, can_view_use_case
@@ -44,11 +46,9 @@ def ap2_decision_surface(request, pk):
         if not can_edit_use_case(request.user, use_case) or not selection_is_current:
             raise PermissionDenied
         facts = draft.get("facts", {})
-        unknown_names = [
-            name for name in GOVERNANCE_FIELDS if facts.get(name, {}).get("value") == "unknown"
-        ]
+        unknown_names = critical_ap2_governance_unknowns(facts)
         try:
-            answer_ap2_governance_unknowns(
+            screening = answer_ap2_governance_unknowns(
                 use_case=use_case,
                 actor=request.user,
                 source_hash=request.POST.get("source_hash", ""),
@@ -57,9 +57,14 @@ def ap2_decision_surface(request, pk):
         except (ValidationError, AP2DecisionGovernanceError) as exc:
             messages.error(request, str(exc))
         else:
-            messages.success(
-                request, "Governance-Fakten wurden geklärt und das Screening vorbereitet."
-            )
+            if screening is None:
+                messages.info(
+                    request, "Angaben geklärt; weitere review-relevante Fragen sind offen."
+                )
+            else:
+                messages.success(
+                    request, "Governance-Fakten wurden geklärt und das Screening vorbereitet."
+                )
         return redirect(reverse("use_cases:ap2_decision_surface", kwargs={"pk": pk}))
 
     architecture = SolutionArchitectureAssessment.objects.filter(solution_option=option).first()
@@ -72,6 +77,29 @@ def ap2_decision_surface(request, pk):
         else ()
     )
     governance = current_governance_status(use_case)
+    review_resolution = ap2_governance_review_resolution(draft.get("facts", {}))
+    critical_names = set(review_resolution.critical_unknowns) if review_resolution else set()
+    review_rows = []
+    for state in governance.reviews:
+        draft_need = (
+            review_resolution.needs[state.definition.review_type]
+            if review_resolution is not None
+            else None
+        )
+        review_rows.append(
+            {
+                "state": state,
+                "draft_label": (
+                    "Erforderlich (Entwurf)"
+                    if draft_need is True
+                    else "Nicht relevant (Entwurf)"
+                    if draft_need is False
+                    else "Bedarf noch offen"
+                    if review_resolution is not None
+                    else "Bedarf noch unbekannt"
+                ),
+            }
+        )
     governance_facts = [
         {
             "name": name,
@@ -93,6 +121,7 @@ def ap2_decision_surface(request, pk):
             "name": name,
             "question": QUESTION_LABELS[name],
             "rationale": draft["facts"][name]["rationale"],
+            "critical": name in critical_names,
         }
         for name in GOVERNANCE_FIELDS
         if draft.get("facts", {}).get(name, {}).get("value") == "unknown"
@@ -112,8 +141,11 @@ def ap2_decision_surface(request, pk):
             "architecture_open_points": architecture_open_points,
             "assessment": use_case.decision_assessments.first(),
             "governance": governance,
+            "governance_review_rows": review_rows,
             "draft": draft,
             "unknowns": unknowns,
+            "critical_unknowns": [item for item in unknowns if item["critical"]],
+            "other_unknowns": [item for item in unknowns if not item["critical"]],
             "governance_facts": governance_facts,
             "planning_unknowns": use_case.ap2_planning_provenance.get("unknowns", []),
             "can_answer": can_edit_use_case(request.user, use_case),

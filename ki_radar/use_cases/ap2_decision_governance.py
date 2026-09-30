@@ -21,6 +21,7 @@ from ki_radar.core.llm_tasks import (
 )
 from ki_radar.core.models import LLMTaskRun
 from ki_radar.governance.models import GovernanceAssessment
+from ki_radar.governance.review_need import FACT_FIELDS, resolve_review_needs
 from ki_radar.governance.services import create_screening_review_artifacts
 
 from .ap2_metric_pilot import build_ap2_metric_pilot_context
@@ -44,19 +45,7 @@ ASSESSMENT_FIELDS = (
     "recommendation",
     "rationale",
 )
-GOVERNANCE_FIELDS = (
-    "personal_data",
-    "employee_data",
-    "automated_person_assessment",
-    "influences_person_decisions",
-    "biometric_data",
-    "safety_critical",
-    "regulated_product",
-    "health_safety_rights_impact",
-    "external_ai_or_cloud",
-    "generated_external_content",
-    "human_oversight_planned",
-)
+GOVERNANCE_FIELDS = FACT_FIELDS
 QUESTION_LABELS = {
     "personal_data": "Werden personenbezogene Daten verarbeitet?",
     "employee_data": "Werden Beschäftigtendaten verarbeitet?",
@@ -296,35 +285,22 @@ def _validate(payload, sources):
     )
 
 
-def _review_needs(facts):
-    def yes(name):
-        return facts[name]["value"] == "yes"
+def _tri_state_facts(facts):
+    values = {"yes": True, "no": False, "unknown": None}
+    return {name: values[facts[name]["value"]] for name in GOVERNANCE_FIELDS}
 
-    privacy = any(yes(name) for name in ("personal_data", "employee_data", "biometric_data"))
-    security = any(
-        yes(name)
-        for name in (
-            "personal_data",
-            "external_ai_or_cloud",
-            "safety_critical",
-            "regulated_product",
-        )
-    )
-    legal = any(
-        yes(name)
-        for name in (
-            "automated_person_assessment",
-            "influences_person_decisions",
-            "biometric_data",
-            "safety_critical",
-            "regulated_product",
-            "health_safety_rights_impact",
-            "generated_external_content",
-        )
-    )
-    if facts["human_oversight_planned"]["value"] == "no":
-        legal = True
-    return {"privacy": privacy, "security": security, "legal": legal}
+
+def ap2_governance_review_resolution(facts):
+    if set(facts) != set(GOVERNANCE_FIELDS) or any(
+        facts[name].get("value") not in {"yes", "no", "unknown"} for name in GOVERNANCE_FIELDS
+    ):
+        return None
+    return resolve_review_needs(_tri_state_facts(facts))
+
+
+def critical_ap2_governance_unknowns(facts):
+    resolution = ap2_governance_review_resolution(facts)
+    return resolution.critical_unknowns if resolution else ()
 
 
 def _preserve_governance_conflicts(facts):
@@ -358,15 +334,18 @@ def materialize_ap2_governance(*, use_case, actor):
     draft = use_case.ap2_governance_draft
     facts = draft.get("facts", {})
     if set(facts) != set(GOVERNANCE_FIELDS) or any(
-        facts[name].get("value") not in {"yes", "no"} for name in GOVERNANCE_FIELDS
+        facts[name].get("value") not in {"yes", "no", "unknown"} for name in GOVERNANCE_FIELDS
     ):
         return None
     if _context(use_case)[1] != draft.get("source_hash"):
         raise AP2DecisionGovernanceError(
             "Governance-Quellenstand ist veraltet.", code="source_stale"
         )
-    needs = _review_needs(facts)
-    values = {name: facts[name]["value"] == "yes" for name in GOVERNANCE_FIELDS}
+    values = _tri_state_facts(facts)
+    resolution = resolve_review_needs(values)
+    if not resolution.is_determinate:
+        return None
+    needs = resolution.needs
     if needs["legal"]:
         result = GovernanceAssessment.Result.LEGAL
     elif needs["privacy"]:
@@ -539,7 +518,7 @@ def answer_ap2_governance_unknowns(*, use_case, actor, source_hash, answers):
     if not draft or draft.get("source_hash") != source_hash or _context(use_case)[1] != source_hash:
         raise ValidationError("Governance-Entwurf ist veraltet. Bitte den aktuellen Stand prüfen.")
     facts = draft["facts"]
-    expected = {name for name in GOVERNANCE_FIELDS if facts[name]["value"] == "unknown"}
+    expected = set(critical_ap2_governance_unknowns(facts))
     if set(answers) != expected or any(value not in {"yes", "no"} for value in answers.values()):
         raise ValidationError("Bitte ausschließlich die offenen Governance-Fakten beantworten.")
     for name, value in answers.items():

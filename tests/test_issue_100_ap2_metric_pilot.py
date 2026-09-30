@@ -18,11 +18,15 @@ from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.models import LLMTaskRun
 from ki_radar.core.openrouter import OpenRouterResult
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.governance.forms import GovernanceAssessmentForm
 from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
+from ki_radar.governance.review_need import FACT_FIELDS, resolve_review_needs
 from ki_radar.use_cases.ap2_decision_governance import (
     ASSESSMENT_FIELDS,
     GOVERNANCE_FIELDS,
+    _context,
     generate_ap2_decision_governance,
+    materialize_ap2_governance,
 )
 from ki_radar.use_cases.ap2_metric_pilot import (
     TARGET_FIELDS,
@@ -374,6 +378,156 @@ def test_ap2_governance_conflicting_person_data_is_kept_unknown():
     assert normalized["personal_data"]["value"] == "unknown"
     assert normalized["personal_data"]["evidence_quote"] == ""
     assert "Widerspruch" in normalized["personal_data"]["rationale"]
+
+
+def test_review_need_resolution_asks_only_facts_that_can_change_a_review():
+    facts = dict.fromkeys(FACT_FIELDS, False)
+    facts.update(
+        personal_data=True,
+        employee_data=None,
+        generated_external_content=None,
+        human_oversight_planned=True,
+    )
+    resolution = resolve_review_needs(facts)
+    assert resolution.needs == {"privacy": True, "security": True, "legal": None}
+    assert resolution.critical_unknowns == ("generated_external_content",)
+
+    facts["generated_external_content"] = False
+    resolution = resolve_review_needs(facts)
+    assert resolution.needs == {"privacy": True, "security": True, "legal": False}
+    assert resolution.is_determinate
+    assert resolution.critical_unknowns == ()
+
+
+@pytest.mark.parametrize(
+    ("external_answer", "legal_required", "legal_status"),
+    [
+        ("no", False, GovernanceReview.Status.NOT_RELEVANT),
+        ("yes", True, GovernanceReview.Status.OPEN),
+    ],
+)
+def test_ap2_governance_preserves_noncritical_unknown_after_one_human_answer(
+    owner, business_unit, client, external_answer, legal_required, legal_status
+):
+    use_case = _ai_use_case(owner, business_unit)
+    facts = {name: "no" for name in GOVERNANCE_FIELDS}
+    facts.update(
+        personal_data="yes",
+        employee_data="unknown",
+        generated_external_content="unknown",
+        human_oversight_planned="yes",
+    )
+    source_hash = _context(use_case)[1]
+    use_case.ap2_governance_draft = {
+        "generated_by": "system",
+        "source_hash": source_hash,
+        "run_id": "real-case-d-shape",
+        "facts": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Quellenstand geprüft; fehlende Angabe bleibt unbekannt.",
+                "evidence_quote": "",
+            }
+            for name, value in facts.items()
+        },
+    }
+    use_case.save(update_fields=["ap2_governance_draft", "updated_at"])
+
+    assert materialize_ap2_governance(use_case=use_case, actor=owner) is None
+    client.force_login(owner)
+    url = f"{use_case.get_absolute_url()}ap2-decision/"
+    surface = client.get(url)
+    assert surface.status_code == 200
+    html = surface.content.decode()
+    assert 'name="generated_external_content"' in html
+    assert 'name="employee_data"' not in html
+    assert "Weitere Governance-Unknowns" in html
+    assert "Datenschutzprüfung: Erforderlich (Entwurf)" in html
+    assert "Informationssicherheitsprüfung: Erforderlich (Entwurf)" in html
+    assert "Rechtsprüfung: Bedarf noch offen" in html
+
+    response = client.post(
+        url,
+        {"source_hash": source_hash, "generated_external_content": external_answer},
+    )
+    assert response.status_code == 302
+    screening = GovernanceAssessment.objects.get(use_case=use_case)
+    assert screening.personal_data is True
+    assert screening.employee_data is None
+    assert screening.generated_external_content is legal_required
+    assert screening.privacy_review_required is True
+    assert screening.security_review_required is True
+    assert screening.legal_review_required is legal_required
+    assert dict(
+        GovernanceReview.objects.filter(use_case=use_case).values_list("review_type", "status")
+    ) == {
+        "privacy": GovernanceReview.Status.OPEN,
+        "security": GovernanceReview.Status.OPEN,
+        "legal": legal_status,
+    }
+    assert not GovernanceReview.objects.filter(result=GovernanceReview.Result.PASSED).exists()
+    assert not ApprovalDecision.objects.filter(use_case=use_case).exists()
+    assert "Weitere Governance-Unknowns" in client.get(url).content.decode()
+
+
+def test_ap2_governance_materializes_when_remaining_unknown_cannot_change_reviews(
+    owner, business_unit
+):
+    use_case = _ai_use_case(owner, business_unit)
+    facts = {name: "no" for name in GOVERNANCE_FIELDS}
+    facts.update(personal_data="yes", employee_data="unknown", human_oversight_planned="yes")
+    source_hash = _context(use_case)[1]
+    use_case.ap2_governance_draft = {
+        "generated_by": "system",
+        "source_hash": source_hash,
+        "run_id": "known-review-need",
+        "facts": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Geprüfter Fallstand.",
+                "evidence_quote": "",
+            }
+            for name, value in facts.items()
+        },
+    }
+    use_case.save(update_fields=["ap2_governance_draft", "updated_at"])
+
+    screening = materialize_ap2_governance(use_case=use_case, actor=owner)
+    assert screening is not None
+    assert screening.employee_data is None
+    assert (screening.privacy_review_required, screening.security_review_required) == (True, True)
+    assert screening.legal_review_required is False
+    assert dict(
+        GovernanceReview.objects.filter(use_case=use_case).values_list("review_type", "status")
+    ) == {
+        "privacy": GovernanceReview.Status.OPEN,
+        "security": GovernanceReview.Status.OPEN,
+        "legal": GovernanceReview.Status.NOT_RELEVANT,
+    }
+
+
+def test_guided_governance_form_accepts_noncritical_unknown_and_rejects_critical_unknown():
+    base = {
+        "assessment_date": "2026-09-30",
+        "basis_version": "manual-tri-state",
+        "result": GovernanceAssessment.Result.PRIVACY,
+        "personal_data": "true",
+        "employee_data": "unknown",
+        "human_oversight_planned": "true",
+        "privacy_review_required": "on",
+        "security_review_required": "on",
+    }
+    form = GovernanceAssessmentForm(base)
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["employee_data"] is None
+    assert form.cleaned_data["personal_data"] is True
+    assert form.cleaned_data["biometric_data"] is False  # Legacy omitted checkbox semantics.
+
+    form = GovernanceAssessmentForm({**base, "personal_data": "unknown"})
+    assert not form.is_valid()
+    assert "personal_data" in form.errors
 
 
 def test_ap2_governance_does_not_apply_answers_after_process_changes(

@@ -2,6 +2,7 @@ from django import forms
 from django.utils import timezone
 
 from .models import GovernanceAssessment, GovernanceReview
+from .review_need import FACT_FIELDS
 
 
 class DateInput(forms.DateInput):
@@ -9,6 +10,30 @@ class DateInput(forms.DateInput):
 
     def __init__(self, attrs=None):
         super().__init__(attrs=attrs, format="%Y-%m-%d")
+
+
+class GovernanceFactField(forms.NullBooleanField):
+    """Show all three fact states while accepting legacy checkbox submissions."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            "widget",
+            forms.Select(
+                choices=(
+                    ("unknown", "Unbekannt"),
+                    ("true", "Ja"),
+                    ("false", "Nein"),
+                )
+            ),
+        )
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if value is None:
+            return False  # Existing checkbox clients omitted unchecked fields.
+        if value == "on":
+            return True
+        return super().to_python(value)
 
 
 class GovernanceAssessmentForm(forms.ModelForm):
@@ -82,11 +107,20 @@ class GovernanceAssessmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["assessment_date"].initial = timezone.localdate()
+        for name in FACT_FIELDS:
+            previous = self.fields[name]
+            self.fields[name] = GovernanceFactField(
+                label=previous.label,
+                initial=previous.initial,
+                help_text=previous.help_text,
+            )
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
                 "form-check-input"
                 if isinstance(field.widget, forms.CheckboxInput)
+                else "form-select"
+                if isinstance(field.widget, forms.Select)
                 else "form-control",
             )
 

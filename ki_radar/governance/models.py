@@ -7,6 +7,8 @@ from simple_history.models import HistoricalRecords
 from ki_radar.core.models import TimeStampedModel
 from ki_radar.use_cases.models import UseCase
 
+from .review_need import FACT_FIELDS, resolve_review_needs
+
 
 class GovernanceAssessment(TimeStampedModel):
     class Result(models.TextChoices):
@@ -29,17 +31,17 @@ class GovernanceAssessment(TimeStampedModel):
         related_name="governance_reviews",
     )
     basis_version = models.CharField(max_length=100)
-    personal_data = models.BooleanField(default=False)
-    employee_data = models.BooleanField(default=False)
-    automated_person_assessment = models.BooleanField(default=False)
-    influences_person_decisions = models.BooleanField(default=False)
-    biometric_data = models.BooleanField(default=False)
-    safety_critical = models.BooleanField(default=False)
-    regulated_product = models.BooleanField(default=False)
-    health_safety_rights_impact = models.BooleanField(default=False)
-    external_ai_or_cloud = models.BooleanField(default=False)
-    generated_external_content = models.BooleanField(default=False)
-    human_oversight_planned = models.BooleanField(default=False)
+    personal_data = models.BooleanField(null=True, blank=True, default=False)
+    employee_data = models.BooleanField(null=True, blank=True, default=False)
+    automated_person_assessment = models.BooleanField(null=True, blank=True, default=False)
+    influences_person_decisions = models.BooleanField(null=True, blank=True, default=False)
+    biometric_data = models.BooleanField(null=True, blank=True, default=False)
+    safety_critical = models.BooleanField(null=True, blank=True, default=False)
+    regulated_product = models.BooleanField(null=True, blank=True, default=False)
+    health_safety_rights_impact = models.BooleanField(null=True, blank=True, default=False)
+    external_ai_or_cloud = models.BooleanField(null=True, blank=True, default=False)
+    generated_external_content = models.BooleanField(null=True, blank=True, default=False)
+    human_oversight_planned = models.BooleanField(null=True, blank=True, default=False)
     privacy_review_required = models.BooleanField(default=False)
     privacy_review_rationale = models.TextField(blank=True)
     security_review_required = models.BooleanField(default=False)
@@ -54,6 +56,17 @@ class GovernanceAssessment(TimeStampedModel):
 
     class Meta:
         ordering = ["-assessment_date", "-created_at"]
+
+    def clean(self):
+        super().clean()
+        resolution = resolve_review_needs({name: getattr(self, name) for name in FACT_FIELDS})
+        if resolution.critical_unknowns:
+            raise ValidationError(
+                {
+                    name: "Diese Angabe kann den erforderlichen Review-Bedarf ändern."
+                    for name in resolution.critical_unknowns
+                }
+            )
 
     def review_rationale(self, review_type: str) -> str:
         field_name = f"{review_type}_review_rationale"

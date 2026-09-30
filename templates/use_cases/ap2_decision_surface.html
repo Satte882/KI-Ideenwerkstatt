@@ -74,22 +74,23 @@
       <dt class="col-md-3">Independent Review / Assumptions</dt><dd class="col-md-9">{{ assessment.get_independent_review_display }} / {{ assessment.get_assumptions_resolved_display }}</dd>
     </dl></details>
     {% else %}<p>Strukturierte Bewertung noch offen.</p>{% endif %}
-    <p><strong>Lösungsrisiken:</strong> {{ option.risks|default:"Noch nicht dokumentiert" }}</p>
+    <p><strong>Lösungsrisiken aus dem ursprünglichen Vergleich:</strong> {{ option.risks|default:"Noch nicht dokumentiert" }}</p>
   </div>
 </section>
 
 <section class="app-card mb-4" aria-labelledby="governance-title">
   <div class="card-header"><h2 class="h5 mb-0" id="governance-title">Governance und offene Pflichtprüfungen</h2></div>
   <div class="card-body">
-    {% if governance.has_screening %}<p>Screening vorbereitet: {{ governance.screening.get_result_display }}. Formale Prüfungen bleiben menschlich.</p>{% elif draft %}<p>Governance-Entwurf vorhanden; boolesches Screening wartet auf geklärte Fakten.</p>{% else %}<p>Governance-Entwurf noch offen.</p>{% endif %}
+    {% if governance.has_screening %}<p>Screening vorbereitet: {{ governance.screening.get_result_display }}. Formale Prüfungen bleiben menschlich.</p>{% elif draft %}<p>Governance-Entwurf vorhanden; das Screening wartet auf entscheidungsrelevante Fakten.</p>{% else %}<p>Governance-Entwurf noch offen.</p>{% endif %}
     {% if governance_facts %}<details><summary>Governance-Fakten und Quellen anzeigen</summary><ul class="mt-2">{% for fact in governance_facts %}<li><strong>{{ fact.question }}</strong> {{ fact.value_label }} · {{ fact.rationale }} <span class="small text-muted">Quellen: {{ fact.source_ids|join:", " }}</span></li>{% endfor %}</ul></details>{% endif %}
-    <ul>{% for review in governance.reviews %}<li>{{ review.definition.label }}: {% if review.review %}{{ review.review.display_status }}{% elif governance.has_screening %}{% if review.required %}Offen{% else %}Nicht relevant{% endif %}{% else %}Bedarf noch unbekannt{% endif %}{% if review.required and not review.completed %} · <a href="{% url 'governance:review' use_case.pk review.definition.review_type %}">Prüfung öffnen</a>{% endif %}</li>{% endfor %}</ul>
-    {% if unknowns %}<h3 class="h6">Entscheidungsrelevante Unknowns</h3><ul>{% for item in unknowns %}<li>{{ item.question }} <span class="small text-muted">{{ item.rationale }}</span></li>{% endfor %}</ul>
+    <ul>{% for row in governance_review_rows %}{% with review=row.state %}<li>{{ review.definition.label }}: {% if review.review %}{{ review.review.display_status }}{% elif governance.has_screening %}{% if review.required %}Offen{% else %}Nicht relevant{% endif %}{% else %}{{ row.draft_label }}{% endif %}{% if review.required and not review.completed %} · <a href="{% url 'governance:review' use_case.pk review.definition.review_type %}">Prüfung öffnen</a>{% endif %}</li>{% endwith %}{% endfor %}</ul>
+    {% if critical_unknowns %}<h3 class="h6">Entscheidungsrelevante Unknowns</h3><ul>{% for item in critical_unknowns %}<li>{{ item.question }} <span class="small text-muted">{{ item.rationale }}</span></li>{% endfor %}</ul>
       {% if can_answer and selection_is_current %}<form method="post" class="mt-3">{% csrf_token %}<input type="hidden" name="source_hash" value="{{ draft.source_hash }}">
-      {% for item in unknowns %}<div class="mb-3"><label class="form-label" for="gov-{{ item.name }}">{{ item.question }}</label><select class="form-select" id="gov-{{ item.name }}" name="{{ item.name }}" required><option value="">Bitte wählen</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>{% endfor %}
+      {% for item in critical_unknowns %}<div class="mb-3"><label class="form-label" for="gov-{{ item.name }}">{{ item.question }}</label><select class="form-select" id="gov-{{ item.name }}" name="{{ item.name }}" required><option value="">Bitte wählen</option><option value="yes">Ja</option><option value="no">Nein</option></select></div>{% endfor %}
       <button class="btn btn-primary" type="submit">Governance-Fakten bestätigen</button></form>{% endif %}
     {% endif %}
-    {% if planning_unknowns %}<h3 class="h6 mt-3">Weitere Mess-/Pilot-Unknowns</h3><ul>{% for item in planning_unknowns %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+    {% if other_unknowns %}<h3 class="h6 mt-3">Weitere Governance-Unknowns</h3><p class="small text-muted">Diese Angaben ändern den aktuell abgeleiteten Review-Bedarf nicht und bleiben als unbekannt dokumentiert.</p><ul>{% for item in other_unknowns %}<li>{{ item.question }} <span class="small text-muted">{{ item.rationale }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if planning_unknowns %}<h3 class="h6 mt-3">Unknowns aus dem ursprünglichen Mess-/Pilotentwurf</h3><p class="small text-muted">Spätere menschliche Klärungen sind im aktuellen Governance-Screening oben dokumentiert.</p><ul>{% for item in planning_unknowns %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
   </div>
 </section>
 
