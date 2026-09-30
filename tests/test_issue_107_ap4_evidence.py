@@ -47,6 +47,7 @@ def _record(
     post_draft_review_seconds=25,
     post_draft_correction_seconds=25,
     system_wait_seconds=100,
+    human_time_measured=True,
     manual_fields_changed=5,
     post_draft_fields_changed=1,
     avoidable_questions=2,
@@ -81,6 +82,7 @@ def _record(
             "post_draft_correction_seconds": post_draft_correction_seconds,
             "system_wait_seconds": system_wait_seconds,
         },
+        "human_time_measured": human_time_measured,
         "manual_fields_changed": manual_fields_changed,
         "post_draft_fields_changed": post_draft_fields_changed,
         "avoidable_questions": avoidable_questions,
@@ -352,6 +354,45 @@ def test_ap4_summary_uses_fresh_paired_baseline_and_frozen_targets():
         "expected_outcome": True,
         "human_rework": True,
     }
+
+
+def test_ap4_unmeasured_autonomous_human_time_stays_open():
+    validation = _validation()
+    raw = _record(
+        validation,
+        case_id="AP4-03",
+        path="autonomous",
+        record_id="AP4-03-auto-unmeasured",
+        active_input_seconds=0,
+        navigation_seconds=0,
+        authority_decision_seconds=0,
+        post_draft_review_seconds=0,
+        post_draft_correction_seconds=0,
+    )
+    raw.pop("human_time_measured")
+    autonomous = normalize_record(raw, validation=validation)
+
+    baseline = normalize_record(
+        _record(
+            validation,
+            case_id="AP4-03",
+            path="manual",
+            record_id="AP4-03-manual-measured",
+            active_input_seconds=45,
+            manual_fields_changed=25,
+        ),
+        validation=validation,
+    )
+
+    summary = summarize_records([baseline, autonomous], validation=validation)
+
+    assert autonomous["human_time_measured"] is False
+    assert summary["metrics"]["active_human_work_median_seconds"] is None
+    assert summary["metrics"]["human_rework_ratio"] is None
+    assert summary["metrics"]["human_time_measured_all"] is False
+    assert summary["metrics"]["paired_human_time_measured_all"] is False
+    assert summary["pass"]["active_human_work"] is False
+    assert summary["pass"]["human_rework"] is False
 
 
 def test_ap4_source_pack_hash_rejects_unfrozen_file(tmp_path):
