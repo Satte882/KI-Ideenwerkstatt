@@ -262,9 +262,7 @@ def get_llm_task_policy(task_type: str) -> LLMTaskPolicy:
         name: _bounded_int(name, _task_setting(name), _TASK_SETTING_BOUNDS)
         for name in _TASK_SETTING_BOUNDS
     }
-    context_limit = values[
-        task_settings.get("context", "LLM_TASK_MAX_CALLS_PER_CONTEXT_DAY")
-    ]
+    context_limit = values[task_settings.get("context", "LLM_TASK_MAX_CALLS_PER_CONTEXT_DAY")]
     user_limit = values["LLM_TASK_MAX_CALLS_PER_USER_DAY"]
     global_limit = values["LLM_TASK_MAX_CALLS_GLOBAL_DAY"]
     if context_limit > user_limit:

@@ -290,6 +290,7 @@ class AP3Verification:
     critical_findings: tuple[dict[str, Any], ...]
     noncritical_findings: tuple[dict[str, Any], ...]
     run_id: str
+    candidate_hash: str
 
 
 @dataclass(frozen=True)
@@ -355,6 +356,10 @@ def _package_version(package: DeliveryPackage) -> str:
 
 
 def build_ap3_source_context(package: DeliveryPackage) -> AP3SourceContext:
+    package = DeliveryPackage.objects.select_related(
+        "use_case",
+        "generated_from_decision__assessment",
+    ).get(pk=package.pk)
     use_case = package.use_case
     approval = package.generated_from_decision
     if latest_final_approval(use_case) != approval:
@@ -598,9 +603,7 @@ def _validate_statement(
     if basis not in {"derived", "assumption", "unknown"}:
         raise AP3DeliveryError(f"{field_name}: ungültige Basis.", code="invalid_contract")
     if value and not source_ids:
-        raise AP3DeliveryError(
-            f"{field_name}: Inhalt ohne Quellenbezug.", code="invalid_contract"
-        )
+        raise AP3DeliveryError(f"{field_name}: Inhalt ohne Quellenbezug.", code="invalid_contract")
     if basis == "unknown" and value:
         raise AP3DeliveryError(
             f"{field_name}: unknown darf keinen erfundenen Inhalt tragen.",
@@ -623,9 +626,13 @@ def _validate_quantitative_claims(
     field_name: str,
 ) -> None:
     source_text = context.source_text.replace(",", ".")
+    source_tokens = {
+        match.group(0).strip().replace(",", ".")
+        for match in _QUANTITATIVE_TOKEN_RE.finditer(source_text)
+    }
     for match in _QUANTITATIVE_TOKEN_RE.finditer(value):
         token = match.group(0).strip().replace(",", ".")
-        if token and token not in source_text:
+        if token and token not in source_tokens:
             raise AP3DeliveryError(
                 f"{field_name}: unbelegte quantitative Angabe {match.group(0)!r}.",
                 code="ungrounded_quantitative_claim",
@@ -744,8 +751,7 @@ def _system_generated_field(
 ) -> bool:
     entry = _synthesis_entry(package, field_name)
     return bool(
-        entry.get("applied")
-        and _field_value(package, field_name) == _clean(entry.get("value"))
+        entry.get("applied") and _field_value(package, field_name) == _clean(entry.get("value"))
     )
 
 
@@ -997,9 +1003,7 @@ def _validate_findings(
                 "rationale",
                 "source_ids",
             }:
-                raise AP3DeliveryError(
-                    "Verifier-Finding ist ungültig.", code="invalid_contract"
-                )
+                raise AP3DeliveryError("Verifier-Finding ist ungültig.", code="invalid_contract")
             fields = item["fields"]
             source_ids = item["source_ids"]
             if (
@@ -1051,6 +1055,7 @@ def _run_verifier(
     context: AP3SourceContext,
 ) -> AP3Verification:
     candidate = _candidate_payload(package)
+    candidate_hash = _verify_hash(context, candidate)
     prepared = None
     try:
         prepared = prepare_llm_task(
@@ -1059,7 +1064,7 @@ def _run_verifier(
             object_type="delivery_package",
             object_id=package.pk,
             field_key=FIELD_KEY,
-            source_hash=_verify_hash(context, candidate),
+            source_hash=candidate_hash,
             prompt_version=PROMPT_VERSION,
             schema_version=SCHEMA_VERSION,
             messages=[
@@ -1090,6 +1095,7 @@ def _run_verifier(
         critical_findings=critical,
         noncritical_findings=noncritical,
         run_id=str(prepared.run.pk),
+        candidate_hash=candidate_hash,
     )
 
 
@@ -1137,9 +1143,7 @@ def _run_repair(
     verification: AP3Verification,
 ) -> tuple[str, dict[str, dict[str, Any]], tuple[str, ...]]:
     allowed_fields = frozenset(
-        field
-        for finding in verification.critical_findings
-        for field in finding["fields"]
+        field for finding in verification.critical_findings for field in finding["fields"]
     )
     prepared = None
     candidate = _candidate_payload(package)
@@ -1205,6 +1209,16 @@ def _record_verification(
             )
     context = build_ap3_source_context(package)
     candidate_hash = _verify_hash(context, _candidate_payload(package))
+    if context.source_hash != source_hash:
+        raise AP3DeliveryError(
+            "Die Delivery-Quellenbasis hat sich während der Verifikation geändert.",
+            code="source_stale",
+        )
+    if candidate_hash != verification.candidate_hash:
+        raise AP3DeliveryError(
+            "Das Delivery Package wurde während der Verifikation geändert.",
+            code="candidate_stale",
+        )
     for review in package.section_reviews.select_for_update().all():
         manifest = dict(review.source_manifest or {})
         manifest[VERIFIER_MANIFEST_KEY] = {
@@ -1227,8 +1241,7 @@ def _current_pass_verification(
     if not reviews:
         return None
     manifests = [
-        dict((review.source_manifest or {}).get(VERIFIER_MANIFEST_KEY) or {})
-        for review in reviews
+        dict((review.source_manifest or {}).get(VERIFIER_MANIFEST_KEY) or {}) for review in reviews
     ]
     if any(
         manifest.get("source_hash") != context.source_hash
@@ -1243,6 +1256,7 @@ def _current_pass_verification(
         critical_findings=(),
         noncritical_findings=(),
         run_id=run_id,
+        candidate_hash=candidate_hash,
     )
 
 
@@ -1359,4 +1373,3 @@ def prepare_autonomous_delivery_package(
         repaired_fields=repaired,
         verification=verification,
     )
-

@@ -7,6 +7,7 @@ from django.utils import timezone
 from ki_radar.architecture.architecture_assessment import (
     save_solution_architecture_assessment,
 )
+from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.models import (
     EvidenceBasis,
     ProcessAnalysis,
@@ -18,6 +19,7 @@ from ki_radar.architecture.models import (
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.models import LLMTaskRun
 from ki_radar.core.openrouter import OpenRouterResult
+from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 from ki_radar.delivery.ap3_autonomous import (
     TARGET_FIELDS,
     AP3DeliveryError,
@@ -43,6 +45,19 @@ def _process(owner, business_unit):
         scope_in="Angebotsvergleich",
         scope_out="Verhandlung und Bestellung",
         status=ValueStream.Status.ACTIVE,
+    )
+    ValueStreamFocus.objects.create(
+        value_stream=stream,
+        business_domain=BusinessDomain.PROCUREMENT,
+        capability="Source-to-Pay",
+        strategic_impact=ScreeningLevel.HIGH,
+        economic_potential=ScreeningLevel.HIGH,
+        pain_intensity=ScreeningLevel.HIGH,
+        data_accessibility=ScreeningLevel.MEDIUM,
+        change_effort=ScreeningLevel.MEDIUM,
+        status=ValueStreamFocus.Status.SELECTED,
+        rationale="Für den Deep Dive ausgewählt.",
+        updated_by=owner,
     )
     stage = ValueStreamStage.objects.create(
         value_stream=stream,
@@ -320,10 +335,13 @@ def test_ap3_prepares_one_canonical_package_with_mapper_synthesis_and_verifier(
         DeliverySectionReview.ReviewStatus.NEEDS_REVIEW
     }
     assert calls == ["ap3_delivery_synthesis", "ap3_delivery_verification"]
-    assert LLMTaskRun.objects.filter(
-        task_type=LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE,
-        object_id=str(package.pk),
-    ).count() == 2
+    assert (
+        LLMTaskRun.objects.filter(
+            task_type=LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE,
+            object_id=str(package.pk),
+        ).count()
+        == 2
+    )
     assert not package.handed_over_at
     assert GovernanceReview.objects.filter(result=GovernanceReview.Result.PASSED).count() == 0
 
@@ -360,9 +378,7 @@ def test_ap3_resume_is_idempotent_and_does_not_create_or_call_provider_again(
     assert len(calls) == before_calls
 
 
-def test_ap3_never_overwrites_existing_manual_delivery_content(
-    owner, business_unit, monkeypatch
-):
+def test_ap3_never_overwrites_existing_manual_delivery_content(owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
     from ki_radar.delivery.services import create_delivery_package
 
@@ -394,9 +410,7 @@ def test_ap3_never_overwrites_existing_manual_delivery_content(
     assert result.package.functional_requirements == "Manuell bestätigte funktionale Anforderung."
 
 
-def test_ap3_allows_one_targeted_repair_and_reverifies(
-    owner, business_unit, monkeypatch
-):
+def test_ap3_allows_one_targeted_repair_and_reverifies(owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
     verifier_calls = 0
 
@@ -423,15 +437,16 @@ def test_ap3_allows_one_targeted_repair_and_reverifies(
     assert result.verification.verdict == "pass"
     assert result.repaired_fields == ("functional_requirements",)
     assert "Eingehende Angebotsdaten" in result.package.functional_requirements
-    assert LLMTaskRun.objects.filter(
-        task_type=LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE,
-        object_id=str(result.package.pk),
-    ).count() == 4
+    assert (
+        LLMTaskRun.objects.filter(
+            task_type=LLMTaskRun.TaskType.AP3_DELIVERY_PACKAGE,
+            object_id=str(result.package.pk),
+        ).count()
+        == 4
+    )
 
 
-def test_ap3_rejects_ungrounded_quantitative_delivery_claim(
-    owner, business_unit, monkeypatch
-):
+def test_ap3_rejects_ungrounded_quantitative_delivery_claim(owner, business_unit, monkeypatch):
     use_case, _approval = _approved_ap3_case(owner, business_unit)
     payload = _synthesis_payload()
     payload["functional_requirements"]["value"] = (
@@ -454,3 +469,51 @@ def test_ap3_rejects_ungrounded_quantitative_delivery_claim(
         object_id=str(package.pk),
     )
     assert run.status == LLMTaskRun.Status.FAILED
+
+
+def test_ap3_rejects_quantitative_substring_as_ungrounded_claim(owner, business_unit, monkeypatch):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+    payload = _synthesis_payload()
+    payload["functional_requirements"]["value"] = "Der Ablauf muss in 3 Sekunden enden."
+
+    monkeypatch.setattr(
+        "ki_radar.delivery.ap3_autonomous.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+
+    with pytest.raises(AP3DeliveryError) as exc_info:
+        prepare_autonomous_delivery_package(use_case=use_case, actor=owner)
+
+    assert exc_info.value.code == "ungrounded_quantitative_claim"
+
+
+def test_ap3_does_not_record_pass_for_human_change_during_verification(
+    owner, business_unit, monkeypatch
+):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+
+    def fake_provider(_prepared, *, response_format):
+        name = response_format["json_schema"]["name"]
+        if name == "ap3_delivery_synthesis":
+            return _provider_result(_synthesis_payload())
+        if name == "ap3_delivery_verification":
+            package = DeliveryPackage.objects.get(use_case=use_case)
+            package.functional_requirements = "Menschliche Änderung während der Verifikation."
+            package.save(update_fields=["functional_requirements", "updated_at"])
+            return _provider_result(_verifier_payload())
+        raise AssertionError(name)
+
+    monkeypatch.setattr(
+        "ki_radar.delivery.ap3_autonomous.request_llm_task_provider",
+        fake_provider,
+    )
+
+    with pytest.raises(AP3DeliveryError) as exc_info:
+        prepare_autonomous_delivery_package(use_case=use_case, actor=owner)
+
+    assert exc_info.value.code == "candidate_stale"
+    package = DeliveryPackage.objects.get(use_case=use_case)
+    assert package.functional_requirements == "Menschliche Änderung während der Verifikation."
+    assert all(
+        "ap3_verifier" not in review.source_manifest for review in package.section_reviews.all()
+    )
