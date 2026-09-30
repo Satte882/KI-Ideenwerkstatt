@@ -131,7 +131,7 @@ def test_ap4_append_only_rejects_second_scored_slot(tmp_path):
     assert [item["record_id"] for item in loaded] == ["AP4-03-scored"]
 
 
-def test_ap4_post_fix_must_preserve_pref_fix_record_and_does_not_replace_score(tmp_path):
+def test_ap4_post_fix_preserves_initial_score_and_adds_post_hardening_view(tmp_path):
     validation = _validation()
     evidence_path = tmp_path / "evidence.jsonl"
 
@@ -167,9 +167,86 @@ def test_ap4_post_fix_must_preserve_pref_fix_record_and_does_not_replace_score(t
     )
 
     assert summary["population"]["post_fix_runs"] == 1
+    assert summary["population"]["post_hardening_cases"] == ["AP4-03"]
+
+    # Initial scored evidence is immutable and remains failed.
     assert summary["metrics"]["hallucinated_facts"] == 1
     assert summary["pass"]["hallucinations"] is False
     assert summary["pass"]["cross_domain_consistency"] is False
+    assert summary["pass"]["expected_outcome"] is False
+
+    # The current hardened product state is reported separately.
+    assert summary["post_hardening_metrics"]["hallucinated_facts"] == 0
+    assert summary["post_hardening_pass"]["hallucinations"] is True
+    assert summary["post_hardening_pass"]["cross_domain_consistency"] is True
+    assert summary["post_hardening_pass"]["expected_outcome"] is True
+
+
+def test_ap4_post_fix_chain_cannot_branch_for_success_sampling(tmp_path):
+    validation = _validation()
+    evidence_path = tmp_path / "evidence.jsonl"
+
+    append_record(
+        evidence_path,
+        _record(
+            validation,
+            case_id="AP4-03",
+            path="autonomous",
+            record_id="AP4-03-scored",
+            expected_outcome_pass=False,
+        ),
+        validation=validation,
+    )
+    append_record(
+        evidence_path,
+        _record(
+            validation,
+            case_id="AP4-03",
+            path="autonomous",
+            record_id="AP4-03-post-fix-1",
+            phase="post_fix",
+            pre_fix_record_id="AP4-03-scored",
+        ),
+        validation=validation,
+    )
+
+    competing_branch = _record(
+        validation,
+        case_id="AP4-03",
+        path="autonomous",
+        record_id="AP4-03-post-fix-2",
+        phase="post_fix",
+        pre_fix_record_id="AP4-03-scored",
+    )
+    with pytest.raises(AP4EvidenceError, match="branching is forbidden"):
+        append_record(evidence_path, competing_branch, validation=validation)
+
+
+def test_ap4_post_fix_must_stay_on_same_case_and_path(tmp_path):
+    validation = _validation()
+    evidence_path = tmp_path / "evidence.jsonl"
+
+    append_record(
+        evidence_path,
+        _record(
+            validation,
+            case_id="AP4-03",
+            path="autonomous",
+            record_id="AP4-03-scored",
+        ),
+        validation=validation,
+    )
+
+    wrong_case = _record(
+        validation,
+        case_id="AP4-04",
+        path="autonomous",
+        record_id="AP4-04-post-fix",
+        phase="post_fix",
+        pre_fix_record_id="AP4-03-scored",
+    )
+    with pytest.raises(AP4EvidenceError, match="same case and path"):
+        append_record(evidence_path, wrong_case, validation=validation)
 
 
 def test_ap4_summary_uses_fresh_paired_baseline_and_frozen_targets():
@@ -233,6 +310,8 @@ def test_ap4_summary_uses_fresh_paired_baseline_and_frozen_targets():
     assert summary["metrics"]["human_rework_ratio"] == pytest.approx(0.10)
     assert summary["metrics"]["provenance_ratio"] == pytest.approx(1.0)
     assert summary["metrics"]["hallucinated_facts"] == 0
+    assert summary["post_hardening_metrics"] == summary["metrics"]
+    assert summary["post_hardening_pass"] == summary["pass"]
     assert summary["pass"] == {
         "active_human_work": True,
         "manual_field_reduction": True,
@@ -291,3 +370,5 @@ def test_ap4_management_command_validates_contract_without_records(tmp_path):
     rendered = output.getvalue()
     assert "AP4 contract valid: 8 cases, 0 evidence records." in rendered
     assert "Fehlende gewertete Slots" in rendered
+    assert "Initial scored result" in rendered
+    assert "Current post-hardening result" in rendered
