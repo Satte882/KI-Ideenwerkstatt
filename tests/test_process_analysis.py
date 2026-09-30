@@ -11,8 +11,9 @@ from ki_radar.architecture.models import (
     ValueStreamStage,
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
-from ki_radar.use_cases.intake_views import SESSION_KEY, _persist_optional_origin
+from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import persist_optional_origin
 
 
 @pytest.fixture
@@ -277,7 +278,7 @@ def test_process_and_solution_origin_is_traceable(
         expected_benefit="Durchlaufzeit reduzieren",
     )
 
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={
             "source_stage_id": str(stage.pk),

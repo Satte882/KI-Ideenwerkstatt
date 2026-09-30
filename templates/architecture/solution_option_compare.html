@@ -123,6 +123,7 @@
 {% if can_select %}
 <form method="post" class="app-card mb-4" id="solution-selection">
   {% csrf_token %}
+  {{ form.process_version }}
   <div class="card-header">
     <strong>Bevorzugte Option auswählen</strong>
     <div class="small text-muted mt-1">Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.</div>
@@ -133,9 +134,26 @@
         <strong>Aktuell bevorzugt: {{ latest_selection.selected_option.name }}</strong>
         <div class="small mt-1">Entschieden am {{ latest_selection.decided_at|date:"d.m.Y H:i" }}. Die Entscheidung ist in der Auswahlhistorie auditierbar.</div>
         {% if latest_selection.selected_option.starts_ai_use_case %}
-          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Die Lösung enthält eine KI-Komponente; ein KI-Use-Case kann regulär weitergeführt werden.</div>
+          <div class="small mt-2">
+            <strong>Journey-Ausgang:</strong>
+            Die Lösung enthält eine KI-Komponente; ein KI-Use-Case kann regulär weitergeführt werden.
+            {% if selected_use_case %}
+              Der kanonische Use Case
+              <a href="{{ selected_use_case.get_absolute_url }}">{{ selected_use_case.short_id }}</a>
+              wurde direkt aus der bestätigten Lösungsentscheidung erzeugt.
+              <a href="{% url 'use_cases:ap2_decision_surface' selected_use_case.pk %}">Entscheidungsgrundlage ansehen</a>.
+            {% endif %}
+          </div>
+          <button class="btn btn-sm btn-outline-secondary mt-2" type="submit"
+                  name="continue_ai_handoff" value="1" formnovalidate>
+            AI-Entscheidungsgrundlage vorbereiten oder fortsetzen
+          </button>
         {% else %}
-          <div class="small mt-2"><strong>Journey-Ausgang:</strong> Kein KI-Use-Case erforderlich. Die Analyseentscheidung bleibt als gültiges Ergebnis erhalten.</div>
+          <div class="small mt-2">
+            <strong>Journey-Ausgang:</strong>
+            Die Analyseentscheidung bleibt als gültiger Non-AI-Endzustand erhalten;
+            es wurde kein KI-Use-Case erzeugt.
+          </div>
         {% endif %}
       </div>
     {% else %}
@@ -187,6 +205,30 @@
         {% endif %}
       </div>
     {% else %}
+      {% if diagnosis_confirmation_required %}
+        <div class="alert alert-info" data-testid="combined-diagnosis-selection">
+          <strong>Kernbefund fachlich bestätigen</strong>
+          <p class="mt-2 mb-3">
+            Der folgende Befund ist aus der geprüften Investigation übernommen bzw. abgeleitet,
+            aber noch nicht als bestätigte Ursache gespeichert. Prüfen und bei Bedarf korrigieren.
+            Erst dieser Submit bestätigt die Diagnose und trifft anschließend die Lösungswahl.
+          </p>
+          {% if latest_investigation_materialization %}
+            <p class="small mb-3">
+              <a href="{% url 'accelerator:investigation_detail' latest_investigation_materialization.run_id %}">
+                Decision Brief / Herkunft prüfen
+              </a>
+            </p>
+          {% endif %}
+          <div>
+            <label class="form-label" for="{{ form.confirmed_causes.id_for_label }}">{{ form.confirmed_causes.label }}</label>
+            {{ form.confirmed_causes }}
+            <div class="form-text">{{ form.confirmed_causes.help_text }}</div>
+            {{ form.confirmed_causes.errors }}
+            {{ form.process_version.errors }}
+          </div>
+        </div>
+      {% endif %}
       <div class="mb-3"><label class="form-label">{{ form.selected_option.label }}</label>{{ form.selected_option }}{{ form.selected_option.errors }}</div>
       <div><label class="form-label" for="{{ form.rationale.id_for_label }}">{{ form.rationale.label }}</label>{{ form.rationale }}<div class="form-text">{{ form.rationale.help_text }}</div>{{ form.rationale.errors }}</div>
     {% endif %}
@@ -195,7 +237,13 @@
     {% if selection_blocked %}
       <button class="btn btn-primary" type="button" disabled>Auswahl noch gesperrt</button>
     {% else %}
-      <button class="btn btn-primary" type="submit">Bevorzugte Option auswählen</button>
+      <button class="btn btn-primary" type="submit">
+        {% if diagnosis_confirmation_required %}
+          Diagnose bestätigen und bevorzugte Option auswählen
+        {% else %}
+          Bevorzugte Option auswählen
+        {% endif %}
+      </button>
     {% endif %}
   </div>
 </form>

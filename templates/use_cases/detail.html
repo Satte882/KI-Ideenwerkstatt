@@ -30,6 +30,9 @@
   </div>
   {% endif %}
 </header>
+{% if architecture_origin and architecture_origin.solution_option and architecture_origin.solution_option.starts_ai_use_case %}
+<p><a class="btn btn-outline-secondary" href="{% url 'use_cases:ap2_decision_surface' use_case.pk %}">Konsolidierte Entscheidungsgrundlage öffnen</a></p>
+{% endif %}
 
 {% include "includes/decision_state.html" %}
 
@@ -75,7 +78,7 @@
             <dl class="uc-detail-list">
               <dt>Version</dt><dd>{{ latest_assessment.version }}</dd>
               <dt>Bewertungsdatum</dt><dd>{{ latest_assessment.assessment_date|date:"d.m.Y" }}</dd>
-              <dt>Bewertet durch</dt><dd>{% if latest_assessment.assessed_by %}{{ latest_assessment.assessed_by.get_display_name }}{% else %}unbekannt{% endif %}</dd>
+              <dt>Bewertet durch</dt><dd>{% if latest_assessment.ap2_provenance %}Systemgenerierte Analyse{% elif latest_assessment.assessed_by %}{{ latest_assessment.assessed_by.get_display_name }}{% else %}unbekannt{% endif %}</dd>
               <dt>Governance-Vorprüfung</dt><dd>{% if latest_assessment.governance_precheck_completed %}durchgeführt{% else %}offen{% endif %}</dd>
               <dt>Nachweis</dt><dd>{% if latest_assessment.evidence_url %}<a href="{{ latest_assessment.evidence_url }}" target="_blank" rel="noopener noreferrer">Bewertungsnachweis öffnen</a>{% else %}Kein externer Nachweis verlinkt · Bewertung auf Annahmenbasis{% endif %}</dd>
             </dl>

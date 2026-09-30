@@ -7,18 +7,23 @@ from ki_radar.architecture.forms import SolutionOptionForm
 from ki_radar.architecture.models import (
     EvidenceBasis,
     ProcessAnalysis,
+    ProcessValidation,
     SolutionOption,
     SolutionSelectionDecision,
     TimeToValue,
+    UseCaseOrigin,
     ValueStream,
     ValueStreamStage,
 )
 from ki_radar.architecture.solution_selection import (
     comparison_blockers,
+    confirm_diagnosis_and_select_solution,
     ordered_solution_options,
     select_preferred_solution,
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 
 @pytest.fixture
@@ -345,6 +350,258 @@ def test_selection_is_auditable_and_updates_statuses(comparison_process, owner):
 
 
 @pytest.mark.django_db
+def test_combined_review_confirms_diagnosis_validates_version_and_selects_option(
+    comparison_process,
+    owner,
+):
+    comparison_process.confirmed_causes = ""
+    comparison_process.status = ProcessAnalysis.Status.REVIEW_REQUIRED
+    comparison_process.save(update_fields=["confirmed_causes", "status", "updated_at"])
+    expected_version = comparison_process.version
+
+    organizational = make_option(
+        comparison_process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+
+    decision = confirm_diagnosis_and_select_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        confirmed_causes="Uneinheitliche Formate erzwingen manuelle Übertragung.",
+        rationale="Die Assistenz adressiert die verbleibende unstrukturierte Extraktionsarbeit.",
+        expected_process_version=expected_version,
+        actor=owner,
+    )
+
+    comparison_process.refresh_from_db()
+    organizational.refresh_from_db()
+    assistant.refresh_from_db()
+    validation = ProcessValidation.objects.get(process_analysis=comparison_process)
+
+    assert comparison_process.confirmed_causes == (
+        "Uneinheitliche Formate erzwingen manuelle Übertragung."
+    )
+    assert comparison_process.version == expected_version + 1
+    assert comparison_process.status == ProcessAnalysis.Status.VALIDATED
+    assert validation.process_version == comparison_process.version
+    assert validation.validated_by == owner
+    assert validation.validator_role == "Business Owner"
+    assert decision.process_version == comparison_process.version
+    assert decision.diagnosis_snapshot["confirmed_causes"] == comparison_process.confirmed_causes
+    assert decision.diagnosis_snapshot["validation"]["process_version"] == (
+        comparison_process.version
+    )
+    assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
+    assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+
+
+@pytest.mark.django_db
+def test_combined_review_rejects_stale_process_without_partial_write(
+    comparison_process,
+    owner,
+):
+    comparison_process.confirmed_causes = ""
+    comparison_process.save(update_fields=["confirmed_causes", "updated_at"])
+    reviewed_version = comparison_process.version
+    first = make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    make_option(
+        comparison_process,
+        owner,
+        name="Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+
+    ProcessAnalysis.objects.filter(pk=comparison_process.pk).update(
+        version=reviewed_version + 1,
+        diagnostic_observations="Zwischenzeitlich fachlich geändert.",
+    )
+
+    with pytest.raises(ValidationError, match="seit dem Review geändert"):
+        confirm_diagnosis_and_select_solution(
+            process_analysis=comparison_process,
+            selected_option=first,
+            confirmed_causes="Veralteter Kernbefund.",
+            rationale="Veraltete Auswahl.",
+            expected_process_version=reviewed_version,
+            actor=owner,
+        )
+
+    comparison_process.refresh_from_db()
+    first.refresh_from_db()
+    assert comparison_process.confirmed_causes == ""
+    assert not comparison_process.validations.exists()
+    assert not comparison_process.solution_selection_decisions.exists()
+    assert first.recommendation == SolutionOption.Recommendation.CANDIDATE
+
+
+@pytest.mark.django_db
+def test_ai_selection_creates_one_idempotent_use_case_with_origin(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        evidence_basis=EvidenceBasis.INDICATIVE,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den verbleibenden Extraktionsschritt ab.",
+        actor=owner,
+    )
+
+    first = create_use_case_from_selected_solution(decision=decision, actor=owner)
+    second = create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert first.created is True
+    assert second.created is False
+    assert first.use_case.pk == second.use_case.pk
+    assert UseCase.objects.count() == 1
+
+    use_case = first.use_case
+    origin = UseCaseOrigin.objects.get(use_case=use_case)
+    assert use_case.title == assistant.name
+    assert use_case.business_unit == comparison_process.stage.value_stream.business_unit
+    assert use_case.business_owner == owner
+    assert use_case.problem_statement == comparison_process.diagnostic_observations
+    assert use_case.affected_process == comparison_process.name
+    assert use_case.source_systems == comparison_process.systems
+    assert use_case.data_sources == assistant.data_requirements
+    assert use_case.interface_description == assistant.integration_impact
+    assert use_case.intended_purpose == assistant.description
+    assert use_case.expected_benefit == assistant.expected_value
+    assert use_case.solution_type == UseCase.SolutionType.ASSISTANT
+    assert use_case.status == UseCase.Status.IDEA
+    assert use_case.decision_status == UseCase.DecisionStatus.READY
+    assert "bleiben beim Menschen" in use_case.human_oversight
+    assert origin.process_analysis == comparison_process
+    assert origin.solution_option == assistant
+    assert origin.stage == comparison_process.stage
+    assert use_case.classification.business_domain == BusinessDomain.PROCUREMENT
+    assert use_case.classification.capability == "Source-to-Pay"
+
+
+@pytest.mark.django_db
+def test_ai_handoff_rejects_process_change_after_human_selection(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den Engpass ab.",
+        actor=owner,
+    )
+    ProcessAnalysis.objects.filter(pk=comparison_process.pk).update(
+        version=comparison_process.version + 1,
+        diagnostic_observations="Zwischenzeitlich fachlich korrigiert.",
+    )
+
+    with pytest.raises(ValidationError, match="Prozessstand"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+
+
+@pytest.mark.django_db
+def test_ai_handoff_rejects_changed_option_after_human_selection(
+    comparison_process,
+    owner,
+):
+    make_option(
+        comparison_process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    assistant = make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=assistant,
+        rationale="Die Assistenz deckt den Engpass ab.",
+        actor=owner,
+    )
+    SolutionOption.objects.filter(pk=assistant.pk).update(
+        description="Nach der Auswahl fachlich veränderte Lösung."
+    )
+
+    with pytest.raises(ValidationError, match="Lösungsstand"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+
+
+@pytest.mark.django_db
+def test_non_ai_selection_does_not_create_fake_ai_use_case(
+    comparison_process,
+    owner,
+):
+    organizational = make_option(
+        comparison_process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+    )
+    make_option(
+        comparison_process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+    )
+    decision = select_preferred_solution(
+        process_analysis=comparison_process,
+        selected_option=organizational,
+        rationale="Die organisatorische Lösung adressiert den Engpass ohne KI.",
+        actor=owner,
+    )
+
+    with pytest.raises(ValidationError, match="keine KI-Komponente"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+
+    assert not UseCase.objects.exists()
+    assert not UseCaseOrigin.objects.exists()
+
+
+@pytest.mark.django_db
 def test_selection_rejects_unauthorized_reader(comparison_process, owner, reader):
     first = make_option(
         comparison_process,
@@ -399,6 +656,7 @@ def test_comparison_page_selects_and_shows_history(client, comparison_process, o
     response = client.post(
         url,
         {
+            "process_version": comparison_process.version,
             "selected_option": assistant.pk,
             "rationale": "Die organisatorische Alternative deckt die Extraktionsarbeit nicht ab.",
         },

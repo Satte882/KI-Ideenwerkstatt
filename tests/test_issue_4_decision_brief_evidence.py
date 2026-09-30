@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -61,6 +62,7 @@ from ki_radar.accelerator.investigation_runtime import (
     apply_planner_state,
     canonical_json,
     content_hash,
+    decision_brief_blockers,
     evaluate_run_policy,
     execute_tool_step,
     pre_verifier_blockers_for_run,
@@ -72,6 +74,7 @@ from ki_radar.accelerator.investigation_tools import (
     create_source_snapshot,
 )
 from ki_radar.accelerator.management.commands import run_issue4_evidence as issue4_evidence_command
+from ki_radar.architecture.focus import ValueStreamFocus
 from ki_radar.architecture.investigation_adoption import (
     InvestigationDraftAdoptionError,
     adopt_investigation_drafts,
@@ -84,7 +87,9 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
-from ki_radar.core.openrouter import OpenRouterUnavailable
+from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable
+from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.models import UseCase
 
 
 def make_process(*, owner, business_unit, name="VS1/3 Fall"):
@@ -939,6 +944,316 @@ def test_materialization_preview_is_read_only_and_describes_domain_changes(
 
 
 @pytest.mark.django_db
+def test_ap2_comparison_fields_are_not_a_new_investigation_ready_gate(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 legacy READY")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-legacy-ready",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    run.brief_payload = payload
+
+    assert decision_brief_blockers(run) == ()
+
+
+@pytest.mark.django_db
+def test_ap2_complete_ready_brief_materializes_comparable_candidates(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 READY handoff")
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-complete-ready",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(
+        snapshot_id=snapshot.snapshot_id,
+        filename="cases.csv",
+    )
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    for option in payload["options"]:
+        option.update(
+            {
+                "feasibility": "medium",
+                "integration_effort": "medium",
+                "technology_constraints": "Bestehende Prozessgrenzen beachten.",
+                "time_to_value": "unknown",
+                "evidence_basis": "indicative",
+                "contains_ai_component": False,
+            }
+        )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+
+    materialization = materialize_decision_brief(
+        actor=owner,
+        run_id=run.pk,
+        operation_key="ap2-comparable-handoff",
+    )
+
+    options = list(process.solution_options.order_by("name"))
+    assert materialization.outcome == materialization.Outcome.APPLIED
+    assert len(options) == 2
+    assert all(option.comparison_complete for option in options)
+    assert all(
+        option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED for option in options
+    )
+    assert all(
+        option.recommendation == SolutionOption.Recommendation.CANDIDATE for option in options
+    )
+    assert not process.solution_options.filter(
+        recommendation=SolutionOption.Recommendation.PREFERRED
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_ap2_ready_brief_to_human_ai_selection_and_metric_pilot_draft(
+    client,
+    owner,
+    business_unit,
+    tmp_path,
+    monkeypatch,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 decision flow")
+    ValueStreamFocus.objects.create(
+        value_stream=process.stage.value_stream,
+        business_domain=BusinessDomain.PROCUREMENT,
+        capability="Freigaben steuern",
+        strategic_impact=ScreeningLevel.HIGH,
+        economic_potential=ScreeningLevel.HIGH,
+        pain_intensity=ScreeningLevel.HIGH,
+        data_accessibility=ScreeningLevel.MEDIUM,
+        change_effort=ScreeningLevel.MEDIUM,
+        status=ValueStreamFocus.Status.SELECTED,
+        rationale="Für den Deep Dive ausgewählt.",
+        updated_by=owner,
+    )
+    (tmp_path / "cases.csv").write_text(
+        "group,value,unit\nA,10,h\nA,20,h\nB,30,h\nB,40,h\n",
+        encoding="utf-8",
+    )
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="ap2-decision-flow",
+            decision_brief_required=True,
+        ),
+    )
+    source = InvestigationSource.objects.get(snapshot_id=snapshot.snapshot_id)
+    step = execute_tool_step(
+        actor=owner,
+        run_id=handle.run_id,
+        executor_token=handle.executor_token,
+        tool_name="compare_groups",
+        parameters={
+            "source_id": str(source.pk),
+            "group_by": "group",
+            "aggregation": "mean",
+            "value_column": "value",
+            "filters": [],
+            "unit_column": "unit",
+        },
+        target_claim_id="calculation",
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    payload = full_brief(
+        run=run,
+        source=source,
+        result_id=step.result_ref["tool_result_id"],
+    )
+    payload["options"].append(
+        {
+            "name": "AI-Assistenz für Freigaben",
+            "option_type": SolutionOption.OptionType.ASSISTANT,
+            "description": "Fachliche Freigaben mit menschlicher Kontrolle vorbereiten.",
+            "expected_value": "Wartezeit bei der Prüfung reduzieren.",
+            "bottleneck_coverage": "Adressiert die beobachtete Wartezeit.",
+            "data_requirements": "Freigabedaten und Fallunterlagen.",
+            "application_impact": "Assistenz im bestehenden Workflow.",
+            "integration_impact": "Lesender Zugriff auf den Workflow.",
+            "risks": "Falsche Vorschläge brauchen fachliche Prüfung.",
+            "architecture_fit": "Assistenz mit menschlicher Entscheidung.",
+            "contains_ai_component": True,
+            "non_ai": False,
+            "status_quo": False,
+        }
+    )
+    for option in payload["options"]:
+        option.update(
+            feasibility="medium",
+            integration_effort="medium",
+            time_to_value="unknown",
+            evidence_basis="hypothesis",
+            technology_constraints="Bestehender Workflow bleibt führend.",
+        )
+    InvestigationRun.objects.filter(pk=run.pk).update(
+        status=InvestigationRun.Status.READY,
+        finished_at=timezone.now(),
+        brief_payload=payload,
+        brief_hash=content_hash(payload),
+    )
+
+    materialization = materialize_decision_brief(
+        actor=owner,
+        run_id=run.pk,
+        operation_key="ap2-decision-flow-materialization",
+    )
+    assert materialization.outcome == materialization.Outcome.APPLIED
+    process.refresh_from_db()
+    options = list(process.solution_options.all())
+    assert len(options) == 3
+    assert all(option.comparison_complete for option in options)
+    assert all(
+        option.recommendation == SolutionOption.Recommendation.CANDIDATE for option in options
+    )
+    assert process.confirmed_causes == ""
+
+    metric_values = {
+        "metric_name": "Wartezeit je Freigabe",
+        "metric_type": UseCase.MetricType.DURATION,
+        "metric_direction": UseCase.MetricDirection.LOWER,
+        "metric_unit": "Stunden",
+        "metric_measurement_method": "Zeit zwischen Eingang und fachlicher Entscheidung messen.",
+        "metric_measurement_population": "Freigabefälle im bestätigten Prozessscope.",
+        "metric_measurement_period": "Ein regulärer Geschäftszyklus.",
+        "pilot_scope": "Ein abgegrenzter Freigabetyp mit Prüfung jedes Vorschlags.",
+        "pilot_review_criteria": "Wartezeit, Korrektheit und manuellen Aufwand prüfen.",
+        "pilot_abort_criteria": "Bei unbemerkten fachlichen Fehlern unterbrechen.",
+    }
+
+    def provider(_prepared, **_kwargs):
+        content = json.dumps(
+            {
+                **{
+                    name: {
+                        "value": value,
+                        "source_ids": ["UC.benefit"],
+                        "evidence_basis": "hypothesis",
+                    }
+                    for name, value in metric_values.items()
+                },
+                "unknowns": ["Numerische Baseline und Zielwert sind nicht belegt."],
+            }
+        )
+        return OpenRouterResult(
+            content=content,
+            model="test/model",
+            usage={"prompt_tokens": 100, "completion_tokens": 200, "total_tokens": 300, "cost": 0},
+            output_chars=len(content),
+            finish_reason="stop",
+        )
+
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        provider,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    review = client.get(url)
+    assert review.status_code == 200
+    assert review.context["selection_blocked"] is False
+    assert review.context["diagnosis_confirmation_required"] is True
+    ai_option = next(option for option in options if option.starts_ai_use_case)
+    response = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "confirmed_causes": "Freigeberverfügbarkeit beeinflusst die Wartezeit.",
+            "selected_option": ai_option.pk,
+            "rationale": "Die Assistenz deckt die verbleibende Prüfung besser ab.",
+        },
+    )
+    assert response.status_code == 302
+    process.refresh_from_db()
+    assert process.confirmed_causes == "Freigeberverfügbarkeit beeinflusst die Wartezeit."
+    assert process.validations.filter(process_version=process.version).exists()
+    decision = process.solution_selection_decisions.get()
+    assert decision.selected_option == ai_option
+    use_case = UseCase.objects.get()
+    assert use_case.architecture_origin.process_analysis == process
+    assert use_case.architecture_origin.solution_option == ai_option
+    assert use_case.metric_name == metric_values["metric_name"]
+    assert use_case.pilot_scope == metric_values["pilot_scope"]
+    assert use_case.metric_baseline is None
+    assert use_case.metric_target is None
+    assert use_case.pilot_start is None
+    assert use_case.ap2_planning_provenance["generated_by"] == "system"
+
+
+@pytest.mark.django_db
 def test_materialization_ui_requires_confirmation_and_redirects_to_existing_comparison(
     client,
     owner,
@@ -1387,6 +1702,152 @@ def test_architecture_adoption_resolves_omitted_existing_id_from_frozen_base_nam
     assert process.solution_options.count() == 1
     assert option.description == "Durch Evidenz nicht gestützt."
     assert option.expected_value == "Nicht priorisieren."
+
+
+@pytest.mark.django_db
+def test_ap2_architecture_adoption_materializes_complete_comparison_as_assessed(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 comparison")
+    proposal = {
+        "name": "Regelbasierte Vorprüfung",
+        "option_type": SolutionOption.OptionType.RULE_AUTOMATION,
+        "description": "Formale Pflichtangaben vorprüfen.",
+        "expected_value": "Manuelle Prüfschritte reduzieren.",
+        "bottleneck_coverage": "Adressiert die wiederholte manuelle Vorprüfung.",
+        "feasibility": SolutionOption.Effort.MEDIUM,
+        "data_requirements": "Strukturierte Angebotsdaten und Kriterien.",
+        "application_impact": "Ergänzung im bestehenden Workflow.",
+        "integration_effort": SolutionOption.Effort.MEDIUM,
+        "integration_impact": "Anbindung an den vorhandenen Angebotsprozess.",
+        "technology_constraints": "Bestehende ERP-Schnittstellen weiterverwenden.",
+        "risks": "Regeln müssen bei Änderungen gepflegt werden.",
+        "architecture_fit": "Deterministische Regeln reichen für die Vorprüfung.",
+        "time_to_value": "unknown",
+        "evidence_basis": "indicative",
+    }
+
+    result = adopt_investigation_drafts(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={},
+        base_options={},
+        process_fields={},
+        solution_proposals=[proposal],
+    )
+
+    option = SolutionOption.objects.get(pk=result.created_solution_option_ids[0])
+    assert option.evaluation_status == SolutionOption.EvaluationStatus.ASSESSED
+    assert option.comparison_complete is True
+    assert option.recommendation == SolutionOption.Recommendation.CANDIDATE
+    assert option.feasibility == SolutionOption.Effort.MEDIUM
+    assert option.integration_effort == SolutionOption.Effort.MEDIUM
+    assert option.time_to_value == "unknown"
+    assert option.technology_constraints == "Bestehende ERP-Schnittstellen weiterverwenden."
+    assert option.contains_ai_component is False
+
+
+@pytest.mark.django_db
+def test_old_ready_brief_does_not_overwrite_absent_ap2_comparison_fields(
+    owner,
+    business_unit,
+):
+    process = make_process(owner=owner, business_unit=business_unit, name="AP2 old brief")
+    option = SolutionOption.objects.create(
+        process_analysis=process,
+        created_by=owner,
+        name="Bestehende Option",
+        option_type=SolutionOption.OptionType.CUSTOM_SOFTWARE,
+        contains_ai_component=True,
+        description="Ausgangsentwurf.",
+        expected_value="Nutzenhypothese.",
+        feasibility=SolutionOption.Effort.HIGH,
+        integration_effort=SolutionOption.Effort.MEDIUM,
+        time_to_value="long",
+        technology_constraints="Vom Menschen dokumentierte Leitplanke.",
+    )
+    base_updated_at = option.updated_at.isoformat()
+    proposal = _solution_proposals(
+        {
+            "options": [
+                {
+                    "name": option.name,
+                    "existing_option_id": str(option.pk),
+                    "option_type": option.option_type,
+                    "description": "Evidenzgestützt präzisierter Entwurf.",
+                    "expected_value": "Präzisierte Nutzenhypothese.",
+                    "non_ai": False,
+                }
+            ]
+        }
+    )[0]
+
+    assert "feasibility" not in proposal
+    assert "integration_effort" not in proposal
+    assert "time_to_value" not in proposal
+    assert "technology_constraints" not in proposal
+
+    adopt_investigation_drafts(
+        actor=owner,
+        process_analysis_id=process.pk,
+        expected_process_version=process.version,
+        base_process={},
+        base_options={
+            str(option.pk): {
+                "id": str(option.pk),
+                "name": option.name,
+                "updated_at": base_updated_at,
+            }
+        },
+        process_fields={},
+        solution_proposals=[proposal],
+    )
+
+    option.refresh_from_db()
+    assert option.description == "Evidenzgestützt präzisierter Entwurf."
+    assert option.feasibility == SolutionOption.Effort.HIGH
+    assert option.integration_effort == SolutionOption.Effort.MEDIUM
+    assert option.time_to_value == "long"
+    assert option.technology_constraints == "Vom Menschen dokumentierte Leitplanke."
+    assert option.contains_ai_component is True
+    assert option.evaluation_status == SolutionOption.EvaluationStatus.DRAFT
+
+
+def test_ap2_solution_proposal_accepts_optional_comparison_fields_without_preference():
+    payload = {
+        "options": [
+            {
+                "name": "Assistenz",
+                "option_type": SolutionOption.OptionType.ASSISTANT,
+                "description": "Vorschlag assistierend vorbereiten.",
+                "expected_value": "Prüfaufwand reduzieren.",
+                "bottleneck_coverage": "Adressiert die manuelle Vorbereitung.",
+                "feasibility": "medium",
+                "data_requirements": "Freigegebene Vorgangsdaten.",
+                "application_impact": "Assistenzoberfläche.",
+                "integration_effort": "low",
+                "integration_impact": "Lesender Zugriff auf Vorgangsdaten.",
+                "technology_constraints": "Keine autonome Freigabe.",
+                "risks": "Vorschläge können fachlich falsch sein.",
+                "architecture_fit": "Human-in-the-loop Assistenz.",
+                "time_to_value": "short",
+                "evidence_basis": "hypothesis",
+                "non_ai": False,
+                "status_quo": False,
+            }
+        ]
+    }
+
+    proposal = _solution_proposals(payload)[0]
+
+    assert proposal["feasibility"] == SolutionOption.Effort.MEDIUM
+    assert proposal["integration_effort"] == SolutionOption.Effort.LOW
+    assert proposal["time_to_value"] == "short"
+    assert proposal["technology_constraints"] == "Keine autonome Freigabe."
+    assert "recommendation" not in proposal
+    assert proposal.get("contains_ai_component") is None
 
 
 @pytest.mark.django_db

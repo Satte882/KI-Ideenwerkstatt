@@ -20,8 +20,9 @@ from ki_radar.architecture.work_design import (
     validate_task,
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
-from ki_radar.use_cases.intake_views import SESSION_KEY, _persist_optional_origin
+from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import persist_optional_origin
 
 
 @pytest.fixture
@@ -830,6 +831,7 @@ def test_taskshift_e2e_selects_task_then_compares_real_solution_options(
         compare_url,
         {
             "selected_option": assistant_option.pk,
+            "process_version": process.version,
             "rationale": (
                 "Die Assistenzoption deckt auch nicht vollständig kodifizierbare "
                 "Vertragsabweichungen ab, während die formale Legal-Freigabe erhalten bleibt."
@@ -863,7 +865,7 @@ def test_taskshift_e2e_selects_task_then_compares_real_solution_options(
         submitter=owner,
         expected_benefit=assistant_option.expected_value,
     )
-    _persist_optional_origin(candidate=use_case, stored=stored)
+    persist_optional_origin(candidate=use_case, stored=stored)
 
     origin = UseCaseOrigin.objects.get(use_case=use_case)
     assert origin.process_analysis == process

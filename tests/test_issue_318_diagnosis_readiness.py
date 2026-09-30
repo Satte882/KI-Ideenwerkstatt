@@ -254,6 +254,7 @@ def test_compare_view_surfaces_actionable_diagnosis_blocker(client, owner, busin
         {
             "selected_option": first.pk,
             "rationale": "Die einfachere Option ist ausreichend.",
+            "process_version": process.version,
         },
     )
 

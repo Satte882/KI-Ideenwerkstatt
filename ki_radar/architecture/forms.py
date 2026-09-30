@@ -605,6 +605,16 @@ class SolutionSelectionForm(forms.Form):
         label="Bevorzugte Option",
         widget=forms.RadioSelect,
     )
+    confirmed_causes = forms.CharField(
+        required=False,
+        label="Bestätigte Ursache",
+        widget=forms.Textarea(attrs={"rows": 4, "class": FORM_CONTROL}),
+        help_text=(
+            "Der vorgeschlagene Kernbefund bleibt bis zu diesem Submit eine Hypothese bzw. "
+            "ein agentisch abgeleiteter Befund. Prüfen und bei Bedarf korrigieren."
+        ),
+    )
+    process_version = forms.IntegerField(required=False, widget=forms.HiddenInput)
     rationale = forms.CharField(
         label="Auswahlbegründung",
         widget=forms.Textarea(attrs={"rows": 5, "class": FORM_CONTROL}),
@@ -614,9 +624,40 @@ class SolutionSelectionForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, options=(), **kwargs):
+    def __init__(
+        self,
+        *args,
+        options=(),
+        confirmed_causes_initial="",
+        process_version=None,
+        require_diagnosis_confirmation=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
+        self.confirmed_causes_initial = str(confirmed_causes_initial or "").strip()
+        self.process_version_initial = process_version
+        self.require_diagnosis_confirmation = bool(require_diagnosis_confirmation)
+        if not self.is_bound:
+            self.initial["confirmed_causes"] = self.confirmed_causes_initial
+            if process_version is not None:
+                self.initial["process_version"] = process_version
         option_ids = [option.pk for option in options]
         field = self.fields["selected_option"]
         field.queryset = SolutionOption.objects.filter(pk__in=option_ids)
         field.choices = [("", "---------"), *((option.pk, option.name) for option in options)]
+
+    def clean_confirmed_causes(self):
+        submitted = str(self.cleaned_data.get("confirmed_causes") or "").strip()
+        if self.is_bound and "confirmed_causes" not in self.data:
+            submitted = self.confirmed_causes_initial
+        if self.require_diagnosis_confirmation and not submitted:
+            raise forms.ValidationError(
+                "Bitte den Kernbefund fachlich bestätigen oder korrigieren."
+            )
+        return submitted
+
+    def clean_process_version(self):
+        submitted = self.cleaned_data.get("process_version")
+        if submitted is None:
+            raise forms.ValidationError("Der geprüfte Prozessstand fehlt.")
+        return submitted

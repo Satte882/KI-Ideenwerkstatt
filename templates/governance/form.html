@@ -41,7 +41,7 @@
     <div class="row g-3 mb-4">
       {% for field in form %}
         {% if field.name == "personal_data" or field.name == "employee_data" or field.name == "automated_person_assessment" or field.name == "influences_person_decisions" or field.name == "biometric_data" or field.name == "safety_critical" or field.name == "regulated_product" or field.name == "health_safety_rights_impact" or field.name == "external_ai_or_cloud" or field.name == "generated_external_content" or field.name == "human_oversight_planned" %}
-        <div class="col-md-6"><div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div><div class="text-danger small">{{ field.errors }}</div></div>
+        <div class="col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}<div class="text-danger small">{{ field.errors }}</div></div>
         {% endif %}
       {% endfor %}
     </div>

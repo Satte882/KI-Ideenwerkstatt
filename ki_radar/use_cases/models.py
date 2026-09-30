@@ -199,6 +199,28 @@ class UseCase(TimeStampedModel):
     metric_measurement_period = models.CharField(
         max_length=200, blank=True, verbose_name="Messzeitraum"
     )
+    metric_measurement_population = models.TextField(
+        blank=True,
+        verbose_name="Messpopulation / Stichprobe",
+    )
+    pilot_scope = models.TextField(
+        blank=True,
+        verbose_name="Kleinster sinnvoller Pilot",
+    )
+    pilot_review_criteria = models.TextField(
+        blank=True,
+        verbose_name="Pilot-Reviewkriterien",
+    )
+    pilot_abort_criteria = models.TextField(
+        blank=True,
+        verbose_name="Pilot-Abbruchkriterien",
+    )
+    ap2_planning_provenance = models.JSONField(
+        default=dict,
+        blank=True,
+        editable=False,
+    )
+    ap2_governance_draft = models.JSONField(default=dict, blank=True, editable=False)
     metric_measured_at = models.DateField(null=True, blank=True, verbose_name="Messdatum")
     metric_evidence_url = models.URLField(blank=True, verbose_name="Messnachweis")
 
@@ -350,6 +372,7 @@ class DecisionAssessment(TimeStampedModel):
     assessed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="decision_assessments",
     )
@@ -369,6 +392,7 @@ class DecisionAssessment(TimeStampedModel):
         default=False,
         verbose_name="Governance-Vorprüfung durchgeführt",
     )
+    ap2_provenance = models.JSONField(default=dict, blank=True, editable=False)
     recommendation = models.CharField(max_length=30, choices=Recommendation.choices)
 
     class Meta:
@@ -389,6 +413,11 @@ class DecisionAssessment(TimeStampedModel):
             self.evidence_quality is not None
             and self.evidence_quality > self.EvidenceQuality.ASSUMPTION
             and not self.evidence_url
+            and not (
+                self.ap2_provenance.get("generated_by") == "system"
+                and self.ap2_provenance.get("source_hash")
+                and self.ap2_provenance.get("field_evidence")
+            )
         ):
             raise ValidationError(
                 {

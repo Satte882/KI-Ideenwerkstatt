@@ -11,7 +11,12 @@ from ki_radar.architecture.investigation_adoption import (
     adopt_investigation_drafts,
     preview_investigation_draft_adoption,
 )
-from ki_radar.architecture.models import EvidenceBasis, ProcessAnalysis, SolutionOption
+from ki_radar.architecture.models import (
+    EvidenceBasis,
+    ProcessAnalysis,
+    SolutionOption,
+    TimeToValue,
+)
 
 from .investigation_models import (
     InvestigationBriefRevision,
@@ -173,15 +178,25 @@ def _target_process_fields(
     }
 
 
+def _enum_or_default(value: object, *, allowed: set[str], default: str) -> str:
+    normalized = str(value or "").strip()
+    return normalized if normalized in allowed else default
+
+
 def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
-    evidence_basis = str(option.get("evidence_basis") or EvidenceBasis.HYPOTHESIS)
-    if evidence_basis not in {choice for choice, _label in EvidenceBasis.choices}:
-        evidence_basis = EvidenceBasis.HYPOTHESIS
+    evidence_basis = _enum_or_default(
+        option.get("evidence_basis"),
+        allowed={choice for choice, _label in EvidenceBasis.choices},
+        default=EvidenceBasis.HYPOTHESIS,
+    )
     allowed_types = {choice for choice, _label in SolutionOption.OptionType.choices}
-    option_type = str(option.get("option_type") or SolutionOption.OptionType.OTHER)
-    if option_type not in allowed_types:
-        option_type = SolutionOption.OptionType.OTHER
-    return {
+    option_type = _enum_or_default(
+        option.get("option_type"),
+        allowed=allowed_types,
+        default=SolutionOption.OptionType.OTHER,
+    )
+
+    payload: dict[str, Any] = {
         "name": str(option.get("name") or "").strip()[:200],
         "option_type": option_type,
         "description": str(option.get("description") or "").strip(),
@@ -195,6 +210,37 @@ def _option_payload(option: Mapping[str, Any]) -> dict[str, Any]:
         "evidence_basis": evidence_basis,
     }
 
+    if "feasibility" in option:
+        payload["feasibility"] = _enum_or_default(
+            option.get("feasibility"),
+            allowed={choice for choice, _label in SolutionOption.Effort.choices},
+            default=SolutionOption.Effort.NOT_ASSESSED,
+        )
+    if "integration_effort" in option:
+        payload["integration_effort"] = _enum_or_default(
+            option.get("integration_effort"),
+            allowed={choice for choice, _label in SolutionOption.Effort.choices},
+            default=SolutionOption.Effort.NOT_ASSESSED,
+        )
+    if "time_to_value" in option:
+        payload["time_to_value"] = _enum_or_default(
+            option.get("time_to_value"),
+            allowed={choice for choice, _label in TimeToValue.choices},
+            default=TimeToValue.NOT_ASSESSED,
+        )
+    if "technology_constraints" in option:
+        payload["technology_constraints"] = str(option.get("technology_constraints") or "").strip()
+
+    if option_type not in (
+        SolutionOption.fixed_ai_option_types() | SolutionOption.fixed_non_ai_option_types()
+    ):
+        if isinstance(option.get("contains_ai_component"), bool):
+            payload["contains_ai_component"] = bool(option["contains_ai_component"])
+        elif "non_ai" in option:
+            payload["contains_ai_component"] = not bool(option.get("non_ai"))
+
+    return payload
+
 
 def _current_domain_hash(process: ProcessAnalysis) -> str:
     options = [
@@ -204,6 +250,19 @@ def _current_domain_hash(process: ProcessAnalysis) -> str:
             "name": option.name,
             "description": option.description,
             "expected_value": option.expected_value,
+            "bottleneck_coverage": option.bottleneck_coverage,
+            "feasibility": option.feasibility,
+            "data_requirements": option.data_requirements,
+            "application_impact": option.application_impact,
+            "integration_effort": option.integration_effort,
+            "integration_impact": option.integration_impact,
+            "technology_constraints": option.technology_constraints,
+            "risks": option.risks,
+            "architecture_fit": option.architecture_fit,
+            "time_to_value": option.time_to_value,
+            "evidence_basis": option.evidence_basis,
+            "contains_ai_component": option.contains_ai_component,
+            "evaluation_status": option.evaluation_status,
             "recommendation": option.recommendation,
         }
         for option in process.solution_options.order_by("id")

@@ -9,18 +9,76 @@ from ki_radar.accelerator.investigation_models import InvestigationMaterializati
 from ki_radar.accelerator.solution_generation_entry import (
     build_solution_generation_entry_context,
 )
+from ki_radar.use_cases.ap2_decision_governance import (
+    AP2DecisionGovernanceError,
+    generate_ap2_decision_governance,
+)
+from ki_radar.use_cases.ap2_metric_pilot import (
+    AP2MetricPilotError,
+    generate_and_apply_ap2_metric_pilot,
+)
+from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
+from .ap2_architecture import AP2ArchitectureError, generate_ap2_architecture_inputs
 from .forms import SolutionSelectionForm
 from .models import ProcessAnalysis, SolutionOption
 from .permissions import can_edit_value_stream
+from .process_decision_presentation import suggested_confirmed_cause
 from .solution_retirement import retire_solution_option
 from .solution_selection import (
     comparison_blockers,
+    confirm_diagnosis_and_select_solution,
     diagnosis_readiness_blockers,
     focus_readiness_blockers,
     ordered_solution_options,
     select_preferred_solution,
 )
+
+
+def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
+    try:
+        use_case_result = create_use_case_from_selected_solution(
+            decision=decision,
+            actor=request.user,
+        )
+    except (PermissionDenied, ValidationError) as exc:
+        messages.warning(
+            request,
+            "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
+            f"Handoff benötigt noch Klärung: {exc}",
+        )
+        return
+
+    verb = "erzeugt" if use_case_result.created else "wiederverwendet"
+    messages.success(
+        request,
+        f"AI-Use-Case {use_case_result.use_case.short_id} wurde "
+        f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
+    )
+    use_case = use_case_result.use_case
+    if not use_case.ap2_planning_provenance:
+        try:
+            planning = generate_and_apply_ap2_metric_pilot(
+                use_case=use_case,
+                actor=request.user,
+            )
+        except (AP2MetricPilotError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Metrik-/Pilotentwurf ist noch offen: {exc}")
+        else:
+            messages.success(
+                request,
+                "Metrik- und Pilotentwurf wurde systemseitig vorbereitet "
+                f"({len(planning.changed_fields)} Felder ergänzt).",
+            )
+    if complete_ap2:
+        try:
+            generate_ap2_architecture_inputs(use_case=use_case, actor=request.user)
+        except (AP2ArchitectureError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Architecture-Advisor-Eingaben sind noch offen: {exc}")
+        try:
+            generate_ap2_decision_governance(use_case=use_case, actor=request.user)
+        except (AP2DecisionGovernanceError, PermissionDenied, ValidationError) as exc:
+            messages.warning(request, f"Entscheidungs-/Governance-Entwurf ist noch offen: {exc}")
 
 
 @login_required
@@ -50,7 +108,7 @@ def solution_option_compare(request, pk):
     selection_history = process_analysis.solution_selection_decisions.all()
     latest_selection = selection_history.first()
     latest_investigation_materialization = (
-        InvestigationMaterialization.objects.select_related("run")
+        InvestigationMaterialization.objects.select_related("run", "brief_revision")
         .filter(
             run__process_analysis=process_analysis,
             run__evidence_campaign__isnull=True,
@@ -59,9 +117,17 @@ def solution_option_compare(request, pk):
         .first()
     )
 
+    diagnosis_confirmation_required = diagnosis_blockers == ["bestätigte Ursache"]
+    confirmed_cause_candidate = suggested_confirmed_cause(
+        process_analysis=process_analysis,
+        latest_materialization=latest_investigation_materialization,
+    )
     form = SolutionSelectionForm(
         request.POST or None,
         options=options,
+        confirmed_causes_initial=confirmed_cause_candidate,
+        process_version=process_analysis.version,
+        require_diagnosis_confirmation=diagnosis_confirmation_required,
         initial={
             "selected_option": latest_selection.selected_option_id,
         }
@@ -71,26 +137,69 @@ def solution_option_compare(request, pk):
     if request.method == "POST":
         if not can_select:
             raise PermissionDenied
+        if request.POST.get("continue_ai_handoff") == "1":
+            if latest_selection is None or not latest_selection.selected_option.starts_ai_use_case:
+                raise PermissionDenied
+            _continue_selected_ai_solution(
+                request=request,
+                decision=latest_selection,
+                complete_ap2=True,
+            )
+            comparison_url = reverse(
+                "architecture:solution_option_compare",
+                kwargs={"pk": process_analysis.pk},
+            )
+            return redirect(f"{comparison_url}#selection-result")
         if form.is_valid():
             try:
-                select_preferred_solution(
-                    process_analysis=process_analysis,
-                    selected_option=form.cleaned_data["selected_option"],
-                    rationale=form.cleaned_data["rationale"],
-                    actor=request.user,
-                )
+                if diagnosis_confirmation_required:
+                    decision = confirm_diagnosis_and_select_solution(
+                        process_analysis=process_analysis,
+                        selected_option=form.cleaned_data["selected_option"],
+                        confirmed_causes=form.cleaned_data["confirmed_causes"],
+                        rationale=form.cleaned_data["rationale"],
+                        expected_process_version=form.cleaned_data["process_version"],
+                        actor=request.user,
+                    )
+                else:
+                    decision = select_preferred_solution(
+                        process_analysis=process_analysis,
+                        selected_option=form.cleaned_data["selected_option"],
+                        rationale=form.cleaned_data["rationale"],
+                        actor=request.user,
+                        expected_process_version=form.cleaned_data["process_version"],
+                    )
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
-                messages.success(
-                    request,
-                    "Die bevorzugte Lösungsoption wurde auditierbar ausgewählt.",
-                )
+                if decision.selected_option.starts_ai_use_case:
+                    _continue_selected_ai_solution(request=request, decision=decision)
+                else:
+                    messages.success(
+                        request,
+                        "Non-AI-Lösung verbindlich ausgewählt; es wurde bewusst kein "
+                        "KI-Use-Case erzeugt.",
+                    )
+                if diagnosis_confirmation_required:
+                    messages.success(
+                        request,
+                        "Kernbefund und bevorzugte Lösungsoption wurden auditierbar bestätigt.",
+                    )
                 comparison_url = reverse(
                     "architecture:solution_option_compare",
                     kwargs={"pk": process_analysis.pk},
                 )
                 return redirect(f"{comparison_url}#selection-result")
+
+    selected_use_case = None
+    if latest_selection is not None:
+        selected_origin = (
+            latest_selection.selected_option.use_case_origins.select_related("use_case")
+            .order_by("-created_at")
+            .first()
+        )
+        if selected_origin is not None:
+            selected_use_case = selected_origin.use_case
 
     return render(
         request,
@@ -101,13 +210,20 @@ def solution_option_compare(request, pk):
             "blockers": blockers,
             "diagnosis_blockers": diagnosis_blockers,
             "focus_blockers": focus_blockers,
-            "selection_blocked": bool(blockers or diagnosis_blockers or focus_blockers),
+            "selection_blocked": bool(
+                blockers
+                or focus_blockers
+                or (diagnosis_blockers and not diagnosis_confirmation_required)
+            ),
+            "diagnosis_confirmation_required": diagnosis_confirmation_required,
+            "confirmed_cause_candidate": confirmed_cause_candidate,
             "incomplete_options": incomplete_options,
             "needs_more_options": len(options) < 2,
             "form": form,
             "can_select": can_select,
             "selection_history": selection_history,
             "latest_selection": latest_selection,
+            "selected_use_case": selected_use_case,
             "latest_investigation_materialization": latest_investigation_materialization,
             **generation_entry,
         },

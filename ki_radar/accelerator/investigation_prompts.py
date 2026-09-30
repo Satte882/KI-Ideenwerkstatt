@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v18"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v15"
+LEGACY_SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
+LEGACY_SYNTHESIS_INSTRUCTION_HASH = (
+    "ba440dace644c62ea68489ecf5bc78e9093937131b77edb80cc9e765c7b35d48"
+)
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v7"
+LEGACY_VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
+LEGACY_VERIFIER_INSTRUCTION_HASH = (
+    "48ca272bd0cabfbb09101e299a097cedfafb3a8db0a63f4fa8f9f33926a76335"
+)
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
-SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
+SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v5"
+LEGACY_SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
 PLANNER_CLARIFICATION_REASONS = (
@@ -99,7 +108,10 @@ Verwende exakt die folgenden Feldnamen des Decision-Brief-Vertrags:
 question_scope={question,scope}, problem={statement,references}, hypotheses als Liste
 mit {statement,status,references,counterevidence_refs}, calculations als Liste mit
 {summary,reference,population,limits}, options als Liste mit
-{name,description,expected_value,option_type,non_ai,status_quo},
+{name,description,expected_value,option_type,non_ai,status_quo,
+bottleneck_coverage,feasibility,data_requirements,application_impact,
+integration_effort,integration_impact,technology_constraints,risks,
+architecture_fit,time_to_value,evidence_basis,contains_ai_component},
 recommendation={summary,rationale,references}, risks_unknowns als Liste und
 validation_step={step,measurement}. population ist ein Objekt, kein Freitext.
 calculations ist optional. Nimm dort nur reproduzierbare Analyseergebnisse auf, deren
@@ -108,9 +120,23 @@ Werkzeugresultaten ist. Eine reine Quellenreferenz mit source_id ist für calcul
 unzulässig. Wenn kein gültiges Analyseergebnis vorliegt, setze calculations=[] und erfinde
 weder Berechnung noch Analyse-Referenz.
 option_type ist ein gültiger Produkttyp wie no_tech, organizational oder generative_ai;
-non_ai und status_quo sind separate boolesche Felder. existing_solution_options enthält den
-beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag einen dort vorhandenen Kandidaten
-fachlich fortschreibt, übernimm dessen id exakt in existing_option_id; erfinde keine ID und
+non_ai und status_quo sind separate boolesche Felder. Die Vergleichseinordnung ist analytisch,
+keine menschliche Auswahl: feasibility und integration_effort sind low|medium|high;
+time_to_value ist unknown|short|medium|long; evidence_basis ist
+hypothesis|indicative|measured. Nutze measured nur für tatsächlich nachgewiesene oder gemessene
+Basis. Bei fehlender belastbarer Zeitbasis ist time_to_value=unknown zulässig. Eine qualitative
+Machbarkeits-/Aufwandseinschätzung darf als hypothesis gekennzeichnet werden und braucht keine
+erfundene Zahl. Erfinde insbesondere keine Kosten, Fristen, Prozentwerte oder Baselines.
+contains_ai_component folgt dem fachlichen Lösungstyp; bei organizational, rule_automation,
+standard_software und no_tech ist es false, bei analytics_ml, generative_ai und assistant true.
+Bei custom_software, hybrid oder other entscheide es aus der tatsächlich beschriebenen
+Lösungskomponente und halte Unsicherheit in risks/technology_constraints sichtbar.
+technology_constraints beschreibt belegte oder als Annahme erkennbare technische Leitplanken;
+fehlende Leitplanken dürfen nicht als bestätigte Abwesenheit erfunden werden.
+Diese Felder dürfen keine Rangfolge oder recommendation=PREFERRED vorwegnehmen.
+existing_solution_options enthält den beim Run-Start eingefrorenen Lösungsraum. Wenn ein Vorschlag
+einen dort vorhandenen Kandidaten fachlich fortschreibt, übernimm dessen id exakt in
+existing_option_id; erfinde keine ID und
 verwende keine bestehende ID für eine tatsächlich neue Option. Eine neue Formulierung oder
 Präzisierung eines bestehenden Kandidaten macht ihn nicht automatisch zu einer neuen Option.
 Gib die aktuelle Entscheidungsfrage im Feld question exakt wieder.
@@ -245,6 +271,13 @@ Evidenz für die bereits erfolgte Durchführung des Validation Plans.
 Prüfe insbesondere, ob Aussagen als bestätigte Daten, berichtete Meinung, Hypothese oder
 unbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob
 vorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.
+Wenn Lösungsoptionen bereits feasibility, integration_effort, time_to_value, evidence_basis,
+technology_constraints oder contains_ai_component enthalten, prüfe deren innere Konsistenz und
+ob die Aussagekraft zur Evidenzbasis passt. Qualitative Einschätzungen mit
+evidence_basis=hypothesis sind zulässig; fehlende Vergleichsfelder allein sind kein kritischer
+Investigation-Fehler und dürfen READY nicht blockieren. Kritisch ist dagegen eine erfundene
+Zahl, eine als gemessen ausgegebene unbelegte Einordnung oder eine widersprüchliche
+AI-/Non-AI-Klassifikation, wenn sie die Empfehlung materiell verzerrt.
 Prüfe auch die Formulierungsstärke: Wenn die Quellen nur „am stärksten gestützt“,
 „bevorzugter Kandidat“, Pilot- oder Prüfvorbehalte tragen, darf der Brief daraus nicht
 „beste“, „optimale“ oder „eindeutig richtige“ Lösung machen. Eine solche unbelegte

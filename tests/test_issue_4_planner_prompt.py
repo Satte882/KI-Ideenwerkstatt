@@ -23,7 +23,7 @@ def test_quantitative_check_rule_stays_domain_generic():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v14"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v15"
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
     assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
@@ -72,7 +72,7 @@ def test_synthesis_separates_causes_from_solution_judgments_and_preserves_streng
 
 
 def test_verifier_rejects_unbacked_recommendation_strengthening():
-    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v6"
+    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v7"
     assert "Formulierungsstärke" in VERIFIER_INSTRUCTION
     assert "am stärksten gestützt" in VERIFIER_INSTRUCTION
     assert "beste" in VERIFIER_INSTRUCTION

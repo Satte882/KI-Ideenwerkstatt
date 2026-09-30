@@ -9,11 +9,13 @@ from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
 
+from ki_radar.accelerator.role_defaults import resolve_use_case_business_owner
 from ki_radar.accounts.permissions import (
     GROUP_COORDINATOR,
     GROUP_TECH_ADMIN,
     is_coordinator,
 )
+from ki_radar.core.taxonomy import BusinessDomain
 from ki_radar.delivery.handover import recorded_handover_package
 from ki_radar.governance.services import (
     current_governance_status,
@@ -24,6 +26,273 @@ from ki_radar.governance.services import (
 
 from .models import ApprovalDecision, DecisionAssessment, UseCase
 from .transition_policy import APPROVED_DECISION_STATUSES
+
+
+@dataclass(frozen=True)
+class SelectedSolutionUseCaseResult:
+    use_case: UseCase
+    created: bool
+
+
+def persist_optional_origin(*, candidate: UseCase, stored: dict) -> None:
+    source_stage_id = stored.get("source_stage_id")
+    source_process_id = stored.get("source_process_analysis_id")
+    selected_process_id = stored.get("process_analysis")
+    source_option_id = stored.get("source_solution_option_id")
+    if not any((source_stage_id, source_process_id, selected_process_id, source_option_id)):
+        return
+
+    from ki_radar.architecture.models import (
+        ProcessAnalysis,
+        SolutionOption,
+        UseCaseOrigin,
+        ValueStreamStage,
+    )
+    from ki_radar.architecture.provenance import build_use_case_source_snapshot
+
+    stage = None
+    process_analysis = None
+
+    if source_process_id:
+        process_analysis = (
+            ProcessAnalysis.objects.select_related("stage__value_stream")
+            .filter(pk=source_process_id)
+            .first()
+        )
+        if process_analysis is None:
+            raise ValidationError(
+                "Der aus Discovery übernommene Ursprungsprozess ist nicht mehr verfügbar."
+            )
+        stage = process_analysis.stage
+        if source_stage_id and str(stage.pk) != str(source_stage_id):
+            raise ValidationError(
+                "Der Discovery-Ursprungsprozess gehört nicht mehr zur erwarteten "
+                "Value-Stream-Phase."
+            )
+    elif selected_process_id:
+        process_analysis = (
+            ProcessAnalysis.objects.select_related("stage__value_stream")
+            .filter(pk=selected_process_id)
+            .first()
+        )
+        if process_analysis is None:
+            raise ValidationError("Der gewählte Ursprungsprozess ist nicht mehr verfügbar.")
+        stage = process_analysis.stage
+        if source_stage_id and str(stage.pk) != str(source_stage_id):
+            raise ValidationError(
+                "Der gewählte Ursprungsprozess gehört nicht zur Discovery-Phase dieses Intake."
+            )
+    elif source_stage_id:
+        stage = (
+            ValueStreamStage.objects.select_related("value_stream")
+            .filter(pk=source_stage_id)
+            .first()
+        )
+        if stage is None:
+            raise ValidationError(
+                "Die aus Discovery übernommene Value-Stream-Phase ist nicht mehr verfügbar."
+            )
+
+    if stage is None:
+        raise ValidationError("Der Ursprung des Use Cases ist nicht konsistent auflösbar.")
+    if stage.value_stream.business_unit_id != candidate.business_unit_id:
+        raise ValidationError(
+            "Der Ursprungsprozess gehört nicht zur gewählten Organisationseinheit. "
+            "Bitte prüfen Sie Prozess und Organisationseinheit."
+        )
+    if process_analysis is not None and candidate.affected_process != process_analysis.name:
+        raise ValidationError(
+            "Der betroffene Prozess stimmt nicht mit dem gewählten Ursprungsprozess überein."
+        )
+
+    solution_option = None
+    if source_option_id:
+        if process_analysis is None:
+            raise ValidationError(
+                "Die Discovery-Lösungsoption kann ohne Ursprungsprozess nicht übernommen werden."
+            )
+        solution_option = SolutionOption.objects.filter(
+            pk=source_option_id,
+            process_analysis=process_analysis,
+        ).first()
+        if solution_option is None:
+            raise ValidationError(
+                "Die aus Discovery übernommene Lösungsoption gehört nicht mehr zum "
+                "Ursprungsprozess."
+            )
+
+    UseCaseOrigin.objects.create(
+        use_case=candidate,
+        stage=stage,
+        process_analysis=process_analysis,
+        solution_option=solution_option,
+        source_snapshot=build_use_case_source_snapshot(
+            stage=stage,
+            process_analysis=process_analysis,
+            solution_option=solution_option,
+        ),
+    )
+
+
+@transaction.atomic
+def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSolutionUseCaseResult:
+    from ki_radar.architecture.models import (
+        SolutionOption,
+        SolutionSelectionDecision,
+        UseCaseOrigin,
+    )
+
+    from .permissions import can_create_use_case
+
+    if not can_create_use_case(actor):
+        raise PermissionDenied("Für die Use-Case-Erzeugung fehlt die Berechtigung.")
+
+    locked_decision = (
+        SolutionSelectionDecision.objects.select_for_update(of=("self",))
+        .select_related(
+            "selected_option",
+            "process_analysis__stage__value_stream__business_unit",
+            "process_analysis__stage__value_stream__focus",
+            "process_analysis__stage__value_stream__owner",
+        )
+        .get(pk=decision.pk)
+    )
+    option = locked_decision.selected_option
+    process = locked_decision.process_analysis
+    stage = process.stage
+    value_stream = stage.value_stream
+
+    if locked_decision.process_version != process.version:
+        raise ValidationError(
+            "Der Prozessstand wurde seit der Lösungsentscheidung geändert. "
+            "Der direkte AI-Use-Case-Handoff benötigt eine aktuelle menschliche Auswahl."
+        )
+    selected_snapshot = next(
+        (
+            item
+            for item in locked_decision.comparison_snapshot
+            if isinstance(item, dict) and item.get("id") == str(option.pk)
+        ),
+        None,
+    )
+    snapshot_fields = (
+        "name",
+        "option_type",
+        "evaluation_status",
+        "evidence_basis",
+        "description",
+        "expected_value",
+        "time_to_value",
+        "bottleneck_coverage",
+        "feasibility",
+        "data_requirements",
+        "application_impact",
+        "integration_effort",
+        "integration_impact",
+        "technology_constraints",
+        "risks",
+        "architecture_fit",
+    )
+    if (
+        selected_snapshot is None
+        or any(
+            selected_snapshot.get(field_name) != getattr(option, field_name)
+            for field_name in snapshot_fields
+        )
+        or selected_snapshot.get("contains_ai_component") != option.starts_ai_use_case
+    ):
+        raise ValidationError(
+            "Der Lösungsstand wurde seit der menschlichen Auswahl geändert. "
+            "Der direkte AI-Use-Case-Handoff benötigt eine aktuelle Auswahl."
+        )
+
+    if option.recommendation != SolutionOption.Recommendation.PREFERRED:
+        raise ValidationError(
+            "Nur die menschlich bevorzugte Lösungsoption darf weitergeführt werden."
+        )
+    if not option.starts_ai_use_case:
+        raise ValidationError("Die bevorzugte Lösung enthält keine KI-Komponente.")
+
+    existing_origins = list(
+        UseCaseOrigin.objects.select_for_update()
+        .select_related("use_case")
+        .filter(process_analysis=process, solution_option=option)
+        .order_by("created_at")
+    )
+    if len(existing_origins) > 1:
+        raise ValidationError(
+            "Für die ausgewählte Lösungsoption existieren mehrere Use-Case-Ursprünge. "
+            "Die automatische Fortsetzung bleibt konfliktgeschützt."
+        )
+    if existing_origins:
+        return SelectedSolutionUseCaseResult(
+            use_case=existing_origins[0].use_case,
+            created=False,
+        )
+
+    owner_resolution = resolve_use_case_business_owner(value_stream=value_stream)
+    if not owner_resolution.has_user:
+        raise ValidationError(
+            "Für den AI-Use-Case ist kein eindeutiger zulässiger Business Owner ableitbar."
+        )
+    business_owner = get_user_model().objects.get(pk=owner_resolution.user_id)
+
+    solution_type_map = {
+        SolutionOption.OptionType.RULE_AUTOMATION: UseCase.SolutionType.AUTOMATION,
+        SolutionOption.OptionType.STANDARD_SOFTWARE: UseCase.SolutionType.STANDARD,
+        SolutionOption.OptionType.CUSTOM_SOFTWARE: UseCase.SolutionType.CUSTOM,
+        SolutionOption.OptionType.ANALYTICS_ML: UseCase.SolutionType.ANALYTICS,
+        SolutionOption.OptionType.GENERATIVE_AI: UseCase.SolutionType.GENERATIVE,
+        SolutionOption.OptionType.ASSISTANT: UseCase.SolutionType.ASSISTANT,
+    }
+    use_case = UseCase(
+        title=option.name,
+        summary=option.description,
+        problem_statement=process.diagnostic_observations or process.bottlenecks,
+        business_unit=value_stream.business_unit,
+        affected_process=process.name,
+        target_users=process.roles,
+        submitter=actor,
+        business_owner=business_owner,
+        decision_status=UseCase.DecisionStatus.READY,
+        solution_type=solution_type_map.get(option.option_type, UseCase.SolutionType.OTHER),
+        hosting_type=UseCase.HostingType.UNKNOWN,
+        source_systems=process.systems,
+        data_sources=option.data_requirements or process.data_objects,
+        interface_description=option.integration_impact,
+        intended_users=process.roles,
+        intended_purpose=option.description,
+        expected_benefit=option.expected_value,
+        human_oversight=(
+            "Fachliche Entscheidung, Freigabe sowie Pilot- und Go-live-Verantwortung "
+            "bleiben beim Menschen."
+        ),
+    )
+    focus = getattr(value_stream, "focus", None)
+    use_case._classification_payload = {
+        "business_domain": (focus.business_domain if focus is not None else BusinessDomain.OTHER),
+        "capability": focus.capability if focus is not None else "",
+        "process_area": process.name,
+    }
+    blockers = intake_blockers(use_case)
+    if blockers:
+        raise ValidationError(
+            "Der direkte Use-Case-Handoff ist unvollständig: " + ", ".join(blockers)
+        )
+
+    use_case.full_clean()
+    use_case._history_user = actor
+    use_case.save()
+    persist_optional_origin(
+        candidate=use_case,
+        stored={
+            "source_stage_id": str(stage.pk),
+            "source_process_analysis_id": str(process.pk),
+            "source_solution_option_id": str(option.pk),
+        },
+    )
+    return SelectedSolutionUseCaseResult(use_case=use_case, created=True)
+
 
 PILOT_STATUS_BLOCKER = "Lifecycle-Status Prüfung"
 PILOT_PACKAGE_BLOCKER = "Aktuelles Delivery Package"

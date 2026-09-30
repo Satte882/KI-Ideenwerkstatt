@@ -7,11 +7,6 @@ from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ki_radar.accelerator.investigation_models import InvestigationMaterialization
-from ki_radar.accounts.permissions import (
-    GROUP_COORDINATOR,
-    in_group,
-    is_technical_admin,
-)
 from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.permissions import can_create_use_case
@@ -39,7 +34,11 @@ from .models import (
     WorkDesignAssessment,
     WorkDesignTask,
 )
-from .permissions import can_edit_value_stream, can_manage_architecture
+from .permissions import (
+    can_edit_value_stream,
+    can_manage_architecture,
+    process_validator_role,
+)
 from .process_decision_presentation import build_process_decision_surface
 from .provenance import build_process_source_snapshot, source_differences
 from .work_design import (
@@ -92,14 +91,6 @@ PROCESS_VALIDATION_FIELDS = {
     "exceptions",
     "baseline_metrics",
 }
-
-
-def _validator_role(user) -> str:
-    if is_technical_admin(user):
-        return "Technischer Administrator"
-    if in_group(user, GROUP_COORDINATOR):
-        return "KI-Koordinator"
-    return "Business Owner"
 
 
 def _can_edit_process(user, process_analysis: ProcessAnalysis) -> bool:
@@ -519,7 +510,7 @@ def process_analysis_validate(request, pk):
             process_analysis=process_analysis,
             process_version=process_analysis.version,
             validated_by=request.user,
-            validator_role=_validator_role(request.user),
+            validator_role=process_validator_role(request.user),
             note=form.cleaned_data["note"],
             evidence_url=form.cleaned_data["evidence_url"],
         )

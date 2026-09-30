@@ -11,8 +11,9 @@ from ki_radar.architecture.models import (
     ValueStreamStage,
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
-from ki_radar.use_cases.intake_views import SESSION_KEY, _persist_optional_origin
+from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
+from ki_radar.use_cases.services import persist_optional_origin
 
 
 @pytest.fixture
@@ -142,7 +143,7 @@ def test_optional_origin_is_persisted_only_for_valid_stage(
         expected_benefit="Durchlaufzeit reduzieren",
     )
 
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={"source_stage_id": str(value_stream_stage.pk)},
     )
@@ -159,7 +160,7 @@ def test_optional_origin_is_persisted_only_for_valid_stage(
         submitter=owner,
         expected_benefit="Qualität verbessern",
     )
-    _persist_optional_origin(candidate=direct_use_case, stored={})
+    persist_optional_origin(candidate=direct_use_case, stored={})
     with pytest.raises(ObjectDoesNotExist):
         _ = direct_use_case.architecture_origin
 
@@ -310,7 +311,7 @@ def test_use_case_origin_stores_snapshot_and_shows_later_source_diff(
         submitter=owner,
         expected_benefit="Auswahl beschleunigen",
     )
-    _persist_optional_origin(
+    persist_optional_origin(
         candidate=use_case,
         stored={"source_stage_id": str(value_stream_stage.pk)},
     )

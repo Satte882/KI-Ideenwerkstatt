@@ -12,6 +12,7 @@
     <p class="cr-work-header__summary">Bewertung und Entscheidung sind personell getrennt. Positive Entscheidungen werden zusätzlich gegen Pflicht-Evidenz und Governance-Prüfungen validiert.</p>
   </div>
 </header>
+{% if use_case.architecture_origin %}<p><a href="{% url 'use_cases:ap2_decision_surface' use_case.pk %}">Konsolidierte Entscheidungsgrundlage vor Freigabe prüfen</a></p>{% endif %}
 {% include "includes/status_dimensions.html" %}
 
 <div class="app-card mb-4" id="governance-artifacts">
@@ -25,7 +26,7 @@
   <div class="card-header"><strong>Rollen und Personentrennung</strong><div class="small text-muted mt-1">Eine Checkbox oder ein Rollenwechsel derselben Person ersetzt keine unabhängige Entscheidung.</div></div>
   <div class="card-body">
     <div class="row g-3">
-      <div class="col-md-6 col-xl-3"><div class="section-title">Bewertende Person</div><strong>{% if assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}Nicht dokumentiert{% endif %}</strong><div class="small text-muted">Assessment v{{ assessment.version }}</div></div>
+      <div class="col-md-6 col-xl-3"><div class="section-title">Bewertung</div><strong>{% if assessment.ap2_provenance %}Systemgenerierte Analyse{% elif assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}Nicht dokumentiert{% endif %}</strong><div class="small text-muted">Assessment v{{ assessment.version }}</div></div>
       <div class="col-md-6 col-xl-3"><div class="section-title">Business Owner</div><strong>{% if use_case.business_owner %}{{ use_case.business_owner.get_display_name }}{% else %}Nicht zugewiesen{% endif %}</strong><div class="small text-muted">Fachliche Verantwortung</div></div>
       <div class="col-md-6 col-xl-3"><div class="section-title">Zugewiesene KI-Koordination</div><strong>{% if use_case.coordinator %}{{ use_case.coordinator.get_display_name }}{% else %}Nicht zugewiesen{% endif %}</strong><div class="small text-muted">Koordination des Entscheidungswegs</div></div>
       <div class="col-md-6 col-xl-3"><div class="section-title">Aktuell entscheidende Person</div><strong>{{ deciding_actor.get_display_name }}</strong><div class="small text-muted">Angemeldete, ausführende Person</div></div>
@@ -73,7 +74,7 @@
           <div class="small text-muted mt-1">Vorschlag aus der Bewertung; noch keine verbindliche Entscheidung.</div>
         </div>
         <dl class="row mb-0 small">
-          <dt class="col-6 text-muted">Bewertende Person</dt><dd class="col-6">{% if assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}–{% endif %}</dd>
+          <dt class="col-6 text-muted">Bewertung</dt><dd class="col-6">{% if assessment.ap2_provenance %}Systemgenerierte Analyse{% elif assessment.assessed_by %}{{ assessment.assessed_by.get_display_name }}{% else %}–{% endif %}</dd>
           <dt class="col-6 text-muted">Wirtschaftlicher Nutzen</dt><dd class="col-6">{{ assessment.get_business_value_display }}</dd>
           <dt class="col-6 text-muted">Strategischer Beitrag</dt><dd class="col-6">{{ assessment.get_strategic_fit_display }}</dd>
           <dt class="col-6 text-muted">Technische Machbarkeit</dt><dd class="col-6">{{ assessment.get_technical_feasibility_display }}</dd>

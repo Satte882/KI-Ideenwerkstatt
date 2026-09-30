@@ -100,6 +100,27 @@ def test_first_wave_task_policies_are_explicit_and_separate():
 
 
 @override_settings(**TASK_SETTINGS)
+def test_ap2_preparation_has_its_own_provider_timeout(monkeypatch):
+    for setting in (
+        "LLM_AP2_METRIC_PILOT_TIMEOUT_SECONDS",
+        "LLM_AP2_ARCHITECTURE_TIMEOUT_SECONDS",
+        "LLM_AP2_DECISION_GOVERNANCE_TIMEOUT_SECONDS",
+    ):
+        monkeypatch.delenv(setting, raising=False)
+
+    assert get_llm_task_policy("delivery_field_draft").timeout_seconds == 60
+    for task_type in (
+        "ap2_metric_pilot_draft",
+        "ap2_architecture_inputs",
+        "ap2_decision_governance_draft",
+    ):
+        assert get_llm_task_policy(task_type).timeout_seconds == 120
+
+    monkeypatch.setenv("LLM_AP2_ARCHITECTURE_TIMEOUT_SECONDS", "75")
+    assert get_llm_task_policy("ap2_architecture_inputs").timeout_seconds == 75
+
+
+@override_settings(**TASK_SETTINGS)
 def test_unknown_task_type_fails_closed():
     with pytest.raises(LLMConfigurationError, match="Unbekannter LLM-Task"):
         get_llm_task_policy("generic_chat")

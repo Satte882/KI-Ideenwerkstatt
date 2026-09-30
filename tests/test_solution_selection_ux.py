@@ -1,3 +1,6 @@
+import json
+from types import SimpleNamespace
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -13,6 +16,9 @@ from ki_radar.architecture.models import (
 )
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
+from ki_radar.use_cases.ap2_decision_governance import GOVERNANCE_FIELDS
+from ki_radar.use_cases.ap2_metric_pilot import AP2MetricPilotError
+from ki_radar.use_cases.models import UseCase
 
 
 def make_process(owner, business_unit):
@@ -150,6 +156,7 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     response = client.post(
         url,
         {
+            "process_version": process.version,
             "selected_option": assistant.pk,
             "rationale": "Die Assistenz deckt den Engpass besser ab.",
         },
@@ -161,12 +168,362 @@ def test_preferred_selection_returns_to_visible_result(client, owner, business_u
     assistant.refresh_from_db()
     assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
     assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+    use_case = UseCase.objects.get()
 
     content = client.get(url).content.decode()
     assert "Aktuell bevorzugt: KI-Assistenz" in content
     assert "Die Entscheidung ist in der Auswahlhistorie auditierbar." in content
+    assert use_case.short_id in content
+    assert "direkt aus der bestätigten Lösungsentscheidung erzeugt" in content
     selected_value = client.get(url).context["form"]["selected_option"].value()
     assert str(selected_value) == str(assistant.pk)
+
+
+@pytest.mark.django_db
+def test_failed_metric_draft_can_resume_without_second_solution_decision(
+    client,
+    owner,
+    business_unit,
+    monkeypatch,
+):
+    process = make_process(owner, business_unit)
+    make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    attempts = 0
+
+    def draft(*, use_case, actor):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise AP2MetricPilotError("Provider vorübergehend nicht verfügbar.", code="provider")
+        use_case.ap2_planning_provenance = {"generated_by": "system"}
+        use_case.save(update_fields=["ap2_planning_provenance", "updated_at"])
+        return SimpleNamespace(changed_fields=("metric_name",))
+
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_and_apply_ap2_metric_pilot",
+        draft,
+    )
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_ap2_architecture_inputs",
+        lambda **_kwargs: None,
+    )
+
+    def governance_draft(*, use_case, actor):
+        use_case.ap2_governance_draft = {"generated_by": "system", "facts": {}}
+        use_case.save(update_fields=["ap2_governance_draft", "updated_at"])
+
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_ap2_decision_governance",
+        governance_draft,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    first = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz deckt den Engpass ab.",
+        },
+    )
+    assert first.status_code == 302
+    use_case = UseCase.objects.get()
+    assert use_case.ap2_planning_provenance == {}
+    assert process.solution_selection_decisions.count() == 1
+    assert (
+        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
+    )
+
+    retry = client.post(url, {"continue_ai_handoff": "1"})
+    assert retry.status_code == 302
+    use_case.refresh_from_db()
+    assert use_case.ap2_planning_provenance["generated_by"] == "system"
+    assert process.solution_selection_decisions.count() == 1
+    assert UseCase.objects.count() == 1
+    assert attempts == 2
+    assert (
+        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
+    )
+
+
+@pytest.mark.django_db
+def test_selected_ai_solution_continues_to_architecture_assessment_and_decision_surface(
+    client, owner, business_unit, monkeypatch
+):
+    process = make_process(owner, business_unit)
+    make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+
+    def metric_draft(*, use_case, actor):
+        use_case.ap2_planning_provenance = {"generated_by": "system"}
+        use_case.save(update_fields=["ap2_planning_provenance", "updated_at"])
+        return SimpleNamespace(changed_fields=())
+
+    monkeypatch.setattr(
+        "ki_radar.architecture.solution_views.generate_and_apply_ap2_metric_pilot",
+        metric_draft,
+    )
+    architecture_answers = {
+        name: {
+            "value": value,
+            "source_ids": ["SO.description"],
+            "rationale": "Aus dem Lösungsfall abgeleitet.",
+        }
+        for name, value in {
+            "simpler_solution_sufficient": "no",
+            "semantic_reasoning_required": "yes",
+            "multiple_known_ai_steps_required": "no",
+            "dynamic_orchestration_required": "no",
+        }.items()
+    }
+    monkeypatch.setattr(
+        "ki_radar.architecture.ap2_architecture.request_llm_task_provider",
+        lambda _prepared, **_kwargs: SimpleNamespace(content=json.dumps(architecture_answers)),
+    )
+    assessment_values = {
+        "business_value": "medium",
+        "strategic_fit": "medium",
+        "technical_feasibility": "medium",
+        "data_readiness": "medium",
+        "risk_complexity": "medium",
+        "evidence_recency": "limited",
+        "evidence_coverage": "limited",
+        "independent_review": "critical",
+        "assumptions_resolved": "limited",
+        "recommendation": "deferred",
+        "rationale": "present",
+    }
+    decision_payload = {
+        "assessment": {
+            name: {
+                "value": value,
+                "source_ids": ["UC.problem"],
+                "rationale": "Konservative Analyse des Falles.",
+            }
+            for name, value in assessment_values.items()
+        },
+        "governance": {
+            name: {
+                "value": "unknown",
+                "source_ids": ["UC.problem"],
+                "rationale": "Nicht sicher belegt.",
+                "evidence_quote": "",
+            }
+            for name in GOVERNANCE_FIELDS
+        },
+    }
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_decision_governance.request_llm_task_provider",
+        lambda _prepared, **_kwargs: SimpleNamespace(content=json.dumps(decision_payload)),
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    selected = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz deckt den Engpass besser ab.",
+        },
+    )
+    assert selected.status_code == 302
+    continued = client.post(url, {"continue_ai_handoff": "1"})
+    assert continued.status_code == 302
+    use_case = UseCase.objects.get()
+    assert assistant.architecture_assessment.architecture_mode == "controlled_llm"
+    assert use_case.decision_assessments.count() == 1
+    assert use_case.ap2_governance_draft["generated_by"] == "system"
+    surface = client.get(reverse("use_cases:ap2_decision_surface", args=[use_case.pk]))
+    assert surface.status_code == 200
+    content = surface.content.decode()
+    assert "Controlled LLM" in content
+    assert "Systemgenerierte Analyse" in content
+    assert "Governance-Entwurf vorhanden" in content
+
+
+@pytest.mark.django_db
+def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    process.confirmed_causes = ""
+    process.status = ProcessAnalysis.Status.REVIEW_REQUIRED
+    process.save(update_fields=["confirmed_causes", "status", "updated_at"])
+    reviewed_version = process.version
+    organizational = make_option(
+        process,
+        owner,
+        name="Organisation",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    assistant = make_option(
+        process,
+        owner,
+        name="Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+
+    response = client.get(url)
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert response.context["selection_blocked"] is False
+    assert response.context["diagnosis_confirmation_required"] is True
+    assert 'data-testid="combined-diagnosis-selection"' in content
+    assert "Kernbefund fachlich bestätigen" in content
+    assert "Diagnose bestätigen und bevorzugte Option auswählen" in content
+    assert reverse("architecture:process_analysis_update", args=[process.pk]) not in content
+
+    response = client.post(
+        url,
+        {
+            "process_version": reviewed_version,
+            "confirmed_causes": (
+                "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten."
+            ),
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz adressiert die verbleibende Extraktionsarbeit.",
+        },
+    )
+
+    assert response.status_code == 302
+    process.refresh_from_db()
+    organizational.refresh_from_db()
+    assistant.refresh_from_db()
+    assert process.confirmed_causes == (
+        "Manuelle Übertragung entsteht durch unstrukturierte Eingangsdaten."
+    )
+    assert process.version == reviewed_version + 1
+    assert process.validations.filter(process_version=process.version).exists()
+    assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
+    assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+
+
+@pytest.mark.django_db
+def test_non_ai_preferred_selection_is_visible_end_state_without_use_case(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    organizational = make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+
+    response = client.post(
+        url,
+        {
+            "process_version": process.version,
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Lösung reicht fachlich aus.",
+        },
+    )
+
+    assert response.status_code == 302
+    assert not UseCase.objects.exists()
+    content = client.get(url).content.decode()
+    assert "gültiger Non-AI-Endzustand" in content
+    assert "kein KI-Use-Case erzeugt" in content
+
+
+@pytest.mark.django_db
+def test_selection_rejects_stale_process_after_page_was_opened(
+    client,
+    owner,
+    business_unit,
+):
+    process = make_process(owner, business_unit)
+    organizational = make_option(
+        process,
+        owner,
+        name="Vorlage standardisieren",
+        option_type=SolutionOption.OptionType.ORGANIZATIONAL,
+        assessed=True,
+    )
+    make_option(
+        process,
+        owner,
+        name="KI-Assistenz",
+        option_type=SolutionOption.OptionType.ASSISTANT,
+        assessed=True,
+    )
+    client.force_login(owner)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    response = client.get(url)
+    reviewed_version = response.context["form"]["process_version"].value()
+    assert 'name="process_version"' in response.content.decode()
+
+    ProcessAnalysis.objects.filter(pk=process.pk).update(
+        version=process.version + 1,
+        diagnostic_observations="Der fachliche Befund wurde inzwischen korrigiert.",
+    )
+    response = client.post(
+        url,
+        {
+            "process_version": reviewed_version,
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Änderung deckt den Engpass ab.",
+        },
+    )
+
+    assert response.status_code == 200
+    assert not process.solution_selection_decisions.exists()
+    organizational.refresh_from_db()
+    assert organizational.recommendation == SolutionOption.Recommendation.CANDIDATE
+
+    missing_version = client.post(
+        url,
+        {
+            "selected_option": organizational.pk,
+            "rationale": "Die organisatorische Änderung deckt den Engpass ab.",
+        },
+    )
+    assert missing_version.status_code == 200
+    assert not process.solution_selection_decisions.exists()
 
 
 @pytest.mark.django_db
