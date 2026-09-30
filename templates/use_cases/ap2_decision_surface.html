@@ -50,7 +50,7 @@
   <div class="card-header"><h2 class="h5 mb-0" id="value-title">Nutzen, Messung und Pilot</h2></div>
   <div class="card-body">
     <p><strong>Nutzenhypothese:</strong> {{ use_case.expected_benefit }}</p>
-    <p><strong>Erfolgsmetrik:</strong> {{ use_case.metric_name|default:"Noch offen" }}{% if use_case.metric_unit %} ({{ use_case.metric_unit }}){% endif %} · {{ use_case.metric_measurement_method|default:"Messmethode offen" }}</p>
+    <p><strong>Erfolgsmetrik:</strong> {{ use_case.metric_name|default:"Noch offen" }}{% if use_case.metric_unit %} ({{ use_case.metric_unit }}){% elif use_case.metric_name %} (Einheit noch offen){% endif %} · {{ use_case.metric_measurement_method|default:"Messmethode offen" }}</p>
     <p><strong>Baseline/Ziel:</strong> {% if use_case.metric_baseline is not None %}{{ use_case.metric_baseline }}{% else %}unbekannt{% endif %} / {% if use_case.metric_target is not None %}{{ use_case.metric_target }}{% else %}unbekannt{% endif %}</p>
     <p><strong>Messpopulation und Zeitraum:</strong> {{ use_case.metric_measurement_population|default:"offen" }} · {{ use_case.metric_measurement_period|default:"offen" }}</p>
     <p><strong>Kleinster Pilot:</strong> {{ use_case.pilot_scope|default:"Noch offen" }}</p>

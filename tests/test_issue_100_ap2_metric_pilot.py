@@ -590,6 +590,34 @@ def test_grounded_metric_pilot_draft_fills_only_non_numeric_plan_fields(
     assert LLMTaskRun.objects.get(pk=result.run_id).status == LLMTaskRun.Status.SUCCESS
 
 
+def test_metric_pilot_does_not_persist_verbose_clipped_unit(
+    owner, business_unit, monkeypatch, client
+):
+    use_case = _ai_use_case(owner, business_unit)
+    payload = _payload()
+    payload["metric_unit"]["value"] = (
+        "Zeit pro abgeschlossenem Prüf- und Aktualisierungsvorgang; qualitativ zu erfass"
+    )
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+
+    result = generate_and_apply_ap2_metric_pilot(use_case=use_case, actor=owner)
+
+    use_case.refresh_from_db()
+    assert use_case.metric_unit == ""
+    assert "metric_unit" not in result.changed_fields
+    assert "Einheit der Erfolgsmetrik ist im Systementwurf zu präzisieren." in result.unknowns
+    assert use_case.metric_name
+    assert use_case.metric_measurement_method
+    client.force_login(owner)
+    assert (
+        "Einheit noch offen"
+        in client.get(f"{use_case.get_absolute_url()}ap2-decision/").content.decode()
+    )
+
+
 def test_existing_metric_values_and_numeric_evidence_are_never_overwritten(
     owner,
     business_unit,
@@ -618,6 +646,54 @@ def test_existing_metric_values_and_numeric_evidence_are_never_overwritten(
     assert use_case.metric_name == "Manuell bestätigte Durchlaufzeit"
     assert use_case.metric_baseline == Decimal("12.5")
     assert use_case.metric_target == Decimal("10")
+
+
+def test_metric_unit_resume_keeps_metric_definition_and_field_provenance(
+    owner, business_unit, monkeypatch
+):
+    use_case = _ai_use_case(owner, business_unit)
+    payload = _payload()
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+    original = generate_and_apply_ap2_metric_pilot(use_case=use_case, actor=owner)
+    use_case.refresh_from_db()
+    use_case.metric_unit = ""
+    use_case.save(update_fields=["metric_unit", "updated_at"])
+    original_provenance = use_case.ap2_planning_provenance
+
+    different_metric = _payload()
+    different_metric["metric_name"]["value"] = "Trefferquote für Klauselabweichungen"
+    different_metric["metric_type"]["value"] = UseCase.MetricType.PERCENT
+    different_metric["metric_unit"]["value"] = "Prozent"
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(different_metric),
+    )
+    skipped = generate_and_apply_ap2_metric_pilot(use_case=use_case, actor=owner)
+    use_case.refresh_from_db()
+    assert skipped.changed_fields == ()
+    assert use_case.metric_unit == ""
+    assert use_case.ap2_planning_provenance == original_provenance
+
+    compatible_metric = _payload()
+    compatible_metric["metric_unit"]["value"] = "Sekunden"
+    monkeypatch.setattr(
+        "ki_radar.use_cases.ap2_metric_pilot.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(compatible_metric),
+    )
+    resumed = generate_and_apply_ap2_metric_pilot(use_case=use_case, actor=owner)
+    use_case.refresh_from_db()
+    assert resumed.changed_fields == ("metric_unit",)
+    assert use_case.metric_unit == "Sekunden"
+    assert (
+        use_case.ap2_planning_provenance["field_sources"]["metric_name"]["run_id"]
+        == original.run_id
+    )
+    assert (
+        use_case.ap2_planning_provenance["field_sources"]["metric_unit"]["run_id"] == resumed.run_id
+    )
 
 
 def test_measured_claim_requires_actual_measurement_source(owner, business_unit):
