@@ -1586,6 +1586,23 @@ Hauptrisiko:
 
 Delivery besitzt viele semantisch gekoppelte Felder. Der Aufwand entsteht weniger aus Codeumfang als aus der notwendigen Qualitätshärtung der erzeugten Inhalte.
 
+
+## Realer Abschlussstand
+
+AP3 wurde mit Issue #104 und PR #105 umgesetzt und real abgenommen.
+
+Nachweis:
+
+- drei fachlich unterschiedliche positive AI-Fälle mit echtem Provider;
+- Controlled LLM, LLM Workflow/Hybrid und Dokumentenextraktion;
+- Delivery- und read-only Decision-Package-Projektionen im Desktop-Browser geprüft;
+- Baseline/Zielwerte blieben ohne Evidenz offen;
+- keine automatische Business/Technical Confirmation, Governance-Freigabe, Handover-, Pilotstart- oder Go-live-Entscheidung;
+- vollständige CI auf dem finalen AP3-Head grün;
+- Merge-Commit: `b3f2148a5396839f281fb54ba4d067ef352e54ad`.
+
+Die real gefundenen Provider-Vertragsabweichungen wurden eng normalisiert. Daraus entstand **keine neue Architekturentscheidung und keine Änderung der AP4-Paketgrenze**.
+
 ---
 
 # 32. AP4 – E2E-Härtung und 10x-Nachweis
@@ -2112,23 +2129,36 @@ Erst dann ist aus KI-Ideenwerkstatt nicht nur ein Workflow mit KI-Unterstützung
 
 # 46. Primäre nächste Aktion
 
-AP1 und AP2 sind abgeschlossen und in `main` integriert.
+AP1, AP2 und AP3 sind abgeschlossen und in `main` integriert.
 
 Die nächste planmäßige Einheit ist:
 
-> **AP3 – Vom positiven menschlichen Approval zum delivery-ready Umsetzungspaket.**
+> **AP4 – E2E-Härtung und 10x-Nachweis.**
 
-AP3 startet auf dem jetzt kanonischen Stand aus Discovery, Investigation, menschlicher Lösungsentscheidung, Use Case, Architecture Assessment, Decision Assessment, Governance und Pilot-/Messkonzept.
-
-Der erste reale Zielnachweis für AP3 lautet:
+AP4 baut auf dem jetzt vollständigen Pfad auf:
 
 ```text
-positive menschliche Approval
-→ bestehende Evidenz deterministisch übernehmen
-→ nur echte Synthesearbeit erzeugen
-→ konkretes DeliveryPackage mit MVP/Requirements/Tests/Backlog
-→ Cross-Domain-Konsistenz prüfen
-→ menschliche Delivery-/Handover-Grenzen erhalten
+Problem + Quellen
+→ Business Architecture / ProcessAnalysis
+→ Investigation
+→ Lösungsalternativen
+→ menschliche Lösungsentscheidung
+→ UseCase / Architecture / Governance / Pilot
+→ menschliche Approval
+→ DeliveryPackage
+→ read-only Decision Package
 ```
 
-Keine neue Approval-Automatisierung und kein paralleler Delivery-Lifecycle.
+Der erste Schritt von AP4 ist **nicht weitere Funktionalität**, sondern die gewertete Testpopulation und den Messvertrag einzufrieren:
+
+```text
+Source Pack
+Startzustand
+Prompt-/Schema-Versionen
+Run-Slots
+Bewertungskriterien
+```
+
+Danach werden die #1-Zielgrößen über die festgelegten Fälle gemessen und nur reproduzierbare technische oder fachliche Defekte gehärtet.
+
+Keine neue Agentenplattform, keine vorsorgliche Queue-/Scheduling-Architektur und kein Success Sampling.
