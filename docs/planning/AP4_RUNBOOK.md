@@ -31,7 +31,9 @@ For each case use the same:
 
 that will later be used by the autonomous run.
 
-Record only actual human work:
+Record only actual human work and set `human_time_measured=true` only when it was actually timed. Scripted acceptance-operator activity is not human time and must remain open rather than be encoded as zero.
+
+Record:
 - active input;
 - navigation;
 - authority-decision time;
