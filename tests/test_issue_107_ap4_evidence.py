@@ -267,7 +267,7 @@ def test_ap4_hardening_map_references_existing_tests():
 
     assert len(payload["scenarios"]) == 12
     partial = {item["scenario"] for item in payload["scenarios"] if item["coverage"] == "partial"}
-    assert partial == {"concurrent_runs", "irrelevant_source"}
+    assert partial == {"irrelevant_source"}
 
     for item in payload["scenarios"]:
         assert item["coverage"] in {"covered", "partial"}
