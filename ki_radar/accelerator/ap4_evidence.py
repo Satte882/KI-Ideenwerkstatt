@@ -306,13 +306,13 @@ def validate_frozen_manifest(
         )
 
     base = Path(repo_root)
+    hashes = {
+        case.case_id: source_pack_hash(base / case.source_pack, case.files)
+        for case in manifest.cases
+    }
     accepted_hashes = {
         case.case_id: _accepted_source_pack_hashes(base / case.source_pack, case.files)
         for case in manifest.cases
-    }
-    hashes = {
-        case_id: sorted(values)[0]
-        for case_id, values in accepted_hashes.items()
     }
     return FrozenValidation(
         manifest=manifest,
