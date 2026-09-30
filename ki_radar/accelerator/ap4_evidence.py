@@ -398,7 +398,8 @@ def load_records(
 def _validate_record_uniqueness(records: Iterable[Mapping[str, Any]]) -> None:
     ids: set[str] = set()
     scored_slots: set[tuple[str, str]] = set()
-    known_ids: set[str] = set()
+    known_records: dict[str, Mapping[str, Any]] = {}
+    latest_by_key: dict[tuple[str, str], str] = {}
 
     for record in records:
         record_id = str(record["record_id"])
@@ -406,8 +407,8 @@ def _validate_record_uniqueness(records: Iterable[Mapping[str, Any]]) -> None:
             raise AP4EvidenceError(f"duplicate record_id: {record_id}")
         ids.add(record_id)
 
+        key = (str(record["case_id"]), str(record["path"]))
         if record["phase"] == "scored":
-            key = (str(record["case_id"]), str(record["path"]))
             if key in scored_slots:
                 raise AP4EvidenceError(
                     "success sampling forbidden: scored slot already recorded for "
@@ -416,11 +417,26 @@ def _validate_record_uniqueness(records: Iterable[Mapping[str, Any]]) -> None:
             scored_slots.add(key)
         else:
             pre_fix = str(record.get("pre_fix_record_id") or "")
-            if pre_fix not in known_ids:
+            predecessor = known_records.get(pre_fix)
+            if predecessor is None:
                 raise AP4EvidenceError(
                     f"post_fix record references unknown earlier record: {pre_fix}"
                 )
-        known_ids.add(record_id)
+            predecessor_key = (
+                str(predecessor["case_id"]),
+                str(predecessor["path"]),
+            )
+            if predecessor_key != key:
+                raise AP4EvidenceError(
+                    "post_fix record must reference the same case and path as its predecessor"
+                )
+            if latest_by_key.get(key) != pre_fix:
+                raise AP4EvidenceError(
+                    "post_fix chain must continue from the latest record; branching is forbidden"
+                )
+
+        known_records[record_id] = record
+        latest_by_key[key] = record_id
 
 
 def append_record(
@@ -459,16 +475,12 @@ def _post_draft_rework_seconds(record: Mapping[str, Any]) -> float:
     return float(times["post_draft_review_seconds"]) + float(times["post_draft_correction_seconds"])
 
 
-def summarize_records(
-    records: Iterable[Mapping[str, Any]],
+def _summary_view(
+    autonomous: list[Mapping[str, Any]],
+    manual: list[Mapping[str, Any]],
     *,
     validation: FrozenValidation,
 ) -> dict[str, Any]:
-    records = list(records)
-    scored = [record for record in records if record["phase"] == "scored"]
-    autonomous = [record for record in scored if record["path"] == "autonomous"]
-    manual = [record for record in scored if record["path"] == "manual"]
-
     autonomous_by_case = {record["case_id"]: record for record in autonomous}
     manual_by_case = {record["case_id"]: record for record in manual}
     baseline_ids = validation.manifest.baseline_case_ids
@@ -504,56 +516,103 @@ def summarize_records(
     scored_case_ids = {record["case_id"] for record in autonomous}
     frozen_case_ids = {case.case_id for case in validation.manifest.cases}
 
+    metrics = {
+        "active_human_work_median_seconds": active_median,
+        "manual_field_reduction": field_reduction,
+        "avoidable_questions_median": question_median,
+        "provenance_ratio": provenance_ratio,
+        "hallucinated_facts": hallucinations,
+        "cross_domain_consistency_all_pass": all(
+            bool(record["quality"]["cross_domain_consistent"]) for record in autonomous
+        )
+        if autonomous
+        else False,
+        "expected_outcome_all_pass": all(
+            bool(record["quality"]["expected_outcome_pass"]) for record in autonomous
+        )
+        if autonomous
+        else False,
+        "human_rework_ratio": rework_ratio,
+    }
+    checks = {
+        "active_human_work": active_median is not None
+        and active_median <= targets["active_human_work_median_seconds_max"],
+        "manual_field_reduction": field_reduction is not None
+        and field_reduction >= targets["manual_field_reduction_min"],
+        "avoidable_questions": question_median is not None
+        and question_median <= targets["avoidable_questions_median_max"],
+        "provenance": provenance_ratio >= targets["provenance_ratio_min"],
+        "hallucinations": hallucinations <= targets["hallucinated_facts_max"],
+        "cross_domain_consistency": bool(autonomous)
+        and all(bool(record["quality"]["cross_domain_consistent"]) for record in autonomous),
+        "expected_outcome": bool(autonomous)
+        and all(bool(record["quality"]["expected_outcome_pass"]) for record in autonomous),
+        "human_rework": rework_ratio is not None
+        and rework_ratio <= targets["human_rework_ratio_max"],
+    }
+    return {
+        "population": {
+            "autonomous_cases": len(autonomous),
+            "missing_cases": sorted(frozen_case_ids - scored_case_ids),
+            "paired_baseline_cases": [base["case_id"] for base, _new in paired],
+        },
+        "metrics": metrics,
+        "pass": checks,
+    }
+
+
+def _current_autonomous_records(
+    records: Iterable[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    current: dict[str, Mapping[str, Any]] = {}
+    for record in records:
+        if record["path"] != "autonomous":
+            continue
+        current[str(record["case_id"])] = record
+    return list(current.values())
+
+
+def summarize_records(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    validation: FrozenValidation,
+) -> dict[str, Any]:
+    records = list(records)
+    scored = [record for record in records if record["phase"] == "scored"]
+    initial_autonomous = [record for record in scored if record["path"] == "autonomous"]
+    manual = [record for record in scored if record["path"] == "manual"]
+    current_autonomous = _current_autonomous_records(records)
+
+    initial = _summary_view(initial_autonomous, manual, validation=validation)
+    post_hardening = _summary_view(current_autonomous, manual, validation=validation)
+
+    frozen_case_ids = {case.case_id for case in validation.manifest.cases}
+    post_fix_case_ids = {
+        str(record["case_id"])
+        for record in records
+        if record["phase"] == "post_fix" and record["path"] == "autonomous"
+    }
+
     return {
         "population": {
             "frozen_cases": len(frozen_case_ids),
-            "scored_autonomous_cases": len(autonomous),
-            "missing_scored_cases": sorted(frozen_case_ids - scored_case_ids),
-            "paired_baseline_cases": [base["case_id"] for base, _new in paired],
+            "scored_autonomous_cases": initial["population"]["autonomous_cases"],
+            "missing_scored_cases": initial["population"]["missing_cases"],
+            "paired_baseline_cases": initial["population"]["paired_baseline_cases"],
             "post_fix_runs": sum(1 for record in records if record["phase"] == "post_fix"),
+            "post_hardening_autonomous_cases": post_hardening["population"]["autonomous_cases"],
+            "post_hardening_cases": sorted(post_fix_case_ids),
         },
-        "metrics": {
-            "active_human_work_median_seconds": active_median,
-            "manual_field_reduction": field_reduction,
-            "avoidable_questions_median": question_median,
-            "provenance_ratio": provenance_ratio,
-            "hallucinated_facts": hallucinations,
-            "cross_domain_consistency_all_pass": all(
-                bool(record["quality"]["cross_domain_consistent"]) for record in autonomous
-            )
-            if autonomous
-            else False,
-            "expected_outcome_all_pass": all(
-                bool(record["quality"]["expected_outcome_pass"]) for record in autonomous
-            )
-            if autonomous
-            else False,
-            "human_rework_ratio": rework_ratio,
-        },
-        "targets": dict(targets),
-        "pass": {
-            "active_human_work": active_median is not None
-            and active_median <= targets["active_human_work_median_seconds_max"],
-            "manual_field_reduction": field_reduction is not None
-            and field_reduction >= targets["manual_field_reduction_min"],
-            "avoidable_questions": question_median is not None
-            and question_median <= targets["avoidable_questions_median_max"],
-            "provenance": provenance_ratio >= targets["provenance_ratio_min"],
-            "hallucinations": hallucinations <= targets["hallucinated_facts_max"],
-            "cross_domain_consistency": bool(autonomous)
-            and all(bool(record["quality"]["cross_domain_consistent"]) for record in autonomous),
-            "expected_outcome": bool(autonomous)
-            and all(bool(record["quality"]["expected_outcome_pass"]) for record in autonomous),
-            "human_rework": rework_ratio is not None
-            and rework_ratio <= targets["human_rework_ratio_max"],
-        },
+        "metrics": initial["metrics"],
+        "pass": initial["pass"],
+        "post_hardening_metrics": post_hardening["metrics"],
+        "post_hardening_pass": post_hardening["pass"],
+        "targets": dict(validation.manifest.metric_targets),
     }
 
 
 def render_summary_markdown(summary: Mapping[str, Any]) -> str:
     population = summary["population"]
-    metrics = summary["metrics"]
-    checks = summary["pass"]
 
     def display(value: object, *, percent: bool = False) -> str:
         if value is None:
@@ -563,6 +622,50 @@ def render_summary_markdown(summary: Mapping[str, Any]) -> str:
         if isinstance(value, float):
             return f"{value:.2f}"
         return str(value)
+
+    def metric_rows(metrics: Mapping[str, Any], checks: Mapping[str, Any]) -> list[str]:
+        return [
+            (
+                "| Aktive Human Work Median | "
+                f"{display(metrics['active_human_work_median_seconds'])} s | "
+                f"{'PASS' if checks['active_human_work'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Manuelle Feldpflege Reduktion | "
+                f"{display(metrics['manual_field_reduction'], percent=True)} | "
+                f"{'PASS' if checks['manual_field_reduction'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Vermeidbare Rückfragen Median | "
+                f"{display(metrics['avoidable_questions_median'])} | "
+                f"{'PASS' if checks['avoidable_questions'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Provenance | "
+                f"{display(metrics['provenance_ratio'], percent=True)} | "
+                f"{'PASS' if checks['provenance'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Halluzinierte Fakten/Messwerte | "
+                f"{display(metrics['hallucinated_facts'])} | "
+                f"{'PASS' if checks['hallucinations'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Cross-Domain-Konsistenz | "
+                f"{display(metrics['cross_domain_consistency_all_pass'])} | "
+                f"{'PASS' if checks['cross_domain_consistency'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Fachlich erwarteter Endzustand | "
+                f"{display(metrics['expected_outcome_all_pass'])} | "
+                f"{'PASS' if checks['expected_outcome'] else 'OPEN/FAIL'} |"
+            ),
+            (
+                "| Menschliche Nacharbeit | "
+                f"{display(metrics['human_rework_ratio'], percent=True)} | "
+                f"{'PASS' if checks['human_rework'] else 'OPEN/FAIL'} |"
+            ),
+        ]
 
     lines = [
         "# AP4 Evidence Summary",
@@ -578,49 +681,25 @@ def render_summary_markdown(summary: Mapping[str, Any]) -> str:
             f"{', '.join(population['paired_baseline_cases']) or 'keine'}**"
         ),
         f"- Dokumentierte Post-Fix-Runs: **{population['post_fix_runs']}**",
+        (
+            "- Post-Hardening-Fälle: **"
+            f"{', '.join(population['post_hardening_cases']) or 'keine'}**"
+        ),
+        "",
+        "## Initial scored result",
         "",
         "| Kriterium | Ergebnis | Status |",
         "|---|---:|---|",
-        (
-            "| Aktive Human Work Median | "
-            f"{display(metrics['active_human_work_median_seconds'])} s | "
-            f"{'PASS' if checks['active_human_work'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Manuelle Feldpflege Reduktion | "
-            f"{display(metrics['manual_field_reduction'], percent=True)} | "
-            f"{'PASS' if checks['manual_field_reduction'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Vermeidbare Rückfragen Median | "
-            f"{display(metrics['avoidable_questions_median'])} | "
-            f"{'PASS' if checks['avoidable_questions'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Provenance | "
-            f"{display(metrics['provenance_ratio'], percent=True)} | "
-            f"{'PASS' if checks['provenance'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Halluzinierte Fakten/Messwerte | "
-            f"{display(metrics['hallucinated_facts'])} | "
-            f"{'PASS' if checks['hallucinations'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Cross-Domain-Konsistenz | "
-            f"{display(metrics['cross_domain_consistency_all_pass'])} | "
-            f"{'PASS' if checks['cross_domain_consistency'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Fachlich erwarteter Endzustand | "
-            f"{display(metrics['expected_outcome_all_pass'])} | "
-            f"{'PASS' if checks['expected_outcome'] else 'OPEN/FAIL'} |"
-        ),
-        (
-            "| Menschliche Nacharbeit | "
-            f"{display(metrics['human_rework_ratio'], percent=True)} | "
-            f"{'PASS' if checks['human_rework'] else 'OPEN/FAIL'} |"
-        ),
+        *metric_rows(summary["metrics"], summary["pass"]),
+        "",
+        "## Current post-hardening result",
+        "",
+        "Diese Sicht verwendet pro Fall den letzten linear verketteten Record. "
+        "Der ursprüngliche scored Run bleibt unverändert erhalten.",
+        "",
+        "| Kriterium | Ergebnis | Status |",
+        "|---|---:|---|",
+        *metric_rows(summary["post_hardening_metrics"], summary["post_hardening_pass"]),
         "",
         "Blind Human Review wird separat dokumentiert und ist kein LLM-Ersatz.",
     ]
