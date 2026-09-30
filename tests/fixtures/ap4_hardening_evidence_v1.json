@@ -1,0 +1,110 @@
+{
+  "contract_version": "ap4-hardening-evidence-v1",
+  "scenarios": [
+    {
+      "scenario": "provider_timeout",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_hardening.py::test_provider_timeout_retries_once_then_fails_closed",
+        "tests/test_issue_98_autonomous_business_discovery.py::test_discovery_stops_after_second_transport_timeout"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "invalid_structured_response",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_hardening.py::test_invalid_provider_response_retries_once_then_fails_closed"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "retry",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_hardening.py::test_successful_planner_call_resets_transient_response_retry",
+        "tests/test_issue_98_autonomous_business_discovery.py::test_discovery_retries_one_transport_timeout_without_extra_semantic_repair"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "resume",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_runtime.py::test_resume_does_not_silently_switch_model_alias",
+        "tests/test_issue_104_ap3_delivery.py::test_ap3_resume_is_idempotent_and_does_not_create_or_call_provider_again"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "user_abort",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_runtime.py::test_waiting_human_blocks_new_start_and_abort_allows_successor",
+        "tests/test_issue_3_investigation_policy.py::test_abort_permission_and_restart_persisted_state_fail_closed"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "concurrent_runs",
+      "coverage": "partial",
+      "evidence": [
+        "tests/test_issue_3_investigation_runtime.py::test_parallel_starts_create_exactly_one_active_run",
+        "tests/test_issue_3_investigation_hardening.py::test_parallel_materialization_creates_exactly_one_revision"
+      ],
+      "gap": "Current tests cover duplicate run/materialization prevention; quota reservation fairness/starvation under simultaneous active work remains an AP4 check.",
+      "ap4_action": "targeted_concurrency_test"
+    },
+    {
+      "scenario": "version_conflict",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_runtime.py::test_process_version_conflict_and_permission_revocation_fail_closed",
+        "tests/test_issue_3_investigation_runtime.py::test_materialization_is_idempotent_and_version_protected"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "human_change_during_agent_work",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_104_ap3_delivery.py::test_ap3_does_not_record_pass_for_human_change_during_verification"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "stale_source",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_policy.py::test_relevant_revision_change_invalidates_old_verifier",
+        "tests/test_delivery_readiness_v2.py::test_delivery_uses_canonical_working_values_and_reports_field_level_source_change"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "stale_delivery",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_delivery_readiness_v2.py::test_delivery_package_snapshots_technical_owner_and_blocks_unresolved_source_change"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "missing_source",
+      "coverage": "covered",
+      "evidence": [
+        "tests/test_issue_3_investigation_hardening.py::test_synthesizer_can_request_decision_critical_missing_evidence"
+      ],
+      "ap4_action": "reuse_current_regression"
+    },
+    {
+      "scenario": "irrelevant_source",
+      "coverage": "partial",
+      "evidence": [
+        "tests/test_issue_3_investigation_runtime.py::test_source_relevance_requires_full_classification_and_real_access_for_relevant_sources"
+      ],
+      "gap": "The state contract is covered; semantic irrelevance should be observed in the frozen real-provider population instead of adding a synthetic product mechanism.",
+      "ap4_action": "observe_in_scored_population"
+    }
+  ]
+}
