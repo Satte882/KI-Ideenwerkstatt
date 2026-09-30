@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from django.urls import reverse
 from django.utils import timezone
 
 from ki_radar.architecture.architecture_assessment import (
@@ -517,3 +518,82 @@ def test_ap3_does_not_record_pass_for_human_change_during_verification(
     assert all(
         "ap3_verifier" not in review.source_manifest for review in package.section_reviews.all()
     )
+
+
+def test_ap3_rejects_generic_delivery_placeholder(
+    owner, business_unit, monkeypatch
+):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+    payload = _synthesis_payload()
+    payload["functional_requirements"]["value"] = (
+        "Kernablauf aus dem freigegebenen Use Case umsetzen."
+    )
+
+    monkeypatch.setattr(
+        "ki_radar.delivery.ap3_autonomous.request_llm_task_provider",
+        lambda _prepared, **_kwargs: _provider_result(payload),
+    )
+
+    with pytest.raises(AP3DeliveryError) as exc_info:
+        prepare_autonomous_delivery_package(use_case=use_case, actor=owner)
+
+    assert exc_info.value.code == "generic_placeholder"
+
+
+def test_ap3_detects_solution_type_drift_before_provider_call(
+    owner, business_unit, monkeypatch
+):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+    use_case.solution_type = UseCase.SolutionType.STANDARD
+    use_case.save(update_fields=["solution_type", "updated_at"])
+
+    def unexpected_provider(*_args, **_kwargs):
+        raise AssertionError("Provider darf bei deterministischem Konsistenzfehler nicht laufen.")
+
+    monkeypatch.setattr(
+        "ki_radar.delivery.ap3_autonomous.request_llm_task_provider",
+        unexpected_provider,
+    )
+
+    with pytest.raises(AP3DeliveryError) as exc_info:
+        prepare_autonomous_delivery_package(use_case=use_case, actor=owner)
+
+    assert exc_info.value.code == "consistency_failed"
+    assert "Lösungstyp" in str(exc_info.value)
+
+
+def test_ap3_decision_package_is_read_only_projection(
+    client, owner, business_unit, monkeypatch
+):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+
+    def fake_provider(_prepared, *, response_format):
+        name = response_format["json_schema"]["name"]
+        if name == "ap3_delivery_synthesis":
+            return _provider_result(_synthesis_payload())
+        if name == "ap3_delivery_verification":
+            return _provider_result(_verifier_payload())
+        raise AssertionError(name)
+
+    monkeypatch.setattr(
+        "ki_radar.delivery.ap3_autonomous.request_llm_task_provider",
+        fake_provider,
+    )
+    result = prepare_autonomous_delivery_package(use_case=use_case, actor=owner)
+    client.force_login(owner)
+    url = reverse("delivery:decision_package", kwargs={"pk": result.package.pk})
+
+    response = client.get(url)
+    rendered = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Entscheidungskern" in rendered
+    assert "Alternativen und Lösungsentscheidung" in rendered
+    assert "Use Case und Architecture Mode" in rendered
+    assert "Governance" in rendered
+    assert "Pilot und Messung" in rendered
+    assert "Delivery" in rendered
+    assert "Offene Entscheidungen und Reviews" in rendered
+    assert "Provenance / Untersuchungsspur" in rendered
+    assert "<form" not in rendered
+    assert client.post(url).status_code == 405
