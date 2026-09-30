@@ -18,6 +18,7 @@
   </div>
   <div class="cr-work-header__actions">
     <a class="btn btn-outline-secondary" href="{% url 'delivery:package_list' %}">Zur Übersicht</a>
+    <a class="btn btn-outline-secondary" href="{% url 'delivery:decision_package' package.pk %}">Decision Package</a>
     <a class="btn btn-outline-secondary" href="{% url 'delivery:methodology_reference' %}">Vorgehensmodell</a>
     <a class="btn btn-outline-secondary" href="{% url 'delivery:methodology_download' %}">Vorgehensmodell herunterladen</a>
     <a class="btn btn-outline-secondary" href="{% url 'delivery:package_export_markdown' package.pk %}">Package exportieren</a>
