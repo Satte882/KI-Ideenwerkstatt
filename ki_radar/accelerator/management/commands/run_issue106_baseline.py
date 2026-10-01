@@ -4,7 +4,7 @@ import json
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404 -- fixed local git executable, shell=False
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -311,7 +311,7 @@ class Command(BaseCommand):
         if not git:
             raise CommandError("Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly.")
         try:
-            status = subprocess.run(  # noqa: S603
+            status = subprocess.run(  # noqa: S603  # nosec B603 -- fixed git argv
                 [git, "status", "--porcelain"],
                 cwd=base,
                 check=True,
@@ -323,7 +323,7 @@ class Command(BaseCommand):
                     "Baseline runs require a clean worktree; commit local changes first."
                 )
             head = (
-                subprocess.run(  # noqa: S603
+                subprocess.run(  # noqa: S603  # nosec B603 -- fixed git argv
                     [git, "rev-parse", "HEAD"],
                     cwd=base,
                     check=True,
