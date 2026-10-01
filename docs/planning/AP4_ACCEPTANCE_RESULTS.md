@@ -161,4 +161,16 @@ Der isolierte Edge-Browser prüfte die tatsächliche Formserialisierung: ursprü
 
 Issue #107 enthält weiterhin die historischen operativen Formulierungen unter „Aktueller Reconciliation-Stand vor Human-Time“ (Blind Review/Gesamtergebnis offen), „AP4.8 – Blind Review“, Arbeitsreihenfolge Schritt 7 und die nicht abgehakten Kriterien „Blind Review mindestens gleichwertig“ / „Blind-Review-Evidence dokumentiert“. PR #108 beschreibt im Draft-Text ebenfalls noch Blind Review als Abschlussvoraussetzung. Für den vereinbarten Abschlussweg lautet die sachliche Reconciliation: „Nicht durchgeführt; bewusst ausgeschlossen für diesen technischen Abschluss; Qualitätsnachweis bleibt unerfüllt.“ Checkboxen werden nicht als PASS erfunden. Die historischen Anforderungen bleiben nachvollziehbar; dieser Bericht dokumentiert die bewusst gewählte Abweichung.
 
-PR #108 bleibt Draft/unmerged, Issue #107 bleibt offen. Arbeitsplan und eingefrorener Messvertrag werden nicht verändert. Kein weiterer technischer Produktrest bekannt; verbleiben der explizite Abschluss mit den obigen Abweichungen und das spätere separate Gesamt-Playthrough.
+## Finaler AP4-Abschlussstand nach Merge
+
+- PR #108 wurde mit finalem Head `5e4bc7a32d254de028d819b121702a1a56ed2a0e` gemergt.
+- Merge-Commit auf `main`: `55b3fba41e6bd60e95a78400e701cdef627a4ed6`.
+- Issue #107 ist als `completed` geschlossen.
+- CI #666 / `36859490252` auf dem finalen PR-Head ist vollständig grün (1.888 Tests plus übrige Checks).
+- AP4 ist **technisch abgeschlossen mit transparent akzeptierten Validation Gaps**.
+- Active Human Work ≤ 15–20 Minuten und Human Rework ≤ 20 % bleiben **nicht quantitativ nachgewiesen**.
+- Blind Human Review wurde **nicht durchgeführt und für diesen Abschlussweg bewusst ausgeschlossen**; kein PASS.
+- Damit liegt ausdrücklich **kein vollständiger quantitativer #1-Nachweis** vor.
+- Das separate vollständige Produkt-Playthrough bleibt ein späterer eigener Qualitätsschritt und ist kein rückwirkender AP4-Blocker.
+
+Arbeitsplan und eingefrorener Messvertrag wurden während AP4 nicht verändert; die Post-AP4-Planaktualisierung erfolgt erst nach dem Merge auf Basis dieses realen Abschlussstands.
