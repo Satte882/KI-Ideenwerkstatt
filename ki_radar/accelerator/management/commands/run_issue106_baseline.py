@@ -66,9 +66,8 @@ class Command(BaseCommand):
         repetition = options.get("repeat")
         if run_all and (case_id or repetition is not None):
             raise CommandError("--all cannot be combined with --case/--repeat.")
-        if not run_all:
-            if not case_id or repetition not in REPETITIONS:
-                raise CommandError("Use --all or provide --case and --repeat 1..5.")
+        if not run_all and (not case_id or repetition not in REPETITIONS):
+            raise CommandError("Use --all or provide --case and --repeat 1..5.")
 
         tested_commit = self._tested_commit()
         self._assert_environment()
@@ -315,9 +314,14 @@ class Command(BaseCommand):
             os.environ["GIT_COMMIT"] = explicit
             return explicit
         base = Path(settings.BASE_DIR)
+        git = shutil.which("git")
+        if not git:
+            raise CommandError(
+                "Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly."
+            )
         try:
             status = subprocess.run(
-                ["git", "status", "--porcelain"],
+                [git, "status", "--porcelain"],
                 cwd=base,
                 check=True,
                 capture_output=True,
@@ -328,7 +332,7 @@ class Command(BaseCommand):
                     "Baseline runs require a clean worktree; commit local changes first."
                 )
             head = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
+                [git, "rev-parse", "HEAD"],
                 cwd=base,
                 check=True,
                 capture_output=True,
