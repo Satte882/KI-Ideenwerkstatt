@@ -86,9 +86,7 @@ class Command(BaseCommand):
                     },
                 )
                 if not folder.is_active:
-                    raise CommandError(
-                        f"{case_id} R{repetition}: source folder is inactive."
-                    )
+                    raise CommandError(f"{case_id} R{repetition}: source folder is inactive.")
                 question = str(spec["problem_statement"])
                 snapshot = self._matching_snapshot(
                     folder=folder,
@@ -223,9 +221,7 @@ class Command(BaseCommand):
             "exceptions": "",
             "baseline_metrics": "Noch nicht gemessen.",
         }
-        matches = list(
-            ProcessAnalysis.objects.select_for_update().filter(stage=stage, name=name)
-        )
+        matches = list(ProcessAnalysis.objects.select_for_update().filter(stage=stage, name=name))
         if len(matches) > 1:
             raise CommandError(f"{name}: multiple ProcessAnalysis records exist.")
         if matches:
