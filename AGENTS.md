@@ -13,7 +13,7 @@ Die Pflichtreihenfolge lautet #110 → #111 → #112. Das **früheste noch offen
 Pflicht-Sub-Issue ist das aktuell freigegebene Arbeitspaket. Nach #112 werden nur
 Experimente bearbeitet, die durch das dokumentierte Gate ausdrücklich ausgewählt wurden.
 
-Für #110 gilt zusätzlich: AP0 darf **keine Performance-Optimierung** implementieren.
+Solange nach #112 kein Experiment-Sub-Issue ausdrücklich freigegeben ist, darf **keine Performance-Optimierung** implementiert werden.
 
 **Satte882/KI-UseCase-Radar ist der eingefrorene Referenzstand und darf weder lokal noch
 remote verändert werden. Alle Arbeiten erfolgen ausschließlich in Satte882/KI-Ideenwerkstatt.**
@@ -64,6 +64,10 @@ Vor Änderungen an Benutzeroberflächen muss zusätzlich `DESIGN.md` vollständi
 - Reversible technische Entscheidungen innerhalb des freigegebenen Experimentvertrags können
   selbständig umgesetzt werden. Irreversible fachliche Trade-offs oder Budgeterweiterungen
   werden im Parent #106 entschieden.
+- Keine neuen Agenten, Formulare, Scores, Statusmodelle oder Prompts ohne messbaren Beitrag
+  zur fachlichen Qualität, Zuverlässigkeit oder zum in #106 belegten Performanceziel.
+- Fachliche Ergebnisqualität und Funktionsfähigkeit haben Vorrang vor Latenz-, Token- oder
+  Kostenoptimierung. Eine schnellere Variante mit Qualitätsregression wird nicht übernommen.
 - `docs/ROADMAP.md` aktualisieren, wenn sich Produktziel, erreichte Capability oder
   Priorisierung tatsächlich ändert.
 - `OPEN_QUESTIONS.md` enthält Betriebs- und Konfigurationsfragen; es steuert nicht die
