@@ -314,13 +314,13 @@ class Command(BaseCommand):
             os.environ["GIT_COMMIT"] = explicit
             return explicit
         base = Path(settings.BASE_DIR)
-        git = shutil.which("git")
+        git = shutil.which("git")  # noqa: S607
         if not git:
             raise CommandError(
                 "Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly."
             )
         try:
-            status = subprocess.run(
+            status = subprocess.run(  # noqa: S603
                 [git, "status", "--porcelain"],
                 cwd=base,
                 check=True,
@@ -331,7 +331,7 @@ class Command(BaseCommand):
                 raise CommandError(
                     "Baseline runs require a clean worktree; commit local changes first."
                 )
-            head = subprocess.run(
+            head = subprocess.run(  # noqa: S603
                 [git, "rev-parse", "HEAD"],
                 cwd=base,
                 check=True,
