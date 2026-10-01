@@ -9,9 +9,11 @@ Issue #1 „10x: Autonomes Evidence-to-Decision-System“ ist technisch abgeschl
 mit AP1–AP4 die funktionale Produktbaseline. Für #106 werden Performance-Änderungen erst nach
 Mess- und Qualitätsvertrag, aktueller Baseline und dokumentiertem Entscheidungsgate ausgewählt.
 
-Aktuell freigegebenes Arbeitspaket ist
-[#110 „AP0 – Mess-, Qualitäts- und Experimentvertrag“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/110).
-AP0 darf **keine Performance-Optimierung** implementieren.
+Die Pflichtreihenfolge lautet #110 → #111 → #112. Das **früheste noch offene**
+Pflicht-Sub-Issue ist das aktuell freigegebene Arbeitspaket. Nach #112 werden nur
+Experimente bearbeitet, die durch das dokumentierte Gate ausdrücklich ausgewählt wurden.
+
+Für #110 gilt zusätzlich: AP0 darf **keine Performance-Optimierung** implementieren.
 
 **Satte882/KI-UseCase-Radar ist der eingefrorene Referenzstand und darf weder lokal noch
 remote verändert werden. Alle Arbeiten erfolgen ausschließlich in Satte882/KI-Ideenwerkstatt.**
