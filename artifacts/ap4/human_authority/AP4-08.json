@@ -1,0 +1,62 @@
+{
+  "evidence_type": "human_authority_path",
+  "case_id": "AP4-08",
+  "captured_on": "2026-10-01",
+  "source_scored_record_id": "AP4-08-auto-scored",
+  "result": "pass",
+  "product_fix": false,
+  "browser": {
+    "path": "/processes/4ddd4b2a-8449-407e-b766-881276e60bc8/solutions/compare/",
+    "screenshot": "artifacts/ap4/browser/AP4-08-human-authority-solution.png",
+    "confirmation": "Non-AI-Lösung verbindlich ausgewählt; es wurde bewusst kein KI-Use-Case erzeugt."
+  },
+  "latest_decision": {
+    "id": "5",
+    "selected_option_id": "e1262b35-4524-423b-9548-b9a1d46239e8",
+    "selected_option": "Ersatzteilverfügbarkeit verbessern",
+    "option_type": "organizational",
+    "contains_ai": false,
+    "decided_by": "ap4-real-owner",
+    "decided_at": "2026-10-01T05:02:59.451858+00:00",
+    "rationale": "Die Quell- und CSV-Evidenz stützt die Ersatzteilverfügbarkeit als stärksten beobachteten Engpass. Die Kausalität bleibt unbestätigt und wird im Pilot geprüft. Die organisatorische Option adressiert den Engpass direkt bei geringerem Integrationsrisiko; für eine ML-Prognose fehlt dagegen eine belastbare Datenbasis. Deshalb wird bewusst die Non-AI-Option gewählt."
+  },
+  "previous_decision": {
+    "id": "3",
+    "selected_option_id": "6675370a-ef47-4e72-8bc7-998fed93dec5",
+    "selected_option": "KI-gestützte Ersatzteilbedarfsprognose",
+    "contains_ai": true,
+    "preserved": true
+  },
+  "old_ai_use_case": {
+    "id": "29c05f92-345f-44c3-ba89-429342b3f2c8",
+    "origin_option_id": "6675370a-ef47-4e72-8bc7-998fed93dec5",
+    "status": "ready"
+  },
+  "downstream": {
+    "use_case_current_selection_guard": {
+      "blocked": true,
+      "reason": "Der Use Case gehört nicht zur aktuellen menschlichen Lösungswahl."
+    },
+    "architecture_guard": {
+      "blocked": true,
+      "reason": "Der Use Case gehört nicht zur aktuellen menschlichen Lösungswahl."
+    },
+    "governance_guard": {
+      "blocked": true,
+      "reason": "Der Use Case gehört nicht zur aktuellen menschlichen Lösungswahl."
+    },
+    "delivery": {
+      "eligible": false,
+      "reason": "Der Use Case besitzt keine finale positive Freigabe.",
+      "approval_id": "",
+      "package_count": 0
+    }
+  },
+  "timing": {
+    "authority_operator_elapsed_seconds": 102.581,
+    "human_time_measured": false,
+    "measured_human_seconds": null,
+    "note": "Gemessene Browser-Operator-Laufzeit der CLI-gestützten Abnahme einschließlich Navigation und Werkzeuglauf; keine menschliche Arbeitszeit und daher nicht in AP4-Human-Metriken gewertet."
+  },
+  "notes": "Die bewusste organisatorische Auswahl ersetzt die frühere bindende ML-Auswahl, ohne Historie oder scored Failure umzuschreiben. Der bestehende AI-Use-Case wird vor UseCase-, Architecture- und Governance-Fortsetzung als veraltet blockiert; Delivery bleibt ohne finale positive Freigabe ineligible. Eine Auswahl entgegen der KI-Empfehlung ist kein Produktfehler."
+}

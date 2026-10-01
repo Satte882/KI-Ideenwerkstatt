@@ -1,0 +1,35 @@
+{
+  "case_id": "AP4-05",
+  "run_slot": "AP4-05-S1",
+  "phase": "post_fix",
+  "provider_mode": "real",
+  "source_pack_hash": "cdb8999c6242422ac2a06d8a8daf8df7fa836ad5bedf3969348b356a201d5ff8",
+  "expected_branch": "waiting_human",
+  "started_at_epoch": 1790796041.777833,
+  "status": "failed",
+  "system_wait_seconds": 0.4757672999985516,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized"
+  ],
+  "capture_session_id": "f7a825d2-5f76-45a3-a2a5-1cb50afa0a60",
+  "discovery_snapshot_id": "9b9f5c3a-62fc-4fdd-8b7e-3d87cbc8a1c7",
+  "discovery_manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+  "discovery": {
+    "analysis_id": "535869dd-c47d-4e75-a8d9-049e83573d58",
+    "status": "failed",
+    "error_code": "user_quota_exceeded",
+    "model": "",
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "cost": "",
+    "facts": [],
+    "hypotheses": [],
+    "unknowns": [],
+    "contradictions": [],
+    "clarifications": [],
+    "source_relevance": [],
+    "verifier": {}
+  },
+  "terminal_stage": "discovery",
+  "finished_at_epoch": 1790796044.2379956
+}
