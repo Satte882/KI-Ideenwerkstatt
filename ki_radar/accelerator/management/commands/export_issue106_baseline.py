@@ -62,9 +62,7 @@ class Command(BaseCommand):
             "runs": records,
         }
         if reviews is not None:
-            output_payload["reviews"] = [
-                reviews[str(item["run_id"])] for item in records
-            ]
+            output_payload["reviews"] = [reviews[str(item["run_id"])] for item in records]
 
         output = self._resolve(options["output"])
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -84,8 +82,7 @@ class Command(BaseCommand):
         if options["require_complete"]:
             if not summary["complete_slots"]:
                 raise CommandError(
-                    "Baseline export is incomplete: "
-                    + ", ".join(summary["missing_slots"])
+                    "Baseline export is incomplete: " + ", ".join(summary["missing_slots"])
                 )
             if not summary["quality_complete"]:
                 raise CommandError(
