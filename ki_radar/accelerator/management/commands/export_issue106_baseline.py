@@ -28,6 +28,11 @@ class Command(BaseCommand):
         parser.add_argument("--review-template", default=DEFAULT_REVIEW)
         parser.add_argument("--assessments")
         parser.add_argument(
+            "--overwrite-review-template",
+            action="store_true",
+            help="Explicitly replace an existing review template when no assessments are supplied.",
+        )
+        parser.add_argument(
             "--require-complete",
             action="store_true",
             help="Fail unless all 25 slots exist and authoritative quality review is complete.",
@@ -74,19 +79,37 @@ class Command(BaseCommand):
         review_path = self._resolve(options["review_template"])
         if reviews is None:
             review_path.parent.mkdir(parents=True, exist_ok=True)
-            review_path.write_text(
-                json.dumps(review_template(records), ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
+            if review_path.exists() and not options["overwrite_review_template"]:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Existing review file preserved: {review_path}. "
+                        "Use --overwrite-review-template to replace it deliberately."
+                    )
+                )
+            else:
+                review_path.write_text(
+                    json.dumps(review_template(records), ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
 
         if options["require_complete"]:
-            if not summary["complete_slots"]:
+            if not summary["population_complete"]:
+                details = []
+                if not summary["complete_slots"]:
+                    details.append(
+                        "slot set incomplete/duplicated: "
+                        + ", ".join(
+                            [*summary["missing_slots"], *summary["duplicate_slots"]]
+                        )
+                    )
+                if not summary["all_runs_at_system_boundary"]:
+                    details.append("one or more runs are still RUNNING/no stored system boundary")
+                if not summary["all_tested_commits_present_and_valid"]:
+                    details.append("one or more tested_commit values are missing/invalid")
+                elif not summary["single_tested_commit"]:
+                    details.append("baseline uses more than one tested commit")
                 raise CommandError(
-                    "Baseline export is incomplete: " + ", ".join(summary["missing_slots"])
-                )
-            if not summary["single_tested_commit"]:
-                raise CommandError(
-                    "Baseline uses more than one tested commit; AP1 requires one frozen commit."
+                    "Baseline population is incomplete: " + "; ".join(details)
                 )
             if not summary["quality_complete"]:
                 raise CommandError(
@@ -107,6 +130,7 @@ class Command(BaseCommand):
                         "review": str(review_path),
                         "observed_runs": summary["observed_run_count"],
                         "complete_slots": summary["complete_slots"],
+                        "population_complete": summary["population_complete"],
                         "quality_complete": summary["quality_complete"],
                         "total_actual_cost_usd": summary["total_actual_cost_usd"],
                         "total_budget_accounted_cost_usd": (
