@@ -132,7 +132,7 @@
         "removes human authority for the final goodwill decision"
       ],
       "source_pack_hashes": [
-        "8ed453472ce5aad840be9aee4669fd7172f85c4014aa1bca3632907f4788d4cd"
+        "3c99ac8819fd8a842dd23547569589bd737e25ae22f0aa9976d1c307867db2ea"
       ]
     },
     {
@@ -221,7 +221,7 @@
         "requires AI where the frozen policy is deterministically sufficient"
       ],
       "source_pack_hashes": [
-        "acef9532fcc6d9e31417f2a057920921cb7aae6af48ecc7718fd106231d5cc7f"
+        "eaa0b7a47570a8194485be3d71648332bbc22439199ef233e46758ab34e7867a"
       ]
     },
     {
@@ -319,7 +319,7 @@
         "misstates the frozen exception rows"
       ],
       "source_pack_hashes": [
-        "57b00b148742098356f85ccb82b6bc840a635ed276fd612879f35f637eee72e2"
+        "1c82673a90466d8c46363a45df22e4b1b1f837a197fb349a8547da1d245285b9"
       ]
     },
     {
@@ -392,7 +392,6 @@
         "returns READY without a precise authority or scope clarification"
       ],
       "source_pack_hashes": [
-        "7247736f6b04b2bdd556ec282a605c9b1ef4a18fe4d5162a8227302c986d0357",
         "cdb8999c6242422ac2a06d8a8daf8df7fa836ad5bedf3969348b356a201d5ff8"
       ]
     },
@@ -475,7 +474,7 @@
         "omits the conflict from the decision basis"
       ],
       "source_pack_hashes": [
-        "baa10b96c8b1cbc197a9461c687fd9b60d0ea2ffe4f4a994d3b08cc811d417cb"
+        "e3131982410fa81f2ef237dbf0c5362339ce61ed7206937bdce4404c76d4583a"
       ]
     }
   ],
