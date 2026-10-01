@@ -100,12 +100,12 @@
     },
     {
       "scenario": "irrelevant_source",
-      "coverage": "partial",
+      "coverage": "covered",
       "evidence": [
-        "tests/test_issue_3_investigation_runtime.py::test_source_relevance_requires_full_classification_and_real_access_for_relevant_sources"
+        "tests/test_issue_3_investigation_runtime.py::test_source_relevance_requires_full_classification_and_real_access_for_relevant_sources",
+        "tests/test_issue_3_investigation_runtime.py::test_invalid_clarification_reason_retry_receives_exact_contract_and_waits_for_evidence"
       ],
-      "gap": "The state contract is covered; semantic irrelevance should be observed in the frozen real-provider population instead of adding a synthetic product mechanism.",
-      "ap4_action": "observe_in_scored_population"
+      "ap4_action": "reuse_current_regression"
     }
   ]
 }
