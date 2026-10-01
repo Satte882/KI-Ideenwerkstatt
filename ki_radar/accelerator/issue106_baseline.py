@@ -253,7 +253,7 @@ def review_template(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "experiment_id": EXPERIMENT_ID,
         "allowed_statuses": ["pass", "fail", "unassessed"],
         "hard_fail_status_semantics": {
-            "pass": "hard-fail condition was checked and is absent",
+            "pass": "hard-fail condition was checked and is absent",  # nosec B105 # Assessment text.
             "fail": "hard-fail condition was observed",
             "unassessed": "hard-fail condition has not been authoritatively checked",
         },
