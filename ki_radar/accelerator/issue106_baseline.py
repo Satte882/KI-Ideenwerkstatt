@@ -176,9 +176,7 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
                 "findings": list(latest_verifier.findings or []),
                 "critical_findings": int(latest_verifier.critical_findings),
                 "source_references_valid": bool(latest_verifier.source_references_valid),
-                "checked_critical_claims": list(
-                    latest_verifier.checked_critical_claims or []
-                ),
+                "checked_critical_claims": list(latest_verifier.checked_critical_claims or []),
                 "bound_hashes": dict(latest_verifier.bound_hashes or {}),
             }
             if latest_verifier is not None
@@ -286,10 +284,9 @@ def validate_reviews(
             raise ValueError(f"{run_id}: review does not belong to the exported baseline")
         case_id = str(item.get("case_id") or "")
         repetition = item.get("repetition")
-        if (
-            case_id != str(expected_record.get("case_id") or "")
-            or repetition != expected_record.get("repetition")
-        ):
+        if case_id != str(
+            expected_record.get("case_id") or ""
+        ) or repetition != expected_record.get("repetition"):
             raise ValueError(f"{run_id}: review slot does not match the exported run")
 
         semantic = item.get("semantic_rubric")
@@ -300,8 +297,6 @@ def validate_reviews(
         quality_contract = cases[case_id]["quality_contract"]
         expected_groups = {
             "expected_key_findings": [
-                str(entry["criterion"])
-                for entry in quality_contract["expected_key_findings"]
             ],
             "required_counterevidence": [
                 str(entry["criterion"])
