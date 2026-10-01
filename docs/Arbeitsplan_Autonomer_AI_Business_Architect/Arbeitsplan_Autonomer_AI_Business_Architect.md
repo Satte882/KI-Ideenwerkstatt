@@ -1,6 +1,6 @@
 # Arbeitsplan – Autonomer AI Business Architect
 
-**Stand:** 30.09.2026  
+**Stand:** 01.10.2026  
 **Repository:** `Satte882/KI-Ideenwerkstatt`  
 **Übergeordnetes Ziel:** GitHub Issue #1 – „10x: Autonomes Evidence-to-Decision-System“
 
@@ -1613,9 +1613,25 @@ Nicht mehr Funktionalität bauen.
 
 Nachweisen, dass aus den Komponenten tatsächlich ein autonomer AI Business Architect entstanden ist.
 
+## Realer Abschlussstand – 01.10.2026
+
+AP4 wurde mit Issue #107 und PR #108 umgesetzt, technisch abgenommen und in `main` integriert.
+
+- finaler PR-Head: `5e4bc7a32d254de028d819b121702a1a56ed2a0e`
+- Merge-Commit: `55b3fba41e6bd60e95a78400e701cdef627a4ed6`
+- finale CI #666 / `36859490252`: vollständig grün
+- HT-F01 bis HT-F09: technisch behoben und regressionsgeprüft
+- keine offene P0/P1-Abweichung im #1-Zielpfad
+
+AP4 wurde über den im AP4-Issue zulässigen **Abweichungs-/Eskalationspfad** abgeschlossen: Die technische Zielerreichung ist nachgewiesen; verbleibende nicht erfüllte quantitative bzw. qualitative #1-Kriterien sind transparent dokumentiert und wurden nicht nachträglich als PASS umgedeutet.
+
+Das ist ausdrücklich **kein vollständiger quantitativer Nachweis für Issue #1**.
+
 ---
 
 # 33. Testpopulation
+
+**Status nach AP4: abgeschlossen.** Acht fachlich unterschiedliche Ausgangsfälle wurden vor den gewerteten Runs eingefroren und bleiben über das Fallmanifest reproduzierbar.
 
 Vor dem gewerteten Lauf werden realistische Ausgangsfälle eingefroren.
 
@@ -1637,6 +1653,8 @@ Ein korrekt erkannter Non-AI- oder WAITING_HUMAN-Fall ist ein valides Ergebnis.
 ---
 
 # 34. Kein Success Sampling
+
+**Status nach AP4: abgeschlossen und real belegt.** Die ursprünglichen scored Failures bleiben erhalten; Post-Fix-Nachweise sind separat und linear dokumentiert.
 
 Vor dem gewerteten Lauf werden festgelegt:
 
@@ -1752,7 +1770,25 @@ als der manuell erarbeitete Referenzfall.
 
 ---
 
+
+## Realer Ergebnisstand der #1-Kriterien in AP4
+
+| Kriterium | AP4-Ergebnis |
+|---|---|
+| Aktive Human Work ≤ 15–20 Minuten Median | **nicht quantitativ nachgewiesen – Validation Gap** |
+| Manuelle Feldpflege ≥ 90 % Reduktion | **91,58 % – PASS** |
+| Rückfragen Median ≤ 3 | **Median 0 – PASS** |
+| Provenance | initial 98,55 %, post-hardening **100 % – PASS** |
+| Halluzinationen | **0 – PASS** |
+| Discovery → Delivery Konsistenz | post-hardening **alle 8 aktuellen Fallstände PASS** |
+| Menschliche Nacharbeit ≤ 20 % | **nicht quantitativ nachgewiesen – Validation Gap** |
+| Blind Human Review | **nicht durchgeführt; für diesen AP4-Abschluss bewusst ausgeschlossen; kein PASS** |
+
+Die Human-Time-Kampagne bleibt unveränderte historische Evidence: AP4-01 bis AP4-03 endeten als technische Fehlversuche, AP4-04 wurde wegen realer UX-Findings gestoppt und AP4-05 bis AP4-08 wurden nicht gestartet. Fehlende Zeiten wurden nicht geschätzt und scripted Operator-Zeit wurde nicht als menschliche Arbeitszeit umgedeutet.
+
 # 36. Technische Härtung in AP4
+
+**Status nach AP4: abgeschlossen.** Die Härtungsmatrix ist durch aktuelle Regressionen und Realbefunde abgedeckt; nur reproduzierbare Probleme wurden behoben. Die fachliche E2E-Qualität der eingefrorenen Population ist post-hardening bestätigt, und die vier frischen gepaarten Baselines AP4-01 bis AP4-04 bleiben der Referenzstand für den Vergleich.
 
 Zusätzlich werden absichtlich geprüft:
 
@@ -1786,14 +1822,14 @@ Keine vorsorgliche neue Scheduling-/Queue-Plattform.
 
 # 37. AP4 – Aufwand
 
+Die folgende Aufwandsschätzung bleibt als historische Planung erhalten:
+
 **Erwartung:** 6–10 fokussierte Arbeitstage  
 **Komplexität:** ca. 0,7–1,0 × VS1-Härtungseinheit
 
-Zusätzlich besteht eine externe Kalenderabhängigkeit für den Blind Human Review.
+**Realer Abschluss:** AP4 ist abgeschlossen. Der Blind Human Review wurde nicht als externe Warteabhängigkeit fortgeführt, sondern für diesen Abschlussweg bewusst ausgeschlossen und bleibt damit ein **nicht erfülltes #1-Qualitätskriterium**. Human-Time und Human-Rework bleiben ebenfalls nicht quantitativ nachgewiesen.
 
-Diese Wartezeit ist kein Implementierungsaufwand.
-
-AP4 enthält bewusst mehrere Post-Fix-Runden. Ein technischer Green Run allein schließt dieses Paket nicht ab.
+AP4 enthielt mehrere dokumentierte Post-Fix-Runden. Ein technischer Green Run allein war nicht der Abschlussgrund; abgeschlossen wurde über den transparent dokumentierten Abweichungs-/Eskalationspfad.
 
 ---
 
@@ -1961,6 +1997,8 @@ eingefrorene E2E-Fälle
 → Abschluss Issue #1
 ```
 
+**Realer Stand nach AP4:** AP1 bis AP4 sind in `main` integriert. Die obige Sequenz bleibt als ursprünglicher Zielpfad erhalten; real wurde AP4 technisch abgeschlossen, Human-Time und Human-Rework blieben quantitative Validation Gaps und der Blind Human Review wurde bewusst nicht durchgeführt. Deshalb folgt **kein automatischer Abschluss von Issue #1**, sondern eine separate #1-Bewertung auf Basis des realen Evidenzstands.
+
 PDF/DOCX oder Governance Tri-State werden nur an der Stelle eingeschoben, an der ein realer Befund ihre Notwendigkeit beweist.
 
 ---
@@ -2102,6 +2140,8 @@ Zusätzlich müssen die #1-Messgrößen real erfüllt sein:
 | Menschliche Nacharbeit | ≤ 20 % des heutigen Aufwands |
 | Blind-Review-Qualität | mindestens gleichwertig zum manuellen Referenzfall |
 
+**Post-AP4-Status:** Feldreduktion, Rückfragen, Provenance, Halluzinationsfreiheit und automatische Discovery→Delivery-Konsistenz sind für die eingefrorene AP4-Population belegt. Active Human Work, Human Rework und Blind-Review-Qualität sind **nicht** entsprechend dieser Definition of Done nachgewiesen. Diese Ziele werden nicht abgeschwächt oder nachträglich als erfüllt markiert.
+
 Erst dann ist aus KI-Ideenwerkstatt nicht nur ein Workflow mit KI-Unterstützung, sondern ein **autonomer AI Business Architect mit menschlicher Entscheidungshoheit** geworden.
 
 ---
@@ -2129,36 +2169,16 @@ Erst dann ist aus KI-Ideenwerkstatt nicht nur ein Workflow mit KI-Unterstützung
 
 # 46. Primäre nächste Aktion
 
-AP1, AP2 und AP3 sind abgeschlossen und in `main` integriert.
+AP1, AP2, AP3 und AP4 sind abgeschlossen und in `main` integriert.
 
-Die nächste planmäßige Einheit ist:
+Der Arbeitsplan ist nach AP4 auf den realen Abschlussstand abgeglichen. Die nächste formale Entscheidung ist **nicht ein weiteres AP4-Arbeitspaket**, sondern die separate Bewertung von Issue #1 gegen dessen unveränderte 10x-Definition of Done.
 
-> **AP4 – E2E-Härtung und 10x-Nachweis.**
+Dabei gilt:
 
-AP4 baut auf dem jetzt vollständigen Pfad auf:
+- technisch nachgewiesene AP4-Ergebnisse bleiben belegt;
+- Active Human Work ≤ 15–20 Minuten bleibt nicht quantitativ nachgewiesen;
+- Human Rework ≤ 20 % bleibt nicht quantitativ nachgewiesen;
+- Blind Human Review bleibt nicht durchgeführt und nicht erfüllt;
+- daraus wird kein vollständiger quantitativer #1-Nachweis konstruiert.
 
-```text
-Problem + Quellen
-→ Business Architecture / ProcessAnalysis
-→ Investigation
-→ Lösungsalternativen
-→ menschliche Lösungsentscheidung
-→ UseCase / Architecture / Governance / Pilot
-→ menschliche Approval
-→ DeliveryPackage
-→ read-only Decision Package
-```
-
-Der erste Schritt von AP4 ist **nicht weitere Funktionalität**, sondern die gewertete Testpopulation und den Messvertrag einzufrieren:
-
-```text
-Source Pack
-Startzustand
-Prompt-/Schema-Versionen
-Run-Slots
-Bewertungskriterien
-```
-
-Danach werden die #1-Zielgrößen über die festgelegten Fälle gemessen und nur reproduzierbare technische oder fachliche Defekte gehärtet.
-
-Keine neue Agentenplattform, keine vorsorgliche Queue-/Scheduling-Architektur und kein Success Sampling.
+Ein vollständiges Produkt-Playthrough kann anschließend als **separater Qualitätsschritt** durchgeführt werden. Es ist kein rückwirkender AP4-Blocker und ersetzt keine der drei fehlenden #1-Metriken.
