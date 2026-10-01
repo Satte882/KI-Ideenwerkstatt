@@ -87,7 +87,8 @@ def test_start_commits_dispatch_and_immediately_opens_live_page(
     assert run.model_calls.count() == 0
     page = client.get(response.url)
     assert page.status_code == 200
-    assert "Untersuchung läuft" in page.content.decode()
+    assert "Untersuchungsstart angefordert" in page.content.decode()
+    assert "Untersuchung läuft" not in page.content.decode()
     assert "Hintergrundausführung wird zugewiesen" in page.content.decode()
     response = client.post(
         reverse("accelerator:investigation_start", args=[product[0].pk]),
@@ -130,6 +131,37 @@ def test_dispatch_rolls_back_with_start(owner, product):
         start(owner, product)
         raise RuntimeError("transaction interrupted")
     assert not InvestigationRun.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("age,state", [(29, "pending"), (30, "pending"), (31, "unavailable")])
+def test_assignment_boundary_never_claims_running_analysis(owner, product, age, state):
+    handle = start(owner, product)
+    now = timezone.now()
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        execution_requested_at=now - timedelta(seconds=age)
+    )
+    activity = build_activity(InvestigationRun.objects.get(pk=handle.run_id), now=now)
+    assert activity["execution_state"] == state
+    assert "läuft" not in activity["title"]
+    assert "läuft im Hintergrund" not in activity["description"]
+
+
+@pytest.mark.django_db
+def test_running_title_requires_current_generation_and_unexpired_lease(owner, product):
+    handle = start(owner, product)
+    claim_execution(uuid.uuid4())
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    now = timezone.now()
+    assert build_activity(run, now=now)["title"] == "Untersuchung läuft"
+    run.execution_lease_until = now
+    assert build_activity(run, now=now)["execution_state"] == "unconfirmed"
+    assert "läuft" not in build_activity(run, now=now)["title"]
+    run.execution_lease_until = now + timedelta(seconds=30)
+    run.executor_generation += 1
+    activity = build_activity(run, now=now)
+    assert activity["execution_state"] == "pending"
+    assert "läuft" not in activity["title"]
 
 
 @pytest.mark.django_db
@@ -247,6 +279,7 @@ def test_global_capacity_is_two_products(owner, business_unit, tmp_path):
     )
     waiting_run = InvestigationRun.objects.get(execution_worker_id__isnull=True)
     assert build_activity(waiting_run)["execution_state"] == "queued"
+    assert build_activity(waiting_run)["title"] == "Untersuchung wartet auf freien Ausführungsplatz"
     assert execution_health() == {"healthy": True, "pending": 1, "overdue": 0, "orphaned": 0}
 
 

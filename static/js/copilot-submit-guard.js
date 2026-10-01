@@ -18,6 +18,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const activeButtonLabel = button.dataset.busyLabel || buttonLabel;
       const activeStatusLabel = button.dataset.busyStatus || statusLabel;
 
+      // Native submit() omits the submitter, and disabled buttons are not posted.
+      // Preserve the selected action before showing the busy state.
+      if (button.name) {
+        const action = document.createElement("input");
+        action.type = "hidden";
+        action.name = button.name;
+        action.value = button.value;
+        form.append(action);
+      }
+
       form.dataset.submitted = "true";
       button.disabled = true;
       button.setAttribute("aria-busy", "true");

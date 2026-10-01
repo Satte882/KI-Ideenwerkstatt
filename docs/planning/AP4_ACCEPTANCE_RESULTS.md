@@ -11,7 +11,7 @@ Branch: `feature/issue-107-ap4-evidence`
 - Vier frische geführte Referenzpfade wurden für AP4-01 bis AP4-04 gegen exakt dieselben eingefrorenen Problemstellungen und Source Packs erfasst.
 - Acht autonome scored Slots wurden jeweils genau einmal mit einem echten OpenRouter-Provider ausgeführt. Kein scored Failure wurde wiederholt oder ersetzt.
 - Die Providerläufe nutzten Discovery mit `google/gemini-3.6-flash`; nachgelagerte AP2-Schritte nutzten die konfigurierte reale Providerstrecke. Mocks waren nicht aktiv.
-- Die geführten Baselines und die scripted Acceptance-Operator-Aktionen sind keine unabhängige Human Review. Nicht gemessene menschliche Zeit wird im Evidence-Aggregator jetzt ausdrücklich als **offen** behandelt und nicht mehr als numerische `0` gewertet. Die Blind Human Review bleibt ausdrücklich offen.
+- Die geführten Baselines und die scripted Acceptance-Operator-Aktionen sind keine unabhängige Human Review. Nicht gemessene menschliche Zeit wird im Evidence-Aggregator jetzt ausdrücklich als **offen** behandelt und nicht mehr als numerische `0` gewertet. Der Blind Human Review wurde nicht durchgeführt; er ist für den aktuellen technischen Abschlussweg bewusst ausgeschlossen und bleibt als Qualitätsnachweis unerfüllt.
 
 ## Frische Baselines
 
@@ -69,7 +69,7 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 | erwarteter Endzustand, alle Fälle | FAIL | **PASS** | alle PASS |
 | menschliche Nacharbeit / Baseline | offen / nicht gemessen* | offen / nicht gemessen* | ≤ 20 % |
 
-\* Nur tatsächlich gemessene aktive menschliche Zeit wird gezählt. Scripted Acceptance-Operator-Aktionen werden nicht in erfundene Zeitwerte umgerechnet. Diese beiden Zeitmetriken bleiben deshalb ausdrücklich **offen** und erzeugen keinen PASS, bis echte menschliche Zeit vorliegt.
+\* Nur tatsächlich gemessene aktive menschliche Zeit wird gezählt. Scripted Acceptance-Operator-Aktionen werden nicht in erfundene Zeitwerte umgerechnet. Diese beiden Zeitmetriken bleiben **quantitativ nicht nachgewiesen** und erzeugen keinen PASS. Die gestoppte erste Human-Time-Kampagne erlaubt keinen belastbaren Median und keine Nacharbeitsquote; für diesen Abschlussweg wird keine zweite Kampagne gestartet.
 
 ## Browser- und Domain-State-Evidence
 
@@ -86,11 +86,11 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 
 - AP4-08 Browser-Operator-Laufzeit: 102,581 s, real gemessen von Öffnen des Solution-Vergleichs bis zur erfolgreichen Speicherung.
 - Diese Zeit stammt aus der CLI-gestützten Abnahme und umfasst Navigation sowie Werkzeuglauf. Sie ist deshalb ausdrücklich **keine menschliche Arbeitszeit** (`human_time_measured=false`) und wird nicht in die AP4-Human-Work- oder Nacharbeitsmetriken eingerechnet.
-- Tatsächliche aktive Human Work und menschliche Nacharbeit bleiben mangels menschlicher Teilnahme offen; es wurden keine Zeiten geschätzt.
+- Dieser Authority-Folgenachweis misst keine menschliche Arbeitszeit. Auch die spätere, gestoppte erste Human-Time-Kampagne belegt die beiden Zeitmetriken nicht; es wurden keine Zeiten geschätzt.
 
-## Plan ↔ Issue Reconciliation vor Human-Time
+## Historischer Plan-/Issue-Abgleich vor Human-Time
 
-Der führende Arbeitsplan bleibt während AP4 unverändert. Issue #107 konkretisiert ihn; dieser Abschnitt prüft nur, ob Issue, Evidence und realer Iststand deckungsgleich sind.
+Der führende Arbeitsplan bleibt während AP4 unverändert. Die folgende Tabelle bewahrt den historischen Stand vor der ersten Human-Time-Kampagne; der aktuelle technische Abschlussweg steht darunter. Sie ist keine Änderung des Plans oder Messvertrags.
 
 | Plan | Issue-/Evidence-Stand | Status vor Human-Time |
 |---|---|---|
@@ -119,10 +119,46 @@ Der führende Arbeitsplan bleibt während AP4 unverändert. Issue #107 konkretis
 - Blind Human Review: **offen / externe Abhängigkeit**
 
 Damit sind vor der Human-Time-Messung **keine bekannte Produktlücke, kein technischer Hardening-Gap und kein Plan↔Issue-Widerspruch** mehr offen. Nicht erfüllt sind ausschließlich die bewusst menschlichen #1-Nachweise.
-## Verbleibende offene Punkte
+## Technische Post-Fix-Abnahme — 2026-10-01
 
-- Aktive Human Work und menschliche Nacharbeit sind noch nicht mit echter menschlicher Teilnahme gemessen.
-- Unabhängige Blind Human Review der neutralisierten Decision Packages ist nicht erfolgt und kann nicht durch diese technische/LLM-gestützte Abnahme ersetzt werden.
-- AP4-05 ist mit dem linearen Real-Provider-Nachweis `PF3` abgeschlossen; kein weiterer AP4-05-Lauf ist erforderlich.
-- Der AP4-08-Produkt-/Domainpfad ist geschlossen und im Post-Hardening-Aggregat als PASS abgebildet.
-- Bis Human-Time-Messung und finaler Abschlussreview erfolgt sind, bleibt Issue #107 offen und PR #108 Draft/unmerged.
+Prüfbasis: `d48401148d67d242b668ae21ea6af4a0f440410b`, Fix-Commits `64541bd` und `d484011`, CI #665 / `36848836450` nachweislich vollständig grün. Zwei reproduzierbare Restfehler wurden im Rahmen dieser Abnahme korrigiert; für den neuen Code-Head ist erneut vollständige CI erforderlich.
+
+| Finding | Produktionsfix / Regression | Ergebnis |
+|---|---|---|
+| HT-F01, HT-F04 | `source-upload-staging.js`: additive FileList, sichtbare Dateinamen, Entfernen; `test_source_upload_staging.py`, `test_issue_80_source_upload.py`, Discovery-Tests und isolierter Edge-Browservertrag | PASS |
+| HT-F02 | Discovery nutzt `data-submit-guard`, Spinner, Live-Status und Mehrfachsubmit-Sperre; Discovery-/Loading-Regressionen | PASS |
+| HT-F03 | `pending_execution_state()` und `build_activity()`; verbleibende irreführende Überschriften korrigiert; `test_issue_75_activity.py`, einschließlich Assignment-/Lease-Grenzen und Generation | PASS |
+| HT-F05, HT-F06 | fokussierte Fehlerzusammenfassung, Feldlinks, gebundene Eingaben und kein Decision-Write bei ungültigem Submit; `test_solution_selection_ux.py` | PASS |
+| HT-F07 | Claim → reviewed Brief-Hypothese → bestehende Ursachenhypothese; Vorschlag bleibt unbestätigt, menschlicher Submit erforderlich; Solution-UX-Regressionen | PASS |
+| HT-F08 | Busy-State bewahrt jetzt den geklickten Aktionswert vor Disabled/native Submit; `test_submit_guard_runtime.py`, Edge Vorher-/Nachher-Reproduktion | PASS |
+| HT-F09 | nach AI-Auswahl Fortsetzung als einzige Primary Action, Auswahländerung sekundär; Solution-UX-Regressionen | PASS |
+
+### HT-F03 Ausführungsvertrag
+
+- `pending`: neues Assignment bis einschließlich 30 Sekunden (`LEASE_SECONDS=30`); keine Überschrift behauptet laufende Analyse.
+- `queued`: älteres unclaimed Assignment, während mindestens `MAX_EXECUTIONS=2` aktuelle produktive Runs mit passender Generation und nicht abgelaufener Lease die Kapazität belegen; UI nennt das Warten auf einen freien Platz.
+- `confirmed`: nur RUNNING mit passender Execution-/Executor-Generation, Worker-ID und Lease strikt nach `now`; nur hier „Untersuchung läuft“ / „läuft im Hintergrund“.
+- `unavailable`: Assignment älter als 30 Sekunden und weniger als zwei bestätigte aktive Produkt-Runs; UI erklärt die nicht übernommene Ausführung, technischen Dienst prüfen/starten, Abbruch und keinen Blind-Restart. Sie behauptet nicht, dass definitiv kein Worker-Prozess existiert.
+- Abgelaufene oder fremde Generation bestätigt keine Analyse. Bereits beanspruchte Runs mit abgelaufener Lease werden `unconfirmed`, bis die bestehende Worker-Cleanup-Logik greift. Keine neue Statusmaschine, Queue oder Architektur.
+
+### Gezielte E2E-Konsistenz
+
+115 relevante Django-/statische Regressionen bestanden (Activity, Solution UX, Loading Feedback, Source Upload/Staging, Discovery, AP4 Evidence und Solution Comparison); zusätzlich 1 ausführbarer JS-Submit-Guard-Test bestanden. Die Tests prüfen Start/Dispatch, menschliche Confirmation, valide/invalid gespeicherte Auswahl, AI-Fortsetzung sowie Bindung des Handoffs an die unveränderte menschliche Auswahl.
+
+Der isolierte Edge-Browser prüfte die tatsächliche Formserialisierung: ursprünglicher Guard verlor die Fortsetzungsaktion, korrigierter Guard überträgt genau `continue_ai_handoff=1` trotz deaktiviertem Button und unvollständigen Feldern der optionalen Auswahländerung. Additives Staging, Dateinamen und Entfernen ebenfalls PASS. Keine neue fachliche Bewertung der acht Fälle und kein neuer Providerlauf. Bestehende AP4-05-PF3-/AP4-08-Authority-Evidence und Downstream-Guards bleiben die Grundlage; vollständige CI prüft zusätzlich die bestehende Härtungsmatrix.
+
+### Historische Human-Time und Abschlussentscheidung
+
+- AP4-01 bis AP4-03: technische Fehlversuche.
+- AP4-04: vom Menschen wegen UX-Findings gestoppt, kein finaler reviewfähiger Messabschluss.
+- AP4-05 bis AP4-08: nicht gestartet.
+- Die vier `AP4-0[1-4]-human-time.json` bleiben byte-identisch. Null-Werte bleiben unbekannt; fehlende Segmente werden weder geschätzt noch zu Null erklärt.
+- Human-Time ≤15–20 Minuten und Human-Rework ≤20 %: **nicht quantitativ nachgewiesen / Validation Gap**, niemals PASS. Die technische Zielerreichung ersetzt keinen Produktivitätsnachweis.
+- Blind Human Review: **nicht durchgeführt und für diesen Abschlussweg bewusst ausgeschlossen**, kein PASS und kein Ersatz durch LLM-/Technical-Review.
+- Separates vollständiges Produkt-Playthrough: späterer eigener Arbeitsschritt, hier nicht durchgeführt und kein Voraussetzungstest dieser technischen Abnahme.
+
+**#107 technisch closure-ready: YES, sofern die vollständige CI auf dem neuen Fix-Head grün ist und die beiden Zeitmetriken als akzeptierte Validation Gap sowie Blind Review als bewusst ausgeschlossener Nachweis im Abschluss dokumentiert werden.** Das ist kein vollständiger quantitativer #1-Nachweis.
+
+Issue #107 enthält weiterhin die historischen operativen Formulierungen unter „Aktueller Reconciliation-Stand vor Human-Time“ (Blind Review/Gesamtergebnis offen), „AP4.8 – Blind Review“, Arbeitsreihenfolge Schritt 7 und die nicht abgehakten Kriterien „Blind Review mindestens gleichwertig“ / „Blind-Review-Evidence dokumentiert“. PR #108 beschreibt im Draft-Text ebenfalls noch Blind Review als Abschlussvoraussetzung. Für den vereinbarten Abschlussweg lautet die sachliche Reconciliation: „Nicht durchgeführt; bewusst ausgeschlossen für diesen technischen Abschluss; Qualitätsnachweis bleibt unerfüllt.“ Checkboxen werden nicht als PASS erfunden. Die historischen Anforderungen bleiben nachvollziehbar; dieser Bericht dokumentiert die bewusst gewählte Abweichung.
+
+PR #108 bleibt Draft/unmerged, Issue #107 bleibt offen. Arbeitsplan und eingefrorener Messvertrag werden nicht verändert. Kein weiterer technischer Produktrest bekannt; verbleiben der explizite Abschluss mit den obigen Abweichungen und das spätere separate Gesamt-Playthrough.

@@ -30,6 +30,7 @@
     }
     if (state.execution_lease_until && now >= Date.parse(state.execution_lease_until)) {
       root.classList.add("activity-offline");
+      text("[data-activity-title]", "Untersuchungsausführung derzeit nicht bestätigt");
       text("[data-activity-description]", "Ausführung derzeit nicht bestätigt. Der letzte gespeicherte Stand bleibt sichtbar.");
       return;
     }

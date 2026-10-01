@@ -4,6 +4,12 @@ Issue: #107
 Planbasis: `main@2b9a2f87699cbf1f1014463d3061e3d05b77a86c`  
 Messvertrag: `docs/planning/AP4_MEASUREMENT_CONTRACT.md`
 
+## Aktueller Status — 2026-10-01
+
+Dieses Runbook beschreibt den eingefrorenen Ablauf der ersten, inzwischen gestoppten Kampagne. AP4-01 bis AP4-03 waren technische Fehlversuche, AP4-04 wurde vom Menschen wegen UX-Findings gestoppt, AP4-05 bis AP4-08 wurden nicht gestartet. Die vier historischen JSON-Records bleiben unverändert; es gibt keinen belastbaren Human-Time-Median und keine belastbare Human-Rework-Quote.
+
+Für den aktuellen technischen Abschlussweg sind beide Zeitmetriken transparent nicht nachgewiesen (Validation Gap); Blind Human Review ist bewusst ausgeschlossen und nicht bestanden. Keine zweite Kampagne wird gestartet. Die folgenden Durchführungsschritte und das historische Gate in §10 sind keine aktuell offene operative Beauftragung. Maßgeblich ist der dokumentierte Abschlussweg in `AP4_ACCEPTANCE_RESULTS.md`; Arbeitsplan und Messvertrag bleiben unverändert.
+
 ## Zweck
 
 Dieses Runbook operationalisiert ausschließlich die bereits eingefrorenen AP4-Messgrößen:

@@ -1,6 +1,6 @@
 # AP4 Human-Time Findings
 
-This ledger preserves observations from the one-time human measurement runs. It does not replace the per-case JSON records, change the frozen measurement contract, or authorize a rerun. The human stopped the round after AP4-04 because the accumulated UX defects made the remaining timing baseline unsuitable. AP4-05 through AP4-08 were not started. The findings are now the correction baseline before any new measurement campaign.
+This ledger preserves observations from the one-time human measurement runs. It does not replace the per-case JSON records, change the frozen measurement contract, or authorize a rerun. The human stopped the round after AP4-04 because the accumulated UX defects made the remaining timing baseline unsuitable. AP4-05 through AP4-08 were not started. The findings are the correction baseline for technical post-fix acceptance. No second measurement campaign is authorized by the current completion path.
 
 ## AP4-01
 
@@ -91,3 +91,13 @@ This ledger preserves observations from the one-time human measurement runs. It 
 - Local visual inspection confirmed the revised Discovery upload surface and the AP4-04 post-selection action hierarchy.
 - Investigation activity now distinguishes fresh assignment, legitimate queueing, confirmed execution, and unavailable background execution; the overdue unclaimed state is regression-tested.
 - Investigation activity regression suite: 19 tests passed.
+
+## Technical post-fix acceptance — 2026-10-01
+
+- HT-F01–HT-F09: PASS after the two concrete corrections below. This is technical acceptance, not a new human timing or independent quality campaign.
+- HT-F03 residual defect: the description distinguished pending/queued execution, but the heading still said “Untersuchung läuft”. The heading now distinguishes pending, queued, confirmed, unavailable and unconfirmed execution. On client-side lease expiry the running heading is also withdrawn. The persisted Domain status remains unchanged.
+- HT-F08 residual defect: disabling the clicked continuation button followed by native `submit()` omitted `continue_ai_handoff=1`. The guard now preserves the clicked name/value before disabling the button. The previous script reproduces the loss in Edge; the current script preserves the continuation action even when unrelated selection fields are invalid (`formnovalidate`). No second selection is implied by continuation.
+- Runtime regression: `tests/test_submit_guard_runtime.py` / `tests/submit_guard_runtime.cjs` executes the production guard and confirms one continuation payload and duplicate-submit protection. Requires Node.js; pytest reports a skip explicitly if unavailable.
+- Targeted Django/static regressions: 115 passed; submit-guard behavioral regression: 1 passed. Assignment boundaries 29/30/31 seconds, lease equality/expiry, generation mismatch and occupied-capacity queue headings are covered.
+- Edge isolated browser contract: additive source accumulation, filename list/removal, disabled busy button, live status and continuation payload PASS. This synthetic local test does not create a provider run or alter the historical AP4 cases.
+- AP4-01–AP4-03 remain technical failed timing attempts; AP4-04 remains human-stopped for UX findings; AP4-05–AP4-08 were not started. All four human-time JSON files remain byte-for-byte unchanged. Neither a reliable Human-Time median nor a Human-Rework ratio can be calculated.

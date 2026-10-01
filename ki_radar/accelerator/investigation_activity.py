@@ -67,8 +67,13 @@ def build_activity(run, *, now=None):
         "failed": "Untersuchung konnte nicht abgeschlossen werden",
         "aborted": "Untersuchung abgebrochen",
     }.get(run.status, "Untersuchung")
-    if execution_state == "unavailable":
-        title = "Untersuchung wartet auf technischen Dienst"
+    if active and not confirmed:
+        title = {
+            "pending": "Untersuchungsstart angefordert",
+            "queued": "Untersuchung wartet auf freien Ausführungsplatz",
+            "unavailable": "Untersuchung wartet auf technischen Dienst",
+            "unconfirmed": "Untersuchungsausführung derzeit nicht bestätigt",
+        }[execution_state]
     description = {
         "confirmed": (
             "Sie können diese Seite verlassen. Die Untersuchung läuft im Hintergrund weiter."
