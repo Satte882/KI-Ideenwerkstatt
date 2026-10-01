@@ -189,6 +189,7 @@ Die Oberfläche wurde auf die fachliche Arbeit und die jeweils nächste Entschei
 - konsistente Desktop-, Tablet- und Mobile-Darstellung;
 - sichtbarer Tastaturfokus, semantische Zustände und zugängliche Interaktionen;
 - reduzierte Legacy- und Duplicate-Journey-Strukturen;
+- explizit gestartete Untersuchungen laufen serverseitig unabhängig vom geöffneten Browser weiter; eine Live-Ansicht zeigt persistierte Aktivitäten, Rückfragen und Wiederholungen, und erst ein freigegebener Untersuchungsstand führt zum Decision Brief;
 - lokal im regulären Browser abgenommene Referenzstrecke vom Value Stream bis zur bewerteten, governance-seitig vorbereiteten KI-Idee einschließlich No-AI-Gegenprobe und hypothesenfähiger Messreife.
 
 Zentrale Nachweise: #279–#287, #295 und #310.
