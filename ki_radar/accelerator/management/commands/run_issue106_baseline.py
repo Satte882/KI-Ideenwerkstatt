@@ -5,16 +5,24 @@ import os
 import re
 import shutil
 import subprocess  # nosec B404 -- fixed local git executable, shell=False
+import uuid
+from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connection, transaction
+from django.utils import timezone
 
-from ki_radar.accelerator.investigation_evidence import create_evidence_campaign
+from ki_radar.accelerator.investigation_evidence import (
+    create_evidence_campaign,
+    mark_provider_attempt_uncertain,
+)
 from ki_radar.accelerator.investigation_loop import run_until_boundary
 from ki_radar.accelerator.investigation_models import (
     InvestigationEvidenceCampaign,
+    InvestigationProviderReservation,
     InvestigationRun,
 )
 from ki_radar.accelerator.investigation_runtime import (
@@ -39,6 +47,36 @@ from ki_radar.accelerator.issue106_baseline import (
 from ki_radar.architecture.models import ProcessAnalysis
 
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
+AP1_LOCK_NAMESPACE = 106
+AP1_LOCK_KEY = 111
+
+
+@contextmanager
+def baseline_execution_lock():
+    """Serialize all real-provider AP1 slots across command processes."""
+    if connection.vendor != "postgresql":
+        raise CommandError(
+            "Real AP1 baseline execution requires PostgreSQL so the project-wide "
+            "advisory lock can protect the shared provider-cost budget."
+        )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_try_advisory_lock(%s, %s)",
+            [AP1_LOCK_NAMESPACE, AP1_LOCK_KEY],
+        )
+        row = cursor.fetchone()
+    if not row or not bool(row[0]):
+        raise CommandError(
+            "Another Issue #106 AP1 baseline command currently owns the project lock."
+        )
+    try:
+        yield
+    finally:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT pg_advisory_unlock(%s, %s)",
+                [AP1_LOCK_NAMESPACE, AP1_LOCK_KEY],
+            )
 
 
 class Command(BaseCommand):
@@ -72,28 +110,37 @@ class Command(BaseCommand):
 
         tested_commit = self._tested_commit()
         self._assert_environment()
-        existing_commits = {
-            str(item.evidence_metadata.get("tested_commit") or "")
-            for item in baseline_runs()
-            if item.evidence_metadata.get("tested_commit")
-        }
-        if existing_commits and existing_commits != {tested_commit}:
+        slots = baseline_slots() if run_all else ((case_id, int(repetition)),)
+
+        with baseline_execution_lock():
+            self._assert_existing_commit_binding(tested_commit)
+            for slot_case, slot_repeat in slots:
+                self._run_slot(
+                    case_id=slot_case,
+                    repetition=slot_repeat,
+                    tested_commit=tested_commit,
+                )
+
+    def _assert_existing_commit_binding(self, tested_commit: str) -> None:
+        metadata_rows = list(baseline_runs().values_list("evidence_metadata", flat=True))
+        if not metadata_rows:
+            return
+        commits = [str((item or {}).get("tested_commit") or "").lower() for item in metadata_rows]
+        if any(not HEX40.fullmatch(value) for value in commits):
+            raise CommandError(
+                "Existing AP1 baseline population contains a missing or invalid tested_commit."
+            )
+        if set(commits) != {tested_commit}:
             raise CommandError(
                 "Existing AP1 baseline runs use a different tested commit: "
-                + ", ".join(sorted(existing_commits))
-            )
-
-        slots = baseline_slots() if run_all else ((case_id, int(repetition)),)
-        for slot_case, slot_repeat in slots:
-            self._run_slot(
-                case_id=slot_case,
-                repetition=slot_repeat,
-                tested_commit=tested_commit,
+                + ", ".join(sorted(set(commits)))
             )
 
     def _run_slot(self, *, case_id: str, repetition: int, tested_commit: str) -> None:
         existing = list(
-            baseline_runs().filter(
+            baseline_runs()
+            .select_related("evidence_campaign__authorized_by")
+            .filter(
                 evidence_metadata__case_id=case_id,
                 evidence_metadata__repetition=repetition,
             )
@@ -101,21 +148,10 @@ class Command(BaseCommand):
         if len(existing) > 1:
             raise CommandError(f"{case_id} R{repetition}: duplicate baseline runs exist.")
         if existing:
-            record = build_baseline_record(existing[0])
-            self.stdout.write(
-                self.style.WARNING(
-                    "ISSUE106_AP1_SLOT_REUSED "
-                    + json.dumps(
-                        {
-                            "case_id": case_id,
-                            "repetition": repetition,
-                            "run_id": record["run_id"],
-                            "status": record["status"],
-                            "cost_usd": record["performance"]["cost_usd"],
-                        },
-                        separators=(",", ":"),
-                    )
-                )
+            self._handle_existing_run(
+                run=existing[0],
+                case_id=case_id,
+                repetition=repetition,
             )
             return
 
@@ -190,21 +226,169 @@ class Command(BaseCommand):
             raise CommandError(f"{case_id} R{repetition}: run could not start: {exc}") from exc
 
         if handle.reused:
+            reused = (
+                InvestigationRun.objects.select_related("evidence_campaign__authorized_by")
+                .get(pk=handle.run_id)
+            )
+            self._handle_existing_run(run=reused, case_id=case_id, repetition=repetition)
+            return
+
+        self._execute_run(
+            run_id=handle.run_id,
+            actor=campaign.authorized_by,
+            executor_token=handle.executor_token,
+            case_id=case_id,
+            repetition=repetition,
+        )
+
+    def _handle_existing_run(
+        self,
+        *,
+        run: InvestigationRun,
+        case_id: str,
+        repetition: int,
+    ) -> None:
+        if run.status != InvestigationRun.Status.RUNNING:
+            record = build_baseline_record(run)
             self.stdout.write(
-                self.style.WARNING(f"{case_id} R{repetition}: existing run reused: {handle.run_id}")
+                self.style.WARNING(
+                    "ISSUE106_AP1_SLOT_REUSED "
+                    + json.dumps(
+                        {
+                            "case_id": case_id,
+                            "repetition": repetition,
+                            "run_id": record["run_id"],
+                            "status": record["status"],
+                            "cost_usd": record["performance"]["cost_usd"],
+                        },
+                        separators=(",", ":"),
+                    )
+                )
             )
             return
+
+        if run.evidence_campaign is None:
+            raise CommandError(
+                f"{case_id} R{repetition}: RUNNING baseline run has no evidence campaign."
+            )
+
+        open_reservation_ids = list(
+            run.provider_reservations.filter(
+                status=InvestigationProviderReservation.Status.OPEN
+            ).values_list("pk", flat=True)
+        )
+        has_inflight_state = bool(
+            open_reservation_ids
+            or run.model_calls.filter(status="running").exists()
+            or run.steps.filter(status="running").exists()
+        )
+        if has_inflight_state:
+            self._fence_interrupted_run(
+                run=run,
+                open_reservation_ids=open_reservation_ids,
+            )
+            self.stdout.write(
+                self.style.WARNING(
+                    f"{case_id} R{repetition}: interrupted in-flight provider state was "
+                    f"preserved as FAILED on existing run {run.pk}; no replacement run started."
+                )
+            )
+            return
+
+        self.stdout.write(
+            self.style.WARNING(
+                f"{case_id} R{repetition}: resuming existing RUNNING baseline run {run.pk}."
+            )
+        )
+        self._execute_run(
+            run_id=run.pk,
+            actor=run.evidence_campaign.authorized_by,
+            executor_token=run.executor_token,
+            case_id=case_id,
+            repetition=repetition,
+        )
+
+    def _fence_interrupted_run(
+        self,
+        *,
+        run: InvestigationRun,
+        open_reservation_ids,
+    ) -> None:
+        for reservation_id in open_reservation_ids:
+            mark_provider_attempt_uncertain(
+                reservation_id=reservation_id,
+                reason="baseline_execution_interrupted",
+            )
+
+        with transaction.atomic():
+            current = InvestigationRun.objects.select_for_update().get(pk=run.pk)
+            if current.status != InvestigationRun.Status.RUNNING:
+                return
+            now = timezone.now()
+            current.model_calls.filter(status="running").update(
+                status="discarded",
+                finished_at=now,
+                error_code="execution_interrupted",
+            )
+            current.steps.filter(status="running").update(
+                status="discarded",
+                finished_at=now,
+                error_code="execution_interrupted",
+            )
+            current.status = InvestigationRun.Status.FAILED
+            current.finished_at = now
+            current.clarification_reason = "technical_failure"
+            current.clarification_payload = {
+                "error_code": "execution_interrupted",
+                "impact": (
+                    "Die AP1-Ausführung wurde mit offenem Provider-/Schrittzustand "
+                    "unterbrochen; der tatsächliche Providerverbrauch kann teilweise "
+                    "unklar sein."
+                ),
+                "required_action": (
+                    "Run als fehlgeschlagene Baseline-Evidence behalten; keinen "
+                    "Ersatzlauf für denselben Slot starten."
+                ),
+            }
+            current.executor_generation += 1
+            current.executor_token = uuid.uuid4()
+            current.save(
+                update_fields=[
+                    "status",
+                    "finished_at",
+                    "clarification_reason",
+                    "clarification_payload",
+                    "executor_generation",
+                    "executor_token",
+                    "updated_at",
+                ]
+            )
+
+    def _execute_run(
+        self,
+        *,
+        run_id,
+        actor,
+        executor_token,
+        case_id: str,
+        repetition: int,
+    ) -> None:
         try:
             result = run_until_boundary(
-                actor=campaign.authorized_by,
-                run_id=handle.run_id,
-                executor_token=handle.executor_token,
+                actor=actor,
+                run_id=run_id,
+                executor_token=executor_token,
             )
         except InvestigationRunError as exc:
             raise CommandError(f"{case_id} R{repetition}: investigation failed: {exc}") from exc
 
         run = InvestigationRun.objects.get(pk=result.run_id)
         record = build_baseline_record(run)
+        contract = performance_contract()
+        baseline_cap_usd = Decimal(
+            str(contract["experiment_budget"]["baseline_provider_cost_cap_usd"])
+        )
+        project_cap_microunits = int(baseline_cap_usd * Decimal("1000000"))
         self.stdout.write(
             self.style.SUCCESS(
                 "ISSUE106_AP1_SLOT_FINISHED "
@@ -300,16 +484,12 @@ class Command(BaseCommand):
         return values
 
     def _tested_commit(self) -> str:
-        explicit = os.getenv("ISSUE106_TESTED_COMMIT", "").strip().lower()
-        if explicit:
-            if not HEX40.fullmatch(explicit):
-                raise CommandError("ISSUE106_TESTED_COMMIT must be a 40-character SHA.")
-            os.environ["GIT_COMMIT"] = explicit
-            return explicit
         base = Path(settings.BASE_DIR)
         git = shutil.which("git")
         if not git:
-            raise CommandError("Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly.")
+            raise CommandError(
+                "Git executable unavailable; AP1 requires a verifiable checkout/HEAD binding."
+            )
         try:
             status = subprocess.run(  # noqa: S603  # nosec B603 -- fixed git argv
                 [git, "status", "--porcelain"],
@@ -335,10 +515,21 @@ class Command(BaseCommand):
             )
         except (OSError, subprocess.CalledProcessError) as exc:
             raise CommandError(
-                "Git revision unavailable; set ISSUE106_TESTED_COMMIT explicitly."
+                "Git revision unavailable; AP1 refuses an unverifiable tested_commit."
             ) from exc
+
         if not HEX40.fullmatch(head):
             raise CommandError("Could not resolve a valid tested commit.")
+
+        explicit = os.getenv("ISSUE106_TESTED_COMMIT", "").strip().lower()
+        if explicit:
+            if not HEX40.fullmatch(explicit):
+                raise CommandError("ISSUE106_TESTED_COMMIT must be a 40-character SHA.")
+            if explicit != head:
+                raise CommandError(
+                    "ISSUE106_TESTED_COMMIT must exactly match the verified checkout HEAD."
+                )
+
         os.environ["GIT_COMMIT"] = head
         return head
 
