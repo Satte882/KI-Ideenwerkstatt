@@ -88,13 +88,40 @@ def test_start_commits_dispatch_and_immediately_opens_live_page(
     page = client.get(response.url)
     assert page.status_code == 200
     assert "Untersuchung läuft" in page.content.decode()
-    assert "Ausführung ausstehend" in page.content.decode()
+    assert "Hintergrundausführung wird zugewiesen" in page.content.decode()
     response = client.post(
         reverse("accelerator:investigation_start", args=[product[0].pk]),
         {"idempotency_key": "live-ui"},
     )
     assert InvestigationRun.objects.count() == 1
     assert response.url.endswith("/activity/")
+
+
+@pytest.mark.django_db
+def test_overdue_unclaimed_dispatch_is_an_actionable_technical_blocker(client, owner, product):
+    handle = start(owner, product)
+    now = timezone.now()
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        execution_requested_at=now - timedelta(seconds=31)
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    activity = build_activity(run, now=now)
+
+    assert activity["execution_state"] == "unavailable"
+    assert activity["attention_required"] is True
+    assert activity["attention_title"] == "Hintergrundausführung nicht verfügbar"
+    assert "keine bestätigte Analyse" in activity["description"]
+    assert "nicht erneut" in activity["required_action"]
+    assert activity["duration_label"] == "Wartezeit seit Startanforderung"
+
+    client.force_login(owner)
+    page = client.get(reverse("accelerator:investigation_activity", args=[run.pk]))
+    content = page.content.decode()
+    assert page.status_code == 200
+    assert "Hintergrundausführung nicht verfügbar" in content
+    assert "keine bestätigte Analyse" in content
+    assert "Wartezeit seit Startanforderung" in content
 
 
 @pytest.mark.django_db
@@ -218,6 +245,8 @@ def test_global_capacity_is_two_products(owner, business_unit, tmp_path):
     InvestigationRun.objects.filter(execution_worker_id__isnull=True).update(
         execution_requested_at=timezone.now() - timedelta(seconds=60)
     )
+    waiting_run = InvestigationRun.objects.get(execution_worker_id__isnull=True)
+    assert build_activity(waiting_run)["execution_state"] == "queued"
     assert execution_health() == {"healthy": True, "pending": 1, "overdue": 0, "orphaned": 0}
 
 
@@ -379,3 +408,5 @@ def test_activity_client_opens_brief_only_on_running_to_ready_transition():
     assert 'state.status === "running" && next.status === "ready"' in script
     assert "next.ready && next.brief_url" in script
     assert "window.location.assign(next.brief_url)" in script
+    assert "next.attention_required" in script
+    assert "next.duration_label" in script

@@ -84,14 +84,13 @@
     text("[data-activity-title]", next.title);
     const headingStatus = root.querySelector("[data-heading-status]");
     headingStatus.className = `activity-heading-status activity-heading-status--${next.execution_state}`;
-    headingStatus.textContent = next.ready ? "✓" : next.status === "failed" ? "×" : next.status === "waiting_human" ? "!" : "●";
+    headingStatus.textContent = next.ready ? "✓" : next.status === "failed" ? "×" : next.attention_required ? "!" : "●";
     root.querySelector("[data-result-jump]").hidden = !next.ready;
     text("[data-activity-description]", next.description);
     text("[data-total-duration]", next.duration);
-    text("[data-duration-label]", next.finished_at ? "Gesamtdauer seit Start" : "Seit Start");
-    const attention = next.status === "waiting_human" || next.status === "failed";
-    root.querySelector("[data-attention]").hidden = !attention;
-    text("[data-attention-title]", next.status === "waiting_human" ? "Entscheidungskritische Klärung" : "Technische Prüfung erforderlich");
+    text("[data-duration-label]", next.duration_label);
+    root.querySelector("[data-attention]").hidden = !next.attention_required;
+    text("[data-attention-title]", next.attention_title);
     text("[data-impact]", next.impact);
     text("[data-required-action]", next.required_action);
     text("[data-needed-evidence]", next.needed_evidence ? `Benötigt: ${next.needed_evidence}` : "");

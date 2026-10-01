@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from .investigation_execution import pending_execution_state
 from .investigation_policy import PolicyOutcome
 from .investigation_presentation import build_decision_surface, humanize_investigation_text
 from .investigation_runtime import evaluate_run_policy
@@ -47,16 +48,12 @@ def build_activity(run, *, now=None):
         and run.execution_lease_until
         and run.execution_lease_until > now
     )
-    pending = (
-        active
-        and run.execution_requested_at
-        and run.execution_generation != run.executor_generation
-    )
+    pending_state = pending_execution_state(run, now=now)
     execution_state = (
         "confirmed"
         if confirmed
-        else "pending"
-        if pending
+        else pending_state
+        if pending_state
         else "unconfirmed"
         if active
         else "stopped"
@@ -70,11 +67,21 @@ def build_activity(run, *, now=None):
         "failed": "Untersuchung konnte nicht abgeschlossen werden",
         "aborted": "Untersuchung abgebrochen",
     }.get(run.status, "Untersuchung")
+    if execution_state == "unavailable":
+        title = "Untersuchung wartet auf technischen Dienst"
     description = {
         "confirmed": (
             "Sie können diese Seite verlassen. Die Untersuchung läuft im Hintergrund weiter."
         ),
-        "pending": "Start angefordert - Ausführung ausstehend.",
+        "pending": "Start angefordert - die Hintergrundausführung wird zugewiesen.",
+        "queued": (
+            "Alle Ausführungsplätze sind belegt. Die Untersuchung wartet auf den nächsten "
+            "freien Platz."
+        ),
+        "unavailable": (
+            "Die Startanforderung wurde nicht übernommen. Es findet derzeit keine "
+            "bestätigte Analyse statt."
+        ),
         "unconfirmed": (
             "Ausführung derzeit nicht bestätigt. Der letzte gespeicherte Stand bleibt sichtbar."
         ),
@@ -224,6 +231,23 @@ def build_activity(run, *, now=None):
     elapsed = ((run.finished_at or now) - run.started_at).total_seconds()
     impact = humanize_investigation_text(run.clarification_payload.get("impact", ""))
     required_action = surface["required_action"]
+    attention_required = run.status in {"waiting_human", "failed"}
+    attention_title = (
+        "Entscheidungskritische Klärung"
+        if run.status == "waiting_human"
+        else "Technische Prüfung erforderlich"
+    )
+    if execution_state == "unavailable":
+        attention_required = True
+        attention_title = "Hintergrundausführung nicht verfügbar"
+        impact = (
+            "Seit mehr als 30 Sekunden hat kein Hintergrunddienst die angeforderte "
+            "Untersuchung übernommen. Es liegt noch keine bestätigte Analyse vor."
+        )
+        required_action = (
+            "Technischen Hintergrunddienst prüfen oder starten. Sie können diesen Lauf "
+            "abbrechen; starten Sie ihn nicht erneut, solange die Ursache ungeklärt ist."
+        )
     internal_terms = re.compile(
         r"planner|synthesizer|verifier|policy|schema|tool|fingerprint", re.I
     )
@@ -246,11 +270,20 @@ def build_activity(run, *, now=None):
         "title": title,
         "description": description,
         "execution_state": execution_state,
+        "attention_required": attention_required,
+        "attention_title": attention_title,
         "server_time": now.isoformat(),
         "execution_lease_until": run.execution_lease_until.isoformat() if confirmed else None,
         "started_at": run.started_at.isoformat(),
         "finished_at": run.finished_at.isoformat() if run.finished_at else None,
         "duration": duration_label(elapsed),
+        "duration_label": (
+            "Gesamtdauer seit Start"
+            if run.finished_at
+            else "Wartezeit seit Startanforderung"
+            if execution_state in {"pending", "queued", "unavailable"}
+            else "Seit Start"
+        ),
         "entries": entries,
         "ready": ready,
         "can_continue": editable,

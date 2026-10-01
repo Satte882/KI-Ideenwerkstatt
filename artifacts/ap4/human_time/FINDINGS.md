@@ -23,7 +23,7 @@ This ledger preserves observations from the one-time human measurement runs. It 
 - Surface: Investigation activity
 - Observation: The page showed "Start angefordert - Ausführung ausstehend" and an increasing elapsed timer, but no worker/progress signal. The run remained unclaimed until the human aborted.
 - Evidence: run `725880dd-5c21-47d7-aac7-c73532228fda`; `AP4-01-human-time.json`
-- Status: local measurement setup failure confirmed (worker was not running); no rerun
+- Status: corrected and covered by regression tests; an unclaimed dispatch becomes an explicit technical blocker after 30 seconds when execution capacity is available, states that no confirmed analysis is running, preserves abort as the safe action, and warns against a blind restart
 
 ## AP4-02
 
@@ -89,3 +89,5 @@ This ledger preserves observations from the one-time human measurement runs. It 
 - Discovery/source-upload regression checks and static staging contract passed.
 - Ruff formatting and lint checks passed for all changed Python tests and presentation logic.
 - Local visual inspection confirmed the revised Discovery upload surface and the AP4-04 post-selection action hierarchy.
+- Investigation activity now distinguishes fresh assignment, legitimate queueing, confirmed execution, and unavailable background execution; the overdue unclaimed state is regression-tested.
+- Investigation activity regression suite: 19 tests passed.
