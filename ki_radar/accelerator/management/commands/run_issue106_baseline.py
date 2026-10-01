@@ -135,9 +135,9 @@ class Command(BaseCommand):
             )
         process = matches[0]
         snapshots = list(
-            process.investigation_source_snapshots.filter(
-                process_version=process.version
-            ).order_by("-revision")
+            process.investigation_source_snapshots.filter(process_version=process.version).order_by(
+                "-revision"
+            )
         )
         if len(snapshots) != 1:
             raise CommandError(
@@ -191,9 +191,7 @@ class Command(BaseCommand):
 
         if handle.reused:
             self.stdout.write(
-                self.style.WARNING(
-                    f"{case_id} R{repetition}: existing run reused: {handle.run_id}"
-                )
+                self.style.WARNING(f"{case_id} R{repetition}: existing run reused: {handle.run_id}")
             )
             return
         try:
@@ -219,10 +217,7 @@ class Command(BaseCommand):
                         "run_seconds": record["performance"]["run_seconds"],
                         "cost_usd": record["performance"]["cost_usd"],
                         "remaining_project_cost_usd": round(
-                            (
-                                project_cap_microunits
-                                - consumed_or_reserved_cost_microunits()
-                            )
+                            (project_cap_microunits - consumed_or_reserved_cost_microunits())
                             / 1_000_000,
                             6,
                         ),
@@ -246,9 +241,7 @@ class Command(BaseCommand):
         currency = os.getenv("ISSUE106_PRICING_CURRENCY", "USD").strip().upper()
         pricing_version = os.getenv("ISSUE106_PRICING_VERSION", "").strip()
         if currency != "USD" or not pricing_version:
-            raise CommandError(
-                "Issue #106 pricing requires USD and ISSUE106_PRICING_VERSION."
-            )
+            raise CommandError("Issue #106 pricing requires USD and ISSUE106_PRICING_VERSION.")
         if existing is not None:
             if existing.process_analysis_id != process.pk:
                 raise CommandError(f"{case_id} R{repetition}: campaign belongs to another slot.")
@@ -287,8 +280,7 @@ class Command(BaseCommand):
             raise CommandError("OPENROUTER_API_KEY is not configured.")
         if configured_model != contract["model"]:
             raise CommandError(
-                "OPENROUTER_MODEL must match the frozen AP0 contract exactly: "
-                f"{contract['model']}"
+                f"OPENROUTER_MODEL must match the frozen AP0 contract exactly: {contract['model']}"
             )
 
     def _pricing_from_env(self) -> dict[str, str]:
@@ -317,9 +309,7 @@ class Command(BaseCommand):
         base = Path(settings.BASE_DIR)
         git = shutil.which("git")
         if not git:
-            raise CommandError(
-                "Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly."
-            )
+            raise CommandError("Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly.")
         try:
             status = subprocess.run(  # noqa: S603
                 [git, "status", "--porcelain"],
@@ -332,13 +322,17 @@ class Command(BaseCommand):
                 raise CommandError(
                     "Baseline runs require a clean worktree; commit local changes first."
                 )
-            head = subprocess.run(  # noqa: S603
-                [git, "rev-parse", "HEAD"],
-                cwd=base,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip().lower()
+            head = (
+                subprocess.run(  # noqa: S603
+                    [git, "rev-parse", "HEAD"],
+                    cwd=base,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                .stdout.strip()
+                .lower()
+            )
         except (OSError, subprocess.CalledProcessError) as exc:
             raise CommandError(
                 "Git revision unavailable; set ISSUE106_TESTED_COMMIT explicitly."
