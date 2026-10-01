@@ -112,9 +112,7 @@ class Command(BaseCommand):
                         "total_budget_accounted_cost_usd": (
                             summary["total_budget_accounted_cost_usd"]
                         ),
-                        "uncertain_provider_attempts": (
-                            summary["uncertain_provider_attempts"]
-                        ),
+                        "uncertain_provider_attempts": (summary["uncertain_provider_attempts"]),
                     },
                     separators=(",", ":"),
                 )
