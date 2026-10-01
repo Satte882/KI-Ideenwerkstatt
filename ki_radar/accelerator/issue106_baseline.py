@@ -297,14 +297,12 @@ def validate_reviews(
         quality_contract = cases[case_id]["quality_contract"]
         expected_groups = {
             "expected_key_findings": [
+                str(entry["criterion"]) for entry in quality_contract["expected_key_findings"]
             ],
             "required_counterevidence": [
-                str(entry["criterion"])
-                for entry in quality_contract["required_counterevidence"]
+                str(entry["criterion"]) for entry in quality_contract["required_counterevidence"]
             ],
-            "hard_fail_checks": [
-                str(criterion) for criterion in quality_contract["hard_failures"]
-            ],
+            "hard_fail_checks": [str(criterion) for criterion in quality_contract["hard_failures"]],
         }
         group_statuses: dict[str, list[str]] = {}
         for group, expected_criteria in expected_groups.items():
@@ -326,9 +324,7 @@ def validate_reviews(
             and bool(str(item.get("reviewed_at") or "").strip())
             and all(status != "unassessed" for status in statuses)
         )
-        hard_fail_observed = any(
-            status == "fail" for status in group_statuses["hard_fail_checks"]
-        )
+        hard_fail_observed = any(status == "fail" for status in group_statuses["hard_fail_checks"])
         non_hard_fail = any(
             status == "fail"
             for status in [
@@ -352,6 +348,7 @@ def validate_reviews(
     if set(reviews) != set(expected_by_id):
         raise ValueError("review file must contain exactly the exported baseline runs")
     return reviews
+
 
 def _mad(values: Sequence[float]) -> float:
     center = median(values)
@@ -445,35 +442,24 @@ def aggregate_baseline(
     present_slots = {
         (str(item.get("case_id")), item.get("repetition"))
         for item in records
-        if item.get("case_id") in GOLDEN_CASE_IDS
-        and item.get("repetition") in REPETITIONS
+        if item.get("case_id") in GOLDEN_CASE_IDS and item.get("repetition") in REPETITIONS
     }
     missing_slots = sorted(
-        f"{case_id}:R{repetition}"
-        for case_id, repetition in expected_slots - present_slots
+        f"{case_id}:R{repetition}" for case_id, repetition in expected_slots - present_slots
     )
     tested_commits = sorted(
-        {
-            str(item.get("tested_commit") or "")
-            for item in records
-            if item.get("tested_commit")
-        }
+        {str(item.get("tested_commit") or "") for item in records if item.get("tested_commit")}
     )
 
     quality_complete = False
     hard_fail_count = None
     overall_quality_statuses: dict[str, int] = {}
     if reviews is not None:
-        quality_complete = (
-            len(reviews) == len(records)
-            and all(
-                bool(reviews[str(item["run_id"])].get("assessment_complete"))
-                for item in records
-            )
+        quality_complete = len(reviews) == len(records) and all(
+            bool(reviews[str(item["run_id"])].get("assessment_complete")) for item in records
         )
         hard_fail_count = sum(
-            bool(reviews[str(item["run_id"])].get("hard_fail_observed"))
-            for item in records
+            bool(reviews[str(item["run_id"])].get("hard_fail_observed")) for item in records
         )
         overall_quality_statuses = dict(
             Counter(str(item.get("overall_status") or "") for item in reviews.values())
@@ -510,8 +496,7 @@ def aggregate_baseline(
             6,
         ),
         "uncertain_provider_attempts": sum(
-            int(item["performance"].get("uncertain_provider_attempts") or 0)
-            for item in records
+            int(item["performance"].get("uncertain_provider_attempts") or 0) for item in records
         ),
         "by_case": by_case,
         "quality_complete": quality_complete,
@@ -522,4 +507,3 @@ def aggregate_baseline(
             "cache_effects_when_provider_metadata_does_not_expose_them",
         ],
     }
-
