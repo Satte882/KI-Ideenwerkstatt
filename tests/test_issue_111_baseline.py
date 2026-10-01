@@ -128,7 +128,7 @@ def test_issue111_waiting_human_diagnostic_excludes_later_human_wait(
 
 
 def test_issue111_real_provider_command_requires_explicit_confirmation():
-    with pytest.raises(Exception, match="confirm-real-provider"):
+    with pytest.raises(CommandError, match="confirm-real-provider"):
         call_command(
             "run_issue106_baseline",
             "--case",
