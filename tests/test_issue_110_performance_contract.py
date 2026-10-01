@@ -22,11 +22,14 @@ from ki_radar.accelerator.investigation_runtime import (
     TRANSPORT_VERSION,
 )
 
-CONTRACT = (
-    Path(settings.BASE_DIR)
-    / "tests/fixtures/issue106_performance_contract_v1.json"
-)
+CONTRACT = Path(settings.BASE_DIR) / "tests/fixtures/issue106_performance_contract_v1.json"
 AP4_MANIFEST = Path(settings.BASE_DIR) / "tests/fixtures/ap4_case_manifest_v1.json"
+CONTRACT_RUNTIME_GATE = (
+    "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30"
+)
+BATCHING_RUNTIME_GATE = (
+    "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45"
+)
 
 
 def _load(path: Path):
@@ -47,10 +50,7 @@ def test_issue110_contract_freezes_current_investigation_execution_contract():
     assert contract["transport"] == TRANSPORT_VERSION
     assert contract["model"] == ENDPOINT_CAPABILITY["model"]
     assert contract["provider_order"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY["order"]
-    assert (
-        contract["allow_fallbacks"]
-        == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]
-    )
+    assert contract["allow_fallbacks"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]
     assert contract["role_limits"] == MODEL_CALL_LIMITS
 
 
@@ -68,27 +68,18 @@ def test_issue110_golden_set_reuses_only_frozen_ap4_cases_and_source_packs():
         "AP4-06",
     ]
     assert len(selected) == 5
-    assert (
-        contract["source_case_manifest"]
-        == "tests/fixtures/ap4_case_manifest_v1.json"
-    )
+    assert contract["source_case_manifest"] == "tests/fixtures/ap4_case_manifest_v1.json"
 
     for item in selected:
         frozen_case = frozen[item["case_id"]]
         source_root = Path(settings.BASE_DIR) / frozen_case["source_pack"]
         assert source_root.is_dir()
-        actual_files = sorted(
-            path.name for path in source_root.iterdir() if path.is_file()
-        )
+        actual_files = sorted(path.name for path in source_root.iterdir() if path.is_file())
         assert actual_files == sorted(frozen_case["files"])
         assert item["expected_key_findings"]
         assert item["required_counterevidence"]
         assert item["hard_failures"]
-        assert set(item["allowed_terminal_states"]) <= {
-            "ready",
-            "waiting_human",
-            "failed",
-        }
+        assert set(item["allowed_terminal_states"]) <= {"ready", "waiting_human", "failed"}
 
 
 def test_issue110_quality_authority_cannot_self_score_or_average_critical_errors():
@@ -110,11 +101,12 @@ def test_issue110_budget_is_finite_and_failures_cannot_be_success_sampled_away()
     assert budget["experiment_real_provider_run_cap_per_gate"] == 25
     assert budget["experiment_provider_cost_cap_usd_per_gate"] > 0
     assert budget["experiment_engineering_hours_cap_before_regate"] == 40
-    assert budget["project_provider_cost_cap_usd_without_parent_amendment"] == (
+    expected_cap = (
         budget["baseline_provider_cost_cap_usd"]
         + budget["experiment_provider_cost_cap_usd_per_gate"]
         + budget["final_provider_cost_cap_usd"]
     )
+    assert budget["project_provider_cost_cap_usd_without_parent_amendment"] == expected_cap
     assert budget["failed_slow_and_aborted_runs_stay_in_dataset"] is True
     assert budget["replacement_runs_require_reason_and_link"] is True
     assert budget["ambiguous_result_after_budget"] == "not_sufficiently_proven"
@@ -124,21 +116,12 @@ def test_issue110_deeper_architecture_changes_have_stricter_adoption_gates():
     gates = _load(CONTRACT)["adoption_gates"]
 
     assert "benefit_must_exceed_aa_noise_floor" in gates["common"]
-    assert (
-        gates["reversible_no_contract_change"]["provider_cost_increase_percent_max"]
-        == 5
-    )
-    assert (
-        "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30"
-        in gates["contract_or_model_change"]["any_required_benefit"]
-    )
-    assert (
-        "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45"
-        in gates["batching_or_concurrency_change"]["any_required_benefit"]
-    )
-    assert "no_increase_in_unnecessary_evidence_actions" in (
-        gates["batching_or_concurrency_change"]["extra_requirements"]
-    )
+    reversible = gates["reversible_no_contract_change"]
+    assert reversible["provider_cost_increase_percent_max"] == 5
+    assert CONTRACT_RUNTIME_GATE in gates["contract_or_model_change"]["any_required_benefit"]
+    batching = gates["batching_or_concurrency_change"]
+    assert BATCHING_RUNTIME_GATE in batching["any_required_benefit"]
+    assert "no_increase_in_unnecessary_evidence_actions" in batching["extra_requirements"]
 
 
 def test_issue110_primary_scope_excludes_human_wait_and_keeps_bounded_regression():
@@ -147,6 +130,5 @@ def test_issue110_primary_scope_excludes_human_wait_and_keeps_bounded_regression
     assert scope["primary"] == "investigation_to_correct_terminal_state"
     assert scope["human_wait_time_excluded_from_runtime"] is True
     assert scope["secondary_regression"] == "bounded_discovery_to_delivery"
-    assert scope["ap4_historical_runs_policy"] == (
-        "baseline_only_when_code_path_and_execution_contract_match"
-    )
+    expected_policy = "baseline_only_when_code_path_and_execution_contract_match"
+    assert scope["ap4_historical_runs_policy"] == expected_policy
