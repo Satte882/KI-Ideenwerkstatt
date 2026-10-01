@@ -108,6 +108,11 @@ def build_investigation_diagnostic(
             "total_tokens": call.total_tokens,
             "cost_microunits": actual_cost,
             "cost_usd": round(actual_cost / 1_000_000, 6) if actual_cost is not None else None,
+            "reserved_cost_microunits": (
+                int(reservation.reserved_cost_microunits)
+                if reservation is not None and reservation.reserved_cost_microunits is not None
+                else None
+            ),
             "provider_reservation_status": reservation.status if reservation is not None else "",
             "max_tokens": (call.effective_parameters or {}).get("max_tokens"),
             "timeout_seconds": (call.effective_parameters or {}).get("timeout_seconds"),
@@ -210,6 +215,22 @@ def build_investigation_diagnostic(
     uncertain_provider_attempts = sum(
         1 for item in reservations.values() if item.status == "uncertain"
     )
+    budget_accounted_cost_microunits = sum(
+        int(
+            item.actual_cost_microunits
+            if item.actual_cost_microunits is not None
+            else item.reserved_cost_microunits or 0
+        )
+        for item in reservations.values()
+    )
+    normalized_role_totals = {}
+    for role, totals in role_totals.items():
+        role_row = dict(totals)
+        role_row["cost_usd"] = round(
+            int(role_row["cost_microunits"]) / 1_000_000,
+            6,
+        )
+        normalized_role_totals[role] = role_row
     return {
         "run_id": str(run.pk),
         "status": run.status,
@@ -217,6 +238,11 @@ def build_investigation_diagnostic(
         "execution_snapshot_runtime": dict((run.execution_snapshot or {}).get("runtime") or {}),
         "cost_microunits": cost_microunits,
         "cost_usd": round(cost_microunits / 1_000_000, 6),
+        "budget_accounted_cost_microunits": budget_accounted_cost_microunits,
+        "budget_accounted_cost_usd": round(
+            budget_accounted_cost_microunits / 1_000_000,
+            6,
+        ),
         "uncertain_provider_attempts": uncertain_provider_attempts,
         "started_at": run.started_at.isoformat(),
         "finished_at": run.finished_at.isoformat() if run.finished_at else None,
@@ -227,7 +253,7 @@ def build_investigation_diagnostic(
             round((model_seconds / run_seconds) * 100, 1) if run_seconds else 0.0
         ),
         "model_calls": call_rows,
-        "role_totals": dict(role_totals),
+        "role_totals": normalized_role_totals,
         "tool_steps": step_rows,
         "synthesis_count": len(synthesis_rows),
         "synthesis_seconds": round(
