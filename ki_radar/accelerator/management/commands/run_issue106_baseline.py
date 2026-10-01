@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -314,7 +315,7 @@ class Command(BaseCommand):
             os.environ["GIT_COMMIT"] = explicit
             return explicit
         base = Path(settings.BASE_DIR)
-        git = shutil.which("git")  # noqa: S607
+        git = shutil.which("git")
         if not git:
             raise CommandError(
                 "Git executable unavailable; set ISSUE106_TESTED_COMMIT explicitly."
