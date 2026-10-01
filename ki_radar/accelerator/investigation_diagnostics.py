@@ -55,9 +55,7 @@ def build_investigation_diagnostic(
     now = now or timezone.now()
     calls = list(run.model_calls.order_by("created_at"))
     steps = list(run.steps.order_by("sequence"))
-    reservations = {
-        item.model_call_id: item for item in run.provider_reservations.all()
-    }
+    reservations = {item.model_call_id: item for item in run.provider_reservations.all()}
     model_seconds = 0.0
     role_totals: dict[str, dict[str, float | int]] = defaultdict(
         lambda: {
