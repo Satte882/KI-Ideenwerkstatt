@@ -54,7 +54,7 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 
 - AP4-04: PASS im separaten echten Providerlauf; Browser zeigt den Decision Brief, vier Optionen und das unveränderte menschliche Solution-Gate.
 - AP4-05: PASS im genau einmal ausgeführten linearen Real-Provider-Lauf `AP4-05-PF3`. Discovery war erfolgreich; der persistierte Execution Snapshot weist Planner `vs1-planner-v19`/Schema `v16` aus. Investigation stoppte korrekt mit `waiting_human`/`permission_or_scope` und fragte nach verbindlicher Entscheidungshoheit sowie Ausnahmeverantwortung. Es wurden keine Authority-Entscheidung, SolutionOption oder SelectionDecision erfunden. Scored Failure, `PF1` und `PF2` bleiben unverändert erhalten.
-- AP4-08: PASS für den Human-Authority-/Domainpfad. Im echten Browser wurde bewusst die organisatorische Non-AI-Option „Ersatzteilverfügbarkeit verbessern“ ausgewählt. Die neue bindende Entscheidung bleibt neben der früheren ML-Entscheidung historisiert. Der alte AI-Use-Case wird vor UseCase-, Architecture- und Governance-Fortsetzung als nicht mehr aktuell blockiert; Delivery bleibt ohne finale positive Freigabe ineligible und hat kein Paket erzeugt. Der ursprüngliche scored Failure bleibt erhalten; **kein Produktfix** war angezeigt.
+- AP4-08: PASS für den Human-Authority-/Domainpfad. Im echten Browser wurde bewusst die organisatorische Non-AI-Option „Ersatzteilverfügbarkeit verbessern“ ausgewählt. Die neue bindende Entscheidung bleibt neben der früheren ML-Entscheidung historisiert. Der alte AI-Use-Case wird vor UseCase-, Architecture- und Governance-Fortsetzung als nicht mehr aktuell blockiert; Delivery bleibt ohne finale positive Freigabe ineligible und hat kein Paket erzeugt. Der ursprüngliche scored Failure bleibt erhalten; **kein Produktfix** war angezeigt. Der separate Authority-Folgenachweis ist als linearer Evidence-Record `AP4-08-auto-post-fix-1` abgebildet, damit das Post-Hardening-Aggregat den bestätigten Endzustand ausweist.
 
 ## Kennzahlen
 
@@ -65,8 +65,8 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 | vermeidbare Rückfragen, Median | 0 | 0 | ≤ 3 |
 | Provenance | 98,55 % | 100 % | 100 % |
 | halluzinierte Fakten/Messwerte | 0 | 0 | 0 |
-| Cross-Domain-Konsistenz, alle Fälle | FAIL | FAIL | alle PASS |
-| erwarteter Endzustand, alle Fälle | FAIL | FAIL | alle PASS |
+| Cross-Domain-Konsistenz, alle Fälle | FAIL | **PASS** | alle PASS |
+| erwarteter Endzustand, alle Fälle | FAIL | **PASS** | alle PASS |
 | menschliche Nacharbeit / Baseline | offen / nicht gemessen* | offen / nicht gemessen* | ≤ 20 % |
 
 \* Nur tatsächlich gemessene aktive menschliche Zeit wird gezählt. Scripted Acceptance-Operator-Aktionen werden nicht in erfundene Zeitwerte umgerechnet. Diese beiden Zeitmetriken bleiben deshalb ausdrücklich **offen** und erzeugen keinen PASS, bis echte menschliche Zeit vorliegt.
@@ -88,9 +88,41 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 - Diese Zeit stammt aus der CLI-gestützten Abnahme und umfasst Navigation sowie Werkzeuglauf. Sie ist deshalb ausdrücklich **keine menschliche Arbeitszeit** (`human_time_measured=false`) und wird nicht in die AP4-Human-Work- oder Nacharbeitsmetriken eingerechnet.
 - Tatsächliche aktive Human Work und menschliche Nacharbeit bleiben mangels menschlicher Teilnahme offen; es wurden keine Zeiten geschätzt.
 
+## Plan ↔ Issue Reconciliation vor Human-Time
+
+Der führende Arbeitsplan bleibt während AP4 unverändert. Issue #107 konkretisiert ihn; dieser Abschnitt prüft nur, ob Issue, Evidence und realer Iststand deckungsgleich sind.
+
+| Plan | Issue-/Evidence-Stand | Status vor Human-Time |
+|---|---|---|
+| §32 Ziel: keine neue Funktionalität, belastbarer E2E-Nachweis | 8 reale Fälle, Browser-/Provider-/Domain-Evidence, keine offene Produktlücke | **ERFÜLLT technisch; Gesamtnachweis noch offen** |
+| §33 Testpopulation | 8 eingefrorene unterschiedliche Fälle, Non-AI und WAITING_HUMAN zulässig | **ERFÜLLT** |
+| §34 kein Success Sampling | 8 scored Slots unverändert; 5 lineare Post-Fix-Records; ursprüngliche Failures erhalten | **ERFÜLLT** |
+| §35 #1-Metriken | Feldpflege 91,58 %, Rückfragen Median 0, Provenance post-hardening 100 %, Halluzinationen 0, Cross-Domain PASS, erwartete Endzustände PASS | **TEILWEISE** – Human Work, menschliche Nacharbeit und Blind Human Review offen |
+| §36 technische Härtung | alle Szenarien durch aktuelle Regressionen/Realbefunde abgedeckt; `irrelevant_source` durch die vorhandenen semantischen Relevanz-/Clarification-Tests abgedeckt | **ERFÜLLT** |
+| §37 Abschlusslogik | CI grün, keine offene P0/P1; externer Blind Review zulässig, aber #1-Human-Time-Metriken noch nicht gemessen | **NOCH NICHT ABSCHLIESSEN** |
+
+### Finales technisches Post-Hardening-Aggregat vor Human-Time
+
+- Records: **17** insgesamt
+- Scored autonome Fälle: **8/8**
+- Frische manuelle Baselines: **4/4**
+- Lineare Post-Fix-Runs: **5**
+- Post-Hardening-Fälle: **AP4-04, AP4-05, AP4-08**
+- Manuelle Feldpflege: **91,58 % Reduktion – PASS**
+- Vermeidbare Rückfragen: **Median 0 – PASS**
+- Provenance: **100 % – PASS**
+- Halluzinationen: **0 – PASS**
+- Cross-Domain-Konsistenz: **alle 8 aktuellen Fallstände PASS**
+- Fachlich erwarteter Endzustand: **alle 8 aktuellen Fallstände PASS**
+- Aktive Human Work: **offen / nicht gemessen**
+- Menschliche Nacharbeit: **offen / nicht gemessen**
+- Blind Human Review: **offen / externe Abhängigkeit**
+
+Damit sind vor der Human-Time-Messung **keine bekannte Produktlücke, kein technischer Hardening-Gap und kein Plan↔Issue-Widerspruch** mehr offen. Nicht erfüllt sind ausschließlich die bewusst menschlichen #1-Nachweise.
 ## Verbleibende offene Punkte
 
+- Aktive Human Work und menschliche Nacharbeit sind noch nicht mit echter menschlicher Teilnahme gemessen.
 - Unabhängige Blind Human Review der neutralisierten Decision Packages ist nicht erfolgt und kann nicht durch diese technische/LLM-gestützte Abnahme ersetzt werden.
 - AP4-05 ist mit dem linearen Real-Provider-Nachweis `PF3` abgeschlossen; kein weiterer AP4-05-Lauf ist erforderlich.
-- Der AP4-08-Produkt-/Domainpfad ist geschlossen. Offen bleibt nur echte unabhängige menschliche Review- und Zeit-Evidence; die gemessene Operator-Laufzeit ersetzt sie nicht.
-- Wegen der offenen Qualitätskriterien ist Issue #107 nicht abnahmefähig zu schließen. PR #108 bleibt Draft und wird nicht gemergt.
+- Der AP4-08-Produkt-/Domainpfad ist geschlossen und im Post-Hardening-Aggregat als PASS abgebildet.
+- Bis Human-Time-Messung und finaler Abschlussreview erfolgt sind, bleibt Issue #107 offen und PR #108 Draft/unmerged.
