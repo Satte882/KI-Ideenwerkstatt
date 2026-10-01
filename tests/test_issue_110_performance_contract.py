@@ -22,7 +22,7 @@ from ki_radar.accelerator.investigation_runtime import (
     TRANSPORT_VERSION,
 )
 
-CONTRACT = Path(settings.BASE_DIR) / "tests/fixtures/issue106_performance_contract_v1.json"
+CONTRACT = (\n    Path(settings.BASE_DIR) / "tests/fixtures/issue106_performance_contract_v1.json"\n)
 AP4_MANIFEST = Path(settings.BASE_DIR) / "tests/fixtures/ap4_case_manifest_v1.json"
 
 
@@ -44,7 +44,7 @@ def test_issue110_contract_freezes_current_investigation_execution_contract():
     assert contract["transport"] == TRANSPORT_VERSION
     assert contract["model"] == ENDPOINT_CAPABILITY["model"]
     assert contract["provider_order"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY["order"]
-    assert contract["allow_fallbacks"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]
+    assert (\n        contract["allow_fallbacks"]\n        == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]\n    )
     assert contract["role_limits"] == MODEL_CALL_LIMITS
 
 
@@ -62,7 +62,7 @@ def test_issue110_golden_set_reuses_only_frozen_ap4_cases_and_source_packs():
         "AP4-06",
     ]
     assert len(selected) == 5
-    assert contract["source_case_manifest"] == "tests/fixtures/ap4_case_manifest_v1.json"
+    assert (\n        contract["source_case_manifest"]\n        == "tests/fixtures/ap4_case_manifest_v1.json"\n    )
 
     for item in selected:
         frozen_case = frozen[item["case_id"]]
@@ -74,10 +74,10 @@ def test_issue110_golden_set_reuses_only_frozen_ap4_cases_and_source_packs():
         assert item["expected_key_findings"]
         assert item["required_counterevidence"]
         assert item["hard_failures"]
-        assert set(item["allowed_terminal_states"]) <= {"ready", "waiting_human", "failed"}
+        assert set(item["allowed_terminal_states"]) <= {\n            "ready",\n            "waiting_human",\n            "failed",\n        }
 
 
-def test_issue110_quality_authority_cannot_be_self_scored_or_average_away_critical_errors():
+def test_issue110_quality_authority_cannot_be_self_scored_or_average_away_critical_errors(\n):
     authority = _load(CONTRACT)["evaluation_authority"]
 
     assert authority["deterministic_checks_required_on_all_runs"] is True
