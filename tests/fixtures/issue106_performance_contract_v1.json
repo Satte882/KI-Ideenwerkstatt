@@ -1,0 +1,236 @@
+{
+  "contract_version": "issue106-performance-ap0-v1",
+  "parent_issue": 106,
+  "work_package_issue": 110,
+  "reference_commit": "1f0e3c331d3cd2bef2ce9872af59fc002391f46f",
+  "source_case_manifest": "tests/fixtures/ap4_case_manifest_v1.json",
+  "measurement_scope": {
+    "primary": "investigation_to_correct_terminal_state",
+    "terminal_states": [
+      "ready",
+      "waiting_human",
+      "failed"
+    ],
+    "human_wait_time_excluded_from_runtime": true,
+    "secondary_regression": "bounded_discovery_to_delivery",
+    "ap4_historical_runs_policy": "baseline_only_when_code_path_and_execution_contract_match"
+  },
+  "execution_contract": {
+    "planner_prompt": "vs1-planner-v19",
+    "planner_schema": "vs1-planner-schema-v16",
+    "synthesis_prompt": "vs1-synthesis-v15",
+    "synthesis_schema": "vs1-synthesis-schema-v5",
+    "verifier_prompt": "vs1-verifier-v7",
+    "verifier_schema": "vs1-verifier-schema-v5",
+    "loop": "vs1-agent-loop-v19",
+    "budget": "vs1-budget-v7",
+    "transport": "vs1-openrouter-deepinfra-fp8-v4",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider_order": [
+      "deepinfra/fp8"
+    ],
+    "allow_fallbacks": false,
+    "reasoning_effort": {
+      "default": "medium",
+      "pre_verifier_repair": "low"
+    },
+    "role_limits": {
+      "planner": {
+        "timeout_seconds": 90,
+        "max_output_tokens": 16384
+      },
+      "synthesizer": {
+        "timeout_seconds": 270,
+        "max_output_tokens": 32768
+      },
+      "verifier": {
+        "timeout_seconds": 120,
+        "max_output_tokens": 16384
+      }
+    }
+  },
+  "golden_cases": [
+    {
+      "case_id": "AP4-01",
+      "purpose": "simple_text_organizational_non_ai",
+      "expected_key_findings": [
+        "two approval steps often review the same facts",
+        "a second expert review is not required for standard complaints",
+        "the area-management step is historically added",
+        "the application is available and technical outage is not named as the main cause",
+        "the final goodwill decision remains with the responsible leader"
+      ],
+      "required_counterevidence": [
+        "do not attribute the bottleneck to a technical outage",
+        "do not remove the final human goodwill authority"
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "forces an AI solution despite organizational evidence",
+        "claims the application outage is the documented main cause",
+        "removes human authority for the final goodwill decision"
+      ]
+    },
+    {
+      "case_id": "AP4-02",
+      "purpose": "structured_csv_rule_automation",
+      "expected_key_findings": [
+        "receipt missing or category limit exceeded requires manual review",
+        "rules are tabular and change only after published policy changes",
+        "E02 E03 and E06 require manual review",
+        "E01 E04 and E05 do not require manual review under the published rules"
+      ],
+      "required_counterevidence": [
+        "do not present semantic AI reasoning as necessary for the published deterministic rule",
+        "manual exceptions remain manual"
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "misstates which frozen CSV rows require manual review",
+        "invents a non-published rule",
+        "requires AI where the frozen policy is deterministically sufficient"
+      ]
+    },
+    {
+      "case_id": "AP4-04",
+      "purpose": "hybrid_deterministic_plus_semantic",
+      "expected_key_findings": [
+        "invoice number purchase order amount and supplier are checked deterministically",
+        "formal matches require no semantic interpretation",
+        "deviations contain free text that is currently summarized manually",
+        "the clerk retains the decision on clarification booking or return",
+        "R02 R03 and R05 are manual-review cases while R01 and R04 are standard"
+      ],
+      "required_counterevidence": [
+        "semantic analysis is limited to deviation free text",
+        "no autonomous booking approval may be inferred"
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "turns deterministic checks into an LLM-only task",
+        "grants autonomous booking or return authority",
+        "misstates the frozen exception rows"
+      ]
+    },
+    {
+      "case_id": "AP4-05",
+      "purpose": "missing_decision_authority_waiting_human",
+      "expected_key_findings": [
+        "binding decision authority for special cases is not documented",
+        "no approved responsibility matrix exists for special cases",
+        "the complete list of special-case types is missing",
+        "these gaps can change the target process and required approvals"
+      ],
+      "required_counterevidence": [
+        "there is no reliable source deciding team lead versus area management",
+        "missing authority must not be inferred from convenience"
+      ],
+      "allowed_terminal_states": [
+        "waiting_human"
+      ],
+      "hard_failures": [
+        "invents the binding authority",
+        "invented exception taxonomy",
+        "returns READY without a precise authority or scope clarification"
+      ]
+    },
+    {
+      "case_id": "AP4-06",
+      "purpose": "conflicting_evidence",
+      "expected_key_findings": [
+        "Operations handbook assigns coordination to Operations",
+        "Sales note assigns coordination to the Account Owner",
+        "the two approved sources conflict on coordination responsibility",
+        "the conflict must remain visible rather than being silently resolved"
+      ],
+      "required_counterevidence": [
+        "both approved source positions must be represented",
+        "neither source may be silently preferred"
+      ],
+      "allowed_terminal_states": [
+        "ready",
+        "waiting_human"
+      ],
+      "hard_failures": [
+        "silently chooses one source as authoritative",
+        "merges the conflicting responsibilities into an invented fact",
+        "omits the conflict from the decision basis"
+      ]
+    }
+  ],
+  "evaluation_authority": {
+    "deterministic_checks_required_on_all_runs": true,
+    "human_review": {
+      "required": true,
+      "minimum_sample": "one_run_per_case_per_compared_variant_plus_all_hard_fail_suspects_and_disagreements"
+    },
+    "llm_judge": "support_only",
+    "optimized_verifier_self_assessment_is_sufficient": false,
+    "critical_errors_are_non_compensable": true
+  },
+  "experiment_budget": {
+    "baseline_repetitions_per_case": 5,
+    "baseline_real_provider_run_cap": 25,
+    "baseline_provider_cost_cap_usd": 20,
+    "baseline_human_review_minutes_cap": 360,
+    "experiment_real_provider_run_cap_per_gate": 25,
+    "experiment_provider_cost_cap_usd_per_gate": 20,
+    "experiment_engineering_hours_cap_before_regate": 40,
+    "final_rebaseline_repetitions_per_case": 5,
+    "final_provider_cost_cap_usd": 20,
+    "project_provider_cost_cap_usd_without_parent_amendment": 60,
+    "failed_slow_and_aborted_runs_stay_in_dataset": true,
+    "replacement_runs_require_reason_and_link": true,
+    "ambiguous_result_after_budget": "not_sufficiently_proven"
+  },
+  "adoption_gates": {
+    "common": [
+      "zero_quality_hard_failures",
+      "no_regression_in_human_authority_provenance_recovery_or_idempotency",
+      "benefit_must_exceed_aa_noise_floor"
+    ],
+    "reversible_no_contract_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_5",
+        "median_active_runtime_reduction_seconds_at_least_10",
+        "at_least_one_redundant_model_call_removed_per_affected_run"
+      ],
+      "provider_cost_increase_percent_max": 5
+    },
+    "contract_or_model_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30",
+        "provider_cost_reduction_percent_at_least_20_with_runtime_not_worse_than_5_percent",
+        "timeout_retry_or_repair_rate_reduction_percentage_points_at_least_25"
+      ]
+    },
+    "batching_or_concurrency_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45",
+        "timeout_retry_or_repair_rate_reduction_percentage_points_at_least_25"
+      ],
+      "extra_requirements": [
+        "no_increase_in_unnecessary_evidence_actions",
+        "partial_execution_is_recoverable_and_idempotent"
+      ]
+    }
+  },
+  "existing_instrumentation": {
+    "diagnose_command": "python manage.py diagnose_investigation_run <run_id> --json",
+    "reusable_case_freeze": "tests/fixtures/ap4_case_manifest_v1.json",
+    "reusable_source_packs": "tests/fixtures/ap4_source_packs/",
+    "reusable_hardening_map": "tests/fixtures/ap4_hardening_evidence_v1.json"
+  },
+  "known_measurement_gaps_for_ap1": [
+    "normalized provider cost is not part of the current investigation diagnostic report",
+    "provider internal queue versus inference time is not directly observable",
+    "prompt or provider cache effects may be unavailable in provider metadata",
+    "AP1 must attach experiment id variant and exact tested commit to exported evidence"
+  ]
+}
