@@ -59,9 +59,7 @@ def golden_case_specs() -> dict[str, dict[str, Any]]:
         for item in ap4_manifest()["cases"]
         if item["case_id"] in GOLDEN_CASE_IDS
     }
-    if set(contract_cases) != set(GOLDEN_CASE_IDS) or set(manifest_cases) != set(
-        GOLDEN_CASE_IDS
-    ):
+    if set(contract_cases) != set(GOLDEN_CASE_IDS) or set(manifest_cases) != set(GOLDEN_CASE_IDS):
         raise ValueError("Issue #106 golden set is incomplete")
     return {
         case_id: {
@@ -73,11 +71,7 @@ def golden_case_specs() -> dict[str, dict[str, Any]]:
 
 
 def baseline_slots() -> tuple[tuple[str, int], ...]:
-    return tuple(
-        (case_id, repetition)
-        for case_id in GOLDEN_CASE_IDS
-        for repetition in REPETITIONS
-    )
+    return tuple((case_id, repetition) for case_id in GOLDEN_CASE_IDS for repetition in REPETITIONS)
 
 
 def slot_process_name(case_id: str, repetition: int) -> str:
@@ -119,9 +113,7 @@ def _repair_summary(model_calls: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         if item.get("synthesis_trigger")
     )
     errors = Counter(
-        str(item.get("error_code") or "")
-        for item in model_calls
-        if item.get("error_code")
+        str(item.get("error_code") or "") for item in model_calls if item.get("error_code")
     )
     repeated_role_after_failure = 0
     for index, item in enumerate(model_calls[:-1]):
@@ -141,8 +133,7 @@ def _repair_summary(model_calls: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "has_invalid_response": bool(errors.get("invalid_response", 0)),
         "has_retry": bool(triggers.get("contract_retry", 0) or repeated_role_after_failure),
         "has_repair": bool(
-            triggers.get("pre_verifier_repair", 0)
-            or triggers.get("verifier_repair", 0)
+            triggers.get("pre_verifier_repair", 0) or triggers.get("verifier_repair", 0)
         ),
     }
 
@@ -169,9 +160,7 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
             int(latest_verifier.critical_findings) if latest_verifier is not None else None
         ),
         "verifier_source_references_valid": (
-            bool(latest_verifier.source_references_valid)
-            if latest_verifier is not None
-            else None
+            bool(latest_verifier.source_references_valid) if latest_verifier is not None else None
         ),
         "unknown_count": unknown_count,
         "clarification_reason": run.clarification_reason,
@@ -190,9 +179,7 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
             "budget_version": run.budget_version,
             "policy_version": run.policy_version,
             "runtime": dict((run.execution_snapshot or {}).get("runtime") or {}),
-            "model_transport": dict(
-                (run.execution_snapshot or {}).get("model_transport") or {}
-            ),
+            "model_transport": dict((run.execution_snapshot or {}).get("model_transport") or {}),
             "planner": dict((run.execution_snapshot or {}).get("planner") or {}),
             "synthesizer": dict((run.execution_snapshot or {}).get("synthesizer") or {}),
             "verifier": dict((run.execution_snapshot or {}).get("verifier") or {}),
@@ -216,9 +203,7 @@ def review_template(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 "repetition": record["repetition"],
                 "reviewer": "",
                 "reviewed_at": "",
-                "semantic_rubric": {
-                    criterion: "unassessed" for criterion in SEMANTIC_RUBRIC
-                },
+                "semantic_rubric": {criterion: "unassessed" for criterion in SEMANTIC_RUBRIC},
                 "expected_key_findings": [
                     {
                         "criterion": item["criterion"],
@@ -335,19 +320,16 @@ def aggregate_baseline(
     present_slots = {
         (str(item.get("case_id")), int(item.get("repetition")))
         for item in records
-        if item.get("case_id") in GOLDEN_CASE_IDS
-        and item.get("repetition") in REPETITIONS
+        if item.get("case_id") in GOLDEN_CASE_IDS and item.get("repetition") in REPETITIONS
     }
     quality_complete = False
     hard_fail_count = None
     if reviews is not None:
         quality_complete = all(
-            bool(reviews[str(item["run_id"])].get("assessment_complete"))
-            for item in records
+            bool(reviews[str(item["run_id"])].get("assessment_complete")) for item in records
         )
         hard_fail_count = sum(
-            bool(reviews[str(item["run_id"])].get("hard_fail_observed"))
-            for item in records
+            bool(reviews[str(item["run_id"])].get("hard_fail_observed")) for item in records
         )
 
     return {
@@ -356,15 +338,12 @@ def aggregate_baseline(
         "observed_run_count": len(records),
         "complete_slots": present_slots == expected_slots,
         "missing_slots": sorted(
-            f"{case_id}:R{repetition}"
-            for case_id, repetition in expected_slots - present_slots
+            f"{case_id}:R{repetition}" for case_id, repetition in expected_slots - present_slots
         ),
         "tested_commits": sorted(
             {str(item.get("tested_commit") or "") for item in records if item.get("tested_commit")}
         ),
-        "total_cost_usd": round(
-            sum(float(item["performance"]["cost_usd"]) for item in records), 6
-        ),
+        "total_cost_usd": round(sum(float(item["performance"]["cost_usd"]) for item in records), 6),
         "by_case": by_case,
         "quality_complete": quality_complete,
         "observed_hard_fail_count": hard_fail_count,
