@@ -71,7 +71,14 @@ services:
       app: {condition: service_started}
       db: {condition: service_healthy}
 volumes:
+  # Der Name des lokalen Datenbank-Volumes ist portabel konfigurierbar.
+  # Standard ohne Umgebungsvariablen: das projektübliche Volume, das bei Bedarf
+  # angelegt wird. Eine bereits vorhandene, maschinenspezifische Datenbank wird
+  # lokal über die nicht versionierte .env eingebunden (LOCAL_DB_VOLUME,
+  # LOCAL_DB_VOLUME_EXTERNAL). Siehe .env.example für die allgemeine Bedeutung.
   local_db:
+    name: ${LOCAL_DB_VOLUME:-ki-radar-local_local_db}
+    external: ${LOCAL_DB_VOLUME_EXTERNAL:-false}
   local_venv:
   local_var:
 secrets:

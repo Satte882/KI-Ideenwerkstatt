@@ -55,11 +55,16 @@ Der lokale Docker-Compose-Stack heißt `ki-radar-local`. PostgreSQL verwendet da
 local_db → /var/lib/postgresql/data
 ```
 
-Docker Compose erzeugt daraus normalerweise einen durch Docker verwalteten Volumenamen wie:
+Standardmäßig verwaltet Docker Compose dieses Volume selbst; es heißt dann `ki-radar-local_local_db` und wird bei Bedarf angelegt.
 
-```text
-ki-radar-local_local_db
+Soll eine bereits vorhandene lokale Datenbank weiterverwendet werden, lässt sich in der nicht versionierten `.env` stattdessen ein bestehender Volume-Name eintragen:
+
+```dotenv
+LOCAL_DB_VOLUME=<vorhandener-volume-name>
+LOCAL_DB_VOLUME_EXTERNAL=true
 ```
+
+Als externes Volume wird es von Docker Compose weder erzeugt noch gelöscht.
 
 Der tatsächliche physische Ablageort wird von Docker Desktop beziehungsweise Docker Engine verwaltet und liegt nicht im Git-Repository.
 
