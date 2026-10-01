@@ -195,7 +195,11 @@ def build_investigation_diagnostic(
         if count > 1
     ]
 
-    end = run.finished_at or now
+    end = (
+        run.updated_at
+        if run.status == InvestigationRun.Status.WAITING_HUMAN
+        else run.finished_at or now
+    )
     run_seconds = max(0.0, (end - run.started_at).total_seconds())
     synthesis_rows = [
         row for row in call_rows if row["role"] == InvestigationModelCall.Role.SYNTHESIZER
