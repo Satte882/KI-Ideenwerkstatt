@@ -45,7 +45,7 @@ Die Produktlogik bindet nachgelagerte AP2-Schritte an die **tatsächlich menschl
 
 1. Historische Investigation-Provenance war nach Verlassen von `DRAFT` nicht mehr lesbar, weil der Read-Pfad den Edit-Guard nutzte. Der Read-Guard prüft nun weiterhin Actor, Ownership, aktiven Quellenraum und Snapshot-Zuordnung, aber nicht den Edit-Status. Schreiboperationen bleiben gesperrt. Browser und Regressionstest bestätigen das Verhalten.
 2. Planner `v18` verwechselte fehlende fertige Lösungsvorschläge mit fehlender Entscheidungsevidenz (AP4-04). Planner `v19` fordert jetzt hypothesenbasierte Optionen aus ausreichender Problem-/Scope-Evidenz und verbietet diese vermeidbare Rückfrage. Der reale Post-Fix-Run erreicht `READY` mit Regel-, Hybrid-, GenAI- und Status-quo-Optionen; die Auswahl bleibt menschlich.
-3. Planner `v18` synthetisierte trotz ausdrücklich offener Entscheidungshoheit/Ausnahmeverantwortung (AP4-05). Planner `v19` bindet diese Grenze an `permission_or_scope`. Prompt-Vertragstests sind grün. Der reale Post-Fix-Versuch scheiterte bereits in Discovery mit `user_quota_exceeded`; er wurde nicht wiederholt und bleibt als Evidence erhalten.
+3. Planner `v18` synthetisierte trotz ausdrücklich offener Entscheidungshoheit/Ausnahmeverantwortung (AP4-05). Planner `v19` bindet diese Grenze an `permission_or_scope`. Nach zwei unverändert erhaltenen Provider-Quota-Failures bestätigt der lineare Real-Provider-Lauf `PF3` den Fix: Planner v19 wurde nachweislich ausgeführt und stoppte mit einer präzisen menschlichen Zuständigkeitsfrage.
 4. Der AP4-Evidence-Vertrag konnte nach einer legitimen Prompt-Härtung keine historischen Records mehr auswerten. Post-Fix-Records binden nun die tatsächlich verwendeten aktuellen Vertragsversionen, während neue scored Records weiterhin strikt gegen den eingefrorenen Vertrag geprüft werden.
 
 Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer Produktdefekt auf; entsprechend wurde kein Produktcode geändert.
@@ -53,7 +53,7 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 ## Post-Hardening
 
 - AP4-04: PASS im separaten echten Providerlauf; Browser zeigt den Decision Brief, vier Optionen und das unveränderte menschliche Solution-Gate.
-- AP4-05: Der genau einmal ausgeführte lineare Real-Provider-Folgelauf `AP4-05-PF2` scheiterte bereits in Discovery nach 0,48 s mit `user_quota_exceeded`. Planner v19 wurde nicht erreicht; es gab keinen Retry. Scored Failure und `PF1` bleiben unverändert erhalten, die reale Providerbestätigung des Fixes bleibt offen.
+- AP4-05: PASS im genau einmal ausgeführten linearen Real-Provider-Lauf `AP4-05-PF3`. Discovery war erfolgreich; der persistierte Execution Snapshot weist Planner `vs1-planner-v19`/Schema `v16` aus. Investigation stoppte korrekt mit `waiting_human`/`permission_or_scope` und fragte nach verbindlicher Entscheidungshoheit sowie Ausnahmeverantwortung. Es wurden keine Authority-Entscheidung, SolutionOption oder SelectionDecision erfunden. Scored Failure, `PF1` und `PF2` bleiben unverändert erhalten.
 - AP4-08: PASS für den Human-Authority-/Domainpfad. Im echten Browser wurde bewusst die organisatorische Non-AI-Option „Ersatzteilverfügbarkeit verbessern“ ausgewählt. Die neue bindende Entscheidung bleibt neben der früheren ML-Entscheidung historisiert. Der alte AI-Use-Case wird vor UseCase-, Architecture- und Governance-Fortsetzung als nicht mehr aktuell blockiert; Delivery bleibt ohne finale positive Freigabe ineligible und hat kein Paket erzeugt. Der ursprüngliche scored Failure bleibt erhalten; **kein Produktfix** war angezeigt.
 
 ## Kennzahlen
@@ -79,7 +79,8 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 - Nach dem Read-Guard-Fix bleiben terminale Decision Briefs lesbar; Schreibzugriffe sind per Test weiterhin untersagt.
 - AP4-04 Post-Fix zeigt im Browser alle vier materialisierten Kandidaten sowie das menschliche Diagnose-/Solution-Gate.
 - AP4-08 zeigt die neue organisatorische Auswahl mit Bestätigungsbanner und vollständiger Entscheidungshistorie. Der gespeicherte Domain-State bestätigt dieselbe bindende Auswahl und die Downstream-Sperren.
-- Strukturierte States: `artifacts/ap4/browser-state.json`, `artifacts/ap4/browser-state-post-fix.json` und `artifacts/ap4/human_authority/AP4-08.json`; Screenshots liegen unter `artifacts/ap4/browser/`.
+- AP4-05 PF3 zeigt im echten Chrome „Klärung erforderlich“ mit derselben Authority-/Ausnahmefrage wie der persistierte Domain-State. Der Run enthält keine SolutionOptions oder SelectionDecisions.
+- Strukturierte States: `artifacts/ap4/browser-state.json`, `artifacts/ap4/browser-state-post-fix.json`, `artifacts/ap4/browser-state-ap4-05-pf3.json` und `artifacts/ap4/human_authority/AP4-08.json`; Screenshots liegen unter `artifacts/ap4/browser/`.
 
 ## Gemessene Zeit im Authority-Folgenachweis
 
@@ -90,6 +91,6 @@ Bei der gezielten Folgeabnahme am 2026-10-01 trat kein weiterer reproduzierbarer
 ## Verbleibende offene Punkte
 
 - Unabhängige Blind Human Review der neutralisierten Decision Packages ist nicht erfolgt und kann nicht durch diese technische/LLM-gestützte Abnahme ersetzt werden.
-- AP4-05 benötigt nach verfügbarem Providerkontingent weiterhin eine reale Planner-v19-Bestätigung. Der angeforderte einmalige Folgelauf ist vollständig dokumentiert und darf nicht automatisch wiederholt werden.
+- AP4-05 ist mit dem linearen Real-Provider-Nachweis `PF3` abgeschlossen; kein weiterer AP4-05-Lauf ist erforderlich.
 - Der AP4-08-Produkt-/Domainpfad ist geschlossen. Offen bleibt nur echte unabhängige menschliche Review- und Zeit-Evidence; die gemessene Operator-Laufzeit ersetzt sie nicht.
 - Wegen der offenen Qualitätskriterien ist Issue #107 nicht abnahmefähig zu schließen. PR #108 bleibt Draft und wird nicht gemergt.
