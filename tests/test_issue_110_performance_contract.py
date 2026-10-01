@@ -22,7 +22,10 @@ from ki_radar.accelerator.investigation_runtime import (
     TRANSPORT_VERSION,
 )
 
-CONTRACT = (\n    Path(settings.BASE_DIR) / "tests/fixtures/issue106_performance_contract_v1.json"\n)
+CONTRACT = (
+    Path(settings.BASE_DIR)
+    / "tests/fixtures/issue106_performance_contract_v1.json"
+)
 AP4_MANIFEST = Path(settings.BASE_DIR) / "tests/fixtures/ap4_case_manifest_v1.json"
 
 
@@ -44,7 +47,10 @@ def test_issue110_contract_freezes_current_investigation_execution_contract():
     assert contract["transport"] == TRANSPORT_VERSION
     assert contract["model"] == ENDPOINT_CAPABILITY["model"]
     assert contract["provider_order"] == ISSUE4_INVESTIGATION_PROVIDER_POLICY["order"]
-    assert (\n        contract["allow_fallbacks"]\n        == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]\n    )
+    assert (
+        contract["allow_fallbacks"]
+        == ISSUE4_INVESTIGATION_PROVIDER_POLICY["allow_fallbacks"]
+    )
     assert contract["role_limits"] == MODEL_CALL_LIMITS
 
 
@@ -62,22 +68,30 @@ def test_issue110_golden_set_reuses_only_frozen_ap4_cases_and_source_packs():
         "AP4-06",
     ]
     assert len(selected) == 5
-    assert (\n        contract["source_case_manifest"]\n        == "tests/fixtures/ap4_case_manifest_v1.json"\n    )
+    assert (
+        contract["source_case_manifest"]
+        == "tests/fixtures/ap4_case_manifest_v1.json"
+    )
 
     for item in selected:
         frozen_case = frozen[item["case_id"]]
         source_root = Path(settings.BASE_DIR) / frozen_case["source_pack"]
         assert source_root.is_dir()
-        assert sorted(path.name for path in source_root.iterdir() if path.is_file()) == sorted(
-            frozen_case["files"]
+        actual_files = sorted(
+            path.name for path in source_root.iterdir() if path.is_file()
         )
+        assert actual_files == sorted(frozen_case["files"])
         assert item["expected_key_findings"]
         assert item["required_counterevidence"]
         assert item["hard_failures"]
-        assert set(item["allowed_terminal_states"]) <= {\n            "ready",\n            "waiting_human",\n            "failed",\n        }
+        assert set(item["allowed_terminal_states"]) <= {
+            "ready",
+            "waiting_human",
+            "failed",
+        }
 
 
-def test_issue110_quality_authority_cannot_be_self_scored_or_average_away_critical_errors(\n):
+def test_issue110_quality_authority_cannot_self_score_or_average_critical_errors():
     authority = _load(CONTRACT)["evaluation_authority"]
 
     assert authority["deterministic_checks_required_on_all_runs"] is True
@@ -111,20 +125,23 @@ def test_issue110_deeper_architecture_changes_have_stricter_adoption_gates():
 
     assert "benefit_must_exceed_aa_noise_floor" in gates["common"]
     assert (
-        gates["reversible_no_contract_change"]["provider_cost_increase_percent_max"] == 5
+        gates["reversible_no_contract_change"]["provider_cost_increase_percent_max"]
+        == 5
     )
-    assert "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30" in (
-        gates["contract_or_model_change"]["any_required_benefit"]
+    assert (
+        "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30"
+        in gates["contract_or_model_change"]["any_required_benefit"]
     )
-    assert "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45" in (
-        gates["batching_or_concurrency_change"]["any_required_benefit"]
+    assert (
+        "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45"
+        in gates["batching_or_concurrency_change"]["any_required_benefit"]
     )
     assert "no_increase_in_unnecessary_evidence_actions" in (
         gates["batching_or_concurrency_change"]["extra_requirements"]
     )
 
 
-def test_issue110_primary_scope_excludes_human_wait_and_keeps_bounded_e2e_regression():
+def test_issue110_primary_scope_excludes_human_wait_and_keeps_bounded_regression():
     scope = _load(CONTRACT)["measurement_scope"]
 
     assert scope["primary"] == "investigation_to_correct_terminal_state"
@@ -133,4 +150,3 @@ def test_issue110_primary_scope_excludes_human_wait_and_keeps_bounded_e2e_regres
     assert scope["ap4_historical_runs_policy"] == (
         "baseline_only_when_code_path_and_execution_contract_match"
     )
-
