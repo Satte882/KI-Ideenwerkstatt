@@ -101,8 +101,10 @@ Erzeugt standardmäßig:
 - Call-Limits und Context-Metadaten;
 - Tool-Zeiten und doppelte Reads;
 - tatsächliche Providerkosten je Call/Rolle/Run;
+- bei unklarer Providerabrechnung zusätzlich reservierten/budget-accounted Cost;
 - Repair-/Retry-/Fehlerindikatoren;
 - Quellenabdeckung, Counterevidence, Critical Claims, Unknowns und Human Escalation;
+- Claim Register, Decision Brief, Source Relevance und Verifier-Kontext für die menschliche Prüfung;
 - exakten getesteten Commit und Execution Contract.
 
 Bei `WAITING_HUMAN` endet die aktive Runtime am gespeicherten Übergang in diesen
@@ -115,7 +117,10 @@ Die Review-Datei enthält für jeden Run:
 - erwartete Schlüsselfunde;
 - notwendige Gegenbelege;
 - die sechs semantischen Rubrikpunkte;
-- Hard-Fail-Markierung.
+- **jedes einzelne Hard-Fail-Kriterium** aus AP0.
+
+Auch ein Hard-Fail muss explizit mit `pass`, `fail` oder `unassessed` bewertet
+werden. Ein vorbefülltes `false` gilt nicht als Prüfung.
 
 Zulässige Werte:
 
@@ -126,7 +131,8 @@ unassessed
 ```
 
 Für den finalen AP1-Abschluss müssen alle Runs autoritativ bewertet sein.
-`unassessed` darf nicht als bestanden interpretiert werden.
+`unassessed` darf nicht als bestanden interpretiert werden. Der Export berechnet daraus
+pro Run einen `overall_status` sowie die Qualitätsstreuung je Fall und insgesamt.
 
 Nach ausgefüllter Review-Datei:
 
@@ -145,8 +151,12 @@ Für jeden Fall werden aus den fünf Runs mindestens berechnet:
 - `2 × MAD` als vorab definierter Engineering-Noise-Floor;
 - Min/Max;
 - Statusverteilung;
-- Kosten;
-- Timeout-/Retry-/Repair-Rate.
+- tatsächliche Kosten und budget-accounted Cost bei unklarer Abrechnung;
+- Timeout-/Retry-/Repair-Rate;
+- Qualitätsstatus-Verteilung nach abgeschlossener Review.
+
+Zusätzlich werden Duplikatslots, gemischte `tested_commit`-Werte und unklare
+Providerabrechnungen ausdrücklich ausgewiesen.
 
 Es werden keine p95- oder Signifikanzbehauptungen aus fünf Wiederholungen abgeleitet.
 
@@ -158,7 +168,9 @@ Es werden keine p95- oder Signifikanzbehauptungen aus fünf Wiederholungen abgel
 2. die A/A-Auswertung erzeugt wurde;
 3. die menschliche Qualitätsbewertung vollständig ist;
 4. Providerkosten, Fehler/Retry/Repair und nicht beobachtbare Größen dokumentiert sind;
-5. die Artefakte den exakten getesteten Commit nennen;
-6. keine Performance-Änderung Teil dieses Arbeitspakets war.
+5. alle 25 Runs denselben exakten `tested_commit` nennen;
+6. keine Duplikatslots vorliegen;
+7. Kosten inklusive unklarer Providerabrechnungen transparent ausgewiesen sind;
+8. keine Performance-Änderung Teil dieses Arbeitspakets war.
 
 Erst danach beginnt #112 mit der Kandidatenentscheidung.
