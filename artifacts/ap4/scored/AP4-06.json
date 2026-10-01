@@ -1,0 +1,352 @@
+{
+  "case_id": "AP4-06",
+  "run_slot": "AP4-06-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "baa10b96c8b1cbc197a9461c687fd9b60d0ea2ffe4f4a994d3b08cc811d417cb",
+  "expected_branch": "conflict_visible",
+  "started_at_epoch": 1790781209.1283855,
+  "status": "failed",
+  "system_wait_seconds": 188.18600240000524,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "72c05527-033b-41bc-b3be-edc0b7efbac2",
+  "discovery_snapshot_id": "3b94e3bf-e7a2-4874-b185-d6f8818931b2",
+  "discovery_manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+  "discovery": {
+    "analysis_id": "f636c9aa-ddae-4ba4-9137-3ec3aa24b648",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4345,
+    "completion_tokens": 7663,
+    "cost": "0.0319950",
+    "facts": [
+      {
+        "statement": "Laut Operations-Handbuch übernimmt Operations bei einer kritischen Serviceeskalation die Koordination, dokumentiert Ursache, Maßnahme und Abschluss und informiert Sales über den Status, ohne dass Sales eine operative Freigabe trifft.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Laut Sales-Prozessnotiz koordiniert bei kritischen Kundeneskalationen der zuständige Account Owner die weitere Bearbeitung, Operations liefert technische Informationen zu und der Account Owner entscheidet über die externe Rückmeldung.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Sowohl das Operations-Handbuch als auch die Sales-Prozessnotiz sind als freigegebene Dokumente gekennzeichnet bzw. hinterlegt.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      },
+      {
+        "statement": "Serviceeskalationen bleiben aktuell liegen.",
+        "evidence_refs": [
+          "U0"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die ungeklärte Zuständigkeit zwischen Operations und Account Owner ist die Hauptursache für das Liegenbleiben der Serviceeskalationen.",
+        "evidence_refs": [
+          "U0",
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Anzahl und durchschnittliche Liegezeit der betroffenen Serviceeskalationen.",
+        "impact": "Fehlende quantitative Messwerte erschweren die exakte Ermittlung des finanziellen und operationalen Schadens."
+      }
+    ],
+    "contradictions": [
+      {
+        "statement": "S1 weist Operations die Koordination von kritischen Serviceeskalationen zu, während S2 die Koordination dem zuständigen Account Owner zuweist.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      },
+      {
+        "statement": "S1 legt fest, dass Sales keine operative Freigabe trifft, während S2 festlegt, dass der Account Owner über die externe Rückmeldung entscheidet.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "clarifications": [
+      {
+        "question": "Welche Abteilung (Operations oder Sales/Account Management) soll künftig die operative Federführung bei kritischen Serviceeskalationen übernehmen?",
+        "impact": "Ohne Klärung dieser Grundsatzentscheidung kann keine verbindliche Prozessordnung etabliert werden.",
+        "blocking": true
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "09800180-e45f-4a2c-9225-da78a66bdc58",
+  "investigation_run_id": "a7b18fe4-e4d4-4412-a079-c8d269d9f14d",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 6,
+      "verifier_calls": 1,
+      "input_tokens": 19564,
+      "output_tokens": 12018,
+      "verifier_reads": 0,
+      "provider_attempts": 6,
+      "action_state_fingerprint": "251b4429f1fb1ba74e9406e5d3aab46c278019de17513300dcb601fd1cbc3519",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Analyse der Koordinationsverantwortung bei Serviceeskalationen“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Autorisierte Quellen: Operations-Handbuch und Sales-Prozessnotiz; Fokus auf Koordinationsverantwortung bei kritischen Service- und Kundeneskalationen."
+      },
+      "problem": {
+        "statement": "Zwei aktuell freigegebene Dokumente widersprechen sich bei der Koordinationsverantwortung für kritische Eskalationen: Das Operations-Handbuch weist die Koordination Operations zu, während die Sales-Prozessnotiz den Account Owner als Koordinator und Entscheider über die externe Rückmeldung nennt.",
+        "references": [
+          {
+            "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+            "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8",
+            "revision_hash": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+            "locator": {
+              "line": 2
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Eine plausible Ursache ist divergierende Prozessdokumentation in verschiedenen Fachbereichen ohne konsolidierte Prozessgovernance.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+              "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+              "locator": {
+                "line": 2
+              }
+            },
+            {
+              "source_id": "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8",
+              "revision_hash": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+              "locator": {
+                "line": 2
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Eine alternative plausible Erklärung ist, dass Serviceeskalationen und Kundeneskalationen unterschiedliche, bereichsspezifische Zuständigkeiten haben und der Widerspruch daher nur scheinbar ist.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+              "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+              "locator": {
+                "line": 2
+              }
+            },
+            {
+              "source_id": "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8",
+              "revision_hash": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+              "locator": {
+                "line": 2
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [],
+      "options": [
+        {
+          "name": "Konsolidierte Prozessgovernance mit klarer Federführung",
+          "description": "Bereichsübergreifende Regelung, die festlegt, wer bei kritischen Service- und Kundeneskalationen die Koordination führt und wie Rückmeldungen abgestimmt werden.",
+          "expected_value": "Reduziert konkurrierende Zuständigkeitsansprüche und schafft eine eindeutige Eskalationsfederführung.",
+          "option_type": "organizational",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert die fehlende klare Federführung.",
+          "feasibility": "medium",
+          "data_requirements": "Bestehende Prozessdokumente, Rollen- und Entscheidungsrechte.",
+          "application_impact": "Hoch für bereichsübergreifende Eskalationen.",
+          "integration_effort": "medium",
+          "integration_impact": "Erfordert Abstimmung zwischen Operations und Sales.",
+          "technology_constraints": "Keine technischen Leitplanken in den Quellen belegt.",
+          "risks": "Ohne Führungsentscheidung können Bereichsinteressen bestehen bleiben.",
+          "architecture_fit": "Passt zu dokumentenbasierten Prozessregelungen.",
+          "time_to_value": "unknown",
+          "evidence_basis": "indicative",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Status quo: parallele Bereichsprozesse beibehalten",
+          "description": "Operations und Sales folgen weiterhin ihren jeweiligen freigegebenen Dokumenten.",
+          "expected_value": "Keine Änderungskosten, aber der dokumentierte Koordinationskonflikt bleibt bestehen.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Deckt den Bottleneck nicht.",
+          "feasibility": "high",
+          "data_requirements": "Keine zusätzlichen.",
+          "application_impact": "Begrenzt.",
+          "integration_effort": "low",
+          "integration_impact": "Keine Integration.",
+          "technology_constraints": "Keine.",
+          "risks": "Eskalationen können wegen unklarer Federführung liegen bleiben.",
+          "architecture_fit": "Bestehende Bereichsprozesse.",
+          "time_to_value": "short",
+          "evidence_basis": "indicative",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Regelbasierte Eskalationsmatrix / RACI",
+          "description": "Dokumentierte Zuordnung von Verantwortlichkeiten für Eskalationstypen.",
+          "expected_value": "Macht Zuständigkeiten explizit und prüfbar.",
+          "option_type": "rule_automation",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert unklare Zuständigkeit.",
+          "feasibility": "medium",
+          "data_requirements": "Rollen, Eskalationstypen, Entscheidungsrechte.",
+          "application_impact": "Mittel bis hoch.",
+          "integration_effort": "medium",
+          "integration_impact": "Abstimmung nötig.",
+          "technology_constraints": "Keine technischen Leitplanken belegt.",
+          "risks": "Matrix ohne Governance kann umgangen werden.",
+          "architecture_fit": "Ergänzt Prozessdokumente.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        }
+      ],
+      "recommendation": {
+        "summary": "Der bevorzugte Kandidat ist eine konsolidierte Prozessgovernance mit klarer Federführung; die Evidenz stützt diesen Ansatz als am stärksten, belegt aber keine Umsetzungswirkung.",
+        "rationale": "Beide Quellen zeigen konkurrierende Koordinationsansprüche. Eine bereichsübergreifende Regelung adressiert den dokumentierten Widerspruch. Die Quellen belegen keine technische Lösung und keine Messwerte.",
+        "references": [
+          {
+            "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+            "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8",
+            "revision_hash": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+            "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Ob eine übergeordnete Prozessgovernance existiert, ist nicht belegt.",
+        "Ob Service- und Kundeneskalationen getrennte Prozesse sind, ist nicht belegt.",
+        "Auswirkungen auf Durchlaufzeiten und Eskalationsvolumen sind nicht belegt.",
+        "Keine technischen Systeme oder Ausnahmeregelungen in den Quellen genannt."
+      ],
+      "validation_step": {
+        "step": "Pilot zur Anwendung einer konsolidierten Federführungsregel auf neue kritische Eskalationen.",
+        "measurement": "Dokumentierte Federführung, Anzahl offener Zuständigkeitskonflikte und Zeit bis zur abgestimmten Rückmeldung; ohne erfundene Baseline."
+      }
+    },
+    "source_relevance": {
+      "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8": {
+        "relevant": true,
+        "reason": "Operations-Handbuch gelesen; enthält Aussagen zur Koordination bei Serviceeskalationen.",
+        "reference": {
+          "source_id": "d82f60fb-6bcc-4d3c-b4c0-7d9da6bf95a8",
+          "revision_hash": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+          "locator": {
+            "line": 2
+          }
+        }
+      },
+      "91350a9c-d24d-49ce-a4c5-4c3bce54a365": {
+        "relevant": true,
+        "reason": "Sales-Prozessnotiz gelesen; enthält Aussagen zur Koordination bei Kundeneskalationen.",
+        "reference": {
+          "source_id": "91350a9c-d24d-49ce-a4c5-4c3bce54a365",
+          "revision_hash": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790",
+          "locator": {
+            "line": 2
+          }
+        }
+      }
+    },
+    "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+    "register_hash": "9a473bb99ccecb2ae85f97d0ede4928691d2652a043604d06462f899535b3c50",
+    "brief_hash": "e4a90f96d64af175f41d2974300ac3142d17a7d1a4d55cc9b59dfc5b0b537937"
+  },
+  "materialization_id": "3f75b929-66ad-4852-9a0a-02051e20a02f",
+  "solution_options": [
+    {
+      "id": "c5817775-ff8a-4d44-bb41-f3f506292fa0",
+      "name": "Konsolidierte Prozessgovernance mit klarer Federführung",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "indicative"
+    },
+    {
+      "id": "e3cb7a99-b267-4fce-95c9-c992ecde9472",
+      "name": "Regelbasierte Eskalationsmatrix / RACI",
+      "type": "rule_automation",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "572e08f9-0556-4bf2-90fc-5a733922a415",
+      "name": "Status quo: parallele Bereichsprozesse beibehalten",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "indicative"
+    }
+  ],
+  "error_type": "RuntimeError",
+  "error": "AP4-06: no source-supported option for expected branch; available=[('Konsolidierte Prozessgovernance mit klarer Federführung', 'organizational'), ('Regelbasierte Eskalationsmatrix / RACI', 'rule_automation'), ('Status quo: parallele Bereichsprozesse beibehalten', 'no_tech')]",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt\\work\\ap4_scored_run.py\", line 325, in execute\n    selected = pick_option(case_id, options)\n  File \"C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt\\work\\ap4_scored_run.py\", line 168, in pick_option\n    raise RuntimeError(\n    ...<2 lines>...\n    )\nRuntimeError: AP4-06: no source-supported option for expected branch; available=[('Konsolidierte Prozessgovernance mit klarer Federführung', 'organizational'), ('Regelbasierte Eskalationsmatrix / RACI', 'rule_automation'), ('Status quo: parallele Bereichsprozesse beibehalten', 'no_tech')]\n",
+  "finished_at_epoch": 1790781397.6313415
+}

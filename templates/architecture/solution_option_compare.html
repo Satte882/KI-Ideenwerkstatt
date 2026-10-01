@@ -121,12 +121,15 @@
 </div>
 
 {% if can_select %}
-<form method="post" class="app-card mb-4" id="solution-selection">
+<form method="post" class="app-card mb-4" id="solution-selection"
+      data-submit-guard
+      data-busy-label="Entscheidung wird gespeichert …"
+      data-busy-status="Diagnose und Lösungsentscheidung werden verarbeitet. Das kann einige Sekunden dauern.">
   {% csrf_token %}
   {{ form.process_version }}
   <div class="card-header">
-    <strong>Bevorzugte Option auswählen</strong>
-    <div class="small text-muted mt-1">Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.</div>
+    <strong>{% if latest_selection %}Bestehende Auswahl ändern{% else %}Bevorzugte Option auswählen{% endif %}</strong>
+    <div class="small text-muted mt-1">{% if latest_selection %}Die aktuelle Entscheidung bleibt bestehen, solange Sie hier keine geänderte Auswahl verbindlich speichern.{% else %}Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.{% endif %}</div>
   </div>
   <div class="card-body">
     {% if latest_selection %}
@@ -144,9 +147,12 @@
               <a href="{% url 'use_cases:ap2_decision_surface' selected_use_case.pk %}">Entscheidungsgrundlage ansehen</a>.
             {% endif %}
           </div>
-          <button class="btn btn-sm btn-outline-secondary mt-2" type="submit"
-                  name="continue_ai_handoff" value="1" formnovalidate>
-            AI-Entscheidungsgrundlage vorbereiten oder fortsetzen
+          <div class="small mt-3"><strong>Nächster Schritt:</strong> AI-Entscheidungsgrundlage vervollständigen und im Use Case fortfahren.</div>
+          <button class="btn btn-primary mt-2" type="submit"
+                  name="continue_ai_handoff" value="1" formnovalidate
+                  data-busy-label="AI-Entscheidungsgrundlage wird vorbereitet …"
+                  data-busy-status="Metrik-, Architektur- und Governance-Entwürfe werden vorbereitet. Das kann einige Sekunden dauern.">
+            Mit AI-Entscheidungsgrundlage fortfahren
           </button>
         {% else %}
           <div class="small mt-2">
@@ -160,7 +166,19 @@
       <div id="selection-result"></div>
     {% endif %}
 
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.errors %}
+      <div class="alert alert-danger" id="selection-errors" role="alert" tabindex="-1" data-selection-error-summary>
+        <strong>Eingabe noch nicht gespeichert.</strong>
+        <p class="mt-2 mb-2">Bitte prüfen Sie die markierten Angaben. Ihre bisherige Eingabe bleibt erhalten.</p>
+        <ul class="mb-0">
+          {% if form.confirmed_causes.errors %}<li><a href="#{{ form.confirmed_causes.id_for_label }}">Kernbefund bestätigen oder korrigieren</a></li>{% endif %}
+          {% if form.selected_option.errors %}<li><a href="#{{ form.selected_option.id_for_label }}">Bevorzugte Option auswählen</a></li>{% endif %}
+          {% if form.rationale.errors %}<li><a href="#{{ form.rationale.id_for_label }}">Auswahl begründen</a></li>{% endif %}
+          {% if form.process_version.errors %}<li>Der geprüfte Prozessstand ist nicht mehr aktuell.</li>{% endif %}
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
 
     {% if selection_blocked %}
       <div class="alert alert-warning mb-0">
@@ -223,6 +241,7 @@
           <div>
             <label class="form-label" for="{{ form.confirmed_causes.id_for_label }}">{{ form.confirmed_causes.label }}</label>
             {{ form.confirmed_causes }}
+            {% if confirmed_cause_candidate %}<div class="small text-muted mt-2">Vorschlag aus dem geprüften Befund – noch nicht fachlich bestätigt.</div>{% endif %}
             <div class="form-text">{{ form.confirmed_causes.help_text }}</div>
             {{ form.confirmed_causes.errors }}
             {{ form.process_version.errors }}
@@ -237,9 +256,11 @@
     {% if selection_blocked %}
       <button class="btn btn-primary" type="button" disabled>Auswahl noch gesperrt</button>
     {% else %}
-      <button class="btn btn-primary" type="submit">
+      <button class="btn {% if latest_selection %}btn-outline-secondary{% else %}btn-primary{% endif %}" type="submit">
         {% if diagnosis_confirmation_required %}
           Diagnose bestätigen und bevorzugte Option auswählen
+        {% elif latest_selection %}
+          Geänderte Auswahl verbindlich speichern
         {% else %}
           Bevorzugte Option auswählen
         {% endif %}

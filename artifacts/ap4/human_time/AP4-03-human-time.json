@@ -1,0 +1,58 @@
+{
+  "schema_version": "ap4-human-time-v1",
+  "case_id": "AP4-03",
+  "measurement_status": "technical_failure",
+  "measurement_started_at": "2026-10-01T07:50:45.376Z",
+  "measurement_finished_at": "2026-10-01T08:12:15.087441Z",
+  "times": {
+    "active_input_seconds": null,
+    "navigation_seconds": 1.75,
+    "authority_decision_seconds": 198.498,
+    "post_draft_review_seconds": null,
+    "post_draft_correction_seconds": null,
+    "system_wait_seconds": 187.799
+  },
+  "human_time_measured": true,
+  "manual_fields_changed": [],
+  "post_draft_fields_changed": [],
+  "avoidable_questions": 0,
+  "authority_questions": 2,
+  "reached_reviewable_state": false,
+  "reviewable_state_type": "technical_failure_before_controlled_llm_reviewable_end_state",
+  "human_authority_decisions": [
+    "The human accepted the displayed scope and selected focus stage kategorisierung_entwurf.",
+    "The human attempted to select 'Menschlich freigegebener KI-Entwurfsassistent' and supplied a rationale, but the decision was not persisted."
+  ],
+  "browser_evidence": [
+    {
+      "finding": "Submitting the solution selection returned to the top of the same comparison page without a prominent error summary or focus/anchor on the invalid field."
+    },
+    {
+      "finding": "After navigating back to ProcessAnalysis, the page still showed 'eine bevorzugte Option ist noch nicht festgelegt', which matched the unsaved domain state but gave the human no explanation of why the prior submit failed."
+    }
+  ],
+  "domain_evidence": [
+    {
+      "capture_session_id": "1c8a1532-1d74-4f06-851e-e52dbbbb64d9",
+      "discovery_snapshot_id": "a41b2488-862d-4ad7-b4fb-dabb6b5933ec",
+      "process_analysis_id": "c5bed74d-a227-4c87-953d-a50fc639ae12",
+      "process_version": 2,
+      "confirmed_causes": "",
+      "solution_selection_decision_count_after_submit": 0,
+      "attempted_option": "Menschlich freigegebener KI-Entwurfsassistent"
+    },
+    {
+      "discovery_analysis_id": "6f5128f4-2ef8-4f80-9510-b02e2b1a4819",
+      "discovery_status": "success",
+      "discovery_duration_ms": 48145,
+      "investigation_run_id": "cfadc30e-5dac-45ff-83b8-27dc83cd82da",
+      "investigation_status": "ready",
+      "investigation_started_at": "2026-10-01T07:54:53.769690Z",
+      "investigation_finished_at": "2026-10-01T07:57:13.423777Z",
+      "tool_calls": 3,
+      "model_calls": 6,
+      "provider_attempts": 6
+    }
+  ],
+  "notes": "AP4-03 was run once and must not be repeated. Technical preparation used the current post-hardening runtime with the web server and investigation worker running. Frozen AP4-03 source pack was validated without modifying the manifest; canonical current source hash: 1d0810649a1143ff94ba66271976d7064d95999082b718d884baf3f5b657042b. Discovery and Investigation completed successfully, but the first solution-selection submit did not persist. Read-only diagnosis found zero SolutionSelectionDecision rows and an empty confirmed_causes field. The UI returned to the page top without an adequate error summary or focus on the blocker, and the subsequent ProcessAnalysis view gave the impression that the decision had been lost. Repeating the same input was rejected as pointless and contrary to the one-run measurement rule; the case therefore ends as technical_failure before the controlled-LLM reviewable end state. Exact persisted intervals retained: 48.145 s Discovery wait, 139.654 s Investigation wait, 1.750 s from start signal to analysis request, and 198.498 s from completed Discovery output to the human scope/focus confirmation. Later active review, navigation, rationale entry, and failed-selection time cannot be separated from the available timestamps and remain null rather than estimated. No post-draft review/correction segment at a final reviewable state was reached."
+}

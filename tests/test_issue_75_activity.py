@@ -87,8 +87,9 @@ def test_start_commits_dispatch_and_immediately_opens_live_page(
     assert run.model_calls.count() == 0
     page = client.get(response.url)
     assert page.status_code == 200
-    assert "Untersuchung läuft" in page.content.decode()
-    assert "Ausführung ausstehend" in page.content.decode()
+    assert "Untersuchungsstart angefordert" in page.content.decode()
+    assert "Untersuchung läuft" not in page.content.decode()
+    assert "Hintergrundausführung wird zugewiesen" in page.content.decode()
     response = client.post(
         reverse("accelerator:investigation_start", args=[product[0].pk]),
         {"idempotency_key": "live-ui"},
@@ -98,11 +99,69 @@ def test_start_commits_dispatch_and_immediately_opens_live_page(
 
 
 @pytest.mark.django_db
+def test_overdue_unclaimed_dispatch_is_an_actionable_technical_blocker(client, owner, product):
+    handle = start(owner, product)
+    now = timezone.now()
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        execution_requested_at=now - timedelta(seconds=31)
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+
+    activity = build_activity(run, now=now)
+
+    assert activity["execution_state"] == "unavailable"
+    assert activity["attention_required"] is True
+    assert activity["attention_title"] == "Hintergrundausführung nicht verfügbar"
+    assert "keine bestätigte Analyse" in activity["description"]
+    assert "nicht erneut" in activity["required_action"]
+    assert activity["duration_label"] == "Wartezeit seit Startanforderung"
+
+    client.force_login(owner)
+    page = client.get(reverse("accelerator:investigation_activity", args=[run.pk]))
+    content = page.content.decode()
+    assert page.status_code == 200
+    assert "Hintergrundausführung nicht verfügbar" in content
+    assert "keine bestätigte Analyse" in content
+    assert "Wartezeit seit Startanforderung" in content
+
+
+@pytest.mark.django_db
 def test_dispatch_rolls_back_with_start(owner, product):
     with pytest.raises(RuntimeError), transaction.atomic():
         start(owner, product)
         raise RuntimeError("transaction interrupted")
     assert not InvestigationRun.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("age,state", [(29, "pending"), (30, "pending"), (31, "unavailable")])
+def test_assignment_boundary_never_claims_running_analysis(owner, product, age, state):
+    handle = start(owner, product)
+    now = timezone.now()
+    InvestigationRun.objects.filter(pk=handle.run_id).update(
+        execution_requested_at=now - timedelta(seconds=age)
+    )
+    activity = build_activity(InvestigationRun.objects.get(pk=handle.run_id), now=now)
+    assert activity["execution_state"] == state
+    assert "läuft" not in activity["title"]
+    assert "läuft im Hintergrund" not in activity["description"]
+
+
+@pytest.mark.django_db
+def test_running_title_requires_current_generation_and_unexpired_lease(owner, product):
+    handle = start(owner, product)
+    claim_execution(uuid.uuid4())
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    now = timezone.now()
+    assert build_activity(run, now=now)["title"] == "Untersuchung läuft"
+    run.execution_lease_until = now
+    assert build_activity(run, now=now)["execution_state"] == "unconfirmed"
+    assert "läuft" not in build_activity(run, now=now)["title"]
+    run.execution_lease_until = now + timedelta(seconds=30)
+    run.executor_generation += 1
+    activity = build_activity(run, now=now)
+    assert activity["execution_state"] == "pending"
+    assert "läuft" not in activity["title"]
 
 
 @pytest.mark.django_db
@@ -218,6 +277,9 @@ def test_global_capacity_is_two_products(owner, business_unit, tmp_path):
     InvestigationRun.objects.filter(execution_worker_id__isnull=True).update(
         execution_requested_at=timezone.now() - timedelta(seconds=60)
     )
+    waiting_run = InvestigationRun.objects.get(execution_worker_id__isnull=True)
+    assert build_activity(waiting_run)["execution_state"] == "queued"
+    assert build_activity(waiting_run)["title"] == "Untersuchung wartet auf freien Ausführungsplatz"
     assert execution_health() == {"healthy": True, "pending": 1, "overdue": 0, "orphaned": 0}
 
 
@@ -379,3 +441,5 @@ def test_activity_client_opens_brief_only_on_running_to_ready_transition():
     assert 'state.status === "running" && next.status === "ready"' in script
     assert "next.ready && next.brief_url" in script
     assert "window.location.assign(next.brief_url)" in script
+    assert "next.attention_required" in script
+    assert "next.duration_label" in script

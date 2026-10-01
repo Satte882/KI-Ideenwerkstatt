@@ -430,6 +430,64 @@ def test_campaign_reservation_is_atomic_for_parallel_provider_attempts(
 
 
 @pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
+def test_campaign_parallel_reservations_do_not_starve_when_budget_is_sufficient(
+    owner,
+    business_unit,
+    tmp_path,
+):
+    if connection.vendor != "postgresql":
+        pytest.skip("Parallel budget row locking is validated on PostgreSQL.")
+
+    process = make_process(owner=owner, business_unit=business_unit, name="Budget fair")
+    (tmp_path / "notes.txt").write_text("Beleg", encoding="utf-8")
+    _folder, snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    campaign = evidence_campaign(
+        owner=owner,
+        process=process,
+        max_calls=2,
+        input_tokens=1_000,
+        output_tokens=1_000,
+    )
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.snapshot_id,
+            idempotency_key="parallel-budget-fair",
+            evidence_campaign_id=campaign.pk,
+            evidence_metadata={"provider_mode": "real", "phase": "scored", "variant": "A"},
+            decision_brief_required=True,
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    calls = [model_call(run, "fair-a"), model_call(run, "fair-b")]
+    barrier = Barrier(2)
+
+    def attempt(call_id):
+        close_old_connections()
+        barrier.wait()
+        try:
+            reservation = reserve_provider_attempt(
+                run_id=run.pk,
+                model_call_id=call_id,
+                max_input_tokens=100,
+                max_output_tokens=100,
+            )
+            return str(reservation.pk)
+        finally:
+            close_old_connections()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        reservation_ids = list(pool.map(attempt, [call.pk for call in calls]))
+
+    assert len(set(reservation_ids)) == 2
+    campaign.refresh_from_db()
+    assert campaign.usage["provider_calls"] == 2
+    assert campaign.usage["reserved_input_tokens"] == 200
+    assert campaign.usage["reserved_output_tokens"] == 200
+    assert InvestigationProviderReservation.objects.filter(campaign=campaign).count() == 2
+
+
 def test_unknown_provider_usage_remains_reserved_and_continuation_keeps_history(
     owner,
     business_unit,

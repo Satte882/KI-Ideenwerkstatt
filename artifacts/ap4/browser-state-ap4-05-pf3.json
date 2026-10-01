@@ -1,0 +1,38 @@
+{
+  "case_id": "AP4-05",
+  "record_id": "AP4-05-auto-post-fix-3",
+  "run_slot": "AP4-05-PF3",
+  "provider_mode": "real",
+  "result": "pass",
+  "process_analysis_id": "abfdb0cc-6bcf-44bd-a317-8e20ecc6181a",
+  "investigation_run_id": "acaaeb08-ef02-4411-9d61-2b8c63a9a078",
+  "persisted_state": {
+    "status": "waiting_human",
+    "clarification_reason": "permission_or_scope",
+    "clarification_payload": {
+      "question": "Wer trägt die verbindliche Entscheidungshoheit für Sonderfälle im Freigabeprozess für Fachanträge – Teamleitung oder Bereichsleitung – und wer verantwortet die zugehörigen Ausnahmen?",
+      "context": "Die autorisierten Quellen (01_case_note.md, 02_open_questions.md) belegen übereinstimmend, dass die Rollenverantwortung bei Sonderfällen nicht dokumentiert ist und keine freigegebene Zuständigkeitsmatrix existiert. Damit ist die finale Entscheidungsrolle ausdrücklich offen gelassen und nicht intern aus dem Quellenraum ableitbar.",
+      "needed_decision": "Festlegung der entscheidungsbefugten Rolle (Teamleitung vs. Bereichsleitung) für Sonderfälle sowie der Verantwortung für Ausnahmen, damit die Ursachenanalyse abgeschlossen und Lösungsrichtungen (z. B. Zuständigkeitsmatrix, Eskalationsregeln) tragfähig abgeleitet werden können."
+    },
+    "planner_prompt_version": "vs1-planner-v19",
+    "planner_schema_version": "vs1-planner-schema-v16",
+    "loop_version": "vs1-agent-loop-v19",
+    "tool_calls": 3,
+    "model_calls": 4,
+    "provider_attempts": 4,
+    "solution_options": 0,
+    "solution_selection_decisions": 0
+  },
+  "browser_state": {
+    "url": "http://127.0.0.1:8000/accelerator/investigations/acaaeb08-ef02-4411-9d61-2b8c63a9a078/activity/",
+    "title": "Untersuchung – KI-Ideenwerkstatt",
+    "heading": "Klärung erforderlich",
+    "human_gate_question": "Wer trägt die verbindliche Entscheidungshoheit für Sonderfälle im Freigabeprozess für Fachanträge – Teamleitung oder Bereichsleitung – und wer verantwortet die zugehörigen Ausnahmen?",
+    "screenshot": "artifacts/ap4/browser/AP4-05-PF3-human-gate.png"
+  },
+  "consistency": {
+    "browser_matches_persisted_state": true,
+    "human_gate_reached": true,
+    "invented_authority_decision": false
+  }
+}

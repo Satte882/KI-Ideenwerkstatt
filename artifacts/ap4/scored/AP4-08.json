@@ -1,0 +1,418 @@
+{
+  "case_id": "AP4-08",
+  "run_slot": "AP4-08-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "0fb1550de720080f854c94dd61d065a1e3668dcf41197f41fab1fc9649d63776",
+  "expected_branch": "data_evidence",
+  "started_at_epoch": 1790787431.8515546,
+  "status": "waiting_human",
+  "system_wait_seconds": 781.7224154999712,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed",
+    "diagnosis confirmed and solution selected by human authority"
+  ],
+  "capture_session_id": "ef23b59c-cad9-4657-875d-3c1e1112ecf9",
+  "discovery_snapshot_id": "3b59f329-e274-4537-8b67-96579f6d30c3",
+  "discovery_manifest_hash": "5d5533ecd2e4d3c2918b73c2069dac8d49d5ba6e8b5c38866a1cb94cd773469d",
+  "discovery": {
+    "analysis_id": "94dc31a7-e994-4d9f-90b0-31229cc86c9a",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 7112,
+    "completion_tokens": 11337,
+    "cost": "0.04784775",
+    "facts": [
+      {
+        "statement": "Wartungsfälle mit nicht verfügbaren Ersatzteilen weisen Durchlaufzeiten von 11 bis 13 Stunden auf, während Fälle mit verfügbaren Ersatzteilen 4 bis 6 Stunden benötigen.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Die in S1 formulierte operative Vermutung, dass fehlende Ersatzteile die Durchlaufzeit erhöhen, wird durch die Daten in S2 bestätigt.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      },
+      {
+        "statement": "Die Datenbasis S2 beinhaltet 8 Fälle aufgeteilt auf die Teams A, B und C.",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die Verzögerung bei fehlenden Ersatzteilen entsteht durch Wartezeiten auf Nachlieferung oder interne Lagerrecherche.",
+        "evidence_refs": []
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Ursachen für das Fehlen der Ersatzteile bei Eintreffen des Wartungsfalls.",
+        "impact": "Behinderung der Identifikation konkreter Maßnahmen im Lieferschein- oder Bestandsmanagement."
+      },
+      {
+        "statement": "Eingesetzte IT-Systeme zur Dokumentation und Steuerung.",
+        "impact": "Keine Aussage über technische Systemmedienbrüche möglich."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche Ursachen führen konkret dazu, dass Ersatzteile bei Fallaufnahme nicht verfügbar sind?",
+        "impact": "Erlaubt die gezielte Behebung von Beschaffungs- oder Lagerengpässen.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "4ddd4b2a-8449-407e-b766-881276e60bc8",
+  "investigation_run_id": "4ad81718-80d8-4d59-a9f7-c230a5cd0e01",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 4,
+      "model_calls": 11,
+      "verifier_calls": 3,
+      "input_tokens": 56934,
+      "output_tokens": 51282,
+      "verifier_reads": 0,
+      "provider_attempts": 11,
+      "action_state_fingerprint": "101810bdebd18364f5d2f8d03121a0acecfe7200c5ce85f2d48e620310a6321c",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "calculations": [
+        {
+          "limits": "Beobachtungsdaten aus 8 Fällen; keine Kausalaussage, keine Kontrolle weiterer Faktoren.",
+          "population": {
+            "aggregated_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "filter_matched_rows": 8,
+            "included_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "rows_total": 8
+          },
+          "reference": {
+            "revision_hash": "5d7ea9f9151b7075fd7e34ff94f8374b4a832306b03dd7fc8a8025c2f5803e96",
+            "tool_result_id": "d4ccf58f-797e-4fc2-b111-b1deb918fd0f"
+          },
+          "summary": "Mittlere Durchlaufzeit bei part_available=false beträgt 12h (n=4), bei true 4,75h (n=4); Differenz 7,25h (false minus true)."
+        },
+        {
+          "limits": "Kleine Gruppengrößen; Unterschiede moderat.",
+          "population": {
+            "aggregated_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "filter_matched_rows": 8,
+            "included_rows": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "rows_total": 8
+          },
+          "reference": {
+            "revision_hash": "5d7ea9f9151b7075fd7e34ff94f8374b4a832306b03dd7fc8a8025c2f5803e96",
+            "tool_result_id": "e730363f-eb05-451a-a69e-077bd53d226a"
+          },
+          "summary": "Mittlere Durchlaufzeit Team A 7h (n=3), B 9,33h (n=3), C 9h (n=2)."
+        }
+      ],
+      "hypotheses": [
+        {
+          "counterevidence_refs": [],
+          "references": [
+            {
+              "revision_hash": "5d7ea9f9151b7075fd7e34ff94f8374b4a832306b03dd7fc8a8025c2f5803e96",
+              "tool_result_id": "d4ccf58f-797e-4fc2-b111-b1deb918fd0f"
+            },
+            {
+              "source_id": "1f544e5a-ae0c-4324-b4d4-d5e89fda8479",
+              "revision_hash": "782fd20aadcbd02a4a1bceecc246fac0b195d3366e4062234189dbb9ce4ee393",
+              "locator": {
+                "line": 3
+              }
+            }
+          ],
+          "statement": "Fehlende Ersatzteilverfügbarkeit ist mit längeren Durchlaufzeiten assoziiert.",
+          "status": "supported"
+        },
+        {
+          "counterevidence_refs": [],
+          "references": [
+            {
+              "revision_hash": "5d7ea9f9151b7075fd7e34ff94f8374b4a832306b03dd7fc8a8025c2f5803e96",
+              "tool_result_id": "e730363f-eb05-451a-a69e-077bd53d226a"
+            }
+          ],
+          "statement": "Unterschiedliche Teamzuordnung erklärt einen Teil der Durchlaufzeitunterschiede.",
+          "status": "open"
+        }
+      ],
+      "options": [
+        {
+          "application_impact": "Direkt auf den Wartungsprozess.",
+          "architecture_fit": "Nicht belegt.",
+          "bottleneck_coverage": "Adressiert den stärksten beobachteten Unterschied (part_available).",
+          "contains_ai_component": false,
+          "data_requirements": "Ersatzteilbestände, Lieferzeiten, Verbrauchsdaten; in den Quellen nicht enthalten.",
+          "description": "Prozess- und organisatorische Maßnahmen zur Sicherstellung der Ersatzteilverfügbarkeit vor oder während der Instandhaltung.",
+          "evidence_basis": "indicative",
+          "expected_value": "Reduktion der Durchlaufzeit bei Fällen mit Ersatzteilengpass.",
+          "feasibility": "medium",
+          "integration_effort": "medium",
+          "integration_impact": "Anpassung von Prüf- und Bereitstellungsabläufen.",
+          "name": "Ersatzteilverfügbarkeit verbessern",
+          "non_ai": true,
+          "option_type": "organizational",
+          "risks": "Kausalität nicht bestätigt; weitere Einflussfaktoren möglich.",
+          "status_quo": false,
+          "technology_constraints": "Keine Systeme in den Quellen belegt.",
+          "time_to_value": "unknown"
+        },
+        {
+          "application_impact": "Keine Veränderung.",
+          "architecture_fit": "Nicht belegt.",
+          "bottleneck_coverage": "Keine.",
+          "contains_ai_component": false,
+          "data_requirements": "Keine zusätzlichen.",
+          "description": "Keine Änderung des aktuellen Wartungsprozesses.",
+          "evidence_basis": "hypothesis",
+          "expected_value": "Vermeidung von Umsetzungsaufwand.",
+          "feasibility": "high",
+          "integration_effort": "low",
+          "integration_impact": "Keine.",
+          "name": "Status quo beibehalten",
+          "non_ai": true,
+          "option_type": "no_tech",
+          "risks": "Bestehende Durchlaufzeitunterschiede bleiben bestehen.",
+          "status_quo": true,
+          "technology_constraints": "Keine.",
+          "time_to_value": "short"
+        },
+        {
+          "application_impact": "Prozessweite.",
+          "architecture_fit": "Nicht belegt.",
+          "bottleneck_coverage": "Moderat; adressiert Teamunterschiede.",
+          "contains_ai_component": false,
+          "data_requirements": "Prozessdokumentation, Teamvergleiche; in den Quellen nur begrenzt.",
+          "description": "Vereinheitlichung von Übergaben und Arbeitsabläufen zwischen den Instandhaltungsteams.",
+          "evidence_basis": "hypothesis",
+          "expected_value": "Reduktion von Teamunterschieden.",
+          "feasibility": "medium",
+          "integration_effort": "medium",
+          "integration_impact": "Änderung von Rollen und Übergaben.",
+          "name": "Teamübergreifende Prozessstandardisierung",
+          "non_ai": true,
+          "option_type": "organizational",
+          "risks": "Teamunterschiede sind im Datensatz klein; Wirkung unsicher.",
+          "status_quo": false,
+          "technology_constraints": "Keine Systeme in den Quellen belegt.",
+          "time_to_value": "unknown"
+        },
+        {
+          "application_impact": "Indirekt über Ersatzteilverfügbarkeit.",
+          "architecture_fit": "Nicht belegt.",
+          "bottleneck_coverage": "Potenziell; nicht belegt.",
+          "contains_ai_component": true,
+          "data_requirements": "Historische Verbräuche, Lieferzeiten, Störungsdaten; nicht in Quellen.",
+          "description": "Einsatz von Analytics/ML zur Vorhersage von Ersatzteilbedarfen.",
+          "evidence_basis": "hypothesis",
+          "expected_value": "Frühzeitige Erkennung von Engpässen.",
+          "feasibility": "medium",
+          "integration_effort": "high",
+          "integration_impact": "Neue Systeme und Datenintegration.",
+          "name": "KI-gestützte Ersatzteilbedarfsprognose",
+          "non_ai": false,
+          "option_type": "analytics_ml",
+          "risks": "Keine Datenbasis für Prognosegüte; Umsetzungsaufwand hoch.",
+          "status_quo": false,
+          "technology_constraints": "Keine Systeme in den Quellen belegt.",
+          "time_to_value": "unknown"
+        }
+      ],
+      "problem": {
+        "references": [
+          {
+            "source_id": "1f544e5a-ae0c-4324-b4d4-d5e89fda8479",
+            "revision_hash": "782fd20aadcbd02a4a1bceecc246fac0b195d3366e4062234189dbb9ce4ee393",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "1f544e5a-ae0c-4324-b4d4-d5e89fda8479",
+            "revision_hash": "782fd20aadcbd02a4a1bceecc246fac0b195d3366e4062234189dbb9ce4ee393",
+            "locator": {
+              "line": 4
+            }
+          }
+        ],
+        "statement": "Die Durchlaufzeiten im Wartungsprozess variieren; die operative Vermutung, dass fehlende Ersatzteile die Durchlaufzeit erhöhen, ist in der Quelle als noch nicht bestätigt beschrieben."
+      },
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Analyse der Durchlaufzeiten im Wartungsprozess“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Analyse der Durchlaufzeiten im Wartungsprozess, Störungserfassung und Teamzuordnung bis Instandhaltungsdurchführung, basierend auf 8 Fällen in S1 und Prozessbeschreibung S2."
+      },
+      "recommendation": {
+        "rationale": "Die analysierten Falldaten zeigen eine deutliche Assoziation: Fälle ohne Ersatzteilverfügbarkeit haben im Mittel 12h, mit Verfügbarkeit 4,75h (Differenz 7,25h). Teamunterschiede sind kleiner. Die Kausalität ist nicht bestätigt; ein Pilot sollte die Wirkung prüfen.",
+        "references": [
+          {
+            "revision_hash": "5d7ea9f9151b7075fd7e34ff94f8374b4a832306b03dd7fc8a8025c2f5803e96",
+            "tool_result_id": "d4ccf58f-797e-4fc2-b111-b1deb918fd0f"
+          },
+          {
+            "source_id": "1f544e5a-ae0c-4324-b4d4-d5e89fda8479",
+            "revision_hash": "782fd20aadcbd02a4a1bceecc246fac0b195d3366e4062234189dbb9ce4ee393",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "1f544e5a-ae0c-4324-b4d4-d5e89fda8479",
+            "revision_hash": "782fd20aadcbd02a4a1bceecc246fac0b195d3366e4062234189dbb9ce4ee393",
+            "locator": {
+              "line": 4
+            }
+          }
+        ],
+        "summary": "Der am stärksten gestützte Lösungsansatz ist die Verbesserung der Ersatzteilverfügbarkeit."
+      },
+      "risks_unknowns": [
+        "Kausalität zwischen Ersatzteilverfügbarkeit und Durchlaufzeit ist nicht bestätigt; es könnte weitere Einflussfaktoren geben.",
+        "Systeme und technische Leitplanken sind in den autorisierten Quellen nicht belegt.",
+        "Kleine Fallzahl (8 Fälle) begrenzt die Belastbarkeit.",
+        "Keine Kosten-, Zeit- oder Aufwandsdaten in den Quellen."
+      ],
+      "validation_step": {
+        "measurement": "Durchlaufzeit (duration_hours) vor/nach der Maßnahme vergleichen, stratifiziert nach part_available.",
+        "step": "Pilot zur Verbesserung der Ersatzteilverfügbarkeit in einem Team oder für eine Fallgruppe durchführen."
+      }
+    },
+    "source_relevance": {
+      "131f239a-f6c5-4d3c-a692-d95351b6f1c0": {
+        "relevant": true,
+        "reason": "CSV-Falldaten wurden mit compare_groups analysiert."
+      },
+      "1f544e5a-ae0c-4324-b4d4-d5e89fda8479": {
+        "relevant": true,
+        "reason": "Prozessbeschreibung und operative Vermutung gelesen."
+      }
+    },
+    "manifest_hash": "5d5533ecd2e4d3c2918b73c2069dac8d49d5ba6e8b5c38866a1cb94cd773469d",
+    "register_hash": "1cf8f9e4cdd3704f062540f8ae170a475dbcf02b75aaf02afb4548ae70c37eca",
+    "brief_hash": "a0e99e75031ee807cdf93e0c25f77eaa9a6254efafb6a375a522b72c64599fbf"
+  },
+  "materialization_id": "3d539d3a-fc5d-4cd0-980b-e878942795a3",
+  "solution_options": [
+    {
+      "id": "e1262b35-4524-423b-9548-b9a1d46239e8",
+      "name": "Ersatzteilverfügbarkeit verbessern",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "indicative"
+    },
+    {
+      "id": "6675370a-ef47-4e72-8bc7-998fed93dec5",
+      "name": "KI-gestützte Ersatzteilbedarfsprognose",
+      "type": "analytics_ml",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "5a6a221d-ec8b-4efb-85c1-261b7e1f9b67",
+      "name": "Status quo beibehalten",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "c1d73185-5c45-4f93-a30a-80329ce1e495",
+      "name": "Teamübergreifende Prozessstandardisierung",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    }
+  ],
+  "solution_decision_id": "3",
+  "selected_solution": {
+    "id": "6675370a-ef47-4e72-8bc7-998fed93dec5",
+    "name": "KI-gestützte Ersatzteilbedarfsprognose",
+    "type": "analytics_ml",
+    "contains_ai": true
+  },
+  "use_case_id": "29c05f92-345f-44c3-ba89-429342b3f2c8",
+  "ap2_completed": [
+    "metric_pilot",
+    "architecture",
+    "decision_governance"
+  ],
+  "terminal_stage": "governance",
+  "blocking_governance_facts": [
+    "personal_data",
+    "employee_data",
+    "automated_person_assessment",
+    "influences_person_decisions",
+    "biometric_data",
+    "safety_critical",
+    "regulated_product",
+    "health_safety_rights_impact",
+    "external_ai_or_cloud",
+    "generated_external_content",
+    "human_oversight_planned"
+  ],
+  "finished_at_epoch": 1790788214.1010249
+}

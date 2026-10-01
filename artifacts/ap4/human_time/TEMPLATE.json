@@ -1,0 +1,26 @@
+{
+  "schema_version": "ap4-human-time-v1",
+  "case_id": "",
+  "measurement_status": "not_started",
+  "measurement_started_at": null,
+  "measurement_finished_at": null,
+  "times": {
+    "active_input_seconds": null,
+    "navigation_seconds": null,
+    "authority_decision_seconds": null,
+    "post_draft_review_seconds": null,
+    "post_draft_correction_seconds": null,
+    "system_wait_seconds": null
+  },
+  "human_time_measured": false,
+  "manual_fields_changed": null,
+  "post_draft_fields_changed": null,
+  "avoidable_questions": null,
+  "authority_questions": null,
+  "reached_reviewable_state": false,
+  "reviewable_state_type": "",
+  "human_authority_decisions": [],
+  "browser_evidence": [],
+  "domain_evidence": [],
+  "notes": ""
+}

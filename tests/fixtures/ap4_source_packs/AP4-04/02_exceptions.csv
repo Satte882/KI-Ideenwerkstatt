@@ -1,0 +1,6 @@
+case_id,formal_match,free_text_note,decision
+R01,true,,standard
+R02,false,"Menge laut Lieferschein abweichend",manual_review
+R03,false,"Zusatzleistung telefonisch vereinbart",manual_review
+R04,true,,standard
+R05,false,"Preisänderung laut Nachtrag",manual_review

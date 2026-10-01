@@ -14,6 +14,7 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
+from ki_radar.architecture.process_decision_presentation import suggested_confirmed_cause
 from ki_radar.architecture.solution_selection import select_preferred_solution
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 from ki_radar.use_cases.ap2_decision_governance import GOVERNANCE_FIELDS
@@ -96,6 +97,52 @@ def make_option(process, owner, *, name, option_type, assessed):
         architecture_fit="Passt zur bestehenden Architektur",
         time_to_value=time_to_value,
         created_by=owner,
+    )
+
+
+@pytest.mark.django_db
+def test_suggested_cause_falls_back_through_reviewed_evidence(owner, business_unit):
+    process = make_process(owner, business_unit)
+    process.confirmed_causes = ""
+    process.save(update_fields=["confirmed_causes", "updated_at"])
+    materialization = SimpleNamespace(
+        brief_revision=SimpleNamespace(
+            payload={
+                "hypotheses": [
+                    {
+                        "status": "supported",
+                        "statement": "Freitext erzeugt vermeidbaren manuellen Leseaufwand.",
+                    }
+                ]
+            }
+        ),
+        run=SimpleNamespace(
+            claim_register=[
+                {
+                    "area": "recommendation",
+                    "claim_kind": "hypothesis",
+                    "status": "supported",
+                    "statement": "Dieser Claim gehört nicht zur Ursachenbestätigung.",
+                }
+            ]
+        ),
+    )
+
+    assert (
+        suggested_confirmed_cause(
+            process_analysis=process,
+            latest_materialization=materialization,
+        )
+        == "Freitext erzeugt vermeidbaren manuellen Leseaufwand."
+    )
+
+    materialization.brief_revision.payload = {"hypotheses": []}
+    assert (
+        suggested_confirmed_cause(
+            process_analysis=process,
+            latest_materialization=materialization,
+        )
+        == process.cause_hypotheses
     )
 
 
@@ -243,9 +290,7 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     use_case = UseCase.objects.get()
     assert use_case.ap2_planning_provenance == {}
     assert process.solution_selection_decisions.count() == 1
-    assert (
-        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
-    )
+    assert "Mit AI-Entscheidungsgrundlage fortfahren" in client.get(url).content.decode()
 
     retry = client.post(url, {"continue_ai_handoff": "1"})
     assert retry.status_code == 302
@@ -254,9 +299,7 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     assert process.solution_selection_decisions.count() == 1
     assert UseCase.objects.count() == 1
     assert attempts == 2
-    assert (
-        "AI-Entscheidungsgrundlage vorbereiten oder fortsetzen" in client.get(url).content.decode()
-    )
+    assert "Mit AI-Entscheidungsgrundlage fortfahren" in client.get(url).content.decode()
 
 
 @pytest.mark.django_db
@@ -403,7 +446,23 @@ def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
     assert 'data-testid="combined-diagnosis-selection"' in content
     assert "Kernbefund fachlich bestätigen" in content
     assert "Diagnose bestätigen und bevorzugte Option auswählen" in content
+    assert "data-submit-guard" in content
     assert reverse("architecture:process_analysis_update", args=[process.pk]) not in content
+
+    invalid = client.post(
+        url,
+        {
+            "process_version": reviewed_version,
+            "selected_option": assistant.pk,
+            "rationale": "Die Assistenz adressiert die verbleibende Extraktionsarbeit.",
+        },
+    )
+    invalid_content = invalid.content.decode()
+    assert invalid.status_code == 200
+    assert "data-selection-error-summary" in invalid_content
+    assert "Eingabe noch nicht gespeichert" in invalid_content
+    assert "Kernbefund bestätigen oder korrigieren" in invalid_content
+    assert not process.solution_selection_decisions.exists()
 
     response = client.post(
         url,
@@ -428,6 +487,10 @@ def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
     assert process.validations.filter(process_version=process.version).exists()
     assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
     assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
+    selected_content = client.get(url).content.decode()
+    assert "Mit AI-Entscheidungsgrundlage fortfahren" in selected_content
+    assert "Bestehende Auswahl ändern" in selected_content
+    assert "Geänderte Auswahl verbindlich speichern" in selected_content
 
 
 @pytest.mark.django_db

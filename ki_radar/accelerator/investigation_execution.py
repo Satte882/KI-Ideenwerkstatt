@@ -17,6 +17,26 @@ HEARTBEAT_SECONDS = 5
 MAX_EXECUTIONS = 2
 
 
+def pending_execution_state(run, *, now=None):
+    """Describe an unclaimed dispatch without pretending that work is running."""
+    now = now or timezone.now()
+    if not (
+        run.status == InvestigationRun.Status.RUNNING
+        and run.execution_requested_at
+        and run.execution_generation != run.executor_generation
+    ):
+        return None
+    if run.execution_requested_at >= now - timedelta(seconds=LEASE_SECONDS):
+        return "pending"
+    active_executions = InvestigationRun.objects.filter(
+        status=InvestigationRun.Status.RUNNING,
+        evidence_campaign__isnull=True,
+        execution_generation=F("executor_generation"),
+        execution_lease_until__gt=now,
+    ).count()
+    return "queued" if active_executions >= MAX_EXECUTIONS else "unavailable"
+
+
 @transaction.atomic
 def request_execution(*, actor, handle):
     # Called in the same outer transaction as start/continue. Reused handles do

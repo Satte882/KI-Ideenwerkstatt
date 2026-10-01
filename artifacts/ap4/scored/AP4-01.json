@@ -1,0 +1,464 @@
+{
+  "case_id": "AP4-01",
+  "run_slot": "AP4-01-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "8ed453472ce5aad840be9aee4669fd7172f85c4014aa1bca3632907f4788d4cd",
+  "expected_branch": "non_ai",
+  "started_at_epoch": 1790779672.9908297,
+  "status": "non_ai_selected",
+  "system_wait_seconds": 226.64304870017804,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed",
+    "diagnosis and organizational solution confirmed in browser"
+  ],
+  "capture_session_id": "e09ff567-af0d-4368-8829-9797bbefe9c7",
+  "discovery_snapshot_id": "be00f90d-6eb6-4c37-9caf-71857a844149",
+  "discovery_manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+  "discovery": {
+    "analysis_id": "d6d40cb6-d460-4609-8028-e9d5f898c518",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4740,
+    "completion_tokens": 8411,
+    "cost": "0.03509625",
+    "facts": [
+      {
+        "statement": "Kundenreklamationen gehen beim Service ein, der Unterlagen sammelt und den Fall an die Teamleitung und anschließend die Bereichsleitung weiterleitet.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Teamleitung und Bereichsleitung prüfen häufig denselben Sachverhalt.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Fachanwendung ist verfügbar und ein technischer Ausfall ist nicht die Hauptursache für die Verzögerungen.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die endgültige Kulanzentscheidung bleibt bei der zuständigen Führungskraft.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Für Standardreklamationen ist keine zweite fachliche Prüfung vorgeschrieben.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Die Bereichsleitung wurde historisch als zusätzliche Kontrollstufe aufgenommen.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Eine aktuelle Rollenklärung für Standardfälle ist nicht dokumentiert.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Reklamationen dauern unnötig lange und durchlaufen mehrere interne Freigaben.",
+        "evidence_refs": [
+          "U0"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Der Entfall der zweiten fachlichen Prüfung bei Standardreklamationen verkürzt die Gesamtdurchlaufzeit maßgeblich, ohne die Entscheidungsqualität zu beeinträchtigen.",
+        "evidence_refs": [
+          "U0",
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Genaue Verteilung des Reklamationsvolumens auf Standardfälle und Sonderfälle.",
+        "impact": "Erschwert die exakte Abschätzung der Durchlaufzeitverkürzung."
+      },
+      {
+        "statement": "Durchschnittliche Verweildauer der Reklamationsfälle in den einzelnen Freigabestufen.",
+        "impact": "Erschwert die genaue Quantifizierung des Zeitverlusts pro Prüfstufe."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche konkreten Kriterien definieren einen Standardfall im Vergleich zu einem Sonderfall?",
+        "impact": "Notwendig für die sichere Abgrenzung von Freigabepflichten.",
+        "blocking": false
+      },
+      {
+        "question": "Welche Betragsgrenzen oder Risikokriterien sollen künftig festlegen, wann eine Einbindung der Bereichsleitung erforderlich ist?",
+        "impact": "Relevant für die Ausgestaltung der Soll-Rollenklärung.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "5d8fc785-a1a5-482d-8709-c648730f1398",
+  "investigation_run_id": "89ce937f-7631-4edc-931d-318ff9552bea",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 6,
+      "verifier_calls": 1,
+      "input_tokens": 21158,
+      "output_tokens": 15966,
+      "verifier_reads": 0,
+      "provider_attempts": 6,
+      "action_state_fingerprint": "2521916ba33d3c742ad169fa70c7eaaddb31de2c02ee2134832e35012a40bb04",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Analyse der internen Freigabeschritte bei Reklamationen“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Interne Freigabeschritte bei Reklamationen von Eingang der gesammelten Unterlagen bei der Teamleitung bis Abschluss der Freigabeprüfungen vor der Kulanzentscheidung."
+      },
+      "problem": {
+        "statement": "Die interne Reklamationsbearbeitung durchläuft Teamleitung und Bereichsleitung; mehrere Mitarbeitende berichten, dass beide Freigabeschritte häufig denselben Sachverhalt prüfen. Für Standardreklamationen ist keine zweite fachliche Prüfung vorgeschrieben, und eine aktuelle Rollenklärung fehlt.",
+        "references": [
+          {
+            "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+            "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+            "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+            "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+            "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Die doppelte Prüfung durch Teamleitung und Bereichsleitung erzeugt organisatorische Redundanz und verlängert die Bearbeitung.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+              "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+              "locator": {
+                "line": 3
+              }
+            },
+            {
+              "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+              "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+              "locator": {
+                "line": 3
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Die historisch beibehaltene Bereichsleitungs-Kontrollstufe ist für Standardfälle nicht mehr erforderlich, weil keine zweite fachliche Prüfung vorgeschrieben ist.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+              "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+              "locator": {
+                "line": 2
+              }
+            },
+            {
+              "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+              "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+              "locator": {
+                "line": 3
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Fehlende aktuelle Rollenklärung für Standardfälle trägt zu uneinheitlichen oder unnötigen Freigabeschritten bei.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+              "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+              "locator": {
+                "line": 4
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Technische Ausfälle der Fachanwendung sind eine Hauptursache der Verzögerungen.",
+          "status": "refuted",
+          "references": [],
+          "counterevidence_refs": [
+            {
+              "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+              "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+              "locator": {
+                "line": 4
+              }
+            }
+          ]
+        }
+      ],
+      "calculations": [],
+      "options": [
+        {
+          "name": "Organisatorische Prozessvereinfachung für Standardreklamationen",
+          "description": "Reduktion der zweiten fachlichen Prüfung für Standardfälle, verbindliche Rollenklärung und klare Abgrenzung zu komplexen Sonderfällen.",
+          "expected_value": "Kann redundante Prüfschritte und Handoffs reduzieren; Wirkung nicht quantifiziert.",
+          "option_type": "organizational",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert doppelte Sachverhaltsprüfung durch Teamleitung und Bereichsleitung sowie fehlende Rollenklärung.",
+          "feasibility": "medium",
+          "data_requirements": "Keine zusätzlichen Daten; erfordert Prozess- und Rollenentscheidung.",
+          "application_impact": "medium",
+          "integration_effort": "low",
+          "integration_impact": "low",
+          "technology_constraints": "Keine technische Änderung erforderlich; Fachanwendung bleibt unverändert.",
+          "risks": "Widerstand gegen Rollenänderung; Abgrenzung Standard- vs. Sonderfälle offen.",
+          "architecture_fit": "Passt zum bestehenden Prozess und den vorhandenen Rollen.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Status quo beibehalten",
+          "description": "Bestehende Freigabeschritte mit Teamleitung und Bereichsleitung unverändert fortführen.",
+          "expected_value": "Keine Änderung; Redundanz und unklare Rollen bleiben bestehen.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Keine gezielte Adressierung der doppelten Prüfung oder Rollenklärung.",
+          "feasibility": "high",
+          "data_requirements": "Keine.",
+          "application_impact": "low",
+          "integration_effort": "low",
+          "integration_impact": "low",
+          "technology_constraints": "Keine neuen technischen Leitplanken.",
+          "risks": "Fortbestehende Verzögerungen und unklare Verantwortlichkeiten.",
+          "architecture_fit": "Entspricht dem dokumentierten Ist-Prozess.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Regelbasierte Workflow-Unterstützung",
+          "description": "Regelbasierte Weiterleitung und Kennzeichnung von Standardfällen in der Fachanwendung, ohne KI.",
+          "expected_value": "Kann manuelle Handoffs reduzieren; nicht quantifiziert.",
+          "option_type": "rule_automation",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Unterstützt Handoffs und Prüfschritte, ersetzt aber keine Rollenklärung.",
+          "feasibility": "medium",
+          "data_requirements": "Prozessregeln und Fallklassifikation Standard/Sonderfall.",
+          "application_impact": "medium",
+          "integration_effort": "medium",
+          "integration_impact": "medium",
+          "technology_constraints": "Fachanwendung muss Regeln unterstützen; nicht belegt.",
+          "risks": "Regelpflege; Abgrenzung Standard/Sonderfall; Akzeptanz.",
+          "architecture_fit": "Erfordert Anpassung der Fachanwendung.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "KI-Assistent zur Vorprüfung",
+          "description": "Generativer KI-Assistent zur Zusammenfassung und Vorprüfung von Reklamationsunterlagen.",
+          "expected_value": "Kann Prüfaufwand reduzieren; Evidenz fehlt.",
+          "option_type": "generative_ai",
+          "non_ai": false,
+          "status_quo": false,
+          "bottleneck_coverage": "Teilweise, wenn Vorprüfung manuelle Schritte ersetzt.",
+          "feasibility": "low",
+          "data_requirements": "Trainings-/Validierungsdaten, Datenschutz, Integration.",
+          "application_impact": "medium",
+          "integration_effort": "high",
+          "integration_impact": "high",
+          "technology_constraints": "Datenschutz, Qualität, Akzeptanz; nicht belegt.",
+          "risks": "Hoher Integrationsaufwand, unklare Datenlage, keine belegte Wirkung.",
+          "architecture_fit": "Nicht belegt.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": true
+        }
+      ],
+      "recommendation": {
+        "summary": "Am stärksten gestützt ist eine organisatorische Prozessvereinfachung für Standardreklamationen: Die zweite fachliche Prüfung ist nicht vorgeschrieben, und die Bereichsleitung wurde historisch als zusätzliche Kontrollstufe aufgenommen. Daher sollte die doppelte Prüfung für Standardfälle überprüft und die Rollenklärung nachgeholt werden.",
+        "rationale": "Die Quellen belegen doppelte Sachverhaltsprüfung, fehlende Vorschrift für eine zweite fachliche Prüfung und fehlende aktuelle Rollenklärung. Technische Ausfälle werden nicht als Hauptursache genannt.",
+        "references": [
+          {
+            "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+            "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+            "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+            "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+            "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+            "locator": {
+              "line": 4
+            }
+          },
+          {
+            "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+            "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Ob die Bereichsleitungsprüfung für komplexe Sonderfälle erforderlich bleibt, ist nicht dokumentiert.",
+        "Quantitative Bearbeitungs- oder Durchlaufzeiten sind in den autorisierten Quellen nicht belegt.",
+        "Die Abgrenzung zwischen Standardreklamationen und komplexen Sonderfällen ist nicht definiert.",
+        "Auswirkungen einer Rollenänderung auf Kulanzentscheidung, Compliance oder Kundenzufriedenheit sind nicht belegt."
+      ],
+      "validation_step": {
+        "step": "Pilot zur Reduktion der zweiten fachlichen Prüfung für klar definierte Standardreklamationen; Rollenklärung dokumentieren.",
+        "measurement": "Anzahl der Prüfschritte und Durchlaufzeit vor/nach Pilot; Abgrenzung Standard/Sonderfall; qualitative Rückmeldungen der Rollen."
+      }
+    },
+    "source_relevance": {
+      "398de8e4-a0d1-4bb6-8824-38b9c54f624e": {
+        "relevant": true,
+        "reason": "Interview beschreibt Prozess, doppelte Prüfung, technische Verfügbarkeit und Kulanzentscheidung.",
+        "reference": {
+          "source_id": "398de8e4-a0d1-4bb6-8824-38b9c54f624e",
+          "revision_hash": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+          "locator": {
+            "line": 2
+          }
+        }
+      },
+      "a56d15cb-2cdb-48ac-8d3d-76324226fa44": {
+        "relevant": true,
+        "reason": "Prozessnotiz belegt fehlende Vorschrift für zweite Prüfung, historische Kontrollstufe und fehlende Rollenklärung.",
+        "reference": {
+          "source_id": "a56d15cb-2cdb-48ac-8d3d-76324226fa44",
+          "revision_hash": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33",
+          "locator": {
+            "line": 2
+          }
+        }
+      }
+    },
+    "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+    "register_hash": "e2bdce61d1d39563873fb24640feaf96608920a76f95f6831970ac7ff5844826",
+    "brief_hash": "32422408e4cdb8c08e6f367dfea53c2a28dfc9f0f6ee7da79651c9e01eec596f"
+  },
+  "materialization_id": "bf40ed26-d3bc-4eae-8ccb-adb2d43b65cc",
+  "solution_options": [
+    {
+      "id": "91307bd9-2105-4348-9b9f-68fff8f2513a",
+      "name": "KI-Assistent zur Vorprüfung",
+      "type": "generative_ai",
+      "contains_ai": true,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "098ae6b4-5b92-4be5-9dcf-cca1a7a7e4e9",
+      "name": "Organisatorische Prozessvereinfachung für Standardreklamationen",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "d96946f3-d7c8-47d9-acf9-6bfbb25c81d1",
+      "name": "Regelbasierte Workflow-Unterstützung",
+      "type": "rule_automation",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "b1efe578-b9ff-40b0-90ba-ad2fe9fa8a74",
+      "name": "Status quo beibehalten",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    }
+  ],
+  "terminal_stage": "solution_selection",
+  "blocking_question": "Which cause can a human confirm from the evidence?",
+  "finished_at_epoch": 1790779900.3277445,
+  "selected_solution": {
+    "id": "098ae6b4-5b92-4be5-9dcf-cca1a7a7e4e9",
+    "name": "Organisatorische Prozessvereinfachung für Standardreklamationen",
+    "type": "organizational",
+    "contains_ai": false,
+    "evidence_basis": "hypothesis"
+  },
+  "solution_decision_id": "4",
+  "browser_human_gate": {
+    "confirmed_cause": "Die historisch ergänzte Bereichsleitungsprüfung erzeugt bei Standardreklamationen eine zweite, fachlich nicht vorgeschriebene Prüfung; die Rollenklärung dafür fehlt.",
+    "rationale": "Die organisatorische Prozessvereinfachung adressiert die belegte doppelte Prüfung direkt. Eine KI-Lösung ist weder erforderlich noch durch die Quellen gestützt; Standard- und Sonderfälle müssen vor dem Pilot fachlich abgegrenzt werden."
+  }
+}

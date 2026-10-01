@@ -469,6 +469,20 @@ def assert_actor_can_edit_run(actor, run: InvestigationRun) -> None:
         raise PermissionDenied("Der Quellenraum gehört nicht zu diesem Fall.")
 
 
+def assert_actor_can_read_run(actor, run: InvestigationRun) -> None:
+    """Keep immutable investigation evidence readable after the process leaves DRAFT."""
+    if actor is None or getattr(actor, "pk", None) is None:
+        raise PermissionDenied("Der Investigation-Run ist nicht zugänglich.")
+    process = run.process_analysis
+    if not can_edit_value_stream(actor, process.stage.value_stream):
+        raise PermissionDenied("Der Investigation-Run ist nicht zugänglich.")
+    snapshot = run.source_snapshot
+    if not snapshot.folder.is_active:
+        raise PermissionDenied("Der Quellenraum wurde entzogen.")
+    if snapshot.process_analysis_id != process.pk:
+        raise PermissionDenied("Der Quellenraum gehört nicht zu diesem Fall.")
+
+
 def read_run(*, actor, run_id) -> InvestigationRun:
     try:
         run = InvestigationRun.objects.select_related(
@@ -477,7 +491,7 @@ def read_run(*, actor, run_id) -> InvestigationRun:
         ).get(pk=run_id)
     except (InvestigationRun.DoesNotExist, ValueError) as exc:
         raise PermissionDenied("Der Investigation-Run ist nicht zugänglich.") from exc
-    assert_actor_can_edit_run(actor, run)
+    assert_actor_can_read_run(actor, run)
     return run
 
 

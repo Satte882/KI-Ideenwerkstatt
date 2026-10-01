@@ -1,0 +1,58 @@
+{
+  "schema_version": "ap4-human-time-v1",
+  "case_id": "AP4-02",
+  "measurement_status": "technical_failure",
+  "measurement_started_at": "2026-10-01T07:44:22.473Z",
+  "measurement_finished_at": "2026-10-01T07:46:20.746863Z",
+  "times": {
+    "active_input_seconds": null,
+    "navigation_seconds": 3.855,
+    "authority_decision_seconds": 0,
+    "post_draft_review_seconds": null,
+    "post_draft_correction_seconds": null,
+    "system_wait_seconds": 49.432
+  },
+  "human_time_measured": true,
+  "manual_fields_changed": [
+    "problem_statement"
+  ],
+  "post_draft_fields_changed": [],
+  "avoidable_questions": 1,
+  "authority_questions": 0,
+  "reached_reviewable_state": false,
+  "reviewable_state_type": "technical_failure_source_pack_mismatch",
+  "human_authority_decisions": [],
+  "browser_evidence": [
+    {
+      "state": "waiting_human",
+      "visible_message": "Eine Scope-/Fokus-Klärung ist erforderlich.",
+      "visible_question": "Soll der Fokus der Discovery-Analyse auf die Spesenprüfung (gemäß der Problemstellung in U0) oder auf die Reklamationsbearbeitung (gemäß den Quellen S1 und S2) ausgerichtet werden?"
+    }
+  ],
+  "domain_evidence": [
+    {
+      "capture_session_id": "655350eb-a10e-469e-a739-8240265bfebf",
+      "discovery_analysis_id": "61e3b817-d47e-47e9-b6a8-9ee01add7f24",
+      "discovery_status": "waiting_human",
+      "discovery_duration_ms": 49325,
+      "discovery_snapshot_id": "9f780201-62a3-4801-b569-df299a1f83c4",
+      "actual_source_manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "actual_source_files": [
+        "01_interview.md",
+        "02_process_note.md"
+      ],
+      "actual_source_content_hashes": [
+        "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      ]
+    },
+    {
+      "expected_ap4_02_source_hash": "eaa0b7a47570a8194485be3d71648332bbc22439199ef233e46758ab34e7867a",
+      "expected_source_files": [
+        "01_policy.md",
+        "02_cases.csv"
+      ]
+    }
+  ],
+  "notes": "AP4-02 was run once and must not be repeated. The run ended in a technical/input-preparation failure because the immutable snapshot contained the AP4-01 complaint sources rather than the frozen AP4-02 expense sources. The system correctly exposed the contradiction and stopped at WAITING_HUMAN; answering the question would have mixed two cases and was therefore prohibited. Measurement began only after the human had prepared the form, so pre-start input/file-selection time remains unmeasured and active_input_seconds stays null without retrospective estimation. Exact persisted intervals retained: 3.855 s from start signal to request creation and 49.432 s server/provider wait through the WAITING_HUMAN result. The remaining human reading/clarification interval cannot be isolated from message/tool latency and is not estimated. No authority decision, final reviewable state, post-draft review, or correction segment was reached."
+}

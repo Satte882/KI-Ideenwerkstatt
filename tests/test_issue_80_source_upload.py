@@ -79,6 +79,8 @@ def test_source_upload_creates_managed_folder_and_reuses_snapshot_flow(
         detail_content = detail.content.decode()
         assert detail.status_code == 200
         assert "+ Dateien hinzufügen" in detail_content
+        assert "Weitere Dateien hinzufügen" in detail_content
+        assert "data-file-staging-input" in detail_content
         assert "administrativ eine Quellenbasis registriert" not in detail_content
 
         response = client.post(

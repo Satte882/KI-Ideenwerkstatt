@@ -14,10 +14,10 @@
     <span aria-hidden="true">/</span><span aria-current="page">Untersuchung</span>
   </nav>
   <div class="page-header activity-header">
-    <div><h1 class="page-title"><span class="activity-heading-status activity-heading-status--{{ activity.execution_state }}" data-heading-status aria-hidden="true">{% if activity.ready %}✓{% elif activity.status == 'failed' %}×{% elif activity.status == 'waiting_human' %}!{% elif activity.status == 'aborted' %}–{% else %}●{% endif %}</span> <span data-activity-title>{{ activity.title }}</span></h1>
+    <div><h1 class="page-title"><span class="activity-heading-status activity-heading-status--{{ activity.execution_state }}" data-heading-status aria-hidden="true">{% if activity.ready %}✓{% elif activity.status == 'failed' %}×{% elif activity.attention_required %}!{% elif activity.status == 'aborted' %}–{% else %}●{% endif %}</span> <span data-activity-title>{{ activity.title }}</span></h1>
       <p class="page-subtitle">{{ activity.question }}</p>
       <a href="#activity-result" data-result-jump {% if not activity.ready %}hidden{% endif %}>Zum fertigen Ergebnis ↓</a></div>
-    <div class="activity-total"><span data-duration-label>{% if activity.finished_at %}Gesamtdauer seit Start{% else %}Seit Start{% endif %}</span>
+    <div class="activity-total"><span data-duration-label>{{ activity.duration_label }}</span>
       <strong data-total-duration>{{ activity.duration }}</strong>
       <span class="small text-muted">Einschließlich möglicher Klärungspausen</span></div>
   </div>
@@ -25,8 +25,8 @@
   <div class="activity-connection" role="status" data-connection hidden></div>
   <div class="visually-hidden" role="status" aria-live="polite" data-announcement></div>
 
-  <section class="activity-attention" data-attention {% if activity.status != 'waiting_human' and activity.status != 'failed' %}hidden{% endif %}>
-    <h2 class="h5" data-attention-title>{% if activity.status == 'waiting_human' %}Entscheidungskritische Klärung{% else %}Technische Prüfung erforderlich{% endif %}</h2>
+  <section class="activity-attention" data-attention {% if not activity.attention_required %}hidden{% endif %}>
+    <h2 class="h5" data-attention-title>{{ activity.attention_title }}</h2>
     <p data-impact>{{ activity.impact }}</p>
     <p data-required-action>{{ activity.required_action }}</p>
     <p data-needed-evidence>{% if activity.needed_evidence %}Benötigt: {{ activity.needed_evidence }}{% endif %}</p>

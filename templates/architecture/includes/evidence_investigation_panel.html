@@ -75,8 +75,15 @@
             </div>
             <div class="col-lg-5">
               <label class="form-label" for="investigation-source-files">Quelldateien</label>
-              <input class="form-control" id="investigation-source-files" type="file" name="files" accept=".md,.txt,.csv" multiple required>
-              <div class="form-text">Unterstützt: .md, .txt und .csv · mehrere Dateien gleichzeitig möglich.</div>
+              <div data-file-staging>
+                <input class="form-control" id="investigation-source-files" type="file" name="files" accept=".md,.txt,.csv" multiple required data-file-staging-input>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" data-file-staging-add>Weitere Dateien hinzufügen</button>
+                  <span class="small text-muted" role="status" aria-live="polite" data-file-staging-summary>Noch keine Dateien ausgewählt.</span>
+                </div>
+                <ul class="list-unstyled small mt-2 mb-0" data-file-staging-list></ul>
+              </div>
+              <div class="form-text">Unterstützt: .md, .txt und .csv · Dateien können nacheinander aus mehreren Ordnern ergänzt werden.</div>
             </div>
             <div class="col-lg-2 d-grid">
               <button class="btn btn-outline-primary" type="submit">Quellenbasis erstellen</button>

@@ -1,0 +1,143 @@
+{
+  "case_id": "AP4-05",
+  "run_slot": "AP4-05-S1",
+  "phase": "post_fix",
+  "provider_mode": "real",
+  "source_pack_hash": "cdb8999c6242422ac2a06d8a8daf8df7fa836ad5bedf3969348b356a201d5ff8",
+  "expected_branch": "waiting_human",
+  "started_at_epoch": 1790833940.7488189,
+  "status": "waiting_human",
+  "system_wait_seconds": 72.04340109997429,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "17f3a83c-99ec-4f6c-82e8-e3230cc9ce78",
+  "discovery_snapshot_id": "56adeba1-a608-4e2d-8184-b276310e8394",
+  "discovery_manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+  "discovery": {
+    "analysis_id": "225da560-010f-400a-8d3e-00bb5b5ef667",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4262,
+    "completion_tokens": 6523,
+    "cost": "0.02765775",
+    "facts": [
+      {
+        "statement": "Ein Freigabeprozess für Fachanträge soll beschleunigt werden.",
+        "evidence_refs": [
+          "U0"
+        ]
+      },
+      {
+        "statement": "Fachanträge werden geprüft und anschließend freigegeben, wobei verschiedene Teams beteiligt sind.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Bearbeitungszeit des Prozesses schwankt deutlich.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Es ist nicht dokumentiert, welche Rolle bei Sonderfällen die verbindliche Entscheidungshoheit besitzt.",
+        "evidence_refs": [
+          "U0",
+          "S1"
+        ]
+      },
+      {
+        "statement": "Für Sonderfälle fehlen eine freigegebene Zuständigkeitsmatrix und die vollständige Liste der Sonderfallarten.",
+        "evidence_refs": [
+          "S2"
+        ]
+      },
+      {
+        "statement": "Es liegt keine belastbare Quelle vor, ob die Teamleitung oder die Bereichsleitung die finale Entscheidung trifft.",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die Fehlende Dokumentation der Entscheidungshoheit bei Sonderfällen verursacht Verzögerungen und führt zu den beobachteten Schwankungen der Bearbeitungszeit.",
+        "evidence_refs": [
+          "U0",
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Welche Rolle (Teamleitung oder Bereichsleitung) besitzt bei Sonderfällen die finale Entscheidungshoheit?",
+        "impact": "Bestimmt die Struktur der Freigabeschritte und den Ablauf des Zielprozesses."
+      },
+      {
+        "statement": "Wie sieht die vollständige Liste aller Sonderfallarten aus?",
+        "impact": "Erforderlich zur Erstellung einer vollständigen und verbindlichen Zuständigkeitsmatrix."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche Rolle (Teamleitung oder Bereichsleitung) hat die verbindliche Entscheidungshoheit bei Sonderfällen?",
+        "impact": "Ohne diese Angabe kann der Zielprozess bezüglich Freigabeschritten nicht verlässlich gestaltet werden.",
+        "blocking": true
+      },
+      {
+        "question": "Welche spezifischen Sonderfallarten existieren im Prozess?",
+        "impact": "Notwendig für die Ausgestaltung der Detailregeln im Zielprozess.",
+        "blocking": false
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "abfdb0cc-6bcf-44bd-a317-8e20ecc6181a",
+  "investigation_run_id": "acaaeb08-ef02-4411-9d61-2b8c63a9a078",
+  "investigation": {
+    "status": "waiting_human",
+    "clarification_reason": "permission_or_scope",
+    "clarification_payload": {
+      "question": "Wer trägt die verbindliche Entscheidungshoheit für Sonderfälle im Freigabeprozess für Fachanträge – Teamleitung oder Bereichsleitung – und wer verantwortet die zugehörigen Ausnahmen?",
+      "context": "Die autorisierten Quellen (01_case_note.md, 02_open_questions.md) belegen übereinstimmend, dass die Rollenverantwortung bei Sonderfällen nicht dokumentiert ist und keine freigegebene Zuständigkeitsmatrix existiert. Damit ist die finale Entscheidungsrolle ausdrücklich offen gelassen und nicht intern aus dem Quellenraum ableitbar.",
+      "needed_decision": "Festlegung der entscheidungsbefugten Rolle (Teamleitung vs. Bereichsleitung) für Sonderfälle sowie der Verantwortung für Ausnahmen, damit die Ursachenanalyse abgeschlossen und Lösungsrichtungen (z. B. Zuständigkeitsmatrix, Eskalationsregeln) tragfähig abgeleitet werden können."
+    },
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 4,
+      "verifier_calls": 0,
+      "input_tokens": 10701,
+      "output_tokens": 1674,
+      "verifier_reads": 0,
+      "provider_attempts": 4
+    },
+    "brief_payload": {},
+    "source_relevance": {},
+    "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+    "register_hash": "66f23ad7bf740cba082c736b720408d1dbc0b9e0848286c1f3107e97098ece86",
+    "brief_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "terminal_stage": "investigation",
+  "finished_at_epoch": 1790834013.4394028
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": "ap4-human-time-v1",
+  "case_id": "AP4-04",
+  "measurement_status": "stopped_by_human_due_to_ux_findings",
+  "measurement_started_at": "2026-10-01T09:13:24.180Z",
+  "measurement_finished_at": "2026-10-01T09:33:55.512784Z",
+  "times": {
+    "active_input_seconds": null,
+    "navigation_seconds": null,
+    "authority_decision_seconds": null,
+    "post_draft_review_seconds": null,
+    "post_draft_correction_seconds": null,
+    "system_wait_seconds": 380.727
+  },
+  "human_time_measured": true,
+  "manual_fields_changed": [
+    "discovery_correction",
+    "confirmed_causes",
+    "solution_selection_rationale"
+  ],
+  "post_draft_fields_changed": [],
+  "avoidable_questions": 1,
+  "authority_questions": 3,
+  "reached_reviewable_state": false,
+  "reviewable_state_type": "measurement_stopped_before_final_reviewable_state",
+  "human_authority_decisions": [
+    "The human corrected and accepted the Discovery scope/focus with stage stg_3_entscheidung.",
+    "The human confirmed the cause as 'Reduziert Leseaufwand und unterstützt Priorisierung erwartet'.",
+    "The human selected 'KI-gestützte Zusammenfassung/Klassifikation von Freitextnotizen' and supplied the rationale 'messbarer ROI erwartet, was bei den anderen Lösung unwahrscheinlich ist'."
+  ],
+  "browser_evidence": [
+    {
+      "finding": "The required confirmed-cause field was empty although the reviewed Investigation and ProcessAnalysis already contained a proposed cause. Submission produced the avoidable message 'Bitte den Kernbefund fachlich bestätigen oder korrigieren.'."
+    },
+    {
+      "finding": "After submitting diagnosis confirmation and preferred option, the interface provided no visible busy state while synchronous follow-up work was running."
+    },
+    {
+      "finding": "After the preferred AI option and canonical use case were persisted, two competing actions remained visible: the continuation action and another 'Bevorzugte Option auswählen' action. The next step was not unambiguous."
+    }
+  ],
+  "domain_evidence": [
+    {
+      "capture_session_id": "093ff75a-2ec7-4a74-8e7c-f179bfab8433",
+      "discovery_snapshot_id": "14f0a175-3b17-42d8-9038-6991d6f4771f",
+      "discovery_analysis_id": "e2542f21-f5e1-49ae-bb97-e32fa4e0a9fc",
+      "discovery_status": "success",
+      "discovery_duration_ms": 45313,
+      "investigation_run_id": "985aa95b-2e6c-4852-906d-9804dbf4882d",
+      "investigation_status": "ready",
+      "investigation_started_at": "2026-10-01T09:18:00.036619Z",
+      "investigation_finished_at": "2026-10-01T09:23:35.450656Z",
+      "tool_calls": 4,
+      "model_calls": 7,
+      "provider_attempts": 7
+    },
+    {
+      "process_analysis_id": "80fff63d-42fb-45a1-b825-5f1fe221aba4",
+      "process_version": 3,
+      "confirmed_causes": "Reduziert Leseaufwand und unterstützt Priorisierung erwartet",
+      "solution_selection_decision_id": 6,
+      "selected_option_id": "3167bfb6-a62e-401d-b3f8-b060ff132603",
+      "selected_option": "KI-gestützte Zusammenfassung/Klassifikation von Freitextnotizen",
+      "selection_rationale": "messbarer ROI erwartet, was bei den anderen Lösung unwahrscheinlich ist",
+      "selected_at": "2026-10-01T09:28:22.733549Z",
+      "created_use_case_id": "05bd35ae-970a-4f81-8ab4-543ea5268ba0",
+      "created_use_case_short_id": "KI-0003"
+    }
+  ],
+  "notes": "AP4-04 was run once and must not be repeated. The human deliberately stopped the Human-Time round after the preferred AI option had been persisted because repeated UX defects made the remaining timing baseline unsuitable. AP4-05 through AP4-08 were not started. Technical preparation used the current post-hardening runtime with web server and investigation worker running. Frozen AP4-04 source pack was validated without modifying the manifest; canonical current source hash: 1c82673a90466d8c46363a45df22e4b1b1f837a197fb349a8547da1d245285b9. Measurement paused from 2026-10-01T09:14:12.078Z through 2026-10-01T09:14:38.218Z for local login recovery; these 26.140 seconds are excluded. Exact persisted waits retained are 45.313 seconds for Discovery and 335.414 seconds for Investigation. Later synchronous solution-selection and AI-handoff wait could not be separated reliably and was not estimated. Active input, navigation, authority-decision, and review/correction segments likewise remain null instead of being estimated. No final controlled-LLM reviewable state was reached."
+}

@@ -1,0 +1,31 @@
+{
+  "discovery": {
+    "url": "http://127.0.0.1:8000/accelerator/value-stream/autonomous/3491dfcd-7202-4420-8448-4529958cff8b/review/",
+    "title": "Discovery prüfen – KI-Radar",
+    "screenshot": "artifacts/ap4/browser/AP4-04-post-fix-discovery.png",
+    "decision_brief_visible": false,
+    "human_gate_visible": false,
+    "option_names_visible": []
+  },
+  "investigation": {
+    "url": "http://127.0.0.1:8000/accelerator/investigations/01678c35-c68e-43fb-b95e-e57dac3f3806/",
+    "title": "Decision Brief – KI-Radar",
+    "screenshot": "artifacts/ap4/browser/AP4-04-post-fix-investigation.png",
+    "decision_brief_visible": true,
+    "human_gate_visible": false,
+    "option_names_visible": []
+  },
+  "solution": {
+    "url": "http://127.0.0.1:8000/architecture/processes/1dc9eac2-b0f1-44de-97d7-d92597368268/options/compare/",
+    "title": "Lösungsoptionen vergleichen – KI-Radar",
+    "screenshot": "artifacts/ap4/browser/AP4-04-post-fix-solution.png",
+    "decision_brief_visible": true,
+    "human_gate_visible": true,
+    "option_names_visible": [
+      "Hybrid: regelbasierte Strukturierung plus KI-gestützte Zusammenfassung",
+      "KI-gestützte Freitextzusammenfassung",
+      "Regelbasierte Strukturierung der Abweichungsgründe",
+      "Status quo: manuelle Freitextzusammenfassung"
+    ]
+  }
+}

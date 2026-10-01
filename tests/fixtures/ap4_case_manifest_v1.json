@@ -1,0 +1,177 @@
+{
+  "contract_version": "ap4-evidence-v1",
+  "plan_commit": "2b9a2f87699cbf1f1014463d3061e3d05b77a86c",
+  "metric_targets": {
+    "active_human_work_median_seconds_max": 1200,
+    "manual_field_reduction_min": 0.9,
+    "avoidable_questions_median_max": 3,
+    "provenance_ratio_min": 1,
+    "hallucinated_facts_max": 0,
+    "human_rework_ratio_max": 0.2
+  },
+  "versions": {
+    "discovery_prompt": "ap1-discovery-v1",
+    "discovery_schema": "ap1-discovery-v1",
+    "discovery_verifier_prompt": "ap1-discovery-verifier-v1",
+    "discovery_verifier_schema": "ap1-discovery-verifier-v1",
+    "investigation_planner_prompt": "vs1-planner-v18",
+    "investigation_planner_schema": "vs1-planner-schema-v16",
+    "investigation_synthesis_prompt": "vs1-synthesis-v15",
+    "investigation_synthesis_schema": "vs1-synthesis-schema-v5",
+    "investigation_verifier_prompt": "vs1-verifier-v7",
+    "investigation_verifier_schema": "vs1-verifier-schema-v5",
+    "investigation_loop": "vs1-agent-loop-v19",
+    "investigation_budget": "vs1-budget-v7",
+    "investigation_transport": "vs1-openrouter-deepinfra-fp8-v4",
+    "ap2_metric_pilot_prompt": "1.1",
+    "ap2_metric_pilot_schema": "1.0",
+    "ap2_decision_governance_prompt": "1.0",
+    "ap2_decision_governance_schema": "1.0",
+    "ap3_delivery_prompt": "1.1",
+    "ap3_delivery_schema": "1.0"
+  },
+  "baseline_case_ids": [
+    "AP4-01",
+    "AP4-02",
+    "AP4-03",
+    "AP4-04"
+  ],
+  "cases": [
+    {
+      "case_id": "AP4-01",
+      "run_slot": "AP4-01-S1",
+      "category": "organizational_non_ai",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-01",
+      "files": [
+        "01_interview.md",
+        "02_process_note.md"
+      ],
+      "problem_statement": "Reklamationen dauern unnötig lange und durchlaufen mehrere interne Freigaben. Welche Änderung adressiert den tatsächlichen Engpass?",
+      "expected_branch": "non_ai",
+      "acceptance_focus": [
+        "Lösungsraum bleibt technologieoffen",
+        "organisatorische Lösung darf ohne künstlichen AI-UseCase enden",
+        "Ursache wird von beobachtetem Symptom getrennt"
+      ]
+    },
+    {
+      "case_id": "AP4-02",
+      "run_slot": "AP4-02-S1",
+      "category": "rule_automation",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-02",
+      "files": [
+        "01_policy.md",
+        "02_cases.csv"
+      ],
+      "problem_statement": "Spesenprüfungen erzeugen manuellen Aufwand. Prüfe, ob eine regelbasierte Automatisierung statt KI ausreicht.",
+      "expected_branch": "rule_automation",
+      "acceptance_focus": [
+        "deterministische Regeln werden erkannt",
+        "KI wird nicht als Selbstzweck gewählt",
+        "CSV-Evidenz bleibt reproduzierbar"
+      ]
+    },
+    {
+      "case_id": "AP4-03",
+      "run_slot": "AP4-03-S1",
+      "category": "controlled_llm",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-03",
+      "files": [
+        "01_service_process.md",
+        "02_system_note.md"
+      ],
+      "problem_statement": "Kundenanfragen in Freitext sollen schneller vorbereitet werden, ohne dass Antworten autonom versendet werden.",
+      "expected_branch": "controlled_llm",
+      "acceptance_focus": [
+        "semantisches Reasoning begründet",
+        "menschliche Freigabe vor externem Versand bleibt",
+        "CRM bleibt führendes System"
+      ]
+    },
+    {
+      "case_id": "AP4-04",
+      "run_slot": "AP4-04-S1",
+      "category": "llm_workflow_hybrid",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-04",
+      "files": [
+        "01_invoice_process.md",
+        "02_exceptions.csv"
+      ],
+      "problem_statement": "Rechnungsabweichungen sollen durch deterministische Prüfungen und begrenzte Freitextanalyse schneller geklärt werden.",
+      "expected_branch": "llm_workflow",
+      "acceptance_focus": [
+        "deterministische und semantische Schritte bleiben getrennt",
+        "keine autonome Buchungsfreigabe",
+        "Workflow-Architektur folgt der ausgewählten Lösung"
+      ]
+    },
+    {
+      "case_id": "AP4-05",
+      "run_slot": "AP4-05-S1",
+      "category": "missing_decision_critical_evidence",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-05",
+      "files": [
+        "01_case_note.md",
+        "02_open_questions.md"
+      ],
+      "problem_statement": "Ein Freigabeprozess soll beschleunigt werden, aber zentrale Angaben zu Entscheidungshoheit und Ausnahmen fehlen.",
+      "expected_branch": "waiting_human",
+      "acceptance_focus": [
+        "entscheidungskritische Lücke erzeugt präzise Rückfrage",
+        "fehlende Fakten werden nicht erfunden",
+        "WAITING_HUMAN ist valides Ergebnis"
+      ]
+    },
+    {
+      "case_id": "AP4-06",
+      "run_slot": "AP4-06-S1",
+      "category": "conflicting_evidence",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-06",
+      "files": [
+        "01_operations.md",
+        "02_sales.md"
+      ],
+      "problem_statement": "Serviceeskalationen bleiben liegen. Zwei freigegebene Quellen widersprechen sich bei der Zuständigkeit.",
+      "expected_branch": "conflict_visible",
+      "acceptance_focus": [
+        "Widerspruch bleibt sichtbar",
+        "keine Quelle wird still bevorzugt",
+        "Scope und Ursache werden nicht erfunden vereinheitlicht"
+      ]
+    },
+    {
+      "case_id": "AP4-07",
+      "run_slot": "AP4-07-S1",
+      "category": "governance_relevant",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-07",
+      "files": [
+        "01_recruiting_process.md",
+        "02_cloud_note.md"
+      ],
+      "problem_statement": "Bewerbungsunterlagen sollen semantisch vorstrukturiert werden. Prüfe Lösung, Governance und menschliche Entscheidungshoheit.",
+      "expected_branch": "ai_with_governance_review",
+      "acceptance_focus": [
+        "personenbezogene Daten werden erkannt",
+        "externe Cloud bleibt Governance-Fakt",
+        "formale Reviews werden nicht automatisch bestanden"
+      ]
+    },
+    {
+      "case_id": "AP4-08",
+      "run_slot": "AP4-08-S1",
+      "category": "data_csv",
+      "source_pack": "tests/fixtures/ap4_source_packs/AP4-08",
+      "files": [
+        "01_maintenance.md",
+        "02_cases.csv"
+      ],
+      "problem_statement": "Wartungsfälle weisen stark unterschiedliche Durchlaufzeiten auf. Ermittle den belegten Engpass aus Text- und CSV-Evidenz.",
+      "expected_branch": "data_evidence",
+      "acceptance_focus": [
+        "CSV wird reproduzierbar ausgewertet",
+        "Zahlen bleiben an Quelle und Einheit gebunden",
+        "keine unbelegte Ursache wird als Fakt dargestellt"
+      ]
+    }
+  ]
+}

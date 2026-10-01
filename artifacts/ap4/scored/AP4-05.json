@@ -1,0 +1,388 @@
+{
+  "case_id": "AP4-05",
+  "run_slot": "AP4-05-S1",
+  "phase": "scored",
+  "provider_mode": "real",
+  "source_pack_hash": "7247736f6b04b2bdd556ec282a605c9b1ef4a18fe4d5162a8227302c986d0357",
+  "expected_branch": "waiting_human",
+  "started_at_epoch": 1790781006.1323543,
+  "status": "failed",
+  "system_wait_seconds": 179.55818509997334,
+  "manual_actions": [
+    "problem statement entered and frozen sources authorized",
+    "scope and recommended focus reviewed and confirmed"
+  ],
+  "capture_session_id": "0cbf136c-eddc-437f-8edb-7a1c5c584a2b",
+  "discovery_snapshot_id": "fdb6a8eb-ba45-495c-82e0-76fed9e36e89",
+  "discovery_manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+  "discovery": {
+    "analysis_id": "9a3c5146-8136-4fc5-83b0-5a0b8ea5a462",
+    "status": "success",
+    "error_code": "",
+    "model": "google/gemini-3.6-flash",
+    "prompt_tokens": 4142,
+    "completion_tokens": 6567,
+    "cost": "0.02773275",
+    "facts": [
+      {
+        "statement": "Ein Freigabeprozess soll beschleunigt werden, wobei zentrale Angaben zu Entscheidungshoheit und Ausnahmen fehlen.",
+        "evidence_refs": [
+          "U0"
+        ]
+      },
+      {
+        "statement": "Fachanträge werden geprüft und anschließend freigegeben, wobei verschiedene Teams beteiligt sind.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Die Bearbeitungszeit im Prozess schwankt deutlich.",
+        "evidence_refs": [
+          "S1"
+        ]
+      },
+      {
+        "statement": "Es ist nicht dokumentiert, welche Rolle bei Sonderfällen die verbindliche Entscheidungshoheit besitzt.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      },
+      {
+        "statement": "Für Sonderfälle fehlen eine freigegebene Zuständigkeitsmatrix sowie die vollständige Liste der Sonderfallarten.",
+        "evidence_refs": [
+          "S2"
+        ]
+      }
+    ],
+    "hypotheses": [
+      {
+        "statement": "Die unklaren Zuständigkeiten und das Fehlen einer Zuständigkeitsmatrix bei Sonderfällen verursachen die deutlichen Schwankungen der Bearbeitungszeit.",
+        "evidence_refs": [
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "unknowns": [
+      {
+        "statement": "Es ist unklar, ob die Teamleitung oder die Bereichsleitung die finale Entscheidung bei Sonderfällen trifft.",
+        "impact": "Verhindert die verbindliche Festlegung von Freigabeschritten im Prozess."
+      },
+      {
+        "statement": "Die vollständige Liste der Sonderfallarten ist nicht bekannt.",
+        "impact": "Erschwert die Festlegung differenzierter Prozesspfade für Sonderfälle."
+      }
+    ],
+    "contradictions": [],
+    "clarifications": [
+      {
+        "question": "Welche Rolle (Teamleitung oder Bereichsleitung) besitzt die verbindliche Entscheidungshoheit bei Sonderfällen?",
+        "impact": "Erforderlich zur Bestimmung des Zielprozesses und der notwendigen Freigabeschritte.",
+        "blocking": true
+      },
+      {
+        "question": "Wie sieht die vollständige Aufstellung aller Sonderfallarten aus?",
+        "impact": "Notwendig für die saubere Abgrenzung von Standard- und Sonderfallprüfungen.",
+        "blocking": true
+      }
+    ],
+    "source_relevance": [],
+    "verifier": {
+      "schema_version": "ap1-discovery-verifier-v1",
+      "status": "approved",
+      "checks": {
+        "source_grounding": true,
+        "scope_quality": true,
+        "stage_sequence": true,
+        "focus_fit": true,
+        "hypothesis_separation": true,
+        "unknowns_visible": true,
+        "contradictions_preserved": true
+      },
+      "critical_findings": [],
+      "repair_instructions": "",
+      "human_question": ""
+    }
+  },
+  "process_analysis_id": "1fcfa880-d984-4694-ad0f-41ba708ad395",
+  "investigation_run_id": "23c0e245-75eb-4bf2-a070-e524945ee192",
+  "investigation": {
+    "status": "ready",
+    "clarification_reason": "",
+    "clarification_payload": {},
+    "usage": {
+      "tool_calls": 3,
+      "model_calls": 6,
+      "verifier_calls": 1,
+      "input_tokens": 19838,
+      "output_tokens": 12718,
+      "verifier_reads": 0,
+      "provider_attempts": 6,
+      "action_state_fingerprint": "f005e95cd060d2d4e54463f2b3bd3d6a0ab101d63bfe4662ac29bc7f45c83928",
+      "action_state_repeat_count": 1
+    },
+    "brief_payload": {
+      "question_scope": {
+        "question": "Welche Ursachen und belastbaren Lösungsrichtungen werden für „Analyse des Freigabeschritts für Fachanträge“ durch die autorisierten Quellen am stärksten gestützt?",
+        "scope": "Freigabeschritt für Fachanträge, von Abschluss der Antragsprüfung bis Erteilung der Freigabe, einschließlich Sonderfälle."
+      },
+      "problem": {
+        "statement": "Der Freigabeschritt für Fachanträge ist durch schwankende Bearbeitungszeiten und unklare Zuständigkeiten bei Sonderfällen gekennzeichnet; eine freigegebene Zuständigkeitsmatrix und die vollständige Liste der Sonderfallarten fehlen im Quellenstand.",
+        "references": [
+          {
+            "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+            "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+            "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+            "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+            "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "hypotheses": [
+        {
+          "statement": "Die fehlende Regelung der Entscheidungshoheit bei Sonderfällen verursacht Verzögerungen und trägt zur schwankenden Bearbeitungszeit bei.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+              "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+              "locator": {
+                "line": 3
+              }
+            },
+            {
+              "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+              "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+              "locator": {
+                "line": 5
+              }
+            },
+            {
+              "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+              "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+              "locator": {
+                "line": 2
+              }
+            },
+            {
+              "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+              "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+              "locator": {
+                "line": 3
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Der Abstimmungsaufwand zwischen den verschiedenen beteiligten Teams verursacht die schwankende Bearbeitungszeit.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+              "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+              "locator": {
+                "line": 3
+              }
+            },
+            {
+              "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+              "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+              "locator": {
+                "line": 4
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        },
+        {
+          "statement": "Die unvollständige Erfassung der Sonderfallarten führt zu uneinheitlichen Freigabeschritten.",
+          "status": "open",
+          "references": [
+            {
+              "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+              "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+              "locator": {
+                "line": 4
+              }
+            },
+            {
+              "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+              "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+              "locator": {
+                "line": 5
+              }
+            }
+          ],
+          "counterevidence_refs": []
+        }
+      ],
+      "calculations": [],
+      "options": [
+        {
+          "name": "Organisatorische Klärung der Entscheidungshoheit für Sonderfälle",
+          "description": "Erstellung und Freigabe einer Zuständigkeitsmatrix, die für Sonderfallarten festlegt, welche Rolle (Teamleitung oder Bereichsleitung) die finale Entscheidung trifft.",
+          "expected_value": "Reduzierung von Klärungsaufwand und Vereinheitlichung der Freigabeschritte für Sonderfälle.",
+          "option_type": "organizational",
+          "non_ai": true,
+          "status_quo": false,
+          "bottleneck_coverage": "Adressiert die fehlende Entscheidungshoheit und die unklare Zuständigkeit bei Sonderfällen.",
+          "feasibility": "medium",
+          "data_requirements": "Vollständige Liste der Sonderfallarten und verbindliche Entscheidungsbefugnisse.",
+          "application_impact": "Kann die Bearbeitungszeit stabilisieren und Freigabeentscheidungen nachvollziehbar machen.",
+          "integration_effort": "medium",
+          "integration_impact": "Erfordert Abstimmung zwischen beteiligten Teams und Leitungsebenen.",
+          "technology_constraints": "Keine technischen Leitplanken in den Quellen belegt.",
+          "risks": "Ohne vollständige Sonderfallliste bleibt die Matrix lückenhaft; Akzeptanz der Rollenklärung nicht belegt.",
+          "architecture_fit": "Passt zum dokumentierten Freigabeprozess.",
+          "time_to_value": "unknown",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        },
+        {
+          "name": "Status quo beibehalten und Sonderfälle fallweise klären",
+          "description": "Der Freigabeprozess bleibt unverändert; Sonderfälle werden weiterhin ohne zentrale Zuständigkeitsmatrix individuell geklärt.",
+          "expected_value": "Kein Umsetzungsaufwand, aber bestehende Unsicherheit und schwankende Bearbeitungszeit bleiben bestehen.",
+          "option_type": "no_tech",
+          "non_ai": true,
+          "status_quo": true,
+          "bottleneck_coverage": "Deckt den Engpass nicht ab.",
+          "feasibility": "high",
+          "data_requirements": "Keine zusätzlichen Daten erforderlich.",
+          "application_impact": "Keine Verbesserung der dokumentierten Schwankungen zu erwarten.",
+          "integration_effort": "low",
+          "integration_impact": "Keine Integration erforderlich.",
+          "technology_constraints": "Keine technischen Leitplanken in den Quellen belegt.",
+          "risks": "Unklare Entscheidungshoheit und fehlende Sonderfallliste bleiben ungelöst.",
+          "architecture_fit": "Entspricht dem aktuellen dokumentierten Ablauf.",
+          "time_to_value": "short",
+          "evidence_basis": "hypothesis",
+          "contains_ai_component": false
+        }
+      ],
+      "recommendation": {
+        "summary": "Am stärksten indiziert, aber nicht bestätigt, ist die organisatorische Klärung der Entscheidungshoheit für Sonderfälle. Eine eindeutig beste Lösung lässt sich aus den Quellen nicht ableiten.",
+        "rationale": "Die Quellen belegen fehlende Zuständigkeitsmatrix und unklare finale Entscheidungsrolle als offene Punkte; sie belegen jedoch keine kausale Wirkung oder gemessene Verbesserung. Daher bleibt die Empfehlung ein bevorzugter Kandidat mit Prüfvorbehalt.",
+        "references": [
+          {
+            "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+            "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+            "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+            "locator": {
+              "line": 5
+            }
+          },
+          {
+            "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+            "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+            "locator": {
+              "line": 2
+            }
+          },
+          {
+            "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+            "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+            "locator": {
+              "line": 3
+            }
+          },
+          {
+            "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+            "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+            "locator": {
+              "line": 4
+            }
+          }
+        ]
+      },
+      "risks_unknowns": [
+        "Verbindliche Entscheidungshoheit bei Sonderfällen (Teamleitung vs. Bereichsleitung) ist nicht dokumentiert.",
+        "Vollständige Liste der Sonderfallarten fehlt im Quellenstand.",
+        "Kausale Ursache der schwankenden Bearbeitungszeit ist nicht belegt.",
+        "Keine Baseline-Messwerte für Bearbeitungszeit in den Quellen.",
+        "Keine technischen Systeme oder Leitplanken in den Quellen belegt."
+      ],
+      "validation_step": {
+        "step": "Pilotierung einer Zuständigkeitsmatrix für eine definierte Auswahl von Sonderfällen und Vergleich der Freigabedurchläufe vor und nach Einführung.",
+        "measurement": "Durchlaufzeit der Freigabe für Sonderfälle, Anzahl Eskalationen und Klärungsaufwand; Erhebung ohne erfundene Zielwerte."
+      }
+    },
+    "source_relevance": {
+      "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40": {
+        "relevant": true,
+        "reason": "Gelesen; enthält Prozessbeschreibung und Beobachtungen zu Bearbeitungszeit und beteiligten Teams.",
+        "reference": {
+          "source_id": "b4eb3e8d-a4ec-4429-83f3-a3e679cd1a40",
+          "revision_hash": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+          "locator": {
+            "line": 1
+          }
+        }
+      },
+      "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986": {
+        "relevant": true,
+        "reason": "Gelesen; dokumentiert offene Evidenz zu Sonderfällen und Entscheidungshoheit.",
+        "reference": {
+          "source_id": "c1a9583b-f4f1-4f28-9e98-8dbc0caa2986",
+          "revision_hash": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b",
+          "locator": {
+            "line": 1
+          }
+        }
+      }
+    },
+    "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+    "register_hash": "cb8da3fcdb27773ba2a94beea591bde565d24e682a404d3baca4f13490f1db56",
+    "brief_hash": "5b99ced0708e7e1a34386bbd367e6d24279e4f6702f4fa2fea8c27d57bdf7807"
+  },
+  "materialization_id": "cacf024f-38f0-4184-9a8f-9ab558d1366c",
+  "solution_options": [
+    {
+      "id": "a7a7844c-6adb-4625-a1fd-2bee5cbb22f4",
+      "name": "Organisatorische Klärung der Entscheidungshoheit für Sonderfälle",
+      "type": "organizational",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    },
+    {
+      "id": "02881766-a483-4b41-9a16-cdad0820fdac",
+      "name": "Status quo beibehalten und Sonderfälle fallweise klären",
+      "type": "no_tech",
+      "contains_ai": false,
+      "evidence_basis": "hypothesis"
+    }
+  ],
+  "error_type": "RuntimeError",
+  "error": "AP4-05: no source-supported option for expected branch; available=[('Organisatorische Klärung der Entscheidungshoheit für Sonderfälle', 'organizational'), ('Status quo beibehalten und Sonderfälle fallweise klären', 'no_tech')]",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt\\work\\ap4_scored_run.py\", line 325, in execute\n    selected = pick_option(case_id, options)\n  File \"C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt\\work\\ap4_scored_run.py\", line 168, in pick_option\n    raise RuntimeError(\n    ...<2 lines>...\n    )\nRuntimeError: AP4-05: no source-supported option for expected branch; available=[('Organisatorische Klärung der Entscheidungshoheit für Sonderfälle', 'organizational'), ('Status quo beibehalten und Sonderfälle fallweise klären', 'no_tech')]\n",
+  "finished_at_epoch": 1790781186.034226
+}
