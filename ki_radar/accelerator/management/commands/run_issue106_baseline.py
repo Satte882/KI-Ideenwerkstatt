@@ -226,10 +226,9 @@ class Command(BaseCommand):
             raise CommandError(f"{case_id} R{repetition}: run could not start: {exc}") from exc
 
         if handle.reused:
-            reused = (
-                InvestigationRun.objects.select_related("evidence_campaign__authorized_by")
-                .get(pk=handle.run_id)
-            )
+            reused = InvestigationRun.objects.select_related(
+                "evidence_campaign__authorized_by"
+            ).get(pk=handle.run_id)
             self._handle_existing_run(run=reused, case_id=case_id, repetition=repetition)
             return
 

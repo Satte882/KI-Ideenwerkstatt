@@ -28,6 +28,8 @@ from ki_radar.accelerator.issue106_baseline import (
 from ki_radar.accelerator.management.commands import run_issue106_baseline
 from ki_radar.accelerator.management.commands.run_issue106_baseline import (
     Command as BaselineRunCommand,
+)
+from ki_radar.accelerator.management.commands.run_issue106_baseline import (
     baseline_execution_lock,
 )
 from ki_radar.architecture.models import ProcessAnalysis
@@ -313,7 +315,6 @@ def test_issue111_diagnostic_reports_actual_role_cost_and_uncertain_budget_cost(
     assert report["model_calls"][1]["reserved_cost_microunits"] == 300_000
 
 
-
 def test_issue111_population_requires_boundary_and_every_commit_value():
     records = [
         _record(case_id, repetition, 100.0, 0.10)
@@ -392,9 +393,8 @@ def test_issue111_global_lock_fails_closed_without_postgresql(monkeypatch):
         SimpleNamespace(vendor="sqlite"),
     )
 
-    with pytest.raises(CommandError, match="requires PostgreSQL"):
-        with baseline_execution_lock():
-            pass
+    with pytest.raises(CommandError, match="requires PostgreSQL"), baseline_execution_lock():
+        pass
 
 
 def test_issue111_global_lock_rejects_second_command(monkeypatch):
@@ -417,9 +417,11 @@ def test_issue111_global_lock_rejects_second_command(monkeypatch):
     )
     monkeypatch.setattr(run_issue106_baseline, "connection", fake_connection)
 
-    with pytest.raises(CommandError, match="currently owns the project lock"):
-        with baseline_execution_lock():
-            pass
+    with (
+        pytest.raises(CommandError, match="currently owns the project lock"),
+        baseline_execution_lock(),
+    ):
+        pass
 
 
 @pytest.mark.django_db
@@ -455,9 +457,8 @@ def test_issue111_running_slot_without_inflight_provider_state_is_resumed(
             "tested_commit": "a" * 40,
         },
     )
-    run = (
-        InvestigationRun.objects.select_related("evidence_campaign__authorized_by")
-        .get(pk=handle.run_id)
+    run = InvestigationRun.objects.select_related("evidence_campaign__authorized_by").get(
+        pk=handle.run_id
     )
     called = {}
     command = BaselineRunCommand()
@@ -529,10 +530,7 @@ def test_issue111_interrupted_inflight_slot_is_fenced_without_replacement(
         reserved_cost_microunits=100_000,
     )
     command = BaselineRunCommand()
-    run = (
-        InvestigationRun.objects.select_related("evidence_campaign__authorized_by")
-        .get(pk=run.pk)
-    )
+    run = InvestigationRun.objects.select_related("evidence_campaign__authorized_by").get(pk=run.pk)
 
     command._handle_existing_run(run=run, case_id="AP4-01", repetition=1)
 
@@ -543,10 +541,15 @@ def test_issue111_interrupted_inflight_slot_is_fenced_without_replacement(
     assert run.clarification_payload["error_code"] == "execution_interrupted"
     assert reservation.status == InvestigationProviderReservation.Status.UNCERTAIN
     assert call.status == InvestigationModelCall.Status.DISCARDED
-    assert baseline_runs().filter(
-        evidence_metadata__case_id="AP4-01",
-        evidence_metadata__repetition=1,
-    ).count() == 1
+    assert (
+        baseline_runs()
+        .filter(
+            evidence_metadata__case_id="AP4-01",
+            evidence_metadata__repetition=1,
+        )
+        .count()
+        == 1
+    )
 
 
 @pytest.mark.django_db

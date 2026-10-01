@@ -150,12 +150,8 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
     case_id = str(metadata.get("case_id") or "")
     case_contract = golden_case_specs().get(case_id, {}).get("quality_contract", {})
     allowed_terminal_states = list(case_contract.get("allowed_terminal_states") or [])
-    system_boundary_reached = (
-        run.status != InvestigationRun.Status.RUNNING
-        and (
-            run.status == InvestigationRun.Status.WAITING_HUMAN
-            or run.finished_at is not None
-        )
+    system_boundary_reached = run.status != InvestigationRun.Status.RUNNING and (
+        run.status == InvestigationRun.Status.WAITING_HUMAN or run.finished_at is not None
     )
     terminal_state_check = {
         "observed": run.status,
@@ -365,9 +361,7 @@ def validate_reviews(
                 *group_statuses["required_counterevidence"],
             ]
         )
-        terminal_state_conforms = bool(
-            expected_record["terminal_state_check"]["conforms"]
-        )
+        terminal_state_conforms = bool(expected_record["terminal_state_check"]["conforms"])
         if not assessment_complete:
             overall_status = "unassessed"
         elif hard_fail_observed or non_hard_fail or not terminal_state_conforms:
@@ -452,9 +446,7 @@ def aggregate_baseline(
             if not bool(item["terminal_state_check"]["conforms"])
         ]
         runtime_by_terminal_state = {
-            status: _runtime_stats(
-                [item for item in case_records if item.get("status") == status]
-            )
+            status: _runtime_stats([item for item in case_records if item.get("status") == status])
             for status in sorted({str(item.get("status") or "") for item in case_records})
         }
         mixed_ap4_06 = case_id == "AP4-06" and len(runtime_by_terminal_state) > 1
@@ -509,26 +501,18 @@ def aggregate_baseline(
     present_slots = {
         (str(item.get("case_id")), item.get("repetition"))
         for item in records
-        if item.get("case_id") in GOLDEN_CASE_IDS
-        and item.get("repetition") in REPETITIONS
+        if item.get("case_id") in GOLDEN_CASE_IDS and item.get("repetition") in REPETITIONS
     }
     missing_slots = sorted(
-        f"{case_id}:R{repetition}"
-        for case_id, repetition in expected_slots - present_slots
+        f"{case_id}:R{repetition}" for case_id, repetition in expected_slots - present_slots
     )
 
-    tested_commit_values = [
-        str(item.get("tested_commit") or "").lower() for item in records
-    ]
+    tested_commit_values = [str(item.get("tested_commit") or "").lower() for item in records]
     all_tested_commits_present_and_valid = bool(records) and all(
         HEX40.fullmatch(value) for value in tested_commit_values
     )
-    tested_commits = sorted(
-        {value for value in tested_commit_values if HEX40.fullmatch(value)}
-    )
-    single_tested_commit = (
-        all_tested_commits_present_and_valid and len(tested_commits) == 1
-    )
+    tested_commits = sorted({value for value in tested_commit_values if HEX40.fullmatch(value)})
+    single_tested_commit = all_tested_commits_present_and_valid and len(tested_commits) == 1
     all_runs_at_system_boundary = bool(records) and all(
         bool(item.get("terminal_state_check", {}).get("system_boundary_reached"))
         for item in records
@@ -539,12 +523,10 @@ def aggregate_baseline(
     overall_quality_statuses: dict[str, int] = {}
     if reviews is not None:
         quality_complete = len(reviews) == len(records) and all(
-            bool(reviews[str(item["run_id"])].get("assessment_complete"))
-            for item in records
+            bool(reviews[str(item["run_id"])].get("assessment_complete")) for item in records
         )
         hard_fail_count = sum(
-            bool(reviews[str(item["run_id"])].get("hard_fail_observed"))
-            for item in records
+            bool(reviews[str(item["run_id"])].get("hard_fail_observed")) for item in records
         )
         overall_quality_statuses = dict(
             Counter(str(item.get("overall_status") or "") for item in reviews.values())
@@ -555,11 +537,7 @@ def aggregate_baseline(
         and present_slots == expected_slots
         and not duplicate_slots
     )
-    population_complete = (
-        complete_slots
-        and all_runs_at_system_boundary
-        and single_tested_commit
-    )
+    population_complete = complete_slots and all_runs_at_system_boundary and single_tested_commit
     return {
         "experiment_id": EXPERIMENT_ID,
         "expected_run_count": len(expected_slots),
@@ -570,9 +548,7 @@ def aggregate_baseline(
         "missing_slots": missing_slots,
         "duplicate_slots": duplicate_slots,
         "tested_commits": tested_commits,
-        "all_tested_commits_present_and_valid": (
-            all_tested_commits_present_and_valid
-        ),
+        "all_tested_commits_present_and_valid": (all_tested_commits_present_and_valid),
         "single_tested_commit": single_tested_commit,
         "total_actual_cost_usd": round(
             sum(float(item["performance"]["cost_usd"]) for item in records),
@@ -591,8 +567,7 @@ def aggregate_baseline(
             6,
         ),
         "uncertain_provider_attempts": sum(
-            int(item["performance"].get("uncertain_provider_attempts") or 0)
-            for item in records
+            int(item["performance"].get("uncertain_provider_attempts") or 0) for item in records
         ),
         "by_case": by_case,
         "quality_complete": quality_complete,
@@ -603,4 +578,3 @@ def aggregate_baseline(
             "cache_effects_when_provider_metadata_does_not_expose_them",
         ],
     }
-

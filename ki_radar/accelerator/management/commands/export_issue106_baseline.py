@@ -98,9 +98,7 @@ class Command(BaseCommand):
                 if not summary["complete_slots"]:
                     details.append(
                         "slot set incomplete/duplicated: "
-                        + ", ".join(
-                            [*summary["missing_slots"], *summary["duplicate_slots"]]
-                        )
+                        + ", ".join([*summary["missing_slots"], *summary["duplicate_slots"]])
                     )
                 if not summary["all_runs_at_system_boundary"]:
                     details.append("one or more runs are still RUNNING/no stored system boundary")
@@ -108,9 +106,7 @@ class Command(BaseCommand):
                     details.append("one or more tested_commit values are missing/invalid")
                 elif not summary["single_tested_commit"]:
                     details.append("baseline uses more than one tested commit")
-                raise CommandError(
-                    "Baseline population is incomplete: " + "; ".join(details)
-                )
+                raise CommandError("Baseline population is incomplete: " + "; ".join(details))
             if not summary["quality_complete"]:
                 raise CommandError(
                     "Baseline quality review is incomplete; PASS/FAIL/UNASSESSED must be "
