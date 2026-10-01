@@ -50,8 +50,13 @@ def suggested_confirmed_cause(
     payload = _payload_mapping(latest_materialization.brief_revision.payload)
     run = latest_materialization.run
     if run.claim_register:
-        return _first_supported_cause_claim(run)
-    return _first_supported_hypothesis(payload)
+        claim = _first_supported_cause_claim(run)
+        if claim:
+            return claim
+    hypothesis = _first_supported_hypothesis(payload)
+    if hypothesis:
+        return hypothesis
+    return humanize_process_text(process_analysis.cause_hypotheses)
 
 
 def _first_calculation(payload: Mapping[str, Any]) -> str:

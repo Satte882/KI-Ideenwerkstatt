@@ -1,0 +1,71 @@
+{
+  "schema_version": "ap4-human-time-v1",
+  "case_id": "AP4-01",
+  "measurement_status": "technical_failure",
+  "measurement_started_at": "2026-10-01T07:09:56.863Z",
+  "measurement_finished_at": "2026-10-01T07:25:42.683712Z",
+  "times": {
+    "active_input_seconds": null,
+    "navigation_seconds": null,
+    "authority_decision_seconds": 197.201,
+    "post_draft_review_seconds": null,
+    "post_draft_correction_seconds": null,
+    "system_wait_seconds": 431.427
+  },
+  "human_time_measured": true,
+  "manual_fields_changed": [
+    "problem_statement"
+  ],
+  "post_draft_fields_changed": [],
+  "avoidable_questions": 0,
+  "authority_questions": 1,
+  "reached_reviewable_state": false,
+  "reviewable_state_type": "technical_failure_before_reviewable_end_state",
+  "human_authority_decisions": [
+    "The human accepted the displayed scope and selected focus stage STG_3_FREIGABE_BL by using 'Scope und Fokus übernommen'."
+  ],
+  "browser_evidence": [
+    {
+      "state": "discovery_review_success",
+      "human_assessment": "The Discovery draft was understandable, successful, and fachlich gelungen."
+    },
+    {
+      "state": "investigation_stalled_then_aborted",
+      "url": "http://127.0.0.1:8000/accelerator/investigations/725880dd-5c21-47d7-aac7-c73532228fda/",
+      "visible_status": "Start angefordert - Ausführung ausstehend",
+      "visible_progress": "Only the initial source-transfer entry was shown; no further progress appeared before the human aborted after six minutes."
+    },
+    {
+      "finding": "The upload control provided no visible staging or second-selection affordance for adding files from different folders."
+    },
+    {
+      "finding": "After 'Analyse starten', the page showed no spinner or step/status feedback comparable to the existing Decision Brief investigation progress UI."
+    }
+  ],
+  "domain_evidence": [
+    {
+      "capture_session_id": "d55a04ae-bc43-4d62-adc8-35c425ed1b5a",
+      "discovery_analysis_id": "6fe195be-5f01-46e9-9e8d-526192d939ea",
+      "discovery_status": "success",
+      "discovery_duration_ms": 68213,
+      "process_analysis_id": "8ed3726e-24cc-45f8-be88-6a9cf7925b55",
+      "investigation_run_id": "725880dd-5c21-47d7-aac7-c73532228fda",
+      "investigation_status": "aborted",
+      "investigation_started_at": "2026-10-01T07:19:39.605975Z",
+      "investigation_finished_at": "2026-10-01T07:25:42.683712Z",
+      "tool_calls": 0,
+      "model_calls": 0,
+      "provider_attempts": 0,
+      "last_progress_at": null
+    },
+    {
+      "source_snapshot_id": "04e736b3-e69b-4b69-9e4f-521d85fade6f",
+      "source_manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_files": [
+        "01_interview.md",
+        "02_process_note.md"
+      ]
+    }
+  ],
+  "notes": "AP4-01 was run once and must not be repeated. The run ended in a technical failure before the correct Non-AI reviewable end state. Root cause of the stalled investigation: the local web server was running without the required run_investigation_worker service, so the queued run remained unclaimed. The long-lived server process also retained the pre-pull planner v18 runtime in memory even though the checked-out post-hardening code is v19; therefore this run was not a valid current-post-hardening completion. Exact persisted intervals retained without estimation: 68.213 s Discovery provider/server time, 0.136 s snapshot-to-analysis server time, 363.078 s queued Investigation wait until abort, and 197.201 s from completed Discovery output to the human scope/focus confirmation. The 317.192 s interval from measurement start to request creation contains inseparable active input/navigation plus the task-related clarification exchange, so active_input_seconds and navigation_seconds remain null rather than being estimated. No final reviewable state, post-draft review, or correction segment was reached."
+}

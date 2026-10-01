@@ -961,6 +961,11 @@ def test_start_surface_is_minimal_and_accepts_only_current_source_scope(client, 
     assert ".md" in content
     assert ".txt" in content
     assert ".csv" in content
+    assert "Weitere Dateien hinzufügen" in content
+    assert "data-file-staging-input" in content
+    assert "data-file-staging-list" in content
+    assert "data-submit-guard" in content
+    assert "Discovery wird analysiert" in content
     assert "Value-Stream-Phasen" not in content
 
 

@@ -16,3 +16,12 @@ def test_solution_generation_submit_has_local_progress_feedback_and_double_submi
     assert "waitForPaint: true" in script
     assert script.count("window.requestAnimationFrame") >= 2
     assert "HTMLFormElement.prototype.submit.call(form)" in script
+
+
+def test_guarded_decision_forms_use_clicked_button_and_focus_error_summary():
+    root = Path(__file__).resolve().parents[1]
+    script = (root / "static" / "js" / "copilot-submit-guard.js").read_text(encoding="utf-8")
+
+    assert "event.submitter" in script
+    assert "form[data-submit-guard]" in script
+    assert "data-selection-error-summary" in script

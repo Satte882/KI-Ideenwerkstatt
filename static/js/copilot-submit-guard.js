@@ -9,27 +9,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const button = form.querySelector('button[type="submit"], button:not([type])');
+      const button =
+        event.submitter || form.querySelector('button[type="submit"], button:not([type])');
       if (!button || button.disabled) {
         return;
       }
+
+      const activeButtonLabel = button.dataset.busyLabel || buttonLabel;
+      const activeStatusLabel = button.dataset.busyStatus || statusLabel;
 
       form.dataset.submitted = "true";
       button.disabled = true;
       button.setAttribute("aria-busy", "true");
 
-      if (statusLabel) {
+      if (activeStatusLabel) {
         button.innerHTML =
           '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> ' +
-          `<span>${buttonLabel}</span>`;
+          `<span>${activeButtonLabel}</span>`;
         const status = document.createElement("div");
         status.className = "small text-info mt-2 solution-generation-progress";
         status.setAttribute("role", "status");
         status.setAttribute("aria-live", "polite");
-        status.textContent = statusLabel;
+        status.textContent = activeStatusLabel;
         form.insertAdjacentElement("afterend", status);
       } else {
-        button.textContent = buttonLabel;
+        button.textContent = activeButtonLabel;
       }
 
       if (waitForPaint) {
@@ -64,6 +68,20 @@ document.addEventListener("DOMContentLoaded", () => {
         waitForPaint: true,
       });
     });
+
+  document.querySelectorAll("form[data-submit-guard]").forEach((form) => {
+    attachSubmitGuard(form, {
+      buttonLabel: form.dataset.busyLabel || "Wird verarbeitet …",
+      statusLabel: form.dataset.busyStatus || "",
+      waitForPaint: true,
+    });
+  });
+
+  const selectionErrorSummary = document.querySelector("[data-selection-error-summary]");
+  if (selectionErrorSummary) {
+    selectionErrorSummary.focus({preventScroll: true});
+    selectionErrorSummary.scrollIntoView({block: "center"});
+  }
 
   const feedback = document.querySelectorAll(".alert-solution-generation-feedback");
   const solutionArea = document.querySelector("#loesungsoptionen .card-body");

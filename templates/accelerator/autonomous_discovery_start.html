@@ -13,7 +13,10 @@
   <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
 </div>
 
-<form method="post" enctype="multipart/form-data" class="cr-work-form app-card">
+<form method="post" enctype="multipart/form-data" class="cr-work-form app-card"
+      data-submit-guard
+      data-busy-label="Discovery wird analysiert …"
+      data-busy-status="Quellen werden geprüft und der Discovery-Entwurf wird erstellt. Das kann einige Sekunden dauern.">
   {% csrf_token %}
   <div class="card-body">
     {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
@@ -35,9 +38,16 @@
 
     <section class="form-section mb-0" aria-labelledby="sources-title">
       <div class="section-title mb-3" id="sources-title">2. Vorhandene Quellen</div>
-      <label class="form-label" for="discovery-sources">Autorisierte Quellen *</label>
-      <input class="form-control" id="discovery-sources" name="sources" type="file" accept=".md,.txt,.csv,text/markdown,text/plain,text/csv" multiple required>
-      <div class="form-text">Unterstützt werden bewusst nur .md, .txt und .csv. Der beim Start erzeugte Quellenstand wird unveränderlich eingefroren und später identisch an die Investigation übergeben.</div>
+      <div data-file-staging>
+        <label class="form-label" for="discovery-sources">Autorisierte Quellen *</label>
+        <input class="form-control" id="discovery-sources" name="sources" type="file" accept=".md,.txt,.csv,text/markdown,text/plain,text/csv" multiple required data-file-staging-input>
+        <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+          <button class="btn btn-sm btn-outline-secondary" type="button" data-file-staging-add>Weitere Dateien hinzufügen</button>
+          <span class="small text-muted" role="status" aria-live="polite" data-file-staging-summary>Noch keine Dateien ausgewählt.</span>
+        </div>
+        <ul class="list-unstyled small mt-2 mb-0" data-file-staging-list></ul>
+      </div>
+      <div class="form-text">Dateien können nacheinander aus mehreren Ordnern ergänzt und vor dem Start geprüft werden. Unterstützt werden bewusst nur .md, .txt und .csv. Der beim Start erzeugte Quellenstand wird unveränderlich eingefroren und später identisch an die Investigation übergeben.</div>
     </section>
   </div>
   <div class="card-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
