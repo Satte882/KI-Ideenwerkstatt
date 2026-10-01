@@ -1,6 +1,6 @@
 # KI-Ideenwerkstatt Produkt-Roadmap
 
-**Stand:** 21.09.2026
+**Stand:** 01.10.2026
 
 **Status:** Produktstand und strategische Richtung, kein Terminversprechen
 
@@ -10,7 +10,7 @@ Diese Datei beschreibt **was KI-Ideenwerkstatt als Produkt bereits kann und welc
 
 Sie beschreibt bewusst **nicht**, wie einzelne Funktionen technisch umgesetzt wurden. Dafür sind die jeweiligen GitHub-Issues, Pull Requests, Gap-Analysen, Completion-Dokumente und – bei architekturrelevanten Entscheidungen – die ADRs maßgeblich.
 
-Für die aktuelle Transformation ist GitHub Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1) der verbindliche Produktauftrag. Der bisherige [`planning/EXECUTION_PLAN.md`](planning/EXECUTION_PLAN.md) bleibt als historische und technische Referenz erhalten, begrenzt aber die Sequenzierung von Issue #1 nicht.
+Der technisch abgeschlossene Auftrag #1 und AP1–AP4 bilden die aktuelle funktionale Baseline. Der verbindliche Produktauftrag ist jetzt GitHub Issue [#106 „Performance nach AI Business Architect: Adaptive Investigation Latency reduzieren“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/106). #106 optimiert messgetrieben und qualitätsneutral; eine Runtime-Änderung wird erst nach Messvertrag, aktueller Baseline und dokumentiertem Gate ausgewählt.
 
 Die Zukunftssicht folgt den Horizonten **Now / Next / Later**:
 
@@ -189,6 +189,7 @@ Die Oberfläche wurde auf die fachliche Arbeit und die jeweils nächste Entschei
 - konsistente Desktop-, Tablet- und Mobile-Darstellung;
 - sichtbarer Tastaturfokus, semantische Zustände und zugängliche Interaktionen;
 - reduzierte Legacy- und Duplicate-Journey-Strukturen;
+- explizit gestartete Untersuchungen laufen serverseitig unabhängig vom geöffneten Browser weiter; eine Live-Ansicht zeigt persistierte Aktivitäten, Rückfragen und Wiederholungen, und erst ein freigegebener Untersuchungsstand führt zum Decision Brief;
 - lokal im regulären Browser abgenommene Referenzstrecke vom Value Stream bis zur bewerteten, governance-seitig vorbereiteten KI-Idee einschließlich No-AI-Gegenprobe und hypothesenfähiger Messreife.
 
 Zentrale Nachweise: #279–#287, #295 und #310.
@@ -197,56 +198,23 @@ Zentrale Nachweise: #279–#287, #295 und #310.
 
 # Now – aktueller Fokus
 
-**Verbindlicher Produktauftrag:** GitHub Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1).
+**Verbindlicher Produktauftrag:** GitHub Issue [#106 „Performance nach AI Business Architect: Adaptive Investigation Latency reduzieren“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/106).
 
-Der heute ausgelieferte Funktionsumfang unter **Shipped** ist die Baseline. Ziel ist die Transformation vom geführten Workflow mit punktueller KI-Unterstützung zu einem System, das die fachliche Analysearbeit zwischen Problem, Evidenz, Diagnose, Lösungsraum, Entscheidung, Governance, Pilot und Delivery weitgehend autonom erledigt.
+Der autonome AI-Business-Architect-Pfad aus #1/AP1–AP4 ist technisch abgeschlossen. Der aktuelle Fokus ist **keine neue Capability**, sondern die kontrollierte Untersuchung, welcher Anteil der Investigation-Laufzeit auf dem gehärteten Produktstand tatsächlich vermeidbar ist.
 
-Erfolg wird nicht an Codeumfang oder sichtbaren KI-Features gemessen, sondern insbesondere an:
+Verbindliche Reihenfolge:
 
-- deutlich weniger aktiver menschlicher Arbeitszeit bis zum reviewfähigen Decision Package;
-- mindestens 90 % weniger manueller Feldpflege;
-- wenigen, nur entscheidungsrelevanten Rückfragen;
-- vollständiger Provenance relevanter Aussagen;
-- null erfundenen Fakten oder Messwerten;
-- automatisch geprüfter Konsistenz von Discovery bis Delivery;
-- mindestens gleichwertiger oder besserer Ergebnisqualität gegenüber der manuellen Referenz.
+1. #110 – Mess-, Qualitäts- und Experimentvertrag;
+2. #111 – aktuelle Post-AP4-Baseline inklusive A/A-Rauschen;
+3. #112 – Bottleneck-/Kandidatenentscheidung;
+4. nur ausgewählte, separat abnehmbare Experimente;
+5. #113 – zeitnahe Re-Baseline, Rollout/Rollback und Abschluss.
 
-Bis der autonome Consultant den Decision Brief samt unabhängiger Verifikation
-zuverlässig erzeugt, hat diese Funktionsfähigkeit Vorrang vor Token- und
-Kostenoptimierung. Harte Run- und Campaign-Grenzen, persistente Abrechnung und
-Safety-Gates bleiben bestehen; Verbrauch wird weiterhin transparent gemessen.
-
-Die detaillierte Definition of Done und Verifikation stehen in Issue #1.
-
-**Untersuchungsverlauf (#75, umgesetzt am 27.09.2026):** Explizit gestartete
-Produktuntersuchungen laufen unabhängig vom geöffneten Browser weiter. Eine eigene
-Live-Ansicht zeigt gespeicherte Aktivitäten, Rückfragen und Wiederholungen; erst eine
-freigegebene Entscheidungsgrundlage erhält den Übergang zum Decision Brief. Die
-bestehende bewusste Übernahme und der Lösungsvergleich bleiben erhalten. Ein realer
-Produktlauf mit dem vorhandenen Testquellenpaket wurde bis zum geöffneten Brief
-geprüft; dies ersetzt nicht die fachliche Wirksamkeitsabnahme aus Issue #4.
-Der anschließende Lösungsvergleich zeigt alle offenen Auswahlvoraussetzungen
-einschließlich Fokusfreigabe gleichzeitig und nennt fehlende Bewertungsangaben.
-Nach der Bewertung führt Speichern zurück zum Vergleich; fachliche Freigaben
-werden weiterhin ausdrücklich dokumentiert.
-
-**VS1-Stand am 21.09.2026:** Der begrenzte Evidence-to-Decision-Slice verfügt technisch
-über den fallgebundenen Quellenraum, reproduzierbare Tools, adaptiven Planner/Verifier,
-Stopppolicy, Decision Brief, konfliktgeschützte Materialisierung und eine vorab festgelegte
-Fixed-Route-Vergleichsstrecke. Die reale Wirksamkeitsprüfung aus Issue #4 ist noch nicht
-abgeschlossen; insbesondere fehlen die vollständigen realen A/B/C-Läufe, der reale
-Fixed-vs-Adaptive-Vergleich, unabhängiger menschlicher Review und menschliche Zeitmessung.
-Issue #1 bleibt deshalb unverändert offen.
-
----
+Die Produktentscheidung aus #86 bleibt bestehen: Bei seltener Nutzung sind fünf bis zehn Minuten grundsätzlich vertretbar, wenn Ergebnisqualität, Provenance, Human Authority und nachvollziehbarer Fortschritt erhalten bleiben. Performance ist daher kein Selbstzweck.
 
 # Next – priorisierte nächste Probleme
 
-**Next zuletzt geprüft:** 2026-09-21
-
-Bis Issue #1 umgesetzt und gegen die Baseline gemessen wurde, gibt es keinen konkurrierenden separaten Next-Scope. Danach wird auf Basis der Messergebnisse neu priorisiert. Bestehende Later-Themen bleiben Optionen und dürfen innerhalb von Issue #1 nur dann vorgezogen werden, wenn sie nachweislich dem 10x-Ziel dienen.
-
----
+Es gibt während #106 **keinen vorab festgelegten technischen Next-Hebel**. Planner-Batching, Synthesizer-/Verifier-Vertrag, Model Routing, deterministische Shortcuts oder Tool-Parallelisierung werden erst nach #112 ausgewählt, wenn die aktuelle Baseline ihren Nutzen gegenüber Qualitäts-, Contract- und Wartungsrisiko belegt.
 
 # Later – strategische Optionen
 

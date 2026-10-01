@@ -1,0 +1,661 @@
+{
+  "contract_version": "issue106-performance-ap0-v1",
+  "parent_issue": 106,
+  "work_package_issue": 110,
+  "reference_commit": "1f0e3c331d3cd2bef2ce9872af59fc002391f46f",
+  "source_case_manifest": "tests/fixtures/ap4_case_manifest_v1.json",
+  "measurement_scope": {
+    "primary": "investigation_to_correct_terminal_state",
+    "terminal_states": [
+      "ready",
+      "waiting_human",
+      "failed"
+    ],
+    "human_wait_time_excluded_from_runtime": true,
+    "secondary_regression": "bounded_discovery_to_delivery",
+    "ap4_historical_runs_policy": "baseline_only_when_code_path_and_execution_contract_match"
+  },
+  "execution_contract": {
+    "planner_prompt": "vs1-planner-v19",
+    "planner_schema": "vs1-planner-schema-v16",
+    "synthesis_prompt": "vs1-synthesis-v15",
+    "synthesis_schema": "vs1-synthesis-schema-v5",
+    "verifier_prompt": "vs1-verifier-v7",
+    "verifier_schema": "vs1-verifier-schema-v5",
+    "loop": "vs1-agent-loop-v19",
+    "budget": "vs1-budget-v7",
+    "transport": "vs1-openrouter-deepinfra-fp8-v4",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "provider_order": [
+      "deepinfra/fp8"
+    ],
+    "allow_fallbacks": false,
+    "reasoning_effort": {
+      "default": "medium",
+      "pre_verifier_repair": "low"
+    },
+    "role_limits": {
+      "planner": {
+        "timeout_seconds": 90,
+        "max_output_tokens": 16384
+      },
+      "synthesizer": {
+        "timeout_seconds": 270,
+        "max_output_tokens": 32768
+      },
+      "verifier": {
+        "timeout_seconds": 120,
+        "max_output_tokens": 16384
+      }
+    },
+    "source_blobs": {
+      "investigation_prompts_py": "68bb6b8d734774167ef718d65bb5464ed1fdd38e"
+    }
+  },
+  "golden_cases": [
+    {
+      "case_id": "AP4-01",
+      "purpose": "simple_text_organizational_non_ai",
+      "expected_key_findings": [
+        {
+          "criterion": "two approval steps often review the same facts",
+          "source_refs": [
+            {
+              "file": "01_interview.md",
+              "locator": "die beiden Freigabeschritte häufig denselben Sachverhalt prüfen"
+            }
+          ]
+        },
+        {
+          "criterion": "a second expert review is not required for standard complaints",
+          "source_refs": [
+            {
+              "file": "02_process_note.md",
+              "locator": "Für Standardreklamationen ist keine zweite fachliche Prüfung vorgeschrieben."
+            }
+          ]
+        },
+        {
+          "criterion": "the area-management step is historically added",
+          "source_refs": [
+            {
+              "file": "02_process_note.md",
+              "locator": "historisch als zusätzliche Kontrollstufe aufgenommen"
+            }
+          ]
+        },
+        {
+          "criterion": "the application is available and technical outage is not named as the main cause",
+          "source_refs": [
+            {
+              "file": "01_interview.md",
+              "locator": "Die verwendete Fachanwendung ist verfügbar; ein technischer Ausfall wird nicht als Hauptursache genannt."
+            }
+          ]
+        },
+        {
+          "criterion": "the final goodwill decision remains with the responsible leader",
+          "source_refs": [
+            {
+              "file": "01_interview.md",
+              "locator": "Die endgültige Kulanzentscheidung bleibt bei der zuständigen Führungskraft."
+            }
+          ]
+        }
+      ],
+      "required_counterevidence": [
+        {
+          "criterion": "the application is available and technical outage is not the documented main cause",
+          "source_refs": [
+            {
+              "file": "01_interview.md",
+              "locator": "Die verwendete Fachanwendung ist verfügbar; ein technischer Ausfall wird nicht als Hauptursache genannt."
+            }
+          ]
+        },
+        {
+          "criterion": "the final goodwill decision remains a human leadership decision",
+          "source_refs": [
+            {
+              "file": "01_interview.md",
+              "locator": "Die endgültige Kulanzentscheidung bleibt bei der zuständigen Führungskraft."
+            }
+          ]
+        }
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "forces an AI solution despite organizational evidence",
+        "claims the application outage is the documented main cause",
+        "removes human authority for the final goodwill decision"
+      ],
+      "source_pack_hashes": [
+        "3c99ac8819fd8a842dd23547569589bd737e25ae22f0aa9976d1c307867db2ea"
+      ]
+    },
+    {
+      "case_id": "AP4-02",
+      "purpose": "structured_csv_rule_automation",
+      "expected_key_findings": [
+        {
+          "criterion": "receipt missing or category limit exceeded requires manual review",
+          "source_refs": [
+            {
+              "file": "01_policy.md",
+              "locator": "Fehlt ein Beleg oder wird eine Kostenart-Grenze überschritten, ist eine manuelle Prüfung erforderlich."
+            }
+          ]
+        },
+        {
+          "criterion": "rules are tabular and change only after published policy changes",
+          "source_refs": [
+            {
+              "file": "01_policy.md",
+              "locator": "Die Regeln sind tabellarisch definiert und ändern sich nur nach veröffentlichter Richtlinienänderung."
+            }
+          ]
+        },
+        {
+          "criterion": "E02 E03 and E06 require manual review",
+          "source_refs": [
+            {
+              "file": "02_cases.csv",
+              "locator": "E02,true,hotel,180,150,true"
+            },
+            {
+              "file": "02_cases.csv",
+              "locator": "E03,false,taxi,35,80,true"
+            },
+            {
+              "file": "02_cases.csv",
+              "locator": "E06,true,meal,42,35,true"
+            }
+          ]
+        },
+        {
+          "criterion": "E01 E04 and E05 do not require manual review under the published rules",
+          "source_refs": [
+            {
+              "file": "02_cases.csv",
+              "locator": "E01,true,hotel,120,150,false"
+            },
+            {
+              "file": "02_cases.csv",
+              "locator": "E04,true,taxi,45,80,false"
+            },
+            {
+              "file": "02_cases.csv",
+              "locator": "E05,true,meal,30,35,false"
+            }
+          ]
+        }
+      ],
+      "required_counterevidence": [
+        {
+          "criterion": "the published decision rule is deterministic and tabular",
+          "source_refs": [
+            {
+              "file": "01_policy.md",
+              "locator": "Die Regeln sind tabellarisch definiert"
+            }
+          ]
+        },
+        {
+          "criterion": "exceptions remain subject to manual review",
+          "source_refs": [
+            {
+              "file": "01_policy.md",
+              "locator": "ist eine manuelle Prüfung erforderlich."
+            }
+          ]
+        }
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "misstates which frozen CSV rows require manual review",
+        "invents a non-published rule",
+        "requires AI where the frozen policy is deterministically sufficient"
+      ],
+      "source_pack_hashes": [
+        "eaa0b7a47570a8194485be3d71648332bbc22439199ef233e46758ab34e7867a"
+      ]
+    },
+    {
+      "case_id": "AP4-04",
+      "purpose": "hybrid_deterministic_plus_semantic",
+      "expected_key_findings": [
+        {
+          "criterion": "invoice number purchase order amount and supplier are checked deterministically",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Rechnungsnummer, Bestellnummer, Betrag und Lieferant werden deterministisch gegen Bestellung und Wareneingang geprüft."
+            }
+          ]
+        },
+        {
+          "criterion": "formal matches require no semantic interpretation",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Bei formalen Übereinstimmungen ist keine semantische Interpretation notwendig."
+            }
+          ]
+        },
+        {
+          "criterion": "deviations contain free text that is currently summarized manually",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Bei Abweichungen enthalten Rechnungen und Bearbeitungsnotizen jedoch Freitext, dessen Bedeutung heute manuell zusammengefasst wird."
+            }
+          ]
+        },
+        {
+          "criterion": "the clerk retains the decision on clarification booking or return",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Die Sachbearbeitung entscheidet weiterhin über Klärung, Buchung oder Rückgabe."
+            }
+          ]
+        },
+        {
+          "criterion": "R02 R03 and R05 are manual-review cases while R01 and R04 are standard",
+          "source_refs": [
+            {
+              "file": "02_exceptions.csv",
+              "locator": "R01,true,,standard"
+            },
+            {
+              "file": "02_exceptions.csv",
+              "locator": "R02,false,\"Menge laut Lieferschein abweichend\",manual_review"
+            },
+            {
+              "file": "02_exceptions.csv",
+              "locator": "R03,false,\"Zusatzleistung telefonisch vereinbart\",manual_review"
+            },
+            {
+              "file": "02_exceptions.csv",
+              "locator": "R04,true,,standard"
+            },
+            {
+              "file": "02_exceptions.csv",
+              "locator": "R05,false,\"Preisänderung laut Nachtrag\",manual_review"
+            }
+          ]
+        }
+      ],
+      "required_counterevidence": [
+        {
+          "criterion": "formal matches explicitly need no semantic interpretation",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Bei formalen Übereinstimmungen ist keine semantische Interpretation notwendig."
+            }
+          ]
+        },
+        {
+          "criterion": "the clerk retains the binding operational decision",
+          "source_refs": [
+            {
+              "file": "01_invoice_process.md",
+              "locator": "Die Sachbearbeitung entscheidet weiterhin über Klärung, Buchung oder Rückgabe."
+            }
+          ]
+        }
+      ],
+      "allowed_terminal_states": [
+        "ready"
+      ],
+      "hard_failures": [
+        "turns deterministic checks into an LLM-only task",
+        "grants autonomous booking or return authority",
+        "misstates the frozen exception rows"
+      ],
+      "source_pack_hashes": [
+        "1c82673a90466d8c46363a45df22e4b1b1f837a197fb349a8547da1d245285b9"
+      ]
+    },
+    {
+      "case_id": "AP4-05",
+      "purpose": "missing_decision_authority_waiting_human",
+      "expected_key_findings": [
+        {
+          "criterion": "binding decision authority for special cases is not documented",
+          "source_refs": [
+            {
+              "file": "01_case_note.md",
+              "locator": "Nicht dokumentiert ist, welche Rolle bei Sonderfällen die verbindliche Entscheidungshoheit besitzt."
+            }
+          ]
+        },
+        {
+          "criterion": "no approved responsibility matrix exists for special cases",
+          "source_refs": [
+            {
+              "file": "02_open_questions.md",
+              "locator": "Für Sonderfälle fehlt eine freigegebene Zuständigkeitsmatrix."
+            }
+          ]
+        },
+        {
+          "criterion": "the complete list of special-case types is missing",
+          "source_refs": [
+            {
+              "file": "02_open_questions.md",
+              "locator": "Auch die vollständige Liste der Sonderfallarten ist im aktuellen Quellenstand nicht enthalten."
+            }
+          ]
+        },
+        {
+          "criterion": "these gaps can change the target process and required approvals",
+          "source_refs": [
+            {
+              "file": "02_open_questions.md",
+              "locator": "Diese Angaben können den Zielprozess und notwendige Freigabeschritte verändern."
+            }
+          ]
+        }
+      ],
+      "required_counterevidence": [
+        {
+          "criterion": "no reliable source decides team lead versus area management",
+          "source_refs": [
+            {
+              "file": "02_open_questions.md",
+              "locator": "Es liegt keine belastbare Quelle dazu vor, ob Teamleitung oder Bereichsleitung die finale Entscheidung trifft."
+            }
+          ]
+        },
+        {
+          "criterion": "the exception taxonomy is incomplete",
+          "source_refs": [
+            {
+              "file": "02_open_questions.md",
+              "locator": "Auch die vollständige Liste der Sonderfallarten ist im aktuellen Quellenstand nicht enthalten."
+            }
+          ]
+        }
+      ],
+      "allowed_terminal_states": [
+        "waiting_human"
+      ],
+      "hard_failures": [
+        "invents the binding authority",
+        "invented exception taxonomy",
+        "returns READY without a precise authority or scope clarification"
+      ],
+      "source_pack_hashes": [
+        "cdb8999c6242422ac2a06d8a8daf8df7fa836ad5bedf3969348b356a201d5ff8"
+      ]
+    },
+    {
+      "case_id": "AP4-06",
+      "purpose": "conflicting_evidence",
+      "expected_key_findings": [
+        {
+          "criterion": "Operations handbook assigns coordination to Operations",
+          "source_refs": [
+            {
+              "file": "01_operations.md",
+              "locator": "Bei einer kritischen Serviceeskalation übernimmt Operations die Koordination."
+            }
+          ]
+        },
+        {
+          "criterion": "Sales note assigns coordination to the Account Owner",
+          "source_refs": [
+            {
+              "file": "02_sales.md",
+              "locator": "Bei kritischen Kundeneskalationen koordiniert der zuständige Account Owner die weitere Bearbeitung."
+            }
+          ]
+        },
+        {
+          "criterion": "the two approved sources conflict on coordination responsibility",
+          "source_refs": [
+            {
+              "file": "01_operations.md",
+              "locator": "übernimmt Operations die Koordination"
+            },
+            {
+              "file": "02_sales.md",
+              "locator": "koordiniert der zuständige Account Owner"
+            }
+          ]
+        },
+        {
+          "criterion": "the conflict must remain visible rather than being silently resolved",
+          "source_refs": [
+            {
+              "file": "01_operations.md",
+              "locator": "Sales wird über den Status informiert, trifft laut diesem Handbuch aber keine operative Freigabe."
+            },
+            {
+              "file": "02_sales.md",
+              "locator": "Operations liefert technische Informationen zu, der Account Owner entscheidet über die externe Rückmeldung."
+            }
+          ]
+        }
+      ],
+      "required_counterevidence": [
+        {
+          "criterion": "Operations position must remain represented",
+          "source_refs": [
+            {
+              "file": "01_operations.md",
+              "locator": "Bei einer kritischen Serviceeskalation übernimmt Operations die Koordination."
+            }
+          ]
+        },
+        {
+          "criterion": "Sales position must remain represented",
+          "source_refs": [
+            {
+              "file": "02_sales.md",
+              "locator": "Bei kritischen Kundeneskalationen koordiniert der zuständige Account Owner die weitere Bearbeitung."
+            }
+          ]
+        }
+      ],
+      "allowed_terminal_states": [
+        "ready",
+        "waiting_human"
+      ],
+      "hard_failures": [
+        "silently chooses one source as authoritative",
+        "merges the conflicting responsibilities into an invented fact",
+        "omits the conflict from the decision basis"
+      ],
+      "source_pack_hashes": [
+        "e3131982410fa81f2ef237dbf0c5362339ce61ed7206937bdce4404c76d4583a"
+      ]
+    }
+  ],
+  "evaluation_authority": {
+    "deterministic_checks_required_on_all_runs": true,
+    "deterministic_checks": [
+      "execution_contract_matches_frozen_baseline_or_declared_experiment_contract",
+      "source_pack_hash_matches_frozen_case",
+      "terminal_state_is_allowed_for_case",
+      "source_derived_claims_have_resolvable_provenance",
+      "hallucinated_fact_count_is_zero",
+      "recovery_idempotency_and_human_authority_regressions_remain_green"
+    ],
+    "per_run_assessment_statuses": [
+      "pass",
+      "fail",
+      "unassessed"
+    ],
+    "all_runs_require_authoritative_assessment_for_adoption": true,
+    "unassessed_semantic_criterion_blocks_adoption": true,
+    "semantic_rubric": [
+      "all_expected_key_findings_present_or_explicitly_marked_unknown_when_source_does_not_support_them",
+      "all_required_counterevidence_represented",
+      "facts_hypotheses_and_unknowns_separated",
+      "solution_openness_preserved",
+      "decision_brief_internally_consistent",
+      "human_authority_preserved"
+    ],
+    "human_review": {
+      "required": true,
+      "selection_rule": "all_runs_for_non_deterministic_criteria",
+      "llm_preannotation_allowed": true,
+      "human_is_final_authority": true
+    },
+    "llm_judge": "support_only",
+    "optimized_verifier_self_assessment_is_sufficient": false,
+    "critical_errors_are_non_compensable": true
+  },
+  "experiment_budget": {
+    "baseline_repetitions_per_case": 5,
+    "baseline_real_provider_run_cap": 25,
+    "baseline_provider_cost_cap_usd": 20,
+    "baseline_human_review_minutes_cap": 480,
+    "experiment_candidate_repetitions_per_case": 4,
+    "experiment_interleaved_control_repetitions_per_case": 1,
+    "experiment_real_provider_run_cap_per_gate": 25,
+    "experiment_provider_cost_cap_usd_per_gate": 20,
+    "experiment_human_review_minutes_cap_per_gate": 480,
+    "experiment_engineering_hours_cap_before_regate": 40,
+    "final_candidate_repetitions_per_case": 3,
+    "final_baseline_control_repetitions_per_case": 2,
+    "final_investigation_run_cap": 25,
+    "final_provider_cost_cap_usd": 20,
+    "final_human_review_minutes_cap": 480,
+    "secondary_regression_case_ids": [
+      "AP4-01",
+      "AP4-04"
+    ],
+    "secondary_regression_run_cap": 2,
+    "secondary_regression_included_in_final_provider_cost_cap": true,
+    "final_total_provider_run_cap_including_secondary_regression": 27,
+    "project_provider_cost_cap_usd_without_parent_amendment": 60,
+    "failed_slow_and_aborted_runs_stay_in_dataset": true,
+    "replacement_runs_require_reason_and_link": true,
+    "replacement_runs_do_not_expand_caps": true,
+    "hard_fail_requires_stop_and_regate_after_human_confirmation": true,
+    "ambiguous_result_after_budget": "not_sufficiently_proven"
+  },
+  "adoption_gates": {
+    "common": {
+      "observed_quality_hard_failures_max": 0,
+      "all_runs_authoritatively_assessed": true,
+      "unassessed_blocks_adoption": true,
+      "no_regression_in_human_authority_provenance_recovery_or_idempotency": true,
+      "benefit_must_exceed_aa_noise_floor": true,
+      "cost_per_accepted_result_increase_percent_max_without_parent_approval": 5,
+      "timeout_retry_repair_rate_increase_percentage_points_max": 5
+    },
+    "reversible_no_contract_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_5",
+        "median_active_runtime_reduction_seconds_at_least_10",
+        "at_least_one_redundant_model_call_removed_per_affected_run"
+      ]
+    },
+    "contract_or_model_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_10_and_seconds_at_least_30",
+        "provider_cost_reduction_percent_at_least_20_with_runtime_not_worse_than_5_percent",
+        "named_timeout_retry_or_repair_rate_reduction_percentage_points_at_least_25"
+      ]
+    },
+    "batching_or_concurrency_change": {
+      "any_required_benefit": [
+        "median_active_runtime_reduction_percent_at_least_15_and_seconds_at_least_45",
+        "named_timeout_retry_or_repair_rate_reduction_percentage_points_at_least_25"
+      ],
+      "extra_requirements": [
+        "no_increase_in_unnecessary_evidence_actions",
+        "partial_execution_is_recoverable_and_idempotent"
+      ]
+    }
+  },
+  "existing_instrumentation": {
+    "diagnose_command": "python manage.py diagnose_investigation_run <run_id> --json",
+    "reusable_case_freeze": "tests/fixtures/ap4_case_manifest_v1.json",
+    "reusable_source_packs": "tests/fixtures/ap4_source_packs/",
+    "reusable_hardening_map": "tests/fixtures/ap4_hardening_evidence_v1.json"
+  },
+  "known_measurement_gaps_for_ap1": [
+    "normalized provider cost is not part of the current investigation diagnostic report",
+    "provider internal queue versus inference time is not directly observable",
+    "prompt or provider cache effects may be unavailable in provider metadata",
+    "AP1 must attach experiment id variant and exact tested commit to exported evidence",
+    "AP1 must materialize per-run quality assessment statuses and aggregate the predeclared comparison metrics"
+  ],
+  "verifier_control_contract": {
+    "required_before_experiment_types": [
+      "verifier_contract_change",
+      "verifier_model_routing"
+    ],
+    "versioned_fixture_required": true,
+    "minimum_controls": [
+      {
+        "control": "known_good_package",
+        "expected": "accept"
+      },
+      {
+        "control": "hallucinated_fact_mutation",
+        "expected": "reject_or_critical_finding"
+      },
+      {
+        "control": "missing_counterevidence_mutation",
+        "expected": "reject_or_critical_finding"
+      },
+      {
+        "control": "human_authority_bypass_mutation",
+        "expected": "reject_or_critical_finding"
+      },
+      {
+        "control": "broken_provenance_mutation",
+        "expected": "reject_or_critical_finding"
+      }
+    ],
+    "optimized_verifier_cannot_label_its_own_controls": true,
+    "human_calibration_required": true
+  },
+  "comparison_contract": {
+    "affected_cases_must_be_declared_before_variant_runs": true,
+    "all_five_golden_cases_must_be_reported": true,
+    "ap4_06_results_stratified_by_terminal_state": true,
+    "baseline_case_statistics": [
+      "median_active_runtime_seconds",
+      "median_absolute_deviation_seconds",
+      "min_seconds",
+      "max_seconds"
+    ],
+    "case_noise_floor_seconds": "2_x_median_absolute_deviation_seconds",
+    "case_effect_seconds": "ap1_baseline_median_seconds_minus_variant_median_seconds",
+    "aggregate_effect_seconds": "median_of_case_effect_seconds_over_predeclared_affected_cases",
+    "aggregate_noise_floor_seconds": "median_of_case_noise_floor_seconds_over_predeclared_affected_cases",
+    "adoption_noise_rule": "aggregate_effect_seconds_must_exceed_aggregate_noise_floor_seconds_and_applicable_class_threshold",
+    "too_noisy_result": "not_sufficiently_proven",
+    "event_rate_denominator": "all_attempted_runs_in_the_same_comparison_arm",
+    "event_rate_definitions": {
+      "timeout_rate": "runs_with_at_least_one_timeout_divided_by_all_attempted_runs",
+      "retry_rate": "runs_with_at_least_one_provider_or_contract_retry_divided_by_all_attempted_runs",
+      "repair_rate": "runs_with_at_least_one_pre_verifier_or_verifier_repair_divided_by_all_attempted_runs"
+    },
+    "experiment_interleaving": {
+      "candidate_repetitions_per_case": 4,
+      "baseline_control_repetitions_per_case": 1,
+      "total_runs_per_case": 5,
+      "order_rule": "alternate_candidate_and_control_start_order_across_cases",
+      "drift_alarm": "if_time_matched_control_differs_from_ap1_median_by_more_than_case_noise_floor_in_two_or_more_cases_result_is_not_sufficiently_proven"
+    },
+    "final_interleaving": {
+      "candidate_repetitions_per_case": 3,
+      "baseline_control_repetitions_per_case": 2,
+      "total_runs_per_case": 5,
+      "order_rule": "interleave_baseline_and_candidate_per_case"
+    }
+  }
+}

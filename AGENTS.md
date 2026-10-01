@@ -3,28 +3,31 @@
 ## Aktueller verbindlicher Produktauftrag
 
 Der aktuelle verbindliche Produktauftrag ist GitHub Issue
-[#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1).
+[#106 „Performance nach AI Business Architect: Adaptive Investigation Latency reduzieren“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/106).
 
-Bis zum Abschluss dieses Auftrags bestimmt Issue #1 Produktziel, Scope und Priorisierung.
-Frühere Roadmap-Prioritäten, Execution-Pläne und die historische Basisspezifikation sind
-Ausgangslage und Referenz, begrenzen Issue #1 aber nicht.
+Issue #1 „10x: Autonomes Evidence-to-Decision-System“ ist technisch abgeschlossen und bildet
+mit AP1–AP4 die funktionale Produktbaseline. Für #106 werden Performance-Änderungen erst nach
+Mess- und Qualitätsvertrag, aktueller Baseline und dokumentiertem Entscheidungsgate ausgewählt.
+
+Die Pflichtreihenfolge lautet #110 → #111 → #112. Das **früheste noch offene**
+Pflicht-Sub-Issue ist das aktuell freigegebene Arbeitspaket. Nach #112 werden nur
+Experimente bearbeitet, die durch das dokumentierte Gate ausdrücklich ausgewählt wurden.
+
+Solange nach #112 kein Experiment-Sub-Issue ausdrücklich freigegeben ist, darf **keine Performance-Optimierung** implementiert werden.
 
 **Satte882/KI-UseCase-Radar ist der eingefrorene Referenzstand und darf weder lokal noch
 remote verändert werden. Alle Arbeiten erfolgen ausschließlich in Satte882/KI-Ideenwerkstatt.**
 
-Vor fachlichen Produktänderungen müssen mindestens gelesen werden:
+Vor fachlichen Produkt- oder Runtime-Änderungen müssen mindestens gelesen werden:
 
-1. GitHub Issue #1;
-2. [`docs/Arbeitsplan_Autonomer_AI_Business_Architect/Arbeitsplan_Autonomer_AI_Business_Architect.md`](docs/Arbeitsplan_Autonomer_AI_Business_Architect/Arbeitsplan_Autonomer_AI_Business_Architect.md);
-3. das aktuell freigegebene AP-Issue;
-4. relevante Architecture Decision Records unter [`docs/adr/`](docs/adr/) sowie bei Bedarf [`docs/ROADMAP.md`](docs/ROADMAP.md).
+1. GitHub Issue #106;
+2. das aktuell freigegebene #106-Sub-Issue;
+3. `docs/planning/ISSUE_106_PERFORMANCE_CONTRACT.md`;
+4. relevante Architecture Decision Records unter `docs/adr/` sowie bei Bedarf `docs/ROADMAP.md`.
 
-Vor Änderungen an Benutzeroberflächen muss zusätzlich [`DESIGN.md`](DESIGN.md)
-vollständig gelesen werden.
+Vor Änderungen an Benutzeroberflächen muss zusätzlich `DESIGN.md` vollständig gelesen werden.
 
 ## Fachliche Invarianten
-
-Diese Grenzen dürfen durch die 10x-Transformation nicht stillschweigend aufgehoben werden:
 
 - Menschen bleiben Source of Authority für verbindlichen Scope, Risikoakzeptanz,
   Freigaben, Pilotstart und Go-live.
@@ -37,27 +40,34 @@ Diese Grenzen dürfen durch die 10x-Transformation nicht stillschweigend aufgeho
 - Berechtigungen, fachlich notwendige Hard Gates und unveränderliche
   Entscheidungs-/Quell-Snapshots dürfen nicht umgangen oder stillschweigend entwertet werden.
 
-## Arbeitsweise für Issue #1
+## Arbeitsweise für Issue #106
 
-- Der Arbeitsplan ist die führende Ziel- und Umsetzungsgrundlage. AP-Issues werden daraus nacheinander abgeleitet; das nächste AP wird erst nach Abschluss und Auswertung des vorherigen angelegt.
-- Während eines laufenden AP wird der Arbeitsplan nicht geändert. Befunde und Abweichungen bleiben im Issue; dauerhafte Planänderungen werden erst zwischen zwei APs entschieden.
-- Jedes AP-Issue nennt den zugrunde liegenden Plan-Commit.
-
-- Vorhandene Domain-Objekte und Provenance als Arbeitsgedächtnis und Source of Truth
-  weiterverwenden; keinen parallelen zweiten Workflow bauen.
-- Bestehende Methodik und Abläufe kritisch prüfen. Regeln, die nur aus früheren
-  Modell-/Agentenlimits entstanden sind und das 10x-Ziel behindern, dürfen vereinfacht
-  oder ersetzt werden, sofern die oben genannten Invarianten erhalten bleiben.
-- In wenigen großen, output-orientierten Arbeitspaketen arbeiten. Ein künstliches
-  „kleine PRs um jeden Preis“-Gebot gilt für Issue #1 nicht.
-- Reversible technische Entscheidungen selbständig treffen; nur irreversible
-  fachliche Entscheidungen oder echte Produkt-Trade-offs eskalieren.
-- Keine neuen Agenten, Formulare, Scores, Statusmodelle, Prompts oder Dokumentation
-  ohne messbaren Beitrag zu weniger Human Work, kürzerer Time-to-Decision oder besserer
-  Outputqualität.
-- Funktionsfähigkeit und fachliche Ergebnisqualität des autonomen Consultants vor
-  Token- oder Kostenoptimierung priorisieren. Harte Budgets, persistente Abrechnung
-  und Safety-Grenzen bleiben verbindlich.
+- #106 bleibt Parent-Issue und verbindliche Quelle für Plan, Gates und Abschlussstatus.
+- Pflichtreihenfolge: #110 Messvertrag → #111 Baseline/A-A → #112 Kandidatenentscheidung.
+  Danach werden nur tatsächlich ausgewählte Experimente als eigene Sub-Issues umgesetzt.
+- Nach jedem Experiment gibt es ein neues Gate. Ein direkter Abschluss über #113 ist jederzeit
+  zulässig, wenn kein weiterer Hebel genügend belegten Nutzen gegenüber Risiko und Aufwand bietet.
+- Keine Performance-Änderung ohne aktuelle Messgrundlage und vorab definierte Übernahmehürde.
+- Fehlgeschlagene, langsame oder abgebrochene Benchmark-Runs bleiben Evidence und dürfen nicht
+  durch bessere Ersatzläufe unsichtbar gemacht werden.
+- Der zu optimierende Verifier bewertet nicht allein seine eigene Qualität. Deterministische
+  Checks und begrenzte menschliche Bewertung bleiben Referenz.
+- Kritische Qualitätsfehler dürfen nicht durch Durchschnittsscores kompensiert werden.
+- Menschliche Wartezeit bei WAITING_HUMAN wird nicht als Runtime-Latenz gewertet.
+- Je Experiment möglichst genau einen technischen Hebel ändern. Batching, Model Routing,
+  Synthesizer-Vertrag und Parallelisierung nicht in einen Sammel-PR mischen, wenn dadurch die
+  Ursache der Wirkung nicht mehr isolierbar ist.
+- Contract-, Prompt-, Schema-, Routing- oder Runtime-Änderungen müssen Versionierung,
+  alte eingefrorene Runs, Replay/Recovery und Rollback explizit behandeln.
+- Vorhandene Domain-Objekte, Provenance und der server-owned Investigation-State bleiben
+  Source of Truth; keinen parallelen zweiten Workflow bauen.
+- Reversible technische Entscheidungen innerhalb des freigegebenen Experimentvertrags können
+  selbständig umgesetzt werden. Irreversible fachliche Trade-offs oder Budgeterweiterungen
+  werden im Parent #106 entschieden.
+- Keine neuen Agenten, Formulare, Scores, Statusmodelle oder Prompts ohne messbaren Beitrag
+  zur fachlichen Qualität, Zuverlässigkeit oder zum in #106 belegten Performanceziel.
+- Fachliche Ergebnisqualität und Funktionsfähigkeit haben Vorrang vor Latenz-, Token- oder
+  Kostenoptimierung. Eine schnellere Variante mit Qualitätsregression wird nicht übernommen.
 - `docs/ROADMAP.md` aktualisieren, wenn sich Produktziel, erreichte Capability oder
   Priorisierung tatsächlich ändert.
 - `OPEN_QUESTIONS.md` enthält Betriebs- und Konfigurationsfragen; es steuert nicht die
@@ -69,6 +79,4 @@ Diese Grenzen dürfen durch die 10x-Transformation nicht stillschweigend aufgeho
 - Ausschließlich die dort definierten semantischen Tokens verwenden.
 - Berechtigungen und serverseitige fachliche Regeln bei visuellen Änderungen erhalten.
 - Neue oder geänderte Oberflächen gegen die Abnahmekriterien in `DESIGN.md` prüfen.
-- Harte Verbote aus `DESIGN.md` nicht stillschweigend umgehen. Wenn Issue #1 eine
-  bewusste Änderung des Design-Systems erfordert, diese Änderung explizit und
-  nachvollziehbar im selben Arbeitskontext vornehmen.
+- Harte Verbote aus `DESIGN.md` nicht stillschweigend umgehen.
