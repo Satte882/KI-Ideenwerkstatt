@@ -84,6 +84,10 @@ class Command(BaseCommand):
                 raise CommandError(
                     "Baseline export is incomplete: " + ", ".join(summary["missing_slots"])
                 )
+            if not summary["single_tested_commit"]:
+                raise CommandError(
+                    "Baseline uses more than one tested commit; AP1 requires one frozen commit."
+                )
             if not summary["quality_complete"]:
                 raise CommandError(
                     "Baseline quality review is incomplete; PASS/FAIL/UNASSESSED must be "
@@ -104,7 +108,13 @@ class Command(BaseCommand):
                         "observed_runs": summary["observed_run_count"],
                         "complete_slots": summary["complete_slots"],
                         "quality_complete": summary["quality_complete"],
-                        "total_cost_usd": summary["total_cost_usd"],
+                        "total_actual_cost_usd": summary["total_actual_cost_usd"],
+                        "total_budget_accounted_cost_usd": (
+                            summary["total_budget_accounted_cost_usd"]
+                        ),
+                        "uncertain_provider_attempts": (
+                            summary["uncertain_provider_attempts"]
+                        ),
                     },
                     separators=(",", ":"),
                 )
