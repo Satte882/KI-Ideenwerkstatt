@@ -18,7 +18,14 @@ Historische AP4-Runs werden nicht in die 5×5-A/A-Population gemischt.
 ## 1. Voraussetzungen
 
 Der Checkout muss sauber und committed sein. Alle 25 Runs müssen auf demselben Commit
-laufen.
+laufen. Ein optional gesetztes `ISSUE106_TESTED_COMMIT` ist nur eine zusätzliche Assertion:
+es muss dem tatsächlich per Git verifizierten `HEAD` entsprechen und kann den
+Clean-Worktree-Check nicht umgehen.
+
+Reale AP1-Runs benötigen PostgreSQL. Der Runner hält während der Ausführung einen
+projektweiten Advisory-Lock, damit auch zwei parallel gestartete Management-Commands
+nicht gleichzeitig unterschiedliche Slots gegen dasselbe 20-USD-Budget autorisieren
+können.
 
 Benötigte Konfiguration:
 
@@ -74,8 +81,13 @@ Schutzregeln:
 
 - dirty worktree → Abbruch;
 - anderer Commit als bereits vorhandene Baseline-Runs → Abbruch;
-- bereits belegter Slot → keine neue Provideranfrage;
-- gleichzeitig RUNNING Baseline-Run → Abbruch;
+- bereits belegter Boundary-/Endzustand → keine neue Provideranfrage;
+- ein vorhandener `RUNNING`-Slot ohne offenen Provider-/Schrittzustand wird auf **demselben
+  Run** fortgesetzt;
+- ein nach Prozessabbruch verbleibender `RUNNING`-Slot mit offenem Provider-/Schrittzustand
+  wird auditierbar auf demselben Run als `FAILED / execution_interrupted` eingefroren;
+  offene Provider-Reservations werden als `UNCERTAIN` erhalten; es entsteht kein Ersatzlauf;
+- projektweiter PostgreSQL-Advisory-Lock verhindert parallele AP1-Runner;
 - aktueller Source-Pack-Hash weicht vom AP0-Contract ab → Abbruch;
 - globales AP1-Providerkostenbudget von 20 USD wird über persistierte Reservations
   vor jedem neuen Slot berücksichtigt;
@@ -142,6 +154,13 @@ uv run python manage.py export_issue106_baseline \
   --require-complete
 ```
 
+Ein erneuter Standardexport überschreibt eine vorhandene `review.json` **nicht**.
+Eine bewusst neue leere Vorlage erfordert:
+
+```powershell
+uv run python manage.py export_issue106_baseline --overwrite-review-template
+```
+
 ## 6. A/A-Auswertung
 
 Für jeden Fall werden aus den fünf Runs mindestens berechnet:
@@ -155,8 +174,14 @@ Für jeden Fall werden aus den fünf Runs mindestens berechnet:
 - Timeout-/Retry-/Repair-Rate;
 - Qualitätsstatus-Verteilung nach abgeschlossener Review.
 
-Zusätzlich werden Duplikatslots, gemischte `tested_commit`-Werte und unklare
-Providerabrechnungen ausdrücklich ausgewiesen.
+Zusätzlich werden Duplikatslots, fehlende/ungültige oder gemischte
+`tested_commit`-Werte, noch laufende Runs und unklare Providerabrechnungen ausdrücklich
+ausgewiesen.
+
+Für **AP4-06** werden Runtime, Median, MAD und `2 × MAD` zusätzlich je tatsächlich
+erreichtem Endzustand getrennt exportiert. Wenn READY und WAITING_HUMAN gemeinsam
+auftreten, wird der gemischte Gesamtwert nicht als alleiniger Vergleichs-Noise-Floor
+verwendet (`comparison_runtime_mode = stratified_only`).
 
 Es werden keine p95- oder Signifikanzbehauptungen aus fünf Wiederholungen abgeleitet.
 
@@ -168,9 +193,13 @@ Es werden keine p95- oder Signifikanzbehauptungen aus fünf Wiederholungen abgel
 2. die A/A-Auswertung erzeugt wurde;
 3. die menschliche Qualitätsbewertung vollständig ist;
 4. Providerkosten, Fehler/Retry/Repair und nicht beobachtbare Größen dokumentiert sind;
-5. alle 25 Runs denselben exakten `tested_commit` nennen;
-6. keine Duplikatslots vorliegen;
-7. Kosten inklusive unklarer Providerabrechnungen transparent ausgewiesen sind;
-8. keine Performance-Änderung Teil dieses Arbeitspakets war.
+5. alle 25 Runs einen gültigen, nicht leeren und identischen `tested_commit` nennen;
+6. alle 25 Runs einen gespeicherten System-Boundary erreicht haben; ein `RUNNING`-Run
+   kann nicht als vollständige Population gelten;
+7. fallbezogene `allowed_terminal_states` deterministisch ausgewiesen und in die
+   Qualitätsbewertung eingebunden sind;
+8. keine Duplikatslots vorliegen;
+9. Kosten inklusive unklarer Providerabrechnungen transparent ausgewiesen sind;
+10. keine Performance-Änderung Teil dieses Arbeitspakets war.
 
 Erst danach beginnt #112 mit der Kandidatenentscheidung.
