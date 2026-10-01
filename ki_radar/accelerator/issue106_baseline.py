@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -19,6 +20,7 @@ from .investigation_models import (
 EXPERIMENT_ID = "issue106-ap1-baseline-v1"
 GOLDEN_CASE_IDS = ("AP4-01", "AP4-02", "AP4-04", "AP4-05", "AP4-06")
 REPETITIONS = (1, 2, 3, 4, 5)
+HEX40 = re.compile(r"^[0-9a-f]{40}$")
 PERFORMANCE_CONTRACT_PATH = (
     Path(settings.BASE_DIR) / "tests/fixtures/issue106_performance_contract_v1.json"
 )
@@ -145,6 +147,22 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
     brief = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
     risks_unknowns = brief.get("risks_unknowns")
     unknown_count = len(risks_unknowns) if isinstance(risks_unknowns, list) else 0
+    case_id = str(metadata.get("case_id") or "")
+    case_contract = golden_case_specs().get(case_id, {}).get("quality_contract", {})
+    allowed_terminal_states = list(case_contract.get("allowed_terminal_states") or [])
+    system_boundary_reached = (
+        run.status != InvestigationRun.Status.RUNNING
+        and (
+            run.status == InvestigationRun.Status.WAITING_HUMAN
+            or run.finished_at is not None
+        )
+    )
+    terminal_state_check = {
+        "observed": run.status,
+        "allowed": allowed_terminal_states,
+        "conforms": run.status in allowed_terminal_states,
+        "system_boundary_reached": system_boundary_reached,
+    }
     quality = {
         "source_relevance_complete": bool(run.source_relevance_complete),
         "source_relevance_count": len(run.source_relevance or {}),
@@ -186,11 +204,12 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
     return {
         "run_id": str(run.pk),
         "experiment_id": metadata.get("experiment_id"),
-        "case_id": metadata.get("case_id"),
+        "case_id": case_id,
         "repetition": metadata.get("repetition"),
         "tested_commit": metadata.get("tested_commit"),
         "status": run.status,
         "manifest_hash": run.manifest_hash,
+        "terminal_state_check": terminal_state_check,
         "execution_contract": {
             "loop_version": run.loop_version,
             "budget_version": run.budget_version,
@@ -221,6 +240,9 @@ def review_template(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 "repetition": record["repetition"],
                 "reviewer": "",
                 "reviewed_at": "",
+                "deterministic_checks": {
+                    "terminal_state": dict(record["terminal_state_check"]),
+                },
                 "semantic_rubric": {criterion: "unassessed" for criterion in SEMANTIC_RUBRIC},
                 "expected_key_findings": [
                     {
@@ -289,6 +311,16 @@ def validate_reviews(
         ) or repetition != expected_record.get("repetition"):
             raise ValueError(f"{run_id}: review slot does not match the exported run")
 
+        deterministic = item.get("deterministic_checks")
+        expected_terminal = expected_record.get("terminal_state_check")
+        if (
+            not isinstance(deterministic, Mapping)
+            or deterministic.get("terminal_state") != expected_terminal
+        ):
+            raise ValueError(
+                f"{run_id}: deterministic terminal-state check differs from exported run"
+            )
+
         semantic = item.get("semantic_rubric")
         if not isinstance(semantic, Mapping) or set(semantic) != set(SEMANTIC_RUBRIC):
             raise ValueError(f"{run_id}: semantic rubric is incomplete")
@@ -333,9 +365,12 @@ def validate_reviews(
                 *group_statuses["required_counterevidence"],
             ]
         )
+        terminal_state_conforms = bool(
+            expected_record["terminal_state_check"]["conforms"]
+        )
         if not assessment_complete:
             overall_status = "unassessed"
-        elif hard_fail_observed or non_hard_fail:
+        elif hard_fail_observed or non_hard_fail or not terminal_state_conforms:
             overall_status = "fail"
         else:
             overall_status = "pass"
@@ -353,6 +388,23 @@ def validate_reviews(
 def _mad(values: Sequence[float]) -> float:
     center = median(values)
     return float(median(abs(value - center) for value in values))
+
+
+def _runtime_stats(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    runtimes = [float(item["performance"]["run_seconds"]) for item in records]
+    if not runtimes:
+        return {}
+    center = float(median(runtimes))
+    mad = _mad(runtimes)
+    return {
+        "sample_size": len(runtimes),
+        "raw_seconds": [round(value, 3) for value in runtimes],
+        "median_seconds": round(center, 3),
+        "mad_seconds": round(mad, 3),
+        "noise_floor_2x_mad_seconds": round(2 * mad, 3),
+        "min_seconds": round(min(runtimes), 3),
+        "max_seconds": round(max(runtimes), 3),
+    }
 
 
 def _rate(records: Sequence[Mapping[str, Any]], flag: str) -> float:
@@ -376,10 +428,11 @@ def aggregate_baseline(
         if count > 1
     )
 
+    cases = golden_case_specs()
     by_case: dict[str, Any] = {}
     for case_id in GOLDEN_CASE_IDS:
         case_records = [item for item in records if item.get("case_id") == case_id]
-        runtimes = [float(item["performance"]["run_seconds"]) for item in case_records]
+        runtime = _runtime_stats(case_records)
         actual_costs = [float(item["performance"]["cost_usd"]) for item in case_records]
         accounted_costs = [
             float(
@@ -390,19 +443,21 @@ def aggregate_baseline(
             )
             for item in case_records
         ]
-        if runtimes:
-            runtime_median = float(median(runtimes))
-            runtime_mad = _mad(runtimes)
-            runtime = {
-                "raw_seconds": [round(value, 3) for value in runtimes],
-                "median_seconds": round(runtime_median, 3),
-                "mad_seconds": round(runtime_mad, 3),
-                "noise_floor_2x_mad_seconds": round(2 * runtime_mad, 3),
-                "min_seconds": round(min(runtimes), 3),
-                "max_seconds": round(max(runtimes), 3),
-            }
-        else:
-            runtime = {}
+        allowed_terminal_states = list(
+            cases[case_id]["quality_contract"]["allowed_terminal_states"]
+        )
+        nonconforming = [
+            str(item["run_id"])
+            for item in case_records
+            if not bool(item["terminal_state_check"]["conforms"])
+        ]
+        runtime_by_terminal_state = {
+            status: _runtime_stats(
+                [item for item in case_records if item.get("status") == status]
+            )
+            for status in sorted({str(item.get("status") or "") for item in case_records})
+        }
+        mixed_ap4_06 = case_id == "AP4-06" and len(runtime_by_terminal_state) > 1
 
         case_reviews = (
             [
@@ -413,9 +468,14 @@ def aggregate_baseline(
             if reviews is not None
             else []
         )
-        by_case[case_id] = {
+        row = {
             "attempted_runs": len(case_records),
             "statuses": dict(Counter(str(item["status"]) for item in case_records)),
+            "allowed_terminal_states": allowed_terminal_states,
+            "terminal_state_conformance": {
+                "all_conform": not nonconforming,
+                "nonconforming_run_ids": nonconforming,
+            },
             "runtime": runtime,
             "cost": {
                 "actual_total_usd": round(sum(actual_costs), 6),
@@ -437,18 +497,41 @@ def aggregate_baseline(
                 else {}
             ),
         }
+        if case_id == "AP4-06":
+            row["runtime_by_terminal_state"] = runtime_by_terminal_state
+            row["comparison_runtime"] = None if mixed_ap4_06 else runtime
+            row["comparison_runtime_mode"] = (
+                "stratified_only" if mixed_ap4_06 else "single_terminal_state"
+            )
+        by_case[case_id] = row
 
     expected_slots = set(baseline_slots())
     present_slots = {
         (str(item.get("case_id")), item.get("repetition"))
         for item in records
-        if item.get("case_id") in GOLDEN_CASE_IDS and item.get("repetition") in REPETITIONS
+        if item.get("case_id") in GOLDEN_CASE_IDS
+        and item.get("repetition") in REPETITIONS
     }
     missing_slots = sorted(
-        f"{case_id}:R{repetition}" for case_id, repetition in expected_slots - present_slots
+        f"{case_id}:R{repetition}"
+        for case_id, repetition in expected_slots - present_slots
+    )
+
+    tested_commit_values = [
+        str(item.get("tested_commit") or "").lower() for item in records
+    ]
+    all_tested_commits_present_and_valid = bool(records) and all(
+        HEX40.fullmatch(value) for value in tested_commit_values
     )
     tested_commits = sorted(
-        {str(item.get("tested_commit") or "") for item in records if item.get("tested_commit")}
+        {value for value in tested_commit_values if HEX40.fullmatch(value)}
+    )
+    single_tested_commit = (
+        all_tested_commits_present_and_valid and len(tested_commits) == 1
+    )
+    all_runs_at_system_boundary = bool(records) and all(
+        bool(item.get("terminal_state_check", {}).get("system_boundary_reached"))
+        for item in records
     )
 
     quality_complete = False
@@ -456,10 +539,12 @@ def aggregate_baseline(
     overall_quality_statuses: dict[str, int] = {}
     if reviews is not None:
         quality_complete = len(reviews) == len(records) and all(
-            bool(reviews[str(item["run_id"])].get("assessment_complete")) for item in records
+            bool(reviews[str(item["run_id"])].get("assessment_complete"))
+            for item in records
         )
         hard_fail_count = sum(
-            bool(reviews[str(item["run_id"])].get("hard_fail_observed")) for item in records
+            bool(reviews[str(item["run_id"])].get("hard_fail_observed"))
+            for item in records
         )
         overall_quality_statuses = dict(
             Counter(str(item.get("overall_status") or "") for item in reviews.values())
@@ -470,15 +555,25 @@ def aggregate_baseline(
         and present_slots == expected_slots
         and not duplicate_slots
     )
+    population_complete = (
+        complete_slots
+        and all_runs_at_system_boundary
+        and single_tested_commit
+    )
     return {
         "experiment_id": EXPERIMENT_ID,
         "expected_run_count": len(expected_slots),
         "observed_run_count": len(records),
         "complete_slots": complete_slots,
+        "population_complete": population_complete,
+        "all_runs_at_system_boundary": all_runs_at_system_boundary,
         "missing_slots": missing_slots,
         "duplicate_slots": duplicate_slots,
         "tested_commits": tested_commits,
-        "single_tested_commit": len(tested_commits) == 1,
+        "all_tested_commits_present_and_valid": (
+            all_tested_commits_present_and_valid
+        ),
+        "single_tested_commit": single_tested_commit,
         "total_actual_cost_usd": round(
             sum(float(item["performance"]["cost_usd"]) for item in records),
             6,
@@ -496,7 +591,8 @@ def aggregate_baseline(
             6,
         ),
         "uncertain_provider_attempts": sum(
-            int(item["performance"].get("uncertain_provider_attempts") or 0) for item in records
+            int(item["performance"].get("uncertain_provider_attempts") or 0)
+            for item in records
         ),
         "by_case": by_case,
         "quality_complete": quality_complete,
@@ -507,3 +603,4 @@ def aggregate_baseline(
             "cache_effects_when_provider_metadata_does_not_expose_them",
         ],
     }
+
