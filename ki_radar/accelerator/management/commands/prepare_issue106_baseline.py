@@ -142,7 +142,7 @@ class Command(BaseCommand):
                 },
             )
             if not business_unit.is_active:
-                raise CommandError(f"Fallback business unit {FALLBACK_BUSINESS_UNIT!r} is inactive.")
+                raise CommandError(\n                    f"Fallback business unit {FALLBACK_BUSINESS_UNIT!r} is inactive."\n                )
 
         streams = list(ValueStream.objects.select_for_update().filter(name=STREAM_NAME))
         if len(streams) > 1:
@@ -205,7 +205,7 @@ class Command(BaseCommand):
             "scope_end": "Ein fachlich korrekter Investigation-Endzustand ist erreicht.",
             "trigger": "Der Baseline-Slot wird explizit gestartet.",
             "outcome": "READY, WAITING_HUMAN oder fachlich korrektes FAILED.",
-            "current_flow": "Evidenz untersuchen und Decision Brief bis zur fachlichen Grenze erzeugen.",
+            "current_flow": (\n                "Evidenz untersuchen und Decision Brief bis zur fachlichen Grenze erzeugen."\n            ),
             "roles": "Benchmark-Operator; fachliche Entscheidungen bleiben Human Authority.",
             "systems": "KI-Ideenwerkstatt Investigation",
             "data_objects": "Eingefrorener Source-Snapshot und persistierter Investigation-State.",
