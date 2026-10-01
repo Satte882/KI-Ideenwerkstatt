@@ -166,6 +166,25 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
         "clarification_reason": run.clarification_reason,
         "clarification_payload": dict(run.clarification_payload or {}),
     }
+    review_context = {
+        "claim_register": list(run.claim_register or []),
+        "brief_payload": dict(brief),
+        "source_relevance": dict(run.source_relevance or {}),
+        "verifier": (
+            {
+                "success": bool(latest_verifier.success),
+                "findings": list(latest_verifier.findings or []),
+                "critical_findings": int(latest_verifier.critical_findings),
+                "source_references_valid": bool(latest_verifier.source_references_valid),
+                "checked_critical_claims": list(
+                    latest_verifier.checked_critical_claims or []
+                ),
+                "bound_hashes": dict(latest_verifier.bound_hashes or {}),
+            }
+            if latest_verifier is not None
+            else None
+        ),
+    }
     return {
         "run_id": str(run.pk),
         "experiment_id": metadata.get("experiment_id"),
@@ -187,6 +206,7 @@ def build_baseline_record(run: InvestigationRun) -> dict[str, Any]:
         "performance": report,
         "recovery": _repair_summary(report["model_calls"]),
         "quality_observables": quality,
+        "review_context": review_context,
     }
 
 
@@ -220,13 +240,25 @@ def review_template(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                     }
                     for item in quality_contract["required_counterevidence"]
                 ],
-                "hard_fail_observed": False,
+                "hard_fail_checks": [
+                    {
+                        "criterion": criterion,
+                        "status": "unassessed",
+                        "notes": "",
+                    }
+                    for criterion in quality_contract["hard_failures"]
+                ],
                 "notes": "",
             }
         )
     return {
         "experiment_id": EXPERIMENT_ID,
         "allowed_statuses": ["pass", "fail", "unassessed"],
+        "hard_fail_status_semantics": {
+            "pass": "hard-fail condition was checked and is absent",
+            "fail": "hard-fail condition was observed",
+            "unassessed": "hard-fail condition has not been authoritatively checked",
+        },
         "reviews": reviews,
     }
 
@@ -238,7 +270,9 @@ def validate_reviews(
     raw_reviews = payload.get("reviews")
     if not isinstance(raw_reviews, list):
         raise ValueError("review file requires a reviews list")
-    expected_ids = {str(item["run_id"]) for item in records}
+
+    expected_by_id = {str(item["run_id"]): item for item in records}
+    cases = golden_case_specs()
     reviews: dict[str, dict[str, Any]] = {}
     for raw in raw_reviews:
         if not isinstance(raw, Mapping):
@@ -247,27 +281,82 @@ def validate_reviews(
         run_id = str(item.get("run_id") or "")
         if not run_id or run_id in reviews:
             raise ValueError("review run_id must be unique and non-empty")
+        expected_record = expected_by_id.get(run_id)
+        if expected_record is None:
+            raise ValueError(f"{run_id}: review does not belong to the exported baseline")
+        case_id = str(item.get("case_id") or "")
+        repetition = item.get("repetition")
+        if (
+            case_id != str(expected_record.get("case_id") or "")
+            or repetition != expected_record.get("repetition")
+        ):
+            raise ValueError(f"{run_id}: review slot does not match the exported run")
+
         semantic = item.get("semantic_rubric")
         if not isinstance(semantic, Mapping) or set(semantic) != set(SEMANTIC_RUBRIC):
             raise ValueError(f"{run_id}: semantic rubric is incomplete")
         statuses = [str(value) for value in semantic.values()]
-        for group in ("expected_key_findings", "required_counterevidence"):
+
+        quality_contract = cases[case_id]["quality_contract"]
+        expected_groups = {
+            "expected_key_findings": [
+                str(entry["criterion"])
+                for entry in quality_contract["expected_key_findings"]
+            ],
+            "required_counterevidence": [
+                str(entry["criterion"])
+                for entry in quality_contract["required_counterevidence"]
+            ],
+            "hard_fail_checks": [
+                str(criterion) for criterion in quality_contract["hard_failures"]
+            ],
+        }
+        group_statuses: dict[str, list[str]] = {}
+        for group, expected_criteria in expected_groups.items():
             entries = item.get(group)
             if not isinstance(entries, list) or not entries:
                 raise ValueError(f"{run_id}: {group} must be non-empty")
-            statuses.extend(str(entry.get("status") or "") for entry in entries)
+            criteria = [str(entry.get("criterion") or "") for entry in entries]
+            if criteria != expected_criteria:
+                raise ValueError(f"{run_id}: {group} criteria differ from the AP0 contract")
+            current_statuses = [str(entry.get("status") or "") for entry in entries]
+            statuses.extend(current_statuses)
+            group_statuses[group] = current_statuses
+
         if any(status not in {"pass", "fail", "unassessed"} for status in statuses):
             raise ValueError(f"{run_id}: invalid assessment status")
-        item["assessment_complete"] = (
+
+        assessment_complete = (
             bool(str(item.get("reviewer") or "").strip())
             and bool(str(item.get("reviewed_at") or "").strip())
             and all(status != "unassessed" for status in statuses)
         )
+        hard_fail_observed = any(
+            status == "fail" for status in group_statuses["hard_fail_checks"]
+        )
+        non_hard_fail = any(
+            status == "fail"
+            for status in [
+                *[str(value) for value in semantic.values()],
+                *group_statuses["expected_key_findings"],
+                *group_statuses["required_counterevidence"],
+            ]
+        )
+        if not assessment_complete:
+            overall_status = "unassessed"
+        elif hard_fail_observed or non_hard_fail:
+            overall_status = "fail"
+        else:
+            overall_status = "pass"
+
+        item["assessment_complete"] = assessment_complete
+        item["hard_fail_observed"] = hard_fail_observed
+        item["overall_status"] = overall_status
         reviews[run_id] = item
-    if set(reviews) != expected_ids:
+
+    if set(reviews) != set(expected_by_id):
         raise ValueError("review file must contain exactly the exported baseline runs")
     return reviews
-
 
 def _mad(values: Sequence[float]) -> float:
     center = median(values)
@@ -286,15 +375,34 @@ def aggregate_baseline(
     *,
     reviews: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    slot_counter = Counter(
+        (str(item.get("case_id") or ""), item.get("repetition")) for item in records
+    )
+    duplicate_slots = sorted(
+        f"{case_id}:R{repetition}"
+        for (case_id, repetition), count in slot_counter.items()
+        if count > 1
+    )
+
     by_case: dict[str, Any] = {}
     for case_id in GOLDEN_CASE_IDS:
         case_records = [item for item in records if item.get("case_id") == case_id]
         runtimes = [float(item["performance"]["run_seconds"]) for item in case_records]
-        costs = [float(item["performance"]["cost_usd"]) for item in case_records]
+        actual_costs = [float(item["performance"]["cost_usd"]) for item in case_records]
+        accounted_costs = [
+            float(
+                item["performance"].get(
+                    "budget_accounted_cost_usd",
+                    item["performance"]["cost_usd"],
+                )
+            )
+            for item in case_records
+        ]
         if runtimes:
             runtime_median = float(median(runtimes))
             runtime_mad = _mad(runtimes)
             runtime = {
+                "raw_seconds": [round(value, 3) for value in runtimes],
                 "median_seconds": round(runtime_median, 3),
                 "mad_seconds": round(runtime_mad, 3),
                 "noise_floor_2x_mad_seconds": round(2 * runtime_mad, 3),
@@ -303,52 +411,120 @@ def aggregate_baseline(
             }
         else:
             runtime = {}
+
+        case_reviews = (
+            [
+                reviews[str(item["run_id"])]
+                for item in case_records
+                if str(item["run_id"]) in reviews
+            ]
+            if reviews is not None
+            else []
+        )
         by_case[case_id] = {
             "attempted_runs": len(case_records),
             "statuses": dict(Counter(str(item["status"]) for item in case_records)),
             "runtime": runtime,
             "cost": {
-                "total_usd": round(sum(costs), 6),
-                "median_usd": round(float(median(costs)), 6) if costs else None,
+                "actual_total_usd": round(sum(actual_costs), 6),
+                "actual_median_usd": (
+                    round(float(median(actual_costs)), 6) if actual_costs else None
+                ),
+                "budget_accounted_total_usd": round(sum(accounted_costs), 6),
             },
+            "uncertain_provider_attempts": sum(
+                int(item["performance"].get("uncertain_provider_attempts") or 0)
+                for item in case_records
+            ),
             "timeout_rate_percent": _rate(case_records, "has_timeout"),
             "retry_rate_percent": _rate(case_records, "has_retry"),
             "repair_rate_percent": _rate(case_records, "has_repair"),
+            "quality_statuses": (
+                dict(Counter(str(item["overall_status"]) for item in case_reviews))
+                if case_reviews
+                else {}
+            ),
         }
 
     expected_slots = set(baseline_slots())
     present_slots = {
-        (str(item.get("case_id")), int(item.get("repetition")))
+        (str(item.get("case_id")), item.get("repetition"))
         for item in records
-        if item.get("case_id") in GOLDEN_CASE_IDS and item.get("repetition") in REPETITIONS
+        if item.get("case_id") in GOLDEN_CASE_IDS
+        and item.get("repetition") in REPETITIONS
     }
+    missing_slots = sorted(
+        f"{case_id}:R{repetition}"
+        for case_id, repetition in expected_slots - present_slots
+    )
+    tested_commits = sorted(
+        {
+            str(item.get("tested_commit") or "")
+            for item in records
+            if item.get("tested_commit")
+        }
+    )
+
     quality_complete = False
     hard_fail_count = None
+    overall_quality_statuses: dict[str, int] = {}
     if reviews is not None:
-        quality_complete = all(
-            bool(reviews[str(item["run_id"])].get("assessment_complete")) for item in records
+        quality_complete = (
+            len(reviews) == len(records)
+            and all(
+                bool(reviews[str(item["run_id"])].get("assessment_complete"))
+                for item in records
+            )
         )
         hard_fail_count = sum(
-            bool(reviews[str(item["run_id"])].get("hard_fail_observed")) for item in records
+            bool(reviews[str(item["run_id"])].get("hard_fail_observed"))
+            for item in records
+        )
+        overall_quality_statuses = dict(
+            Counter(str(item.get("overall_status") or "") for item in reviews.values())
         )
 
+    complete_slots = (
+        len(records) == len(expected_slots)
+        and present_slots == expected_slots
+        and not duplicate_slots
+    )
     return {
         "experiment_id": EXPERIMENT_ID,
         "expected_run_count": len(expected_slots),
         "observed_run_count": len(records),
-        "complete_slots": present_slots == expected_slots,
-        "missing_slots": sorted(
-            f"{case_id}:R{repetition}" for case_id, repetition in expected_slots - present_slots
+        "complete_slots": complete_slots,
+        "missing_slots": missing_slots,
+        "duplicate_slots": duplicate_slots,
+        "tested_commits": tested_commits,
+        "single_tested_commit": len(tested_commits) == 1,
+        "total_actual_cost_usd": round(
+            sum(float(item["performance"]["cost_usd"]) for item in records),
+            6,
         ),
-        "tested_commits": sorted(
-            {str(item.get("tested_commit") or "") for item in records if item.get("tested_commit")}
+        "total_budget_accounted_cost_usd": round(
+            sum(
+                float(
+                    item["performance"].get(
+                        "budget_accounted_cost_usd",
+                        item["performance"]["cost_usd"],
+                    )
+                )
+                for item in records
+            ),
+            6,
         ),
-        "total_cost_usd": round(sum(float(item["performance"]["cost_usd"]) for item in records), 6),
+        "uncertain_provider_attempts": sum(
+            int(item["performance"].get("uncertain_provider_attempts") or 0)
+            for item in records
+        ),
         "by_case": by_case,
         "quality_complete": quality_complete,
+        "quality_statuses": overall_quality_statuses,
         "observed_hard_fail_count": hard_fail_count,
         "non_observable": [
             "provider_internal_queue_vs_inference_time",
             "cache_effects_when_provider_metadata_does_not_expose_them",
         ],
     }
+
