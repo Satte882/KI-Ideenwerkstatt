@@ -40,7 +40,7 @@ from ki_radar.accelerator.issue118_experiment import (
     validate_record,
     verify_checkout,
 )
-from ki_radar.accelerator.issue118_fixtures import SOURCE, fixture_evidence
+from ki_radar.accelerator.issue118_fixtures import ARCHIVED_SOURCE, fixture_evidence
 from ki_radar.accelerator.management.commands import prepare_issue118_experiment
 from tests.test_issue_111_baseline import _complete_review, _record
 
@@ -431,10 +431,10 @@ def test_plan_order_is_versioned_and_hash_protected(plan, tmp_path):
 def test_fixture_proof_requires_both_exact_passed_tests(tmp_path):
     path = tmp_path / "fixtures.json"
     payload = {
-        "tested_commit": "a" * 40,
+        "tested_commit": "b7c7832f6436a487b4921fad68baa7a33466ef79",
         "test_selector": FIXTURE_TEST,
         "test_source_sha256": hashlib.sha256(
-            (Path(settings.BASE_DIR) / SOURCE).read_bytes()
+            (Path(settings.BASE_DIR) / ARCHIVED_SOURCE).read_bytes()
         ).hexdigest(),
         "passed_cases": list(AFFECTED_CASES),
         "junit_xml": (
@@ -444,13 +444,13 @@ def test_fixture_proof_requires_both_exact_passed_tests(tmp_path):
         ),
     }
     path.write_text(json.dumps(payload), encoding="utf-8")
-    assert fixture_evidence(path, settings.BASE_DIR, "a" * 40) == payload
+    assert fixture_evidence(path, settings.BASE_DIR, payload["tested_commit"]) == payload
     payload["junit_xml"] = payload["junit_xml"].replace(
         "/></testsuite>", "><failure/></testcase></testsuite>"
     )
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(CommandError, match="passed"):
-        fixture_evidence(path, settings.BASE_DIR, "a" * 40)
+        fixture_evidence(path, settings.BASE_DIR, payload["tested_commit"])
 
 
 @pytest.fixture
@@ -538,6 +538,10 @@ def test_check_only_never_starts_provider_or_run(prepared, monkeypatch):
         issue118_execution,
         "base_execution_snapshot",
         lambda *a, **kw: frozen["contracts"]["variant"],
+    )
+    # Simulate the historical v20 checkout for the historical harness success path.
+    monkeypatch.setattr(
+        "ki_radar.accelerator.investigation_runtime.LOOP_VERSION", "vs1-agent-loop-v20"
     )
     call_command("run_issue118_variant", plan=str(path), case="AP4-01", repeat=1, check_only=True)
     assert not InvestigationRun.objects.exists()
@@ -651,3 +655,21 @@ def test_interrupted_existing_run_fenced_no_replacement(
     assert reservation.status == "uncertain"
     assert ledger_cost([reservation]) == 9
     assert InvestigationRun.objects.count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("check_only", [True, False])
+def test_variant_execution_fails_closed_on_restored_v19(prepared, monkeypatch, check_only):
+    _, path = prepared
+    # Even if checkout verification were satisfied, a v19 runtime cannot run v20 slots.
+    monkeypatch.setattr(issue118_execution, "verify_checkout", lambda *a: "a" * 40)
+    with pytest.raises(CommandError, match="Wrong arm runtime"):
+        call_command(
+            "run_issue118_variant",
+            plan=str(path),
+            case="AP4-01",
+            repeat=1,
+            check_only=check_only,
+            confirm_real_provider=True,
+        )
+    assert not InvestigationRun.objects.exists()

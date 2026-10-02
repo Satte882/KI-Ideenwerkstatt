@@ -1,0 +1,10 @@
+{
+  "tested_commit": "b7c7832f6436a487b4921fad68baa7a33466ef79",
+  "test_selector": "tests/test_issue_118_planner_source_coverage.py::test_historical_early_read_survives_six_later_steps",
+  "test_source_sha256": "35ce5bf2b40146f231625dba92346a54597c625d00ca4abd36bb01fa6ac99528",
+  "passed_cases": [
+    "AP4-02",
+    "AP4-04"
+  ],
+  "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"2\" time=\"42.678\" timestamp=\"2026-10-02T13:46:40.313678+02:00\" hostname=\"DESKTOP-CEB2D8G\"><testcase classname=\"tests.test_issue_118_planner_source_coverage\" name=\"test_historical_early_read_survives_six_later_steps[AP4-02-R4-state-pattern]\" time=\"36.298\" /><testcase classname=\"tests.test_issue_118_planner_source_coverage\" name=\"test_historical_early_read_survives_six_later_steps[AP4-04-R5-state-pattern]\" time=\"6.166\" /></testsuite></testsuites>"
+}

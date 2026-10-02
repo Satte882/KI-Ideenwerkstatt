@@ -32,6 +32,12 @@ class Command(BaseCommand):
         parser.add_argument("--require-complete", action="store_true")
 
     def handle(self, *args, **options):
+        archive = (Path(settings.BASE_DIR) / "artifacts/issue106/exp118").resolve()
+        for key in ("output", "review_template"):
+            if self._resolve(options[key]).is_relative_to(archive):
+                raise CommandError(
+                    "Archived #118 evidence is read-only; choose external output paths"
+                )
         plan = read_plan(options["plan"])
         if Path(settings.BASE_DIR).resolve() != Path(plan["variant_root"]).resolve():
             raise CommandError("Export must use the frozen variant checkout")
