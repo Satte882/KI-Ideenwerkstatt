@@ -11,9 +11,11 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from ki_radar.accelerator.investigation_runtime import LOOP_VERSION
 from ki_radar.accelerator.issue118_experiment import (
     AFFECTED_CASES,
     FIXTURE_TEST,
+    LOOPS,
     verify_checkout,
 )
 from ki_radar.accelerator.issue118_fixtures import SOURCE, fixture_evidence
@@ -27,6 +29,10 @@ class Command(BaseCommand):
         parser.add_argument("--output", required=True)
 
     def handle(self, *args, **options):
+        if LOOPS["variant"] != LOOP_VERSION:
+            raise CommandError(
+                "Historical #118 C1 fixtures require the frozen v20 runtime checkout"
+            )
         root = Path(settings.BASE_DIR)
         commit = verify_checkout(root, options["expected_variant_commit"])
         env = dict(os.environ)

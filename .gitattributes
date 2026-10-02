@@ -4,3 +4,8 @@
 *.yaml text eol=lf
 tests/fixtures/accelerator/*.json text eol=lf
 tests/fixtures/accelerator/*.sha256 text eol=lf
+
+# Preserve external #118 evidence and historical test source byte-for-byte.
+/artifacts/issue106/exp118/*.json -text whitespace=cr-at-eol
+/artifacts/issue106/exp118/C2C_8_RUN_REVIEW_PACKET.md -text whitespace=cr-at-eol,-blank-at-eol
+/artifacts/issue106/exp118/historical/*.txt -text whitespace=cr-at-eol

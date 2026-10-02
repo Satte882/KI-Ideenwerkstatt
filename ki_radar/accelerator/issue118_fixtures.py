@@ -13,6 +13,18 @@ from .issue118_experiment import AFFECTED_CASES, FIXTURE_TEST
 
 IDS = ("AP4-02-R4-state-pattern", "AP4-04-R5-state-pattern")
 SOURCE = "tests/test_issue_118_planner_source_coverage.py"
+HISTORICAL_COMMIT = "b7c7832f6436a487b4921fad68baa7a33466ef79"
+ARCHIVED_SOURCE = (
+    "artifacts/issue106/exp118/historical/test_issue_118_planner_source_coverage.py.txt"
+)
+
+
+def fixture_source(root, commit):
+    """Use the original checkout source, or its exact archived historical bytes."""
+    source = Path(root) / SOURCE
+    if not source.exists() and commit == HISTORICAL_COMMIT:
+        source = Path(root) / ARCHIVED_SOURCE
+    return source
 
 
 def fixture_evidence(path, root, commit):
@@ -20,7 +32,7 @@ def fixture_evidence(path, root, commit):
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         if payload["tested_commit"] != commit or payload["test_selector"] != FIXTURE_TEST:
             raise ValueError("Fixture commit/test selection mismatch")
-        expected_hash = hashlib.sha256((Path(root) / SOURCE).read_bytes()).hexdigest()
+        expected_hash = hashlib.sha256(fixture_source(root, commit).read_bytes()).hexdigest()
         if payload["test_source_sha256"] != expected_hash:
             raise ValueError("Fixture source changed")
         xml = payload["junit_xml"]

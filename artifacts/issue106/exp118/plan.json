@@ -1,0 +1,720 @@
+{
+  "schema_version": "issue106-exp118-source-coverage-v1",
+  "experiment_id": "issue106-exp118-source-coverage-v1",
+  "variant_root": "C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt",
+  "control_root": "C:\\Users\\user\\Documents\\GitHub\\KI-Ideenwerkstatt-control-v19",
+  "variant_commit": "b7c7832f6436a487b4921fad68baa7a33466ef79",
+  "control_commit": "b37e25b6508a6e5769785c72c2fc35ac1177fae2",
+  "database_binding": "91cf800decae54673641ad70743498e29aee1603d4a8b4ec9e4ab9c82d593d54",
+  "pricing": {
+    "rates": {
+      "input_per_million": "0.05",
+      "output_per_million": "0.6"
+    },
+    "currency": "USD",
+    "version": "issue106-ap1-comparability-basis-v1"
+  },
+  "source_hashes": {
+    "AP4-01": "3c99ac8819fd8a842dd23547569589bd737e25ae22f0aa9976d1c307867db2ea",
+    "AP4-02": "eaa0b7a47570a8194485be3d71648332bbc22439199ef233e46758ab34e7867a",
+    "AP4-04": "1c82673a90466d8c46363a45df22e4b1b1f837a197fb349a8547da1d245285b9",
+    "AP4-05": "cdb8999c6242422ac2a06d8a8daf8df7fa836ad5bedf3969348b356a201d5ff8",
+    "AP4-06": "e3131982410fa81f2ef237dbf0c5362339ce61ed7206937bdce4404c76d4583a"
+  },
+  "ap1_hashes": {
+    "artifacts\\issue106\\ap1\\baseline.json": "d074333895fa59b78cbe42e8dba86ece0d04a01671ac4a4b4c1dcab0e46eb675",
+    "artifacts\\issue106\\ap1\\review.json": "ddf049a8de997ad3514906cb4203bbf8608f38c0cc927eba0b770c2db78d215e"
+  },
+  "fixture_evidence": {
+    "tested_commit": "b7c7832f6436a487b4921fad68baa7a33466ef79",
+    "test_selector": "tests/test_issue_118_planner_source_coverage.py::test_historical_early_read_survives_six_later_steps",
+    "test_source_sha256": "35ce5bf2b40146f231625dba92346a54597c625d00ca4abd36bb01fa6ac99528",
+    "passed_cases": [
+      "AP4-02",
+      "AP4-04"
+    ],
+    "junit_xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"2\" time=\"42.678\" timestamp=\"2026-10-02T13:46:40.313678+02:00\" hostname=\"DESKTOP-CEB2D8G\"><testcase classname=\"tests.test_issue_118_planner_source_coverage\" name=\"test_historical_early_read_survives_six_later_steps[AP4-02-R4-state-pattern]\" time=\"36.298\" /><testcase classname=\"tests.test_issue_118_planner_source_coverage\" name=\"test_historical_early_read_survives_six_later_steps[AP4-04-R5-state-pattern]\" time=\"6.166\" /></testsuite></testsuites>"
+  },
+  "slots": [
+    {
+      "arm": "variant",
+      "case_id": "AP4-01",
+      "repetition": 1
+    },
+    {
+      "arm": "control",
+      "case_id": "AP4-01",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-01",
+      "repetition": 2
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-01",
+      "repetition": 3
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-01",
+      "repetition": 4
+    },
+    {
+      "arm": "control",
+      "case_id": "AP4-02",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-02",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-02",
+      "repetition": 2
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-02",
+      "repetition": 3
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-02",
+      "repetition": 4
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-04",
+      "repetition": 1
+    },
+    {
+      "arm": "control",
+      "case_id": "AP4-04",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-04",
+      "repetition": 2
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-04",
+      "repetition": 3
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-04",
+      "repetition": 4
+    },
+    {
+      "arm": "control",
+      "case_id": "AP4-05",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-05",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-05",
+      "repetition": 2
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-05",
+      "repetition": 3
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-05",
+      "repetition": 4
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-06",
+      "repetition": 1
+    },
+    {
+      "arm": "control",
+      "case_id": "AP4-06",
+      "repetition": 1
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-06",
+      "repetition": 2
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-06",
+      "repetition": 3
+    },
+    {
+      "arm": "variant",
+      "case_id": "AP4-06",
+      "repetition": 4
+    }
+  ],
+  "prepared": {
+    "i106-e118-variant-ap4-01-r1-v1": {
+      "process_id": "d6d46c07-eb01-4e26-a198-9e2994be2bf3",
+      "snapshot_id": "3d882c69-c11a-473e-b6fe-d546c5379f3a",
+      "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_file_hashes": {
+        "01_interview.md": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "02_process_note.md": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      },
+      "domain_input_hash": "d1bdaf7d032d30f5641515b10e2ef2046a031e9178758691e7b17371db6e93ca"
+    },
+    "i106-e118-control-ap4-01-r1-v1": {
+      "process_id": "8e3704b3-7a34-4458-bd3c-9580979bff65",
+      "snapshot_id": "fd510716-ed92-442a-ab25-a436297b5827",
+      "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_file_hashes": {
+        "01_interview.md": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "02_process_note.md": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      },
+      "domain_input_hash": "bbaaacd6339b0feab0fa8c5c029402e8fee179431e8532c1d5db563bda2738c5"
+    },
+    "i106-e118-variant-ap4-01-r2-v1": {
+      "process_id": "3b443fbf-251e-4111-8661-79adf4f2eac4",
+      "snapshot_id": "0563bb65-b7f6-49b5-87a7-fadb0a33c690",
+      "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_file_hashes": {
+        "01_interview.md": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "02_process_note.md": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      },
+      "domain_input_hash": "e0bcb40ba76042caa8333ceb8ff82e0e1a27f0f7a3af454cf5ba12f66f3752fc"
+    },
+    "i106-e118-variant-ap4-01-r3-v1": {
+      "process_id": "3e69c4d4-900a-47c0-8d58-61e1e88caf84",
+      "snapshot_id": "b76e692e-8e04-42a0-90d7-a33b98103dd9",
+      "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_file_hashes": {
+        "01_interview.md": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "02_process_note.md": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      },
+      "domain_input_hash": "a62bb88a6d9a3e3df7898a2513b12ce18157488efa6baa46d820f7cff05407bf"
+    },
+    "i106-e118-variant-ap4-01-r4-v1": {
+      "process_id": "6a106de5-ebe7-4574-aedd-2a277f5576c5",
+      "snapshot_id": "f9a116dd-0889-47ad-8172-b05bd8f6ace6",
+      "manifest_hash": "8c812e5a410ecdbf650d82e608d78d7b0efbb4d717fef3f99e67e1f25c9004b6",
+      "source_file_hashes": {
+        "01_interview.md": "aa1291ae90da7d8e8f4fc8197a3cf33991751c3b1152743da8849c4294ed82b5",
+        "02_process_note.md": "5660d8ca0cd367ce25219ac85ee38c37d80f9fce0a79f3cf0dd33fa94596ea33"
+      },
+      "domain_input_hash": "1ef009d24c4593297059b1764845939ba6c98ebe773206de410186f6dc30d7b6"
+    },
+    "i106-e118-control-ap4-02-r1-v1": {
+      "process_id": "088763f9-0bf4-4b46-827d-989a0a06a9ba",
+      "snapshot_id": "fd77588a-da51-4114-9fdb-0209f4bde4d1",
+      "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+      "source_file_hashes": {
+        "01_policy.md": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+        "02_cases.csv": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+      },
+      "domain_input_hash": "bb7c8c2f4a2c44dcc5fcea37f4b296fc657998c231ec34cf7c00d469ac5b2a0b"
+    },
+    "i106-e118-variant-ap4-02-r1-v1": {
+      "process_id": "29ad62bc-0d15-4db2-8b11-088acb39adb9",
+      "snapshot_id": "e1ed482a-1ed1-4d18-81f0-6355732547d2",
+      "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+      "source_file_hashes": {
+        "01_policy.md": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+        "02_cases.csv": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+      },
+      "domain_input_hash": "cd224360bc6128f80b10cfe06e14fc07b1a21198a0013ab6ac47e6db10c70c08"
+    },
+    "i106-e118-variant-ap4-02-r2-v1": {
+      "process_id": "d84ea410-9cb7-4e1f-86bb-7c122e918f8d",
+      "snapshot_id": "f1b16433-17fd-4bc8-8cf8-b784c77d14c9",
+      "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+      "source_file_hashes": {
+        "01_policy.md": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+        "02_cases.csv": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+      },
+      "domain_input_hash": "bce77e60a0ca32232ec95870ef48bc7cb2d61a07da14a026996067361398d2ee"
+    },
+    "i106-e118-variant-ap4-02-r3-v1": {
+      "process_id": "369019ae-2cb8-4066-a342-cefacf213803",
+      "snapshot_id": "8159ba7c-3d7e-45cd-b9b7-0c5387f00ea2",
+      "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+      "source_file_hashes": {
+        "01_policy.md": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+        "02_cases.csv": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+      },
+      "domain_input_hash": "b78c222a33096510f50e8103052dd202dbd131586dfc236068219a27e52dd121"
+    },
+    "i106-e118-variant-ap4-02-r4-v1": {
+      "process_id": "f1d2ea06-9cd6-43fe-aa42-880e2bcddc7b",
+      "snapshot_id": "f9ba77eb-1cac-4aba-88c2-1cc1a54edc86",
+      "manifest_hash": "cba03ebf4933075a57a1868cfabce3fc64172a46e09430dbd867805e3e0b35f1",
+      "source_file_hashes": {
+        "01_policy.md": "9d8ec8275738545eb741e14f2d11f92607f18055037bf0142002bab02d5cde3e",
+        "02_cases.csv": "d1c171fbf253ff6835e4aa3519a596059ad09e905ca8816dbfbefd481c9d9813"
+      },
+      "domain_input_hash": "5ac0f525a3e73cad8beedecfe14069fea0cea5fb1825bbf2b59a674e51f98b19"
+    },
+    "i106-e118-variant-ap4-04-r1-v1": {
+      "process_id": "1b3c67dd-6e1e-4575-8c8a-34c5f2c3b869",
+      "snapshot_id": "c5e4eecd-6155-477b-b87b-ac71c879390b",
+      "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+      "source_file_hashes": {
+        "01_invoice_process.md": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+        "02_exceptions.csv": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+      },
+      "domain_input_hash": "a387c2ce93e96d9df4c380512eb57e8740fa04db769d3bd99ad4c928e3f5bee1"
+    },
+    "i106-e118-control-ap4-04-r1-v1": {
+      "process_id": "d71bc6fa-e618-42a0-8a80-f85e13b4c725",
+      "snapshot_id": "cb478b49-907a-4326-91ec-50340e7e01f6",
+      "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+      "source_file_hashes": {
+        "01_invoice_process.md": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+        "02_exceptions.csv": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+      },
+      "domain_input_hash": "cdec8fcaa9bd2316bac1fe998adf70391c9e291ecad8c0aa697b96d043172abc"
+    },
+    "i106-e118-variant-ap4-04-r2-v1": {
+      "process_id": "fc0b97db-325f-425f-9bc4-1dab7a047293",
+      "snapshot_id": "f46e37ac-03dd-4de8-8b34-42784ac6d180",
+      "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+      "source_file_hashes": {
+        "01_invoice_process.md": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+        "02_exceptions.csv": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+      },
+      "domain_input_hash": "c1b0abc41cbeacfdcad1328c43403c6e6b3aef876dae82e41c7eec1c87f9a826"
+    },
+    "i106-e118-variant-ap4-04-r3-v1": {
+      "process_id": "c59e1e7d-74cd-44d1-bb5c-eec97c941b09",
+      "snapshot_id": "3b96b13b-09a3-4925-b30c-a7698ddde2e9",
+      "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+      "source_file_hashes": {
+        "01_invoice_process.md": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+        "02_exceptions.csv": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+      },
+      "domain_input_hash": "fb60e8d1840c4b2861c7965e25ef24e84db44e706f026c89c434f4b0fd3811ff"
+    },
+    "i106-e118-variant-ap4-04-r4-v1": {
+      "process_id": "098bbce5-8275-42bf-9a24-60865255fc11",
+      "snapshot_id": "c57825f5-799b-440a-bfac-a540e59d17bf",
+      "manifest_hash": "51755f4c573eaff725504e6d23abe024b215743314fe3322d8a88315c023f74d",
+      "source_file_hashes": {
+        "01_invoice_process.md": "8e579e32118de0f1097e997c3b68a7228867a784d77d37889ccb7fb44bed0950",
+        "02_exceptions.csv": "1cf93e8f34842ba488407af553140003823d5e308ae02aaf8a1a9668e0c1ae62"
+      },
+      "domain_input_hash": "48f9260564fc090baaa62381591c91af9efc8ef1733648b3f7c55d0b422cd490"
+    },
+    "i106-e118-control-ap4-05-r1-v1": {
+      "process_id": "c09fff73-a784-49be-870e-3e89ca3921f3",
+      "snapshot_id": "51cfc3a3-c82a-4fd9-bb04-a8620e32aaf8",
+      "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+      "source_file_hashes": {
+        "01_case_note.md": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+        "02_open_questions.md": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b"
+      },
+      "domain_input_hash": "061448dd9d96303ca7afceca35360795f7109ee58766ba1c22d184d695606693"
+    },
+    "i106-e118-variant-ap4-05-r1-v1": {
+      "process_id": "63e76cec-18d8-4180-996c-013f4d2b908c",
+      "snapshot_id": "9417d835-9919-4498-9c15-10631e1ab69b",
+      "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+      "source_file_hashes": {
+        "01_case_note.md": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+        "02_open_questions.md": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b"
+      },
+      "domain_input_hash": "f6f5667392c6bdae94472e10ed33f4d0662d7f0f6face846a0ce7a1f61ce04db"
+    },
+    "i106-e118-variant-ap4-05-r2-v1": {
+      "process_id": "a6949ef8-5391-4ca0-a30e-5ca5624944d7",
+      "snapshot_id": "a64787e7-6427-40ba-9a0a-71fa14eeffde",
+      "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+      "source_file_hashes": {
+        "01_case_note.md": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+        "02_open_questions.md": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b"
+      },
+      "domain_input_hash": "c534567f005ba4a4d33afd939150ee2c29cab8aa80f989e3bfd291fc96a5e5e8"
+    },
+    "i106-e118-variant-ap4-05-r3-v1": {
+      "process_id": "4058a294-ad6c-4585-a050-9320e4c8295a",
+      "snapshot_id": "2954725c-ab42-41df-bae2-b94b8d3a2c9b",
+      "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+      "source_file_hashes": {
+        "01_case_note.md": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+        "02_open_questions.md": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b"
+      },
+      "domain_input_hash": "62bde9c4919d776904c2ce82dd871884b9bdd2eb481b2597c15ba0204d8ed2fa"
+    },
+    "i106-e118-variant-ap4-05-r4-v1": {
+      "process_id": "f32bcec0-54fb-4189-b701-d1aa47af275f",
+      "snapshot_id": "31713f5d-5ee0-435d-a829-6ee7b268535f",
+      "manifest_hash": "4dd03b157dbcf89e10a7cf552ac0e18d70b2ee644906b7fe814ecc53ad767ab1",
+      "source_file_hashes": {
+        "01_case_note.md": "3773659bad241514eb7ab4821f00ffbfed81d145b4547178fa8111e09de77ac4",
+        "02_open_questions.md": "486491313cfbe46c823faf581ce33120dc0a9e5d7d0938757543a89f6515152b"
+      },
+      "domain_input_hash": "a4cefd775b9899eefd7d233d1d0b86d2f1b5756c8fa82f27f016d4b440a10637"
+    },
+    "i106-e118-variant-ap4-06-r1-v1": {
+      "process_id": "e672b726-a515-486e-9d8b-570a41b545f6",
+      "snapshot_id": "b2007e6a-e2b2-49a0-b19e-d20cb98fc31a",
+      "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+      "source_file_hashes": {
+        "01_operations.md": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+        "02_sales.md": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790"
+      },
+      "domain_input_hash": "b630549c5f977b024dd3d48b27ebefeb61ead2db5da2eea2ceb6bd5b005023e7"
+    },
+    "i106-e118-control-ap4-06-r1-v1": {
+      "process_id": "5e5ac334-57bf-45f0-ac1f-99aef41729b5",
+      "snapshot_id": "bb7f0c79-2640-44b5-8314-47fd858f41a1",
+      "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+      "source_file_hashes": {
+        "01_operations.md": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+        "02_sales.md": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790"
+      },
+      "domain_input_hash": "e6439a4ebd93c1a0c3644f4041162a8187ac147421fd047ca7b514aea81a5d94"
+    },
+    "i106-e118-variant-ap4-06-r2-v1": {
+      "process_id": "ec040297-1ac9-4bf5-98e5-9707f3664aee",
+      "snapshot_id": "83dcdd0a-6d30-4c28-839f-122b55a0c053",
+      "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+      "source_file_hashes": {
+        "01_operations.md": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+        "02_sales.md": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790"
+      },
+      "domain_input_hash": "75296efd3c8b54e61b0efc1bdd0d0063d7290919cffea1798e00229da338eb2b"
+    },
+    "i106-e118-variant-ap4-06-r3-v1": {
+      "process_id": "b2fdff8a-5ff4-4253-9b2b-0be624796888",
+      "snapshot_id": "c2290c7e-3785-49a0-99e2-eac8f39db686",
+      "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+      "source_file_hashes": {
+        "01_operations.md": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+        "02_sales.md": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790"
+      },
+      "domain_input_hash": "42c47f9beb69d39ee3d6805996d32ddc58fb3de59c526fa5105a83154532b3a3"
+    },
+    "i106-e118-variant-ap4-06-r4-v1": {
+      "process_id": "04529a02-0f3c-4b8f-8d8a-3b0485210fad",
+      "snapshot_id": "637b0d3f-1cb8-4ea1-9efa-ba45f131523c",
+      "manifest_hash": "9ebc10573a1b6e8505248883c27a533284d4c337669c951561538012ddc73745",
+      "source_file_hashes": {
+        "01_operations.md": "0cbb8a5ba2389829c492a390130bbd8592915e191bca801080464ae37584b4bd",
+        "02_sales.md": "59e8ae2d9afb83a0a3691e49a7c514fa761cd8cc160d25ba8921e0dc58200790"
+      },
+      "domain_input_hash": "567b1beaf092d3e8d843f7e1119b0e651480c8c68ae1b8b0a160bc39972942b7"
+    }
+  },
+  "contracts": {
+    "variant": {
+      "loop_version": "vs1-agent-loop-v20",
+      "budget_version": "vs1-budget-v7",
+      "policy_version": "vs1-stop-policy-v5",
+      "runtime": {
+        "python": "3.13.5",
+        "django": "5.2.17",
+        "postgresql": 170005,
+        "dependency_lock_hashes": {
+          "uv.lock": "25c7ea9ff681064e273d887f930dc6a944da1140ef725384b6b7cb0b3ea6f76c",
+          "pyproject.toml": "da0cd88a4c6ae9313d1018c057f6cfec8ec3edf2be8883c56020feab2a0a70ae"
+        }
+      },
+      "model_transport": {
+        "provider": "openrouter",
+        "provider_policy": {
+          "zdr": true,
+          "data_collection": "deny",
+          "order": [
+            "deepinfra/fp8"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true
+        },
+        "requested_model": "deepseek/deepseek-v4.1-flash",
+        "temperature": 0.1,
+        "reasoning_effort": "medium",
+        "endpoint_capability": {
+          "version": "vs1-openrouter-deepinfra-fp8-v4",
+          "model": "deepseek/deepseek-v4.1-flash",
+          "provider": "deepinfra/fp8",
+          "context_tokens": 1048576,
+          "completion_tokens": 131072
+        },
+        "role_limits": {
+          "planner": {
+            "timeout_seconds": 90,
+            "max_output_tokens": 16384
+          },
+          "synthesizer": {
+            "timeout_seconds": 270,
+            "max_output_tokens": 32768
+          },
+          "verifier": {
+            "timeout_seconds": 120,
+            "max_output_tokens": 16384
+          }
+        }
+      },
+      "planner": {
+        "prompt_version": "vs1-planner-v19",
+        "instruction_hash": "440a4d9ea44632102ad4d61d8e266d47a6f3bfbc645701688fa5255502e32c05",
+        "instruction_template": "Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.\nW\u00e4hle genau den n\u00e4chsten fachlich sinnvollen Schritt: Werkzeug, Synthese oder eine wirklich\nentscheidungskritische R\u00fcckfrage. Wenn die vorhandene Evidenz f\u00fcr einen reviewf\u00e4higen\nEntscheidungsstand gen\u00fcgt, w\u00e4hle action=synthesize mit leerem tool_name und {} als\nparameters. Der Server besitzt Quellen, Werkzeugergebnisse, Claims und Brief; schreibe\ndiese Zust\u00e4nde nicht zur\u00fcck. Nutze nur die Werkzeugnamen,\nSource-IDs und Parameter aus dem Kontext. F\u00fcr read_source und profile_csv ist genau\neine source_id erlaubt. F\u00fcr compare_groups gelten die angegebenen Pflichtfelder.\nBevor du action=synthesize w\u00e4hlst: Wenn eine tragende Hypothese oder Empfehlung auf einer\nquantitativen Beziehung zwischen strukturierten Feldern beruht und die daf\u00fcr n\u00f6tigen Werte\nim freigegebenen Quellenraum vorhanden sind, f\u00fchre die passende reproduzierbare Analyse mit\neinem erlaubten Werkzeug aus, insbesondere compare_groups. Verschiebe einen solchen intern\nl\u00f6sbaren Analysecheck nicht nur in validation_step; blo\u00dfes Lesen der Rohzeilen ersetzt ihn nicht.\nAntworte als ein einziges JSON-Objekt. action ist immer Pflicht. Bei action=tool sind\ntool_name und parameters Pflicht; target_claim_id, expected_discriminating_finding und\nrationale sind optional. Bei action=clarify sind clarification_reason und\nclarification_payload Pflicht. clarification_reason ist dabei exakt einer dieser drei\nmaschinenlesbaren Werte: missing_evidence, permission_or_scope oder value_tradeoff.\nVerwende keine Synonyme und erfinde keine weiteren Reason-Codes. Wenn gelesene oder\ndurchsuchte Quellen keinen entscheidungsrelevanten Bezug zur Entscheidungsfrage liefern\nund die notwendige Evidenz au\u00dferhalb des freigegebenen Quellenraums fehlt, verwende\naction=clarify mit clarification_reason=missing_evidence und frage konkret nach der\nentscheidungsrelevanten Evidenz. Bei action=synthesize gen\u00fcgt action; inaktive Felder d\u00fcrfen\nweggelassen werden und werden serverseitig leer normalisiert. parameters und\nclarification_payload sind echte JSON-Objekte und d\u00fcrfen niemals als JSON-Text in Strings\nserialisiert werden; leer ist {}.\nWenn synthesis_investigation_request gesetzt ist, schlie\u00dfe diese vom Synthesizer erkannte\nEvidenzl\u00fccke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums\nl\u00f6sbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuf\u00fchren.\nSolution Options sind Kandidaten und m\u00fcssen nicht bereits als fertige L\u00f6sungsvorschl\u00e4ge in\nden Quellen stehen. Wenn Problem, Scope und tragende Evidenz ausreichen, leite plausible\nOptionen als Hypothesen ab und synthetisiere; frage nicht allein deshalb nach weiteren\nQuellen, weil diese noch keine L\u00f6sungsrichtungen oder Verbesserungsma\u00dfnahmen formulieren.\nWenn die Quellen dagegen ausdr\u00fccklich offenlassen, wer die Entscheidungshoheit tr\u00e4gt oder\nwer entscheidungsrelevante Ausnahmen verantwortet, ist das keine intern schlie\u00dfbare\nAnalysel\u00fccke. Verwende dann action=clarify mit clarification_reason=permission_or_scope und\nfrage pr\u00e4zise nach der fehlenden menschlichen Zust\u00e4ndigkeitsentscheidung.\nEine Suche nach m\u00f6glichen Gegenbelegen geh\u00f6rt zur Untersuchung. Wenn bereits eine\nrelevante Quelle gelesen oder analysiert wurde, evidence_coverage.counterevidence_search_executed\naber noch false ist und eine sinnvolle Gegenhypothese oder Alternative formulierbar ist, f\u00fchre\nvor der ersten Synthese eine gezielte search_sources-Suche aus. Das ist eine Planungsregel,\nkein universelles READY-Gate: Wenn keine sinnvolle Gegenbelegsuche formulierbar ist, darfst du\ntrotzdem synthetisieren.\nErfinde keine Fakten, Messwerte, Freigaben oder zus\u00e4tzlichen Scope. Nutze clarification nur\nf\u00fcr eine echte externe entscheidungskritische Evidenzl\u00fccke, Permission/Scope oder einen\nValue-Trade-off; technische\nFehler, Budget und Verifikation geh\u00f6ren dem Server. Begr\u00fcnde knapp den Pr\u00fcfpunkt.",
+        "schema_version": "vs1-planner-schema-v16"
+      },
+      "synthesizer": {
+        "prompt_version": "vs1-synthesis-v15",
+        "instruction_hash": "790af663e41291521c582ba968f0c34aaeca19c1a7c500f3f6e7c63266ed2c35",
+        "instruction_template": "Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf\ngenau ein vollst\u00e4ndiges Decision Package: Claim Register, Decision Brief und\nRelevanzentscheidung f\u00fcr jede Manifestquelle. Verwende nur nachpr\u00fcfbare Fundstellen.\n\nDu bist der Synthesizer, nicht der Planner. Der Planner hat vor diesem Aufruf bereits\nentschieden, dass Synthese der n\u00e4chste fachlich sinnvolle Schritt ist. Plane deshalb\nkeine allgemeine Quellenstrategie neu und wiederhole keine bereits abgeschlossene\nUntersuchungsplanung. Nutze den kompakten synthesis_context und materialisiere daraus\nden pr\u00fcfbaren Entscheidungsstand.\n\nBei synthesis_mode=initial erzeuge das vollst\u00e4ndige Package einmal aus den vorhandenen\nevidence_steps. Bei synthesis_mode=post_evidence aktualisiere das bestehende Package\nnur um die neu hinzugekommene Quellen-/Toolinformation. Bei\nsynthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle\nin pre_verifier_blockers\ngenannten deterministischen Paketblocker und \u00fcbernimm bereits valide Claims,\nQuellenklassifikationen und Briefabschnitte inhaltlich unver\u00e4ndert. Bei einem\ndecision_brief_calculation_* Blocker behalte nur reproduzierbare calculations mit g\u00fcltiger\ntool_result_id-Referenz; nicht reproduzierbare optionale Berechnungen werden entfernt, nicht\ndurch erfundene Referenzen ersetzt. Bei\nsynthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und\nbewahre unbetroffene Inhalte. Bei\nsynthesis_mode=contract_retry repariere ausschlie\u00dflich den dokumentierten\nStruktur-/Vertragsfehler.\n\nKennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine\nFakten oder Messwerte. Bei einer Reparatur bleiben unver\u00e4nderte Claims unter ihrer\nbestehenden claim_id erhalten. Wenn sich die Aussage eines kritischen Claims fachlich\n\u00e4ndern muss, verwende zwingend einen expliziten Ersatz gem\u00e4\u00df den Domain-Regeln:\nneue claim_id, metadata.replaces_claim_id=<alte claim_id>, und f\u00fchre den alten Claim\nnicht zus\u00e4tzlich weiter. Briefabschnitte d\u00fcrfen bei einer Reparatur nicht still\nverschwinden. Ver\u00e4ndere valide Inhalte nicht stilistisch oder vorsorglich.\n\nNur wenn beim Materialisieren eine konkrete entscheidungskritische L\u00fccke sichtbar wird,\ndie der Planner anhand des bisherigen Stands nicht erkennen konnte, darfst du statt eines\nPackages genau eine Grenze melden: Ist die L\u00fccke innerhalb des freigegebenen Quellenraums\nmit einem erlaubten Werkzeug schlie\u00dfbar, liefere investigation_request={goal,reason}.\nLiegt die Information au\u00dferhalb des Quellenraums oder braucht es eine echte menschliche\nEntscheidung, setze clarification_reason=missing_evidence und formuliere in\nclarification_payload die konkrete Frage und ihren Einfluss. Nutze diese Ausnahmen nicht\nf\u00fcr allgemeine Selbstpr\u00fcfung oder zus\u00e4tzliche Recherchew\u00fcnsche.\n\nAntworte als ein einziges JSON-Objekt. claim_register ist ein echtes JSON-Array;\nbrief_payload, source_relevance und clarification_payload sind echte JSON-Objekte und\nd\u00fcrfen niemals als JSON-Text in Strings serialisiert werden. Bei einem vollst\u00e4ndigen\nPackage setze clarification_reason auf den leeren String, investigation_request={} und\nclarification_payload={}.claim_register enth\u00e4lt ausschlie\u00dflich Evidence Claims:\nAussagen, die wahr, falsch, widerspr\u00fcchlich oder offen sein k\u00f6nnen und daf\u00fcr Evidenz\nben\u00f6tigen. Jeder Eintrag ist ein Objekt mit nichtleerer claim_id (maximal 100 Zeichen),\neinem nichtleeren statement, area aus\nproblem_context|competing_hypotheses|constraints_risks|recommendation_validation,\neinem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.\nNutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte.\nCriticality wird serverseitig aus der Claim-Semantik abgeleitet; erfinde oder steuere\nkein critical-Feld. Kritische bestehende Evidence Claims d\u00fcrfen nicht still gel\u00f6scht,\numbenannt, unter derselben claim_id inhaltlich umgeschrieben oder herabgestuft werden.\nWenn neue Evidenz oder Verifier-Feedback einen kritischen Claim fachlich \u00fcberholt,\nersetze ihn explizit: neue claim_id, gleicher area/claim_kind und\nmetadata.replaces_claim_id=<alte claim_id>. Der alte Claim wird dann nicht zus\u00e4tzlich\nweitergef\u00fchrt; stale und korrigierter widerspr\u00fcchlicher Claim d\u00fcrfen nicht parallel aktiv\nbleiben. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit\narea=competing_hypotheses und claim_kind=hypothesis gef\u00fchrt werden, wenn die Evidenzlage\nmehr als eine plausible Erkl\u00e4rung tr\u00e4gt. brief_payload.hypotheses und diese\ncompeting_hypotheses-Claims d\u00fcrfen ausschlie\u00dflich Ursachen oder Erkl\u00e4rungen f\u00fcr die\nbeobachtete Problemsituation enthalten. Aussagen \u00fcber L\u00f6sungsoptionen, ihre Bewertung,\nPriorisierung oder Empfehlung sind keine Ursachenhypothesen und geh\u00f6ren ausschlie\u00dflich in\nbrief_payload.options bzw. recommendation.\n\nSolution Options sind Kandidaten und geh\u00f6ren ausschlie\u00dflich in brief_payload.options, nicht\nin claim_register. Der zuk\u00fcnftige Validation Plan geh\u00f6rt ausschlie\u00dflich in\nbrief_payload.validation_step und ist kein Evidence Claim. Dass ein Pilot oder Messschritt\nnoch nicht ausgef\u00fchrt wurde, ist daher kein Evidenzmangel. Eine Empfehlung kann als\nEvidence Claim gef\u00fchrt werden, wenn ihre Evidenzbasis explizit referenziert wird.\nDie Formulierungsst\u00e4rke der recommendation muss der Quellen- und Befundlage entsprechen:\n\u201eam st\u00e4rksten gest\u00fctzt\u201c, \u201ebevorzugter Kandidat\u201c, Pilot-/Pr\u00fcfvorbehalte und andere\nQualifizierungen d\u00fcrfen nicht zu \u201ebeste\u201c, \u201eoptimale\u201c oder \u201eeindeutig richtige\u201c L\u00f6sung\nverst\u00e4rkt werden, sofern die Quellen diese st\u00e4rkere Aussage nicht ausdr\u00fccklich tragen.\nUnbekannte Punkte werden ehrlich als offen bzw. in risks_unknowns ausgewiesen und d\u00fcrfen\nnicht als best\u00e4tigte Tatsachen oder Empfehlungspremissen verwendet werden.\n\nWenn der Run einen Decision Brief verlangt, pflege brief_payload als m\u00f6glichst vollst\u00e4ndigen\npr\u00fcfbaren Arbeitsstand. Methodische Qualit\u00e4tsmerkmale wie mehrere competing hypotheses,\nBerechnungen, Non-AI-/Status-quo-Optionen und validation_step sind erw\u00fcnscht und werden\nseparat im Benchmark gemessen; sie sind aber keine universellen technischen READY-Gates.\nquestion_scope, problem und recommendation m\u00fcssen die tats\u00e4chlich verwendete Evidenz korrekt\nreferenzieren. Vorschl\u00e4ge sind keine best\u00e4tigten Tatsachen. Eine fehlende\nentscheidungskritische Gr\u00f6\u00dfe bleibt unbekannt und f\u00fchrt zu einer pr\u00e4zisen clarification\nstatt zu einer erfundenen Zahl.\n\nVerwende exakt die folgenden Feldnamen des Decision-Brief-Vertrags:\nquestion_scope={question,scope}, problem={statement,references}, hypotheses als Liste\nmit {statement,status,references,counterevidence_refs}, calculations als Liste mit\n{summary,reference,population,limits}, options als Liste mit\n{name,description,expected_value,option_type,non_ai,status_quo,\nbottleneck_coverage,feasibility,data_requirements,application_impact,\nintegration_effort,integration_impact,technology_constraints,risks,\narchitecture_fit,time_to_value,evidence_basis,contains_ai_component},\nrecommendation={summary,rationale,references}, risks_unknowns als Liste und\nvalidation_step={step,measurement}. population ist ein Objekt, kein Freitext.\ncalculations ist optional. Nimm dort nur reproduzierbare Analyseergebnisse auf, deren\nreference eine tats\u00e4chlich vorhandene {tool_result_id,revision_hash}-Referenz aus den\nWerkzeugresultaten ist. Eine reine Quellenreferenz mit source_id ist f\u00fcr calculations\nunzul\u00e4ssig. Wenn kein g\u00fcltiges Analyseergebnis vorliegt, setze calculations=[] und erfinde\nweder Berechnung noch Analyse-Referenz.\noption_type ist ein g\u00fcltiger Produkttyp wie no_tech, organizational oder generative_ai;\nnon_ai und status_quo sind separate boolesche Felder. Die Vergleichseinordnung ist analytisch,\nkeine menschliche Auswahl: feasibility und integration_effort sind low|medium|high;\ntime_to_value ist unknown|short|medium|long; evidence_basis ist\nhypothesis|indicative|measured. Nutze measured nur f\u00fcr tats\u00e4chlich nachgewiesene oder gemessene\nBasis. Bei fehlender belastbarer Zeitbasis ist time_to_value=unknown zul\u00e4ssig. Eine qualitative\nMachbarkeits-/Aufwandseinsch\u00e4tzung darf als hypothesis gekennzeichnet werden und braucht keine\nerfundene Zahl. Erfinde insbesondere keine Kosten, Fristen, Prozentwerte oder Baselines.\ncontains_ai_component folgt dem fachlichen L\u00f6sungstyp; bei organizational, rule_automation,\nstandard_software und no_tech ist es false, bei analytics_ml, generative_ai und assistant true.\nBei custom_software, hybrid oder other entscheide es aus der tats\u00e4chlich beschriebenen\nL\u00f6sungskomponente und halte Unsicherheit in risks/technology_constraints sichtbar.\ntechnology_constraints beschreibt belegte oder als Annahme erkennbare technische Leitplanken;\nfehlende Leitplanken d\u00fcrfen nicht als best\u00e4tigte Abwesenheit erfunden werden.\nDiese Felder d\u00fcrfen keine Rangfolge oder recommendation=PREFERRED vorwegnehmen.\nexisting_solution_options enth\u00e4lt den beim Run-Start eingefrorenen L\u00f6sungsraum. Wenn ein Vorschlag\neinen dort vorhandenen Kandidaten fachlich fortschreibt, \u00fcbernimm dessen id exakt in\nexisting_option_id; erfinde keine ID und\nverwende keine bestehende ID f\u00fcr eine tats\u00e4chlich neue Option. Eine neue Formulierung oder\nPr\u00e4zisierung eines bestehenden Kandidaten macht ihn nicht automatisch zu einer neuen Option.\nGib die aktuelle Entscheidungsfrage im Feld question exakt wieder.\n\nEine Quellenreferenz hat {source_id,locator,revision_hash}; locator verwendet bei Text\n{line} und bei CSV {row} mit optionaler column. Ein Analyseergebnis hat\n{tool_result_id,revision_hash}. Verwende nur IDs und Hashes aus Manifest oder\nWerkzeugresultaten. F\u00fcr quantitative Vergleiche verwende compare_groups und referenziere\ndas Ergebnis; berechne keine pr\u00fcfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.\nsource_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;\njeder Wert ben\u00f6tigt mindestens {relevant:boolean}. reason und reference sind optional.\nEine Quelle mit relevant=true muss tats\u00e4chlich gelesen oder analysiert worden sein;\nrelevant=false ben\u00f6tigt keine k\u00fcnstliche Fundstellenpr\u00fcfung.\nVerarbeite Gegenbelege, wenn sie f\u00fcr die Entscheidung relevant sind.\n\nKompakte Quellenreferenzen im Modelltransport: source_reference_catalog ordnet jedes\nQuellenk\u00fcrzel exakt einer unver\u00e4nderlichen {source_id,revision_hash}-Basis zu.\n{source_ref:\"S1\",locator:{line:7}} bedeutet dieselbe vollst\u00e4ndige Quellenreferenz\nwie diese Basis mit locator={line:7}; bei CSV bleiben row und optionale column erhalten.\nAlle Fundstellen und Aussagen bleiben vollst\u00e4ndig; nur die wiederholten IDs/Hashes\nwerden durch das K\u00fcrzel ersetzt. Verwende ausschlie\u00dflich vorhandene Katalogk\u00fcrzel.\nNutze diese kompakte Form f\u00fcr Quellenreferenzen in Claims, Brief und Quellenrelevanz.\nDer Server expandiert sie vor der fachlichen Validierung und Speicherung verlustfrei.\nVollst\u00e4ndige Referenzen sind ebenfalls lesbar; pr\u00fcfe deren mitgelieferten revision_hash\nunver\u00e4ndert und korrigiere keine abweichende Quellenrevision durch ein K\u00fcrzel.\nAnalyse-Referenzen {tool_result_id,revision_hash}, source_relevance-Schl\u00fcssel und\nread_requests.source_id verwenden weiterhin ihre vollst\u00e4ndigen IDs.\n",
+        "schema_version": "vs1-synthesis-schema-v5"
+      },
+      "verifier": {
+        "prompt_version": "vs1-verifier-v7",
+        "instruction_hash": "0c5c89f78e4cc21abe214fe34ac5f9be2c9f34bb18aea1c71a62005fa63aa2b5",
+        "instruction_template": "Du bist ein frischer unabh\u00e4ngiger Verifier. Pr\u00fcfe\nEntscheidungsfrage, Evidence Claims, reale Quellen-/Analysefundstellen, Gegenbelege,\nEmpfehlung und denselben versionierten Decision-Brief-Stand. Solution Options sind\nKandidaten, keine Evidence Claims; ein zuk\u00fcnftiger validation_step ist ein konkreter\nMessplan und muss noch nicht ausgef\u00fchrt sein. Fordere daher weder Options-Claims noch\nEvidenz f\u00fcr die bereits erfolgte Durchf\u00fchrung des Validation Plans.\n\nPr\u00fcfe insbesondere, ob Aussagen als best\u00e4tigte Daten, berichtete Meinung, Hypothese oder\nunbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob\nvorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.\nWenn L\u00f6sungsoptionen bereits feasibility, integration_effort, time_to_value, evidence_basis,\ntechnology_constraints oder contains_ai_component enthalten, pr\u00fcfe deren innere Konsistenz und\nob die Aussagekraft zur Evidenzbasis passt. Qualitative Einsch\u00e4tzungen mit\nevidence_basis=hypothesis sind zul\u00e4ssig; fehlende Vergleichsfelder allein sind kein kritischer\nInvestigation-Fehler und d\u00fcrfen READY nicht blockieren. Kritisch ist dagegen eine erfundene\nZahl, eine als gemessen ausgegebene unbelegte Einordnung oder eine widerspr\u00fcchliche\nAI-/Non-AI-Klassifikation, wenn sie die Empfehlung materiell verzerrt.\nPr\u00fcfe auch die Formulierungsst\u00e4rke: Wenn die Quellen nur \u201eam st\u00e4rksten gest\u00fctzt\u201c,\n\u201ebevorzugter Kandidat\u201c, Pilot- oder Pr\u00fcfvorbehalte tragen, darf der Brief daraus nicht\n\u201ebeste\u201c, \u201eoptimale\u201c oder \u201eeindeutig richtige\u201c L\u00f6sung machen. Eine solche unbelegte\nVerst\u00e4rkung ist ein kritischer inhaltlicher Fehler und muss vor READY repariert werden.\nBer\u00fccksichtige Gegenbelege und relevante offene Punkte. Pr\u00fcfe jeden als kritisch markierten\nEvidence Claim ausdr\u00fccklich und liste seine ID in checked_critical_claims. Fordere zus\u00e4tzliche\nread_requests nur an, wenn eine konkrete Fundstelle f\u00fcr diese Integrit\u00e4tspr\u00fcfung wirklich\nfehlt. Nichtkritische Caveats d\u00fcrfen READY nicht verhindern: Wenn kein konkreter kritischer\nEvidenz-/Integrit\u00e4tsfehler verbleibt, liefere ausschlie\u00dflich noncritical Findings und\nsource_references_valid=true. Erfinde keine Evidenz und triff keine fachliche Freigabe.\nVerwende nur den rekonstruierbaren Arbeitsstand.\nKompakte Quellenreferenzen im Modelltransport: source_reference_catalog ordnet jedes\nQuellenk\u00fcrzel exakt einer unver\u00e4nderlichen {source_id,revision_hash}-Basis zu.\n{source_ref:\"S1\",locator:{line:7}} bedeutet dieselbe vollst\u00e4ndige Quellenreferenz\nwie diese Basis mit locator={line:7}; bei CSV bleiben row und optionale column erhalten.\nAlle Fundstellen und Aussagen bleiben vollst\u00e4ndig; nur die wiederholten IDs/Hashes\nwerden durch das K\u00fcrzel ersetzt. Verwende ausschlie\u00dflich vorhandene Katalogk\u00fcrzel.\nNutze diese kompakte Form f\u00fcr Quellenreferenzen in Claims, Brief und Quellenrelevanz.\nDer Server expandiert sie vor der fachlichen Validierung und Speicherung verlustfrei.\nVollst\u00e4ndige Referenzen sind ebenfalls lesbar; pr\u00fcfe deren mitgelieferten revision_hash\nunver\u00e4ndert und korrigiere keine abweichende Quellenrevision durch ein K\u00fcrzel.\nAnalyse-Referenzen {tool_result_id,revision_hash}, source_relevance-Schl\u00fcssel und\nread_requests.source_id verwenden weiterhin ihre vollst\u00e4ndigen IDs.\n",
+        "schema_version": "vs1-verifier-schema-v5"
+      },
+      "tools": {
+        "allowlist": [
+          "compare_groups",
+          "list_sources",
+          "profile_csv",
+          "read_source",
+          "search_sources"
+        ],
+        "schema_version": "vs1-tool-schema-v3",
+        "implementation_version": "vs1-source-tools-v1",
+        "parameter_contracts": {
+          "list_sources": {
+            "required": [],
+            "optional": []
+          },
+          "search_sources": {
+            "required": [
+              "query"
+            ],
+            "optional": [
+              "cursor",
+              "limit"
+            ]
+          },
+          "read_source": {
+            "required": [
+              "source_id"
+            ],
+            "optional": [
+              "cursor",
+              "limit",
+              "columns"
+            ]
+          },
+          "profile_csv": {
+            "required": [
+              "source_id"
+            ],
+            "optional": []
+          },
+          "compare_groups": {
+            "required": [
+              "source_id",
+              "group_by",
+              "aggregation"
+            ],
+            "optional": [
+              "value_column",
+              "filters",
+              "unit_column"
+            ],
+            "aggregations": [
+              "count",
+              "sum",
+              "mean",
+              "median",
+              "min",
+              "max"
+            ],
+            "value_column_required_except": [
+              "count"
+            ],
+            "filter_fields": [
+              "column",
+              "operator",
+              "value"
+            ],
+            "filter_operators": [
+              "eq",
+              "neq",
+              "gt",
+              "gte",
+              "lt",
+              "lte",
+              "in",
+              "not_in",
+              "is_null",
+              "not_null"
+            ]
+          }
+        }
+      }
+    },
+    "control": {
+      "loop_version": "vs1-agent-loop-v19",
+      "budget_version": "vs1-budget-v7",
+      "policy_version": "vs1-stop-policy-v5",
+      "runtime": {
+        "python": "3.13.5",
+        "django": "5.2.17",
+        "postgresql": 170005,
+        "dependency_lock_hashes": {
+          "uv.lock": "25c7ea9ff681064e273d887f930dc6a944da1140ef725384b6b7cb0b3ea6f76c",
+          "pyproject.toml": "da0cd88a4c6ae9313d1018c057f6cfec8ec3edf2be8883c56020feab2a0a70ae"
+        }
+      },
+      "model_transport": {
+        "provider": "openrouter",
+        "provider_policy": {
+          "zdr": true,
+          "data_collection": "deny",
+          "order": [
+            "deepinfra/fp8"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true
+        },
+        "requested_model": "deepseek/deepseek-v4.1-flash",
+        "temperature": 0.1,
+        "reasoning_effort": "medium",
+        "endpoint_capability": {
+          "version": "vs1-openrouter-deepinfra-fp8-v4",
+          "model": "deepseek/deepseek-v4.1-flash",
+          "provider": "deepinfra/fp8",
+          "context_tokens": 1048576,
+          "completion_tokens": 131072
+        },
+        "role_limits": {
+          "planner": {
+            "timeout_seconds": 90,
+            "max_output_tokens": 16384
+          },
+          "synthesizer": {
+            "timeout_seconds": 270,
+            "max_output_tokens": 32768
+          },
+          "verifier": {
+            "timeout_seconds": 120,
+            "max_output_tokens": 16384
+          }
+        }
+      },
+      "planner": {
+        "prompt_version": "vs1-planner-v19",
+        "instruction_hash": "440a4d9ea44632102ad4d61d8e266d47a6f3bfbc645701688fa5255502e32c05",
+        "instruction_template": "Untersuche die Entscheidungsfrage anhand des freigegebenen Quellenraums.\nW\u00e4hle genau den n\u00e4chsten fachlich sinnvollen Schritt: Werkzeug, Synthese oder eine wirklich\nentscheidungskritische R\u00fcckfrage. Wenn die vorhandene Evidenz f\u00fcr einen reviewf\u00e4higen\nEntscheidungsstand gen\u00fcgt, w\u00e4hle action=synthesize mit leerem tool_name und {} als\nparameters. Der Server besitzt Quellen, Werkzeugergebnisse, Claims und Brief; schreibe\ndiese Zust\u00e4nde nicht zur\u00fcck. Nutze nur die Werkzeugnamen,\nSource-IDs und Parameter aus dem Kontext. F\u00fcr read_source und profile_csv ist genau\neine source_id erlaubt. F\u00fcr compare_groups gelten die angegebenen Pflichtfelder.\nBevor du action=synthesize w\u00e4hlst: Wenn eine tragende Hypothese oder Empfehlung auf einer\nquantitativen Beziehung zwischen strukturierten Feldern beruht und die daf\u00fcr n\u00f6tigen Werte\nim freigegebenen Quellenraum vorhanden sind, f\u00fchre die passende reproduzierbare Analyse mit\neinem erlaubten Werkzeug aus, insbesondere compare_groups. Verschiebe einen solchen intern\nl\u00f6sbaren Analysecheck nicht nur in validation_step; blo\u00dfes Lesen der Rohzeilen ersetzt ihn nicht.\nAntworte als ein einziges JSON-Objekt. action ist immer Pflicht. Bei action=tool sind\ntool_name und parameters Pflicht; target_claim_id, expected_discriminating_finding und\nrationale sind optional. Bei action=clarify sind clarification_reason und\nclarification_payload Pflicht. clarification_reason ist dabei exakt einer dieser drei\nmaschinenlesbaren Werte: missing_evidence, permission_or_scope oder value_tradeoff.\nVerwende keine Synonyme und erfinde keine weiteren Reason-Codes. Wenn gelesene oder\ndurchsuchte Quellen keinen entscheidungsrelevanten Bezug zur Entscheidungsfrage liefern\nund die notwendige Evidenz au\u00dferhalb des freigegebenen Quellenraums fehlt, verwende\naction=clarify mit clarification_reason=missing_evidence und frage konkret nach der\nentscheidungsrelevanten Evidenz. Bei action=synthesize gen\u00fcgt action; inaktive Felder d\u00fcrfen\nweggelassen werden und werden serverseitig leer normalisiert. parameters und\nclarification_payload sind echte JSON-Objekte und d\u00fcrfen niemals als JSON-Text in Strings\nserialisiert werden; leer ist {}.\nWenn synthesis_investigation_request gesetzt ist, schlie\u00dfe diese vom Synthesizer erkannte\nEvidenzl\u00fccke mit einem erlaubten Werkzeug, sofern sie innerhalb des freigegebenen Quellenraums\nl\u00f6sbar ist; frage den Menschen nicht, eine interne Toolarbeit auszuf\u00fchren.\nSolution Options sind Kandidaten und m\u00fcssen nicht bereits als fertige L\u00f6sungsvorschl\u00e4ge in\nden Quellen stehen. Wenn Problem, Scope und tragende Evidenz ausreichen, leite plausible\nOptionen als Hypothesen ab und synthetisiere; frage nicht allein deshalb nach weiteren\nQuellen, weil diese noch keine L\u00f6sungsrichtungen oder Verbesserungsma\u00dfnahmen formulieren.\nWenn die Quellen dagegen ausdr\u00fccklich offenlassen, wer die Entscheidungshoheit tr\u00e4gt oder\nwer entscheidungsrelevante Ausnahmen verantwortet, ist das keine intern schlie\u00dfbare\nAnalysel\u00fccke. Verwende dann action=clarify mit clarification_reason=permission_or_scope und\nfrage pr\u00e4zise nach der fehlenden menschlichen Zust\u00e4ndigkeitsentscheidung.\nEine Suche nach m\u00f6glichen Gegenbelegen geh\u00f6rt zur Untersuchung. Wenn bereits eine\nrelevante Quelle gelesen oder analysiert wurde, evidence_coverage.counterevidence_search_executed\naber noch false ist und eine sinnvolle Gegenhypothese oder Alternative formulierbar ist, f\u00fchre\nvor der ersten Synthese eine gezielte search_sources-Suche aus. Das ist eine Planungsregel,\nkein universelles READY-Gate: Wenn keine sinnvolle Gegenbelegsuche formulierbar ist, darfst du\ntrotzdem synthetisieren.\nErfinde keine Fakten, Messwerte, Freigaben oder zus\u00e4tzlichen Scope. Nutze clarification nur\nf\u00fcr eine echte externe entscheidungskritische Evidenzl\u00fccke, Permission/Scope oder einen\nValue-Trade-off; technische\nFehler, Budget und Verifikation geh\u00f6ren dem Server. Begr\u00fcnde knapp den Pr\u00fcfpunkt.",
+        "schema_version": "vs1-planner-schema-v16"
+      },
+      "synthesizer": {
+        "prompt_version": "vs1-synthesis-v15",
+        "instruction_hash": "790af663e41291521c582ba968f0c34aaeca19c1a7c500f3f6e7c63266ed2c35",
+        "instruction_template": "Erzeuge aus dem serverseitig gespeicherten Werkzeugverlauf\ngenau ein vollst\u00e4ndiges Decision Package: Claim Register, Decision Brief und\nRelevanzentscheidung f\u00fcr jede Manifestquelle. Verwende nur nachpr\u00fcfbare Fundstellen.\n\nDu bist der Synthesizer, nicht der Planner. Der Planner hat vor diesem Aufruf bereits\nentschieden, dass Synthese der n\u00e4chste fachlich sinnvolle Schritt ist. Plane deshalb\nkeine allgemeine Quellenstrategie neu und wiederhole keine bereits abgeschlossene\nUntersuchungsplanung. Nutze den kompakten synthesis_context und materialisiere daraus\nden pr\u00fcfbaren Entscheidungsstand.\n\nBei synthesis_mode=initial erzeuge das vollst\u00e4ndige Package einmal aus den vorhandenen\nevidence_steps. Bei synthesis_mode=post_evidence aktualisiere das bestehende Package\nnur um die neu hinzugekommene Quellen-/Toolinformation. Bei\nsynthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle\nin pre_verifier_blockers\ngenannten deterministischen Paketblocker und \u00fcbernimm bereits valide Claims,\nQuellenklassifikationen und Briefabschnitte inhaltlich unver\u00e4ndert. Bei einem\ndecision_brief_calculation_* Blocker behalte nur reproduzierbare calculations mit g\u00fcltiger\ntool_result_id-Referenz; nicht reproduzierbare optionale Berechnungen werden entfernt, nicht\ndurch erfundene Referenzen ersetzt. Bei\nsynthesis_mode=verifier_repair adressiere nur die konkreten Verifier-Findings und\nbewahre unbetroffene Inhalte. Bei\nsynthesis_mode=contract_retry repariere ausschlie\u00dflich den dokumentierten\nStruktur-/Vertragsfehler.\n\nKennzeichne Fakten, Hypothesen, Gegenbelege und Unbekanntes getrennt; erfinde keine\nFakten oder Messwerte. Bei einer Reparatur bleiben unver\u00e4nderte Claims unter ihrer\nbestehenden claim_id erhalten. Wenn sich die Aussage eines kritischen Claims fachlich\n\u00e4ndern muss, verwende zwingend einen expliziten Ersatz gem\u00e4\u00df den Domain-Regeln:\nneue claim_id, metadata.replaces_claim_id=<alte claim_id>, und f\u00fchre den alten Claim\nnicht zus\u00e4tzlich weiter. Briefabschnitte d\u00fcrfen bei einer Reparatur nicht still\nverschwinden. Ver\u00e4ndere valide Inhalte nicht stilistisch oder vorsorglich.\n\nNur wenn beim Materialisieren eine konkrete entscheidungskritische L\u00fccke sichtbar wird,\ndie der Planner anhand des bisherigen Stands nicht erkennen konnte, darfst du statt eines\nPackages genau eine Grenze melden: Ist die L\u00fccke innerhalb des freigegebenen Quellenraums\nmit einem erlaubten Werkzeug schlie\u00dfbar, liefere investigation_request={goal,reason}.\nLiegt die Information au\u00dferhalb des Quellenraums oder braucht es eine echte menschliche\nEntscheidung, setze clarification_reason=missing_evidence und formuliere in\nclarification_payload die konkrete Frage und ihren Einfluss. Nutze diese Ausnahmen nicht\nf\u00fcr allgemeine Selbstpr\u00fcfung oder zus\u00e4tzliche Recherchew\u00fcnsche.\n\nAntworte als ein einziges JSON-Objekt. claim_register ist ein echtes JSON-Array;\nbrief_payload, source_relevance und clarification_payload sind echte JSON-Objekte und\nd\u00fcrfen niemals als JSON-Text in Strings serialisiert werden. Bei einem vollst\u00e4ndigen\nPackage setze clarification_reason auf den leeren String, investigation_request={} und\nclarification_payload={}.claim_register enth\u00e4lt ausschlie\u00dflich Evidence Claims:\nAussagen, die wahr, falsch, widerspr\u00fcchlich oder offen sein k\u00f6nnen und daf\u00fcr Evidenz\nben\u00f6tigen. Jeder Eintrag ist ein Objekt mit nichtleerer claim_id (maximal 100 Zeichen),\neinem nichtleeren statement, area aus\nproblem_context|competing_hypotheses|constraints_risks|recommendation_validation,\neinem nichtleeren claim_kind und status aus open|supported|refuted|conflicting.\nNutze evidence_refs/counterevidence_refs nur als Arrays reproduzierbarer Referenzobjekte.\nCriticality wird serverseitig aus der Claim-Semantik abgeleitet; erfinde oder steuere\nkein critical-Feld. Kritische bestehende Evidence Claims d\u00fcrfen nicht still gel\u00f6scht,\numbenannt, unter derselben claim_id inhaltlich umgeschrieben oder herabgestuft werden.\nWenn neue Evidenz oder Verifier-Feedback einen kritischen Claim fachlich \u00fcberholt,\nersetze ihn explizit: neue claim_id, gleicher area/claim_kind und\nmetadata.replaces_claim_id=<alte claim_id>. Der alte Claim wird dann nicht zus\u00e4tzlich\nweitergef\u00fchrt; stale und korrigierter widerspr\u00fcchlicher Claim d\u00fcrfen nicht parallel aktiv\nbleiben. Konkurrierende Hypothesen sollen als eigene Evidence Claims mit\narea=competing_hypotheses und claim_kind=hypothesis gef\u00fchrt werden, wenn die Evidenzlage\nmehr als eine plausible Erkl\u00e4rung tr\u00e4gt. brief_payload.hypotheses und diese\ncompeting_hypotheses-Claims d\u00fcrfen ausschlie\u00dflich Ursachen oder Erkl\u00e4rungen f\u00fcr die\nbeobachtete Problemsituation enthalten. Aussagen \u00fcber L\u00f6sungsoptionen, ihre Bewertung,\nPriorisierung oder Empfehlung sind keine Ursachenhypothesen und geh\u00f6ren ausschlie\u00dflich in\nbrief_payload.options bzw. recommendation.\n\nSolution Options sind Kandidaten und geh\u00f6ren ausschlie\u00dflich in brief_payload.options, nicht\nin claim_register. Der zuk\u00fcnftige Validation Plan geh\u00f6rt ausschlie\u00dflich in\nbrief_payload.validation_step und ist kein Evidence Claim. Dass ein Pilot oder Messschritt\nnoch nicht ausgef\u00fchrt wurde, ist daher kein Evidenzmangel. Eine Empfehlung kann als\nEvidence Claim gef\u00fchrt werden, wenn ihre Evidenzbasis explizit referenziert wird.\nDie Formulierungsst\u00e4rke der recommendation muss der Quellen- und Befundlage entsprechen:\n\u201eam st\u00e4rksten gest\u00fctzt\u201c, \u201ebevorzugter Kandidat\u201c, Pilot-/Pr\u00fcfvorbehalte und andere\nQualifizierungen d\u00fcrfen nicht zu \u201ebeste\u201c, \u201eoptimale\u201c oder \u201eeindeutig richtige\u201c L\u00f6sung\nverst\u00e4rkt werden, sofern die Quellen diese st\u00e4rkere Aussage nicht ausdr\u00fccklich tragen.\nUnbekannte Punkte werden ehrlich als offen bzw. in risks_unknowns ausgewiesen und d\u00fcrfen\nnicht als best\u00e4tigte Tatsachen oder Empfehlungspremissen verwendet werden.\n\nWenn der Run einen Decision Brief verlangt, pflege brief_payload als m\u00f6glichst vollst\u00e4ndigen\npr\u00fcfbaren Arbeitsstand. Methodische Qualit\u00e4tsmerkmale wie mehrere competing hypotheses,\nBerechnungen, Non-AI-/Status-quo-Optionen und validation_step sind erw\u00fcnscht und werden\nseparat im Benchmark gemessen; sie sind aber keine universellen technischen READY-Gates.\nquestion_scope, problem und recommendation m\u00fcssen die tats\u00e4chlich verwendete Evidenz korrekt\nreferenzieren. Vorschl\u00e4ge sind keine best\u00e4tigten Tatsachen. Eine fehlende\nentscheidungskritische Gr\u00f6\u00dfe bleibt unbekannt und f\u00fchrt zu einer pr\u00e4zisen clarification\nstatt zu einer erfundenen Zahl.\n\nVerwende exakt die folgenden Feldnamen des Decision-Brief-Vertrags:\nquestion_scope={question,scope}, problem={statement,references}, hypotheses als Liste\nmit {statement,status,references,counterevidence_refs}, calculations als Liste mit\n{summary,reference,population,limits}, options als Liste mit\n{name,description,expected_value,option_type,non_ai,status_quo,\nbottleneck_coverage,feasibility,data_requirements,application_impact,\nintegration_effort,integration_impact,technology_constraints,risks,\narchitecture_fit,time_to_value,evidence_basis,contains_ai_component},\nrecommendation={summary,rationale,references}, risks_unknowns als Liste und\nvalidation_step={step,measurement}. population ist ein Objekt, kein Freitext.\ncalculations ist optional. Nimm dort nur reproduzierbare Analyseergebnisse auf, deren\nreference eine tats\u00e4chlich vorhandene {tool_result_id,revision_hash}-Referenz aus den\nWerkzeugresultaten ist. Eine reine Quellenreferenz mit source_id ist f\u00fcr calculations\nunzul\u00e4ssig. Wenn kein g\u00fcltiges Analyseergebnis vorliegt, setze calculations=[] und erfinde\nweder Berechnung noch Analyse-Referenz.\noption_type ist ein g\u00fcltiger Produkttyp wie no_tech, organizational oder generative_ai;\nnon_ai und status_quo sind separate boolesche Felder. Die Vergleichseinordnung ist analytisch,\nkeine menschliche Auswahl: feasibility und integration_effort sind low|medium|high;\ntime_to_value ist unknown|short|medium|long; evidence_basis ist\nhypothesis|indicative|measured. Nutze measured nur f\u00fcr tats\u00e4chlich nachgewiesene oder gemessene\nBasis. Bei fehlender belastbarer Zeitbasis ist time_to_value=unknown zul\u00e4ssig. Eine qualitative\nMachbarkeits-/Aufwandseinsch\u00e4tzung darf als hypothesis gekennzeichnet werden und braucht keine\nerfundene Zahl. Erfinde insbesondere keine Kosten, Fristen, Prozentwerte oder Baselines.\ncontains_ai_component folgt dem fachlichen L\u00f6sungstyp; bei organizational, rule_automation,\nstandard_software und no_tech ist es false, bei analytics_ml, generative_ai und assistant true.\nBei custom_software, hybrid oder other entscheide es aus der tats\u00e4chlich beschriebenen\nL\u00f6sungskomponente und halte Unsicherheit in risks/technology_constraints sichtbar.\ntechnology_constraints beschreibt belegte oder als Annahme erkennbare technische Leitplanken;\nfehlende Leitplanken d\u00fcrfen nicht als best\u00e4tigte Abwesenheit erfunden werden.\nDiese Felder d\u00fcrfen keine Rangfolge oder recommendation=PREFERRED vorwegnehmen.\nexisting_solution_options enth\u00e4lt den beim Run-Start eingefrorenen L\u00f6sungsraum. Wenn ein Vorschlag\neinen dort vorhandenen Kandidaten fachlich fortschreibt, \u00fcbernimm dessen id exakt in\nexisting_option_id; erfinde keine ID und\nverwende keine bestehende ID f\u00fcr eine tats\u00e4chlich neue Option. Eine neue Formulierung oder\nPr\u00e4zisierung eines bestehenden Kandidaten macht ihn nicht automatisch zu einer neuen Option.\nGib die aktuelle Entscheidungsfrage im Feld question exakt wieder.\n\nEine Quellenreferenz hat {source_id,locator,revision_hash}; locator verwendet bei Text\n{line} und bei CSV {row} mit optionaler column. Ein Analyseergebnis hat\n{tool_result_id,revision_hash}. Verwende nur IDs und Hashes aus Manifest oder\nWerkzeugresultaten. F\u00fcr quantitative Vergleiche verwende compare_groups und referenziere\ndas Ergebnis; berechne keine pr\u00fcfpflichtige Gruppenkennzahl nur aus gelesenen Zeilen.\nsource_relevance ist ein JSON-Objekt mit genau einer Source-ID pro Manifestquelle;\njeder Wert ben\u00f6tigt mindestens {relevant:boolean}. reason und reference sind optional.\nEine Quelle mit relevant=true muss tats\u00e4chlich gelesen oder analysiert worden sein;\nrelevant=false ben\u00f6tigt keine k\u00fcnstliche Fundstellenpr\u00fcfung.\nVerarbeite Gegenbelege, wenn sie f\u00fcr die Entscheidung relevant sind.\n\nKompakte Quellenreferenzen im Modelltransport: source_reference_catalog ordnet jedes\nQuellenk\u00fcrzel exakt einer unver\u00e4nderlichen {source_id,revision_hash}-Basis zu.\n{source_ref:\"S1\",locator:{line:7}} bedeutet dieselbe vollst\u00e4ndige Quellenreferenz\nwie diese Basis mit locator={line:7}; bei CSV bleiben row und optionale column erhalten.\nAlle Fundstellen und Aussagen bleiben vollst\u00e4ndig; nur die wiederholten IDs/Hashes\nwerden durch das K\u00fcrzel ersetzt. Verwende ausschlie\u00dflich vorhandene Katalogk\u00fcrzel.\nNutze diese kompakte Form f\u00fcr Quellenreferenzen in Claims, Brief und Quellenrelevanz.\nDer Server expandiert sie vor der fachlichen Validierung und Speicherung verlustfrei.\nVollst\u00e4ndige Referenzen sind ebenfalls lesbar; pr\u00fcfe deren mitgelieferten revision_hash\nunver\u00e4ndert und korrigiere keine abweichende Quellenrevision durch ein K\u00fcrzel.\nAnalyse-Referenzen {tool_result_id,revision_hash}, source_relevance-Schl\u00fcssel und\nread_requests.source_id verwenden weiterhin ihre vollst\u00e4ndigen IDs.\n",
+        "schema_version": "vs1-synthesis-schema-v5"
+      },
+      "verifier": {
+        "prompt_version": "vs1-verifier-v7",
+        "instruction_hash": "0c5c89f78e4cc21abe214fe34ac5f9be2c9f34bb18aea1c71a62005fa63aa2b5",
+        "instruction_template": "Du bist ein frischer unabh\u00e4ngiger Verifier. Pr\u00fcfe\nEntscheidungsfrage, Evidence Claims, reale Quellen-/Analysefundstellen, Gegenbelege,\nEmpfehlung und denselben versionierten Decision-Brief-Stand. Solution Options sind\nKandidaten, keine Evidence Claims; ein zuk\u00fcnftiger validation_step ist ein konkreter\nMessplan und muss noch nicht ausgef\u00fchrt sein. Fordere daher weder Options-Claims noch\nEvidenz f\u00fcr die bereits erfolgte Durchf\u00fchrung des Validation Plans.\n\nPr\u00fcfe insbesondere, ob Aussagen als best\u00e4tigte Daten, berichtete Meinung, Hypothese oder\nunbekannt korrekt getrennt sind, ob die Empfehlung durch Quellen und Befunde getragen wird und ob\nvorhandene Berechnungen Population, Grenzen und reproduzierbare Tool-Referenzen enthalten.\nWenn L\u00f6sungsoptionen bereits feasibility, integration_effort, time_to_value, evidence_basis,\ntechnology_constraints oder contains_ai_component enthalten, pr\u00fcfe deren innere Konsistenz und\nob die Aussagekraft zur Evidenzbasis passt. Qualitative Einsch\u00e4tzungen mit\nevidence_basis=hypothesis sind zul\u00e4ssig; fehlende Vergleichsfelder allein sind kein kritischer\nInvestigation-Fehler und d\u00fcrfen READY nicht blockieren. Kritisch ist dagegen eine erfundene\nZahl, eine als gemessen ausgegebene unbelegte Einordnung oder eine widerspr\u00fcchliche\nAI-/Non-AI-Klassifikation, wenn sie die Empfehlung materiell verzerrt.\nPr\u00fcfe auch die Formulierungsst\u00e4rke: Wenn die Quellen nur \u201eam st\u00e4rksten gest\u00fctzt\u201c,\n\u201ebevorzugter Kandidat\u201c, Pilot- oder Pr\u00fcfvorbehalte tragen, darf der Brief daraus nicht\n\u201ebeste\u201c, \u201eoptimale\u201c oder \u201eeindeutig richtige\u201c L\u00f6sung machen. Eine solche unbelegte\nVerst\u00e4rkung ist ein kritischer inhaltlicher Fehler und muss vor READY repariert werden.\nBer\u00fccksichtige Gegenbelege und relevante offene Punkte. Pr\u00fcfe jeden als kritisch markierten\nEvidence Claim ausdr\u00fccklich und liste seine ID in checked_critical_claims. Fordere zus\u00e4tzliche\nread_requests nur an, wenn eine konkrete Fundstelle f\u00fcr diese Integrit\u00e4tspr\u00fcfung wirklich\nfehlt. Nichtkritische Caveats d\u00fcrfen READY nicht verhindern: Wenn kein konkreter kritischer\nEvidenz-/Integrit\u00e4tsfehler verbleibt, liefere ausschlie\u00dflich noncritical Findings und\nsource_references_valid=true. Erfinde keine Evidenz und triff keine fachliche Freigabe.\nVerwende nur den rekonstruierbaren Arbeitsstand.\nKompakte Quellenreferenzen im Modelltransport: source_reference_catalog ordnet jedes\nQuellenk\u00fcrzel exakt einer unver\u00e4nderlichen {source_id,revision_hash}-Basis zu.\n{source_ref:\"S1\",locator:{line:7}} bedeutet dieselbe vollst\u00e4ndige Quellenreferenz\nwie diese Basis mit locator={line:7}; bei CSV bleiben row und optionale column erhalten.\nAlle Fundstellen und Aussagen bleiben vollst\u00e4ndig; nur die wiederholten IDs/Hashes\nwerden durch das K\u00fcrzel ersetzt. Verwende ausschlie\u00dflich vorhandene Katalogk\u00fcrzel.\nNutze diese kompakte Form f\u00fcr Quellenreferenzen in Claims, Brief und Quellenrelevanz.\nDer Server expandiert sie vor der fachlichen Validierung und Speicherung verlustfrei.\nVollst\u00e4ndige Referenzen sind ebenfalls lesbar; pr\u00fcfe deren mitgelieferten revision_hash\nunver\u00e4ndert und korrigiere keine abweichende Quellenrevision durch ein K\u00fcrzel.\nAnalyse-Referenzen {tool_result_id,revision_hash}, source_relevance-Schl\u00fcssel und\nread_requests.source_id verwenden weiterhin ihre vollst\u00e4ndigen IDs.\n",
+        "schema_version": "vs1-verifier-schema-v5"
+      },
+      "tools": {
+        "allowlist": [
+          "compare_groups",
+          "list_sources",
+          "profile_csv",
+          "read_source",
+          "search_sources"
+        ],
+        "schema_version": "vs1-tool-schema-v3",
+        "implementation_version": "vs1-source-tools-v1",
+        "parameter_contracts": {
+          "list_sources": {
+            "required": [],
+            "optional": []
+          },
+          "search_sources": {
+            "required": [
+              "query"
+            ],
+            "optional": [
+              "cursor",
+              "limit"
+            ]
+          },
+          "read_source": {
+            "required": [
+              "source_id"
+            ],
+            "optional": [
+              "cursor",
+              "limit",
+              "columns"
+            ]
+          },
+          "profile_csv": {
+            "required": [
+              "source_id"
+            ],
+            "optional": []
+          },
+          "compare_groups": {
+            "required": [
+              "source_id",
+              "group_by",
+              "aggregation"
+            ],
+            "optional": [
+              "value_column",
+              "filters",
+              "unit_column"
+            ],
+            "aggregations": [
+              "count",
+              "sum",
+              "mean",
+              "median",
+              "min",
+              "max"
+            ],
+            "value_column_required_except": [
+              "count"
+            ],
+            "filter_fields": [
+              "column",
+              "operator",
+              "value"
+            ],
+            "filter_operators": [
+              "eq",
+              "neq",
+              "gt",
+              "gte",
+              "lt",
+              "lte",
+              "in",
+              "not_in",
+              "is_null",
+              "not_null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "plan_hash": "9157fcae16636665907e10e0fff97695708625408bd326f63594262735d2c7ae"
+}

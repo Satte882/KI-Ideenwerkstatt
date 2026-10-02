@@ -1,5 +1,12 @@
 # #118 C2a: v20 Variant / echter v19 Control
 
+> Historical #118 experiment documentation. C2d restores the active product to
+> `vs1-agent-loop-v19`; v20 was **NOT SUFFICIENTLY PROVEN — NOT ADOPTED**.
+> The instructions and v20 assertions below describe the historical experiment,
+> not the current product runtime or authorization for another provider cycle.
+> See [rollback decision](ISSUE_118_ROLLBACK.md) and
+> [frozen audit archive](../../artifacts/issue106/exp118/README.md).
+
 Diese Anleitung beschreibt das spätere reale Experiment. **In C2a wurden keine
 realen Provider-Runs ausgeführt.** Harness-Einführung ist keine Experimentmessung
 und keine Übernahmeentscheidung. Parent #106 bleibt Entscheidungsgate.
