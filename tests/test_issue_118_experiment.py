@@ -261,6 +261,8 @@ def test_complete_review_reliability_path_is_eligible(records, plan, reference):
     assert report["g03"]["gate_pass"]
     assert not report["runtime_effect"]["gate_pass"]
     assert report["adoption_eligible"]
+    assert report["ap1_reference"]["quality_pass_count"] == 16
+    assert report["ap1_reference"]["by_case"]["AP4-04"]["runtime"]["median_seconds"] == 266.381
 
 
 def test_failed_runtime_is_stratified_not_speed_comparison(records, plan, reference):

@@ -437,6 +437,11 @@ def aggregate_experiment(records, plan, reference, reviews=None):
     )
     adoption = comparable and guards and (runtime_gate or reliability)
     return {
+        "ap1_reference": {
+            "by_case": baseline["by_case"],
+            "budget_accounted_cost_usd": baseline["total_budget_accounted_cost_usd"],
+            "quality_pass_count": baseline["quality_statuses"]["pass"],
+        },
         "population_complete": complete,
         "expected_variant_count": 20,
         "expected_control_count": 5,
@@ -452,6 +457,9 @@ def aggregate_experiment(records, plan, reference, reviews=None):
             "by_case": effects,
             "aggregate_effect_seconds": effect,
             "aggregate_noise_floor_seconds": noise,
+            "aggregate_reduction_percent": effect / baseline_center * 100
+            if effect is not None
+            else None,
             "status_comparable": runtime_comparable,
             "gate_pass": runtime_gate,
         },
