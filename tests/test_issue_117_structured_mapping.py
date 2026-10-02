@@ -115,9 +115,7 @@ def write_default_sources(root: Path) -> None:
         encoding="utf-8",
     )
     (root / "secondary.csv").write_text(
-        "case_id,decision,amount\n"
-        "E01,secondary,11\n"
-        "X02,secondary,22\n",
+        "case_id,decision,amount\nE01,secondary,11\nX02,secondary,22\n",
         encoding="utf-8",
     )
 
@@ -296,10 +294,7 @@ def test_duplicate_case_key_blocks(owner, business_unit, tmp_path):
             ],
         ),
     )
-    assert (
-        "structured_mapping_duplicate_case_key:routing:E01"
-        in structured_mapping_blockers(run)
-    )
+    assert "structured_mapping_duplicate_case_key:routing:E01" in structured_mapping_blockers(run)
 
 
 @pytest.mark.django_db
@@ -367,10 +362,7 @@ def test_invalid_or_wrong_source_reference_blocks(owner, business_unit, tmp_path
             [assignment(secondary, "E01", "standard", 1)],
         ),
     )
-    assert (
-        "structured_mapping_reference_invalid:routing:E01"
-        in structured_mapping_blockers(run)
-    )
+    assert "structured_mapping_reference_invalid:routing:E01" in structured_mapping_blockers(run)
 
 
 @pytest.mark.django_db
@@ -494,9 +486,7 @@ def test_same_case_key_in_two_sources_is_bound_per_obligation(owner, business_un
         lambda item: {**item, "exhaustive": False},
     ],
 )
-def test_invalid_activation_contract_fails_closed(
-    owner, business_unit, tmp_path, mutator
-):
+def test_invalid_activation_contract_fails_closed(owner, business_unit, tmp_path, mutator):
     process = make_process(owner=owner, business_unit=business_unit, name="Issue 117 invalid")
     write_default_sources(tmp_path)
     snapshot = snapshot_for_root(owner=owner, process=process, root=tmp_path)
@@ -533,9 +523,7 @@ def test_text_source_cannot_activate_mapping_obligation(owner, business_unit, tm
 
 
 @pytest.mark.django_db
-def test_mapping_removal_inside_existing_brief_section_is_rechecked(
-    owner, business_unit, tmp_path
-):
+def test_mapping_removal_inside_existing_brief_section_is_rechecked(owner, business_unit, tmp_path):
     _snapshot, handle, source = start_default_mapping_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="repair-loss"
     )
@@ -620,9 +608,7 @@ def test_repair_can_complete_missing_assignment(owner, business_unit, tmp_path):
 
 
 @pytest.mark.django_db
-def test_budget_exhaustion_with_missing_mapping_never_becomes_ready(
-    owner, business_unit, tmp_path
-):
+def test_budget_exhaustion_with_missing_mapping_never_becomes_ready(owner, business_unit, tmp_path):
     _snapshot, handle, source = start_default_mapping_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="budget"
     )
@@ -673,9 +659,7 @@ def test_mapping_change_invalidates_existing_verifier(owner, business_unit, tmp_
 
 
 @pytest.mark.django_db
-def test_obligation_contract_change_invalidates_existing_verifier(
-    owner, business_unit, tmp_path
-):
+def test_obligation_contract_change_invalidates_existing_verifier(owner, business_unit, tmp_path):
     _snapshot, handle, source = start_default_mapping_run(
         owner=owner, business_unit=business_unit, tmp_path=tmp_path, key="stale-obligation"
     )
