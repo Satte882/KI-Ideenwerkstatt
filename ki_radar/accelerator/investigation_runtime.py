@@ -418,6 +418,68 @@ def normalize_structured_mapping_obligations(
     return tuple(sorted(normalized, key=lambda item: str(item["obligation_id"])))
 
 
+def structured_mapping_obligations_from_snapshot(
+    snapshot: InvestigationSourceSnapshot,
+) -> tuple[dict[str, Any], ...]:
+    """Materialize an immutable snapshot mapping spec into the runtime contract."""
+    context = snapshot.process_context if isinstance(snapshot.process_context, Mapping) else {}
+    raw_specs = context.get("structured_mapping_specs")
+    if raw_specs in (None, []):
+        return ()
+    if not isinstance(raw_specs, list):
+        raise InvestigationRunError(
+            "Der eingefrorene Structured-Mapping-Contract ist ungültig.",
+            code="invalid_structured_mapping_snapshot_contract",
+        )
+
+    source_by_filename = {source.filename: source for source in snapshot.sources.all()}
+    allowed_fields = {
+        "obligation_id",
+        "source_filename",
+        "source_content_sha256",
+        "case_key_column",
+        "case_keys",
+        "mapping_dimension",
+        "exhaustive",
+    }
+    obligations: list[dict[str, Any]] = []
+    for spec in raw_specs:
+        if not isinstance(spec, Mapping) or set(spec) != allowed_fields:
+            raise InvestigationRunError(
+                "Der eingefrorene Structured-Mapping-Contract ist unvollständig.",
+                code="invalid_structured_mapping_snapshot_contract",
+            )
+        source_filename = str(spec.get("source_filename") or "").strip()
+        source = source_by_filename.get(source_filename)
+        if (
+            source is None
+            or source.source_type != InvestigationSource.SourceType.CSV
+            or source.content_sha256 != str(spec.get("source_content_sha256") or "")
+        ):
+            raise InvestigationRunError(
+                "Die eingefrorene Mapping-Quelle stimmt nicht mit dem Snapshot überein.",
+                code="invalid_structured_mapping_snapshot_contract",
+            )
+        obligations.append(
+            {
+                "obligation_id": spec.get("obligation_id"),
+                "source_id": str(source.pk),
+                "case_key_column": spec.get("case_key_column"),
+                "case_keys": list(spec.get("case_keys") or []),
+                "mapping_dimension": spec.get("mapping_dimension"),
+                "exhaustive": spec.get("exhaustive"),
+            }
+        )
+
+    try:
+        return normalize_structured_mapping_obligations(snapshot, obligations)
+    except InvestigationRunError as exc:
+        raise InvestigationRunError(
+            "Der eingefrorene Structured-Mapping-Contract ist nicht ausführbar.",
+            code="invalid_structured_mapping_snapshot_contract",
+        ) from exc
+
+
 def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, object]:
     options = [
         {
@@ -782,9 +844,22 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 code="process_version_conflict",
             )
 
-        structured_mapping_obligations = normalize_structured_mapping_obligations(
+        snapshot_mapping_obligations = structured_mapping_obligations_from_snapshot(snapshot)
+        requested_mapping_obligations = normalize_structured_mapping_obligations(
             snapshot,
             request.structured_mapping_obligations,
+        )
+        if (
+            snapshot_mapping_obligations
+            and requested_mapping_obligations
+            and snapshot_mapping_obligations != requested_mapping_obligations
+        ):
+            raise InvestigationRunError(
+                "Der Run darf den eingefrorenen Structured-Mapping-Contract nicht überschreiben.",
+                code="snapshot_mapping_contract_conflict",
+            )
+        structured_mapping_obligations = (
+            snapshot_mapping_obligations or requested_mapping_obligations
         )
         requested_contract_hash = content_hash(
             contract_payload(
