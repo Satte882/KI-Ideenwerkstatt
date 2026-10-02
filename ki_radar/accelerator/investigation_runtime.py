@@ -356,7 +356,10 @@ def normalize_structured_mapping_obligations(
         source = source_by_id.get(source_id)
         if source is None or source.source_type != InvestigationSource.SourceType.CSV:
             raise InvestigationRunError(
-                "Structured-Mapping-Obligation muss an eine CSV-Quelle des Snapshots gebunden sein.",
+                (
+                    "Structured-Mapping-Obligation muss an eine CSV-Quelle "
+                    "des Snapshots gebunden sein."
+                ),
                 code="invalid_structured_mapping_obligation",
             )
         if case_key_column not in list(source.columns):
@@ -812,7 +815,10 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             assert_actor_can_edit_run(actor, same)
             if same.contract_hash != requested_contract_hash:
                 raise InvestigationRunError(
-                    "Der Idempotency-Key wurde bereits mit einem anderen Execution Contract verwendet.",
+                    (
+                        "Der Idempotency-Key wurde bereits mit einem anderen "
+                        "Execution Contract verwendet."
+                    ),
                     code="idempotency_contract_conflict",
                     existing_run_id=same.pk,
                 )
@@ -923,7 +929,10 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     ) from exc
                 if same.contract_hash != requested_contract_hash:
                     raise InvestigationRunError(
-                        "Der Idempotency-Key wurde parallel mit einem anderen Execution Contract verwendet.",
+                        (
+                            "Der Idempotency-Key wurde parallel mit einem anderen "
+                            "Execution Contract verwendet."
+                        ),
                         code="idempotency_contract_conflict",
                         existing_run_id=same.pk,
                     ) from exc
@@ -1196,7 +1205,10 @@ def structured_mapping_blockers(run: InvestigationRun) -> tuple[str, ...]:
             valid_references = (
                 isinstance(references, list)
                 and bool(references)
-                and all(isinstance(item, Mapping) and reference_valid(run, item) for item in references)
+                and all(
+                    isinstance(item, Mapping) and reference_valid(run, item)
+                    for item in references
+                )
             )
             bound_reference = (
                 valid_references
