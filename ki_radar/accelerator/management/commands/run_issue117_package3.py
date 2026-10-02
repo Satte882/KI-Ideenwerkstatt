@@ -25,6 +25,8 @@ from ki_radar.accelerator.investigation_runtime import (
     ENDPOINT_CAPABILITY,
     InvestigationRunError,
     StartInvestigationRequest,
+    brief_hash,
+    normalize_decision_brief_payload,
     start_investigation,
 )
 from ki_radar.accelerator.issue118_experiment import pricing_from_env
@@ -161,6 +163,7 @@ class Command(BaseCommand):
             "applied": False,
             "original_mapping": None,
             "mutated_mapping": None,
+            "mutated_brief_hash": None,
             "model_call_id": None,
         }
         synthesizer = request_synthesis_package
@@ -284,6 +287,8 @@ class Command(BaseCommand):
 
             mutation_audit["applied"] = True
             mutation_audit["mutated_mapping"] = json.loads(json.dumps(mappings[0]))
+            normalized_payload = normalize_decision_brief_payload(run, payload)
+            mutation_audit["mutated_brief_hash"] = brief_hash(normalized_payload)
             return replace(action, brief_payload=payload)
 
         return controlled
@@ -303,29 +308,145 @@ class Command(BaseCommand):
             )
 
         if test_type == "controlled_missing_assignment_repair":
-            repair_calls = run.model_calls.filter(
-                role="synthesizer",
-                synthesis_trigger="pre_verifier_repair",
-                status="success",
-            ).count()
-            if repair_calls < 1:
+            mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
+            repair_calls = list(
+                run.model_calls.filter(
+                    role="synthesizer",
+                    synthesis_trigger="pre_verifier_repair",
+                    status="success",
+                ).order_by("started_at", "id")
+            )
+            if not repair_calls:
                 raise CommandError(
                     f"{slot['slot_id']}: no successful real pre-verifier repair was observed."
+                )
+            if not any(
+                str((call.context_refs or {}).get("brief_hash") or "") == mutated_brief_hash
+                for call in repair_calls
+            ):
+                raise CommandError(
+                    f"{slot['slot_id']}: repair was not bound to the injected incomplete brief."
                 )
             if run.status != InvestigationRun.Status.READY:
                 raise CommandError(
                     f"{slot['slot_id']}: real repair did not return the run to READY; "
                     "keep the run as evidence but do not claim repair success."
                 )
+
+            final_mappings = (
+                run.brief_payload.get("structured_mappings")
+                if isinstance(run.brief_payload, dict)
+                else None
+            )
+            if not isinstance(final_mappings, list) or len(final_mappings) != 1:
+                raise CommandError(
+                    f"{slot['slot_id']}: repaired READY brief has no single structured mapping."
+                )
+            final_assignments = final_mappings[0].get("assignments")
+            if not isinstance(final_assignments, list):
+                raise CommandError(
+                    f"{slot['slot_id']}: repaired READY brief has no assignment list."
+                )
+            final_by_key = {
+                str(item.get("case_key") or ""): item
+                for item in final_assignments
+                if isinstance(item, dict)
+            }
+            expected_keys = {str(item) for item in slot["case_keys"]}
+            if set(final_by_key) != expected_keys or len(final_assignments) != len(expected_keys):
+                raise CommandError(
+                    f"{slot['slot_id']}: repair did not restore the exact required case set."
+                )
+
+            original = mutation_audit.get("original_mapping") or {}
+            original_assignments = original.get("assignments")
+            if not isinstance(original_assignments, list):
+                raise CommandError(
+                    f"{slot['slot_id']}: original control mapping is unavailable for audit."
+                )
+            original_by_key = {
+                str(item.get("case_key") or ""): item
+                for item in original_assignments
+                if isinstance(item, dict)
+            }
+            target_key = str(slot["mutation"]["case_key"])
+            for case_key in sorted(expected_keys - {target_key}):
+                if str(final_by_key[case_key].get("value") or "") != str(
+                    original_by_key[case_key].get("value") or ""
+                ):
+                    raise CommandError(
+                        f"{slot['slot_id']}: repair changed previously retained assignment "
+                        f"{case_key}."
+                    )
+            if not str(final_by_key[target_key].get("value") or "").strip():
+                raise CommandError(
+                    f"{slot['slot_id']}: repaired target assignment is still empty."
+                )
+
+            final_reports = list(run.verifier_reports.order_by("revision"))
+            if not any(
+                report.success
+                and str((report.bound_hashes or {}).get("brief") or "") == run.brief_hash
+                for report in final_reports
+            ):
+                raise CommandError(
+                    f"{slot['slot_id']}: repaired READY brief lacks a fresh successful verifier."
+                )
             return
 
         if test_type == "semantic_verifier_negative":
+            mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
             reports = list(run.verifier_reports.order_by("revision"))
-            if not any(report.critical_findings > 0 for report in reports):
+            if not any(
+                report.critical_findings > 0
+                and str((report.bound_hashes or {}).get("brief") or "") == mutated_brief_hash
+                for report in reports
+            ):
                 raise CommandError(
                     f"{slot['slot_id']}: real verifier did not produce a critical finding "
-                    "for the semantic negative control."
+                    "bound to the semantic negative-control brief."
                 )
+
+            if run.status == InvestigationRun.Status.READY:
+                final_mappings = (
+                    run.brief_payload.get("structured_mappings")
+                    if isinstance(run.brief_payload, dict)
+                    else None
+                )
+                if not isinstance(final_mappings, list) or len(final_mappings) != 1:
+                    raise CommandError(
+                        f"{slot['slot_id']}: final READY brief has no single structured mapping."
+                    )
+                final_assignments = final_mappings[0].get("assignments")
+                if not isinstance(final_assignments, list):
+                    raise CommandError(
+                        f"{slot['slot_id']}: final READY brief has no assignment list."
+                    )
+                target_key = str(slot["mutation"]["case_key"])
+                final_by_key = {
+                    str(item.get("case_key") or ""): item
+                    for item in final_assignments
+                    if isinstance(item, dict)
+                }
+                if target_key not in final_by_key:
+                    raise CommandError(
+                        f"{slot['slot_id']}: final READY brief lost the mutation target."
+                    )
+                if str(final_by_key[target_key].get("value") or "") == str(
+                    slot["mutation"]["value"]
+                ):
+                    raise CommandError(
+                        f"{slot['slot_id']}: final READY brief still contains the injected "
+                        "wrong semantic value."
+                    )
+                if not any(
+                    report.success
+                    and str((report.bound_hashes or {}).get("brief") or "") == run.brief_hash
+                    for report in reports
+                ):
+                    raise CommandError(
+                        f"{slot['slot_id']}: corrected READY brief lacks a fresh verifier."
+                    )
             return
 
         raise CommandError(f"{slot['slot_id']}: unknown Package 3 test type.")
