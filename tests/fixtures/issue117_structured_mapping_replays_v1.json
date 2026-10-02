@@ -1,0 +1,109 @@
+{
+  "schema_version": "issue117-structured-mapping-replay-v1",
+  "note": "Test-only replay adapter from authoritative AP1 review evidence. Golden-set IDs are intentionally confined to test fixtures.",
+  "cases": [
+    {
+      "name": "AP4-02 R2",
+      "csv": "case_id,receipt_present,category,amount_eur,limit_eur,manual_review\nE01,true,hotel,120,150,false\nE02,true,hotel,180,150,true\nE03,false,taxi,35,80,true\nE04,true,taxi,45,80,false\nE05,true,meal,30,35,false\nE06,true,meal,42,35,true\n",
+      "obligation_id": "expense-review-routing",
+      "case_keys": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06"
+      ],
+      "assignments": [
+        {
+          "case_key": "E01",
+          "value": "no_manual_review",
+          "row": 1
+        },
+        {
+          "case_key": "E02",
+          "value": "manual_review",
+          "row": 2
+        },
+        {
+          "case_key": "E03",
+          "value": "manual_review",
+          "row": 3
+        },
+        {
+          "case_key": "E04",
+          "value": "no_manual_review",
+          "row": 4
+        },
+        {
+          "case_key": "E05",
+          "value": "no_manual_review",
+          "row": 5
+        },
+        {
+          "case_key": "E06",
+          "value": "manual_review",
+          "row": 6
+        }
+      ],
+      "expected_blocked": false
+    },
+    {
+      "name": "AP4-02 R3",
+      "csv": "case_id,receipt_present,category,amount_eur,limit_eur,manual_review\nE01,true,hotel,120,150,false\nE02,true,hotel,180,150,true\nE03,false,taxi,35,80,true\nE04,true,taxi,45,80,false\nE05,true,meal,30,35,false\nE06,true,meal,42,35,true\n",
+      "obligation_id": "expense-review-routing",
+      "case_keys": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06"
+      ],
+      "assignments": [],
+      "expected_blocked": true
+    },
+    {
+      "name": "AP4-04 R1",
+      "csv": "case_id,formal_match,free_text_note,decision\nR01,true,,standard\nR02,false,\"Menge laut Lieferschein abweichend\",manual_review\nR03,false,\"Zusatzleistung telefonisch vereinbart\",manual_review\nR04,true,,standard\nR05,false,\"Preisänderung laut Nachtrag\",manual_review\n",
+      "obligation_id": "invoice-exception-routing",
+      "case_keys": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ],
+      "assignments": [],
+      "expected_blocked": true
+    },
+    {
+      "name": "AP4-04 R3",
+      "csv": "case_id,formal_match,free_text_note,decision\nR01,true,,standard\nR02,false,\"Menge laut Lieferschein abweichend\",manual_review\nR03,false,\"Zusatzleistung telefonisch vereinbart\",manual_review\nR04,true,,standard\nR05,false,\"Preisänderung laut Nachtrag\",manual_review\n",
+      "obligation_id": "invoice-exception-routing",
+      "case_keys": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ],
+      "assignments": [],
+      "expected_blocked": true
+    },
+    {
+      "name": "AP4-04 R4",
+      "csv": "case_id,formal_match,free_text_note,decision\nR01,true,,standard\nR02,false,\"Menge laut Lieferschein abweichend\",manual_review\nR03,false,\"Zusatzleistung telefonisch vereinbart\",manual_review\nR04,true,,standard\nR05,false,\"Preisänderung laut Nachtrag\",manual_review\n",
+      "obligation_id": "invoice-exception-routing",
+      "case_keys": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ],
+      "assignments": [],
+      "expected_blocked": true
+    }
+  ]
+}

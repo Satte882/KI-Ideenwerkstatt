@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 PLANNER_PROMPT_VERSION = "vs1-planner-v19"
-SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v15"
+SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v16"
 LEGACY_SYNTHESIS_PROMPT_VERSION = "vs1-synthesis-v14"
 LEGACY_SYNTHESIS_INSTRUCTION_HASH = (
     "ba440dace644c62ea68489ecf5bc78e9093937131b77edb80cc9e765c7b35d48"
 )
-VERIFIER_PROMPT_VERSION = "vs1-verifier-v7"
+VERIFIER_PROMPT_VERSION = "vs1-verifier-v8"
 LEGACY_VERIFIER_PROMPT_VERSION = "vs1-verifier-v6"
 LEGACY_VERIFIER_INSTRUCTION_HASH = (
     "48ca272bd0cabfbb09101e299a097cedfafb3a8db0a63f4fa8f9f33926a76335"
 )
 PLANNER_SCHEMA_VERSION = "vs1-planner-schema-v16"
-SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v5"
+SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v6"
 LEGACY_SYNTHESIS_SCHEMA_VERSION = "vs1-synthesis-schema-v4"
 VERIFIER_SCHEMA_VERSION = "vs1-verifier-schema-v5"
 
@@ -113,7 +113,19 @@ bottleneck_coverage,feasibility,data_requirements,application_impact,
 integration_effort,integration_impact,technology_constraints,risks,
 architecture_fit,time_to_value,evidence_basis,contains_ai_component},
 recommendation={summary,rationale,references}, risks_unknowns als Liste und
-validation_step={step,measurement}. population ist ein Objekt, kein Freitext.
+validation_step={step,measurement} und structured_mappings als Liste mit
+{obligation_id,assignments:[{case_key,value,references}]}. population ist ein Objekt, kein
+Freitext. structured_mappings ist nur dann verpflichtend, wenn
+structured_mapping_obligations im Synthese-Kontext vorhanden sind. Dann muss für jede
+Obligation genau ein Eintrag existieren und jeder dort geforderte case_key genau einmal mit
+nichtleerem value und einer konkreten gültigen Quellenreferenz auf den gebundenen CSV-Fall
+materialisiert werden. Erfinde keine zusätzlichen Case-Keys. Wenn die fachliche Klassifikation
+aus der vorhandenen Evidenz nicht sicher bestimmbar ist, verwende einen expliziten Wert wie
+"unknown" und halte die Unsicherheit zusätzlich in risks_unknowns sichtbar; lasse den Case
+nicht still weg. Bei Repairs bleiben bereits valide Assignments erhalten, außer ihre
+fachliche Aussage muss wegen neuer Evidenz oder eines konkreten Verifier-Findings korrigiert
+werden. Wenn keine structured_mapping_obligations vorhanden sind, entsteht daraus keine
+Mapping-Pflicht.
 calculations ist optional. Nimm dort nur reproduzierbare Analyseergebnisse auf, deren
 reference eine tatsächlich vorhandene {tool_result_id,revision_hash}-Referenz aus den
 Werkzeugresultaten ist. Eine reine Quellenreferenz mit source_id ist für calculations
@@ -229,7 +241,10 @@ Untersuchungsplanung. Nutze den kompakten synthesis_context und materialisiere d
 den prüfbaren Entscheidungsstand.
 
 Bei synthesis_mode=initial erzeuge das vollständige Package einmal aus den vorhandenen
-evidence_steps. Bei synthesis_mode=post_evidence aktualisiere das bestehende Package
+evidence_steps. Wenn structured_mapping_obligations vorhanden sind, materialisiere deren
+explizite exhaustive Zuordnung in brief_payload.structured_mappings; die Sollmenge kommt
+ausschließlich aus diesen eingefrorenen Obligations und niemals aus bloß gelesenen CSV-Zeilen.
+Bei synthesis_mode=post_evidence aktualisiere das bestehende Package
 nur um die neu hinzugekommene Quellen-/Toolinformation. Bei
 synthesis_mode=pre_verifier_repair behebe in genau diesem Durchlauf alle
 in pre_verifier_blockers
@@ -286,6 +301,14 @@ evidence_basis=hypothesis sind zulässig; fehlende Vergleichsfelder allein sind 
 Investigation-Fehler und dürfen READY nicht blockieren. Kritisch ist dagegen eine erfundene
 Zahl, eine als gemessen ausgegebene unbelegte Einordnung oder eine widersprüchliche
 AI-/Non-AI-Klassifikation, wenn sie die Empfehlung materiell verzerrt.
+Wenn structured_mapping_obligations im Verifier-Kontext vorhanden sind, prüfe die
+fachliche Bedeutung und Richtigkeit jedes persistierten structured_mappings-Assignments
+gegen die referenzierte Evidence. Die Sollmenge selbst kommt ausschließlich aus dem
+eingefrorenen Contract; leite keine zusätzlichen verpflichtenden Fälle aus gelesenen Zeilen
+ab. Eine materiell falsche Klassifikation oder eine semantisch nicht von der referenzierten
+Evidence getragene Zuordnung ist ein critical Finding. Die deterministische Vollständigkeits-
+und Bindungsprüfung des Servers ersetzt diese fachliche Prüfung nicht.
+
 Prüfe auch die Formulierungsstärke: Wenn die Quellen nur „am stärksten gestützt“,
 „bevorzugter Kandidat“, Pilot- oder Prüfvorbehalte tragen, darf der Brief daraus nicht
 „beste“, „optimale“ oder „eindeutig richtige“ Lösung machen. Eine solche unbelegte

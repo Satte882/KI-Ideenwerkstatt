@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
 import os
 import platform
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
 from typing import Any
@@ -68,7 +70,7 @@ from .investigation_tools import (
     search_sources,
 )
 
-LOOP_VERSION = "vs1-agent-loop-v19"
+LOOP_VERSION = "vs1-agent-loop-v21"
 BUDGET_VERSION = "vs1-budget-v7"
 TRANSPORT_VERSION = "vs1-openrouter-deepinfra-fp8-v4"
 # Verified for the pinned DeepInfra fp8 endpoint. This is an execution contract,
@@ -165,6 +167,7 @@ class StartInvestigationRequest:
     evidence_metadata: Mapping[str, Any] | None = None
     decision_brief_required: bool = False
     allow_historical_snapshot_replay: bool = False
+    structured_mapping_obligations: tuple[Mapping[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -269,6 +272,8 @@ def initial_usage() -> dict[str, int]:
 def contract_payload(
     snapshot: InvestigationSourceSnapshot,
     budget: Mapping[str, int],
+    *,
+    structured_mapping_obligations: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, object]:
     return {
         "decision_question": snapshot.decision_question,
@@ -278,6 +283,9 @@ def contract_payload(
         "policy_version": POLICY_VERSION,
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
+        "structured_mapping_obligations": [
+            dict(item) for item in structured_mapping_obligations
+        ],
         "required_areas": [
             "problem_context",
             "competing_hypotheses",
@@ -286,6 +294,129 @@ def contract_payload(
             "recommendation_validation",
         ],
     }
+
+
+def normalize_structured_mapping_obligations(
+    snapshot: InvestigationSourceSnapshot,
+    raw_obligations: Sequence[Mapping[str, Any]] | None,
+) -> tuple[dict[str, Any], ...]:
+    """Validate and freeze an explicitly requested exhaustive mapping scope.
+
+    The caller supplies only the scope that must be classified. The server binds
+    it to the immutable source snapshot and validates key identity, but never
+    derives or validates the semantic mapping value.
+    """
+    if raw_obligations is None:
+        return ()
+    if not isinstance(raw_obligations, (list, tuple)):
+        raise InvestigationRunError(
+            "Structured-Mapping-Obligations müssen eine Liste sein.",
+            code="invalid_structured_mapping_obligation",
+        )
+
+    source_by_id = {
+        str(source.pk): source for source in snapshot.sources.all()
+    }
+    normalized: list[dict[str, Any]] = []
+    seen_obligation_ids: set[str] = set()
+    allowed_fields = {
+        "obligation_id",
+        "source_id",
+        "case_key_column",
+        "case_keys",
+        "mapping_dimension",
+        "exhaustive",
+    }
+
+    for raw in raw_obligations:
+        if not isinstance(raw, Mapping) or set(raw) - allowed_fields:
+            raise InvestigationRunError(
+                "Structured-Mapping-Obligation enthält ungültige Felder.",
+                code="invalid_structured_mapping_obligation",
+            )
+
+        obligation_id = str(raw.get("obligation_id") or "").strip()
+        source_id = str(raw.get("source_id") or "").strip()
+        case_key_column = str(raw.get("case_key_column") or "").strip()
+        mapping_dimension = str(raw.get("mapping_dimension") or "").strip()
+        if (
+            not obligation_id
+            or len(obligation_id) > 100
+            or obligation_id in seen_obligation_ids
+            or not source_id
+            or not case_key_column
+            or not mapping_dimension
+            or raw.get("exhaustive") is not True
+        ):
+            raise InvestigationRunError(
+                "Structured-Mapping-Obligation ist unvollständig oder nicht eindeutig.",
+                code="invalid_structured_mapping_obligation",
+            )
+
+        source = source_by_id.get(source_id)
+        if source is None or source.source_type != InvestigationSource.SourceType.CSV:
+            raise InvestigationRunError(
+                "Structured-Mapping-Obligation muss an eine CSV-Quelle des Snapshots gebunden sein.",
+                code="invalid_structured_mapping_obligation",
+            )
+        if case_key_column not in list(source.columns):
+            raise InvestigationRunError(
+                "Die Case-Key-Spalte existiert nicht in der gebundenen CSV-Quelle.",
+                code="invalid_structured_mapping_obligation",
+            )
+
+        raw_case_keys = raw.get("case_keys")
+        if not isinstance(raw_case_keys, (list, tuple)) or not raw_case_keys:
+            raise InvestigationRunError(
+                "Structured-Mapping-Obligation benötigt explizite Case-Keys.",
+                code="invalid_structured_mapping_obligation",
+            )
+        case_keys: list[str] = []
+        for raw_key in raw_case_keys:
+            if not isinstance(raw_key, str) or not raw_key.strip():
+                raise InvestigationRunError(
+                    "Case-Keys müssen nichtleere Strings sein.",
+                    code="invalid_structured_mapping_obligation",
+                )
+            case_keys.append(raw_key.strip())
+        if len(case_keys) != len(set(case_keys)):
+            raise InvestigationRunError(
+                "Case-Keys einer Structured-Mapping-Obligation müssen eindeutig sein.",
+                code="invalid_structured_mapping_obligation",
+            )
+
+        reader = csv.DictReader(io.StringIO(source.content))
+        source_key_counts: dict[str, int] = {}
+        for row in reader:
+            value = str(row.get(case_key_column) or "").strip()
+            source_key_counts[value] = source_key_counts.get(value, 0) + 1
+        for case_key in case_keys:
+            count = source_key_counts.get(case_key, 0)
+            if count != 1:
+                raise InvestigationRunError(
+                    (
+                        "Jeder verpflichtende Case-Key muss genau einmal in der "
+                        "gebundenen CSV-Spalte existieren."
+                    ),
+                    code="invalid_structured_mapping_obligation",
+                )
+
+        seen_obligation_ids.add(obligation_id)
+        normalized.append(
+            {
+                "obligation_id": obligation_id,
+                "snapshot_id": str(snapshot.pk),
+                "manifest_hash": snapshot.manifest_hash,
+                "source_id": str(source.pk),
+                "source_revision_hash": source.content_sha256,
+                "case_key_column": case_key_column,
+                "case_keys": sorted(case_keys),
+                "mapping_dimension": mapping_dimension,
+                "exhaustive": True,
+            }
+        )
+
+    return tuple(sorted(normalized, key=lambda item: str(item["obligation_id"])))
 
 
 def domain_materialization_snapshot(process: ProcessAnalysis) -> dict[str, object]:
@@ -357,6 +488,7 @@ def base_execution_snapshot(
     evidence_metadata: Mapping[str, Any] | None = None,
     decision_brief_required: bool = False,
     historical_snapshot_replay: bool = False,
+    structured_mapping_obligations: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, object]:
     return {
         "runtime": runtime_version_snapshot(),
@@ -369,6 +501,9 @@ def base_execution_snapshot(
         "evidence_metadata": dict(evidence_metadata or {}),
         "decision_brief_required": bool(decision_brief_required),
         "historical_snapshot_replay": bool(historical_snapshot_replay),
+        "structured_mapping_obligations": [
+            dict(item) for item in structured_mapping_obligations
+        ],
         "evidence_campaign": (
             {
                 "id": str(evidence_campaign.pk),
@@ -650,6 +785,18 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                 code="process_version_conflict",
             )
 
+        structured_mapping_obligations = normalize_structured_mapping_obligations(
+            snapshot,
+            request.structured_mapping_obligations,
+        )
+        requested_contract_hash = content_hash(
+            contract_payload(
+                snapshot,
+                budget,
+                structured_mapping_obligations=structured_mapping_obligations,
+            )
+        )
+
         is_evidence_request = request.evidence_campaign_id is not None
         same = InvestigationRun.objects.filter(
             process_analysis=process,
@@ -663,6 +810,12 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     existing_run_id=same.pk,
                 )
             assert_actor_can_edit_run(actor, same)
+            if same.contract_hash != requested_contract_hash:
+                raise InvestigationRunError(
+                    "Der Idempotency-Key wurde bereits mit einem anderen Execution Contract verwendet.",
+                    code="idempotency_contract_conflict",
+                    existing_run_id=same.pk,
+                )
             return RunHandle(
                 same.pk,
                 same.executor_token,
@@ -722,6 +875,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
             evidence_metadata=evidence_metadata,
             decision_brief_required=bool(request.decision_brief_required),
             historical_snapshot_replay=historical_snapshot_replay,
+            structured_mapping_obligations=structured_mapping_obligations,
         )
         try:
             with transaction.atomic():
@@ -735,7 +889,7 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     idempotency_key=key,
                     process_version=snapshot.process_version,
                     decision_question=snapshot.decision_question,
-                    contract_hash=content_hash(contract_payload(snapshot, budget)),
+                    contract_hash=requested_contract_hash,
                     manifest_hash=snapshot.manifest_hash,
                     policy_version=POLICY_VERSION,
                     budget_version=BUDGET_VERSION,
@@ -765,6 +919,12 @@ def start_investigation(*, actor, request: StartInvestigationRequest) -> RunHand
                     raise InvestigationRunError(
                         "Der Idempotency-Key wurde parallel für einen anderen Run-Zweck verwendet.",
                         code="idempotency_scope_conflict",
+                        existing_run_id=same.pk,
+                    ) from exc
+                if same.contract_hash != requested_contract_hash:
+                    raise InvestigationRunError(
+                        "Der Idempotency-Key wurde parallel mit einem anderen Execution Contract verwendet.",
+                        code="idempotency_contract_conflict",
                         existing_run_id=same.pk,
                     ) from exc
                 return RunHandle(
@@ -913,6 +1073,147 @@ def reference_valid(run: InvestigationRun, reference: Mapping[str, Any]) -> bool
     return False
 
 
+def _mapping_reference_matches_case(
+    run: InvestigationRun,
+    obligation: Mapping[str, Any],
+    case_key: str,
+    reference: Mapping[str, Any],
+) -> bool:
+    if not reference_valid(run, reference):
+        return False
+    source_id = str(obligation.get("source_id") or "")
+    if str(reference.get("source_id") or "") != source_id:
+        return False
+    if str(reference.get("revision_hash") or "") != str(
+        obligation.get("source_revision_hash") or ""
+    ):
+        return False
+    locator = reference.get("locator")
+    if not isinstance(locator, Mapping) or not isinstance(locator.get("row"), int):
+        return False
+    try:
+        source = run.source_snapshot.sources.get(pk=source_id)
+    except (InvestigationSource.DoesNotExist, ValueError):
+        return False
+    reader = csv.DictReader(io.StringIO(source.content))
+    rows = list(reader)
+    row_number = int(locator["row"])
+    if row_number < 1 or row_number > len(rows):
+        return False
+    key_column = str(obligation.get("case_key_column") or "")
+    return str(rows[row_number - 1].get(key_column) or "").strip() == case_key
+
+
+def structured_mapping_blockers(run: InvestigationRun) -> tuple[str, ...]:
+    """Return deterministic completeness/binding blockers for explicit obligations.
+
+    This deliberately does not evaluate the semantic correctness of an assignment
+    value. That remains verifier/human-review responsibility.
+    """
+    obligations = [
+        dict(item)
+        for item in (run.execution_snapshot.get("structured_mapping_obligations") or [])
+        if isinstance(item, Mapping)
+    ]
+    if not obligations:
+        return ()
+
+    payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
+    raw_mappings = payload.get("structured_mappings")
+    if not isinstance(raw_mappings, list):
+        return tuple(
+            f"structured_mapping_coverage_incomplete:{item['obligation_id']}"
+            for item in obligations
+        )
+
+    blockers: list[str] = []
+    expected_by_id = {
+        str(item["obligation_id"]): item for item in obligations
+    }
+    actual_by_id: dict[str, list[Mapping[str, Any]]] = {}
+    for mapping in raw_mappings:
+        if not isinstance(mapping, Mapping):
+            blockers.append("structured_mapping_invalid")
+            continue
+        obligation_id = str(mapping.get("obligation_id") or "").strip()
+        if not obligation_id:
+            blockers.append("structured_mapping_invalid")
+            continue
+        actual_by_id.setdefault(obligation_id, []).append(mapping)
+
+    for obligation_id in sorted(set(actual_by_id) - set(expected_by_id)):
+        blockers.append(f"structured_mapping_unexpected_obligation:{obligation_id}")
+
+    for obligation_id, obligation in expected_by_id.items():
+        groups = actual_by_id.get(obligation_id, [])
+        if len(groups) != 1:
+            if len(groups) > 1:
+                blockers.append(f"structured_mapping_duplicate_obligation:{obligation_id}")
+            blockers.append(f"structured_mapping_coverage_incomplete:{obligation_id}")
+            continue
+
+        assignments = groups[0].get("assignments")
+        if not isinstance(assignments, list):
+            blockers.append(f"structured_mapping_coverage_incomplete:{obligation_id}")
+            continue
+
+        expected_keys = {str(item) for item in obligation.get("case_keys", [])}
+        actual_keys: list[str] = []
+        assignment_by_key: dict[str, Mapping[str, Any]] = {}
+        for assignment in assignments:
+            if not isinstance(assignment, Mapping):
+                blockers.append(f"structured_mapping_assignment_invalid:{obligation_id}")
+                continue
+            case_key = str(assignment.get("case_key") or "").strip()
+            if not case_key:
+                blockers.append(f"structured_mapping_assignment_invalid:{obligation_id}")
+                continue
+            actual_keys.append(case_key)
+            if case_key in assignment_by_key:
+                blockers.append(
+                    f"structured_mapping_duplicate_case_key:{obligation_id}:{case_key}"
+                )
+            else:
+                assignment_by_key[case_key] = assignment
+
+        actual_key_set = set(actual_keys)
+        for case_key in sorted(actual_key_set - expected_keys):
+            blockers.append(
+                f"structured_mapping_unexpected_case_key:{obligation_id}:{case_key}"
+            )
+        if actual_key_set != expected_keys or len(actual_keys) != len(expected_keys):
+            blockers.append(f"structured_mapping_coverage_incomplete:{obligation_id}")
+
+        for case_key in sorted(expected_keys & actual_key_set):
+            assignment = assignment_by_key.get(case_key)
+            if assignment is None:
+                continue
+            if not str(assignment.get("value") or "").strip():
+                blockers.append(
+                    f"structured_mapping_value_missing:{obligation_id}:{case_key}"
+                )
+            references = assignment.get("references")
+            valid_references = (
+                isinstance(references, list)
+                and bool(references)
+                and all(isinstance(item, Mapping) and reference_valid(run, item) for item in references)
+            )
+            bound_reference = (
+                valid_references
+                and any(
+                    _mapping_reference_matches_case(run, obligation, case_key, item)
+                    for item in references
+                    if isinstance(item, Mapping)
+                )
+            )
+            if not valid_references or not bound_reference:
+                blockers.append(
+                    f"structured_mapping_reference_invalid:{obligation_id}:{case_key}"
+                )
+
+    return tuple(sorted(set(blockers)))
+
+
 def normalize_decision_brief_payload(
     run: InvestigationRun,
     payload: Mapping[str, Any],
@@ -961,11 +1262,11 @@ def decision_brief_blockers(run: InvestigationRun) -> tuple[str, ...]:
     validation plan) is measured by the benchmark, not used as a universal
     runtime READY gate.
     """
+    blockers = list(structured_mapping_blockers(run))
     if not bool(run.execution_snapshot.get("decision_brief_required")):
-        return ()
+        return tuple(sorted(set(blockers)))
 
     payload = run.brief_payload if isinstance(run.brief_payload, Mapping) else {}
-    blockers: list[str] = []
 
     question_scope = payload.get("question_scope")
     if not isinstance(question_scope, Mapping):

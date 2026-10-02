@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-POLICY_VERSION = "vs1-stop-policy-v5"
+POLICY_VERSION = "vs1-stop-policy-v6"
 
 
 class PolicyOutcome(StrEnum):
