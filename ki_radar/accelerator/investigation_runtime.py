@@ -283,9 +283,7 @@ def contract_payload(
         "policy_version": POLICY_VERSION,
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
-        "structured_mapping_obligations": [
-            dict(item) for item in structured_mapping_obligations
-        ],
+        "structured_mapping_obligations": [dict(item) for item in structured_mapping_obligations],
         "required_areas": [
             "problem_context",
             "competing_hypotheses",
@@ -314,9 +312,7 @@ def normalize_structured_mapping_obligations(
             code="invalid_structured_mapping_obligation",
         )
 
-    source_by_id = {
-        str(source.pk): source for source in snapshot.sources.all()
-    }
+    source_by_id = {str(source.pk): source for source in snapshot.sources.all()}
     normalized: list[dict[str, Any]] = []
     seen_obligation_ids: set[str] = set()
     allowed_fields = {
@@ -504,9 +500,7 @@ def base_execution_snapshot(
         "evidence_metadata": dict(evidence_metadata or {}),
         "decision_brief_required": bool(decision_brief_required),
         "historical_snapshot_replay": bool(historical_snapshot_replay),
-        "structured_mapping_obligations": [
-            dict(item) for item in structured_mapping_obligations
-        ],
+        "structured_mapping_obligations": [dict(item) for item in structured_mapping_obligations],
         "evidence_campaign": (
             {
                 "id": str(evidence_campaign.pk),
@@ -1136,9 +1130,7 @@ def structured_mapping_blockers(run: InvestigationRun) -> tuple[str, ...]:
         )
 
     blockers: list[str] = []
-    expected_by_id = {
-        str(item["obligation_id"]): item for item in obligations
-    }
+    expected_by_id = {str(item["obligation_id"]): item for item in obligations}
     actual_by_id: dict[str, list[Mapping[str, Any]]] = {}
     for mapping in raw_mappings:
         if not isinstance(mapping, Mapping):
@@ -1179,17 +1171,13 @@ def structured_mapping_blockers(run: InvestigationRun) -> tuple[str, ...]:
                 continue
             actual_keys.append(case_key)
             if case_key in assignment_by_key:
-                blockers.append(
-                    f"structured_mapping_duplicate_case_key:{obligation_id}:{case_key}"
-                )
+                blockers.append(f"structured_mapping_duplicate_case_key:{obligation_id}:{case_key}")
             else:
                 assignment_by_key[case_key] = assignment
 
         actual_key_set = set(actual_keys)
         for case_key in sorted(actual_key_set - expected_keys):
-            blockers.append(
-                f"structured_mapping_unexpected_case_key:{obligation_id}:{case_key}"
-            )
+            blockers.append(f"structured_mapping_unexpected_case_key:{obligation_id}:{case_key}")
         if actual_key_set != expected_keys or len(actual_keys) != len(expected_keys):
             blockers.append(f"structured_mapping_coverage_incomplete:{obligation_id}")
 
@@ -1198,30 +1186,22 @@ def structured_mapping_blockers(run: InvestigationRun) -> tuple[str, ...]:
             if assignment is None:
                 continue
             if not str(assignment.get("value") or "").strip():
-                blockers.append(
-                    f"structured_mapping_value_missing:{obligation_id}:{case_key}"
-                )
+                blockers.append(f"structured_mapping_value_missing:{obligation_id}:{case_key}")
             references = assignment.get("references")
             valid_references = (
                 isinstance(references, list)
                 and bool(references)
                 and all(
-                    isinstance(item, Mapping) and reference_valid(run, item)
-                    for item in references
+                    isinstance(item, Mapping) and reference_valid(run, item) for item in references
                 )
             )
-            bound_reference = (
-                valid_references
-                and any(
-                    _mapping_reference_matches_case(run, obligation, case_key, item)
-                    for item in references
-                    if isinstance(item, Mapping)
-                )
+            bound_reference = valid_references and any(
+                _mapping_reference_matches_case(run, obligation, case_key, item)
+                for item in references
+                if isinstance(item, Mapping)
             )
             if not valid_references or not bound_reference:
-                blockers.append(
-                    f"structured_mapping_reference_invalid:{obligation_id}:{case_key}"
-                )
+                blockers.append(f"structured_mapping_reference_invalid:{obligation_id}:{case_key}")
 
     return tuple(sorted(set(blockers)))
 
