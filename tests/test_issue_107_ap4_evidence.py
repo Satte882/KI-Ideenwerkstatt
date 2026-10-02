@@ -395,11 +395,17 @@ def test_ap4_unmeasured_autonomous_human_time_stays_open():
     assert summary["pass"]["human_rework"] is False
 
 
-def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass():
+def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass(monkeypatch):
     validation = _validation()
     evidence_path = Path(settings.BASE_DIR) / "artifacts/ap4/evidence.jsonl"
+    # Frozen v19 evidence must not be reclassified as an experiment-v20 rerun.
+    with pytest.raises(AP4EvidenceError, match="post_fix contract_versions"):
+        load_records(evidence_path, validation=validation)
+    with monkeypatch.context() as historical:
+        historical.setattr("ki_radar.accelerator.ap4_evidence.LOOP_VERSION", "vs1-agent-loop-v19")
+        records = load_records(evidence_path, validation=validation)
     summary = summarize_records(
-        load_records(evidence_path, validation=validation),
+        records,
         validation=validation,
     )
 
