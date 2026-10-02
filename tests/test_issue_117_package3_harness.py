@@ -22,6 +22,7 @@ class _FakeCalls:
 
 class _FakeRun:
     model_calls = _FakeCalls()
+    execution_snapshot = {"decision_brief_required": False}
 
 
 def _slot(test_type: str):
@@ -69,6 +70,7 @@ def _audit(slot):
         "applied": False,
         "original_mapping": None,
         "mutated_mapping": None,
+        "mutated_brief_hash": None,
         "model_call_id": None,
     }
 
@@ -116,6 +118,8 @@ def test_missing_assignment_control_mutates_only_persisted_control_action(monkey
         "assignments"
     ]
     assert audit["mutated_mapping"] == result.brief_payload["structured_mappings"][0]
+    assert isinstance(audit["mutated_brief_hash"], str)
+    assert len(audit["mutated_brief_hash"]) == 64
 
 
 def test_semantic_negative_control_changes_exactly_one_predeclared_value(monkeypatch):
@@ -147,6 +151,8 @@ def test_semantic_negative_control_changes_exactly_one_predeclared_value(monkeyp
     assert after[target] == slot["mutation"]["value"]
     assert source_action.brief_payload == original_payload
     assert audit["applied"] is True
+    assert isinstance(audit["mutated_brief_hash"], str)
+    assert len(audit["mutated_brief_hash"]) == 64
 
 
 def test_semantic_negative_control_fails_closed_if_model_is_already_wrong(monkeypatch):
