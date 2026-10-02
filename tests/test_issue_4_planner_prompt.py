@@ -36,7 +36,7 @@ def test_planner_preserves_human_authority_for_ownership_and_exceptions():
 
 
 def test_repair_synthesis_requires_explicit_critical_claim_replacement():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v15"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v16"
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
     assert "führe den alten Claim" in SYNTHESIS_INSTRUCTION
@@ -85,7 +85,7 @@ def test_synthesis_separates_causes_from_solution_judgments_and_preserves_streng
 
 
 def test_verifier_rejects_unbacked_recommendation_strengthening():
-    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v7"
+    assert VERIFIER_PROMPT_VERSION == "vs1-verifier-v8"
     assert "Formulierungsstärke" in VERIFIER_INSTRUCTION
     assert "am stärksten gestützt" in VERIFIER_INSTRUCTION
     assert "beste" in VERIFIER_INSTRUCTION

@@ -398,11 +398,22 @@ def test_ap4_unmeasured_autonomous_human_time_stays_open():
 def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass(monkeypatch):
     validation = _validation()
     evidence_path = Path(settings.BASE_DIR) / "artifacts/ap4/evidence.jsonl"
-    # Restored v19 runtime accepts the frozen v19 archive unchanged.
-    records = load_records(evidence_path, validation=validation)
-    # A v20 runtime must still reject that same v19 evidence.
-    with monkeypatch.context() as variant:
-        variant.setattr("ki_radar.accelerator.ap4_evidence.LOOP_VERSION", "vs1-agent-loop-v20")
+    # The current #117 contract cannot reinterpret frozen v19 evidence as a rerun.
+    with pytest.raises(AP4EvidenceError, match="post_fix contract_versions"):
+        load_records(evidence_path, validation=validation)
+    # Evaluate the archived human-time assertions under their complete historical
+    # reader contract; neither product versions nor archived records are rewritten.
+    with monkeypatch.context() as historical:
+        for name, version in {
+            "LOOP_VERSION": "vs1-agent-loop-v19",
+            "SYNTHESIS_PROMPT_VERSION": "vs1-synthesis-v15",
+            "SYNTHESIS_SCHEMA_VERSION": "vs1-synthesis-schema-v5",
+            "VERIFIER_PROMPT_VERSION": "vs1-verifier-v7",
+        }.items():
+            historical.setattr(f"ki_radar.accelerator.ap4_evidence.{name}", version)
+        records = load_records(evidence_path, validation=validation)
+        # Changing only the loop to v20 must also reject that same archive.
+        historical.setattr("ki_radar.accelerator.ap4_evidence.LOOP_VERSION", "vs1-agent-loop-v20")
         with pytest.raises(AP4EvidenceError, match="post_fix contract_versions"):
             load_records(evidence_path, validation=validation)
     summary = summarize_records(
