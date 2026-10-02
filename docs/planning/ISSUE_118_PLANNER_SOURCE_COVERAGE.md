@@ -96,6 +96,10 @@ hashes, maximum budgets, old-contract rejection and authorization.
 
 AP0 contract tests retain the frozen v19 baseline and explicitly assert the
 selected v20 runtime difference; no acceptance gates or frozen fixtures change.
+The AP4 historical-summary test explicitly asserts that frozen v19 post-fix
+records cannot be loaded as current v20 evidence, then evaluates the original
+human-time assertions under a test-scoped historical v19 reader. The production
+evidence validator and archived record versions are unchanged.
 The existing no-progress guard remains unchanged at repeat > 3.
 
 Local targeted verification on PostgreSQL: **210 passed, 2 skipped** (Windows
