@@ -167,7 +167,9 @@ class Command(BaseCommand):
                 },
             )
             if not business_unit.is_active:
-                raise CommandError(f"Fallback business unit {FALLBACK_BUSINESS_UNIT!r} is inactive.")
+                raise CommandError(
+                    f"Fallback business unit {FALLBACK_BUSINESS_UNIT!r} is inactive."
+                )
 
         streams = list(ValueStream.objects.select_for_update().filter(name=STREAM_NAME))
         if len(streams) > 1:
@@ -179,7 +181,9 @@ class Command(BaseCommand):
                 or stream.business_unit_id != business_unit.pk
                 or stream.status != ValueStream.Status.ACTIVE
             ):
-                raise CommandError("Existing Issue #117 Package 3 ValueStream conflicts with setup.")
+                raise CommandError(
+                    "Existing Issue #117 Package 3 ValueStream conflicts with setup."
+                )
         else:
             stream = ValueStream.objects.create(
                 name=STREAM_NAME,
@@ -219,10 +223,14 @@ class Command(BaseCommand):
         name = _process_name(slot_id)
         expected = {
             "scope_start": "Ein eingefrorener Paket-3-Fall liegt zur Investigation vor.",
-            "scope_end": "Der vorab definierte Paket-3-Nachweis ist erreicht oder sicher blockiert.",
+            "scope_end": (
+                "Der vorab definierte Paket-3-Nachweis ist erreicht oder sicher blockiert."
+            ),
             "trigger": "Der Paket-3-Slot wird explizit gestartet.",
             "outcome": "Auditierbare Provider- und Human-Review-Evidence.",
-            "current_flow": "Evidenz untersuchen, Mapping erzeugen, prüfen und gegebenenfalls reparieren.",
+            "current_flow": (
+                "Evidenz untersuchen, Mapping erzeugen, prüfen und gegebenenfalls reparieren."
+            ),
             "roles": "Benchmark-Operator; Human Reviewer bleibt semantische Autorität.",
             "systems": "KI-Ideenwerkstatt Investigation",
             "data_objects": "Immutable Source Snapshot und Structured-Mapping-Contract.",
@@ -246,7 +254,8 @@ class Command(BaseCommand):
             for field, value in expected.items():
                 if getattr(process, field) != value:
                     raise CommandError(
-                        f"{slot_id}: existing ProcessAnalysis differs in {field}; refusing overwrite."
+                        f"{slot_id}: existing ProcessAnalysis differs in {field}; "
+                        "refusing overwrite."
                     )
             return process
         return ProcessAnalysis.objects.create(
@@ -272,7 +281,13 @@ class Command(BaseCommand):
             raise CommandError(f"{slot['slot_id']}: snapshot has no single frozen mapping spec.")
         spec = specs[0]
         expected = self._mapping_spec(slot)
-        for field in ("source_filename", "case_key_column", "case_keys", "mapping_dimension", "exhaustive"):
+        for field in (
+            "source_filename",
+            "case_key_column",
+            "case_keys",
+            "mapping_dimension",
+            "exhaustive",
+        ):
             if spec.get(field) != expected[field]:
                 raise CommandError(
                     f"{slot['slot_id']}: frozen snapshot mapping contract differs in {field}."
