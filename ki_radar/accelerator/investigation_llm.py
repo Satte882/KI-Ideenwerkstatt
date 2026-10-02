@@ -600,11 +600,55 @@ def _planner_context(actor, run: InvestigationRun) -> dict[str, Any]:
     }
 
 
+def _source_read_coverage(run: InvestigationRun) -> list[dict[str, Any]]:
+    """Project successful reads from this run's immutable snapshot, without content.
+
+    The returned interval is zero-based and half-open. Use the stored item count,
+    not the requested limit: byte limits can shorten a page. A null next_cursor
+    only denotes the end of that page's source, never complete source/column coverage.
+    Entries are bounded by the existing tool + verifier-read budgets; dropping old
+    entries here would recreate the planner's state loss.
+    """
+    revisions = {
+        str(source.pk): source.content_sha256 for source in run.source_snapshot.sources.all()
+    }
+    coverage = []
+    for step in run.steps.filter(
+        status=InvestigationStep.Status.SUCCESS, tool_name="read_source"
+    ).order_by("sequence"):
+        source_id = str(step.parameters["source_id"])
+        result = step.result_payload
+        if (
+            source_id not in revisions
+            or result.get("source_id") != source_id
+            or result.get("snapshot_id") != str(run.source_snapshot_id)
+        ):
+            continue
+        returned_count = len(result["items"])
+        coverage.append(
+            {
+                "sequence": step.sequence,
+                "source_id": source_id,
+                "snapshot_id": str(run.source_snapshot_id),
+                "revision_hash": revisions[source_id],
+                "cursor": step.parameters["cursor"],
+                "limit": step.parameters["limit"],
+                "columns": step.parameters["columns"],
+                "returned_count": returned_count,
+                "end_cursor_exclusive": step.parameters["cursor"] + returned_count,
+                "next_cursor": result["next_cursor"],
+                "result_hash": step.result_hash,
+            }
+        )
+    return coverage
+
+
 def _investigation_context(actor, run: InvestigationRun) -> dict[str, Any]:
     context = _planner_context(actor, run)
     for field in ("claim_register", "brief_payload", "source_relevance"):
         context.pop(field)
     context["recent_steps"] = context["recent_steps"][:5]
+    context["source_read_coverage"] = _source_read_coverage(run)
     context["evidence_coverage"] = {
         "data_check_executed": run.data_check_executed,
         "counterevidence_search_executed": run.counterevidence_search_executed,

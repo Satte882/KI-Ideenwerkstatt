@@ -53,7 +53,7 @@ def _git_blob_sha(path: Path) -> str:
     return hashlib.sha1(prefix + data, usedforsecurity=False).hexdigest()
 
 
-def test_issue110_contract_freezes_current_investigation_execution_contract():
+def test_issue110_contract_freezes_baseline_and_only_issue118_loop_differs():
     contract = _load(CONTRACT)["execution_contract"]
     provider_policy = ISSUE4_INVESTIGATION_PROVIDER_POLICY
 
@@ -63,7 +63,9 @@ def test_issue110_contract_freezes_current_investigation_execution_contract():
     assert contract["synthesis_schema"] == SYNTHESIS_SCHEMA_VERSION
     assert contract["verifier_prompt"] == VERIFIER_PROMPT_VERSION
     assert contract["verifier_schema"] == VERIFIER_SCHEMA_VERSION
-    assert contract["loop"] == LOOP_VERSION
+    # AP0 stays immutable; #118 versions only the planner context/runtime projection.
+    assert contract["loop"] == "vs1-agent-loop-v19"
+    assert LOOP_VERSION == "vs1-agent-loop-v20"
     assert contract["budget"] == BUDGET_VERSION
     assert contract["transport"] == TRANSPORT_VERSION
     assert contract["model"] == ENDPOINT_CAPABILITY["model"]
