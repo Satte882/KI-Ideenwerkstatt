@@ -284,7 +284,8 @@ def test_authorization_ui_freezes_explicit_mapping_scope(
     assert spec["case_keys"] == ["E01", "E02", "E03"]
     assert spec["case_key_column"] == "case_id"
     assert spec["mapping_dimension"] == "review routing"
-    assert spec["source_content_sha256"] == snapshot.sources.get(filename="cases.csv").content_sha256
+    source = snapshot.sources.get(filename="cases.csv")
+    assert spec["source_content_sha256"] == source.content_sha256
     assert "value" not in spec
 
 
