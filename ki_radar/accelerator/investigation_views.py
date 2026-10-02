@@ -72,9 +72,7 @@ def _structured_mapping_specs_from_post(request) -> tuple[dict[str, object], ...
         )
 
     normalized_keys_text = raw_case_keys.replace(",", "\n").replace(";", "\n")
-    case_keys = tuple(
-        value.strip() for value in normalized_keys_text.splitlines() if value.strip()
-    )
+    case_keys = tuple(value.strip() for value in normalized_keys_text.splitlines() if value.strip())
     if not case_keys:
         raise InvestigationToolError(
             "Die vollständige Fallzuordnung benötigt mindestens einen Case-Key.",
