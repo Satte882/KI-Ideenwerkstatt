@@ -45,6 +45,41 @@
           </div>
         {% endif %}
       </div>
+
+      <details class="architecture-disclosure mb-4">
+        <summary>Vollständige Fallzuordnung festlegen (optional)</summary>
+        <div class="pt-3">
+          <p class="small text-muted">Nur aktivieren, wenn die Richtungsfrage ausdrücklich eine vollständige Zuordnung einer festgelegten Fallmenge aus einer CSV verlangt. Die Klassifikation selbst wird hier nicht vorgegeben; eingefroren werden nur Quelle, Fallmenge und Mapping-Dimension.</p>
+          {% if selected_csv_files %}
+            <div class="mb-3">
+              <label class="form-label" for="mapping-source">CSV-Quelle</label>
+              <select class="form-select" id="mapping-source" name="mapping_source_filename">
+                <option value="">Keine vollständige Fallzuordnung</option>
+                {% for source in selected_csv_files %}
+                  <option value="{{ source.filename }}" {% if mapping_source_filename == source.filename %}selected{% endif %}>{{ source.filename }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="mapping-case-key-column">Case-Key-Spalte</label>
+              <input class="form-control" id="mapping-case-key-column" name="mapping_case_key_column" value="{{ mapping_case_key_column }}" placeholder="z. B. case_id">
+              <div class="form-text">Die Werte in dieser Spalte identifizieren die verpflichtenden Fälle eindeutig.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="mapping-dimension">Mapping-Dimension</label>
+              <input class="form-control" id="mapping-dimension" name="mapping_dimension" value="{{ mapping_dimension }}" placeholder="z. B. Prüfpfad / Routing">
+              <div class="form-text">Beschreibt, welche Art von Zuordnung erwartet wird. Keine Ergebniswerte oder Kategorien vorgeben.</div>
+            </div>
+            <div>
+              <label class="form-label" for="mapping-case-keys">Verpflichtende Case-Keys</label>
+              <textarea class="form-control" id="mapping-case-keys" name="mapping_case_keys" rows="4" placeholder="E01&#10;E02&#10;E03">{{ mapping_case_keys }}</textarea>
+              <div class="form-text">Ein Wert pro Zeile; Komma oder Semikolon sind ebenfalls zulässig. Nur diese explizit autorisierte Sollmenge wird auf Vollständigkeit geprüft.</div>
+            </div>
+          {% else %}
+            <p class="small text-muted mb-0">Die ausgewählte Quellenbasis enthält keine CSV-Quelle. Eine fallbezogene Mapping-Pflicht kann daher nicht aktiviert werden.</p>
+          {% endif %}
+        </div>
+      </details>
     </section>
 
     <details class="architecture-disclosure">
