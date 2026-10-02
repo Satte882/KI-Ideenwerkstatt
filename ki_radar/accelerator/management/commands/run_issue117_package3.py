@@ -247,8 +247,12 @@ class Command(BaseCommand):
                 )
 
             mutation_audit["original_mapping"] = json.loads(json.dumps(mappings[0]))
-            latest_call = run.model_calls.filter(role="synthesizer").order_by("-started_at").first()
-            mutation_audit["model_call_id"] = str(latest_call.pk) if latest_call is not None else None
+            latest_call = (
+                run.model_calls.filter(role="synthesizer").order_by("-started_at").first()
+            )
+            mutation_audit["model_call_id"] = (
+                str(latest_call.pk) if latest_call is not None else None
+            )
 
             if mutation["type"] == "drop_assignment":
                 mappings[0]["assignments"] = [
