@@ -26,9 +26,7 @@ class _FakeRun:
 
 
 def _slot(test_type: str):
-    return next(
-        item for item in package3._contract()["slots"] if item["test_type"] == test_type
-    )
+    return next(item for item in package3._contract()["slots"] if item["test_type"] == test_type)
 
 
 def _action(slot):
@@ -114,9 +112,10 @@ def test_missing_assignment_control_mutates_only_persisted_control_action(monkey
     assert {item["case_key"] for item in assignments} == set(slot["case_keys"]) - {target}
     assert source_action.brief_payload == original_payload
     assert audit["applied"] is True
-    assert audit["original_mapping"]["assignments"] == original_payload["structured_mappings"][0][
-        "assignments"
-    ]
+    assert (
+        audit["original_mapping"]["assignments"]
+        == original_payload["structured_mappings"][0]["assignments"]
+    )
     assert audit["mutated_mapping"] == result.brief_payload["structured_mappings"][0]
     assert isinstance(audit["mutated_brief_hash"], str)
     assert len(audit["mutated_brief_hash"]) == 64
