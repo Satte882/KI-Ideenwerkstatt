@@ -197,6 +197,17 @@ Erwartung:
 
 Ein sicherer FAILED-/nicht-READY-Ausgang kann diese **Negativkontrolle** bestehen. Er ersetzt keinen Positivnachweis.
 
+Bei einem späteren READY muss das finale Mapping wieder exakt das eingefrorene Fallset
+enthalten und der mutierte Zielwert dem vorab festgelegten Sollwert entsprechen. Diese
+Sollwertprüfung gehört ausschließlich zum Evidence-Harness; fachliche Klassifikation bleibt
+im Produkt Aufgabe des Verifiers und der menschlichen Bewertung.
+
+Für beide Kontrollproben zählt nur der neueste Verifier-Bericht: erfolgreich, ohne kritische
+Findings und an den nichtleeren Hash des finalen Briefs gebunden. Ein früherer Erfolg darf
+eine spätere fehlgeschlagene Prüfung nicht überdecken. Die Zusammenfassung exportiert
+`final_brief_hash` und die `context_refs` der Modellaufrufe, damit Repair- und Verifier-Bindung
+zusammen mit dem Mutation-Audit nachvollziehbar bleiben.
+
 ### P3-E – optionaler unbetroffener Kontrollfall
 
 Nur starten, wenn P3-A bis P3-D eine konkrete offene Frage hinterlassen, zum Beispiel:

@@ -299,8 +299,11 @@ class Command(BaseCommand):
         if not mutation_audit["applied"]:
             raise CommandError(f"{slot['slot_id']}: declared control mutation was never applied.")
 
+        mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
+        if not mutated_brief_hash:
+            raise CommandError(f"{slot['slot_id']}: injected brief hash is missing from the audit.")
+
         if test_type == "controlled_missing_assignment_repair":
-            mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
             repair_calls = list(
                 run.model_calls.filter(
                     role="synthesizer",
@@ -374,18 +377,13 @@ class Command(BaseCommand):
                 raise CommandError(f"{slot['slot_id']}: repaired target assignment is still empty.")
 
             final_reports = list(run.verifier_reports.order_by("revision"))
-            if not any(
-                report.success
-                and str((report.bound_hashes or {}).get("brief") or "") == run.brief_hash
-                for report in final_reports
-            ):
+            if not self._has_final_verifier(run, final_reports):
                 raise CommandError(
                     f"{slot['slot_id']}: repaired READY brief lacks a fresh successful verifier."
                 )
             return
 
         if test_type == "semantic_verifier_negative":
-            mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
             reports = list(run.verifier_reports.order_by("revision"))
             if not any(
                 report.critical_findings > 0
@@ -418,28 +416,39 @@ class Command(BaseCommand):
                     for item in final_assignments
                     if isinstance(item, dict)
                 }
-                if target_key not in final_by_key:
-                    raise CommandError(
-                        f"{slot['slot_id']}: final READY brief lost the mutation target."
-                    )
-                if str(final_by_key[target_key].get("value") or "") == str(
-                    slot["mutation"]["value"]
+                expected_keys = {str(item) for item in slot["case_keys"]}
+                if set(final_by_key) != expected_keys or len(final_assignments) != len(
+                    expected_keys
                 ):
                     raise CommandError(
-                        f"{slot['slot_id']}: final READY brief still contains the injected "
-                        "wrong semantic value."
+                        f"{slot['slot_id']}: final READY brief lacks the exact required case set."
                     )
-                if not any(
-                    report.success
-                    and str((report.bound_hashes or {}).get("brief") or "") == run.brief_hash
-                    for report in reports
+                # Frozen labels belong to this evidence harness, never to the product guard.
+                if str(final_by_key[target_key].get("value") or "") != str(
+                    slot["expected_assignments"][target_key]
                 ):
+                    raise CommandError(
+                        f"{slot['slot_id']}: final READY brief has not restored the frozen "
+                        "expected semantic value."
+                    )
+                if not self._has_final_verifier(run, reports):
                     raise CommandError(
                         f"{slot['slot_id']}: corrected READY brief lacks a fresh verifier."
                     )
             return
 
         raise CommandError(f"{slot['slot_id']}: unknown Package 3 test type.")
+
+    @staticmethod
+    def _has_final_verifier(run, reports) -> bool:
+        if not reports or not run.brief_hash:
+            return False
+        latest = reports[-1]
+        return (
+            latest.success
+            and latest.critical_findings == 0
+            and str((latest.bound_hashes or {}).get("brief") or "") == run.brief_hash
+        )
 
     def _prepared_process(self, slot_id: str) -> ProcessAnalysis:
         matches = list(
@@ -595,6 +604,7 @@ class Command(BaseCommand):
                 "schema_version": call.schema_version,
                 "synthesis_trigger": call.synthesis_trigger,
                 "accepted_payload_hash": call.accepted_payload_hash,
+                "context_refs": call.context_refs,
                 "error_code": call.error_code,
             }
             for call in run.model_calls.order_by("started_at", "id")
@@ -614,6 +624,7 @@ class Command(BaseCommand):
             "tested_commit": run.evidence_metadata.get("tested_commit"),
             "contract_hash": run.contract_hash,
             "manifest_hash": run.manifest_hash,
+            "final_brief_hash": run.brief_hash,
             "structured_mapping_obligations": run.execution_snapshot.get(
                 "structured_mapping_obligations"
             ),
