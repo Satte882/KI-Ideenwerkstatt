@@ -312,6 +312,11 @@ class Command(BaseCommand):
                 raise CommandError(
                     f"{slot['slot_id']}: no successful real pre-verifier repair was observed."
                 )
+            if run.status != InvestigationRun.Status.READY:
+                raise CommandError(
+                    f"{slot['slot_id']}: real repair did not return the run to READY; "
+                    "keep the run as evidence but do not claim repair success."
+                )
             return
 
         if test_type == "semantic_verifier_negative":
