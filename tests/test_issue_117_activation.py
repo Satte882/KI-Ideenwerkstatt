@@ -68,10 +68,7 @@ def make_process(*, owner, business_unit, name="Issue 117 activation"):
 
 def register_csv_folder(*, owner, process, root: Path):
     (root / "cases.csv").write_text(
-        "case_id,decision\n"
-        "E01,standard\n"
-        "E02,manual_review\n"
-        "E03,manual_review\n",
+        "case_id,decision\nE01,standard\nE02,manual_review\nE03,manual_review\n",
         encoding="utf-8",
     )
     return InvestigationSourceFolder.objects.create(
