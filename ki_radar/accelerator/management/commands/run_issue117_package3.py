@@ -83,18 +83,16 @@ class Command(BaseCommand):
             raise CommandError("--confirm-real-provider is required.")
 
         contract = _contract()
-        slot = next(
-            item for item in contract["slots"] if item["slot_id"] == options["slot"]
-        )
+        slot = next(item for item in contract["slots"] if item["slot_id"] == options["slot"])
         tested_commit = self._tested_commit()
         self._assert_environment()
         self._assert_package_budget(contract)
 
         process = self._prepared_process(str(slot["slot_id"]))
         snapshots = list(
-            process.investigation_source_snapshots.filter(
-                process_version=process.version
-            ).order_by("-revision")
+            process.investigation_source_snapshots.filter(process_version=process.version).order_by(
+                "-revision"
+            )
         )
         if len(snapshots) != 1:
             raise CommandError(
@@ -250,18 +248,14 @@ class Command(BaseCommand):
                 )
 
             mutation_audit["original_mapping"] = json.loads(json.dumps(mappings[0]))
-            latest_call = (
-                run.model_calls.filter(role="synthesizer").order_by("-started_at").first()
-            )
+            latest_call = run.model_calls.filter(role="synthesizer").order_by("-started_at").first()
             mutation_audit["model_call_id"] = (
                 str(latest_call.pk) if latest_call is not None else None
             )
 
             if mutation["type"] == "drop_assignment":
                 mappings[0]["assignments"] = [
-                    item
-                    for item in assignments
-                    if str(item.get("case_key") or "") != target_key
+                    item for item in assignments if str(item.get("case_key") or "") != target_key
                 ]
             elif mutation["type"] == "replace_value":
                 expected_value = str(slot["expected_assignments"][target_key])
@@ -303,9 +297,7 @@ class Command(BaseCommand):
             return
 
         if not mutation_audit["applied"]:
-            raise CommandError(
-                f"{slot['slot_id']}: declared control mutation was never applied."
-            )
+            raise CommandError(f"{slot['slot_id']}: declared control mutation was never applied.")
 
         if test_type == "controlled_missing_assignment_repair":
             mutated_brief_hash = str(mutation_audit.get("mutated_brief_hash") or "")
@@ -379,9 +371,7 @@ class Command(BaseCommand):
                         f"{case_key}."
                     )
             if not str(final_by_key[target_key].get("value") or "").strip():
-                raise CommandError(
-                    f"{slot['slot_id']}: repaired target assignment is still empty."
-                )
+                raise CommandError(f"{slot['slot_id']}: repaired target assignment is still empty.")
 
             final_reports = list(run.verifier_reports.order_by("revision"))
             if not any(
@@ -459,8 +449,7 @@ class Command(BaseCommand):
         )
         if len(matches) != 1:
             raise CommandError(
-                f"{slot_id}: prepared ProcessAnalysis missing; "
-                "run prepare_issue117_package3 first."
+                f"{slot_id}: prepared ProcessAnalysis missing; run prepare_issue117_package3 first."
             )
         return matches[0]
 
