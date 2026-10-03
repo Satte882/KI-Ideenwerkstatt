@@ -84,6 +84,15 @@ genannten Produktbefunde wurden separat behoben und erneut geprueft.
 - Die vollstaendige PostgreSQL-CI inklusive Migrationen, DEMO-E2E, Gesamttests,
   Sicherheits-/Abhaengigkeitschecks, Compose und Docker-Builds wird auf dem
   aktualisierten Stand von PR #128 erneut ausgefuehrt; das Ergebnis steht im PR.
+- Erstes CI nach UI-Nachtrag: 2120 bestanden, ein Regressionstest fehlgeschlagen
+  (`test_reader_can_open_current_investigation_without_edit_controls`, laufender
+  Altdatensatz ohne vollstaendige Budgetfelder). Die reine Lease-/Dispatch-Anzeige
+  ist deshalb aus der bestehenden Aktivitaetsprojektion gemeinsam nutzbar gemacht;
+  die Prozessseite benoetigt keine Entscheidungs-/Budgetpruefung mehr. Der alte
+  Test und die unveraenderte Policy bleiben erhalten; anschliessend erneute Abnahme.
+- Nach dieser Korrektur: **70 bestanden, 1 PostgreSQL-Lock-Test uebersprungen**
+  (Diagnose-Integration, Untersuchungsaktivitaet und Ideen-Discovery). Der vorher
+  fehlgeschlagene Reader-Test ist unveraendert gruen.
 
 ## Grenzen
 

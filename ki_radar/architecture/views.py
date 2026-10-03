@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ki_radar.accelerator.investigation_activity import build_activity
+from ki_radar.accelerator.investigation_activity import build_execution_status
 from ki_radar.accelerator.investigation_models import InvestigationMaterialization
 from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
@@ -431,7 +431,7 @@ def process_analysis_detail(request, pk):
             "solution_design_task": solution_design_task,
             "latest_investigation_run": latest_investigation_run,
             "latest_investigation_activity": (
-                build_activity(latest_investigation_run)
+                build_execution_status(latest_investigation_run)
                 if latest_investigation_run and latest_investigation_run.status == "running"
                 else None
             ),
