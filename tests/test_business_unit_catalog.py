@@ -1,5 +1,4 @@
 import pytest
-from django.core.exceptions import ValidationError
 
 from ki_radar.accounts import business_units
 from ki_radar.accounts.models import BusinessUnit
@@ -50,7 +49,11 @@ def test_existing_legacy_reference_can_be_rendered_as_current_choice():
         name="Historischer Bestand für Referenz",
         catalog_scope=BusinessUnit.CatalogScope.LEGACY,
     )
-    ids = set(business_units.selectable_business_units(current_id=legacy.pk).values_list("pk", flat=True))
+    ids = set(
+        business_units.selectable_business_units(current_id=legacy.pk).values_list(
+            "pk", flat=True
+        )
+    )
     assert legacy.pk in ids
 
 
@@ -87,6 +90,8 @@ def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
 
 @pytest.mark.django_db
 def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
+    from django.core.exceptions import ValidationError
+
     from ki_radar.accelerator.services import create_autonomous_capture_session
 
     demo = BusinessUnit.objects.create(
