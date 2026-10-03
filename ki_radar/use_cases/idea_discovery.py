@@ -59,8 +59,3 @@ def assert_idea_discovery_start(*, idea: IdeaCandidate, actor) -> None:
         or idea.discovery_process_analysis_id is not None
     ):
         raise ValidationError("Diese Idee besitzt bereits einen Abschluss oder eine Analyse.")
-    if idea.business_unit_id is not None and idea.business_unit_id != actor.business_unit_id:
-        raise ValidationError(
-            "Die Organisationseinheit der Idee weicht von Ihrer Organisationseinheit ab. "
-            "Bitte die Zuordnung vor dem Discovery-Start klären."
-        )

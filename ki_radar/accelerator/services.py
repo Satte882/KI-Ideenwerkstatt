@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from ki_radar.accounts.models import BusinessUnit
 from ki_radar.architecture.permissions import can_manage_architecture
 from ki_radar.use_cases.idea_discovery import (
     active_idea_discovery,
@@ -23,6 +24,7 @@ from .catalogs import (
     get_capture_catalog,
     validate_answer_document,
 )
+from .discovery_context import default_discovery_business_unit
 from .models import CaptureSession
 from .retention import expire_capture_session_if_due
 from .retention_policy import completed_capture_expiry
@@ -105,17 +107,9 @@ def create_autonomous_capture_session(
     problem_statement: str,
     business_context: str = "",
     idea_candidate_id=None,
+    business_unit_id=None,
 ) -> CaptureSession:
     _assert_capture_permission(actor, CaptureSession.CaptureType.VALUE_STREAM)
-    business_unit = getattr(actor, "business_unit", None)
-    if business_unit is None or not business_unit.is_active:
-        raise ValidationError(
-            {
-                "business_unit": (
-                    "Für die autonome Discovery ist eine aktive Organisationseinheit erforderlich."
-                )
-            }
-        )
 
     problem = str(problem_statement or "").strip()
     context = str(business_context or "").strip()
@@ -147,9 +141,22 @@ def create_autonomous_capture_session(
                 )
             return existing
 
+    if business_unit_id is None:
+        default_unit = default_discovery_business_unit(actor=actor, idea=idea)
+        business_unit_id = default_unit.pk if default_unit else None
+    try:
+        business_unit = BusinessUnit.objects.filter(pk=business_unit_id, is_active=True).first()
+    except (ValueError, TypeError) as exc:
+        raise ValidationError({"business_unit": "Die Organisationseinheit ist ungültig."}) from exc
+    if business_unit is None:
+        raise ValidationError(
+            {"business_unit": "Bitte wählen Sie eine aktive Organisationseinheit der Untersuchung."}
+        )
+
     catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
     title = problem.splitlines()[0].strip()[:120] or "Autonome Business Discovery"
     answers = {
+        "business_unit": {"id": business_unit.pk, "name": business_unit.name},
         "problem_statement": problem,
         "business_context": context,
         "corrections": [],

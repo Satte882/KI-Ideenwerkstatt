@@ -2,8 +2,20 @@ from __future__ import annotations
 
 from django import forms
 
+from ki_radar.accounts.models import BusinessUnit
+
 
 class AutonomousDiscoveryStartForm(forms.Form):
+    business_unit = forms.ModelChoiceField(
+        label="Organisationseinheit der Untersuchung",
+        queryset=BusinessUnit.objects.none(),
+        empty_label="Bitte auswählen",
+        widget=forms.Select(attrs={"class": "form-select"}),
+        error_messages={
+            "required": "Bitte wählen Sie eine Organisationseinheit für die Untersuchung.",
+            "invalid_choice": "Bitte wählen Sie eine verfügbare aktive Organisationseinheit.",
+        },
+    )
     problem_statement = forms.CharField(
         label="Geschäftsproblem oder Ziel",
         max_length=4000,
@@ -32,6 +44,10 @@ class AutonomousDiscoveryStartForm(forms.Form):
             }
         ),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["business_unit"].queryset = BusinessUnit.objects.filter(is_active=True)
 
 
 class DiscoveryCorrectionForm(forms.Form):

@@ -1,0 +1,86 @@
+{
+  "viewport": "1440x1000 desktop",
+  "provider": "deterministic fixture",
+  "checks": [
+    "Owner without profile unit starts cross-unit idea discovery and confirms result",
+    "Inactive idea unit can be replaced; discard and direct restart",
+    "Generic discovery without profile unit; discard and restart",
+    "Idea edit, save and cancel return to origin",
+    "Contextual correction links and visible server validation preserve input",
+    "Discovery start, history back/forward, correction",
+    "Process edit fields and cancel navigation",
+    "Resume, materialize, investigation, process, durable idea link",
+    "Discard releases idea",
+    "Direct intake prefill and backwards navigation"
+  ],
+  "pages": [
+    {
+      "name": "unit-01-unassigned-start",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "unit-02-cross-unit-review",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "01-idea",
+      "horizontalOverflow": false,
+      "activeSidebar": "◇\nIdeen-Inbox"
+    },
+    {
+      "name": "02-start",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "03-review",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "03-review-desktop-1280",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "03-review-desktop-1920",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "04-investigation",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "05-process",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "09-process-edit",
+      "horizontalOverflow": false,
+      "activeSidebar": "⇢\nAnalyse"
+    },
+    {
+      "name": "06-intake",
+      "horizontalOverflow": false,
+      "activeSidebar": "◫\nUse Cases"
+    },
+    {
+      "name": "07-intake-review",
+      "horizontalOverflow": false,
+      "activeSidebar": "◫\nUse Cases"
+    },
+    {
+      "name": "08-promoted-idea",
+      "horizontalOverflow": false,
+      "activeSidebar": "◇\nIdeen-Inbox"
+    }
+  ],
+  "findings": [],
+  "browserErrors": [],
+  "status": "passed"
+}
