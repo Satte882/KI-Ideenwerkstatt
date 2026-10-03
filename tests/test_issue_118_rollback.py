@@ -1,4 +1,4 @@
-"""Current v19 rollback contracts; historical v20 projection tests live in the archive."""
+"""Current v21 product contract; historical v19/v20 evidence remains frozen."""
 
 import json
 from pathlib import Path
@@ -32,7 +32,7 @@ def forbid_real_provider(monkeypatch):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("case_id", ["AP4-02", "AP4-04"])
-def test_restored_v19_planner_uses_only_five_recent_steps(
+def test_current_v21_planner_uses_only_five_recent_steps(
     owner, business_unit, case_id, monkeypatch
 ):
     root = Path(settings.BASE_DIR) / "tests/fixtures/ap4_source_packs" / case_id
@@ -42,7 +42,7 @@ def test_restored_v19_planner_uses_only_five_recent_steps(
         actor=owner, request=StartInvestigationRequest(snapshot.snapshot_id, "rollback")
     )
     run = InvestigationRun.objects.get(pk=handle.run_id)
-    assert run.loop_version == run.execution_snapshot["loop_version"] == "vs1-agent-loop-v19"
+    assert run.loop_version == run.execution_snapshot["loop_version"] == "vs1-agent-loop-v21"
     source = run.source_snapshot.sources.order_by("filename").first()
     early = execute_tool_step(
         actor=owner,
@@ -118,7 +118,7 @@ def test_archived_c1_proof_remains_valid_only_for_historical_commit():
     assert plan["variant_commit"] == HISTORICAL_COMMIT
 
 
-def test_historical_fixture_execution_is_unavailable_on_v19(tmp_path):
+def test_historical_fixture_execution_is_unavailable_on_current_runtime(tmp_path):
     with pytest.raises(CommandError, match="frozen v20 runtime"):
         call_command(
             "check_issue118_fixtures",

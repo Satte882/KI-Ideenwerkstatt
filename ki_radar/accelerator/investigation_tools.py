@@ -5,7 +5,7 @@ import hashlib
 import io
 import json
 import stat
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
@@ -73,6 +73,7 @@ class SnapshotRequest:
     folder_id: UUID | str
     decision_question: str
     run_limits: Mapping[str, int]
+    structured_mapping_specs: tuple[Mapping[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -620,7 +621,147 @@ def _scan_registered_folder(folder: InvestigationSourceFolder) -> tuple[_Scanned
     )
 
 
-def _process_context(process: ProcessAnalysis) -> dict[str, Any]:
+def normalize_structured_mapping_specs(
+    scanned: Sequence[_ScannedSource],
+    raw_specs: Sequence[Mapping[str, Any]] | None,
+) -> tuple[dict[str, Any], ...]:
+    """Validate human-authorized mapping scope before freezing a source snapshot.
+
+    The snapshot contract contains only the explicit classification scope. It
+    never derives or stores the semantic classification value itself.
+    """
+    if raw_specs is None:
+        return ()
+    if not isinstance(raw_specs, (list, tuple)):
+        raise _error(
+            "Structured-Mapping-Spezifikationen müssen eine Liste sein.",
+            "invalid_structured_mapping_spec",
+        )
+
+    source_by_filename = {item.filename: item for item in scanned}
+    allowed_fields = {
+        "obligation_id",
+        "source_filename",
+        "case_key_column",
+        "case_keys",
+        "mapping_dimension",
+        "exhaustive",
+    }
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+
+    for raw in raw_specs:
+        if not isinstance(raw, Mapping) or set(raw) - allowed_fields:
+            raise _error(
+                "Structured-Mapping-Spezifikation enthält ungültige Felder.",
+                "invalid_structured_mapping_spec",
+            )
+
+        source_filename = str(raw.get("source_filename") or "").strip()
+        case_key_column = str(raw.get("case_key_column") or "").strip()
+        mapping_dimension = str(raw.get("mapping_dimension") or "").strip()
+        if (
+            not source_filename
+            or not case_key_column
+            or not mapping_dimension
+            or raw.get("exhaustive") is not True
+        ):
+            raise _error(
+                "Structured-Mapping-Spezifikation ist unvollständig.",
+                "invalid_structured_mapping_spec",
+            )
+
+        source = source_by_filename.get(source_filename)
+        if source is None or source.source_type != InvestigationSource.SourceType.CSV:
+            raise _error(
+                "Structured-Mapping-Spezifikation muss an eine CSV-Quelle gebunden sein.",
+                "invalid_structured_mapping_spec",
+            )
+        if case_key_column not in source.columns:
+            raise _error(
+                "Die Case-Key-Spalte existiert nicht in der gebundenen CSV-Quelle.",
+                "invalid_structured_mapping_spec",
+            )
+
+        raw_case_keys = raw.get("case_keys")
+        if (
+            not isinstance(raw_case_keys, (list, tuple))
+            or isinstance(raw_case_keys, (str, bytes))
+            or not raw_case_keys
+        ):
+            raise _error(
+                "Structured-Mapping-Spezifikation benötigt explizite Case-Keys.",
+                "invalid_structured_mapping_spec",
+            )
+        case_keys: list[str] = []
+        for raw_key in raw_case_keys:
+            if not isinstance(raw_key, str) or not raw_key.strip():
+                raise _error(
+                    "Case-Keys müssen nichtleere Strings sein.",
+                    "invalid_structured_mapping_spec",
+                )
+            case_keys.append(raw_key.strip())
+        if len(case_keys) != len(set(case_keys)):
+            raise _error(
+                "Case-Keys einer Structured-Mapping-Spezifikation müssen eindeutig sein.",
+                "invalid_structured_mapping_spec",
+            )
+
+        reader = csv.DictReader(io.StringIO(source.content))
+        source_key_counts: dict[str, int] = {}
+        for row in reader:
+            value = str(row.get(case_key_column) or "").strip()
+            source_key_counts[value] = source_key_counts.get(value, 0) + 1
+        for case_key in case_keys:
+            if source_key_counts.get(case_key, 0) != 1:
+                raise _error(
+                    "Jeder verpflichtende Case-Key muss genau einmal in der CSV-Spalte existieren.",
+                    "invalid_structured_mapping_spec",
+                )
+
+        normalized_keys = sorted(case_keys)
+        obligation_id = str(raw.get("obligation_id") or "").strip()
+        if not obligation_id:
+            identity = json.dumps(
+                {
+                    "source_filename": source_filename,
+                    "source_content_sha256": source.content_sha256,
+                    "case_key_column": case_key_column,
+                    "case_keys": normalized_keys,
+                    "mapping_dimension": mapping_dimension,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+            obligation_id = "mapping-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+        if len(obligation_id) > 100 or obligation_id in seen_ids:
+            raise _error(
+                "Structured-Mapping-Spezifikation benötigt eine eindeutige Obligation-ID.",
+                "invalid_structured_mapping_spec",
+            )
+
+        seen_ids.add(obligation_id)
+        normalized.append(
+            {
+                "obligation_id": obligation_id,
+                "source_filename": source_filename,
+                "source_content_sha256": source.content_sha256,
+                "case_key_column": case_key_column,
+                "case_keys": normalized_keys,
+                "mapping_dimension": mapping_dimension,
+                "exhaustive": True,
+            }
+        )
+
+    return tuple(sorted(normalized, key=lambda item: str(item["obligation_id"])))
+
+
+def _process_context(
+    process: ProcessAnalysis,
+    *,
+    structured_mapping_specs: Sequence[Mapping[str, Any]] = (),
+) -> dict[str, Any]:
     return {
         "process_analysis_id": str(process.pk),
         "process_version": process.version,
@@ -642,6 +783,7 @@ def _process_context(process: ProcessAnalysis) -> dict[str, Any]:
         "constraints": process.constraints,
         "exceptions": process.exceptions,
         "baseline_metrics": process.baseline_metrics,
+        "structured_mapping_specs": [dict(item) for item in structured_mapping_specs],
         "claim_semantics": (
             "Vorhandene Aussagen sind Angaben ihres Erstellers und keine automatisch "
             "bestätigten Fakten."
@@ -666,6 +808,10 @@ def create_source_snapshot(*, actor, request: SnapshotRequest) -> SnapshotResult
         raise PermissionDenied("Der Quellenordner ist für diesen Fall nicht freigegeben.")
 
     scanned = _scan_registered_folder(folder)
+    structured_mapping_specs = normalize_structured_mapping_specs(
+        scanned,
+        request.structured_mapping_specs,
+    )
     manifest_hash = _manifest_hash(scanned)
 
     with transaction.atomic():
@@ -698,7 +844,10 @@ def create_source_snapshot(*, actor, request: SnapshotRequest) -> SnapshotResult
             process_version=locked_process.version,
             decision_question=question,
             run_limits=run_limits,
-            process_context=_process_context(locked_process),
+            process_context=_process_context(
+                locked_process,
+                structured_mapping_specs=structured_mapping_specs,
+            ),
             manifest_hash=manifest_hash,
             captured_by=actor,
         )

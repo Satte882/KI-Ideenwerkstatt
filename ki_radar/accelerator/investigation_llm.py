@@ -699,6 +699,9 @@ def _synthesis_context(actor, run: InvestigationRun) -> dict[str, Any]:
         "sources": planner_context["sources"],
         "evidence_steps": evidence_steps,
         "input_revisions": planner_context["input_revisions"],
+        "structured_mapping_obligations": list(
+            run.execution_snapshot.get("structured_mapping_obligations") or []
+        ),
         "evidence_coverage": {
             "data_check_executed": run.data_check_executed,
             "counterevidence_search_executed": run.counterevidence_search_executed,
@@ -809,6 +812,9 @@ def _verifier_context(
         "claim_register": run.claim_register,
         "source_relevance": run.source_relevance,
         "brief_payload": run.brief_payload,
+        "structured_mapping_obligations": list(
+            run.execution_snapshot.get("structured_mapping_obligations") or []
+        ),
         "analysis_replays": list(analysis_replays or []),
         "tool_trace": [
             {

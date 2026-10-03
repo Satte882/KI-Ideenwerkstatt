@@ -56,6 +56,40 @@ from .investigation_tools import (
 )
 
 
+def _structured_mapping_specs_from_post(request) -> tuple[dict[str, object], ...]:
+    source_filename = str(request.POST.get("mapping_source_filename") or "").strip()
+    case_key_column = str(request.POST.get("mapping_case_key_column") or "").strip()
+    mapping_dimension = str(request.POST.get("mapping_dimension") or "").strip()
+    raw_case_keys = str(request.POST.get("mapping_case_keys") or "").strip()
+
+    if not any((source_filename, case_key_column, mapping_dimension, raw_case_keys)):
+        return ()
+    if not all((source_filename, case_key_column, mapping_dimension, raw_case_keys)):
+        raise InvestigationToolError(
+            "Für eine vollständige Fallzuordnung müssen CSV-Quelle, Case-Key-Spalte, "
+            "Mapping-Dimension und Case-Keys gemeinsam angegeben werden.",
+            code="invalid_structured_mapping_spec",
+        )
+
+    normalized_keys_text = raw_case_keys.replace(",", "\n").replace(";", "\n")
+    case_keys = tuple(value.strip() for value in normalized_keys_text.splitlines() if value.strip())
+    if not case_keys:
+        raise InvestigationToolError(
+            "Die vollständige Fallzuordnung benötigt mindestens einen Case-Key.",
+            code="invalid_structured_mapping_spec",
+        )
+
+    return (
+        {
+            "source_filename": source_filename,
+            "case_key_column": case_key_column,
+            "case_keys": case_keys,
+            "mapping_dimension": mapping_dimension,
+            "exhaustive": True,
+        },
+    )
+
+
 def _editable_process(user, process: ProcessAnalysis) -> bool:
     return process.status == ProcessAnalysis.Status.DRAFT and can_edit_value_stream(
         user, process.stage.value_stream
@@ -153,6 +187,7 @@ def investigation_authorize(request, process_pk):
             messages.error(request, "Die Richtungsfrage darf nicht leer sein.")
         else:
             try:
+                structured_mapping_specs = _structured_mapping_specs_from_post(request)
                 snapshot = create_source_snapshot(
                     actor=request.user,
                     request=SnapshotRequest(
@@ -160,6 +195,7 @@ def investigation_authorize(request, process_pk):
                         folder_id=folder.pk,
                         decision_question=question,
                         run_limits={},
+                        structured_mapping_specs=structured_mapping_specs,
                     ),
                 )
             except InvestigationToolError as exc:
@@ -194,6 +230,12 @@ def investigation_authorize(request, process_pk):
             except InvestigationToolError:
                 selected_folder_files = []
 
+    selected_csv_files = [
+        source
+        for source in selected_folder_files
+        if source.source_type == InvestigationSource.SourceType.CSV
+    ]
+
     return render(
         request,
         "accelerator/investigation_authorize.html",
@@ -202,7 +244,16 @@ def investigation_authorize(request, process_pk):
             "folders": folders,
             "selected_folder_id": selected_folder_id,
             "selected_folder_files": selected_folder_files,
+            "selected_csv_files": selected_csv_files,
             "decision_question": question,
+            "mapping_source_filename": str(
+                request.POST.get("mapping_source_filename") or ""
+            ).strip(),
+            "mapping_case_key_column": str(
+                request.POST.get("mapping_case_key_column") or ""
+            ).strip(),
+            "mapping_dimension": str(request.POST.get("mapping_dimension") or "").strip(),
+            "mapping_case_keys": str(request.POST.get("mapping_case_keys") or "").strip(),
             "budget": DEFAULT_BUDGET,
         },
     )

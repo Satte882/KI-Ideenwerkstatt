@@ -53,19 +53,23 @@ def _git_blob_sha(path: Path) -> str:
     return hashlib.sha1(prefix + data, usedforsecurity=False).hexdigest()
 
 
-def test_issue110_contract_matches_restored_v19_product_runtime():
+def test_issue110_contract_remains_frozen_v19_after_issue117_contract_bump():
     contract = _load(CONTRACT)["execution_contract"]
     provider_policy = ISSUE4_INVESTIGATION_PROVIDER_POLICY
 
-    assert contract["planner_prompt"] == PLANNER_PROMPT_VERSION
-    assert contract["planner_schema"] == PLANNER_SCHEMA_VERSION
-    assert contract["synthesis_prompt"] == SYNTHESIS_PROMPT_VERSION
-    assert contract["synthesis_schema"] == SYNTHESIS_SCHEMA_VERSION
-    assert contract["verifier_prompt"] == VERIFIER_PROMPT_VERSION
-    assert contract["verifier_schema"] == VERIFIER_SCHEMA_VERSION
-    # AP0 stays immutable; the product rollback restores its v19 loop contract.
+    # AP0 is historical evidence and must not be rewritten when the active product
+    # contract advances for #117.
+    assert contract["planner_prompt"] == "vs1-planner-v19" == PLANNER_PROMPT_VERSION
+    assert contract["planner_schema"] == "vs1-planner-schema-v16" == PLANNER_SCHEMA_VERSION
+    assert contract["synthesis_prompt"] == "vs1-synthesis-v15"
+    assert contract["synthesis_schema"] == "vs1-synthesis-schema-v5"
+    assert contract["verifier_prompt"] == "vs1-verifier-v7"
+    assert contract["verifier_schema"] == "vs1-verifier-schema-v5" == VERIFIER_SCHEMA_VERSION
     assert contract["loop"] == "vs1-agent-loop-v19"
-    assert contract["loop"] == LOOP_VERSION
+    assert contract["loop"] != LOOP_VERSION
+    assert contract["synthesis_prompt"] != SYNTHESIS_PROMPT_VERSION
+    assert contract["synthesis_schema"] != SYNTHESIS_SCHEMA_VERSION
+    assert contract["verifier_prompt"] != VERIFIER_PROMPT_VERSION
     assert contract["budget"] == BUDGET_VERSION
     assert contract["transport"] == TRANSPORT_VERSION
     assert contract["model"] == ENDPOINT_CAPABILITY["model"]
@@ -73,7 +77,8 @@ def test_issue110_contract_matches_restored_v19_product_runtime():
     assert contract["allow_fallbacks"] == provider_policy["allow_fallbacks"]
     assert contract["role_limits"] == MODEL_CALL_LIMITS
     prompt_blob = contract["source_blobs"]["investigation_prompts_py"]
-    assert prompt_blob == _git_blob_sha(PROMPTS)
+    assert prompt_blob == "68bb6b8d734774167ef718d65bb5464ed1fdd38e"
+    assert prompt_blob != _git_blob_sha(PROMPTS)
 
 
 def test_issue110_contract_freezes_reasoning_effort_used_by_model_calls():

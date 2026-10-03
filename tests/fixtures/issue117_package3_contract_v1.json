@@ -1,0 +1,121 @@
+{
+  "schema_version": "issue117-package3-contract-v1",
+  "provider_budget": {
+    "max_investigation_runs": 5,
+    "planned_runs": 4,
+    "max_provider_calls_total": 40,
+    "max_cost_usd": 5,
+    "currency": "USD"
+  },
+  "slots": [
+    {
+      "slot_id": "p3-a-ap4-02-positive",
+      "case_id": "AP4-02",
+      "test_type": "positive",
+      "source_filename": "02_cases.csv",
+      "case_key_column": "case_id",
+      "mapping_dimension": "manual review routing",
+      "case_keys": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06"
+      ],
+      "expected_assignments": {
+        "E01": "no_manual_review",
+        "E02": "manual_review",
+        "E03": "manual_review",
+        "E04": "no_manual_review",
+        "E05": "no_manual_review",
+        "E06": "manual_review"
+      },
+      "mutation": null,
+      "required_positive_ready": true
+    },
+    {
+      "slot_id": "p3-b-ap4-04-positive",
+      "case_id": "AP4-04",
+      "test_type": "positive",
+      "source_filename": "02_exceptions.csv",
+      "case_key_column": "case_id",
+      "mapping_dimension": "review routing",
+      "case_keys": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ],
+      "expected_assignments": {
+        "R01": "standard",
+        "R02": "manual_review",
+        "R03": "manual_review",
+        "R04": "standard",
+        "R05": "manual_review"
+      },
+      "mutation": null,
+      "required_positive_ready": true
+    },
+    {
+      "slot_id": "p3-c-ap4-02-missing-repair",
+      "case_id": "AP4-02",
+      "test_type": "controlled_missing_assignment_repair",
+      "source_filename": "02_cases.csv",
+      "case_key_column": "case_id",
+      "mapping_dimension": "manual review routing",
+      "case_keys": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06"
+      ],
+      "expected_assignments": {
+        "E01": "no_manual_review",
+        "E02": "manual_review",
+        "E03": "manual_review",
+        "E04": "no_manual_review",
+        "E05": "no_manual_review",
+        "E06": "manual_review"
+      },
+      "mutation": {
+        "type": "drop_assignment",
+        "case_key": "E03",
+        "apply_to": "first_synthesize_action_only"
+      },
+      "required_positive_ready": false
+    },
+    {
+      "slot_id": "p3-d-ap4-04-semantic-negative",
+      "case_id": "AP4-04",
+      "test_type": "semantic_verifier_negative",
+      "source_filename": "02_exceptions.csv",
+      "case_key_column": "case_id",
+      "mapping_dimension": "review routing",
+      "case_keys": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ],
+      "expected_assignments": {
+        "R01": "standard",
+        "R02": "manual_review",
+        "R03": "manual_review",
+        "R04": "standard",
+        "R05": "manual_review"
+      },
+      "mutation": {
+        "type": "replace_value",
+        "case_key": "R02",
+        "value": "standard",
+        "apply_to": "first_synthesize_action_only"
+      },
+      "required_positive_ready": false
+    }
+  ]
+}

@@ -998,8 +998,8 @@ def test_empty_provider_response_retries_once_then_fails_closed(
     assert first.status == InvestigationRun.Status.RUNNING
     assert first.policy.outcome == PolicyOutcome.CONTINUE
     assert second.status == InvestigationRun.Status.FAILED
-    assert run.loop_version == "vs1-agent-loop-v19"
-    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v19"
+    assert run.loop_version == "vs1-agent-loop-v21"
+    assert run.execution_snapshot["loop_version"] == "vs1-agent-loop-v21"
     assert run.clarification_reason == "technical_failure"
     assert run.clarification_payload["error_code"] == "empty_response"
     assert run.clarification_payload["attempts"] == 2
@@ -2233,7 +2233,7 @@ def test_reserved_verifier_budget_becomes_clean_waiting_boundary(
 
 
 def test_synthesis_prompt_distinguishes_stable_ids_from_explicit_replacements():
-    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v15"
+    assert SYNTHESIS_PROMPT_VERSION == "vs1-synthesis-v16"
     assert "Bei einer Reparatur bleiben vorhandene Claim-IDs" not in SYNTHESIS_INSTRUCTION
     assert "Bei einer Reparatur bleiben unveränderte Claims" in SYNTHESIS_INSTRUCTION
     assert "metadata.replaces_claim_id=<alte claim_id>" in SYNTHESIS_INSTRUCTION
