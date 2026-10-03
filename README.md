@@ -4,26 +4,17 @@
 
 > AI Business Architecture, Portfolio- und Decision-Governance-Cockpit für kleine und mittlere Unternehmen
 
-## Aktuelle Entwicklungsrichtung
+## Produktstand
 
-Dieses Repository ist der experimentelle Nachfolger des eingefrorenen Referenzstands
-`Satte882/KI-UseCase-Radar`. Der aktuelle verbindliche Produktauftrag ist GitHub
-Issue [#1 „10x: Autonomes Evidence-to-Decision-System“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/1).
+Dieses Repository ist der aktive Nachfolger des eingefrorenen Referenzstands
+`Satte882/KI-UseCase-Radar`. KI-Ideenwerkstatt ist heute eine funktionsfähige
+Single-Tenant-Referenzimplementierung für Business Architecture, Prozessdiagnose,
+lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung.
 
-Die nachfolgend beschriebenen Fähigkeiten bilden die **heutige Baseline**, nicht das
-Endziel der Transformation. Ziel ist, die fachliche Arbeit zwischen Geschäftsproblem,
-Evidenz, Diagnose, Lösungsraum, Entscheidung, Governance, Pilot und Delivery weitgehend
-autonom auszuführen, während verbindliche Entscheidungen beim Menschen bleiben.
-
-Der erste begrenzte agentische Vertical Slice (VS1) umfasst inzwischen einen autorisierten
-Quellenraum, reproduzierbare Untersuchungswerkzeuge, einen persistenten adaptiven
-Planner-/Verifier-Loop, eine testbare Stopppolicy sowie einen versionierten Decision Brief
-mit konfliktgeschützter Übernahme in bestehende Fachobjekte. Der externe Wirksamkeitsnachweis
-ist davon getrennt: reale A/B/C-Providerläufe, der vorab festgelegte Fixed-vs-Adaptive-
-Vergleich, unabhängiger menschlicher Fachreview und aktive menschliche Zeitmessung bleiben
-bis zur tatsächlichen Durchführung offen. Daraus wird derzeit keine 10x-Fertigmeldung abgeleitet.
-
-KI-Ideenwerkstatt verbindet Business Architecture, Prozessdiagnose, lösungsoffene KI-Auswahl, Governance, Delivery Readiness und Lifecycle-Steuerung in einem nachvollziehbaren Arbeitsmodell.
+Die autonome Evidence-to-Decision-Baseline sowie die anschließende Performance-Härtung
+sind umgesetzt. Der aktuelle Schwerpunkt liegt auf manueller End-to-End-Validierung mit
+unterschiedlichen fachlichen Einstiegsperspektiven. Neue Produktarbeit wird aus konkret
+beobachteten Lücken abgeleitet und nicht vorab angenommen.
 
 Das System beantwortet nicht nur, **welche KI-Ideen existieren**, sondern vor allem:
 
@@ -56,7 +47,7 @@ Business Architecture & Discovery
 → Betrieb oder Abschluss
 ```
 
-Der systematische Pfad beginnt bei Geschäftsarchitektur und Problemverständnis. KI ist darin **eine Lösungsoption unter mehreren**, nicht der Ausgangspunkt der Analyse.
+Der systematische Pfad kann niedrigschwellig in der **Inbox „Ideen & Probleme“** beginnen und von dort in die Business Discovery übergehen. Geschäftsarchitektur und Problemverständnis bleiben der fachliche Ausgangspunkt; KI ist darin **eine Lösungsoption unter mehreren**.
 
 Bereits bekannte Vorhaben können weiterhin direkt über den Use-Case-Intake erfasst werden. Systematisch abgeleitete Vorhaben erhalten zusätzlich eine nachvollziehbare Herkunftskette vom Value Stream über Fokus, Prozessanalyse und Lösungsoption bis zum Use Case.
 
@@ -78,7 +69,8 @@ KI-Ideenwerkstatt unterstützt die strukturierte Analyse eines Geschäftsbereich
 - geordnete Wertschöpfungsphasen mit erkennbarem Wertfortschritt;
 - Fokus-Screening nach strategischem Impact, wirtschaftlichem Potenzial, Problemintensität, Datenzugänglichkeit und Veränderungsaufwand;
 - dokumentierte Auswahl für einen Deep Dive;
-- kontextsensitive Methodik-Hilfe und verständliche Skalenanker.
+- kontextsensitive Methodik-Hilfe und verständliche Skalenanker;
+- einen flachen produktiven Organisationskatalog, getrennt von Demo-/Test- und historischen Bestandszuordnungen.
 
 Value Stream, Capability und Process bleiben fachlich getrennte Konzepte. Der Discovery-Pfad ist optional und belastet bekannte Einzelvorhaben nicht mit unnötigen Architekturartefakten.
 
