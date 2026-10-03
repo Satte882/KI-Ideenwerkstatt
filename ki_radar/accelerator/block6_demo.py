@@ -59,7 +59,13 @@ STAGES = (
 
 
 def _prepare_actor() -> tuple[User, BusinessUnit]:
-    business_unit, _ = BusinessUnit.objects.get_or_create(name=DEMO_BUSINESS_UNIT)
+    business_unit, _ = BusinessUnit.objects.update_or_create(
+        name=DEMO_BUSINESS_UNIT,
+        defaults={
+            "is_active": True,
+            "catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST,
+        },
+    )
     actor, _ = User.objects.get_or_create(
         username=DEMO_USERNAME,
         defaults={"business_unit": business_unit, "is_active": True},

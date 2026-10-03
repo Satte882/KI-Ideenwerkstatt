@@ -182,8 +182,12 @@ class Command(AP1Prepare):
     def _ensure_stream(self, owner):
         unit = owner.business_unit
         if unit is None or not unit.is_active:
-            unit, _ = BusinessUnit.objects.get_or_create(
-                name="Issue #106 Evidence", defaults={"is_active": True}
+            unit, _ = BusinessUnit.objects.update_or_create(
+                name="Issue #106 Evidence",
+                defaults={
+                    "is_active": True,
+                    "catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST,
+                },
             )
         if not unit.is_active:
             raise CommandError("Experiment business unit inactive")
