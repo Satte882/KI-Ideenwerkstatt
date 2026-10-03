@@ -43,11 +43,7 @@ def active_discovery_business_unit(session):
 def freeze_legacy_discovery_business_unit(session):
     if "business_unit" in session.answers:
         return active_discovery_business_unit(session)
-    locked = (
-        CaptureSession.objects.select_for_update()
-        .select_related("owner")
-        .get(pk=session.pk)
-    )
+    locked = CaptureSession.objects.select_for_update().select_related("owner").get(pk=session.pk)
     unit = active_discovery_business_unit(locked)
     if "business_unit" not in locked.answers:
         locked.answers = {
