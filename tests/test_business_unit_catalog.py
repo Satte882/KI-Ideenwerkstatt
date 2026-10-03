@@ -6,12 +6,6 @@ from ki_radar.accounts.business_units import (
     selectable_business_units,
 )
 from ki_radar.accounts.models import BusinessUnit
-from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
-from ki_radar.accelerator.services import create_autonomous_capture_session
-from ki_radar.architecture.forms import ValueStreamForm
-from ki_radar.use_cases.forms import UseCaseForm
-from ki_radar.use_cases.idea_forms import IdeaCandidateForm
-from ki_radar.use_cases.intake import ProblemStepForm
 
 
 EXPECTED_PRODUCTIVE_UNITS = {
@@ -65,6 +59,12 @@ def test_existing_legacy_reference_can_be_rendered_as_current_choice():
 
 @pytest.mark.django_db
 def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
+    from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
+    from ki_radar.architecture.forms import ValueStreamForm
+    from ki_radar.use_cases.forms import UseCaseForm
+    from ki_radar.use_cases.idea_forms import IdeaCandidateForm
+    from ki_radar.use_cases.intake import ProblemStepForm
+
     demo = BusinessUnit.objects.create(
         name="Nicht auswählbare Demo-Einheit",
         catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST,
@@ -90,6 +90,8 @@ def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
 
 @pytest.mark.django_db
 def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
+    from ki_radar.accelerator.services import create_autonomous_capture_session
+
     demo = BusinessUnit.objects.create(
         name="Manipulierte Demo-Einheit",
         catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST,
@@ -105,12 +107,13 @@ def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
 
 @pytest.mark.django_db
 def test_existing_legacy_assignment_remains_selectable_only_on_its_own_edit_form():
+    from ki_radar.use_cases.idea_forms import IdeaCandidateForm
+    from ki_radar.use_cases.idea_models import IdeaCandidate
+
     legacy = BusinessUnit.objects.create(
         name="Historische Zuordnung",
         catalog_scope=BusinessUnit.CatalogScope.LEGACY,
     )
-    from ki_radar.use_cases.idea_models import IdeaCandidate
-
     idea = IdeaCandidate.objects.create(
         title="Historischer Eintrag",
         description="Bestehende Zuordnung darf nicht still verschwinden.",
