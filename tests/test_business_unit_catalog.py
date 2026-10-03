@@ -1,10 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from ki_radar.accounts.business_units import (
-    active_productive_business_units,
-    selectable_business_units,
-)
+from ki_radar.accounts import business_units
 from ki_radar.accounts.models import BusinessUnit
 
 
@@ -20,7 +17,7 @@ EXPECTED_PRODUCTIVE_UNITS = {
 
 @pytest.mark.django_db
 def test_productive_catalog_is_seeded_without_company_prefix():
-    names = set(active_productive_business_units().values_list("name", flat=True))
+    names = set(business_units.active_productive_business_units().values_list("name", flat=True))
     assert names >= EXPECTED_PRODUCTIVE_UNITS
     assert not any(name.startswith("RSD") for name in EXPECTED_PRODUCTIVE_UNITS)
 
@@ -29,7 +26,7 @@ def test_productive_catalog_is_seeded_without_company_prefix():
 def test_new_business_unit_defaults_to_productive():
     unit = BusinessUnit.objects.create(name="Neue bestätigte Einheit")
     assert unit.catalog_scope == BusinessUnit.CatalogScope.PRODUCTIVE
-    assert active_productive_business_units().filter(pk=unit.pk).exists()
+    assert business_units.active_productive_business_units().filter(pk=unit.pk).exists()
 
 
 @pytest.mark.django_db
@@ -42,7 +39,7 @@ def test_demo_and_legacy_units_are_not_productive_choices():
         name="Historischer Bestand",
         catalog_scope=BusinessUnit.CatalogScope.LEGACY,
     )
-    ids = set(active_productive_business_units().values_list("pk", flat=True))
+    ids = set(business_units.active_productive_business_units().values_list("pk", flat=True))
     assert demo.pk not in ids
     assert legacy.pk not in ids
 
@@ -53,7 +50,7 @@ def test_existing_legacy_reference_can_be_rendered_as_current_choice():
         name="Historischer Bestand für Referenz",
         catalog_scope=BusinessUnit.CatalogScope.LEGACY,
     )
-    ids = set(selectable_business_units(current_id=legacy.pk).values_list("pk", flat=True))
+    ids = set(business_units.selectable_business_units(current_id=legacy.pk).values_list("pk", flat=True))
     assert legacy.pk in ids
 
 
