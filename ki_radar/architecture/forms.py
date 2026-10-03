@@ -1,7 +1,11 @@
 from django import forms
 from django.db.models import Q
 
-from ki_radar.accounts.models import BusinessUnit, User
+from ki_radar.accounts.business_units import (
+    is_active_productive_business_unit,
+    selectable_business_units,
+)
+from ki_radar.accounts.models import User
 from ki_radar.accounts.permissions import (
     GROUP_BUSINESS_OWNER,
     GROUP_COORDINATOR,
@@ -133,17 +137,18 @@ class ValueStreamForm(StyledModelForm):
         super().__init__(*args, **kwargs)
         self.assignment_warnings = []
 
-        business_units = BusinessUnit.objects.filter(is_active=True).order_by("name")
+        current_unit_id = self.instance.business_unit_id if self.instance.pk else None
+        business_units = selectable_business_units(current_id=current_unit_id)
         owners = eligible_value_stream_owners()
 
         if self.instance.pk:
-            if self.instance.business_unit_id and not self.instance.business_unit.is_active:
-                business_units = BusinessUnit.objects.filter(
-                    Q(is_active=True) | Q(pk=self.instance.business_unit_id)
-                ).order_by("name")
+            if self.instance.business_unit_id and not is_active_productive_business_unit(
+                self.instance.business_unit
+            ):
                 self.assignment_warnings.append(
-                    "Die aktuell zugeordnete Organisationseinheit ist inaktiv. "
-                    "Bitte vor dem Speichern eine aktive Organisationseinheit auswählen."
+                    "Die aktuell zugeordnete Organisationseinheit ist historischer Bestand "
+                    "oder nicht mehr aktiv. Sie bleibt erhalten, solange die Zuordnung "
+                    "nicht geändert wird."
                 )
             if self.instance.owner_id and not is_eligible_value_stream_owner(self.instance.owner):
                 owners = (
@@ -167,8 +172,8 @@ class ValueStreamForm(StyledModelForm):
         self.fields["business_unit"].queryset = business_units
         self.fields["business_unit"].label = "Organisationseinheit"
         self.fields["business_unit"].help_text = (
-            "Nur aktive Organisationseinheiten. Fehlende Einheiten können durch die "
-            "Administration gepflegt werden."
+            "Neue Zuordnungen verwenden nur aktive Einheiten aus dem freigegebenen "
+            "Organisationskatalog."
         )
         self.fields["scope_in"].help_text = "Verbindlicher Umfang dieses Value Streams."
         self.fields[
@@ -203,9 +208,15 @@ class ValueStreamForm(StyledModelForm):
 
     def clean_business_unit(self):
         business_unit = self.cleaned_data["business_unit"]
-        if not business_unit.is_active:
+        if (
+            self.instance.pk
+            and business_unit.pk == self.instance.business_unit_id
+        ):
+            return business_unit
+        if not is_active_productive_business_unit(business_unit):
             raise forms.ValidationError(
-                "Für einen Value Stream muss eine aktive Organisationseinheit gewählt werden."
+                "Für eine neue Zuordnung muss eine aktive Organisationseinheit aus dem "
+                "freigegebenen Organisationskatalog gewählt werden."
             )
         return business_unit
 

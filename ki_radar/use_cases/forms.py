@@ -8,7 +8,7 @@ from ki_radar.accelerator.role_defaults import (
     resolve_use_case_coordinator,
     resolve_use_case_technical_owner,
 )
-from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accounts.business_units import selectable_business_units
 from ki_radar.accounts.permissions import is_business_owner, is_coordinator
 from ki_radar.core.taxonomy import BusinessDomain
 
@@ -229,7 +229,10 @@ class UseCaseForm(forms.ModelForm):
         ]:
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs["class"] = "form-select"
-        self.fields["business_unit"].queryset = BusinessUnit.objects.filter(is_active=True)
+        current_unit_id = self.instance.business_unit_id if self.instance.pk else None
+        self.fields["business_unit"].queryset = selectable_business_units(
+            current_id=current_unit_id
+        )
         user_model = get_user_model()
         active_users = list(
             user_model.objects.filter(is_active=True, is_anonymized=False)

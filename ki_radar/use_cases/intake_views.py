@@ -10,7 +10,7 @@ from django.db.models import Model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accounts.business_units import active_productive_business_unit
 from ki_radar.accounts.permissions import is_business_owner
 from ki_radar.core.taxonomy import BusinessDomain
 
@@ -76,7 +76,7 @@ def _selected_business_unit(stored: dict):
     business_unit_id = stored.get("business_unit")
     if not business_unit_id:
         return None
-    return BusinessUnit.objects.filter(pk=business_unit_id).first()
+    return active_productive_business_unit(pk=business_unit_id)
 
 
 def _current_business_owner(stored: dict):
@@ -133,13 +133,13 @@ def _wizard_step_states(
     return states
 
 
-def _build_use_case(*, stored: dict, user, business_owner) -> UseCase:
+def _build_use_case(*, stored: dict, user, business_owner, business_unit) -> UseCase:
     affected_process = stored.get("affected_process", "")
     candidate = UseCase(
         title=stored["title"],
         summary=stored.get("summary", ""),
         problem_statement=stored.get("problem_statement", ""),
-        business_unit=get_object_or_404(BusinessUnit, pk=stored["business_unit"]),
+        business_unit=business_unit,
         affected_process=affected_process,
         target_users=stored.get("target_users", ""),
         submitter=user,
@@ -217,10 +217,19 @@ def use_case_intake(request, step: int = 1):
                 "Der gewählte Business Owner ist aktuell nicht mehr zulässig. Bitte neu wählen.",
             )
             return redirect("use_cases:create")
+        business_unit = _selected_business_unit(stored)
+        if business_unit is None:
+            messages.warning(
+                request,
+                "Die gewählte Organisationseinheit ist nicht mehr für neue Zuordnungen "
+                "verfügbar. Bitte wählen Sie eine Organisationseinheit aus dem Katalog.",
+            )
+            return redirect("use_cases:create")
         candidate = _build_use_case(
             stored=stored,
             user=request.user,
             business_owner=business_owner,
+            business_unit=business_unit,
         )
         blockers = intake_blockers(candidate)
         if request.method == "POST":
