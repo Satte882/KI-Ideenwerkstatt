@@ -95,7 +95,11 @@ def idea_create(request):
     return render(
         request,
         "use_cases/ideas/form.html",
-        {"form": form, "page_title": "Idee oder Problem erfassen", "submit_label": "Eintrag speichern"},
+        {
+            "form": form,
+            "page_title": "Idee oder Problem erfassen",
+            "submit_label": "Eintrag speichern",
+        },
     )
 
 
@@ -233,7 +237,7 @@ def idea_promote(request, pk):
     if idea.discovery_process_analysis_id is not None or active_idea_discovery(idea) is not None:
         messages.warning(
             request,
-             "Für diesen Eintrag existiert bereits eine Discovery oder Prozessanalyse. ".trimStart()
+            "Für diesen Eintrag existiert bereits eine Discovery oder Prozessanalyse. "
             "Bitte diese fortsetzen oder den Discovery-Draft verwerfen.",
         )
         return redirect(idea)
@@ -242,7 +246,7 @@ def idea_promote(request, pk):
         messages.warning(
             request,
             "Es läuft bereits eine Use-Case-Aufnahme. Setzen Sie diese fort oder verwerfen Sie "
-            "den Draft bewusst, bevor Sie eine Idee übernehmen.",
+            "den Draft bewusst, bevor Sie einen Eintrag übernehmen.",
         )
         return redirect(idea)
 
@@ -257,7 +261,7 @@ def idea_promote(request, pk):
     request.session.modified = True
     messages.info(
         request,
-         "Der Eintrag wurde in den bestehenden Intake vorbefüllt. Erst der erfolgreiche Abschluss ".trimStart()
-        "von Schritt 6 übernimmt sie als Use Case.",
+        "Der Eintrag wurde in den bestehenden Intake vorbefüllt. Erst der erfolgreiche Abschluss "
+        "von Schritt 6 übernimmt ihn als Use Case.",
     )
     return redirect("use_cases:create")
