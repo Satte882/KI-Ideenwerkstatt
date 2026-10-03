@@ -7,6 +7,7 @@ import pytest
 from django.core.management.base import CommandError
 
 from ki_radar.accelerator.investigation_llm import PlannerAction
+from ki_radar.accelerator.investigation_models import InvestigationModelCall
 from ki_radar.accelerator.investigation_runtime import InvestigationRunError
 from ki_radar.accelerator.management.commands import run_issue117_package3 as package3
 
@@ -181,10 +182,18 @@ def test_semantic_negative_control_fails_closed_if_model_is_already_wrong(monkey
 
 class _Records(list):
     def filter(self, **kwargs):
+        # Validate against Django's real model fields without executing a DB query.
+        InvestigationModelCall.objects.filter(**kwargs)
+
+        def matches(item, key, value):
+            field, _, json_key = key.partition("__")
+            actual = getattr(item, field)
+            if json_key:
+                actual = (actual or {}).get(json_key)
+            return actual == value
+
         return _Records(
-            item
-            for item in self
-            if all(getattr(item, key) == value for key, value in kwargs.items())
+            item for item in self if all(matches(item, key, value) for key, value in kwargs.items())
         )
 
     def order_by(self, *fields):
@@ -205,13 +214,13 @@ def _completed_control(test_type):
         brief_payload=deepcopy(_action(slot).brief_payload),
         model_calls=_Records(
             [
-                SimpleNamespace(
+                InvestigationModelCall(
                     role="synthesizer",
-                    synthesis_trigger="pre_verifier_repair",
                     status="success",
-                    started_at=1,
-                    id=1,
-                    context_refs={"brief_hash": audit["mutated_brief_hash"]},
+                    context_refs={
+                        "brief_hash": audit["mutated_brief_hash"],
+                        "synthesis_mode": "pre_verifier_repair",
+                    },
                 )
             ]
         ),
@@ -276,17 +285,21 @@ def test_ready_control_rejects_missing_or_stale_final_verifier(test_type, defect
         package3.Command()._assert_mechanical_expectation(run, slot, audit)
 
 
-@pytest.mark.parametrize("defect", ["absent", "wrong_hash", "failed", "wrong_trigger"])
+@pytest.mark.parametrize(
+    "defect", ["absent", "wrong_hash", "failed", "wrong_trigger", "missing_mode"]
+)
 def test_missing_assignment_requires_real_repair_bound_to_injected_brief(defect):
     run, slot, audit = _completed_control("controlled_missing_assignment_repair")
     if defect == "absent":
         run.model_calls.clear()
     elif defect == "wrong_hash":
-        run.model_calls[0].context_refs = {"brief_hash": "c" * 64}
+        run.model_calls[0].context_refs["brief_hash"] = "c" * 64
     elif defect == "failed":
         run.model_calls[0].status = "failed"
+    elif defect == "wrong_trigger":
+        run.model_calls[0].context_refs["synthesis_mode"] = "initial"
     else:
-        run.model_calls[0].synthesis_trigger = "initial"
+        run.model_calls[0].context_refs.pop("synthesis_mode")
     with pytest.raises(CommandError, match="repair"):
         package3.Command()._assert_mechanical_expectation(run, slot, audit)
 
@@ -355,7 +368,7 @@ def test_semantic_negative_failure_is_evidence_without_claiming_ready():
 def test_control_requires_persisted_mutation_hash(test_type):
     run, slot, audit = _completed_control(test_type)
     audit["mutated_brief_hash"] = ""
-    run.model_calls[0].context_refs = {"brief_hash": ""}
+    run.model_calls[0].context_refs["brief_hash"] = ""
     run.verifier_reports[0].bound_hashes = {"brief": ""}
     with pytest.raises(CommandError, match="injected brief hash"):
         package3.Command()._assert_mechanical_expectation(run, slot, audit)
@@ -370,7 +383,8 @@ def test_real_provider_command_requires_explicit_confirmation(monkeypatch):
         package3.Command().handle(confirm_real_provider=False)
 
 
-def test_summary_exports_repair_and_final_verifier_bindings():
+@pytest.mark.parametrize("synthesis_mode", ["pre_verifier_repair", "initial", None])
+def test_summary_exports_repair_and_final_verifier_bindings(synthesis_mode):
     run, slot, audit = _completed_control("controlled_missing_assignment_repair")
     run.refresh_from_db = lambda: None
     run.pk = "test-run"
@@ -383,6 +397,10 @@ def test_summary_exports_repair_and_final_verifier_bindings():
         report.findings = []
         report.model_call_id = report.revision
     call = run.model_calls[0]
+    if synthesis_mode is None:
+        call.context_refs.pop("synthesis_mode")
+    else:
+        call.context_refs["synthesis_mode"] = synthesis_mode
     call.pk = call.id
     call.prompt_version = "test-prompt"
     call.schema_version = "test-schema"
@@ -392,5 +410,6 @@ def test_summary_exports_repair_and_final_verifier_bindings():
     summary = package3.Command()._summary(run, slot, mutation_audit=audit)
 
     assert summary["final_brief_hash"] == run.brief_hash
+    assert summary["model_calls"][0]["synthesis_trigger"] == (synthesis_mode or "")
     assert summary["model_calls"][0]["context_refs"]["brief_hash"] == audit["mutated_brief_hash"]
     assert summary["verifier_reports"][-1]["bound_hashes"]["brief"] == summary["final_brief_hash"]

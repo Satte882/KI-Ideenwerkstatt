@@ -307,7 +307,7 @@ class Command(BaseCommand):
             repair_calls = list(
                 run.model_calls.filter(
                     role="synthesizer",
-                    synthesis_trigger="pre_verifier_repair",
+                    context_refs__synthesis_mode="pre_verifier_repair",
                     status="success",
                 ).order_by("started_at", "id")
             )
@@ -602,7 +602,7 @@ class Command(BaseCommand):
                 "status": call.status,
                 "prompt_version": call.prompt_version,
                 "schema_version": call.schema_version,
-                "synthesis_trigger": call.synthesis_trigger,
+                "synthesis_trigger": str((call.context_refs or {}).get("synthesis_mode") or ""),
                 "accepted_payload_hash": call.accepted_payload_hash,
                 "context_refs": call.context_refs,
                 "error_code": call.error_code,
