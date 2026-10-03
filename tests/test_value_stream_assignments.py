@@ -65,7 +65,12 @@ def test_value_stream_form_filters_active_units_and_eligible_owners(business_uni
 
     form = ValueStreamForm()
 
-    assert list(form.fields["business_unit"].queryset) == [business_unit]
+    assert business_unit in form.fields["business_unit"].queryset
+    assert (
+        not form.fields["business_unit"]
+        .queryset.exclude(is_active=True, catalog_scope=BusinessUnit.CatalogScope.PRODUCTIVE)
+        .exists()
+    )
     owner_ids = set(form.fields["owner"].queryset.values_list("pk", flat=True))
     assert {business_owner.pk, coordinator.pk, tech_admin.pk, superuser.pk} <= owner_ids
     assert reader.pk not in owner_ids

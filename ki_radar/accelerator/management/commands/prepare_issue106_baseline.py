@@ -132,11 +132,12 @@ class Command(BaseCommand):
     def _ensure_stream(self, owner):
         business_unit = owner.business_unit
         if business_unit is None or not business_unit.is_active:
-            business_unit, _created = BusinessUnit.objects.get_or_create(
+            business_unit, _created = BusinessUnit.objects.update_or_create(
                 name=FALLBACK_BUSINESS_UNIT,
                 defaults={
                     "description": "Technische Organisationseinheit für #106/AP1-Baselines.",
                     "is_active": True,
+                    "catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST,
                 },
             )
             if not business_unit.is_active:

@@ -228,13 +228,14 @@ class Command(BaseCommand):
 
         business_unit = owner.business_unit
         if business_unit is None or not business_unit.is_active:
-            business_unit, _ = BusinessUnit.objects.get_or_create(
+            business_unit, _ = BusinessUnit.objects.update_or_create(
                 name="VS1 Evidence",
                 defaults={
                     "description": (
                         "Technische Organisationseinheit für den kontrollierten VS1/#4-Nachweis."
                     ),
                     "is_active": True,
+                    "catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST,
                 },
             )
             if not business_unit.is_active:

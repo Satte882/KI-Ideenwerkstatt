@@ -9,7 +9,6 @@ from django.db.models import Q
 from ki_radar.architecture.forms import (
     ProcessAnalysisForm,
     SolutionOptionForm,
-    ValueStreamForm,
     ValueStreamStageForm,
 )
 from ki_radar.architecture.models import (
@@ -21,10 +20,10 @@ from ki_radar.architecture.models import (
     ValueStream,
     ValueStreamStage,
 )
-from ki_radar.use_cases.forms import UseCaseForm
 from ki_radar.use_cases.models import UseCase
 
 from .scenario_blueprint_diff import BlueprintGraphDiff, DiffStatus, build_blueprint_diff
+from .scenario_blueprint_forms import BlueprintUseCaseForm, BlueprintValueStreamForm
 from .scenario_blueprint_provenance import origin_source_snapshot, process_source_snapshot
 from .scenario_blueprint_validation import ResolvedBlueprint, validate_blueprint
 
@@ -95,7 +94,7 @@ def _save_value_stream(resolved: ResolvedBlueprint) -> ValueStream:
             "focus_rationale": "",
         }
     )
-    form = ValueStreamForm(data=data)
+    form = BlueprintValueStreamForm(data=data, business_unit=resolved.business_unit)
     if not form.is_valid():
         raise _form_failure("value_stream", form)
     value_stream = form.save(commit=False)
@@ -265,7 +264,7 @@ def _save_use_case(resolved: ResolvedBlueprint) -> UseCase:
             "metric_measurement_method": metric["measurement_method"],
         }
     )
-    form = UseCaseForm(data=data)
+    form = BlueprintUseCaseForm(data=data, business_unit=resolved.business_unit)
     if not form.is_valid():
         raise _form_failure("use_case", form)
     use_case = form.save(commit=False)

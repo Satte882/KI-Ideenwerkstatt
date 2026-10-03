@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from ki_radar.accelerator.role_default_guard import validate_business_owner_suggestion
 from ki_radar.accelerator.role_default_ui import attach_role_default
 from ki_radar.accelerator.role_defaults import SUGGESTION, resolve_use_case_business_owner
+from ki_radar.accounts.business_units import active_productive_business_units
 from ki_radar.accounts.models import BusinessUnit
 from ki_radar.accounts.permissions import is_business_owner
 from ki_radar.architecture.models import ProcessAnalysis
@@ -52,7 +53,7 @@ class ProblemStepForm(IntakeStepForm):
     def __init__(self, *args, value_stream=None, **kwargs):
         self.value_stream = value_stream
         super().__init__(*args, **kwargs)
-        self.fields["business_unit"].queryset = BusinessUnit.objects.filter(is_active=True)
+        self.fields["business_unit"].queryset = active_productive_business_units()
         user_model = get_user_model()
         active_users = list(
             user_model.objects.filter(is_active=True, is_anonymized=False)

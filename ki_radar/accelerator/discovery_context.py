@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from ki_radar.accounts.business_units import is_active_productive_business_unit
 from ki_radar.accounts.models import BusinessUnit
 
 from .models import CaptureSession
@@ -8,7 +9,7 @@ from .models import CaptureSession
 
 def default_discovery_business_unit(*, actor, idea=None):
     unit = idea.business_unit if idea is not None and idea.business_unit_id else actor.business_unit
-    return unit if unit is not None and unit.is_active else None
+    return unit if is_active_productive_business_unit(unit) else None
 
 
 def discovery_business_unit_context(session):

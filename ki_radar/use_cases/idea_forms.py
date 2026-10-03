@@ -1,6 +1,6 @@
 from django import forms
 
-from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accounts.business_units import selectable_business_units
 
 from .idea_models import IdeaCandidate
 
@@ -32,7 +32,8 @@ class IdeaCandidateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["business_unit"].queryset = BusinessUnit.objects.filter(is_active=True)
+        current_id = self.instance.business_unit_id if self.instance.pk else None
+        self.fields["business_unit"].queryset = selectable_business_units(current_id=current_id)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", FORM_CONTROL)
             if isinstance(field.widget, forms.Select):

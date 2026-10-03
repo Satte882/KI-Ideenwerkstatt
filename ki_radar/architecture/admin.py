@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from ki_radar.accounts.catalog_admin import BusinessUnitAssignmentAdminMixin
+
 from .models import (
     ProcessAnalysis,
     SolutionOption,
@@ -22,7 +24,7 @@ class SolutionOptionInline(admin.TabularInline):
 
 
 @admin.register(ValueStream)
-class ValueStreamAdmin(admin.ModelAdmin):
+class ValueStreamAdmin(BusinessUnitAssignmentAdminMixin, admin.ModelAdmin):
     list_display = ("name", "business_unit", "owner", "status", "updated_at")
     list_filter = ("status", "business_unit")
     search_fields = ("name", "description", "strategic_objective")

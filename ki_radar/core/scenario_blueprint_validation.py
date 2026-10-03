@@ -9,14 +9,13 @@ from ki_radar.accounts.models import BusinessUnit, User
 from ki_radar.architecture.forms import (
     ProcessAnalysisForm,
     SolutionOptionForm,
-    ValueStreamForm,
     ValueStreamStageForm,
     is_eligible_value_stream_owner,
 )
 from ki_radar.architecture.models import EvidenceBasis, TimeToValue
-from ki_radar.use_cases.forms import UseCaseForm
 
 from .scenario_blueprint import blueprint_checksum, load_blueprint_json
+from .scenario_blueprint_forms import BlueprintUseCaseForm, BlueprintValueStreamForm
 
 CONTRACT_PATH = Path(__file__).with_name("scenario_blueprints") / "contract.v1.json"
 
@@ -456,7 +455,7 @@ def _validate_forms(
             "focus_rationale": "",
         }
     )
-    form = ValueStreamForm(data=stream_data)
+    form = BlueprintValueStreamForm(data=stream_data, business_unit=unit)
     if not form.is_valid():
         errors.extend(_form_errors("value_stream", form))
 
@@ -576,7 +575,7 @@ def _validate_forms(
             "metric_measurement_method": metric["measurement_method"],
         }
     )
-    form = UseCaseForm(data=use_case_data)
+    form = BlueprintUseCaseForm(data=use_case_data, business_unit=unit)
     if not form.is_valid():
         errors.extend(_form_errors("use_case", form))
     return errors

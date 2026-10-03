@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
+from .catalog_admin import BusinessUnitAssignmentAdminMixin
 from .models import BusinessUnit, PrivacyRequest, User
 
 
 @admin.register(User)
-class RadarUserAdmin(UserAdmin):
+class RadarUserAdmin(BusinessUnitAssignmentAdminMixin, UserAdmin):
+    add_fieldsets = (
+        *UserAdmin.add_fieldsets,
+        ("KI-Radar", {"fields": ("business_unit", "job_function")}),
+    )
     fieldsets = (
         *UserAdmin.fieldsets,
         (
@@ -28,8 +33,8 @@ class RadarUserAdmin(UserAdmin):
 
 @admin.register(BusinessUnit)
 class BusinessUnitAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_active", "updated_at")
-    list_filter = ("is_active",)
+    list_display = ("name", "catalog_scope", "is_active", "updated_at")
+    list_filter = ("catalog_scope", "is_active")
     search_fields = ("name", "description")
 
 

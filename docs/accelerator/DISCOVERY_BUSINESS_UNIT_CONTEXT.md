@@ -15,7 +15,9 @@ wird nicht eingefuehrt.
 | `CaptureSession.answers.business_unit` | Eingefrorener Untersuchungskontext (`id`, `name`) |
 | `ValueStream.business_unit` | Dauerhafte Ergebniszuordnung nach Human Review |
 
-Keine neue Modellrelation oder Datenbankmigration. Eine Untersuchung aendert weder
+Die Kontexttrennung aus #129 benoetigte keine neue Modellrelation. #131 ergaenzt
+lediglich eine Katalogklassifikation an `BusinessUnit`; die Discovery-Herkunft und
+Ergebnisrelationen bleiben unveraendert. Eine Untersuchung aendert weder
 die Organisationseinheit noch den State der Idee. `promoted` bedeutet weiterhin
 ausschliesslich tatsaechliche Use-Case-Uebernahme.
 
@@ -23,13 +25,14 @@ ausschliesslich tatsaechliche Use-Case-Uebernahme.
 
 Das Startformular zeigt die Ideen-Zuordnung und die persoenliche Zuordnung,
 einschliesslich fehlender oder inaktiver Zustaende. Die sichtbare Auswahl
-**Organisationseinheit der Untersuchung** enthaelt nur aktive Einheiten.
+**Organisationseinheit der Untersuchung** enthaelt nur aktive, produktiv freigegebene
+Einheiten aus dem Organisationskatalog.
 
-- Aktive Ideen-Einheit: bevorzugte Vorbelegung.
-- Idee ohne Einheit / generischer Einstieg: aktive persoenliche Einheit als Default.
+- Aktive produktive Ideen-Einheit: bevorzugte Vorbelegung.
+- Idee ohne Einheit / generischer Einstieg: aktive produktive persoenliche Einheit als Default.
 - Inaktive Ideen-Einheit: keine stille Ersetzung durch das Profil, Auswahl bleibt leer.
 - Kein aktiver Default: Auswahl direkt im Formular, kein Account-Blocker.
-- Keine aktive Einheit im System: sichtbarer Hinweis; fuer Staff direkter Zugang
+- Keine aktive produktive Einheit im Katalog: sichtbarer Hinweis; fuer Staff direkter Zugang
   zur bestehenden Administration, sonst Hinweis auf die Administration.
 
 Beim Start wird die Auswahl in der Capture-Session eingefroren. LLM-Input,
@@ -42,8 +45,10 @@ Ein Organisationswechsel nach Analysebeginn erfordert Verwerfen und Neustart.
 Auch generische Discoveries besitzen den bestehenden Verwerfen-Pfad und danach
 einen direkten Neustart-Link. Der verworfene Lauf wird nicht geloescht.
 
-Die ausgewaehlte Einheit wird serverseitig beim Start, beim erneuten Analysieren
-und bei der Materialisierung auf Existenz und Aktivitaet geprueft. Eine inzwischen
+Neue Starts akzeptieren serverseitig ausschliesslich aktive, produktiv freigegebene
+Katalogeinheiten. Bereits eingefrorene historische Discovery-Kontexte bleiben erhalten;
+beim erneuten Analysieren und bei der Materialisierung werden Existenz und Aktivitaet
+weiterhin geprueft. Eine inzwischen
 deaktivierte oder geloeschte Einheit wird nicht still durch die Profil-Einheit
 ersetzt. Im Review bleiben Entwurf, Verwerfen und Navigation zugaenglich;
 eine unzulaessige Ergebnisuebernahme wird verhindert.

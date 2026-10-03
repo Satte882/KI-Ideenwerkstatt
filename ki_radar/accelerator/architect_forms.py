@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django import forms
 
+from ki_radar.accounts.business_units import active_productive_business_units
 from ki_radar.accounts.models import BusinessUnit
 
 
@@ -47,7 +48,7 @@ class AutonomousDiscoveryStartForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["business_unit"].queryset = BusinessUnit.objects.filter(is_active=True)
+        self.fields["business_unit"].queryset = active_productive_business_units()
 
 
 class DiscoveryCorrectionForm(forms.Form):

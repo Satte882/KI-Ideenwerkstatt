@@ -750,7 +750,11 @@ def seed_demo_data(*, demo_user_password: str) -> dict[str, int]:
     for unit in DEMO_BUSINESS_UNITS:
         business_unit, _ = BusinessUnit.objects.update_or_create(
             name=unit["name"],
-            defaults={"description": unit["description"], "is_active": True},
+            defaults={
+                "description": unit["description"],
+                "is_active": True,
+                "catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST,
+            },
         )
         business_units[unit["name"]] = business_unit
 
