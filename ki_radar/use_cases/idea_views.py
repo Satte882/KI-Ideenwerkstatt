@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from ki_radar.accounts.models import BusinessUnit
 
+from .idea_discovery import active_idea_discovery
 from .idea_forms import IdeaCandidateForm, IdeaDismissForm, IdeaTriageForm
 from .idea_models import IdeaCandidate
 from .intake_views import IDEA_CANDIDATE_SESSION_KEY, SESSION_KEY
@@ -216,6 +217,14 @@ def idea_promote(request, pk):
         messages.warning(
             request,
             "Diese Idee wurde bereits abgeschlossen und kann nicht erneut übernommen werden.",
+        )
+        return redirect(idea)
+
+    if idea.discovery_process_analysis_id is not None or active_idea_discovery(idea) is not None:
+        messages.warning(
+            request,
+            "Für diese Idee existiert bereits eine Discovery oder Prozessanalyse. "
+            "Bitte diese fortsetzen oder den Discovery-Draft verwerfen.",
         )
         return redirect(idea)
 

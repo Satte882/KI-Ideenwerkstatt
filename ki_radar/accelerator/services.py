@@ -7,6 +7,12 @@ from django.db import transaction
 from django.utils import timezone
 
 from ki_radar.architecture.permissions import can_manage_architecture
+from ki_radar.use_cases.idea_discovery import (
+    active_idea_discovery,
+    assert_idea_discovery_start,
+    build_idea_origin,
+)
+from ki_radar.use_cases.idea_models import IdeaCandidate
 from ki_radar.use_cases.permissions import can_create_use_case
 
 from .catalogs import (
@@ -92,11 +98,13 @@ def create_capture_session(*, actor, capture_type: str, working_title: str = "")
     )
 
 
+@transaction.atomic
 def create_autonomous_capture_session(
     *,
     actor,
     problem_statement: str,
     business_context: str = "",
+    idea_candidate_id=None,
 ) -> CaptureSession:
     _assert_capture_permission(actor, CaptureSession.CaptureType.VALUE_STREAM)
     business_unit = getattr(actor, "business_unit", None)
@@ -124,8 +132,31 @@ def create_autonomous_capture_session(
             {"business_context": ("Der Geschäftskontext darf höchstens 8000 Zeichen enthalten.")}
         )
 
+    idea = None
+    if idea_candidate_id is not None:
+        try:
+            idea = IdeaCandidate.objects.select_for_update().get(pk=idea_candidate_id)
+        except (IdeaCandidate.DoesNotExist, ValueError) as exc:
+            raise ValidationError("Die Ursprungsidee ist nicht mehr verfügbar.") from exc
+        assert_idea_discovery_start(idea=idea, actor=actor)
+        existing = active_idea_discovery(idea)
+        if existing is not None:
+            if existing.owner_id != actor.pk:
+                raise ValidationError(
+                    "Die Discovery dieser Idee wird bereits von jemand anderem bearbeitet."
+                )
+            return existing
+
     catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
     title = problem.splitlines()[0].strip()[:120] or "Autonome Business Discovery"
+    answers = {
+        "problem_statement": problem,
+        "business_context": context,
+        "corrections": [],
+    }
+    if idea is not None:
+        answers["origin"] = build_idea_origin(idea)
+        title = idea.title
     return CaptureSession.objects.create(
         owner=actor,
         capture_type=CaptureSession.CaptureType.VALUE_STREAM,
@@ -134,11 +165,7 @@ def create_autonomous_capture_session(
         catalog_version=catalog.version,
         schema_version=catalog.schema_version,
         required_question_count=0,
-        answers={
-            "problem_statement": problem,
-            "business_context": context,
-            "corrections": [],
-        },
+        answers=answers,
         expires_at=_draft_expiry(),
     )
 

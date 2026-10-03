@@ -179,6 +179,8 @@ def _lock_idea_candidate_for_promotion(request):
         raise ValidationError(
             "Die Ursprungsidee wurde bereits abgeschlossen und kann nicht erneut übernommen werden."
         )
+    if idea.discovery_process_analysis_id is not None:
+        raise ValidationError("Die Ursprungsidee wurde bereits in eine Prozessanalyse übernommen.")
     return idea
 
 

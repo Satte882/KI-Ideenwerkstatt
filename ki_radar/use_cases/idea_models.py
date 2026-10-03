@@ -85,6 +85,13 @@ class IdeaCandidate(TimeStampedModel):
         on_delete=models.PROTECT,
         related_name="origin_idea_candidate",
     )
+    discovery_process_analysis = models.OneToOneField(
+        "architecture.ProcessAnalysis",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="origin_idea_candidate",
+    )
 
     class Meta:
         ordering = ["-created_at"]
