@@ -1,13 +1,13 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
-from ki_radar.accelerator.services import create_autonomous_capture_session
 from ki_radar.accounts.business_units import (
     active_productive_business_units,
     selectable_business_units,
 )
 from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
+from ki_radar.accelerator.services import create_autonomous_capture_session
 from ki_radar.architecture.forms import ValueStreamForm
 from ki_radar.use_cases.forms import UseCaseForm
 from ki_radar.use_cases.idea_forms import IdeaCandidateForm
@@ -27,7 +27,7 @@ EXPECTED_PRODUCTIVE_UNITS = {
 @pytest.mark.django_db
 def test_productive_catalog_is_seeded_without_company_prefix():
     names = set(active_productive_business_units().values_list("name", flat=True))
-    assert EXPECTED_PRODUCTIVE_UNITS <= names
+    assert names >= EXPECTED_PRODUCTIVE_UNITS
     assert not any(name.startswith("RSD") for name in EXPECTED_PRODUCTIVE_UNITS)
 
 
