@@ -1,9 +1,10 @@
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils import timezone
 
-from ki_radar.accelerator.models import CaptureSession
+from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 
 from .idea_models import IdeaCandidate
 
@@ -39,10 +40,13 @@ def active_idea_discovery(idea: IdeaCandidate) -> CaptureSession | None:
             capture_type=CaptureSession.CaptureType.VALUE_STREAM,
             mode=CaptureSession.Mode.AUTONOMOUS,
             status=CaptureSession.Status.DRAFT,
-            expires_at__gt=timezone.now(),
             answers__origin__type="idea_candidate",
             answers__origin__idea_candidate_id=str(idea.pk),
         )
+        .filter(
+            Q(expires_at__gt=timezone.now()) | Q(analyses__status=CaptureAnalysis.Status.RUNNING)
+        )
+        .distinct()
         .order_by("created_at")
         .first()
     )

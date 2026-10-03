@@ -218,8 +218,9 @@ def idea_dismiss(request, pk):
 
 @login_required
 @require_POST
+@transaction.atomic
 def idea_promote(request, pk):
-    idea = get_object_or_404(IdeaCandidate, pk=pk)
+    idea = get_object_or_404(IdeaCandidate.objects.select_for_update(), pk=pk)
     if not can_promote_idea(request.user, idea):
         raise PermissionDenied
     if idea.state != IdeaCandidate.State.OPEN or idea.promoted_use_case_id is not None:

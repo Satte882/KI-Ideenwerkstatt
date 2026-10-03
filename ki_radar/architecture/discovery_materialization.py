@@ -165,7 +165,7 @@ def materialize_discovery_and_start_investigation(
             "Diese Discovery wurde bereits mit einem anderen Stand abgeschlossen.",
             code="materialization_conflict",
         )
-    if session.status != CaptureSession.Status.DRAFT or session.expires_at <= timezone.now():
+    if session.status != CaptureSession.Status.DRAFT:
         raise DiscoveryMaterializationError(
             "Diese Discovery ist nicht mehr bearbeitbar.",
             code="capture_not_editable",
@@ -185,6 +185,10 @@ def materialize_discovery_and_start_investigation(
     try:
         origin_id = idea_origin_id(session.answers or {})
         if origin_id is not None:
+            if session.expires_at <= timezone.now():
+                raise DiscoveryMaterializationError(
+                    "Diese Idea-Discovery ist abgelaufen.", code="capture_not_editable"
+                )
             idea = IdeaCandidate.objects.select_for_update().get(pk=origin_id)
             assert_idea_discovery_start(idea=idea, actor=actor)
     except (IdeaCandidate.DoesNotExist, ValidationError) as exc:

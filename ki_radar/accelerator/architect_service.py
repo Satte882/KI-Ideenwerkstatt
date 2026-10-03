@@ -595,8 +595,8 @@ def execute_autonomous_business_discovery(
                 )
 
         source_labels = {"U0": "Problem, Kontext und Nutzerkorrekturen"}
-        for index, source in enumerate(snapshot.sources.order_by("filename", "id"), start=1):
-            source_labels[f"S{index}"] = source.filename
+        for source in document["sources"]:
+            source_labels[source["ref"]] = source["filename"]
 
         status = (
             CaptureAnalysis.Status.SUCCESS

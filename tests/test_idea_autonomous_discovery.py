@@ -1,18 +1,32 @@
+import json
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
-from test_issue_98_autonomous_business_discovery import _approved_analysis, _session_and_snapshot
+from test_issue_98_autonomous_business_discovery import (
+    _approved_analysis,
+    _draft,
+    _result,
+    _session_and_snapshot,
+    _source_uploads,
+    _verifier,
+)
 from test_issue_422_idea_inbox import set_intake_session
 
 from ki_radar.accelerator import architect_service, architect_views
 from ki_radar.accelerator.investigation_models import InvestigationSourceSnapshot
 from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
+from ki_radar.accelerator.retention import (
+    expire_due_capture_sessions,
+    purge_terminal_capture_sessions,
+)
 from ki_radar.accelerator.services import create_autonomous_capture_session
 from ki_radar.accounts.models import BusinessUnit
 from ki_radar.architecture.discovery_materialization import (
@@ -320,3 +334,288 @@ def test_long_idea_description_is_not_truncated_and_requires_confirmation(client
     assert response.status_code == 200
     assert response.context["form"].errors["problem_statement"]
     assert not CaptureSession.objects.exists()
+
+
+@pytest.mark.parametrize("uploads", [False, True])
+def test_complete_idea_discovery_uses_existing_review_and_investigation(
+    client, idea, owner, tmp_path, monkeypatch, uploads
+):
+    draft = _draft()
+    if not uploads:
+        for item in [
+            draft["value_stream"],
+            draft["focus"],
+            draft["process_analysis"],
+            *draft["stages"],
+            *draft["facts"],
+            *draft["hypotheses"],
+        ]:
+            item["evidence_refs"] = ["U0"]
+    provider_results = iter([_result(draft), _result(_verifier())])
+    observed = []
+
+    def provider(**kwargs):
+        observed.append(json.loads(kwargs["messages"][1]["content"]))
+        return next(provider_results)
+
+    monkeypatch.setattr(architect_service, "_provider_call", provider)
+    client.force_login(owner)
+    data = {
+        "idea_candidate": str(idea.pk),
+        "problem_statement": (
+            "Ein freigegebener Beschaffungsbedarf startet die Lieferantenauswahl. "
+            "Angebote werden per E-Mail eingeholt und manuell verglichen. "
+            "Einkauf und Fachbereich bereiten die Entscheidung vor."
+        ),
+        "business_context": "Der manuelle Angebotsvergleich dauert zu lange.",
+    }
+    if uploads:
+        data["sources"] = _source_uploads()
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        response = client.post(reverse("accelerator:autonomous_discovery_start"), data)
+    session = CaptureSession.objects.get()
+    assert response.url == reverse("accelerator:autonomous_discovery_review", args=[session.pk])
+    analysis = session.analyses.get()
+    assert analysis.status == CaptureAnalysis.Status.SUCCESS
+    assert len(observed) == 2
+    assert observed[0]["input_ref"] == "U0"
+    assert len(observed[0]["sources"]) == int(uploads)
+    assert analysis.result_payload["source_labels"].keys() == ({"U0", "S1"} if uploads else {"U0"})
+    review = client.get(response.url)
+    assert review.status_code == 200
+    assert review.context["can_confirm"]
+    assert "Discovery verwerfen" in review.content.decode()
+    assert not ProcessAnalysis.objects.exists()
+    response = client.post(
+        response.url,
+        {
+            "action": "confirm",
+            "revision": session.revision,
+            "selected_stage_key": "compare",
+        },
+    )
+    assert response.status_code == 302
+    idea.refresh_from_db()
+    session.refresh_from_db()
+    assert idea.state == IdeaCandidate.State.OPEN
+    process = idea.discovery_process_analysis
+    assert process.stage.value_stream.business_unit == owner.business_unit
+    assert session.status == CaptureSession.Status.COMPLETED
+    snapshot = InvestigationSourceSnapshot.objects.get(process_analysis=process)
+    source = snapshot.sources.get(filename=session.answers["origin"]["origin_source_filename"])
+    assert data["problem_statement"] in source.content
+    assert (Path(snapshot.folder.root_path) / source.filename).is_file()
+    assert response.url == reverse(
+        "accelerator:investigation_activity",
+        args=[session.answers["materialization"]["investigation_run_id"]],
+    )
+
+
+def test_capture_retention_preserves_durable_idea_origin_and_process_source(
+    client, idea, owner, tmp_path, monkeypatch
+):
+    session, snapshot = start_from_idea(client, idea, owner, tmp_path, monkeypatch)
+    analysis = _approved_analysis(session=session, snapshot=snapshot)
+    result = materialize(owner, session, analysis)
+    process_snapshot = InvestigationSourceSnapshot.objects.get(pk=result.investigation_snapshot_id)
+    source = process_snapshot.sources.get()
+    source_path = Path(process_snapshot.folder.root_path) / source.filename
+    source_bytes = source_path.read_bytes()
+    now = timezone.now()
+    CaptureSession.objects.filter(pk=session.pk).update(
+        status=CaptureSession.Status.EXPIRED, expired_at=now - timedelta(days=8)
+    )
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        assert purge_terminal_capture_sessions(now=now) == 1
+    assert not CaptureSession.objects.filter(pk=session.pk).exists()
+    assert not CaptureAnalysis.objects.filter(pk=analysis.pk).exists()
+    assert not InvestigationSourceSnapshot.objects.filter(pk=snapshot.pk).exists()
+    idea.refresh_from_db()
+    assert idea.discovery_process_analysis_id == result.process_analysis_id
+    assert idea.discovery_process_analysis.stage.value_stream_id == result.value_stream_id
+    assert source_path.read_bytes() == source_bytes
+    assert process_snapshot.sources.get().content_sha256 == source.content_sha256
+    assert "Analyse fortsetzen" in client.get(idea.get_absolute_url()).content.decode()
+    response = client.post(
+        reverse("accelerator:autonomous_discovery_start"),
+        {
+            "idea_candidate": str(idea.pk),
+        },
+    )
+    assert response.url == idea.discovery_process_analysis.get_absolute_url()
+    assert not CaptureSession.objects.exists()
+
+
+@pytest.mark.parametrize("outcome", ["waiting_human", "failed", "discard", "expiry"])
+def test_discovery_lifecycle_keeps_idea_open_and_only_terminal_drafts_release_intake(
+    client, idea, owner, tmp_path, monkeypatch, outcome
+):
+    session, snapshot = start_from_idea(
+        client, idea, owner, tmp_path, monkeypatch, uploads=_source_uploads()
+    )
+    if outcome in {"waiting_human", "failed"}:
+
+        def provider(**kwargs):
+            if outcome == "failed":
+                raise architect_service.DiscoveryAnalysisError(
+                    "Provider fehlgeschlagen", code="test_failure"
+                )
+            if kwargs["schema_name"] == "autonomous_business_discovery_v1":
+                return _result(_draft())
+            return _result(_verifier("waiting_human", human_question="Wo beginnt der Prozess?"))
+
+        monkeypatch.setattr(architect_service, "_provider_call", provider)
+        if outcome == "failed":
+            with pytest.raises(architect_service.DiscoveryAnalysisError):
+                architect_service.execute_autonomous_business_discovery(
+                    actor=owner, session_id=session.pk, snapshot_id=snapshot.pk
+                )
+        else:
+            architect_service.execute_autonomous_business_discovery(
+                actor=owner, session_id=session.pk, snapshot_id=snapshot.pk
+            )
+        assert session.analyses.get().status == outcome
+    elif outcome == "discard":
+        response = client.post(
+            reverse("accelerator:capture_discard", args=[session.pk]),
+            {
+                "revision": session.revision,
+            },
+        )
+        assert response.status_code == 302
+    else:
+        CaptureSession.objects.filter(pk=session.pk).update(
+            expires_at=timezone.now() - timedelta(seconds=1)
+        )
+        assert expire_due_capture_sessions() == 1
+    idea.refresh_from_db()
+    assert idea.state == IdeaCandidate.State.OPEN
+    assert idea.discovery_process_analysis_id is None
+    client.post(reverse("use_cases:idea_promote", args=[idea.pk]))
+    assert bool(client.session.get("use_case_intake")) == (outcome in {"discard", "expiry"})
+
+
+def test_other_owner_cannot_create_second_session_or_open_first_owner_review(
+    client, idea, owner, other_owner, tmp_path, monkeypatch
+):
+    session, _ = start_from_idea(client, idea, owner, tmp_path, monkeypatch)
+    client.force_login(other_owner)
+    response = client.post(
+        reverse("accelerator:autonomous_discovery_start"),
+        {
+            "idea_candidate": str(idea.pk),
+            "problem_statement": idea.description,
+        },
+    )
+    assert response.url == idea.get_absolute_url()
+    assert CaptureSession.objects.count() == 1
+    response = client.get(reverse("accelerator:autonomous_discovery_review", args=[session.pk]))
+    assert response.status_code == 404
+    with pytest.raises(ValidationError, match="jemand anderem"):
+        create_autonomous_capture_session(
+            actor=other_owner, problem_statement=idea.description, idea_candidate_id=idea.pk
+        )
+
+
+def test_bu_mismatch_is_rejected_at_request_and_stale_materialization(
+    client, idea, owner, tmp_path
+):
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    idea.business_unit = BusinessUnit.objects.create(name="Abweichende Organisation")
+    idea.save()
+    client.force_login(owner)
+    response = client.post(
+        reverse("accelerator:autonomous_discovery_start"),
+        {
+            "idea_candidate": str(idea.pk),
+            "problem_statement": idea.description,
+        },
+    )
+    assert response.url == idea.get_absolute_url()
+    assert "Zuordnung" in client.get(response.url).content.decode()
+    with pytest.raises(DiscoveryMaterializationError, match="Organisationseinheit"):
+        materialize(owner, session, analysis)
+    assert not ProcessAnalysis.objects.exists()
+    assert not ValueStream.objects.exists()
+
+
+@pytest.mark.parametrize("state", ["dismissed", "missing", "invalid_origin", "expired"])
+def test_stale_discovery_cannot_materialize_invalid_or_terminal_origin(
+    idea, owner, tmp_path, state
+):
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    if state == "dismissed":
+        idea.state = IdeaCandidate.State.DISMISSED
+        idea.decision_note = "Kein Bedarf"
+        idea.save()
+    elif state == "missing":
+        idea.delete()
+    elif state == "invalid_origin":
+        session.answers["origin"]["idea_candidate_id"] = "invalid"
+        session.save()
+    else:
+        session.expires_at = timezone.now() - timedelta(seconds=1)
+        session.save()
+    with pytest.raises(DiscoveryMaterializationError):
+        materialize(owner, session, analysis)
+    assert not ProcessAnalysis.objects.exists()
+    assert not ValueStream.objects.exists()
+
+
+def test_running_analysis_keeps_due_draft_active_like_existing_capture_retention(idea, owner):
+    session = create_autonomous_capture_session(
+        actor=owner, problem_statement=idea.description, idea_candidate_id=idea.pk
+    )
+    CaptureAnalysis.objects.create(
+        session=session,
+        source_revision=session.revision,
+        source_hash="a" * 64,
+        capture_type=session.capture_type,
+        catalog_version=session.catalog_version,
+        answer_schema_version=session.schema_version,
+        prompt_version="test",
+        extraction_schema_version="test",
+    )
+    CaptureSession.objects.filter(pk=session.pk).update(
+        expires_at=timezone.now() - timedelta(seconds=1)
+    )
+    assert expire_due_capture_sessions() == 0
+    repeated = create_autonomous_capture_session(
+        actor=owner, problem_statement=idea.description, idea_candidate_id=idea.pk
+    )
+    assert repeated.pk == session.pk
+    assert CaptureSession.objects.count() == 1
+
+
+@pytest.mark.django_db(transaction=True)
+def test_origin_migration_preserves_existing_idea_data(owner):
+    target = ("use_cases", "0013_alter_decisionassessment_assessed_by")
+    executor = MigrationExecutor(connection)
+    leaves = executor.loader.graph.leaf_nodes()
+    executor.migrate([target])
+    try:
+        old_apps = executor.loader.project_state([target]).apps
+        OldIdea = old_apps.get_model("use_cases", "IdeaCandidate")
+        OldUseCase = old_apps.get_model("use_cases", "UseCase")
+        use_case = OldUseCase.objects.create(
+            title="Bestehender Use Case",
+            business_unit_id=owner.business_unit_id,
+            business_owner_id=owner.pk,
+        )
+        for state in ["open", "dismissed", "promoted"]:
+            OldIdea.objects.create(
+                title=f"Bestehende Idee {state}",
+                description="Originalbeschreibung",
+                state=state,
+                decision_note="Originalbegründung" if state == "dismissed" else "",
+                promoted_use_case_id=use_case.pk if state == "promoted" else None,
+                impact=4,
+                confidence=3,
+                ease=2,
+                source_note="Originalquelle",
+            )
+        before = list(OldIdea.objects.order_by("pk").values())
+    finally:
+        MigrationExecutor(connection).migrate(leaves)
+    after = list(IdeaCandidate.objects.order_by("pk").values())
+    assert after == [{**row, "discovery_process_analysis_id": None} for row in before]
