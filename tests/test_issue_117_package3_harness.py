@@ -5,11 +5,28 @@ from types import SimpleNamespace
 
 import pytest
 from django.core.management.base import CommandError
+from django.utils import timezone
 
+from ki_radar.accelerator import investigation_llm as llm
 from ki_radar.accelerator.investigation_llm import PlannerAction
-from ki_radar.accelerator.investigation_models import InvestigationModelCall
-from ki_radar.accelerator.investigation_runtime import InvestigationRunError
+from ki_radar.accelerator.investigation_models import InvestigationModelCall, InvestigationRun
+from ki_radar.accelerator.investigation_runtime import (
+    InvestigationRunError,
+    StartInvestigationRequest,
+    apply_planner_state,
+    start_investigation,
+    structured_mapping_blockers,
+)
 from ki_radar.accelerator.management.commands import run_issue117_package3 as package3
+from tests.test_issue_117_structured_mapping import make_process, snapshot_for_root
+
+
+@pytest.fixture(autouse=True)
+def forbid_provider_calls(monkeypatch):
+    def forbidden(**_kwargs):
+        pytest.fail("Package 3 harness tests must never call a real provider")
+
+    monkeypatch.setattr(llm, "_structured_provider_call", forbidden)
 
 
 class _FakeCalls:
@@ -413,3 +430,240 @@ def test_summary_exports_repair_and_final_verifier_bindings(synthesis_mode):
     assert summary["model_calls"][0]["synthesis_trigger"] == (synthesis_mode or "")
     assert summary["model_calls"][0]["context_refs"]["brief_hash"] == audit["mutated_brief_hash"]
     assert summary["verifier_reports"][-1]["bound_hashes"]["brief"] == summary["final_brief_hash"]
+
+
+@pytest.mark.parametrize(
+    "test_type", ["controlled_missing_assignment_repair", "semantic_verifier_negative"]
+)
+def test_planner_internal_synthesis_is_mutated_once_before_later_repair(monkeypatch, test_type):
+    slot = _slot(test_type)
+    action = _action(slot)
+    audit = _audit(slot)
+    run = _FakeRun()
+    run.pk = "test-run"
+    monkeypatch.setattr(llm, "assert_actor_can_edit_run", lambda *_args: None)
+    monkeypatch.setattr(llm, "_investigation_context", lambda *_args: {})
+    monkeypatch.setattr(
+        llm, "_structured_provider_call", lambda **_kwargs: ({"action": "synthesize"}, None)
+    )
+    monkeypatch.setattr(llm, "request_synthesis_package", lambda **_kwargs: action)
+    monkeypatch.setattr(package3, "request_synthesis_package", lambda **_kwargs: action)
+    command = package3.Command()
+    planner = command._controlled_synthesizer(slot, audit, requester=llm.request_planner_action)
+    synthesizer = command._controlled_synthesizer(slot, audit)
+
+    first = planner(actor=None, run=run, executor_token=None)
+    first_audit = deepcopy(audit)
+    assert first.brief_payload != action.brief_payload
+    assert audit["applied"] is True
+    assert synthesizer(actor=None, run=run, executor_token=None) is action
+    assert planner(actor=None, run=run, executor_token=None) is action
+    assert audit == first_audit
+
+
+def _control_snapshot(owner, business_unit, tmp_path, slot):
+    process = make_process(owner=owner, business_unit=business_unit)
+    rows = [f"{key},{slot['expected_assignments'][key]}" for key in slot["case_keys"]]
+    (tmp_path / "cases.csv").write_text("case_id,decision\n" + "\n".join(rows), encoding="utf-8")
+    result = snapshot_for_root(owner=owner, process=process, root=tmp_path)
+    snapshot = process.investigation_source_snapshots.get(pk=result.snapshot_id)
+    return process, snapshot
+
+
+def _mapping_values(payload):
+    return {
+        item["case_key"]: item["value"] for item in payload["structured_mappings"][0]["assignments"]
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "test_type", ["controlled_missing_assignment_repair", "semantic_verifier_negative"]
+)
+def test_control_is_persisted_before_repair_or_verifier(
+    owner, business_unit, tmp_path, monkeypatch, test_type
+):
+    slot = _slot(test_type)
+    _process, snapshot = _control_snapshot(owner, business_unit, tmp_path, slot)
+    source = snapshot.sources.get(filename="cases.csv")
+    handle = start_investigation(
+        actor=owner,
+        request=StartInvestigationRequest(
+            snapshot_id=snapshot.pk,
+            idempotency_key="control-sequence",
+            structured_mapping_obligations=(
+                {
+                    "obligation_id": "test-obligation",
+                    "source_id": str(source.pk),
+                    "case_key_column": "case_id",
+                    "case_keys": slot["case_keys"],
+                    "mapping_dimension": "routing",
+                    "exhaustive": True,
+                },
+            ),
+        ),
+    )
+    run = InvestigationRun.objects.get(pk=handle.run_id)
+    action = _action(slot)
+    for assignment in action.brief_payload["structured_mappings"][0]["assignments"]:
+        assignment["references"][0].update(
+            source_id=str(source.pk), revision_hash=source.content_sha256
+        )
+    original_context = llm._investigation_context
+    monkeypatch.setattr(llm, "_investigation_context", lambda *_args: {})
+    monkeypatch.setattr(
+        llm, "_structured_provider_call", lambda **_kwargs: ({"action": "synthesize"}, None)
+    )
+
+    def initial_synthesis(**_kwargs):
+        InvestigationModelCall.objects.create(
+            run=run,
+            role="synthesizer",
+            status="success",
+            executor_generation=run.executor_generation,
+            prompt_version="test",
+            schema_version="test",
+            finished_at=timezone.now(),
+            context_refs={"synthesis_mode": "initial", "brief_hash": run.brief_hash},
+        )
+        return action
+
+    monkeypatch.setattr(llm, "request_synthesis_package", initial_synthesis)
+    audit = _audit(slot)
+    command = package3.Command()
+    controlled = command._controlled_synthesizer(slot, audit, requester=llm.request_planner_action)
+    initial = controlled(actor=owner, run=run, executor_token=handle.executor_token)
+    monkeypatch.setattr(llm, "_investigation_context", original_context)
+    apply_planner_state(
+        actor=owner,
+        run_id=run.pk,
+        executor_token=handle.executor_token,
+        brief_payload=initial.brief_payload,
+    )
+    run.refresh_from_db()
+    assert run.brief_hash == audit["mutated_brief_hash"]
+    assert run.verifier_reports.count() == 0
+    if test_type == "controlled_missing_assignment_repair":
+        assert any("coverage_incomplete" in item for item in structured_mapping_blockers(run))
+        context = llm._synthesis_context(owner, run)
+        assert context["synthesis_mode"] == "pre_verifier_repair"
+        assert _mapping_values(context["brief_payload"]) == _mapping_values(run.brief_payload)
+
+        def repair_request(*, actor, run, executor_token):
+            call = llm._reserve_model_call(
+                actor=actor,
+                run_id=run.pk,
+                executor_token=executor_token,
+                role="synthesizer",
+                instruction="test",
+                prompt_version="test",
+                schema_version="test",
+                context=context,
+            )
+            assert call.context_refs["brief_hash"] == audit["mutated_brief_hash"]
+            assert call.context_refs["synthesis_mode"] == "pre_verifier_repair"
+            return action
+
+        monkeypatch.setattr(package3, "request_synthesis_package", repair_request)
+        repaired = command._controlled_synthesizer(slot, audit)(
+            actor=owner, run=run, executor_token=handle.executor_token
+        )
+        assert repaired is action
+        apply_planner_state(
+            actor=owner,
+            run_id=run.pk,
+            executor_token=handle.executor_token,
+            brief_payload=repaired.brief_payload,
+        )
+        run.refresh_from_db()
+        assert structured_mapping_blockers(run) == ()
+    else:
+        assert structured_mapping_blockers(run) == ()
+    context = llm._verifier_context(run)
+    assert _mapping_values(context["brief_payload"]) == _mapping_values(run.brief_payload)
+    assert context["bound_hashes"]["brief"] == run.brief_hash
+
+
+@pytest.mark.parametrize("defect", ["wrong_id", "wrong_slot", "missing", "ready", "second"])
+def test_replacement_rejects_anything_except_documented_failed_run(defect):
+    slot = deepcopy(_slot("controlled_missing_assignment_repair"))
+    original = SimpleNamespace(
+        pk=package3.REPLACEABLE_RUN_ID, status="failed", evidence_metadata={}
+    )
+    existing = [original]
+    requested = package3.REPLACEABLE_RUN_ID
+    if defect == "wrong_id":
+        requested = "another-run"
+    elif defect == "wrong_slot":
+        slot["slot_id"] = "p3-d-ap4-04-semantic-negative"
+    elif defect == "missing":
+        existing = []
+    elif defect == "ready":
+        original.status = "ready"
+    else:
+        existing.append(
+            SimpleNamespace(
+                pk="replacement", status="failed", evidence_metadata={"replaces_run_id": requested}
+            )
+        )
+    with pytest.raises(CommandError):
+        package3.Command()._replacement_target(slot, existing, requested)
+
+
+@pytest.mark.django_db
+def test_explicit_replacement_preserves_original_and_rejects_second(
+    owner, business_unit, tmp_path, monkeypatch
+):
+    slot = _slot("controlled_missing_assignment_repair")
+    process, snapshot = _control_snapshot(owner, business_unit, tmp_path, slot)
+    original = InvestigationRun.objects.create(
+        id=package3.REPLACEABLE_RUN_ID,
+        process_analysis=process,
+        source_snapshot=snapshot,
+        requested_by=owner,
+        idempotency_key="documented-failure",
+        process_version=process.version,
+        decision_question="Control",
+        contract_hash="a" * 64,
+        manifest_hash=snapshot.manifest_hash,
+        status="failed",
+        finished_at=timezone.now(),
+        evidence_metadata={"experiment_id": package3.EXPERIMENT_ID, "slot_id": slot["slot_id"]},
+    )
+    before = InvestigationRun.objects.filter(pk=original.pk).values().get()
+    for key, value in {
+        "ISSUE106_PRICE_INPUT_PER_MILLION": "0.1",
+        "ISSUE106_PRICE_OUTPUT_PER_MILLION": "0.4",
+        "ISSUE106_PRICING_CURRENCY": "USD",
+        "ISSUE106_PRICING_VERSION": "test-only",
+    }.items():
+        monkeypatch.setenv(key, value)
+    command = package3.Command()
+    kwargs = dict(
+        process=process,
+        snapshot=snapshot,
+        slot=slot,
+        contract=package3._contract(),
+        tested_commit="b" * 40,
+    )
+    with pytest.raises(CommandError, match="no automatic replacement"):
+        command._start_slot(**kwargs, replace_run=None)
+    handle, campaign = command._start_slot(**kwargs, replace_run=package3.REPLACEABLE_RUN_ID)
+    replacement = InvestigationRun.objects.get(pk=handle.run_id)
+    assert replacement.evidence_metadata["replaces_run_id"] == str(original.pk)
+    assert (
+        replacement.evidence_metadata["replacement_reason"]
+        == "package3_control_initial_synthesis_bypass"
+    )
+    assert campaign.campaign_key.endswith("-replacement-1")
+    assert replacement.idempotency_key.endswith("-replacement-1")
+    assert InvestigationRun.objects.filter(pk=original.pk).values().get() == before
+    with pytest.raises(CommandError, match="replacement already exists"):
+        command._start_slot(**kwargs, replace_run=package3.REPLACEABLE_RUN_ID)
+    assert (
+        InvestigationRun.objects.filter(
+            evidence_metadata__experiment_id=package3.EXPERIMENT_ID
+        ).count()
+        == 2
+    )
+    assert replacement.provider_reservations.count() == 0

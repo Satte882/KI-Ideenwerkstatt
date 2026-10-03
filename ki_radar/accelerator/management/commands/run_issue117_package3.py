@@ -11,9 +11,14 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 from ki_radar.accelerator.investigation_evidence import create_evidence_campaign
-from ki_radar.accelerator.investigation_llm import PlannerAction, request_synthesis_package
+from ki_radar.accelerator.investigation_llm import (
+    PlannerAction,
+    request_planner_action,
+    request_synthesis_package,
+)
 from ki_radar.accelerator.investigation_loop import run_until_boundary
 from ki_radar.accelerator.investigation_models import (
     InvestigationEvidenceCampaign,
@@ -35,6 +40,8 @@ from ki_radar.architecture.models import ProcessAnalysis
 CONTRACT_PATH = "tests/fixtures/issue117_package3_contract_v1.json"
 EXPERIMENT_ID = "issue117-package3-v1"
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
+REPLACEABLE_RUN_ID = "d6469021-d878-43de-9471-db97310edaf1"
+REPLACEABLE_SLOT = "p3-c-ap4-02-missing-repair"
 
 
 def _contract() -> dict[str, object]:
@@ -73,6 +80,10 @@ class Command(BaseCommand):
         slot_ids = tuple(str(item["slot_id"]) for item in _contract()["slots"])
         parser.add_argument("--slot", choices=slot_ids, required=True)
         parser.add_argument(
+            "--replace-run",
+            help="Explicitly replace the single documented P3-C harness-control failure once.",
+        )
+        parser.add_argument(
             "--confirm-real-provider",
             action="store_true",
             help="Required acknowledgement that real provider calls and cost are allowed.",
@@ -102,60 +113,16 @@ class Command(BaseCommand):
         snapshot = snapshots[0]
         self._assert_snapshot_contract(snapshot, slot)
 
-        existing = list(
-            InvestigationRun.objects.filter(
-                evidence_metadata__experiment_id=EXPERIMENT_ID,
-                evidence_metadata__slot_id=slot["slot_id"],
-            )
+        handle, campaign = self._start_slot(
+            process=process,
+            snapshot=snapshot,
+            slot=slot,
+            contract=contract,
+            tested_commit=tested_commit,
+            replace_run=options.get("replace_run"),
         )
-        if existing:
-            if len(existing) > 1:
-                raise CommandError(f"{slot['slot_id']}: duplicate Package 3 runs exist.")
-            self.stdout.write(
-                self.style.WARNING(
-                    "ISSUE117_P3_EXISTING "
-                    + json.dumps(self._summary(existing[0], slot, mutation_audit=None))
-                )
-            )
-            raise CommandError(
-                f"{slot['slot_id']}: a Package 3 run already exists; "
-                "no automatic replacement or retry is allowed."
-            )
 
-        campaign = self._campaign(process=process, slot=slot, contract=contract)
         mutation = slot.get("mutation")
-        metadata = {
-            "provider_mode": "real",
-            "phase": "package3",
-            "experiment_id": EXPERIMENT_ID,
-            "slot_id": slot["slot_id"],
-            "case_id": slot["case_id"],
-            "test_type": slot["test_type"],
-            "tested_commit": tested_commit,
-            "control_mutation": dict(mutation) if isinstance(mutation, dict) else None,
-            "contract_schema_version": contract["schema_version"],
-        }
-
-        try:
-            handle = start_investigation(
-                actor=campaign.authorized_by,
-                request=StartInvestigationRequest(
-                    snapshot_id=snapshot.pk,
-                    idempotency_key=f"i117-{slot['slot_id']}-v1",
-                    evidence_campaign_id=campaign.pk,
-                    execution_mode="adaptive",
-                    evidence_metadata=metadata,
-                    decision_brief_required=True,
-                ),
-            )
-        except InvestigationRunError as exc:
-            raise CommandError(f"{slot['slot_id']}: run could not start: {exc}") from exc
-
-        if handle.reused:
-            raise CommandError(
-                f"{slot['slot_id']}: start unexpectedly reused an existing run; inspect manually."
-            )
-
         mutation_audit = {
             "declared": dict(mutation) if isinstance(mutation, dict) else None,
             "applied": False,
@@ -164,15 +131,20 @@ class Command(BaseCommand):
             "mutated_brief_hash": None,
             "model_call_id": None,
         }
+        planner = request_planner_action
         synthesizer = request_synthesis_package
         if isinstance(mutation, dict):
             synthesizer = self._controlled_synthesizer(slot, mutation_audit)
+            planner = self._controlled_synthesizer(
+                slot, mutation_audit, requester=request_planner_action
+            )
 
         try:
             result = run_until_boundary(
                 actor=campaign.authorized_by,
                 run_id=handle.run_id,
                 executor_token=handle.executor_token,
+                planner=planner,
                 synthesizer=synthesizer,
             )
         except InvestigationRunError as exc:
@@ -199,13 +171,106 @@ class Command(BaseCommand):
         )
         self._assert_mechanical_expectation(run, slot, mutation_audit)
 
-    def _controlled_synthesizer(self, slot, mutation_audit):
+    @transaction.atomic
+    def _start_slot(self, *, process, snapshot, slot, contract, tested_commit, replace_run):
+        # Serialize duplicate/replacement checks with creation, before any provider call.
+        ProcessAnalysis.objects.select_for_update().get(pk=process.pk)
+        self._assert_package_budget(contract)
+        existing = list(
+            InvestigationRun.objects.filter(
+                evidence_metadata__experiment_id=EXPERIMENT_ID,
+                evidence_metadata__slot_id=slot["slot_id"],
+            )
+        )
+        replaced = self._replacement_target(slot, existing, replace_run)
+        if replaced is not None and (
+            replaced.process_analysis_id != process.pk or replaced.source_snapshot_id != snapshot.pk
+        ):
+            raise CommandError(
+                "Replacement must reuse the original P3-C process and source snapshot."
+            )
+        if existing and replaced is None:
+            if len(existing) > 1:
+                raise CommandError(f"{slot['slot_id']}: duplicate Package 3 runs exist.")
+            self.stdout.write(
+                self.style.WARNING(
+                    "ISSUE117_P3_EXISTING "
+                    + json.dumps(self._summary(existing[0], slot, mutation_audit=None))
+                )
+            )
+            raise CommandError(
+                f"{slot['slot_id']}: a Package 3 run already exists; "
+                "no automatic replacement or retry is allowed."
+            )
+
+        campaign = self._campaign(
+            process=process, slot=slot, contract=contract, replacement=replaced is not None
+        )
+        mutation = slot.get("mutation")
+        metadata = {
+            "provider_mode": "real",
+            "phase": "package3",
+            "experiment_id": EXPERIMENT_ID,
+            "slot_id": slot["slot_id"],
+            "case_id": slot["case_id"],
+            "test_type": slot["test_type"],
+            "tested_commit": tested_commit,
+            "control_mutation": dict(mutation) if isinstance(mutation, dict) else None,
+            "contract_schema_version": contract["schema_version"],
+        }
+        suffix = "-replacement-1" if replaced is not None else ""
+        if replaced is not None:
+            metadata.update(
+                replaces_run_id=str(replaced.pk),
+                replacement_reason="package3_control_initial_synthesis_bypass",
+            )
+
+        try:
+            handle = start_investigation(
+                actor=campaign.authorized_by,
+                request=StartInvestigationRequest(
+                    snapshot_id=snapshot.pk,
+                    idempotency_key=f"i117-{slot['slot_id']}-v1{suffix}",
+                    evidence_campaign_id=campaign.pk,
+                    execution_mode="adaptive",
+                    evidence_metadata=metadata,
+                    decision_brief_required=True,
+                ),
+            )
+        except InvestigationRunError as exc:
+            raise CommandError(f"{slot['slot_id']}: run could not start: {exc}") from exc
+
+        if handle.reused:
+            raise CommandError(
+                f"{slot['slot_id']}: start unexpectedly reused an existing run; inspect manually."
+            )
+
+        return handle, campaign
+
+    def _replacement_target(self, slot, existing, requested):
+        if not requested:
+            return None
+        if slot["slot_id"] != REPLACEABLE_SLOT or str(requested) != REPLACEABLE_RUN_ID:
+            raise CommandError("Replacement is restricted to the documented P3-C control failure.")
+        if len(existing) != 1 or str(existing[0].pk) != REPLACEABLE_RUN_ID:
+            raise CommandError(
+                "Original P3-C run is missing or its one replacement already exists."
+            )
+        original = existing[0]
+        if original.status != InvestigationRun.Status.FAILED:
+            raise CommandError("Only the documented FAILED P3-C run may be replaced.")
+        if original.evidence_metadata.get("replaces_run_id"):
+            raise CommandError("A replacement cannot itself be replaced.")
+        return original
+
+    def _controlled_synthesizer(self, slot, mutation_audit, *, requester=None):
+        requester = requester or request_synthesis_package
         mutation = dict(slot["mutation"])
         expected_keys = {str(item) for item in slot["case_keys"]}
         target_key = str(mutation["case_key"])
 
         def controlled(*, actor, run, executor_token) -> PlannerAction:
-            action = request_synthesis_package(
+            action = requester(
                 actor=actor,
                 run=run,
                 executor_token=executor_token,
@@ -483,7 +548,9 @@ class Command(BaseCommand):
         if source is None or spec.get("source_content_sha256") != source.content_sha256:
             raise CommandError(f"{slot['slot_id']}: mapping source binding is invalid.")
 
-    def _campaign(self, *, process, slot, contract) -> InvestigationEvidenceCampaign:
+    def _campaign(
+        self, *, process, slot, contract, replacement=False
+    ) -> InvestigationEvidenceCampaign:
         budget = contract["provider_budget"]
         max_cost = int(Decimal(str(budget["max_cost_usd"])) * Decimal("1000000"))
         used_calls, used_cost = _package_provider_usage()
@@ -493,6 +560,8 @@ class Command(BaseCommand):
             raise CommandError("Issue #117 Package 3 provider budget is exhausted.")
 
         key = f"i117-p3-{slot['slot_id']}-v1"
+        if replacement:
+            key += "-replacement-1"
         existing = InvestigationEvidenceCampaign.objects.filter(campaign_key=key).first()
         pricing_data = pricing_from_env()
         pricing = pricing_data["rates"]
@@ -622,6 +691,8 @@ class Command(BaseCommand):
             "run_id": str(run.pk),
             "status": run.status,
             "tested_commit": run.evidence_metadata.get("tested_commit"),
+            "replaces_run_id": run.evidence_metadata.get("replaces_run_id"),
+            "replacement_reason": run.evidence_metadata.get("replacement_reason"),
             "contract_hash": run.contract_hash,
             "manifest_hash": run.manifest_hash,
             "final_brief_hash": run.brief_hash,
