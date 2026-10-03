@@ -63,7 +63,12 @@ def _upload(name: str, content: str, content_type: str = "text/plain"):
 def _prepare_owner() -> User:
     CaptureSession.objects.filter(owner__username=USERNAME).delete()
     User.objects.filter(username=USERNAME).delete()
-    unit, _ = BusinessUnit.objects.get_or_create(name="Issue-98-Real-Acceptance")
+    # Exercise the productive start contract without creating a technical catalog entry.
+    unit = BusinessUnit.objects.get(
+        name="IT & Digitalisierung",
+        catalog_scope=BusinessUnit.CatalogScope.PRODUCTIVE,
+        is_active=True,
+    )
     group, _ = Group.objects.get_or_create(name=GROUP_BUSINESS_OWNER)
     user = User.objects.create_user(
         username=USERNAME,

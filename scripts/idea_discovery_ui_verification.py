@@ -42,12 +42,13 @@ def serve():
     from ki_radar.use_cases.idea_models import IdeaCandidate
 
     call_command("migrate", verbosity=0)
-    unit = BusinessUnit.objects.create(name="Isolierte UI-Abnahme")
+    unit = BusinessUnit.objects.get(name="IT & Digitalisierung")
     user = User.objects.create_user(username="idea-ui-owner", password=PASSWORD, business_unit=unit)
     user.groups.add(Group.objects.get_or_create(name=GROUP_BUSINESS_OWNER)[0])
     unassigned = User.objects.create_user(username="unassigned-ui-owner", password=PASSWORD)
     unassigned.groups.add(Group.objects.get_or_create(name=GROUP_BUSINESS_OWNER)[0])
-    BusinessUnit.objects.create(name="Anderer Untersuchungsbereich")
+    BusinessUnit.objects.create(name="Demo-UI-Einheit", catalog_scope="demo_test")
+    BusinessUnit.objects.create(name="Legacy-UI-Einheit", catalog_scope="legacy")
     inactive = BusinessUnit.objects.create(name="Inaktive Idee-Einheit", is_active=False)
     urls = {}
     for key in ["discovery", "discard", "intake"]:
@@ -73,6 +74,9 @@ def serve():
         urls[key] = idea.get_absolute_url()
     urls["generic"] = reverse("accelerator:autonomous_discovery_start")
     urls["login"] = reverse("accounts:login")
+    urls["idea_create"] = reverse("use_cases:idea_create")
+    urls["stream_create"] = reverse("architecture:value_stream_create")
+    urls["use_case_create"] = reverse("use_cases:create")
     (scratch / "urls.json").write_text(json.dumps(urls), encoding="utf-8")
 
     def provider(**kwargs):
@@ -132,6 +136,22 @@ def verify():
                     page.on("pageerror", lambda error: errors.append(str(error)))
 
                     def capture(name):
+                        unit_select = page.locator('select[name="business_unit"]')
+                        if unit_select.count():
+                            names = {
+                                name.strip()
+                                for name in unit_select.locator(
+                                    'option:not([value=""])'
+                                ).all_text_contents()
+                            }
+                            assert names == {
+                                "Unternehmenssteuerung",
+                                "Touristik & Operations",
+                                "Kundenservice & Buchung",
+                                "Marketing & Vertrieb",
+                                "IT & Digitalisierung",
+                                "Finanzen & Administration",
+                            }, names
                         active = page.locator(".app-sidebar .sidebar-link.active")
                         expect(active).to_have_count(1)
                         active_label = active.inner_text().strip()
@@ -170,15 +190,15 @@ def verify():
                         page.get_by_text("Ihre persönliche Zuordnung: Nicht zugeordnet")
                     ).to_be_visible()
                     expect(page.locator('[name="business_unit"] option:checked')).to_have_text(
-                        "Isolierte UI-Abnahme"
+                        "IT & Digitalisierung"
                     )
                     page.locator('[name="business_unit"]').select_option(
-                        label="Anderer Untersuchungsbereich"
+                        label="Touristik & Operations"
                     )
                     capture("unit-01-unassigned-start")
                     page.get_by_role("button", name="Analyse starten", exact=True).click()
                     expect(page.locator('[aria-labelledby="decision-heading"]')).to_contain_text(
-                        "Wird angelegt in: Anderer Untersuchungsbereich"
+                        "Wird angelegt in: Touristik & Operations"
                     )
                     capture("unit-02-cross-unit-review")
                     page.get_by_role("button", name="Scope & Fokus übernehmen").click()
@@ -203,7 +223,7 @@ def verify():
                         )
                     ).to_have_count(0)
                     page.locator('[name="business_unit"]').select_option(
-                        label="Isolierte UI-Abnahme"
+                        label="IT & Digitalisierung"
                     )
                     page.get_by_role("button", name="Analyse starten", exact=True).click()
                     page.get_by_role("button", name="Discovery verwerfen").click()
@@ -218,7 +238,7 @@ def verify():
                         "Angebote werden manuell verglichen."
                     )
                     page.locator('[name="business_unit"]').select_option(
-                        label="Isolierte UI-Abnahme"
+                        label="IT & Digitalisierung"
                     )
                     page.locator('[name="sources"]').set_input_files(
                         {
@@ -229,7 +249,7 @@ def verify():
                     )
                     page.get_by_role("button", name="Analyse starten", exact=True).click()
                     expect(page.locator('[aria-labelledby="decision-heading"]')).to_contain_text(
-                        "Wird angelegt in: Isolierte UI-Abnahme"
+                        "Wird angelegt in: IT & Digitalisierung"
                     )
                     page.get_by_role("button", name="Discovery verwerfen").click()
                     page.get_by_role("link", name="Neue Untersuchung starten").click()
@@ -244,11 +264,11 @@ def verify():
                     page.locator('[name="password"]').fill(PASSWORD)
                     page.locator('button[type="submit"]').click()
                     page.goto(BASE + urls["discovery"])
-                    page.get_by_role("link", name="Idee korrigieren").click()
+                    page.get_by_role("link", name="Eintrag korrigieren").click()
                     expect(page.locator('[name="description"]')).not_to_be_empty()
                     page.get_by_role("link", name="Abbrechen", exact=True).click()
                     assert page.url == BASE + urls["discovery"]
-                    page.get_by_role("link", name="Idee korrigieren").click()
+                    page.get_by_role("link", name="Eintrag korrigieren").click()
                     page.locator('[name="source_note"]').fill("Synthetischer UI-Test korrigiert")
                     page.get_by_role("button", name="Änderungen speichern").click()
                     expect(
@@ -390,6 +410,12 @@ def verify():
                     ).to_be_visible()
                     capture("08-promoted-idea")
                     report["checks"].append("Direct intake prefill and backwards navigation")
+                    for key in ["idea_create", "stream_create", "use_case_create"]:
+                        page.goto(BASE + urls[key])
+                        capture(f"catalog-{key}")
+                    report["checks"].append(
+                        "Six productive units only: Discovery, Inbox, Value Stream, Guided Intake"
+                    )
                     assert not errors, errors
                     report["browserErrors"] = errors
                     browser.close()

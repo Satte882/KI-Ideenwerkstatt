@@ -113,7 +113,9 @@ def test_block9_v2_records_real_manual_builder_semantics(business_unit, owner):
         "hosting_type": common["hosting_type"],
     }
 
-    candidate = _build_use_case(stored=stored, user=owner, business_owner=owner)
+    candidate = _build_use_case(
+        stored=stored, user=owner, business_owner=owner, business_unit=business_unit
+    )
 
     assert candidate.decision_status == UseCase.DecisionStatus.READY
     assert candidate.summary == facts["summary"]

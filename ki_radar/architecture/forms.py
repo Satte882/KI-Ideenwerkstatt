@@ -147,7 +147,7 @@ class ValueStreamForm(StyledModelForm):
             ):
                 self.assignment_warnings.append(
                     "Die aktuell zugeordnete Organisationseinheit ist historischer Bestand "
-                    "oder nicht mehr aktiv. Sie bleibt erhalten, solange die Zuordnung "
+                    "oder inaktiv. Sie bleibt erhalten, solange die Zuordnung "
                     "nicht geändert wird."
                 )
             if self.instance.owner_id and not is_eligible_value_stream_owner(self.instance.owner):
@@ -208,10 +208,7 @@ class ValueStreamForm(StyledModelForm):
 
     def clean_business_unit(self):
         business_unit = self.cleaned_data["business_unit"]
-        if (
-            self.instance.pk
-            and business_unit.pk == self.instance.business_unit_id
-        ):
+        if self.instance.pk and business_unit.pk == self.instance.business_unit_id:
             return business_unit
         if not is_active_productive_business_unit(business_unit):
             raise forms.ValidationError(

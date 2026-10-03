@@ -7,6 +7,8 @@ import pytest
 from django.core.management import call_command
 from django.test import override_settings
 
+from ki_radar.accounts.business_units import active_productive_business_units
+from ki_radar.accounts.models import BusinessUnit
 from ki_radar.architecture.focus import ValueStreamFocus, get_value_stream_focus
 from ki_radar.architecture.models import (
     ProcessAnalysis,
@@ -18,6 +20,7 @@ from ki_radar.architecture.models import (
 from ki_radar.core.scenario_blueprint import blueprint_checksum, load_blueprint_json
 from ki_radar.core.scenario_blueprint_apply import BlueprintApplyError
 from ki_radar.core.scenario_blueprint_run import run_blueprint
+from ki_radar.core.scenario_blueprint_validation import BlueprintValidationError
 from ki_radar.use_cases.models import UseCase
 
 BLUEPRINT_DIRECTORY = (
@@ -101,6 +104,9 @@ def test_real_demo_dry_run_apply_and_repeat_are_reproducible(real_demo_payload):
     focus = get_value_stream_focus(stream)
 
     assert stream.status == ValueStream.Status.DRAFT
+    assert stream.business_unit.catalog_scope == BusinessUnit.CatalogScope.DEMO_TEST
+    assert use_case.business_unit_id == stream.business_unit_id
+    assert not active_productive_business_units().filter(pk=stream.business_unit_id).exists()
     assert focus.status == ValueStreamFocus.Status.NOT_SCREENED
     assert process.status == ProcessAnalysis.Status.DRAFT
     assert options.count() == 3
@@ -146,3 +152,13 @@ def test_real_demo_apply_rolls_back_complete_graph_on_error(real_demo_payload, m
         "use_cases": 0,
         "origins": 0,
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("scope,active", [("legacy", True), ("demo_test", False)])
+def test_blueprint_seed_rejects_legacy_or_inactive_unit(real_demo_payload, scope, active):
+    unit_name = real_demo_payload["references"]["business_unit"]["name"]
+    BusinessUnit.objects.filter(name=unit_name).update(catalog_scope=scope, is_active=active)
+    with pytest.raises(BlueprintValidationError):
+        run_blueprint(real_demo_payload, apply=True)
+    assert _target_counts()["value_streams"] == 0

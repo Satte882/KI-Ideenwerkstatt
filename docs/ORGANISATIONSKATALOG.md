@@ -91,6 +91,39 @@ Organisationseinheiten explizit als `demo_test`. Dazu gehören insbesondere:
 - #106-Baseline-Evidence,
 - #117 Package-3-Evidence,
 - #118 Experiment-Fallback.
+- VS1/#4-Evidence-Fallback und Block-3/4/5-UI-Prüfungen.
 
 Damit können Demo- und technische Nachweise im selben Datenbestand existieren,
 ohne in produktiven Organisationsauswahlen zu erscheinen.
+
+Die isolierte Desktop-Prüfung verwendet die sechs migrierten Katalogeinheiten und
+zusätzlich ausgeschlossene Demo-/Legacy-Fixtures. Der #98-Abnahmehelfer verwendet
+für neue produktive Discoveries die freigegebene Einheit IT & Digitalisierung;
+er legt keine technische produktive Einheit mehr an.
+
+## Bestandsüberführung und Inventar
+
+Die sechs Namen sind durch den Auftrag zu #131/#132 bestätigt. Die Migration
+übernimmt exakt gleich benannte vorhandene Einheiten unter ihrer bisherigen ID;
+alle übrigen vorhandenen Einheiten erhalten zunächst `legacy`. Sie interpretiert
+keine Namensmuster, löscht nichts und verändert keine Fremdschlüssel oder
+eingefrorenen Discovery-Antworten. Auch vorhandene `RSD –`-Namen bleiben als
+Altbestand erhalten, bis die Administration sie ausdrücklich einordnet.
+
+Die Erzeugungspfade umfassen Administration, diese Migration, `seed_demo_data`,
+Block-5/6-Real-DEMO, die #4/#106/#117/#118-Evidence-Helfer und UI-Abnahmehelfer.
+Test-Fixtures erzeugen in isolierten Testdatenbanken produktive Einheiten für
+positive Tests und explizite Demo/Test-, Legacy- und inaktive Einheiten für
+negative Tests. Golden-Path-/Architektur-Demos verwenden bestehende Demo-Einheiten.
+
+Neue Zuordnungen im Admin (Nutzer, Use Case, Value Stream) verwenden denselben
+Katalogvertrag wie die produktiven Formulare; nur die eigene aktuelle historische
+Zuordnung darf unverändert gespeichert werden. Listen-/Portfoliofilter dürfen
+historische Einheiten weiter auffindbar machen; sie erzeugen keine Zuordnung.
+
+Vor einer späteren manuellen Bereinigung ist pro fraglicher Einheit ein Bericht
+mit ID, Name, Scope, Aktivität sowie Nutzer-, Ideen-, Value-Stream-, Use-Case- und
+Discovery-Referenzen zu erstellen. Discovery-Referenzen liegen zusätzlich als ID
+in `CaptureSession.answers.business_unit` vor. Der Bericht muss geplante
+Klassifikation und betroffene Referenzen ausweisen. Dieses Issue führt keine
+Bereinigung des lokalen produktiven Datenbestands aus.

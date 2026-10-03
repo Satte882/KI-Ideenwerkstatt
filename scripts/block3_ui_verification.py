@@ -48,7 +48,10 @@ def prepare_data() -> dict[str, CaptureSession]:
     CaptureSession.objects.filter(owner__username=USERNAME).delete()
     User.objects.filter(username=USERNAME).delete()
 
-    business_unit, _ = BusinessUnit.objects.get_or_create(name="Block-3-UI-Prüfung")
+    business_unit, _ = BusinessUnit.objects.update_or_create(
+        name="Block-3-UI-Prüfung",
+        defaults={"catalog_scope": BusinessUnit.CatalogScope.DEMO_TEST},
+    )
     group, _ = Group.objects.get_or_create(name=GROUP_BUSINESS_OWNER)
     user = User.objects.create_user(
         username=USERNAME,

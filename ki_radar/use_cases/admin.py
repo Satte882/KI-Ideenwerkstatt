@@ -1,11 +1,13 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
+from ki_radar.accounts.catalog_admin import BusinessUnitAssignmentAdminMixin
+
 from .models import ApprovalDecision, DecisionAssessment, UseCase
 
 
 @admin.register(UseCase)
-class UseCaseAdmin(SimpleHistoryAdmin):
+class UseCaseAdmin(BusinessUnitAssignmentAdminMixin, SimpleHistoryAdmin):
     list_display = (
         "short_id",
         "title",

@@ -33,9 +33,7 @@ class IdeaCandidateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         current_id = self.instance.business_unit_id if self.instance.pk else None
-        self.fields["business_unit"].queryset = selectable_business_units(
-            current_id=current_id
-        )
+        self.fields["business_unit"].queryset = selectable_business_units(current_id=current_id)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", FORM_CONTROL)
             if isinstance(field.widget, forms.Select):

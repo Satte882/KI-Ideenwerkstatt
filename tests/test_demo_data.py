@@ -31,9 +31,7 @@ def test_seed_demo_data_creates_complete_dataset():
 
     demo_units = BusinessUnit.objects.filter(name__in=demo_business_unit_names())
     assert demo_units.count() == 3
-    assert not demo_units.exclude(
-        catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST
-    ).exists()
+    assert not demo_units.exclude(catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST).exists()
     assert User.objects.filter(username__in=demo_usernames()).count() == 4
     assert demo_use_cases.count() == 10
     assert GovernanceAssessment.objects.filter(use_case__in=demo_use_cases).count() >= 6
