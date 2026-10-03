@@ -1,6 +1,6 @@
 # KI-Ideenwerkstatt Produkt-Roadmap
 
-**Stand:** 01.10.2026
+**Stand:** 03.10.2026
 
 **Status:** Produktstand und strategische Richtung, kein Terminversprechen
 
@@ -10,7 +10,7 @@ Diese Datei beschreibt **was KI-Ideenwerkstatt als Produkt bereits kann und welc
 
 Sie beschreibt bewusst **nicht**, wie einzelne Funktionen technisch umgesetzt wurden. Dafür sind die jeweiligen GitHub-Issues, Pull Requests, Gap-Analysen, Completion-Dokumente und – bei architekturrelevanten Entscheidungen – die ADRs maßgeblich.
 
-Der technisch abgeschlossene Auftrag #1 und AP1–AP4 bilden die aktuelle funktionale Baseline. Der verbindliche Produktauftrag ist jetzt GitHub Issue [#106 „Performance nach AI Business Architect: Adaptive Investigation Latency reduzieren“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/106). #106 optimiert messgetrieben und qualitätsneutral; eine Runtime-Änderung wird erst nach Messvertrag, aktueller Baseline und dokumentiertem Gate ausgewählt.
+Die großen Aufbauaufträge für den autonomen Evidence-to-Decision-Pfad und dessen Performance-Härtung sind abgeschlossen und bilden die aktuelle funktionale Baseline. Der derzeitige Schwerpunkt ist die manuelle End-to-End-Validierung des erreichten Produktstands. Neue Produktarbeit entsteht aus konkret beobachteten Lücken und wird anschließend über GitHub Issues priorisiert.
 
 Die Zukunftssicht folgt den Horizonten **Now / Next / Later**:
 
@@ -198,23 +198,30 @@ Zentrale Nachweise: #279–#287, #295 und #310.
 
 # Now – aktueller Fokus
 
-**Verbindlicher Produktauftrag:** GitHub Issue [#106 „Performance nach AI Business Architect: Adaptive Investigation Latency reduzieren“](https://github.com/Satte882/KI-Ideenwerkstatt/issues/106).
+Der aktuelle Schwerpunkt liegt auf **manueller End-to-End-Validierung des erreichten Produktstands**.
 
-Der autonome AI-Business-Architect-Pfad aus #1/AP1–AP4 ist technisch abgeschlossen. Der aktuelle Fokus ist **keine neue Capability**, sondern die kontrollierte Untersuchung, welcher Anteil der Investigation-Laufzeit auf dem gehärteten Produktstand tatsächlich vermeidbar ist.
+Dazu werden bewusst unterschiedliche Einstiegsperspektiven durch die vorhandene Journey geführt,
+zum Beispiel Bottom-up aus operativen Problemen, Top-down aus Führungsfragen sowie Outside-in
+aus Kunden- oder Partnerperspektive. Die dabei verwendeten Szenarien sind Testhypothesen und
+keine behaupteten Unternehmensfakten.
 
-Verbindliche Reihenfolge:
+Ziel ist nicht, vorsorglich neue Funktionen zu bauen, sondern konkret zu prüfen:
 
-1. #110 – Mess-, Qualitäts- und Experimentvertrag;
-2. #111 – aktuelle Post-AP4-Baseline inklusive A/A-Rauschen;
-3. #112 – Bottleneck-/Kandidatenentscheidung;
-4. nur ausgewählte, separat abnehmbare Experimente;
-5. #113 – zeitnahe Re-Baseline, Rollout/Rollback und Abschluss.
+- ob aus einem Ausgangsproblem ein nachvollziehbarer fachlicher Pfad entsteht;
+- ob Annahmen, unbekannte Informationen und Evidenz sauber getrennt bleiben;
+- ob Discovery, Value Stream, Prozessanalyse, Lösungsraum und Use Case konsistent verbunden sind;
+- ob KI eine echte Option unter mehreren bleibt;
+- ob Governance, Delivery Readiness, Pilot, Wirkung und Lifecycle ohne künstliche Sprünge funktionieren.
 
-Die Produktentscheidung aus #86 bleibt bestehen: Bei seltener Nutzung sind fünf bis zehn Minuten grundsätzlich vertretbar, wenn Ergebnisqualität, Provenance, Human Authority und nachvollziehbarer Fortschritt erhalten bleiben. Performance ist daher kein Selbstzweck.
+Beobachtete Produktlücken werden erst danach als eigenständige Issues beschrieben und priorisiert.
 
 # Next – priorisierte nächste Probleme
 
-Es gibt während #106 **keinen vorab festgelegten technischen Next-Hebel**. Planner-Batching, Synthesizer-/Verifier-Vertrag, Model Routing, deterministische Shortcuts oder Tool-Parallelisierung werden erst nach #112 ausgewählt, wenn die aktuelle Baseline ihren Nutzen gegenüber Qualitäts-, Contract- und Wartungsrisiko belegt.
+Es gibt derzeit **keinen vorab festgelegten nächsten großen Produktumbau**.
+
+Der nächste konkrete Produktauftrag soll aus der manuellen E2E-Validierung oder aus realen
+betrieblichen Anforderungen entstehen. Dadurch bleibt die Weiterentwicklung problemgetrieben
+und vermeidet Architektur oder Features auf Vorrat.
 
 # Later – strategische Optionen
 
@@ -286,7 +293,7 @@ Der in #307 beschriebene zusätzliche Decision-Space bleibt als strategische Opt
 1. Die Roadmap beschreibt **Produktfähigkeit, Problem und Richtung**, nicht technische Implementierungsdetails.
 2. `Shipped` wird nach relevanten Produktmerges auf Capability-Ebene aktualisiert; einzelne Fixes werden nicht als eigene Roadmap-Punkte gespiegelt.
 3. `Now`, `Next` und `Later` sind Prioritätshorizonte, keine Kalendertermine.
-4. Während Issue #1 läuft, bestimmt dessen Ziel und Definition of Done die Sequenzierung; separate Zwischenfreigaben sind nur für irreversible fachliche Entscheidungen oder echte Produkt-Trade-offs erforderlich. Nach Abschluss von Issue #1 gilt für neue `Next`- oder `Later`-Themen wieder eine explizite Produktpriorisierung.
+4. Konkrete Reihenfolgen, Gates und Definition-of-Done-Regeln werden im jeweils aktiven GitHub-Issue geführt; neue `Next`- oder `Later`-Themen benötigen eine explizite Produktpriorisierung.
 5. GitHub-Issues und Pull Requests bleiben der detaillierte Umsetzungs- und Änderungssachverhalt.
 6. Gap-Analysen, Methodik- und Completion-Dokumente bleiben der vertiefende fachliche beziehungsweise technische Nachweis.
 7. ADRs dokumentieren ausschließlich relevante Architekturentscheidungen mit Kontext, Entscheidung und Konsequenzen; sie dienen nicht als Capability-Inventar.
