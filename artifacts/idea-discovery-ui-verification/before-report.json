@@ -1,0 +1,40 @@
+{
+  "viewport": "1440x1000 desktop",
+  "provider": "deterministic fixture",
+  "checks": [
+    "Discovery start, history back/forward, correction",
+    "Resume, materialize, investigation, process, durable idea link",
+    "Discard releases idea"
+  ],
+  "pages": [
+    {
+      "name": "01-idea",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "02-start",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "03-review",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "04-investigation",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "05-process",
+      "horizontalOverflow": false
+    },
+    {
+      "name": "06-intake",
+      "horizontalOverflow": false
+    }
+  ],
+  "findings": [
+    "Missing contextual correction: value-stream-heading",
+    "Missing contextual correction: stages-heading",
+    "Missing contextual correction: process-heading"
+  ]
+}

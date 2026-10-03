@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import hashlib
 import shutil
 import uuid
 from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream, can_manage_architecture
+from ki_radar.use_cases.idea_discovery import idea_origin_id
 
 from .investigation_models import InvestigationSourceFolder
 from .investigation_tools import (
@@ -24,6 +27,26 @@ from .models import CaptureSession
 
 class InvestigationSourceUploadError(RuntimeError):
     pass
+
+
+def idea_origin_upload(session: CaptureSession) -> SimpleUploadedFile:
+    origin_id = idea_origin_id(session.answers)
+    if origin_id is None:
+        raise InvestigationSourceUploadError("Für die Ideenquelle fehlt die Ursprungsidee.")
+    origin = session.answers["origin"]
+    filename = f"ideenbox-{origin_id}.md"
+    content = (
+        "Typ: Nutzerangabe aus Ideen-Box\n"
+        "Status: berichtete Ausgangsinformation, nicht unabhängig bestätigt\n\n"
+        f"Titel: {origin['title']}\n"
+        f"Problem / Beobachtung / Ziel: {session.answers['problem_statement']}\n"
+        f"Geschäftskontext: {session.answers.get('business_context', '')}\n"
+        f"Quelle / ursprünglicher Einreicher: {origin['source_note']}\n"
+    ).encode()
+    origin["origin_source_filename"] = filename
+    origin["origin_source_sha256"] = hashlib.sha256(content).hexdigest()
+    session.save(update_fields=["answers", "updated_at"])
+    return SimpleUploadedFile(filename, content, content_type="text/markdown")
 
 
 def _managed_source_root() -> Path:

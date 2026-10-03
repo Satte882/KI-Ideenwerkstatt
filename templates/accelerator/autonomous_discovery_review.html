@@ -13,6 +13,18 @@
   <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
 </div>
 
+{% if session.answers.origin.type == 'idea_candidate' %}
+<div class="mb-4 d-flex gap-3 align-items-center flex-wrap">
+  <a href="{% url 'use_cases:idea_detail' pk=session.answers.origin.idea_candidate_id %}">Ursprungsidee: {{ session.answers.origin.title }}</a>
+  {% if session.status == 'draft' %}
+  <form method="post" action="{% url 'accelerator:capture_discard' session_id=session.pk %}">
+    {% csrf_token %}<input type="hidden" name="revision" value="{{ session.revision }}">
+    <button class="btn btn-outline-danger" type="submit">Discovery verwerfen</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
 {% if session.status == 'completed' and materialization %}
 <div class="alert alert-success" role="status">
   <strong>Discovery übernommen.</strong> Die kanonischen Business-Architecture-Objekte wurden erzeugt und die bestehende Investigation gestartet.
@@ -51,7 +63,7 @@
 
 {% if presentation.draft %}
 <section class="app-card mb-4" aria-labelledby="value-stream-heading">
-  <div class="card-header"><div class="section-title" id="value-stream-heading">Vorgeschlagener Value Stream</div></div>
+  <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap"><div class="section-title" id="value-stream-heading">Vorgeschlagener Value Stream</div>{% if session.status == 'draft' %}<a href="#id_correction">Value Stream korrigieren</a>{% endif %}</div>
   <div class="card-body">
     <h2 class="h5 mb-2">{{ presentation.value_stream.name }}</h2>
     {% if presentation.value_stream.description %}<p>{{ presentation.value_stream.description }}</p>{% endif %}
@@ -69,7 +81,7 @@
 </section>
 
 <section class="app-card mb-4" aria-labelledby="stages-heading">
-  <div class="card-header"><div class="section-title" id="stages-heading">Phasen und Fokusvorschlag</div></div>
+  <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap"><div class="section-title" id="stages-heading">Phasen und Fokusvorschlag</div>{% if session.status == 'draft' %}<a href="#id_correction">Phasen / Fokus korrigieren</a>{% endif %}</div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table align-middle mb-0">
@@ -94,7 +106,7 @@
 </section>
 
 <section class="app-card mb-4" aria-labelledby="process-heading">
-  <div class="card-header"><div class="section-title" id="process-heading">Vorgeschlagener Process Scope</div></div>
+  <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap"><div class="section-title" id="process-heading">Vorgeschlagener Process Scope</div>{% if session.status == 'draft' %}<a href="#id_correction">Process Scope korrigieren</a>{% endif %}</div>
   <div class="card-body">
     <h2 class="h5 mb-3">{{ presentation.process.name }}</h2>
     <dl class="row mb-0">
@@ -142,8 +154,10 @@
     {% csrf_token %}
     <div class="card-body">
       {{ correction_form.revision }}
+      {% if correction_form.non_field_errors or correction_form.revision.errors %}<div class="alert alert-danger" role="alert">{{ correction_form.non_field_errors }}{{ correction_form.revision.errors }}</div>{% endif %}
       <label class="form-label" for="{{ correction_form.correction.id_for_label }}">{{ correction_form.correction.label }}</label>
       {{ correction_form.correction }}
+      {% if correction_form.correction.errors %}<div class="field-attention-message" role="alert">{{ correction_form.correction.errors }}</div>{% endif %}
       <div class="form-text">Der bestehende Quellen-Snapshot bleibt unverändert; die neue Analyse erhält die Korrektur als expliziten Nutzerinput.</div>
     </div>
     <div class="card-footer text-end"><button class="btn btn-outline-secondary" type="submit" name="action" value="correct">Mit Korrektur neu analysieren</button></div>

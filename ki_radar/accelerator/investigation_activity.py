@@ -30,16 +30,9 @@ def duration_label(seconds):
     return f"{hours:02}:{minutes:02}:{seconds:02}" if hours else f"{minutes:02}:{seconds:02}"
 
 
-def build_activity(run, *, now=None):
+def build_execution_status(run, *, now=None):
+    """Read lease/dispatch status without requiring a decision-policy budget."""
     now = now or timezone.now()
-    policy = evaluate_run_policy(run)
-    surface = build_decision_surface(
-        run=run,
-        policy=policy,
-        latest_materialization=None,
-        materialization_preview=None,
-    )
-    ready = run.status == "ready" and policy.outcome == PolicyOutcome.READY_FOR_DECISION
     active = run.status == "running"
     confirmed = bool(
         active
@@ -59,21 +52,13 @@ def build_activity(run, *, now=None):
         else "stopped"
     )
     title = {
-        "running": "Untersuchung läuft",
-        "waiting_human": "Klärung erforderlich",
-        "ready": "Decision Brief bereit"
-        if ready
-        else "Entscheidungsgrundlage derzeit nicht freigegeben",
-        "failed": "Untersuchung konnte nicht abgeschlossen werden",
-        "aborted": "Untersuchung abgebrochen",
-    }.get(run.status, "Untersuchung")
-    if active and not confirmed:
-        title = {
-            "pending": "Untersuchungsstart angefordert",
-            "queued": "Untersuchung wartet auf freien Ausführungsplatz",
-            "unavailable": "Untersuchung wartet auf technischen Dienst",
-            "unconfirmed": "Untersuchungsausführung derzeit nicht bestätigt",
-        }[execution_state]
+        "confirmed": "Untersuchung läuft",
+        "pending": "Untersuchungsstart angefordert",
+        "queued": "Untersuchung wartet auf freien Ausführungsplatz",
+        "unavailable": "Untersuchung wartet auf technischen Dienst",
+        "unconfirmed": "Untersuchungsausführung derzeit nicht bestätigt",
+        "stopped": "Untersuchung",
+    }[execution_state]
     description = {
         "confirmed": (
             "Sie können diese Seite verlassen. Die Untersuchung läuft im Hintergrund weiter."
@@ -92,6 +77,36 @@ def build_activity(run, *, now=None):
         ),
         "stopped": "",
     }[execution_state]
+    return {"title": title, "description": description, "execution_state": execution_state}
+
+
+def build_activity(run, *, now=None):
+    now = now or timezone.now()
+    policy = evaluate_run_policy(run)
+    surface = build_decision_surface(
+        run=run,
+        policy=policy,
+        latest_materialization=None,
+        materialization_preview=None,
+    )
+    ready = run.status == "ready" and policy.outcome == PolicyOutcome.READY_FOR_DECISION
+    active = run.status == "running"
+    execution = build_execution_status(run, now=now)
+    execution_state = execution["execution_state"]
+    confirmed = execution_state == "confirmed"
+    title = (
+        execution["title"]
+        if active
+        else {
+            "waiting_human": "Klärung erforderlich",
+            "ready": "Decision Brief bereit"
+            if ready
+            else "Entscheidungsgrundlage derzeit nicht freigegeben",
+            "failed": "Untersuchung konnte nicht abgeschlossen werden",
+            "aborted": "Untersuchung abgebrochen",
+        }.get(run.status, "Untersuchung")
+    )
+    description = execution["description"]
     sources = {str(source.pk): source.filename for source in run.source_snapshot.sources.all()}
     entries = []
 

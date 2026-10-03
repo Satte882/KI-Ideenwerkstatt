@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -15,6 +15,8 @@ from ki_radar.accelerator.investigation_runtime import (
 from ki_radar.accelerator.investigation_tools import bind_discovery_snapshot_to_process
 from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 from ki_radar.accelerator.retention_policy import completed_capture_expiry
+from ki_radar.use_cases.idea_discovery import assert_idea_discovery_start, idea_origin_id
+from ki_radar.use_cases.idea_models import IdeaCandidate
 
 from .focus import ValueStreamFocus
 from .models import ProcessAnalysis, ValueStream, ValueStreamStage
@@ -178,6 +180,19 @@ def materialize_discovery_and_start_investigation(
             "Die zugeordnete Organisationseinheit fehlt oder ist inaktiv.",
             code="missing_business_unit",
         )
+
+    idea = None
+    try:
+        origin_id = idea_origin_id(session.answers or {})
+        if origin_id is not None:
+            if session.expires_at <= timezone.now():
+                raise DiscoveryMaterializationError(
+                    "Diese Idea-Discovery ist abgelaufen.", code="capture_not_editable"
+                )
+            idea = IdeaCandidate.objects.select_for_update().get(pk=origin_id)
+            assert_idea_discovery_start(idea=idea, actor=actor)
+    except (IdeaCandidate.DoesNotExist, ValidationError) as exc:
+        raise DiscoveryMaterializationError(str(exc), code="idea_origin_conflict") from exc
 
     try:
         analysis = CaptureAnalysis.objects.select_for_update().get(
@@ -351,6 +366,9 @@ def materialize_discovery_and_start_investigation(
     process.source_snapshot = build_process_source_snapshot(selected_stage)
     process.full_clean()
     process.save()
+    if idea is not None:
+        idea.discovery_process_analysis = process
+        idea.save(update_fields=["discovery_process_analysis", "updated_at"])
 
     discovery_snapshot_id = result_payload.get("discovery_snapshot_id")
     if not discovery_snapshot_id:

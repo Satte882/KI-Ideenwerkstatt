@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="card-footer d-flex justify-content-between gap-2">
-      <a class="btn btn-outline-secondary" href="{% url 'use_cases:idea_list' %}">Abbrechen</a>
+      <a class="btn btn-outline-secondary" href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'use_cases:idea_list' %}{% endif %}">Abbrechen</a>
       <button class="btn btn-primary" type="submit">{{ submit_label }}</button>
     </div>
   </form>

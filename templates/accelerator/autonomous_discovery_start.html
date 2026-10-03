@@ -10,7 +10,7 @@
     <h1 class="page-title">Business Discovery starten</h1>
     <p class="page-subtitle">Beschreiben Sie das Geschäftsproblem in wenigen Sätzen und geben Sie die bereits vorhandenen Quellen frei. Das System erarbeitet Value Stream, Fokusphase und Process Scope als prüfbaren Entwurf.</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
+  {% if idea %}<a class="btn btn-outline-secondary" href="{{ idea.get_absolute_url }}">Zur Ursprungsidee</a>{% else %}<a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>{% endif %}
 </div>
 
 <form method="post" enctype="multipart/form-data" class="cr-work-form app-card"
@@ -20,6 +20,14 @@
   {% csrf_token %}
   <div class="card-body">
     {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% if idea %}
+    <input type="hidden" name="idea_candidate" value="{{ idea.pk }}">
+    <div class="mb-4">
+      <div class="section-title">Ursprung aus der Ideen-Box</div>
+      <h2 class="h5"><a href="{{ idea.get_absolute_url }}">{{ idea.title }}</a></h2>
+      <p class="small text-muted mb-0">Quelle / ursprünglicher Einreicher: {{ idea.source_note|default:"Nicht angegeben" }}{% if idea.business_unit %} · {{ idea.business_unit.name }}{% endif %}</p>
+    </div>
+    {% endif %}
 
     <section class="form-section" aria-labelledby="problem-title">
       <div class="section-title mb-3" id="problem-title">1. Problem und Ziel</div>
@@ -39,8 +47,8 @@
     <section class="form-section mb-0" aria-labelledby="sources-title">
       <div class="section-title mb-3" id="sources-title">2. Vorhandene Quellen</div>
       <div data-file-staging>
-        <label class="form-label" for="discovery-sources">Autorisierte Quellen *</label>
-        <input class="form-control" id="discovery-sources" name="sources" type="file" accept=".md,.txt,.csv,text/markdown,text/plain,text/csv" multiple required data-file-staging-input>
+        <label class="form-label" for="discovery-sources">{% if idea %}Zusätzliche autorisierte Quellen (optional){% else %}Autorisierte Quellen *{% endif %}</label>
+        <input class="form-control" id="discovery-sources" name="sources" type="file" accept=".md,.txt,.csv,text/markdown,text/plain,text/csv" multiple {% if not idea %}required{% endif %} data-file-staging-input>
         <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
           <button class="btn btn-sm btn-outline-secondary" type="button" data-file-staging-add>Weitere Dateien hinzufügen</button>
           <span class="small text-muted" role="status" aria-live="polite" data-file-staging-summary>Noch keine Dateien ausgewählt.</span>

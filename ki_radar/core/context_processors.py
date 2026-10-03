@@ -10,6 +10,20 @@ def navigation_context(request):
         return {}
 
     expire_due_capture_sessions(owner=request.user)
+    match = request.resolver_match
+    nav_is_discovery = bool(
+        match
+        and match.namespace == "accelerator"
+        and match.url_name.startswith("autonomous_discovery_")
+    )
+    nav_is_analysis = bool(
+        match
+        and (
+            match.namespace == "architecture"
+            or nav_is_discovery
+            or (match.namespace == "accelerator" and match.url_name.startswith("investigation_"))
+        )
+    )
     draft_summary = CaptureSession.objects.filter(
         owner=request.user,
         status=CaptureSession.Status.DRAFT,
@@ -25,6 +39,8 @@ def navigation_context(request):
         ),
     )
     return {
+        "nav_is_analysis": nav_is_analysis,
+        "nav_is_discovery": nav_is_discovery,
         "nav_is_coordinator": is_coordinator(request.user),
         "nav_is_technical_admin": is_technical_admin(request.user),
         "capture_draft_count": draft_summary["total"],
