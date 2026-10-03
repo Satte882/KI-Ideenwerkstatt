@@ -1,8 +1,5 @@
 import pytest
 
-from ki_radar.accounts import business_units
-from ki_radar.accounts.models import BusinessUnit
-
 
 EXPECTED_PRODUCTIVE_UNITS = {
     "Unternehmenssteuerung",
@@ -16,6 +13,8 @@ EXPECTED_PRODUCTIVE_UNITS = {
 
 @pytest.mark.django_db
 def test_productive_catalog_is_seeded_without_company_prefix():
+    from ki_radar.accounts import business_units
+
     names = set(business_units.active_productive_business_units().values_list("name", flat=True))
     assert names >= EXPECTED_PRODUCTIVE_UNITS
     assert not any(name.startswith("RSD") for name in EXPECTED_PRODUCTIVE_UNITS)
@@ -23,6 +22,9 @@ def test_productive_catalog_is_seeded_without_company_prefix():
 
 @pytest.mark.django_db
 def test_new_business_unit_defaults_to_productive():
+    from ki_radar.accounts import business_units
+    from ki_radar.accounts.models import BusinessUnit
+
     unit = BusinessUnit.objects.create(name="Neue bestätigte Einheit")
     assert unit.catalog_scope == BusinessUnit.CatalogScope.PRODUCTIVE
     assert business_units.active_productive_business_units().filter(pk=unit.pk).exists()
@@ -30,6 +32,9 @@ def test_new_business_unit_defaults_to_productive():
 
 @pytest.mark.django_db
 def test_demo_and_legacy_units_are_not_productive_choices():
+    from ki_radar.accounts import business_units
+    from ki_radar.accounts.models import BusinessUnit
+
     demo = BusinessUnit.objects.create(
         name="Demo Einheit",
         catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST,
@@ -45,6 +50,9 @@ def test_demo_and_legacy_units_are_not_productive_choices():
 
 @pytest.mark.django_db
 def test_existing_legacy_reference_can_be_rendered_as_current_choice():
+    from ki_radar.accounts import business_units
+    from ki_radar.accounts.models import BusinessUnit
+
     legacy = BusinessUnit.objects.create(
         name="Historischer Bestand für Referenz",
         catalog_scope=BusinessUnit.CatalogScope.LEGACY,
@@ -59,6 +67,7 @@ def test_existing_legacy_reference_can_be_rendered_as_current_choice():
 
 @pytest.mark.django_db
 def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
+    from ki_radar.accounts.models import BusinessUnit
     from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
     from ki_radar.architecture.forms import ValueStreamForm
     from ki_radar.use_cases.forms import UseCaseForm
@@ -92,6 +101,7 @@ def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
 def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
     from django.core.exceptions import ValidationError
 
+    from ki_radar.accounts.models import BusinessUnit
     from ki_radar.accelerator.services import create_autonomous_capture_session
 
     demo = BusinessUnit.objects.create(
@@ -109,6 +119,7 @@ def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
 
 @pytest.mark.django_db
 def test_existing_legacy_assignment_remains_selectable_only_on_its_own_edit_form():
+    from ki_radar.accounts.models import BusinessUnit
     from ki_radar.use_cases.idea_forms import IdeaCandidateForm
     from ki_radar.use_cases.idea_models import IdeaCandidate
 
