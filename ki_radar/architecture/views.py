@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 
+from ki_radar.accelerator.investigation_activity import build_activity
 from ki_radar.accelerator.investigation_models import InvestigationMaterialization
 from ki_radar.use_cases.intake_views import SESSION_KEY
 from ki_radar.use_cases.models import UseCase
@@ -429,6 +430,11 @@ def process_analysis_detail(request, pk):
             "highlighted_solution_option": highlighted_solution_option,
             "solution_design_task": solution_design_task,
             "latest_investigation_run": latest_investigation_run,
+            "latest_investigation_activity": (
+                build_activity(latest_investigation_run)
+                if latest_investigation_run and latest_investigation_run.status == "running"
+                else None
+            ),
             "latest_investigation_materialization": latest_investigation_materialization,
             "process_decision_surface": process_decision_surface,
             "current_investigation_snapshot": current_investigation_snapshot,

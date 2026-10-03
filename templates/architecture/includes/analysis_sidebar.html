@@ -14,6 +14,7 @@
     <span>Prozessanalyse</span>
   </a>
   <div class="sidebar-local-subdepth">
+    {% if process_context_navigation.investigation_url %}<a href="{{ process_context_navigation.investigation_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'investigation' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'investigation' %} aria-current="page"{% endif %}><span aria-hidden="true">{% if process_context_navigation.active_key == 'investigation' %}●{% else %}○{% endif %}</span><span>Untersuchung</span></a>{% endif %}
     {% if process_context_navigation.decision_brief_url %}
     <a href="{{ process_context_navigation.decision_brief_url }}" class="sidebar-local-step sidebar-local-substep{% if process_context_navigation.active_key == 'brief' %} sidebar-local-active{% endif %}"{% if process_context_navigation.active_key == 'brief' %} aria-current="page"{% endif %}>
       <span aria-hidden="true">{% if process_context_navigation.active_key == 'brief' %}●{% else %}○{% endif %}</span>

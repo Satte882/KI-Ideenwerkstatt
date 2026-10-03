@@ -270,6 +270,7 @@ def autonomous_discovery_review(request, session_id):
         raise Http404 from exc
     latest = _latest_analysis(session)
     snapshot = _latest_snapshot(session)
+    correction_form = None
 
     if request.method == "POST":
         action = str(request.POST.get("action") or "").strip()
@@ -429,7 +430,8 @@ def autonomous_discovery_review(request, session_id):
         for stage in presentation.get("stages", [])
     ]
     recommended = str(presentation.get("focus", {}).get("recommended_stage_key") or "")
-    correction_form = DiscoveryCorrectionForm(initial={"revision": session.revision})
+    if correction_form is None:
+        correction_form = DiscoveryCorrectionForm(initial={"revision": session.revision})
     confirm_form = DiscoveryConfirmForm(
         stage_choices=stage_choices,
         initial={

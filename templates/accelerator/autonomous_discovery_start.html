@@ -10,7 +10,7 @@
     <h1 class="page-title">Business Discovery starten</h1>
     <p class="page-subtitle">Beschreiben Sie das Geschäftsproblem in wenigen Sätzen und geben Sie die bereits vorhandenen Quellen frei. Das System erarbeitet Value Stream, Fokusphase und Process Scope als prüfbaren Entwurf.</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
+  {% if idea %}<a class="btn btn-outline-secondary" href="{{ idea.get_absolute_url }}">Zur Ursprungsidee</a>{% else %}<a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>{% endif %}
 </div>
 
 <form method="post" enctype="multipart/form-data" class="cr-work-form app-card"

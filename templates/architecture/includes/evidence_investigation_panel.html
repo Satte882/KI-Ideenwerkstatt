@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
       <div>
         {% if latest_investigation_run %}
-          <div><strong>Aktuelle Untersuchung:</strong> {{ latest_investigation_run.get_status_display }}</div>
+          <div><strong>Aktuelle Untersuchung:</strong> {% if latest_investigation_activity %}{{ latest_investigation_activity.title }}{% else %}{{ latest_investigation_run.get_status_display }}{% endif %}</div>
           <div class="small text-muted mt-1">Richtungsfrage: {{ latest_investigation_run.decision_question }}</div>
           {% if latest_investigation_run.status == "waiting_human" %}
             <div class="small mt-2"><strong>Offene Klärung:</strong> Die Untersuchung benötigt eine entscheidungsrelevante Eingabe, bevor sie fortgesetzt werden kann.</div>
@@ -11,7 +11,7 @@
           {% if latest_investigation_run.status == "ready" %}
             <p class="small mt-2 mb-0">Befunde, offene Fragen und Empfehlung im Decision Brief prüfen.</p>
           {% elif latest_investigation_run.status == "running" %}
-            <p class="small mt-2 mb-0">Die Untersuchung läuft im Hintergrund. Der Verlauf zeigt den Fortschritt; Sie können diese Seite verlassen.</p>
+            <p class="small mt-2 mb-0">{{ latest_investigation_activity.description }}</p>
           {% endif %}
         {% elif current_investigation_snapshot %}
           <div><strong>Untersuchungsgrundlage autorisiert.</strong></div>

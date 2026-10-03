@@ -85,6 +85,63 @@ def test_origin_parser_is_explicit_and_rejects_invalid_idea_ids(idea):
             idea_origin_id({"origin": origin})
 
 
+def test_invalid_correction_stays_visible_and_preserves_input(client, idea, owner, tmp_path):
+    session, _analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    revision = session.revision
+    client.force_login(owner)
+    correction = "x" * 4001
+    response = client.post(
+        reverse("accelerator:autonomous_discovery_review", args=[session.pk]),
+        {"action": "correct", "revision": session.revision, "correction": correction},
+    )
+    assert response.status_code == 200
+    form = response.context["correction_form"]
+    assert form.is_bound
+    assert "correction" in form.errors
+    assert form["correction"].value() == correction
+    assert 'role="alert"' in response.content.decode()
+    session.refresh_from_db()
+    assert session.revision == revision
+
+
+def test_discovery_and_process_sidebar_keep_current_location(client, idea, owner, tmp_path):
+    client.force_login(owner)
+    start = client.get(
+        reverse("accelerator:autonomous_discovery_start"), {"idea_candidate": idea.pk}
+    )
+    assert start.context["nav_is_analysis"]
+    assert start.context["nav_is_discovery"]
+    assert 'aria-current="page"' in start.content.decode()
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    review = client.get(reverse("accelerator:autonomous_discovery_review", args=[session.pk]))
+    assert review.context["nav_is_discovery"]
+    result = materialize(owner, session, analysis)
+    process = client.get(
+        reverse("architecture:process_analysis_detail", args=[result.process_analysis_id])
+    )
+    assert process.context["nav_is_analysis"]
+    assert process.context["latest_investigation_activity"]["execution_state"] == "pending"
+    content = process.content.decode()
+    assert "Untersuchungsstart angefordert" in content
+    assert "Die Untersuchung läuft im Hintergrund" not in content
+    assert "Zur Ursprungsidee" in content
+    activity = client.get(
+        reverse("accelerator:investigation_activity", args=[result.investigation_run_id])
+    )
+    assert 'sidebar-local-active" aria-current="page"' in activity.content.decode()
+
+
+def test_completed_intake_can_return_directly_to_review_after_edit(client, idea, owner):
+    from ki_radar.use_cases.intake_views import SESSION_KEY, _wizard_step_states
+
+    client.force_login(owner)
+    set_intake_session(client, owner.business_unit, owner, idea=idea)
+    stored = client.session[SESSION_KEY]
+    for current_step in range(1, 6):
+        states = _wizard_step_states(stored=stored, current_step=current_step)
+        assert all(state["is_reachable"] for state in states)
+
+
 def test_discovery_binds_origin_once_without_promoting(idea, owner, tmp_path):
     session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
     first = materialize(owner, session, analysis)

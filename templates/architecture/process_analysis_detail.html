@@ -20,6 +20,7 @@
     <p class="cr-work-header__summary">{{ process_analysis.get_status_display }} · Ist-Prozess, Architekturkontext und Lösungsoptionen.</p>
   </div>
   <div class="cr-work-header__actions">
+    {% if process_analysis.origin_idea_candidate %}<a class="btn btn-outline-secondary" href="{{ process_analysis.origin_idea_candidate.get_absolute_url }}">Zur Ursprungsidee</a>{% endif %}
     {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Bearbeiten</a>{% endif %}
   </div>
 </header>

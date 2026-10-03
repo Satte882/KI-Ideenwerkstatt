@@ -40,6 +40,8 @@ def _first_process_analysis(value_stream):
 
 PROCESS_CONTEXT_ROUTE_KEYS = {
     ("architecture", "process_analysis_detail"): "process",
+    ("architecture", "process_analysis_update"): "process",
+    ("accelerator", "investigation_activity"): "investigation",
     ("architecture", "solution_option_compare"): "compare",
     ("accelerator", "investigation_detail"): "brief",
     ("accelerator", "investigation_source"): "brief",
@@ -88,6 +90,11 @@ def _process_context_from_context(context):
 
     return {
         "active_key": active_key,
+        "investigation_url": (
+            reverse("accelerator:investigation_activity", args=[decision_brief_run.pk])
+            if decision_brief_run is not None
+            else None
+        ),
         "value_stream_url": analysis_step_url(value_stream_url, "value_stream"),
         "focus_url": _focus_navigation_url(context, value_stream),
         "process_url": analysis_step_url(process_url, "process"),

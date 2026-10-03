@@ -100,6 +100,10 @@ def _wizard_step_states(
     error_step: int | None = None,
 ) -> list[dict]:
     states = []
+    intake_complete = all(
+        all(name in stored for name in _completion_field_names(WIZARD_STEPS[number]["form"]))
+        for number in range(1, 6)
+    )
     for number in WIZARD_STEPS:
         form_class = WIZARD_STEPS[number]["form"]
         complete = number == 6 and current_step == 6
@@ -121,7 +125,9 @@ def _wizard_step_states(
                 "state": state,
                 "symbol": symbol,
                 "is_current": number == current_step,
-                "is_reachable": number <= current_step,
+                "is_reachable": number <= current_step
+                or complete
+                or (number == 6 and intake_complete),
             }
         )
     return states

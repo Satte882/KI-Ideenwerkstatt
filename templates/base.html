@@ -53,10 +53,12 @@
       </a>
 
       <div class="nav-caption">Vorhaben</div>
-      <a class="sidebar-link {% if request.resolver_match.namespace == 'architecture' or request.resolver_match.namespace == 'accelerator' and request.resolver_match.url_name|slice:':14' == 'investigation_' %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}">
+      <a class="sidebar-link {% if nav_is_analysis %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}"{% if nav_is_analysis %} aria-current="location"{% endif %}>
         <span class="nav-icon">⇢</span> Analyse
       </a>
-      {% if request.resolver_match.namespace == 'architecture' or request.resolver_match.namespace == 'accelerator' and request.resolver_match.url_name|slice:':14' == 'investigation_' %}
+      {% if nav_is_discovery %}
+      <div class="sidebar-local-depth" aria-label="Lokale Discovery"><span class="sidebar-local-step sidebar-local-active" aria-current="page"><span aria-hidden="true">●</span><span>Business Discovery</span></span></div>
+      {% elif nav_is_analysis %}
       {% analysis_sidebar %}
       {% endif %}
       <a class="sidebar-link {% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}" href="{% url 'use_cases:list' %}">

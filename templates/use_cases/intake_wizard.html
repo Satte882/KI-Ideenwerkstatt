@@ -4,6 +4,7 @@
 {% block body_class %}page-form-workspace page-intake-wizard{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
+{% if request.session.use_case_intake_idea_candidate %}<a class="btn btn-outline-secondary mb-3" href="{% url 'use_cases:idea_detail' request.session.use_case_intake_idea_candidate %}">Zur Ursprungsidee</a>{% endif %}
 <div class="page-header">
   <div>
     <div class="eyebrow mb-2">Geführte Use-Case-Aufnahme · Schritt {{ step }} von {{ total_steps }}</div>
@@ -78,13 +79,14 @@
       <div class="alert alert-danger"><strong>{{ blockers|length }} Pflichtangaben fehlen. Der Use Case ist noch nicht bewertungsbereit.</strong><ul class="mb-0 mt-2">{% for blocker in blockers %}<li><span aria-hidden="true">⚠</span> {{ blocker }}</li>{% endfor %}</ul></div>
       {% endif %}
       <div class="row g-4">
-        <div class="col-md-6"><div class="section-title">Problem</div><p>{{ candidate.problem_statement }}</p></div>
-        <div class="col-md-6"><div class="section-title">Prozess</div><p>{{ candidate.affected_process }}</p><p class="small text-muted">{{ candidate.summary }}</p></div>
-        <div class="col-md-6"><div class="section-title">Erwarteter Nutzen</div><p>{{ candidate.expected_benefit }}</p></div>
-        <div class="col-md-6"><div class="section-title">Primäre Kennzahl</div><p>{{ candidate.metric_name }}: {{ metric.baseline.display }} → {{ metric.target.display }}</p></div>
-        <div class="col-md-6"><div class="section-title">Daten</div><p>{{ candidate.data_sources }}</p></div>
+        <div class="col-md-6"><div class="section-title">Problem</div><a href="{% url 'use_cases:intake_step' 1 %}">Problem bearbeiten</a><p>{{ candidate.problem_statement }}</p></div>
+        <div class="col-md-6"><div class="section-title">Prozess</div><a href="{% url 'use_cases:intake_step' 2 %}">Prozess bearbeiten</a><p>{{ candidate.affected_process }}</p><p class="small text-muted">{{ candidate.summary }}</p></div>
+        <div class="col-md-6"><div class="section-title">Erwarteter Nutzen</div><a href="{% url 'use_cases:intake_step' 4 %}">Nutzen bearbeiten</a><p>{{ candidate.expected_benefit }}</p></div>
+        <div class="col-md-6"><div class="section-title">Primäre Kennzahl</div><a href="{% url 'use_cases:intake_step' 4 %}">Kennzahl bearbeiten</a><p>{{ candidate.metric_name }}: {{ metric.baseline.display }} → {{ metric.target.display }}</p></div>
+        <div class="col-md-6"><div class="section-title">Daten</div><a href="{% url 'use_cases:intake_step' 5 %}">Daten bearbeiten</a><p>{{ candidate.data_sources }}</p></div>
         <div class="col-md-6">
           <div class="section-title">Erforderliche Prüfungen</div>
+          <a href="{% url 'use_cases:intake_step' 3 %}">Prüfungen bearbeiten</a>
           <dl class="review-requirements mb-0">
             <dt>Datenschutz</dt>
             <dd>{% if candidate.privacy_review_required %}Erforderlich{% else %}Nicht erforderlich{% endif %}</dd>
