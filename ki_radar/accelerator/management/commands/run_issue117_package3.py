@@ -31,6 +31,7 @@ from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
     StartInvestigationRequest,
     brief_hash,
+    content_hash,
     normalize_decision_brief_payload,
     start_investigation,
 )
@@ -450,13 +451,16 @@ class Command(BaseCommand):
 
         if test_type == "semantic_verifier_negative":
             reports = list(run.verifier_reports.order_by("revision"))
-            if not any(
+            reported_rejection = any(
                 report.critical_findings > 0
                 and str((report.bound_hashes or {}).get("brief") or "") == mutated_brief_hash
                 for report in reports
+            )
+            if not reported_rejection and not self._negative_verifier_calls(
+                run, mutated_brief_hash
             ):
                 raise CommandError(
-                    f"{slot['slot_id']}: real verifier did not produce a critical finding "
+                    f"{slot['slot_id']}: no accepted real verifier critical finding "
                     "bound to the semantic negative-control brief."
                 )
 
@@ -503,6 +507,25 @@ class Command(BaseCommand):
             return
 
         raise CommandError(f"{slot['slot_id']}: unknown Package 3 test type.")
+
+    @staticmethod
+    def _negative_verifier_calls(run, mutated_brief_hash):
+        # A validated critical response already proves rejection, even if it also
+        # requests more evidence. It cannot authorize READY: that still requires
+        # a completed successful report bound to the corrected final brief.
+        calls = run.model_calls.filter(
+            role="verifier", status="success", context_refs__brief_hash=mutated_brief_hash
+        )
+        return [
+            call
+            for call in calls
+            if isinstance(call.accepted_payload, dict)
+            and call.accepted_payload_hash == content_hash(call.accepted_payload)
+            and any(
+                isinstance(finding, dict) and finding.get("severity") == "critical"
+                for finding in call.accepted_payload.get("findings", [])
+            )
+        ]
 
     @staticmethod
     def _has_final_verifier(run, reports) -> bool:
@@ -702,6 +725,21 @@ class Command(BaseCommand):
             "final_structured_mappings": mappings,
             "mutation_audit": mutation_audit,
             "verifier_reports": verifier_reports,
+            "negative_verifier_responses": [
+                {
+                    "model_call_id": str(call.pk),
+                    "brief_hash": call.context_refs["brief_hash"],
+                    "accepted_payload_hash": call.accepted_payload_hash,
+                    "findings": call.accepted_payload.get("findings", []),
+                    "read_requests": call.accepted_payload.get("read_requests", []),
+                    "completed_report": run.verifier_reports.filter(model_call_id=call.pk).exists(),
+                }
+                for call in self._negative_verifier_calls(
+                    run, str((mutation_audit or {}).get("mutated_brief_hash") or "")
+                )
+            ]
+            if slot["test_type"] == "semantic_verifier_negative"
+            else [],
             "model_calls": model_calls,
             "usage": run.usage,
         }

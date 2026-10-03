@@ -14,6 +14,7 @@ from ki_radar.accelerator.investigation_runtime import (
     InvestigationRunError,
     StartInvestigationRequest,
     apply_planner_state,
+    content_hash,
     start_investigation,
     structured_mapping_blockers,
 )
@@ -356,6 +357,64 @@ def test_semantic_negative_requires_critical_finding_bound_to_mutation():
     run, slot, audit = _completed_control("semantic_verifier_negative")
     run.verifier_reports[0].bound_hashes = {"brief": "c" * 64}
     with pytest.raises(CommandError, match="critical finding"):
+        package3.Command()._assert_mechanical_expectation(run, slot, audit)
+
+
+def _pending_negative_response(run, audit):
+    payload = {
+        "findings": [{"severity": "critical", "code": "wrong_routing", "message": "R02 is wrong"}],
+        "read_requests": [{"source_id": "source", "cursor": 0, "limit": 5}],
+    }
+    call = InvestigationModelCall(
+        role="verifier",
+        status="success",
+        context_refs={"brief_hash": audit["mutated_brief_hash"]},
+        accepted_payload=payload,
+        accepted_payload_hash=content_hash(payload),
+    )
+    run.model_calls.append(call)
+    run.verifier_reports.pop(0)
+    return call
+
+
+def test_semantic_negative_accepts_validated_critical_response_with_pending_read():
+    run, slot, audit = _completed_control("semantic_verifier_negative")
+    call = _pending_negative_response(run, audit)
+    command = package3.Command()
+    assert command._negative_verifier_calls(run, audit["mutated_brief_hash"]) == [call]
+    command._assert_mechanical_expectation(run, slot, audit)
+
+
+@pytest.mark.parametrize("defect", ["failed", "planner", "wrong_hash", "tampered", "noncritical"])
+def test_semantic_negative_rejects_unbound_or_unvalidated_model_response(defect):
+    run, slot, audit = _completed_control("semantic_verifier_negative")
+    call = _pending_negative_response(run, audit)
+    if defect == "failed":
+        call.status = "failed"
+    elif defect == "planner":
+        call.role = "planner"
+    elif defect == "wrong_hash":
+        call.context_refs["brief_hash"] = "c" * 64
+    elif defect == "tampered":
+        call.accepted_payload_hash = "c" * 64
+    else:
+        call.accepted_payload["findings"][0]["severity"] = "noncritical"
+        call.accepted_payload_hash = content_hash(call.accepted_payload)
+    with pytest.raises(CommandError, match="critical finding"):
+        package3.Command()._assert_mechanical_expectation(run, slot, audit)
+
+
+@pytest.mark.parametrize("defect", ["missing_report", "stale_report", "wrong_r02"])
+def test_pending_negative_response_never_substitutes_for_final_ready_verification(defect):
+    run, slot, audit = _completed_control("semantic_verifier_negative")
+    _pending_negative_response(run, audit)
+    if defect == "missing_report":
+        run.verifier_reports.clear()
+    elif defect == "stale_report":
+        run.verifier_reports[0].bound_hashes["brief"] = audit["mutated_brief_hash"]
+    else:
+        run.brief_payload["structured_mappings"][0]["assignments"][1]["value"] = "standard"
+    with pytest.raises(CommandError):
         package3.Command()._assert_mechanical_expectation(run, slot, audit)
 
 
