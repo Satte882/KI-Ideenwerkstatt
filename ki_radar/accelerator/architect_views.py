@@ -25,6 +25,11 @@ from .architect_forms import (
     DiscoveryCorrectionForm,
 )
 from .architect_service import DiscoveryAnalysisError, execute_autonomous_business_discovery
+from .discovery_context import (
+    active_discovery_business_unit,
+    default_discovery_business_unit,
+    discovery_business_unit_context,
+)
 from .investigation_ingestion import (
     InvestigationSourceUploadError,
     create_managed_discovery_source_folder,
@@ -149,6 +154,7 @@ def _prepare_discovery_start(*, actor, data, uploads, idea):
         problem_statement=data["problem_statement"],
         business_context=data["business_context"],
         idea_candidate_id=idea.pk if idea is not None else None,
+        business_unit_id=data["business_unit"].pk,
     )
     if idea is not None:
         uploads = [idea_origin_upload(session), *uploads]
@@ -247,14 +253,22 @@ def autonomous_discovery_start(request):
                     session_id=session.pk,
                 )
     else:
+        default_unit = default_discovery_business_unit(actor=request.user, idea=idea)
         form = AutonomousDiscoveryStartForm(
-            initial={"problem_statement": idea.description} if idea is not None else None
+            initial={
+                "problem_statement": idea.description if idea is not None else "",
+                "business_unit": default_unit.pk if default_unit else None,
+            }
         )
 
     return render(
         request,
         "accelerator/autonomous_discovery_start.html",
-        {"form": form, "idea": idea},
+        {
+            "form": form,
+            "idea": idea,
+            "has_active_business_units": form.fields["business_unit"].queryset.exists(),
+        },
     )
 
 
@@ -440,6 +454,13 @@ def autonomous_discovery_review(request, session_id):
         },
     )
     materialization = dict((session.answers or {}).get("materialization") or {})
+    business_unit_context = {}
+    business_unit_error = ""
+    try:
+        business_unit_context = discovery_business_unit_context(session)
+        active_discovery_business_unit(session)
+    except ValidationError as exc:
+        business_unit_error = " ".join(exc.messages)
 
     return render(
         request,
@@ -451,10 +472,14 @@ def autonomous_discovery_review(request, session_id):
             "correction_form": correction_form,
             "confirm_form": confirm_form,
             "materialization": materialization,
+            "business_unit_context": business_unit_context,
+            "business_unit_error": business_unit_error,
+            "legacy_business_unit": "business_unit" not in session.answers,
             "can_confirm": bool(
                 latest
                 and latest.status == CaptureAnalysis.Status.SUCCESS
                 and session.status == CaptureSession.Status.DRAFT
+                and not business_unit_error
             ),
             "waiting_human": bool(latest and latest.status == CaptureAnalysis.Status.WAITING_HUMAN),
             "analysis_failed": bool(latest and latest.status == CaptureAnalysis.Status.FAILED),

@@ -13,17 +13,23 @@
   <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
 </div>
 
-{% if session.answers.origin.type == 'idea_candidate' %}
 <div class="mb-4 d-flex gap-3 align-items-center flex-wrap">
+  {% if session.answers.origin.type == 'idea_candidate' %}
   <a href="{% url 'use_cases:idea_detail' pk=session.answers.origin.idea_candidate_id %}">Ursprungsidee: {{ session.answers.origin.title }}</a>
+  {% endif %}
+  {% if business_unit_context %}<span>Organisationseinheit der Untersuchung: <strong>{{ business_unit_context.name }}</strong></span>{% endif %}
   {% if session.status == 'draft' %}
   <form method="post" action="{% url 'accelerator:capture_discard' session_id=session.pk %}">
     {% csrf_token %}<input type="hidden" name="revision" value="{{ session.revision }}">
     <button class="btn btn-outline-danger" type="submit">Discovery verwerfen</button>
   </form>
+  {% elif session.status == 'discarded' %}
+  <a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_start' %}{% if session.answers.origin.type == 'idea_candidate' %}?idea_candidate={{ session.answers.origin.idea_candidate_id }}{% endif %}">Neue Untersuchung starten</a>
   {% endif %}
 </div>
-{% endif %}
+
+{% if session.status == 'draft' and business_unit_error %}<div class="alert alert-warning" role="alert">{{ business_unit_error }}</div>{% endif %}
+{% if session.status == 'draft' and legacy_business_unit %}<p class="small text-muted">Bestehender Lauf: Als Untersuchungseinheit gilt die bisherige persönliche Zuordnung. Sie wird beim nächsten Analysestart oder bei der Übernahme für diesen Lauf festgeschrieben.</p>{% endif %}
 
 {% if session.status == 'completed' and materialization %}
 <div class="alert alert-success" role="status">
@@ -172,6 +178,7 @@
     {% csrf_token %}
     <div class="card-body">
       {{ confirm_form.revision }}
+      <p>Wird angelegt in: <strong>{{ business_unit_context.name }}</strong></p>
       <p class="mb-3">Bestätigen Sie den fachlichen Scope und wählen Sie die Fokusphase. Erst danach werden die kanonischen Domain-Objekte erzeugt.</p>
       {{ confirm_form.selected_stage_key }}
     </div>

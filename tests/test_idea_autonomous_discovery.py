@@ -218,24 +218,19 @@ def test_active_discovery_blocks_new_intake_only_until_discard_or_expiry(
 
 
 @pytest.mark.parametrize("unit", ["empty", "same", "different"])
-def test_discovery_start_checks_business_unit_server_side(idea, owner, unit):
+def test_discovery_start_defaults_to_idea_unit_without_account_restriction(idea, owner, unit):
     if unit == "empty":
         idea.business_unit = None
     elif unit == "different":
         idea.business_unit = BusinessUnit.objects.create(name="Andere Organisation")
     idea.save()
-    if unit == "different":
-        with pytest.raises(ValidationError, match="Organisationseinheit"):
-            create_autonomous_capture_session(
-                actor=owner, problem_statement=idea.description, idea_candidate_id=idea.pk
-            )
-        assert not CaptureSession.objects.exists()
-    else:
-        session = create_autonomous_capture_session(
-            actor=owner, problem_statement=idea.description, idea_candidate_id=idea.pk
-        )
-        assert idea_origin_id(session.answers) == idea.pk
-        assert session.owner.business_unit_id == owner.business_unit_id
+    session = create_autonomous_capture_session(
+        actor=owner, problem_statement=idea.description, idea_candidate_id=idea.pk
+    )
+    assert idea_origin_id(session.answers) == idea.pk
+    assert session.answers["business_unit"]["id"] == (
+        idea.business_unit_id or owner.business_unit_id
+    )
     idea.refresh_from_db()
     assert (idea.business_unit_id is None) == (unit == "empty")
 
@@ -257,6 +252,7 @@ def start_from_idea(client, idea, owner, tmp_path, monkeypatch, *, uploads=()):
     client.force_login(owner)
     data = {
         "idea_candidate": str(idea.pk),
+        "business_unit": owner.business_unit_id,
         "problem_statement": "Bestätigte Korrektur: Angebote werden manuell verglichen.",
         "business_context": "Einkauf und Fachbereich bereiten die Entscheidung vor.",
     }
@@ -281,8 +277,15 @@ def test_idea_cta_and_prefill_are_permission_guarded_and_read_only(
             reverse("accelerator:autonomous_discovery_start"), {"idea_candidate": str(idea.pk)}
         )
     assert response.status_code == 200
-    assert response.context["form"].initial == {"problem_statement": idea.description}
-    assert set(response.context["form"].fields) == {"problem_statement", "business_context"}
+    assert response.context["form"].initial == {
+        "problem_statement": idea.description,
+        "business_unit": idea.business_unit_id,
+    }
+    assert set(response.context["form"].fields) == {
+        "problem_statement",
+        "business_context",
+        "business_unit",
+    }
     assert idea.title in response.content.decode()
     assert idea.source_note in response.content.decode()
     assert not CaptureSession.objects.exists()
@@ -419,6 +422,7 @@ def test_complete_idea_discovery_uses_existing_review_and_investigation(
     client.force_login(owner)
     data = {
         "idea_candidate": str(idea.pk),
+        "business_unit": owner.business_unit_id,
         "problem_statement": (
             "Ein freigegebener Beschaffungsbedarf startet die Lieferantenauswahl. "
             "Angebote werden per E-Mail eingeholt und manuell verglichen. "
@@ -574,7 +578,7 @@ def test_other_owner_cannot_create_second_session_or_open_first_owner_review(
         )
 
 
-def test_bu_mismatch_is_rejected_at_request_and_stale_materialization(
+def test_changed_idea_unit_does_not_redirect_existing_discovery_or_change_materialization(
     client, idea, owner, tmp_path
 ):
     session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
@@ -588,12 +592,11 @@ def test_bu_mismatch_is_rejected_at_request_and_stale_materialization(
             "problem_statement": idea.description,
         },
     )
-    assert response.url == idea.get_absolute_url()
-    assert "Zuordnung" in client.get(response.url).content.decode()
-    with pytest.raises(DiscoveryMaterializationError, match="Organisationseinheit"):
-        materialize(owner, session, analysis)
-    assert not ProcessAnalysis.objects.exists()
-    assert not ValueStream.objects.exists()
+    assert response.url == reverse("accelerator:autonomous_discovery_review", args=[session.pk])
+    result = materialize(owner, session, analysis)
+    value_stream = ValueStream.objects.get(pk=result.value_stream_id)
+    assert value_stream.business_unit_id == session.answers["business_unit"]["id"]
+    assert value_stream.business_unit_id != idea.business_unit_id
 
 
 @pytest.mark.parametrize("state", ["dismissed", "missing", "invalid_origin", "expired"])

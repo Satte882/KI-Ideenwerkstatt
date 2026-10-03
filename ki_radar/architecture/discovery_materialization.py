@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from ki_radar.accelerator.discovery_context import freeze_legacy_discovery_business_unit
 from ki_radar.accelerator.investigation_execution import request_execution
 from ki_radar.accelerator.investigation_runtime import (
     StartInvestigationRequest,
@@ -175,11 +176,13 @@ def materialize_discovery_and_start_investigation(
             "Die Discovery wurde zwischenzeitlich geändert. Bitte den aktuellen Stand neu laden.",
             code="revision_conflict",
         )
-    if session.owner.business_unit is None or not session.owner.business_unit.is_active:
+    try:
+        business_unit = freeze_legacy_discovery_business_unit(session)
+    except ValidationError as exc:
         raise DiscoveryMaterializationError(
-            "Die zugeordnete Organisationseinheit fehlt oder ist inaktiv.",
+            " ".join(exc.messages),
             code="missing_business_unit",
-        )
+        ) from exc
 
     idea = None
     try:
@@ -259,7 +262,7 @@ def materialize_discovery_and_start_investigation(
     value_stream = ValueStream(
         name=_required_text(value_draft.get("name"), field="Value Stream Name"),
         description=_optional_text(value_draft.get("description")),
-        business_unit=session.owner.business_unit,
+        business_unit=business_unit,
         owner=actor,
         created_by=actor,
         trigger=_required_text(value_draft.get("trigger"), field="Value Stream Trigger"),

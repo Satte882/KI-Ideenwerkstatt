@@ -25,9 +25,22 @@
     <div class="mb-4">
       <div class="section-title">Ursprung aus der Ideen-Box</div>
       <h2 class="h5"><a href="{{ idea.get_absolute_url }}">{{ idea.title }}</a></h2>
-      <p class="small text-muted mb-0">Quelle / ursprünglicher Einreicher: {{ idea.source_note|default:"Nicht angegeben" }}{% if idea.business_unit %} · {{ idea.business_unit.name }}{% endif %}</p>
+      <p class="small text-muted mb-1">Quelle / ursprünglicher Einreicher: {{ idea.source_note|default:"Nicht angegeben" }}</p>
+      <p class="small mb-0">Organisationseinheit der Idee: {% if idea.business_unit %}{{ idea.business_unit.name }}{% if not idea.business_unit.is_active %} (inaktiv){% endif %}{% else %}Noch offen{% endif %}</p>
     </div>
     {% endif %}
+
+    <section class="form-section" aria-labelledby="organisation-title">
+      <div class="section-title mb-3" id="organisation-title">Organisation der Untersuchung</div>
+      <p class="small text-muted">Ihre persönliche Zuordnung: {% if request.user.business_unit %}{{ request.user.business_unit.name }}{% if not request.user.business_unit.is_active %} (inaktiv){% endif %}{% else %}Nicht zugeordnet{% endif %}</p>
+      <label class="form-label" for="{{ form.business_unit.id_for_label }}">{{ form.business_unit.label }} *</label>
+      {{ form.business_unit }}
+      {% if form.business_unit.errors %}<div class="field-attention-message" role="alert">{{ form.business_unit.errors }}</div>{% endif %}
+      {% if idea %}<p class="small text-muted mt-2 mb-0">Die Untersuchung darf einer anderen Organisationseinheit zugeordnet sein. Die Zuordnung der Ursprungsidee bleibt unverändert.</p>{% endif %}
+      {% if not has_active_business_units %}
+      <div class="alert alert-warning mt-2" role="alert">Es ist noch keine aktive Organisationseinheit verfügbar. {% if request.user.is_staff %}<a href="{% url 'admin:accounts_businessunit_changelist' %}">Organisationseinheiten verwalten</a>{% else %}Bitte lassen Sie eine Organisationseinheit durch die Administration aktivieren.{% endif %}</div>
+      {% endif %}
+    </section>
 
     <section class="form-section" aria-labelledby="problem-title">
       <div class="section-title mb-3" id="problem-title">1. Problem und Ziel</div>

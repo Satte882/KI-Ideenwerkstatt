@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
@@ -30,6 +30,10 @@ from .architect_contract import (
     build_discovery_verifier_schema,
     validate_discovery_payload,
     validate_verifier_payload,
+)
+from .discovery_context import (
+    discovery_business_unit_context,
+    freeze_legacy_discovery_business_unit,
 )
 from .investigation_tools import get_discovery_source_snapshot
 from .models import CaptureAnalysis, CaptureSession
@@ -200,7 +204,7 @@ def _source_document(*, session: CaptureSession, snapshot) -> tuple[dict[str, An
         "input_ref": "U0",
         "capture_session_id": str(session.pk),
         "capture_revision": session.revision,
-        "business_unit": session.owner.business_unit.name,
+        "business_unit": discovery_business_unit_context(session)["name"],
         "problem_statement": problem,
         "business_context": business_context,
         "corrections": corrections,
@@ -398,11 +402,13 @@ def execute_autonomous_business_discovery(
     session = get_owned_autonomous_capture_session(actor=actor, session_id=session_id)
     if session.status != CaptureSession.Status.DRAFT:
         raise PermissionDenied("Die autonome Discovery ist nicht mehr bearbeitbar.")
-    if session.owner.business_unit is None or not session.owner.business_unit.is_active:
+    try:
+        freeze_legacy_discovery_business_unit(session)
+    except ValidationError as exc:
         raise DiscoveryAnalysisError(
-            "Für die autonome Discovery fehlt eine aktive Organisationseinheit.",
+            " ".join(exc.messages),
             code="missing_business_unit",
-        )
+        ) from exc
 
     snapshot = get_discovery_source_snapshot(actor=actor, snapshot_id=snapshot_id)
     if snapshot.capture_session_id != session.pk:

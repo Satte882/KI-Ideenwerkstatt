@@ -500,7 +500,7 @@ def test_guided_capture_remains_default(owner):
 
 
 @pytest.mark.django_db
-def test_autonomous_capture_requires_active_user_business_unit(owner):
+def test_autonomous_capture_requires_active_investigation_business_unit(owner):
     owner.business_unit.is_active = False
     owner.business_unit.save(update_fields=["is_active"])
 
@@ -1006,6 +1006,7 @@ def test_start_post_creates_capture_snapshot_without_guided_questions(
         response = client.post(
             reverse("accelerator:autonomous_discovery_start"),
             {
+                "business_unit": owner.business_unit_id,
                 "problem_statement": "Angebote werden manuell verglichen.",
                 "business_context": "Einkauf und Fachbereich entscheiden gemeinsam.",
                 "sources": _source_uploads(),
