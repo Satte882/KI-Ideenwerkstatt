@@ -1,10 +1,17 @@
 import pytest
+from django.core.exceptions import ValidationError
 
+from ki_radar.accelerator.architect_forms import AutonomousDiscoveryStartForm
+from ki_radar.accelerator.services import create_autonomous_capture_session
 from ki_radar.accounts.business_units import (
     active_productive_business_units,
     selectable_business_units,
 )
 from ki_radar.accounts.models import BusinessUnit
+from ki_radar.architecture.forms import ValueStreamForm
+from ki_radar.use_cases.forms import UseCaseForm
+from ki_radar.use_cases.idea_forms import IdeaCandidateForm
+from ki_radar.use_cases.intake import ProblemStepForm
 
 
 EXPECTED_PRODUCTIVE_UNITS = {
@@ -54,3 +61,66 @@ def test_existing_legacy_reference_can_be_rendered_as_current_choice():
     )
     ids = set(selectable_business_units(current_id=legacy.pk).values_list("pk", flat=True))
     assert legacy.pk in ids
+
+
+@pytest.mark.django_db
+def test_all_productive_business_unit_forms_hide_demo_and_legacy_units():
+    demo = BusinessUnit.objects.create(
+        name="Nicht auswählbare Demo-Einheit",
+        catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST,
+    )
+    legacy = BusinessUnit.objects.create(
+        name="Nicht auswählbarer Bestand",
+        catalog_scope=BusinessUnit.CatalogScope.LEGACY,
+    )
+
+    forms = [
+        AutonomousDiscoveryStartForm(),
+        IdeaCandidateForm(),
+        ProblemStepForm(),
+        UseCaseForm(),
+        ValueStreamForm(),
+    ]
+
+    for form in forms:
+        ids = set(form.fields["business_unit"].queryset.values_list("pk", flat=True))
+        assert demo.pk not in ids
+        assert legacy.pk not in ids
+
+
+@pytest.mark.django_db
+def test_discovery_service_rejects_demo_unit_when_form_is_bypassed(owner):
+    demo = BusinessUnit.objects.create(
+        name="Manipulierte Demo-Einheit",
+        catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST,
+    )
+
+    with pytest.raises(ValidationError, match="freigegebenen Organisationskatalog"):
+        create_autonomous_capture_session(
+            actor=owner,
+            problem_statement="Kundenanfragen benötigen zu viele manuelle Schritte.",
+            business_unit_id=demo.pk,
+        )
+
+
+@pytest.mark.django_db
+def test_existing_legacy_assignment_remains_selectable_only_on_its_own_edit_form():
+    legacy = BusinessUnit.objects.create(
+        name="Historische Zuordnung",
+        catalog_scope=BusinessUnit.CatalogScope.LEGACY,
+    )
+    from ki_radar.use_cases.idea_models import IdeaCandidate
+
+    idea = IdeaCandidate.objects.create(
+        title="Historischer Eintrag",
+        description="Bestehende Zuordnung darf nicht still verschwinden.",
+        business_unit=legacy,
+    )
+
+    form = IdeaCandidateForm(instance=idea)
+    ids = set(form.fields["business_unit"].queryset.values_list("pk", flat=True))
+    assert legacy.pk in ids
+
+    create_form = IdeaCandidateForm()
+    create_ids = set(create_form.fields["business_unit"].queryset.values_list("pk", flat=True))
+    assert legacy.pk not in create_ids

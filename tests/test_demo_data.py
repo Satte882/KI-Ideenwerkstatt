@@ -29,7 +29,11 @@ def test_seed_demo_data_creates_complete_dataset():
 
     demo_use_cases = UseCase.objects.filter(title__in=demo_use_case_titles())
 
-    assert BusinessUnit.objects.filter(name__in=demo_business_unit_names()).count() == 3
+    demo_units = BusinessUnit.objects.filter(name__in=demo_business_unit_names())
+    assert demo_units.count() == 3
+    assert not demo_units.exclude(
+        catalog_scope=BusinessUnit.CatalogScope.DEMO_TEST
+    ).exists()
     assert User.objects.filter(username__in=demo_usernames()).count() == 4
     assert demo_use_cases.count() == 10
     assert GovernanceAssessment.objects.filter(use_case__in=demo_use_cases).count() >= 6
