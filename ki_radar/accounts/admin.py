@@ -28,8 +28,8 @@ class RadarUserAdmin(UserAdmin):
 
 @admin.register(BusinessUnit)
 class BusinessUnitAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_active", "updated_at")
-    list_filter = ("is_active",)
+    list_display = ("name", "catalog_scope", "is_active", "updated_at")
+    list_filter = ("catalog_scope", "is_active")
     search_fields = ("name", "description")
 
 

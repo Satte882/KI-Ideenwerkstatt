@@ -5,9 +5,20 @@ from ki_radar.core.models import TimeStampedModel
 
 
 class BusinessUnit(TimeStampedModel):
+    class CatalogScope(models.TextChoices):
+        PRODUCTIVE = "productive", "Produktiv"
+        DEMO_TEST = "demo_test", "Demo/Test"
+        LEGACY = "legacy", "Bestand"
+
     name = models.CharField(max_length=150, unique=True)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
+    catalog_scope = models.CharField(
+        max_length=20,
+        choices=CatalogScope.choices,
+        default=CatalogScope.PRODUCTIVE,
+        db_index=True,
+    )
 
     class Meta:
         ordering = ["name"]
