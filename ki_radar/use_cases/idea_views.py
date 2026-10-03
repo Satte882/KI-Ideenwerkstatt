@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accounts.business_units import active_productive_business_units
 from ki_radar.architecture.permissions import can_manage_architecture
 
 from .idea_discovery import active_idea_discovery
@@ -70,7 +70,7 @@ def idea_list(request):
             "stats": stats,
             "state_filter": state_filter,
             "business_unit_id": business_unit_id,
-            "business_units": BusinessUnit.objects.filter(is_active=True),
+            "business_units": active_productive_business_units(),
             "query": query,
             "sort": sort,
             "can_create_idea": can_create_idea(request.user),

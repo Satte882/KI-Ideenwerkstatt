@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from ki_radar.accounts.models import BusinessUnit
+from ki_radar.accounts.business_units import active_productive_business_unit
 from ki_radar.architecture.permissions import can_manage_architecture
 from ki_radar.use_cases.idea_discovery import (
     active_idea_discovery,
@@ -144,13 +144,15 @@ def create_autonomous_capture_session(
     if business_unit_id is None:
         default_unit = default_discovery_business_unit(actor=actor, idea=idea)
         business_unit_id = default_unit.pk if default_unit else None
-    try:
-        business_unit = BusinessUnit.objects.filter(pk=business_unit_id, is_active=True).first()
-    except (ValueError, TypeError) as exc:
-        raise ValidationError({"business_unit": "Die Organisationseinheit ist ungültig."}) from exc
+    business_unit = active_productive_business_unit(pk=business_unit_id)
     if business_unit is None:
         raise ValidationError(
-            {"business_unit": "Bitte wählen Sie eine aktive Organisationseinheit der Untersuchung."}
+            {
+                "business_unit": (
+                    "Bitte wählen Sie eine aktive Organisationseinheit aus dem "
+                    "freigegebenen Organisationskatalog."
+                )
+            }
         )
 
     catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
