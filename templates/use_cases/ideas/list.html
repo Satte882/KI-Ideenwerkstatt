@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Ideen-Inbox – KI-Radar{% endblock %}
+{% block title %}Ideen & Probleme – KI-Radar{% endblock %}
 {% block body_class %}page-idea-inbox{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
   <div>
     <div class="eyebrow mb-2">Use Case Steering · Eingangskanal</div>
-    <h1 class="page-title">Ideen-Inbox</h1>
-    <p class="page-subtitle mb-0">Frühe Ideen erfassen, schnell triagieren und erst bei Relevanz in den bestehenden Intake übernehmen.</p>
+    <h1 class="page-title">Ideen &amp; Probleme</h1>
+    <p class="page-subtitle mb-0">Frühe Ideen und Probleme erfassen, priorisieren und je nach Reife systematisch untersuchen oder direkt als Use Case weiterführen.</p>
   </div>
-  {% if can_create_idea %}<a class="btn btn-primary" href="{% url 'use_cases:idea_create' %}">Idee erfassen</a>{% endif %}
+  {% if can_create_idea %}<a class="btn btn-primary" href="{% url 'use_cases:idea_create' %}">Idee oder Problem erfassen</a>{% endif %}
 </div>
 
-<div class="row g-3 mb-4" aria-label="Ideenstatus">
+<div class="row g-3 mb-4" aria-label="Inbox-Status">
   <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Gesamt</div><div class="h3 mb-0">{{ stats.all }}</div></div></div></div>
   <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Offen</div><div class="h3 mb-0">{{ stats.open }}</div></div></div></div>
   <div class="col-6 col-lg-3"><div class="app-card h-100"><div class="card-body"><div class="text-muted small">Nicht weiterverfolgt</div><div class="h3 mb-0">{{ stats.dismissed }}</div></div></div></div>
@@ -22,7 +22,7 @@
 
 <div class="app-card mb-4">
   <div class="card-body">
-    <form method="get" class="row g-3 align-items-end" aria-label="Ideen filtern">
+    <form method="get" class="row g-3 align-items-end" aria-label="Einträge filtern">
       <div class="col-12 col-lg-4">
         <label class="form-label" for="idea-search">Suche</label>
         <input class="form-control" id="idea-search" type="search" name="q" value="{{ query }}" placeholder="Titel, Beschreibung oder Quelle">
@@ -58,7 +58,7 @@
 <div class="app-card">
   <div class="table-responsive">
     <table class="table align-middle mb-0">
-      <thead><tr><th>Idee</th><th>Bereich</th><th class="text-center">I</th><th class="text-center">C</th><th class="text-center">V</th><th class="text-center">Score</th><th>Alter</th><th>Status / Aktion</th></tr></thead>
+      <thead><tr><th>Idee / Problem</th><th>Bereich</th><th class="text-center">I</th><th class="text-center">C</th><th class="text-center">V</th><th class="text-center">Score</th><th>Alter</th><th>Status / Aktion</th></tr></thead>
       <tbody>
       {% for idea in ideas %}
         <tr>
@@ -81,7 +81,7 @@
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-5">Keine Ideen für die gewählten Filter.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-5">Keine Einträge für die gewählten Filter.</td></tr>
       {% endfor %}
       </tbody>
     </table>

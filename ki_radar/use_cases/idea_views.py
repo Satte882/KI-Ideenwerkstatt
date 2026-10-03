@@ -88,14 +88,14 @@ def idea_create(request):
             idea = form.save(commit=False)
             idea.submitted_by = request.user
             idea.save()
-            messages.success(request, "Idee wurde in der Ideen-Inbox erfasst.")
+            messages.success(request, "Eintrag wurde in der Inbox erfasst.")
             return redirect(idea)
     else:
         form = IdeaCandidateForm()
     return render(
         request,
         "use_cases/ideas/form.html",
-        {"form": form, "page_title": "Idee erfassen", "submit_label": "Idee speichern"},
+        {"form": form, "page_title": "Idee oder Problem erfassen", "submit_label": "Eintrag speichern"},
     )
 
 
@@ -139,7 +139,7 @@ def idea_edit(request, pk):
         form = IdeaCandidateForm(request.POST, instance=idea)
         if form.is_valid():
             form.save()
-            messages.success(request, "Idee wurde aktualisiert.")
+            messages.success(request, "Eintrag wurde aktualisiert.")
             return redirect(idea)
     else:
         form = IdeaCandidateForm(instance=idea)
@@ -148,7 +148,7 @@ def idea_edit(request, pk):
         "use_cases/ideas/form.html",
         {
             "form": form,
-            "page_title": "Idee bearbeiten",
+            "page_title": "Eintrag bearbeiten",
             "submit_label": "Änderungen speichern",
         },
     )
@@ -211,7 +211,7 @@ def idea_dismiss(request, pk):
         )
     messages.success(
         request,
-        "Idee wurde nachvollziehbar als nicht weiterzuverfolgen abgeschlossen.",
+        "Eintrag wurde nachvollziehbar als nicht weiterzuverfolgen abgeschlossen.",
     )
     return redirect(idea)
 
@@ -226,14 +226,14 @@ def idea_promote(request, pk):
     if idea.state != IdeaCandidate.State.OPEN or idea.promoted_use_case_id is not None:
         messages.warning(
             request,
-            "Diese Idee wurde bereits abgeschlossen und kann nicht erneut übernommen werden.",
+            "Dieser Eintrag wurde bereits abgeschlossen und kann nicht erneut übernommen werden.",
         )
         return redirect(idea)
 
     if idea.discovery_process_analysis_id is not None or active_idea_discovery(idea) is not None:
         messages.warning(
             request,
-            "Für diese Idee existiert bereits eine Discovery oder Prozessanalyse. "
+             "Für diesen Eintrag existiert bereits eine Discovery oder Prozessanalyse. ".trimStart()
             "Bitte diese fortsetzen oder den Discovery-Draft verwerfen.",
         )
         return redirect(idea)
@@ -257,7 +257,7 @@ def idea_promote(request, pk):
     request.session.modified = True
     messages.info(
         request,
-        "Die Idee wurde in den bestehenden Intake vorbefüllt. Erst der erfolgreiche Abschluss "
+         "Der Eintrag wurde in den bestehenden Intake vorbefüllt. Erst der erfolgreiche Abschluss ".trimStart()
         "von Schritt 6 übernimmt sie als Use Case.",
     )
     return redirect("use_cases:create")

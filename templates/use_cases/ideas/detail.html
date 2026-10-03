@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ idea.title }} – Ideen-Inbox{% endblock %}
+{% block title %}{{ idea.title }} – Ideen & Probleme{% endblock %}
 {% block body_class %}page-detail-workspace page-idea-detail{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
   <div>
-    <div class="eyebrow mb-2">Ideen-Inbox · noch kein Use Case</div>
+    <div class="eyebrow mb-2">Inbox · noch kein Use Case</div>
     <h1 class="page-title">{{ idea.title }}</h1>
     <p class="page-subtitle mb-0">{% if idea.business_unit %}{{ idea.business_unit.name }} · {% endif %}erfasst vor {{ idea.age_days }} Tag{% if idea.age_days != 1 %}en{% endif %}{% if idea.submitted_by %} · {{ idea.submitted_by.get_display_name }}{% endif %}</p>
   </div>
   <div class="d-flex gap-2 align-items-center">
     {% if idea.state == 'open' %}<span class="badge state-ready">Offen</span>{% elif idea.state == 'dismissed' %}<span class="badge text-bg-secondary">Nicht weiterverfolgt</span>{% else %}<span class="badge text-bg-success">Übernommen</span>{% endif %}
     {% if idea.is_stale %}<span class="badge text-bg-warning">lange offen</span>{% endif %}
-    {% if can_edit %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'use_cases:idea_edit' idea.pk %}">Idee korrigieren</a>{% endif %}
+    {% if can_edit %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'use_cases:idea_edit' idea.pk %}">Eintrag korrigieren</a>{% endif %}
   </div>
 </div>
 
-<nav class="cr-local-work-status mb-4" aria-label="Arbeitsbereiche dieser Idee" data-testid="local-work-status">
+<nav class="cr-local-work-status mb-4" aria-label="Arbeitsbereiche dieses Eintrags" data-testid="local-work-status">
   <div class="cr-local-work-status__header">
     <div><span class="cr-local-work-status__kicker">Auf dieser Seite ·</span> <strong class="cr-local-work-status__title">Arbeitsbereiche</strong></div>
     <span class="cr-local-work-status__hint">Sektionsnavigation, kein Lifecycle</span>
   </div>
   <div class="cr-local-work-status__items">
-    <a class="cr-local-work-status__item" href="#idea" data-work-target="idea" data-work-state="done"><span class="cr-local-work-status__marker" aria-hidden="true">✓</span><span class="cr-local-work-status__label">Idee</span><span class="cr-local-work-status__state">Erfasst</span></a>
+    <a class="cr-local-work-status__item" href="#idea" data-work-target="idea" data-work-state="done"><span class="cr-local-work-status__marker" aria-hidden="true">✓</span><span class="cr-local-work-status__label">Eintrag</span><span class="cr-local-work-status__state">Erfasst</span></a>
     <a class="cr-local-work-status__item" href="#quick-triage" data-work-target="quick-triage" data-work-state="{% if idea.triage_complete %}done{% else %}open{% endif %}"><span class="cr-local-work-status__marker" aria-hidden="true">{% if idea.triage_complete %}✓{% else %}○{% endif %}</span><span class="cr-local-work-status__label">Quick-Triage</span><span class="cr-local-work-status__state">{% if idea.triage_complete %}Erledigt{% else %}Offen{% endif %}</span></a>
     <a class="cr-local-work-status__item" href="#abschluss" data-work-target="abschluss" data-work-state="{% if idea.state == 'open' %}open{% else %}done{% endif %}"><span class="cr-local-work-status__marker" aria-hidden="true">{% if idea.state == 'open' %}○{% else %}✓{% endif %}</span><span class="cr-local-work-status__label">Abschluss</span><span class="cr-local-work-status__state">{% if idea.state == 'open' %}Offen{% else %}Erledigt{% endif %}</span></a>
   </div>
@@ -31,7 +31,7 @@
 
 <section id="idea" class="app-card mb-4" tabindex="-1">
   <div class="card-body">
-    <div class="section-title">Idee</div>
+    <div class="section-title">Eintrag</div>
     <h2 class="h5">Problem / Beobachtung</h2>
     <p class="mb-4">{{ idea.description|linebreaksbr }}</p>
     <div class="row g-3">
@@ -47,7 +47,7 @@
       <div>
         <div class="section-title">Quick-Triage</div>
         <h2 class="h5 mb-1">Impact · Confidence · Validierbarkeit</h2>
-        <p class="text-muted mb-1">Nur Orientierung für die Reihenfolge in der Ideen-Inbox. Kein Assessment und keine Promote-Automatik.</p>
+        <p class="text-muted mb-1">Nur Orientierung für die Reihenfolge in der Inbox. Kein Assessment und keine Promote-Automatik.</p>
         <p class="small text-muted mb-0">Angelehnt an die <a href="https://www.productboard.com/glossary/product-prioritization-frameworks/" target="_blank" rel="noopener noreferrer">ICE-Methode</a> (Impact, Confidence, Ease). Validierbarkeit ersetzt hier bewusst „Ease“, weil in dieser frühen Phase die schnelle Überprüfbarkeit einer Idee entscheidend ist.</p>
       </div>
       <div class="text-end"><div class="text-muted small">Quick Score</div><div class="h3 mb-0">{% if idea.quick_score is not None %}{{ idea.quick_score }}{% else %}–{% endif %}</div></div>
@@ -76,7 +76,7 @@
     <div class="section-title">Abschluss</div>
     {% if idea.state == 'promoted' %}
       <h2 class="h5">Als Use Case übernommen</h2>
-      <p>Die Idee ist abgeschlossen. Ab hier ist der Use Case der Source of Truth; Assessment-, Governance- und Lifecycle-Zustände werden nicht in die Idee zurückgespiegelt.</p>
+      <p>Der Eintrag ist abgeschlossen. Ab hier ist der Use Case der Source of Truth; Assessment-, Governance- und Lifecycle-Zustände werden nicht in die Idee zurückgespiegelt.</p>
       {% if idea.promoted_use_case %}<a class="btn btn-primary" href="{{ idea.promoted_use_case.get_absolute_url }}">{{ idea.promoted_use_case.short_id }} öffnen</a>{% endif %}
     {% elif idea.state == 'dismissed' %}
       <h2 class="h5">Nicht weiterverfolgt</h2>
@@ -107,7 +107,7 @@
           <h2 class="h5">Direkt als Use Case übernehmen</h2>
           <p>Startet den vorhandenen 6-Schritt-Intake mit Titel, Beschreibung und – falls vorhanden – Organisationseinheit als Vorbelegung. Es wird jetzt noch kein Use Case angelegt.</p>
           {% if idea.discovery_process_analysis %}
-          <p class="text-muted mb-0">Die Idee ist bereits mit einer Prozessanalyse verknüpft.</p>
+          <p class="text-muted mb-0">Der Eintrag ist bereits mit einer Prozessanalyse verknüpft.</p>
           {% elif discovery %}
           <p class="text-muted mb-0">Solange der Discovery-Draft aktiv ist, ist die direkte Übernahme gesperrt.</p>
           {% elif has_intake_draft %}
@@ -140,5 +140,5 @@
   </div>
 </section>
 
-<a class="btn btn-outline-secondary" href="{% url 'use_cases:idea_list' %}">Zur Ideen-Inbox</a>
+<a class="btn btn-outline-secondary" href="{% url 'use_cases:idea_list' %}">Zur Inbox</a>
 {% endblock %}
