@@ -13,6 +13,18 @@
   <a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>
 </div>
 
+{% if session.answers.origin.type == 'idea_candidate' %}
+<div class="mb-4 d-flex gap-3 align-items-center flex-wrap">
+  <a href="{% url 'use_cases:idea_detail' pk=session.answers.origin.idea_candidate_id %}">Ursprungsidee: {{ session.answers.origin.title }}</a>
+  {% if session.status == 'draft' %}
+  <form method="post" action="{% url 'accelerator:capture_discard' session_id=session.pk %}">
+    {% csrf_token %}<input type="hidden" name="revision" value="{{ session.revision }}">
+    <button class="btn btn-outline-danger" type="submit">Discovery verwerfen</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
 {% if session.status == 'completed' and materialization %}
 <div class="alert alert-success" role="status">
   <strong>Discovery übernommen.</strong> Die kanonischen Business-Architecture-Objekte wurden erzeugt und die bestehende Investigation gestartet.

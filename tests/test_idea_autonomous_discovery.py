@@ -2,13 +2,17 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from test_issue_98_autonomous_business_discovery import _approved_analysis, _session_and_snapshot
 from test_issue_422_idea_inbox import set_intake_session
 
-from ki_radar.accelerator.models import CaptureSession
+from ki_radar.accelerator import architect_service, architect_views
+from ki_radar.accelerator.investigation_models import InvestigationSourceSnapshot
+from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 from ki_radar.accelerator.services import create_autonomous_capture_session
 from ki_radar.accounts.models import BusinessUnit
 from ki_radar.architecture.discovery_materialization import (
@@ -175,3 +179,144 @@ def test_repeated_service_start_reuses_active_session(idea, owner):
     assert first.pk == second.pk
     assert CaptureSession.objects.count() == 1
     assert second.answers["problem_statement"] == idea.description
+
+
+def start_from_idea(client, idea, owner, tmp_path, monkeypatch, *, uploads=()):
+    monkeypatch.setattr(architect_views, "_run_analysis", lambda *args, **kwargs: None)
+    client.force_login(owner)
+    data = {
+        "idea_candidate": str(idea.pk),
+        "problem_statement": "Bestätigte Korrektur: Angebote werden manuell verglichen.",
+        "business_context": "Einkauf und Fachbereich bereiten die Entscheidung vor.",
+    }
+    if uploads:
+        data["sources"] = list(uploads)
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        response = client.post(reverse("accelerator:autonomous_discovery_start"), data)
+    assert response.status_code == 302
+    session = CaptureSession.objects.get()
+    return session, session.discovery_source_snapshots.get()
+
+
+def test_idea_cta_and_prefill_are_permission_guarded_and_read_only(
+    client, idea, owner, reader, tmp_path
+):
+    client.force_login(owner)
+    detail = client.get(idea.get_absolute_url())
+    assert "Geschäftsproblem untersuchen" in detail.content.decode()
+    assert "Direkt als Use Case übernehmen" in detail.content.decode()
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
+        response = client.get(
+            reverse("accelerator:autonomous_discovery_start"), {"idea_candidate": str(idea.pk)}
+        )
+    assert response.status_code == 200
+    assert response.context["form"].initial == {"problem_statement": idea.description}
+    assert set(response.context["form"].fields) == {"problem_statement", "business_context"}
+    assert idea.title in response.content.decode()
+    assert idea.source_note in response.content.decode()
+    assert not CaptureSession.objects.exists()
+    assert not CaptureAnalysis.objects.exists()
+    assert not ProcessAnalysis.objects.exists()
+    assert not (tmp_path / "managed").exists()
+    client.force_login(reader)
+    assert (
+        "Geschäftsproblem untersuchen" not in client.get(idea.get_absolute_url()).content.decode()
+    )
+    for method in [client.get, client.post]:
+        response = method(
+            reverse("accelerator:autonomous_discovery_start"), {"idea_candidate": str(idea.pk)}
+        )
+        assert response.status_code == 403
+
+
+@pytest.mark.parametrize("extra_source", [False, True])
+def test_idea_source_is_frozen_but_only_real_uploads_are_independent_evidence(
+    client, idea, owner, tmp_path, monkeypatch, extra_source
+):
+    uploads = (
+        [SimpleUploadedFile("interview.md", b"Zusatzquelle aus dem Interview.")]
+        if extra_source
+        else []
+    )
+    session, snapshot = start_from_idea(client, idea, owner, tmp_path, monkeypatch, uploads=uploads)
+    origin = session.answers["origin"]
+    source = snapshot.sources.get(filename=origin["origin_source_filename"])
+    assert source.content_sha256 == origin["origin_source_sha256"]
+    assert len(snapshot.manifest_hash) == 64
+    assert "nicht unabhängig bestätigt" in source.content
+    assert session.answers["problem_statement"] in source.content
+    assert session.answers["business_context"] in source.content
+    assert idea.title in source.content
+    assert idea.source_note in source.content
+    assert idea.description not in source.content
+    assert snapshot.sources.count() == (2 if extra_source else 1)
+    assert set(origin) == {
+        "type",
+        "idea_candidate_id",
+        "title",
+        "source_note",
+        "captured_at",
+        "idea_updated_at",
+        "origin_source_filename",
+        "origin_source_sha256",
+    }
+    assert not any(key in session.answers for key in ["impact", "confidence", "ease", "focus"])
+    document, refs, evidence = architect_service._source_document(
+        session=session, snapshot=snapshot
+    )
+    assert document["input_ref"] == "U0"
+    assert document["problem_statement"] == session.answers["problem_statement"]
+    assert origin["origin_source_filename"] not in str(document)
+    assert evidence.count(session.answers["problem_statement"]) == 1
+    assert refs == ({"U0", "S1"} if extra_source else {"U0"})
+    if extra_source:
+        assert document["sources"][0]["filename"] == "interview.md"
+        assert document["sources"][0]["ref"] == "S1"
+    idea.refresh_from_db()
+    assert idea.state == IdeaCandidate.State.OPEN
+
+
+def test_repeat_start_and_detail_resume_existing_or_materialized_discovery(
+    client, idea, owner, tmp_path, monkeypatch
+):
+    session, snapshot = start_from_idea(client, idea, owner, tmp_path, monkeypatch)
+    review_url = reverse("accelerator:autonomous_discovery_review", args=[session.pk])
+    start_url = reverse("accelerator:autonomous_discovery_start")
+    for method in [client.get, client.post]:
+        response = method(start_url, {"idea_candidate": str(idea.pk)})
+        assert response.url == review_url
+    assert CaptureSession.objects.count() == 1
+    assert InvestigationSourceSnapshot.objects.count() == 1
+    assert "Discovery fortsetzen" in client.get(idea.get_absolute_url()).content.decode()
+    analysis = _approved_analysis(session=session, snapshot=snapshot)
+    result = materialize(owner, session, analysis)
+    process = ProcessAnalysis.objects.get(pk=result.process_analysis_id)
+    assert "Analyse fortsetzen" in client.get(idea.get_absolute_url()).content.decode()
+    for method in [client.get, client.post]:
+        response = method(start_url, {"idea_candidate": str(idea.pk)})
+        assert response.url == process.get_absolute_url()
+    investigation_snapshot = InvestigationSourceSnapshot.objects.get(
+        pk=result.investigation_snapshot_id
+    )
+    assert list(snapshot.sources.values_list("filename", "content_sha256", "content")) == list(
+        investigation_snapshot.sources.values_list("filename", "content_sha256", "content")
+    )
+
+
+def test_long_idea_description_is_not_truncated_and_requires_confirmation(client, idea, owner):
+    idea.description = "x" * 4001
+    idea.save()
+    client.force_login(owner)
+    url = reverse("accelerator:autonomous_discovery_start")
+    response = client.get(url, {"idea_candidate": str(idea.pk)})
+    assert response.context["form"].initial["problem_statement"] == idea.description
+    response = client.post(
+        url,
+        {
+            "idea_candidate": str(idea.pk),
+            "problem_statement": idea.description,
+        },
+    )
+    assert response.status_code == 200
+    assert response.context["form"].errors["problem_statement"]
+    assert not CaptureSession.objects.exists()

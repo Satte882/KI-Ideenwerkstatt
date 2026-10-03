@@ -14,6 +14,7 @@ from django.views.decorators.debug import sensitive_variables
 
 from ki_radar.core.llm_policy import LLMConfigurationError, get_accelerator_llm_policy
 from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable, request_openrouter
+from ki_radar.use_cases.idea_discovery import idea_origin_id
 
 from .analysis_service import (
     CaptureAnalysisQuotaExceeded,
@@ -171,8 +172,17 @@ def _source_document(*, session: CaptureSession, snapshot) -> tuple[dict[str, An
     sources = []
     allowed_refs = {"U0"}
     evidence_parts = [problem, business_context, *corrections]
-    for index, source in enumerate(snapshot.sources.order_by("filename", "id"), start=1):
-        ref = f"S{index}"
+    origin = session.answers.get("origin") or {}
+    has_idea_origin = idea_origin_id(session.answers) is not None
+    for source in snapshot.sources.order_by("filename", "id"):
+        # The managed idea source freezes U0; it is not independent corroboration.
+        if (
+            has_idea_origin
+            and source.filename == origin.get("origin_source_filename")
+            and source.content_sha256 == origin.get("origin_source_sha256")
+        ):
+            continue
+        ref = f"S{len(sources) + 1}"
         allowed_refs.add(ref)
         evidence_parts.append(source.content)
         sources.append(

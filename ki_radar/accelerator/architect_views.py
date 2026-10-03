@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.debug import sensitive_post_parameters
 
 from ki_radar.architecture.discovery_materialization import (
@@ -12,6 +15,8 @@ from ki_radar.architecture.discovery_materialization import (
     materialize_discovery_and_start_investigation,
 )
 from ki_radar.architecture.permissions import can_manage_architecture
+from ki_radar.use_cases.idea_discovery import active_idea_discovery, assert_idea_discovery_start
+from ki_radar.use_cases.idea_models import IdeaCandidate
 
 from .architect_contract import DISCOVERY_PROMPT_VERSION
 from .architect_forms import (
@@ -23,6 +28,7 @@ from .architect_service import DiscoveryAnalysisError, execute_autonomous_busine
 from .investigation_ingestion import (
     InvestigationSourceUploadError,
     create_managed_discovery_source_folder,
+    idea_origin_upload,
 )
 from .investigation_tools import (
     DiscoverySnapshotRequest,
@@ -124,23 +130,84 @@ def _run_analysis(request, *, session: CaptureSession, snapshot) -> CaptureAnaly
         return None
 
 
+@transaction.atomic
+def _prepare_discovery_start(*, actor, data, uploads, idea):
+    if idea is not None:
+        idea = get_object_or_404(IdeaCandidate.objects.select_for_update(), pk=idea.pk)
+        if idea.discovery_process_analysis_id is not None:
+            return None, None, idea.discovery_process_analysis, ""
+        assert_idea_discovery_start(idea=idea, actor=actor)
+        existing = active_idea_discovery(idea)
+        if existing is not None:
+            if existing.owner_id != actor.pk:
+                raise ValidationError(
+                    "Die Discovery dieser Idee wird bereits von jemand anderem bearbeitet."
+                )
+            return existing, None, None, ""
+    session = create_autonomous_capture_session(
+        actor=actor,
+        problem_statement=data["problem_statement"],
+        business_context=data["business_context"],
+        idea_candidate_id=idea.pk if idea is not None else None,
+    )
+    if idea is not None:
+        uploads = [idea_origin_upload(session), *uploads]
+    folder = create_managed_discovery_source_folder(
+        actor=actor,
+        capture_session_id=session.pk,
+        name="Autorisierte Discovery-Quellen",
+        uploads=uploads,
+    )
+    try:
+        snapshot_result = create_discovery_source_snapshot(
+            actor=actor,
+            request=DiscoverySnapshotRequest(capture_session_id=session.pk, folder_id=folder.pk),
+        )
+    except InvestigationToolError as exc:
+        return session, None, None, str(exc)
+    return session, session.discovery_source_snapshots.get(pk=snapshot_result.snapshot_id), None, ""
+
+
 @sensitive_post_parameters()
 @login_required
 def autonomous_discovery_start(request):
     if not can_manage_architecture(request.user):
         raise PermissionDenied
 
+    idea_id = request.GET.get("idea_candidate") or request.POST.get("idea_candidate")
+    try:
+        idea = get_object_or_404(IdeaCandidate, pk=UUID(idea_id)) if idea_id else None
+    except ValueError as exc:
+        raise Http404("Die Ursprungsidee ist ungültig.") from exc
+    if idea is not None:
+        if idea.discovery_process_analysis_id is not None:
+            return redirect(idea.discovery_process_analysis)
+        try:
+            assert_idea_discovery_start(idea=idea, actor=request.user)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return redirect(idea)
+        existing = active_idea_discovery(idea)
+        if existing is not None:
+            if existing.owner_id == request.user.pk:
+                return redirect("accelerator:autonomous_discovery_review", session_id=existing.pk)
+            messages.warning(
+                request, "Die Discovery dieser Idee wird bereits von jemand anderem bearbeitet."
+            )
+            return redirect(idea)
+
     if request.method == "POST":
         form = AutonomousDiscoveryStartForm(request.POST)
         uploads = request.FILES.getlist("sources")
-        if not uploads:
+        if not uploads and idea is None:
             form.add_error(None, "Bitte mindestens eine .md-, .txt- oder .csv-Quelle auswählen.")
         if form.is_valid():
             try:
-                session = create_autonomous_capture_session(
+                session, snapshot, process, snapshot_error = _prepare_discovery_start(
                     actor=request.user,
-                    problem_statement=form.cleaned_data["problem_statement"],
-                    business_context=form.cleaned_data["business_context"],
+                    data=form.cleaned_data,
+                    uploads=uploads,
+                    idea=idea,
                 )
             except ValidationError as exc:
                 error_map = getattr(
@@ -152,38 +219,17 @@ def autonomous_discovery_start(request):
                     target = field if field in form.fields else None
                     for error in errors:
                         form.add_error(target, error)
+            except (InvestigationSourceUploadError, InvestigationToolError) as exc:
+                form.add_error(None, str(exc))
             else:
-                try:
-                    folder = create_managed_discovery_source_folder(
-                        actor=request.user,
-                        capture_session_id=session.pk,
-                        name="Autorisierte Discovery-Quellen",
-                        uploads=uploads,
+                if process is not None:
+                    return redirect(process)
+                if snapshot_error:
+                    messages.error(
+                        request,
+                        f"Der Quellenstand konnte nicht autorisiert werden: {snapshot_error}",
                     )
-                except (InvestigationSourceUploadError, InvestigationToolError) as exc:
-                    session.delete()
-                    form.add_error(None, str(exc))
-                else:
-                    try:
-                        snapshot_result = create_discovery_source_snapshot(
-                            actor=request.user,
-                            request=DiscoverySnapshotRequest(
-                                capture_session_id=session.pk,
-                                folder_id=folder.pk,
-                            ),
-                        )
-                        snapshot = session.discovery_source_snapshots.get(
-                            pk=snapshot_result.snapshot_id
-                        )
-                    except InvestigationToolError as exc:
-                        messages.error(
-                            request,
-                            f"Der Quellenstand konnte nicht autorisiert werden: {exc}",
-                        )
-                        return redirect(
-                            "accelerator:autonomous_discovery_review",
-                            session_id=session.pk,
-                        )
+                if snapshot is not None:
                     analysis = _run_analysis(request, session=session, snapshot=snapshot)
                     if analysis is not None:
                         if analysis.status == CaptureAnalysis.Status.WAITING_HUMAN:
@@ -196,17 +242,19 @@ def autonomous_discovery_start(request):
                                 request,
                                 "Discovery-Draft und unabhängiger Review sind abgeschlossen.",
                             )
-                    return redirect(
-                        "accelerator:autonomous_discovery_review",
-                        session_id=session.pk,
-                    )
+                return redirect(
+                    "accelerator:autonomous_discovery_review",
+                    session_id=session.pk,
+                )
     else:
-        form = AutonomousDiscoveryStartForm()
+        form = AutonomousDiscoveryStartForm(
+            initial={"problem_statement": idea.description} if idea is not None else None
+        )
 
     return render(
         request,
         "accelerator/autonomous_discovery_start.html",
-        {"form": form},
+        {"form": form, "idea": idea},
     )
 
 

@@ -82,17 +82,41 @@
       <h2 class="h5">Nicht weiterverfolgt</h2>
       <p class="mb-0">{{ idea.decision_note }}</p>
     {% else %}
+      {% if idea.discovery_process_analysis %}
+      <div class="mb-4">
+        <h2 class="h5">Geschäftsproblem untersucht</h2>
+        <a class="btn btn-primary" href="{{ idea.discovery_process_analysis.get_absolute_url }}">Analyse fortsetzen</a>
+      </div>
+      {% elif discovery %}
+      <div class="mb-4">
+        <h2 class="h5">Discovery läuft</h2>
+        {% if can_discover and can_resume_discovery %}
+        <a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_review' session_id=discovery.pk %}">Discovery fortsetzen</a>
+        {% else %}
+        <p class="text-muted mb-0">Die Discovery wird durch den ausführenden Business Owner bearbeitet.</p>
+        {% endif %}
+      </div>
+      {% elif can_discover %}
+      <div class="mb-4">
+        <h2 class="h5">Geschäftsproblem untersuchen</h2>
+        <a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_start' %}?idea_candidate={{ idea.pk }}">Geschäftsproblem untersuchen</a>
+      </div>
+      {% endif %}
       <div class="row g-4">
         <div class="col-lg-7">
-          <h2 class="h5">Use-Case-Aufnahme starten</h2>
+          <h2 class="h5">Direkt als Use Case übernehmen</h2>
           <p>Startet den vorhandenen 6-Schritt-Intake mit Titel, Beschreibung und – falls vorhanden – Organisationseinheit als Vorbelegung. Es wird jetzt noch kein Use Case angelegt.</p>
-          {% if has_intake_draft %}
+          {% if idea.discovery_process_analysis %}
+          <p class="text-muted mb-0">Die Idee ist bereits mit einer Prozessanalyse verknüpft.</p>
+          {% elif discovery %}
+          <p class="text-muted mb-0">Solange der Discovery-Draft aktiv ist, ist die direkte Übernahme gesperrt.</p>
+          {% elif has_intake_draft %}
           <div class="alert alert-warning">
             <strong>Es läuft bereits eine Use-Case-Aufnahme.</strong> Diese Idee überschreibt den bestehenden Draft nicht. Setzen Sie den Draft fort oder verwerfen Sie ihn dort bewusst.
             <div class="mt-2"><a class="btn btn-sm btn-outline-primary" href="{% url 'use_cases:create' %}">Laufenden Intake fortsetzen</a></div>
           </div>
           {% elif can_promote %}
-          <form method="post" action="{% url 'use_cases:idea_promote' idea.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Use-Case-Aufnahme starten</button></form>
+          <form method="post" action="{% url 'use_cases:idea_promote' idea.pk %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit">Direkt als Use Case übernehmen</button></form>
           {% else %}
           <p class="text-muted mb-0">Nur Business Owner bzw. KI-Koordination mit bestehender Intake-Berechtigung können die Aufnahme starten.</p>
           {% endif %}

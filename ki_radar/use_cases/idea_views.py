@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from ki_radar.accounts.models import BusinessUnit
+from ki_radar.architecture.permissions import can_manage_architecture
 
 from .idea_discovery import active_idea_discovery
 from .idea_forms import IdeaCandidateForm, IdeaDismissForm, IdeaTriageForm
@@ -102,10 +103,15 @@ def idea_create(request):
 def idea_detail(request, pk):
     idea = get_object_or_404(
         IdeaCandidate.objects.select_related(
-            "business_unit", "submitted_by", "triaged_by", "promoted_use_case"
+            "business_unit",
+            "submitted_by",
+            "triaged_by",
+            "promoted_use_case",
+            "discovery_process_analysis",
         ),
         pk=pk,
     )
+    discovery = active_idea_discovery(idea)
     return render(
         request,
         "use_cases/ideas/detail.html",
@@ -117,6 +123,9 @@ def idea_detail(request, pk):
             "can_triage": can_triage_idea(request.user, idea),
             "can_promote": can_promote_idea(request.user, idea),
             "has_intake_draft": bool(request.session.get(SESSION_KEY)),
+            "can_discover": can_manage_architecture(request.user),
+            "discovery": discovery,
+            "can_resume_discovery": discovery is not None and discovery.owner_id == request.user.pk,
         },
     )
 
