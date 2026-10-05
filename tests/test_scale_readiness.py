@@ -441,6 +441,8 @@ def test_saved_scale_decision_remains_visible_in_outcome_workspace(client, scale
     assert "Gespeicherter Readiness-Stand" in content
     assert "Bereit" in content
     assert "release-2026.08.23" in content
+    assert "Finanzierung" in content
+    assert "Betriebsbudget FIN-OPS-001" in content
     assert "Scale-Readiness-Snapshot" in content
 
 
