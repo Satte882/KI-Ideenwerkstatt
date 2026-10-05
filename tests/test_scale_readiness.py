@@ -145,6 +145,7 @@ def test_scale_readiness_go_live_reuses_review_and_persists_snapshot(scale_candi
     assert review.scale_readiness_snapshot["delivery"]["production_version"] == "release-2026.08.23"
     assert "metric_actual" not in review.scale_readiness_snapshot["pilot"]
 
+
 @pytest.mark.django_db
 def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scale_candidate):
     use_case, _package, coordinator = scale_candidate
@@ -173,7 +174,6 @@ def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scal
         finding["code"] == "TAILORING_MISSING" and finding["severity"] == "readiness"
         for finding in review.scale_readiness_snapshot["findings"]
     )
-
 
 
 @pytest.mark.django_db

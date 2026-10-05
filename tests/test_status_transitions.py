@@ -155,13 +155,9 @@ def test_admin_post_cannot_change_lifecycle_status_without_review(
         value = admin_form.initial.get(name, field.initial)
         if isinstance(field, forms.ModelMultipleChoiceField):
             values = value.all() if hasattr(value, "all") else (value or [])
-            post_data[name] = [
-                str(item.pk if hasattr(item, "pk") else item) for item in values
-            ]
+            post_data[name] = [str(item.pk if hasattr(item, "pk") else item) for item in values]
         elif isinstance(field, forms.ModelChoiceField):
-            post_data[name] = (
-                str(value.pk if hasattr(value, "pk") else value) if value else ""
-            )
+            post_data[name] = str(value.pk if hasattr(value, "pk") else value) if value else ""
         elif isinstance(field, forms.BooleanField):
             if value:
                 post_data[name] = "on"

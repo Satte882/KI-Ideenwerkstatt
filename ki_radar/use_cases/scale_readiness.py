@@ -459,8 +459,18 @@ def _evaluate_responsibility(
     findings: list[ScaleReadinessFinding],
 ) -> None:
     responsibility_rules = (
-        (bool(use_case.business_owner_id), "BUSINESS_OWNER_MISSING", "readiness", "Business Owner fehlt."),
-        (bool(use_case.technical_owner_id), "TECHNICAL_OWNER_MISSING", "enforcement", "Technical Owner fehlt."),
+        (
+            bool(use_case.business_owner_id),
+            "BUSINESS_OWNER_MISSING",
+            "readiness",
+            "Business Owner fehlt.",
+        ),
+        (
+            bool(use_case.technical_owner_id),
+            "TECHNICAL_OWNER_MISSING",
+            "enforcement",
+            "Technical Owner fehlt.",
+        ),
         (
             bool(_text(use_case.support_responsibility)),
             "SUPPORT_RESPONSIBILITY_MISSING",
