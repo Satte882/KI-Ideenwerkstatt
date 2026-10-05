@@ -223,7 +223,7 @@ def test_go_live_satisfied_funding_needs_evidence(scale_candidate):
         funding_evidence="",
     )
 
-    with pytest.raises(ValidationError, match="belastbare Referenz"):
+    with pytest.raises(ValidationError, match="dokumentierte Evidence"):
         create_review(use_case=use_case, actor=coordinator, data=data)
 
 
