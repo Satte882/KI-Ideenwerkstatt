@@ -209,6 +209,8 @@ class ReviewForm(forms.ModelForm):
             "decision",
             "new_status",
             "rationale",
+            "funding_status",
+            "funding_evidence",
             *SCALE_EVIDENCE_FIELDS,
             "go_live_exception_confirmed",
             "early_go_live_exception_confirmed",
@@ -226,6 +228,7 @@ class ReviewForm(forms.ModelForm):
             "action_due_date": DateInput(),
             "next_review_date": DateInput(),
             "rationale": forms.Textarea(attrs={"rows": 4}),
+            "funding_evidence": forms.Textarea(attrs={"rows": 2}),
             "open_actions": forms.Textarea(attrs={"rows": 3}),
         }
         labels = {
@@ -233,6 +236,8 @@ class ReviewForm(forms.ModelForm):
             "decision": "Entscheidung",
             "new_status": "Neuer Status",
             "rationale": "Entscheidungsbegründung",
+            "funding_status": "Finanzierung für diesen Entscheidungsscope",
+            "funding_evidence": "Finanzierungsnachweis / Begründung",
             "open_actions": "Offene Maßnahmen / Kompensationsmaßnahme",
             "action_owner": "Maßnahmenverantwortliche Person",
             "action_due_date": "Fälligkeitsdatum der Maßnahme",
@@ -260,6 +265,18 @@ class ReviewForm(forms.ModelForm):
         self.fields["pilot_start"].widget.attrs["max"] = today.isoformat()
         self.fields["next_review_date"].initial = use_case.next_review_date
         self.fields["early_go_live_original_pilot_end"].initial = use_case.planned_pilot_end
+        self.fields["funding_status"].choices = [
+            ("", "Bitte wählen"),
+            *Review.FundingStatus.choices,
+        ]
+        self.fields["funding_status"].help_text = (
+            "Nur für den konkreten Pilot- oder Produktivscope. "
+            "Kostenangaben allein gelten nicht als Finanzierungsnachweis."
+        )
+        self.fields["funding_evidence"].help_text = (
+            "Bei erfüllter/zugesagter Finanzierung: konkrete Referenz oder Attestation der "
+            "zuständigen Stelle. Bei 'nicht erforderlich': kurze nachvollziehbare Begründung."
+        )
         if not self.is_bound:
             if requested_action == "go_live" and use_case.status == UseCase.Status.PILOT:
                 self.fields["decision"].initial = Review.Decision.GO_LIVE
@@ -319,6 +336,16 @@ class ReviewForm(forms.ModelForm):
         selected_decision = self.fields["decision"].initial
         if self.is_bound:
             selected_decision = self.data.get("decision")
+
+        funding_visible = bool(
+            self.pilot_start_only
+            or requested_action == "go_live"
+            or selected_decision in {Review.Decision.START_PILOT, Review.Decision.GO_LIVE}
+        )
+        if not funding_visible:
+            self.fields.pop("funding_status", None)
+            self.fields.pop("funding_evidence", None)
+
         scale_visible = bool(
             not pilot_start_only
             and use_case.status == UseCase.Status.PILOT
@@ -363,6 +390,8 @@ class ReviewForm(forms.ModelForm):
                 "decision",
                 "new_status",
                 "rationale",
+                "funding_status",
+                "funding_evidence",
                 "scale_tailoring_level",
                 "scale_pilot_validation_confirmed",
                 "ml_score_data",
@@ -410,6 +439,7 @@ class ReviewForm(forms.ModelForm):
             "decision",
             "new_status",
             "action_owner",
+            "funding_status",
             "scale_tailoring_level",
             "ml_score_data",
             "ml_score_model",
