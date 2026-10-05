@@ -336,7 +336,7 @@ def test_pilot_start_satisfied_funding_needs_evidence(handed_over_candidate, coo
     data["funding_status"] = Review.FundingStatus.SATISFIED
     data["funding_evidence"] = ""
 
-    with pytest.raises(ValidationError, match="belastbare Referenz"):
+    with pytest.raises(ValidationError, match="dokumentierte Evidence"):
         create_review(use_case=use_case, actor=coordinator, data=data)
 
 
