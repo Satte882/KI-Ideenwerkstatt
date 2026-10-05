@@ -251,6 +251,8 @@ def test_go_live_action_uses_existing_review_form(client, coordinator, owner, bu
     )
     assert form.fields["decision"].initial == Review.Decision.GO_LIVE
     assert form.fields["new_status"].initial == UseCase.Status.OPERATION
+    assert "funding_status" in form.fields
+    assert "funding_evidence" in form.fields
 
 
 @pytest.mark.django_db
