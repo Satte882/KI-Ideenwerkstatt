@@ -344,6 +344,8 @@ def test_due_operation_review_and_closure_use_existing_review_form(
     )
     assert form.fields["decision"].initial == Review.Decision.END
     assert form.fields["new_status"].initial == UseCase.Status.ENDED
+    assert "funding_status" not in form.fields
+    assert "funding_evidence" not in form.fields
 
 
 @pytest.mark.django_db
