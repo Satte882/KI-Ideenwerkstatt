@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
             name="funding_status",
             field=models.CharField(
                 blank=True,
+                default="",
                 choices=[
                     ("satisfied", "Erfüllt / verbindlich zugesagt"),
                     ("open", "Offen / nicht zugesagt"),
@@ -26,6 +27,7 @@ class Migration(migrations.Migration):
             name="funding_evidence",
             field=models.TextField(
                 blank=True,
+                default="",
                 verbose_name="Finanzierungsnachweis / Begründung",
             ),
         ),
@@ -34,6 +36,7 @@ class Migration(migrations.Migration):
             name="funding_status",
             field=models.CharField(
                 blank=True,
+                default="",
                 choices=[
                     ("satisfied", "Erfüllt / verbindlich zugesagt"),
                     ("open", "Offen / nicht zugesagt"),
@@ -48,6 +51,7 @@ class Migration(migrations.Migration):
             name="funding_evidence",
             field=models.TextField(
                 blank=True,
+                default="",
                 verbose_name="Finanzierungsnachweis / Begründung",
             ),
         ),
