@@ -8,7 +8,7 @@
 
   const relevantField = (target) => {
     const name = target?.name || "";
-    return name.startsWith("scale_") || name.startsWith("ml_score_");
+    return name === "decision" || name.startsWith("scale_") || name.startsWith("ml_score_");
   };
 
   let timer = null;
