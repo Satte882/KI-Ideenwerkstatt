@@ -499,6 +499,7 @@ def outcome_workspace(request):
 
     latest_scale_review = None
     latest_pilot_review = None
+    latest_go_live_review = None
     if selected_use_case is not None:
         reviews = list(selected_use_case.reviews.all())
         latest_scale_review = next(
@@ -511,6 +512,15 @@ def outcome_workspace(request):
                 for review in reviews
                 if review.decision == Review.Decision.START_PILOT
                 and review.new_status == UseCase.Status.PILOT
+            ),
+            None,
+        )
+        latest_go_live_review = next(
+            (
+                review
+                for review in reviews
+                if review.decision == Review.Decision.GO_LIVE
+                and review.new_status == UseCase.Status.OPERATION
             ),
             None,
         )
@@ -540,6 +550,7 @@ def outcome_workspace(request):
         "selected_use_case": selected_use_case,
         "latest_scale_review": latest_scale_review,
         "latest_pilot_review": latest_pilot_review,
+        "latest_go_live_review": latest_go_live_review,
         "use_cases": use_cases,
         "pilot_total": sum(item.status == UseCase.Status.PILOT for item in use_cases),
         "measured_total": sum(item.metric_actual is not None for item in use_cases),

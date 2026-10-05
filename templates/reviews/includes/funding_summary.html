@@ -1,0 +1,14 @@
+<section class="outcome-scale-decision outcome-funding-summary" id="{{ funding_id }}" aria-labelledby="{{ funding_id }}-title">
+  <div class="outcome-scale-decision__heading">
+    <div>
+      <div class="outcome-eyebrow">{{ funding_phase }}</div>
+      <h3 id="{{ funding_id }}-title">Finanzierungsstand vom {{ funding_review.review_date|date:"d.m.Y" }}</h3>
+    </div>
+    <span class="badge {% if funding_review.funding_status == 'satisfied' or funding_review.funding_status == 'not_required' %}state-ready{% else %}state-review{% endif %}">{{ funding_review.get_funding_status_display|default:"Unbekannt / noch nicht eingeordnet" }}</span>
+  </div>
+  <dl class="outcome-scale-decision__facts">
+    <div><dt>Finanzierung</dt><dd>{{ funding_review.get_funding_status_display|default:"Unbekannt / noch nicht eingeordnet" }}</dd></div>
+    <div><dt>Nachweis / Begründung</dt><dd>{{ funding_review.funding_evidence|default:"Kein Nachweis dokumentiert" }}</dd></div>
+  </dl>
+  {% if not funding_review.funding_status or funding_review.funding_status == 'open' %}<p class="form-text">Finanzierung bleibt zu klären. Dieser Hinweis ist keine automatische Lifecycle-Sperre.</p>{% endif %}
+</section>

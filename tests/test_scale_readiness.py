@@ -181,7 +181,7 @@ def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scal
 
 
 @pytest.mark.django_db
-def test_go_live_requires_funding_classification(scale_candidate):
+def test_go_live_preserves_unknown_funding_without_blocking(scale_candidate):
     use_case, _package, coordinator = scale_candidate
     data = _go_live_data(
         coordinator,
@@ -189,16 +189,16 @@ def test_go_live_requires_funding_classification(scale_candidate):
         funding_evidence="",
     )
 
-    with pytest.raises(ValidationError, match="Finanzierung für den Produktivscope"):
-        create_review(use_case=use_case, actor=coordinator, data=data)
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
 
     use_case.refresh_from_db()
-    assert use_case.status == UseCase.Status.PILOT
-    assert use_case.reviews.filter(decision=Review.Decision.GO_LIVE).exists() is False
+    assert use_case.status == UseCase.Status.OPERATION
+    assert review.funding_status == ""
+    assert review.history.first().funding_status == ""
 
 
 @pytest.mark.django_db
-def test_go_live_blocks_open_funding(scale_candidate):
+def test_go_live_preserves_open_funding_without_blocking(scale_candidate):
     use_case, _package, coordinator = scale_candidate
     data = _go_live_data(
         coordinator,
@@ -206,12 +206,12 @@ def test_go_live_blocks_open_funding(scale_candidate):
         funding_evidence="Betriebsbudget ist noch nicht freigegeben.",
     )
 
-    with pytest.raises(ValidationError, match="offen oder nicht zugesagt"):
-        create_review(use_case=use_case, actor=coordinator, data=data)
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
 
     use_case.refresh_from_db()
-    assert use_case.status == UseCase.Status.PILOT
-    assert use_case.reviews.filter(decision=Review.Decision.GO_LIVE).exists() is False
+    assert use_case.status == UseCase.Status.OPERATION
+    assert review.funding_status == Review.FundingStatus.OPEN
+    assert review.funding_evidence == "Betriebsbudget ist noch nicht freigegeben."
 
 
 @pytest.mark.django_db
@@ -223,7 +223,7 @@ def test_go_live_satisfied_funding_needs_evidence(scale_candidate):
         funding_evidence="",
     )
 
-    with pytest.raises(ValidationError, match="dokumentierte Evidence"):
+    with pytest.raises(ValidationError, match="benötigt einen Nachweis"):
         create_review(use_case=use_case, actor=coordinator, data=data)
 
 
@@ -436,8 +436,8 @@ def test_go_live_form_exposes_compact_scale_gate(client, scale_candidate):
     assert "NO-GO · Nicht bereit" not in content
     assert "Pilot → Wirkung → Scale" in content
     assert "scale-readiness-preview.js" in content
-    assert 'name="ending_reason"' not in content
-    assert 'name="lessons_learned"' not in content
+    # Closure inputs remain available when switching to END, but are initially hidden.
+    assert content.count('data-review-closure-group class="col-12 d-none"') == 5
 
 
 @pytest.mark.django_db
@@ -498,25 +498,43 @@ def test_go_live_enforcement_does_not_present_rework_as_blocked(client, scale_ca
     assert "Go-live blockiert" in go_live_content
 
 
+@pytest.mark.parametrize("stage", ["decision", "operation"])
 @pytest.mark.django_db
-def test_saved_scale_decision_remains_visible_in_outcome_workspace(client, scale_candidate):
+def test_saved_scale_decision_remains_visible_in_outcome_workspace(client, scale_candidate, stage):
     use_case, _package, coordinator = scale_candidate
     client.force_login(coordinator)
-    create_review(use_case=use_case, actor=coordinator, data=_go_live_data(coordinator))
+    go_live_review = create_review(
+        use_case=use_case, actor=coordinator, data=_go_live_data(coordinator)
+    )
+    create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data={
+            "review_date": timezone.localdate(),
+            "decision": Review.Decision.CONTINUE,
+            "new_status": UseCase.Status.OPERATION,
+            "rationale": "Betrieb fortführen; die Go-live-Finanzierung bleibt historisch erhalten.",
+            "next_review_date": timezone.localdate(),
+        },
+    )
 
     response = client.get(
         reverse("reporting:outcome_workspace"),
-        {"stage": "decision", "use_case": use_case.pk},
+        {"stage": stage, "use_case": use_case.pk},
     )
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert "Gespeicherter Readiness-Stand" in content
-    assert "Bereit" in content
-    assert "release-2026.08.23" in content
+    assert response.context["latest_go_live_review"] == go_live_review
+    assert 'id="outcome-pilot-funding"' in content
+    assert 'id="outcome-go-live-funding"' in content
+    if stage == "decision":
+        assert "Gespeicherter Readiness-Stand" in content
+        assert "Bereit" in content
+        assert "release-2026.08.23" in content
+        assert "Scale-Readiness-Snapshot" in content
     assert "Finanzierung" in content
     assert "Betriebsbudget FIN-OPS-001" in content
-    assert "Scale-Readiness-Snapshot" in content
 
 
 @pytest.mark.django_db

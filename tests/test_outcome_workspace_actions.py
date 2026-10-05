@@ -154,12 +154,16 @@ def test_running_pilot_opens_real_external_delivery_link(
     assert "outcome-stage-status" not in content
 
 
+@pytest.mark.parametrize(
+    "funding_status", ["", Review.FundingStatus.OPEN, Review.FundingStatus.NOT_REQUIRED]
+)
 @pytest.mark.django_db
 def test_running_pilot_shows_start_pilot_funding_evidence(
     client,
     coordinator,
     owner,
     business_unit,
+    funding_status,
 ):
     use_case = _use_case(owner, business_unit)
     _package(use_case, coordinator)
@@ -171,7 +175,7 @@ def test_running_pilot_shows_start_pilot_funding_evidence(
         new_status=UseCase.Status.PILOT,
         decision=Review.Decision.START_PILOT,
         rationale="Pilotstart mit dokumentierter Finanzierung.",
-        funding_status=Review.FundingStatus.NOT_REQUIRED,
+        funding_status=funding_status,
         funding_evidence=(
             "Begrenzter Offline-Pilot nutzt die vorhandene Umgebung; "
             "kein separates Budget erforderlich."
@@ -187,7 +191,13 @@ def test_running_pilot_shows_start_pilot_funding_evidence(
     content = response.content.decode()
     assert response.context["latest_pilot_review"] == review
     assert 'id="outcome-pilot-funding"' in content
-    assert "Für diesen Scope nicht erforderlich" in content
+    if funding_status == Review.FundingStatus.NOT_REQUIRED:
+        assert "Für diesen Scope nicht erforderlich" in content
+    else:
+        assert "Dieser Hinweis ist keine automatische Lifecycle-Sperre" in content
+        assert 'class="badge state-review"' in content
+        if not funding_status:
+            assert "Unbekannt / noch nicht eingeordnet" in content
     assert "kein separates Budget erforderlich" in content
 
 
@@ -312,7 +322,7 @@ def test_funding_fields_follow_selected_command_without_failed_submit(
     assert content.count("data-funding-evidence-group") >= 3
     assert "review-funding-evidence.js" in content
     assert 'new Set(["start_pilot", "go_live"])' in js
-    assert 'decision.addEventListener("change", syncFundingVisibility)' in js
+    assert 'decision.addEventListener("change", syncDecision)' in js
     assert "status.disabled = !relevant" in js
     assert "evidence.disabled = !relevant" in js
 
@@ -322,7 +332,7 @@ def test_funding_fields_follow_selected_command_without_failed_submit(
             "decision": Review.Decision.REWORK,
             "new_status": UseCase.Status.PILOT,
             "rationale": "Zurück in fachliche Nacharbeit.",
-            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_status": "invalid_hidden_value",
             "funding_evidence": "Dieser Wert muss bei REWORK verworfen werden.",
             "open_actions": "",
             "action_owner": "",

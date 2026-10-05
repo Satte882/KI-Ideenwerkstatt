@@ -63,7 +63,7 @@ Der bestehende Lifecycle-Review speichert ausschließlich den für die Entscheid
 - `open` – offen / nicht zugesagt
 - `not_required` – für diesen Scope nicht erforderlich
 
-Für `satisfied` verlangt das System einen nicht leeren Evidence-Text. Für `not_required` verlangt es eine Begründung. `unknown` und `open` blockieren nur `START_PILOT` bzw. `GO_LIVE`.
+Für `satisfied` verlangt das System einen nicht leeren Evidence-Text. Für `not_required` verlangt es eine Begründung. `unknown` und `open` bleiben sichtbare Readiness-Lücken, blockieren aber weder `START_PILOT` noch `GO_LIVE` pauschal. Das Fehlen einer Finanzierungsangabe belegt keine zwingende Finanzierungsabhängigkeit des konkreten Schritts. Die verantwortliche Person entscheidet über die Durchführbarkeit; die bestehenden fachlichen Lifecycle-Guards bleiben erhalten.
 
 Die Anwendung prüft **nicht semantisch**, ob der Evidence-Text eine echte Budgetfreigabe darstellt. Diese fachliche Belastbarkeit verantwortet die entscheidende Person.
 

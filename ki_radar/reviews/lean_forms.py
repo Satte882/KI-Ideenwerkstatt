@@ -68,8 +68,11 @@ class ReviewForm(LegacyReviewForm):
             )
 
         if decision not in {Review.Decision.START_PILOT, Review.Decision.GO_LIVE}:
-            cleaned["funding_status"] = ""
-            cleaned["funding_evidence"] = ""
+            for name in ("funding_status", "funding_evidence"):
+                if name in self.fields:
+                    cleaned[name] = ""
+                else:
+                    cleaned.pop(name, None)
 
         if (
             decision in {Review.Decision.PAUSE, Review.Decision.REWORK, Review.Decision.CONTINUE}

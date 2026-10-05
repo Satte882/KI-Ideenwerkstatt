@@ -72,21 +72,23 @@ def _funding_blockers(
 ) -> list[str]:
     status = _text(status)
     evidence = _text(evidence)
-    if not status:
-        return [f"Finanzierung für {scope_label} ist nicht eingeordnet"]
-    if status == "open":
-        return [f"Finanzierung für {scope_label} ist offen oder nicht zugesagt"]
+    # Missing or open funding is a readiness gap, not proof that the scoped action
+    # is impossible. The responsible person retains the lifecycle decision.
+    if status in {"", "open"}:
+        return []
     if status == "satisfied":
         if not evidence:
             return [
-                f"Finanzierung für {scope_label} benötigt dokumentierte Evidence "
-                "(Referenz oder Attestation)"
+                f"Finanzierung für {scope_label} benötigt einen Nachweis "
+                "(Referenz oder Bestätigung). "
+                "Nachweis ergänzen oder Finanzierung als offen einordnen"
             ]
         return []
     if status == "not_required":
         if not evidence:
             return [
-                f"Nicht erforderliche Finanzierung für {scope_label} muss begründet werden"
+                f"Nicht erforderliche Finanzierung für {scope_label} muss begründet werden. "
+                "Begründung ergänzen oder Finanzierung als offen einordnen"
             ]
         return []
     return [f"Unbekannter Finanzierungsstatus für {scope_label}"]

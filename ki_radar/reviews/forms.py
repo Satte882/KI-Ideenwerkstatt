@@ -266,18 +266,20 @@ class ReviewForm(forms.ModelForm):
         self.fields["next_review_date"].initial = use_case.next_review_date
         self.fields["early_go_live_original_pilot_end"].initial = use_case.planned_pilot_end
         self.fields["funding_status"].choices = [
-            ("", "Bitte wählen"),
+            ("", "Unbekannt / noch nicht eingeordnet"),
             *Review.FundingStatus.choices,
         ]
         self.fields["funding_status"].help_text = (
-            "Nur für den konkreten Pilot- oder Produktivscope. "
-            "Kostenangaben allein gelten nicht als Finanzierungsnachweis."
+            "Finanzierung für den geplanten Pilot oder Betrieb dokumentieren. "
+            "Unbekannte oder offene Finanzierung bleibt als Hinweis sichtbar und blockiert "
+            "die Entscheidung nicht automatisch. "
+            "Kostenangaben allein sind keine Finanzierungszusage."
         )
         self.fields["funding_evidence"].help_text = (
-            "Bei erfüllter/zugesagter Finanzierung: Source of Truth bzw. bestätigende Stelle "
-            "sowie relevanten Scope und – soweit nötig – Zeitraum nachvollziehbar nennen. "
-            "Die Anwendung prüft die fachliche Echtheit dieser Attestation nicht. "
-            "Bei 'nicht erforderlich': kurze nachvollziehbare Begründung."
+            "Bei zugesagter Finanzierung: Freigabe oder Referenz, zuständige Stelle und "
+            "finanzierten Umfang nennen; bei Bedarf auch den Zeitraum. "
+            "Bei 'nicht erforderlich': kurz begründen. Bei 'offen' ist Kontext optional. "
+            "Die entscheidende Person verantwortet die Belastbarkeit des Nachweises."
         )
         if not self.is_bound:
             if requested_action == "go_live" and use_case.status == UseCase.Status.PILOT:
@@ -325,16 +327,6 @@ class ReviewForm(forms.ModelForm):
         elif use_case.status != UseCase.Status.REVIEW:
             self.fields.pop("pilot_start", None)
 
-        if requested_action == "go_live":
-            for name in [
-                "ending_reason",
-                "data_and_access_handling",
-                "replacement_solution",
-                "final_assessment",
-                "lessons_learned",
-            ]:
-                self.fields.pop(name, None)
-
         selected_decision = self.fields["decision"].initial
         if self.is_bound:
             selected_decision = self.data.get("decision")
@@ -346,6 +338,12 @@ class ReviewForm(forms.ModelForm):
         if not funding_available:
             self.fields.pop("funding_status", None)
             self.fields.pop("funding_evidence", None)
+        elif self.is_bound and not self.pilot_start_only:
+            for name in ("funding_status", "funding_evidence"):
+                self.fields[name].disabled = selected_decision not in {
+                    Review.Decision.START_PILOT,
+                    Review.Decision.GO_LIVE,
+                }
 
         scale_visible = bool(
             not pilot_start_only
