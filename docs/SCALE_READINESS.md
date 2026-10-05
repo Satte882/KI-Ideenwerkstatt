@@ -56,7 +56,7 @@ Die methodischen Tailoring-Stufen aus `DELIVERY_METHODOLOGY.md` werden nicht als
 - **B – Standard:** zusätzlich insbesondere belastbarer Incident-/Eskalationsprozess.
 - **C – erweitert:** zusätzlich Bestätigung der je Relevanz erforderlichen unabhängigen Reviews, Recovery-/Security- und Notfall-/Abschaltnachweise.
 
-Governance-Merkmale mit personenbezogenen, sicherheitskritischen, regulierten oder erheblich wirkenden Entscheidungen erzwingen mindestens Tailoring C. Eine niedrigere Auswahl ist dann serverseitig blockiert.
+Governance-Merkmale mit personenbezogenen, sicherheitskritischen, regulierten oder erheblich wirkenden Entscheidungen legen weiterhin eine methodische Mindeststufe nahe. Eine abweichende Tailoring-Auswahl ist jedoch **Readiness**, nicht pauschales Lifecycle-Enforcement; konkrete erforderliche Governance-Prüfungen bleiben separat serverseitig geschützt.
 
 ## Zustände und Entscheidungen
 
@@ -66,37 +66,46 @@ Scale Readiness berechnet ausschließlich einen Evidenzzustand:
 - `conditional`
 - `not_ready`
 
-Dieser Zustand ist **kein neuer Lifecycle-Status**.
+Dieser Zustand ist **kein neuer Lifecycle-Status und keine Go-live-Entscheidung**. Er beschreibt, wie vollständig und belastbar die zusammengeführte Readiness-Evidenz ist.
 
-Die verbindliche Entscheidung bleibt das bestehende `Review`:
+Die sichtbaren Labels lauten:
 
-| Managemententscheidung | Bestehende Review-/Lifecycle-Semantik |
+| Scale-State | Bedeutung |
 |---|---|
-| Go | `GO_LIVE`, Snapshot `ready`, `Pilot → Betrieb` |
-| Conditional Go | `GO_LIVE`, Snapshot `conditional`, `Pilot → Betrieb` |
-| Pilot verlängern / nacharbeiten | `CONTINUE` beziehungsweise `REWORK`, Status bleibt `Pilot` |
-| Stop | `END`, Zielstatus `Beendet` |
+| `ready` | **Bereit** – keine offenen Readiness-Findings |
+| `conditional` | **Bedingt bereit** – dokumentierte Auflagen / Bedingungen sind offen |
+| `not_ready` | **Readiness offen** – wesentliche Readiness-Nachweise fehlen oder ein Enforcement-Finding ist sichtbar |
 
-Ein Conditional Go ist nur zulässig, wenn **kein Hard Blocker** besteht und mindestens Kompensationsmaßnahme, Owner und Frist im bestehenden Review dokumentiert sind.
+Die verbindliche Lifecycle-Entscheidung bleibt das bestehende `Review`. Ob `GO_LIVE` zulässig ist, entscheidet ausschließlich die kanonische Transition Policy.
 
-Im UI werden diese Zustände ausdrücklich als `GO · Bereit`, `CONDITIONAL GO · Bereit mit Auflagen` und `NO-GO · Nicht bereit` bezeichnet.
+Damit gilt bewusst:
 
-## Nicht überstimmbare Hard Blocker
+> **Readiness beschreibt Entscheidungsreife. Enforcement entscheidet, ob die konkrete Lifecycle-Aktion zulässig ist.**
 
-Unter anderem blockieren:
+Ein `not_ready`-Snapshot ist deshalb nicht automatisch gleichbedeutend mit einem serverseitigen `NO-GO`.
 
-- fehlende oder unzureichende aktuelle ML-Test-Score-Erhebung,
-- finaler ML Test Score unter dem projektspezifischen Mindestwert,
-- nicht erfüllte zwingende ML-Test-Score-Einzelprüfungen,
-- fehlende eindeutig identifizierte Produktivversion,
-- nicht praktisch getesteter Rollback beziehungsweise keine Deaktivierung,
-- fehlendes technisches oder AI-/fachliches Qualitätsmonitoring,
-- erforderlicher, aber fehlender Incident-/Eskalationsprozess,
-- offene beziehungsweise fehlgeschlagene formale Governance-Prüfungen,
-- fehlende bestehende Owner-/Betriebsverantwortung,
-- für Tailoring C fehlende erweiterte Kontrollen.
+## Finding-Typen und Enforcement
 
-Diese Blocker können weder durch einen hohen Score in einer anderen Kategorie noch durch eine freie Begründung, eine Early-Go-live-Ausnahme oder eine direkte Service-Nutzung kompensiert werden.
+Scale Readiness unterscheidet vier Finding-Typen:
+
+| Typ | Bedeutung | Lifecycle-Wirkung |
+|---|---|---|
+| `enforcement` | verbindliche Voraussetzung für die konkrete Aktion | wird zusätzlich in der kanonischen Transition Policy serverseitig geschützt |
+| `readiness` | relevanter offener Nachweis / Qualitätsaspekt | sichtbar, blockiert für sich allein nicht |
+| `condition` | bewusste Bedingung / Restrisiko | sichtbar; kann eine verantwortete Ausnahme oder Folgemaßnahme verlangen |
+| `advisory` | Hinweis / Traceability | keine Blockierung |
+
+Aktuelle **Enforcement**-Fälle für `PILOT → OPERATION` sind insbesondere:
+
+- erforderliche Governance-Prüfung offen oder fehlgeschlagen,
+- ausdrücklich dokumentierte zwingende ML-Test-Score-Einzelprüfung fehlgeschlagen,
+- Rollback / Deaktivierung nicht praktisch möglich oder getestet,
+- Technical Owner fehlt,
+- Support-/Betriebsverantwortung fehlt.
+
+Weitere Scale-Aspekte wie Tailoring-Auswahl, vollständige ML-Test-Score-Dokumentation, Produktivversionsreferenz, Monitoring-Nachweise, Incident-Prozess, generisches Human-Oversight-Textfeld oder erweiterte Tailoring-C-Sammelbestätigung bleiben **Readiness** beziehungsweise **Advisory**, sofern keine konkrete Governance- oder Lifecycle-Regel daraus Enforcement macht.
+
+Der alte Runtime-Wrapper um `use_cases.services.apply_status_transition()` ist nicht Teil des kanonischen Pfads. Lifecycle-Schreibvorgänge laufen über `reviews.services.create_review()`; die dort aufgerufene Transition Policy ist die einzige fachliche Enforcement-Quelle.
 
 ## Persistenter Decision-Snapshot
 
@@ -106,6 +115,8 @@ Mit #333 wurde `Review` minimal ergänzt um:
 
 - `scale_readiness_schema_version`
 - `scale_readiness_snapshot`
+
+Schema-Version **2** trennt die Finding-Semantik explizit in `enforcement`, `readiness`, `condition` und `advisory`. Historische Snapshots bleiben unverändert erhalten.
 
 Der Snapshot wird **serverseitig erzeugt**. Er enthält keine vollständige Kopie der fachlichen Quellen, sondern nur die entscheidungsrelevanten Referenzen und den damals verwendeten Stand:
 
@@ -130,16 +141,16 @@ Am konkreten Use Case führt die lokale linke Navigation über `Wirkung & Betrie
 Das bestehende Lifecycle-Review zeigt:
 
 - die sechs Prüfdimensionen in fachlicher Reihenfolge;
-- eine live aktualisierte, noch nicht gespeicherte Entscheidungsvorschau;
+- eine live aktualisierte, noch nicht gespeicherte Readiness-Vorschau;
 - einbezogene Pilot-, Governance-, Delivery-, Rollen- und ML-Test-Score-Evidenz;
-- aktuelle Findings und genau eine konkrete nächste Aktion;
-- bei `CONDITIONAL GO` die Pflichtangaben Maßnahme, Owner und Frist.
+- aktuelle Findings mit ihrer Einordnung als Enforcement, Readiness, Bedingung oder Hinweis;
+- genau eine konkrete nächste Aktion.
 
 Nach dem Speichern führt der Ablauf zurück zur Ergebnisentscheidung. Dort bleibt der serverseitig erzeugte Snapshot mit Entscheidung, sechs Dimensionen, verwendeter Evidenz und gegebenenfalls Auflagen sichtbar. Die Use-Case-Historie zeigt denselben gespeicherten Entscheidungsstand.
 
 ## Legacy und Änderungen nach Go-live
 
-Bestehende `OPERATION`-Use-Cases werden nicht rückwirkend invalidiert und erhalten keinen erfundenen Backfill. Die neuen Gates gelten für zukünftige `Pilot → Betrieb`-Übergänge.
+Bestehende `OPERATION`-Use-Cases werden nicht rückwirkend invalidiert und erhalten keinen erfundenen Backfill. Die kanonischen Lifecycle-Guards gelten für zukünftige `Pilot → Betrieb`-Übergänge; Readiness-Findings bleiben davon semantisch getrennt.
 
 Ein später geänderter Quellstand setzt einen bereits produktiven Use Case nicht automatisch zurück. Die historische Entscheidung bleibt erhalten; neue Managemententscheidungen werden als neues Review mit neuem Snapshot dokumentiert.
 
