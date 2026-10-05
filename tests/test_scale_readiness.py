@@ -327,8 +327,8 @@ def test_saved_scale_decision_remains_visible_in_outcome_workspace(client, scale
     content = response.content.decode()
 
     assert response.status_code == 200
-    assert "Gespeicherte Entscheidung" in content
-    assert "GO · Bereit" in content
+    assert "Gespeicherter Readiness-Stand" in content
+    assert "Bereit" in content
     assert "release-2026.08.23" in content
     assert "Scale-Readiness-Snapshot" in content
 
