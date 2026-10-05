@@ -144,8 +144,7 @@ def test_incident_process_help_text_uses_readiness_not_enforcement_language(use_
     form = ReviewForm(use_case=use_case)
 
     assert form.fields["scale_incident_process_ready"].help_text == (
-        "Für Tailoring B/C als Readiness-Nachweis vorgesehen; "
-        "kein automatischer Go-live-Blocker."
+        "Für Tailoring B/C als Readiness-Nachweis vorgesehen; kein automatischer Go-live-Blocker."
     )
 
 
