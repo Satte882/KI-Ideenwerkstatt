@@ -330,6 +330,17 @@ def test_pilot_start_blocks_open_funding(handed_over_candidate, coordinator):
 
 
 @pytest.mark.django_db
+def test_pilot_start_satisfied_funding_needs_evidence(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.SATISFIED
+    data["funding_evidence"] = ""
+
+    with pytest.raises(ValidationError, match="belastbare Referenz"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
 def test_pilot_start_not_required_needs_reason(handed_over_candidate, coordinator):
     use_case, package = handed_over_candidate
     data = _review_data(use_case, timezone.localdate(package.handed_over_at))
