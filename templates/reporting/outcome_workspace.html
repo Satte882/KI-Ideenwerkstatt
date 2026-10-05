@@ -79,6 +79,8 @@
           <div><dt>Tailoring</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.tailoring_level|default:"–" }}</dd></div>
           <div><dt>ML Test Score</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.ml_test_score.final|default:"–" }}</dd></div>
           <div><dt>Produktivversion</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.delivery.production_version|default:"–" }}</dd></div>
+          <div><dt>Finanzierung</dt><dd>{% if latest_scale_review.funding_status %}{{ latest_scale_review.get_funding_status_display }}{% else %}–{% endif %}</dd></div>
+          <div><dt>Funding Evidence</dt><dd>{{ latest_scale_review.funding_evidence|default:"–" }}</dd></div>
           <div><dt>Nächster Review</dt><dd>{{ latest_scale_review.next_review_date|date:"d.m.Y"|default:"–" }}</dd></div>
         </dl>
         {% if latest_scale_review.scale_readiness_snapshot.dimensions %}<dl class="outcome-scale-decision__dimensions">{% for dimension in latest_scale_review.scale_readiness_snapshot.dimensions %}<div><dt>{{ dimension.label }}</dt><dd>{% if dimension.state == "ready" %}Erfüllt{% elif dimension.state == "conditional" %}Mit Auflage{% else %}Nicht erfüllt{% endif %}</dd></div>{% endfor %}</dl>{% endif %}
