@@ -73,8 +73,14 @@ class ScaleReadinessResult:
     tailoring_level: str
 
     @property
-    def enforcement_findings(self) -> tuple[ScaleReadinessFinding, ...]:
+    def go_live_enforcement_findings(self) -> tuple[ScaleReadinessFinding, ...]:
+        """Findings enforced specifically by the PILOT → OPERATION command."""
         return tuple(item for item in self.findings if item.severity == "enforcement")
+
+    @property
+    def enforcement_findings(self) -> tuple[ScaleReadinessFinding, ...]:
+        """Compatibility alias; enforcement in Scale Readiness is Go-live scoped."""
+        return self.go_live_enforcement_findings
 
     @property
     def readiness_findings(self) -> tuple[ScaleReadinessFinding, ...]:
@@ -82,8 +88,8 @@ class ScaleReadinessResult:
 
     @property
     def blockers(self) -> tuple[ScaleReadinessFinding, ...]:
-        """Compatibility alias for findings that really block the lifecycle command."""
-        return self.enforcement_findings
+        """Compatibility alias for findings that block the Go-live command."""
+        return self.go_live_enforcement_findings
 
     @property
     def conditions(self) -> tuple[ScaleReadinessFinding, ...]:
