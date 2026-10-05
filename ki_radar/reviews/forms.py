@@ -274,8 +274,10 @@ class ReviewForm(forms.ModelForm):
             "Kostenangaben allein gelten nicht als Finanzierungsnachweis."
         )
         self.fields["funding_evidence"].help_text = (
-            "Bei erfüllter/zugesagter Finanzierung: konkrete Referenz oder Attestation der "
-            "zuständigen Stelle. Bei 'nicht erforderlich': kurze nachvollziehbare Begründung."
+            "Bei erfüllter/zugesagter Finanzierung: Source of Truth bzw. bestätigende Stelle "
+            "sowie relevanten Scope und – soweit nötig – Zeitraum nachvollziehbar nennen. "
+            "Die Anwendung prüft die fachliche Echtheit dieser Attestation nicht. "
+            "Bei 'nicht erforderlich': kurze nachvollziehbare Begründung."
         )
         if not self.is_bound:
             if requested_action == "go_live" and use_case.status == UseCase.Status.PILOT:
@@ -337,12 +339,11 @@ class ReviewForm(forms.ModelForm):
         if self.is_bound:
             selected_decision = self.data.get("decision")
 
-        funding_visible = bool(
+        funding_available = bool(
             self.pilot_start_only
-            or requested_action == "go_live"
-            or selected_decision in {Review.Decision.START_PILOT, Review.Decision.GO_LIVE}
+            or use_case.status in {UseCase.Status.REVIEW, UseCase.Status.PILOT}
         )
-        if not funding_visible:
+        if not funding_available:
             self.fields.pop("funding_status", None)
             self.fields.pop("funding_evidence", None)
 
