@@ -164,6 +164,8 @@ def test_admin_post_cannot_change_lifecycle_status_without_review(
         else:
             post_data[name] = "" if value is None else str(value)
 
+    post_data["submitter"] = str(technical_admin.pk)
+
     # Malicious/privileged payload: status is readonly and must be ignored by the admin form.
     post_data["status"] = UseCase.Status.OPERATION
     post_data["_save"] = "Speichern"
