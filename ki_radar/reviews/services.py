@@ -85,6 +85,8 @@ def create_review(*, use_case, actor, data) -> Review:
         scale_evidence=scale_evidence,
         go_live_exception_confirmed=bool(review_data.get("go_live_exception_confirmed")),
         rationale=review_data.get("rationale", ""),
+        funding_status=review_data.get("funding_status", ""),
+        funding_evidence=review_data.get("funding_evidence", ""),
     )
 
     for field in [
