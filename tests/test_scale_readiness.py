@@ -130,7 +130,7 @@ def test_scale_readiness_go_live_reuses_review_and_persists_snapshot(scale_candi
 
     assert use_case.status == UseCase.Status.OPERATION
     assert review.decision == Review.Decision.GO_LIVE
-    assert review.scale_readiness_schema_version == 1
+    assert review.scale_readiness_schema_version == 2
     assert review.scale_readiness_snapshot["state"] == "ready"
     assert [item["key"] for item in review.scale_readiness_snapshot["dimensions"]] == [
         "pilot",
@@ -145,10 +145,49 @@ def test_scale_readiness_go_live_reuses_review_and_persists_snapshot(scale_candi
     assert review.scale_readiness_snapshot["delivery"]["production_version"] == "release-2026.08.23"
     assert "metric_actual" not in review.scale_readiness_snapshot["pilot"]
 
+@pytest.mark.django_db
+def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    evidence = _scale_evidence(scale_tailoring_level="")
+
+    result = evaluate_scale_readiness(use_case, evidence)
+
+    assert result.state == "not_ready"
+    assert result.state_label == "Readiness offen"
+    assert any(
+        finding.code == "TAILORING_MISSING" and finding.severity == "readiness"
+        for finding in result.findings
+    )
+    assert not result.enforcement_findings
+
+    review = create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data=_go_live_data(coordinator, scale_tailoring_level=""),
+    )
+    use_case.refresh_from_db()
+
+    assert use_case.status == UseCase.Status.OPERATION
+    assert review.scale_readiness_snapshot["state"] == "not_ready"
+    assert any(
+        finding["code"] == "TAILORING_MISSING" and finding["severity"] == "readiness"
+        for finding in review.scale_readiness_snapshot["findings"]
+    )
+
+
 
 @pytest.mark.django_db
 def test_missing_rollback_is_non_overridable_scale_blocker(scale_candidate):
     use_case, _package, coordinator = scale_candidate
+
+    result = evaluate_scale_readiness(
+        use_case,
+        _scale_evidence(scale_rollback_tested=False),
+    )
+    assert any(
+        finding.code == "ROLLBACK_NOT_TESTED" and finding.severity == "enforcement"
+        for finding in result.findings
+    )
 
     with pytest.raises(ValidationError, match="Rollback"):
         create_review(
@@ -203,7 +242,7 @@ def test_conditional_go_action_owner_and_due_date_are_readiness(scale_candidate)
 
 
 @pytest.mark.django_db
-def test_direct_operation_transition_cannot_bypass_scale_gate(scale_candidate):
+def test_direct_operation_transition_cannot_bypass_canonical_review_command(scale_candidate):
     use_case, _package, coordinator = scale_candidate
 
     with pytest.raises(ValidationError, match=r"reviews\.services\.create_review"):
@@ -239,7 +278,8 @@ def test_go_live_form_exposes_compact_scale_gate(client, scale_candidate):
     assert 'name="ml_score_data"' in content
     assert 'name="scale_rollback_tested"' in content
     assert "kein zusätzlicher Gesamtscore" in content
-    assert "NO-GO · Nicht bereit" in content
+    assert "Readiness offen" in content
+    assert "NO-GO · Nicht bereit" not in content
     assert "Pilot → Wirkung → Scale" in content
     assert "scale-readiness-preview.js" in content
     assert 'name="ending_reason"' not in content
@@ -256,8 +296,8 @@ def test_scale_readiness_preview_updates_to_go_and_conditional_go(client, scale_
     go_content = go_response.content.decode()
 
     assert go_response.status_code == 200
-    assert "GO · Bereit" in go_content
-    assert "GO dokumentieren" in go_content
+    assert "Bereit" in go_content
+    assert "Entscheidung dokumentieren" in go_content
     assert "Pilot-Evidenz / Wirkung" in go_content
     assert "Verantwortung, Governance &amp; Restrisiko" in go_content
 
@@ -270,8 +310,8 @@ def test_scale_readiness_preview_updates_to_go_and_conditional_go(client, scale_
     conditional_content = conditional_response.content.decode()
 
     assert conditional_response.status_code == 200
-    assert "CONDITIONAL GO · Bereit mit Auflagen" in conditional_content
-    assert "Maßnahme, Owner und Frist" in conditional_content
+    assert "Bedingt bereit" in conditional_content
+    assert "Auflage absichern" in conditional_content
 
 
 @pytest.mark.django_db
