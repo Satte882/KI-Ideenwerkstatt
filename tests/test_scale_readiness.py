@@ -315,6 +315,36 @@ def test_scale_readiness_preview_updates_to_go_and_conditional_go(client, scale_
 
 
 @pytest.mark.django_db
+def test_go_live_enforcement_does_not_present_rework_as_blocked(client, scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    client.force_login(coordinator)
+    url = reverse("reviews:scale_readiness_preview", kwargs={"use_case_id": use_case.pk})
+    evidence = _scale_evidence(scale_rollback_tested=False)
+
+    rework_response = client.post(
+        url,
+        {**evidence, "decision": Review.Decision.REWORK},
+    )
+    rework_content = rework_response.content.decode()
+
+    assert rework_response.status_code == 200
+    assert "Go-live-Voraussetzung" in rework_content
+    assert "Vor Go-live erforderlich" in rework_content
+    assert "Diese Review-Aktion wird dadurch nicht blockiert" in rework_content
+    assert "Go-live blockiert" not in rework_content
+
+    go_live_response = client.post(
+        url,
+        {**evidence, "decision": Review.Decision.GO_LIVE},
+    )
+    go_live_content = go_live_response.content.decode()
+
+    assert go_live_response.status_code == 200
+    assert "Go-live-Voraussetzung" in go_live_content
+    assert "Go-live blockiert" in go_live_content
+
+
+@pytest.mark.django_db
 def test_saved_scale_decision_remains_visible_in_outcome_workspace(client, scale_candidate):
     use_case, _package, coordinator = scale_candidate
     client.force_login(coordinator)
