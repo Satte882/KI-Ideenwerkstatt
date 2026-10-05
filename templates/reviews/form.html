@@ -21,7 +21,7 @@
     </div>
 
     {% if form.scale_readiness_result %}
-    {% include "reviews/includes/scale_readiness_summary.html" with scale_result=form.scale_readiness_result %}
+    {% include "reviews/includes/scale_readiness_summary.html" with scale_result=form.scale_readiness_result selected_decision=form.decision.value %}
     {% endif %}
 
     <div class="app-card">
@@ -35,7 +35,7 @@
   </div>
   <div class="col-xl-8">
     <form method="post" class="app-card" id="review-form" data-initially-dirty="{% if form.is_bound %}true{% else %}false{% endif %}">{% csrf_token %}
-      <div class="card-header"><strong>{% if pilot_start_only %}Pilotbeginn bestätigen{% elif form.scale_readiness_result %}Scale Readiness prüfen und Beschluss dokumentieren{% else %}Review und Beschluss{% endif %}</strong><div class="small text-muted mt-1">{% if pilot_start_only %}Der tatsächliche Pilotbeginn muss am oder nach dem verbindlichen Übergabedatum liegen und darf nicht in der Zukunft liegen.{% elif form.scale_readiness_result %}Hard Blocker sind nicht überstimmbar. Ein Conditional Go benötigt Maßnahme, Owner und Frist. Die verbindliche Lifecycle-Entscheidung bleibt das bestehende Review.{% else %}Die Entscheidung bleibt menschlich verantwortlich und wird revisionsfähig dokumentiert.{% endif %}</div></div>
+      <div class="card-header"><strong>{% if pilot_start_only %}Pilotbeginn bestätigen{% elif form.scale_readiness_result %}Scale Readiness prüfen und Beschluss dokumentieren{% else %}Review und Beschluss{% endif %}</strong><div class="small text-muted mt-1">{% if pilot_start_only %}Der tatsächliche Pilotbeginn muss am oder nach dem verbindlichen Übergabedatum liegen und darf nicht in der Zukunft liegen.{% elif form.scale_readiness_result %}Readiness-Nachweise unterstützen die Entscheidung. Nur kanonische Go-live-Voraussetzungen blockieren die Produktivsetzung; andere Review-Aktionen werden separat geprüft.{% else %}Die Entscheidung bleibt menschlich verantwortlich und wird revisionsfähig dokumentiert.{% endif %}</div></div>
       <div class="card-body">{{ form.non_field_errors }}<div class="row g-3">
         {% for field in form %}
           {% if field.name == "scale_tailoring_level" %}<div class="col-12 border-top pt-3 mt-4"><div class="section-title">Scale-Readiness-Nachweise</div><p class="form-text mb-0">Die ML-Test-Score-Erhebung und operativen Detailnachweise bleiben im führenden Delivery-/Betriebssystem. Hier wird nur die für diese Entscheidung verwendete Version bzw. Referenz bestätigt.</p></div>{% endif %}
