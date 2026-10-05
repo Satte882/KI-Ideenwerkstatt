@@ -79,8 +79,8 @@ def _funding_blockers(
     if status == "satisfied":
         if not evidence:
             return [
-                f"Finanzierung für {scope_label} benötigt eine belastbare Referenz "
-                "oder Attestation"
+                f"Finanzierung für {scope_label} benötigt dokumentierte Evidence "
+                "(Referenz oder Attestation)"
             ]
         return []
     if status == "not_required":
