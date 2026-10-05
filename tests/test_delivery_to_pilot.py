@@ -301,6 +301,64 @@ def test_golden_path_uses_one_use_case_from_value_stream_to_pilot(settings):
 
 
 @pytest.mark.django_db
+def test_pilot_start_requires_funding_classification(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = ""
+    data["funding_evidence"] = ""
+
+    with pytest.raises(ValidationError, match="Finanzierung für den Pilotscope"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.REVIEW
+    assert use_case.reviews.count() == 0
+
+
+@pytest.mark.django_db
+def test_pilot_start_blocks_open_funding(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.OPEN
+    data["funding_evidence"] = "Budgetentscheidung steht noch aus."
+
+    with pytest.raises(ValidationError, match="offen oder nicht zugesagt"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.REVIEW
+
+
+@pytest.mark.django_db
+def test_pilot_start_not_required_needs_reason(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.NOT_REQUIRED
+    data["funding_evidence"] = ""
+
+    with pytest.raises(ValidationError, match="muss begründet werden"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
+def test_pilot_start_persists_not_required_funding_reason(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.NOT_REQUIRED
+    data["funding_evidence"] = (
+        "Begrenzter Offline-Pilot nutzt bestehende Umgebung und benötigt kein separates Budget."
+    )
+
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert review.funding_status == Review.FundingStatus.NOT_REQUIRED
+    assert "kein separates Budget" in review.funding_evidence
+    assert review.history.first().funding_status == Review.FundingStatus.NOT_REQUIRED
+
+
+@pytest.mark.django_db
 def test_pilot_start_requires_a_delivery_package(owner, coordinator, business_unit):
     use_case = _make_pilot_candidate(owner, coordinator, business_unit)
 
