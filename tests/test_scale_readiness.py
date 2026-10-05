@@ -304,6 +304,33 @@ def test_non_funding_review_commands_do_not_require_funding_evidence(
 
 
 @pytest.mark.django_db
+def test_canonical_service_discards_irrelevant_funding_evidence(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+
+    review = create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data={
+            "review_date": timezone.localdate(),
+            "decision": Review.Decision.REWORK,
+            "new_status": UseCase.Status.PILOT,
+            "rationale": "Pilot wird fachlich nachgearbeitet.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Dieser irrelevante Wert darf nicht persistiert werden.",
+            "open_actions": "",
+            "action_owner": None,
+            "action_due_date": None,
+            "next_review_date": timezone.localdate(),
+        },
+    )
+
+    assert review.funding_status == ""
+    assert review.funding_evidence == ""
+    assert review.history.first().funding_status == ""
+    assert review.history.first().funding_evidence == ""
+
+
+@pytest.mark.django_db
 def test_missing_rollback_is_non_overridable_scale_blocker(scale_candidate):
     use_case, _package, coordinator = scale_candidate
 
