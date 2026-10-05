@@ -113,7 +113,12 @@ def scale_readiness_preview(request, use_case_id):
     return render(
         request,
         "reviews/includes/scale_readiness_summary.html",
-        {"scale_result": result, "use_case": use_case, "is_preview_update": True},
+        {
+            "scale_result": result,
+            "use_case": use_case,
+            "is_preview_update": True,
+            "selected_decision": request.POST.get("decision", ""),
+        },
     )
 
 

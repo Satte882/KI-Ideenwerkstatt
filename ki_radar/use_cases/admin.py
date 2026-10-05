@@ -27,7 +27,7 @@ class UseCaseAdmin(BusinessUnitAssignmentAdminMixin, SimpleHistoryAdmin):
         "risk_complexity",
     )
     search_fields = ("short_id", "title", "problem_statement", "expected_benefit")
-    readonly_fields = ("short_id", "decision_status", "created_at", "updated_at")
+    readonly_fields = ("short_id", "status", "decision_status", "created_at", "updated_at")
 
 
 class AuditOnlyDecisionAdmin(admin.ModelAdmin):
