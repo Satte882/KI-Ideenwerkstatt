@@ -288,6 +288,8 @@ def test_go_live_form_exposes_separate_early_exception_fields(
         assert response.status_code == 200
         form = response.context["form"]
         assert isinstance(form, ReviewForm)
+        assert "funding_status" in form.fields
+        assert "funding_evidence" in form.fields
         assert "early_go_live_exception_confirmed" in form.fields
         assert "early_go_live_original_pilot_end" in form.fields
         assert form.fields["early_go_live_original_pilot_end"].disabled is True
