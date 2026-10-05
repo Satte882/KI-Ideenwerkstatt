@@ -70,10 +70,10 @@
       <section class="outcome-scale-decision" id="outcome-scale-review" aria-labelledby="saved-scale-decision-title">
         <div class="outcome-scale-decision__heading">
           <div>
-            <div class="outcome-eyebrow">Gespeicherte Entscheidung</div>
+            <div class="outcome-eyebrow">Gespeicherter Readiness-Stand</div>
             <h3 id="saved-scale-decision-title">Scale-Readiness-Snapshot vom {{ latest_scale_review.review_date|date:"d.m.Y" }}</h3>
           </div>
-          {% if latest_scale_review.scale_readiness_snapshot.state == "ready" %}<span class="badge state-ready">GO · Bereit</span>{% elif latest_scale_review.scale_readiness_snapshot.state == "conditional" %}<span class="badge state-review">CONDITIONAL GO · Bereit mit Auflagen</span>{% else %}<span class="badge state-blocked">NO-GO · Nicht bereit</span>{% endif %}
+          {% if latest_scale_review.scale_readiness_snapshot.state == "ready" %}<span class="badge state-ready">Bereit</span>{% elif latest_scale_review.scale_readiness_snapshot.state == "conditional" %}<span class="badge state-review">Bedingt bereit</span>{% else %}<span class="badge state-review">Readiness offen</span>{% endif %}
         </div>
         <dl class="outcome-scale-decision__facts">
           <div><dt>Tailoring</dt><dd>{{ latest_scale_review.scale_readiness_snapshot.tailoring_level|default:"–" }}</dd></div>
