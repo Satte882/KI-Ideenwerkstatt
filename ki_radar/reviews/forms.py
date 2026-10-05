@@ -134,7 +134,10 @@ class ReviewForm(forms.ModelForm):
     scale_incident_process_ready = forms.BooleanField(
         required=False,
         label="Incident- und Eskalationsprozess nachgewiesen",
-        help_text="Für Tailoring B/C verbindlich; bei A optional.",
+        help_text=(
+            "Für Tailoring B/C als Readiness-Nachweis vorgesehen; "
+            "kein automatischer Go-live-Blocker."
+        ),
     )
     scale_extended_controls_completed = forms.BooleanField(
         required=False,
