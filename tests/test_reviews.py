@@ -137,6 +137,18 @@ def test_review_form_uses_german_decision_labels(use_case):
 
 
 @pytest.mark.django_db
+def test_incident_process_help_text_uses_readiness_not_enforcement_language(use_case):
+    use_case.status = UseCase.Status.PILOT
+    use_case.save(update_fields=["status", "updated_at"])
+
+    form = ReviewForm(use_case=use_case)
+
+    assert form.fields["scale_incident_process_ready"].help_text == (
+        "Für Tailoring B/C als Readiness-Nachweis vorgesehen; kein automatischer Go-live-Blocker."
+    )
+
+
+@pytest.mark.django_db
 def test_review_form_renders_date_inputs_in_browser_format(use_case):
     localized_today = timezone.localdate().strftime("%d.%m.%Y")
     form = ReviewForm(use_case=use_case)
@@ -263,6 +275,35 @@ def test_review_can_supply_required_review_date_for_pilot_transition(coordinator
     assert use_case.next_review_date == today
     assert use_case.history.first().history_user == coordinator
     assert review.history.first().history_user == coordinator
+
+
+@pytest.mark.django_db
+def test_decision_history_shows_unknown_funding_for_pilot_start(
+    client,
+    coordinator,
+    use_case,
+):
+    use_case.status = UseCase.Status.PILOT
+    use_case.save(update_fields=["status", "updated_at"])
+    Review.objects.create(
+        use_case=use_case,
+        review_date=timezone.localdate(),
+        reviewer=coordinator,
+        previous_status=UseCase.Status.REVIEW,
+        new_status=UseCase.Status.PILOT,
+        decision=Review.Decision.START_PILOT,
+        rationale="Pilotstart mit noch ungeklärter Finanzierung.",
+        funding_status="",
+        funding_evidence="Budgetentscheidung folgt nach Pilotstart.",
+    )
+    client.force_login(coordinator)
+
+    response = client.get(use_case.get_absolute_url())
+    content = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Unbekannt / noch nicht eingeordnet" in content
+    assert "Budgetentscheidung folgt nach Pilotstart." in content
 
 
 @pytest.mark.django_db

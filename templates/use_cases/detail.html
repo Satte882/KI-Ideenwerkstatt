@@ -242,7 +242,7 @@
                 {% if review.go_live_exception_confirmed %}<span class="badge state-review">Ausnahme ausdrücklich bestätigt</span>{% endif %}
               </div>
               <div class="uc-secondary-copy">{{ review.rationale }}</div>
-              {% if review.funding_status %}<div class="uc-secondary-copy"><strong>Finanzierung:</strong> {{ review.get_funding_status_display }} · {{ review.funding_evidence }}</div>{% endif %}
+              {% if review.decision == "start_pilot" or review.decision == "go_live" %}<div class="uc-secondary-copy"><strong>Finanzierung:</strong> {{ review.get_funding_status_display|default:"Unbekannt / noch nicht eingeordnet" }}{% if review.funding_evidence %} · {{ review.funding_evidence }}{% endif %}</div>{% endif %}
               {% if review.scale_readiness_snapshot %}<details class="uc-scale-snapshot"><summary>Scale-Readiness-Snapshot anzeigen</summary><div class="uc-secondary-copy">ML Test Score {{ review.scale_readiness_snapshot.ml_test_score.final|default:"–" }} · Produktivversion {{ review.scale_readiness_snapshot.delivery.production_version|default:"–" }}{% if review.open_actions %}<br>Maßnahme: {{ review.open_actions }} · Owner: {% if review.action_owner %}{{ review.action_owner.get_display_name }}{% else %}–{% endif %} · Frist: {{ review.action_due_date|date:"d.m.Y"|default:"–" }}{% endif %}</div></details>{% endif %}
             </div>
             <span>{{ review.review_date|date:"d.m.Y" }}</span>

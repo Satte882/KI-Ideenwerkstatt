@@ -151,6 +151,32 @@ def test_scale_readiness_go_live_reuses_review_and_persists_snapshot(scale_candi
 
 
 @pytest.mark.django_db
+def test_scale_readiness_snapshot_preserves_zero_scores(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+
+    review = create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data=_go_live_data(
+            coordinator,
+            ml_score_data=Decimal("0"),
+            ml_score_model=Decimal("0"),
+            ml_score_infrastructure=Decimal("0"),
+            ml_score_monitoring=Decimal("0"),
+            ml_score_minimum=Decimal("0"),
+        ),
+    )
+
+    snapshot = review.scale_readiness_snapshot["ml_test_score"]
+    assert snapshot["data"] == "0"
+    assert snapshot["model"] == "0"
+    assert snapshot["infrastructure"] == "0"
+    assert snapshot["monitoring"] == "0"
+    assert snapshot["final"] == "0"
+    assert snapshot["minimum"] == "0"
+
+
+@pytest.mark.django_db
 def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scale_candidate):
     use_case, _package, coordinator = scale_candidate
     evidence = _scale_evidence(scale_tailoring_level="")

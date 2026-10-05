@@ -137,6 +137,11 @@ def _decimal(value) -> Decimal | None:
         return None
 
 
+def _decimal_text(value) -> str:
+    decimal_value = _decimal(value)
+    return "" if decimal_value is None else str(decimal_value)
+
+
 def _iso(value) -> str:
     if value is None:
         return ""
@@ -606,12 +611,12 @@ def build_scale_readiness_snapshot(
             "operations_evidence_url": _text(data.get("scale_evidence_url")),
         },
         "ml_test_score": {
-            "data": str(_decimal(data.get("ml_score_data")) or ""),
-            "model": str(_decimal(data.get("ml_score_model")) or ""),
-            "infrastructure": str(_decimal(data.get("ml_score_infrastructure")) or ""),
-            "monitoring": str(_decimal(data.get("ml_score_monitoring")) or ""),
-            "final": str(result.final_ml_score or ""),
-            "minimum": str(_decimal(data.get("ml_score_minimum")) or ""),
+            "data": _decimal_text(data.get("ml_score_data")),
+            "model": _decimal_text(data.get("ml_score_model")),
+            "infrastructure": _decimal_text(data.get("ml_score_infrastructure")),
+            "monitoring": _decimal_text(data.get("ml_score_monitoring")),
+            "final": _decimal_text(result.final_ml_score),
+            "minimum": _decimal_text(data.get("ml_score_minimum")),
             "version": _text(data.get("ml_score_version")),
             "date": _iso(data.get("ml_score_date")),
             "evidence_url": _text(data.get("ml_score_evidence_url")),
