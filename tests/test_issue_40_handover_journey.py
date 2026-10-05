@@ -66,6 +66,8 @@ def test_started_pilot_does_not_complete_overall_journey_on_delivery_page(
             "decision": Review.Decision.START_PILOT,
             "new_status": UseCase.Status.PILOT,
             "rationale": "Delivery ist übergeben; der Pilot wird fachlich gestartet.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
             "go_live_exception_confirmed": False,
             "open_actions": "",
             "action_owner": None,
