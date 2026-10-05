@@ -12,6 +12,7 @@ from ki_radar.delivery.models import DeliveryPackage
 from ki_radar.delivery.permissions import can_edit_package, can_transition_package
 from ki_radar.delivery.readiness import delivery_status_snapshot
 from ki_radar.delivery.services import current_handed_over_package
+from ki_radar.reviews.models import Review
 from ki_radar.use_cases.blockers import build_blocker_details
 from ki_radar.use_cases.classification import UseCaseClassification
 from ki_radar.use_cases.models import UseCase
@@ -497,12 +498,19 @@ def outcome_workspace(request):
         )
 
     latest_scale_review = None
+    latest_pilot_review = None
     if selected_use_case is not None:
+        reviews = list(selected_use_case.reviews.all())
         latest_scale_review = next(
+            (review for review in reviews if review.scale_readiness_snapshot),
+            None,
+        )
+        latest_pilot_review = next(
             (
                 review
-                for review in selected_use_case.reviews.all()
-                if review.scale_readiness_snapshot
+                for review in reviews
+                if review.decision == Review.Decision.START_PILOT
+                and review.new_status == UseCase.Status.PILOT
             ),
             None,
         )
@@ -531,6 +539,7 @@ def outcome_workspace(request):
         "journey": journey,
         "selected_use_case": selected_use_case,
         "latest_scale_review": latest_scale_review,
+        "latest_pilot_review": latest_pilot_review,
         "use_cases": use_cases,
         "pilot_total": sum(item.status == UseCase.Status.PILOT for item in use_cases),
         "measured_total": sum(item.metric_actual is not None for item in use_cases),
