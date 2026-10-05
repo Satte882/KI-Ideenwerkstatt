@@ -76,6 +76,10 @@ def create_review(*, use_case, actor, data) -> Review:
     decision = review_data.get("decision")
     target_status = review_data.get("new_status")
 
+    if decision not in {Review.Decision.START_PILOT, Review.Decision.GO_LIVE}:
+        review_data["funding_status"] = ""
+        review_data["funding_evidence"] = ""
+
     validate_review_command(
         use_case=use_case,
         decision=decision,
