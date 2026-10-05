@@ -122,6 +122,8 @@ def _go_live_data(use_case, coordinator, **overrides):
         "decision": Review.Decision.GO_LIVE,
         "new_status": UseCase.Status.OPERATION,
         "rationale": "Die vorhandene Evidenz trägt eine kontrollierte vorzeitige Entscheidung.",
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Betriebsbudget FIN-OPS-001 durch zuständige Stelle bestätigt.",
         "go_live_exception_confirmed": False,
         "early_go_live_exception_confirmed": True,
         "early_go_live_original_pilot_end": use_case.planned_pilot_end,
