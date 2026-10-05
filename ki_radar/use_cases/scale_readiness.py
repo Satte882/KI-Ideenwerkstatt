@@ -4,7 +4,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
-from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from ki_radar.delivery.handover import current_handed_over_package
@@ -15,7 +14,7 @@ from ki_radar.governance.services import (
 
 from .models import UseCase
 
-SCALE_READINESS_SCHEMA_VERSION = 1
+SCALE_READINESS_SCHEMA_VERSION = 2
 
 SCALE_EVIDENCE_FIELDS = (
     "scale_tailoring_level",
@@ -74,19 +73,32 @@ class ScaleReadinessResult:
     tailoring_level: str
 
     @property
+    def enforcement_findings(self) -> tuple[ScaleReadinessFinding, ...]:
+        return tuple(item for item in self.findings if item.severity == "enforcement")
+
+    @property
+    def readiness_findings(self) -> tuple[ScaleReadinessFinding, ...]:
+        return tuple(item for item in self.findings if item.severity == "readiness")
+
+    @property
     def blockers(self) -> tuple[ScaleReadinessFinding, ...]:
-        return tuple(item for item in self.findings if item.severity == "blocker")
+        """Compatibility alias for findings that really block the lifecycle command."""
+        return self.enforcement_findings
 
     @property
     def conditions(self) -> tuple[ScaleReadinessFinding, ...]:
         return tuple(item for item in self.findings if item.severity == "condition")
 
     @property
+    def advisories(self) -> tuple[ScaleReadinessFinding, ...]:
+        return tuple(item for item in self.findings if item.severity == "advisory")
+
+    @property
     def state_label(self) -> str:
         return {
-            "ready": "GO · Bereit",
-            "conditional": "CONDITIONAL GO · Bereit mit Auflagen",
-            "not_ready": "NO-GO · Nicht bereit",
+            "ready": "Bereit",
+            "conditional": "Bedingt bereit",
+            "not_ready": "Readiness offen",
         }[self.state]
 
 
@@ -183,7 +195,7 @@ def _add_governance_findings(
                     findings,
                     f"{prefix}_FAILED",
                     "responsibility",
-                    "blocker",
+                    "enforcement",
                     f"{label} wurde nicht bestanden.",
                 )
             else:
@@ -191,7 +203,7 @@ def _add_governance_findings(
                     findings,
                     f"{prefix}_OPEN",
                     "responsibility",
-                    "blocker",
+                    "enforcement",
                     f"{label} ist als erforderliche formale Prüfung noch offen.",
                 )
             continue
@@ -217,7 +229,7 @@ def _evaluate_tailoring(
             findings,
             "TAILORING_MISSING",
             "responsibility",
-            "blocker",
+            "readiness",
             "Tailoring-Stufe A, B oder C muss für die Scale-Entscheidung festgelegt sein.",
         )
         return ""
@@ -226,7 +238,7 @@ def _evaluate_tailoring(
             findings,
             "TAILORING_TOO_LOW",
             "responsibility",
-            "blocker",
+            "readiness",
             (
                 f"Die gewählte Tailoring-Stufe {tailoring} unterschreitet die aus dem "
                 f"Governance-Kontext erforderliche Mindeststufe {minimum}."
@@ -253,7 +265,7 @@ def _evaluate_pilot(
             findings,
             "PILOT_VALIDATION_NOT_CONFIRMED",
             "pilot",
-            "blocker",
+            "readiness",
             (
                 "Pilotumfang, Repräsentativität sowie relevante Fehler- und Ausnahmefälle "
                 "müssen für den geplanten Produktivscope bestätigt sein."
@@ -274,7 +286,7 @@ def _evaluate_ml_score(
                 findings,
                 f"ML_SCORE_{code_name}_MISSING",
                 dimension,
-                "blocker",
+                "readiness",
                 f"Der aktuelle ML-Test-Score für {label} fehlt.",
             )
         elif not Decimal("0") <= value <= Decimal("7"):
@@ -282,7 +294,7 @@ def _evaluate_ml_score(
                 findings,
                 f"ML_SCORE_{code_name}_INVALID",
                 dimension,
-                "blocker",
+                "readiness",
                 f"Der ML-Test-Score für {label} muss zwischen 0 und 7 liegen.",
             )
         else:
@@ -295,7 +307,7 @@ def _evaluate_ml_score(
             findings,
             "ML_SCORE_MINIMUM_MISSING",
             "quality",
-            "blocker",
+            "readiness",
             "Der projektspezifische ML-Test-Score-Mindestwert fehlt.",
         )
     elif not Decimal("0") <= minimum <= Decimal("7"):
@@ -303,7 +315,7 @@ def _evaluate_ml_score(
             findings,
             "ML_SCORE_MINIMUM_INVALID",
             "quality",
-            "blocker",
+            "readiness",
             ("Der projektspezifische ML-Test-Score-Mindestwert muss zwischen 0 und 7 liegen."),
         )
     elif final_score is not None and final_score < minimum:
@@ -311,7 +323,7 @@ def _evaluate_ml_score(
             findings,
             "ML_SCORE_BELOW_MINIMUM",
             "quality",
-            "blocker",
+            "readiness",
             (
                 f"Der ML-Test-Score {final_score} unterschreitet den "
                 f"projektspezifischen Mindestwert {minimum}."
@@ -328,13 +340,13 @@ def _evaluate_ml_score(
     )
     for field_name, code, message in required_text:
         if not _text(data.get(field_name)):
-            _add(findings, code, "quality", "blocker", message)
+            _add(findings, code, "quality", "readiness", message)
     if not data.get("ml_score_date"):
         _add(
             findings,
             "ML_SCORE_DATE_MISSING",
             "quality",
-            "blocker",
+            "readiness",
             "Datum der aktuellen ML-Test-Score-Erhebung fehlt.",
         )
     if _text(data.get("ml_score_failed_mandatory_checks")):
@@ -342,7 +354,7 @@ def _evaluate_ml_score(
             findings,
             "ML_SCORE_MANDATORY_CHECK_FAILED",
             "quality",
-            "blocker",
+            "enforcement",
             "Mindestens eine zwingende ML-Test-Score-Einzelprüfung ist nicht erfüllt.",
         )
     if _text(data.get("ml_score_open_core_checks")):
@@ -366,7 +378,7 @@ def _evaluate_deployment(
             findings,
             "DELIVERY_HANDOVER_MISSING",
             "deployment",
-            "blocker",
+            "advisory",
             "Das aktuelle Delivery Package ist nicht verbindlich übergeben.",
         )
     if not _text(data.get("scale_production_version")):
@@ -374,7 +386,7 @@ def _evaluate_deployment(
             findings,
             "PRODUCTION_VERSION_MISSING",
             "deployment",
-            "blocker",
+            "readiness",
             "Die freigegebene Produktivversion ist nicht eindeutig identifiziert.",
         )
     if not _bool(data.get("scale_rollback_tested")):
@@ -382,7 +394,7 @@ def _evaluate_deployment(
             findings,
             "ROLLBACK_NOT_TESTED",
             "deployment",
-            "blocker",
+            "enforcement",
             "Rollback oder Deaktivierung wurde nicht praktisch getestet.",
         )
 
@@ -416,14 +428,20 @@ def _evaluate_operations(
             else _bool(data.get(field_name))
         )
         if not value:
-            _add(findings, code, "monitoring", "blocker", message)
+            _add(
+                findings,
+                code,
+                "monitoring",
+                "advisory" if field_name == "scale_evidence_url" else "readiness",
+                message,
+            )
 
     if tailoring in {"B", "C"} and not _bool(data.get("scale_incident_process_ready")):
         _add(
             findings,
             "INCIDENT_PROCESS_MISSING",
             "monitoring",
-            "blocker",
+            "readiness",
             ("Incident- und Eskalationsprozess ist für dieses Tailoring nicht nachgewiesen."),
         )
 
@@ -435,22 +453,24 @@ def _evaluate_responsibility(
     findings: list[ScaleReadinessFinding],
 ) -> None:
     responsibility_rules = (
-        (bool(use_case.business_owner_id), "BUSINESS_OWNER_MISSING", "Business Owner fehlt."),
-        (bool(use_case.technical_owner_id), "TECHNICAL_OWNER_MISSING", "Technical Owner fehlt."),
+        (bool(use_case.business_owner_id), "BUSINESS_OWNER_MISSING", "readiness", "Business Owner fehlt."),
+        (bool(use_case.technical_owner_id), "TECHNICAL_OWNER_MISSING", "enforcement", "Technical Owner fehlt."),
         (
             bool(_text(use_case.support_responsibility)),
             "SUPPORT_RESPONSIBILITY_MISSING",
+            "enforcement",
             "Betriebs- und Supportverantwortung ist nicht geklärt.",
         ),
         (
             bool(_text(use_case.human_oversight)),
             "HUMAN_OVERSIGHT_MISSING",
+            "readiness",
             "Human Oversight ist nicht geklärt.",
         ),
     )
-    for present, code, message in responsibility_rules:
+    for present, code, severity, message in responsibility_rules:
         if not present:
-            _add(findings, code, "responsibility", "blocker", message)
+            _add(findings, code, "responsibility", severity, message)
 
     _add_governance_findings(use_case, findings)
     if tailoring == "C" and not _bool(data.get("scale_extended_controls_completed")):
@@ -458,7 +478,7 @@ def _evaluate_responsibility(
             findings,
             "EXTENDED_CONTROLS_MISSING",
             "responsibility",
-            "blocker",
+            "readiness",
             (
                 "Die zusätzlichen Nachweise für Tailoring C "
                 "(z. B. unabhängiges Review, Recovery/Security und Abschaltverfahren) "
@@ -492,7 +512,7 @@ def evaluate_scale_readiness(
     dimensions: list[ScaleReadinessDimension] = []
     for key, label in dimension_labels:
         dimension_findings = tuple(item for item in findings if item.dimension == key)
-        if any(item.severity == "blocker" for item in dimension_findings):
+        if any(item.severity in {"enforcement", "readiness"} for item in dimension_findings):
             state = "not_ready"
         elif any(item.severity == "condition" for item in dimension_findings):
             state = "conditional"
@@ -507,7 +527,7 @@ def evaluate_scale_readiness(
             )
         )
 
-    if any(item.severity == "blocker" for item in findings):
+    if any(item.severity in {"enforcement", "readiness"} for item in findings):
         state = "not_ready"
     elif any(item.severity == "condition" for item in findings):
         state = "conditional"
@@ -606,46 +626,3 @@ def build_scale_readiness_snapshot(
             for finding in result.findings
         ],
     }
-
-
-_original_apply_status_transition = None
-
-
-def _apply_status_transition_with_scale_readiness(
-    *,
-    use_case: UseCase,
-    target_status: str,
-    actor,
-    pilot_start=None,
-    allow_early_go_live_exception: bool = False,
-    scale_evidence: Mapping | None = None,
-):
-    if _original_apply_status_transition is None:
-        raise RuntimeError("Scale Readiness enforcement is not installed.")
-
-    if target_status == UseCase.Status.OPERATION and use_case.status == UseCase.Status.PILOT:
-        result = evaluate_scale_readiness(use_case, scale_evidence)
-        if result.blockers:
-            raise ValidationError(
-                "Scale Readiness blockiert: "
-                + "; ".join(finding.message for finding in result.blockers)
-            )
-
-    return _original_apply_status_transition(
-        use_case=use_case,
-        target_status=target_status,
-        actor=actor,
-        pilot_start=pilot_start,
-        allow_early_go_live_exception=allow_early_go_live_exception,
-    )
-
-
-def install() -> None:
-    global _original_apply_status_transition
-
-    from . import services
-
-    if services.apply_status_transition is _apply_status_transition_with_scale_readiness:
-        return
-    _original_apply_status_transition = services.apply_status_transition
-    services.apply_status_transition = _apply_status_transition_with_scale_readiness
