@@ -61,6 +61,22 @@
       </div>
       {% endif %}
 
+      {% if active_stage == "pilot" and latest_pilot_review and latest_pilot_review.funding_status %}
+      <section class="outcome-scale-decision" id="outcome-pilot-funding" aria-labelledby="pilot-funding-title">
+        <div class="outcome-scale-decision__heading">
+          <div>
+            <div class="outcome-eyebrow">Pilotentscheidung</div>
+            <h3 id="pilot-funding-title">Funding Evidence vom {{ latest_pilot_review.review_date|date:"d.m.Y" }}</h3>
+          </div>
+          <span class="badge state-ready">{{ latest_pilot_review.get_funding_status_display }}</span>
+        </div>
+        <dl class="outcome-scale-decision__facts">
+          <div><dt>Finanzierung</dt><dd>{{ latest_pilot_review.get_funding_status_display }}</dd></div>
+          <div><dt>Nachweis / Begründung</dt><dd>{{ latest_pilot_review.funding_evidence }}</dd></div>
+        </dl>
+      </section>
+      {% endif %}
+
       {% if active_stage == "decision" %}
       <div class="alert alert-secondary mt-3 mb-0">
         <strong>Scale Readiness bündelt, dupliziert nicht.</strong>
