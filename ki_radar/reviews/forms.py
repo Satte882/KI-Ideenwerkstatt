@@ -209,6 +209,8 @@ class ReviewForm(forms.ModelForm):
             "decision",
             "new_status",
             "rationale",
+            "funding_status",
+            "funding_evidence",
             *SCALE_EVIDENCE_FIELDS,
             "go_live_exception_confirmed",
             "early_go_live_exception_confirmed",
@@ -226,6 +228,7 @@ class ReviewForm(forms.ModelForm):
             "action_due_date": DateInput(),
             "next_review_date": DateInput(),
             "rationale": forms.Textarea(attrs={"rows": 4}),
+            "funding_evidence": forms.Textarea(attrs={"rows": 2}),
             "open_actions": forms.Textarea(attrs={"rows": 3}),
         }
         labels = {
@@ -233,6 +236,8 @@ class ReviewForm(forms.ModelForm):
             "decision": "Entscheidung",
             "new_status": "Neuer Status",
             "rationale": "Entscheidungsbegründung",
+            "funding_status": "Finanzierung für diesen Entscheidungsscope",
+            "funding_evidence": "Finanzierungsnachweis / Begründung",
             "open_actions": "Offene Maßnahmen / Kompensationsmaßnahme",
             "action_owner": "Maßnahmenverantwortliche Person",
             "action_due_date": "Fälligkeitsdatum der Maßnahme",
@@ -260,6 +265,22 @@ class ReviewForm(forms.ModelForm):
         self.fields["pilot_start"].widget.attrs["max"] = today.isoformat()
         self.fields["next_review_date"].initial = use_case.next_review_date
         self.fields["early_go_live_original_pilot_end"].initial = use_case.planned_pilot_end
+        self.fields["funding_status"].choices = [
+            ("", "Unbekannt / noch nicht eingeordnet"),
+            *Review.FundingStatus.choices,
+        ]
+        self.fields["funding_status"].help_text = (
+            "Finanzierung für den geplanten Pilot oder Betrieb dokumentieren. "
+            "Unbekannte oder offene Finanzierung bleibt als Hinweis sichtbar und blockiert "
+            "die Entscheidung nicht automatisch. "
+            "Kostenangaben allein sind keine Finanzierungszusage."
+        )
+        self.fields["funding_evidence"].help_text = (
+            "Bei zugesagter Finanzierung: Freigabe oder Referenz, zuständige Stelle und "
+            "finanzierten Umfang nennen; bei Bedarf auch den Zeitraum. "
+            "Bei 'nicht erforderlich': kurz begründen. Bei 'offen' ist Kontext optional. "
+            "Die entscheidende Person verantwortet die Belastbarkeit des Nachweises."
+        )
         if not self.is_bound:
             if requested_action == "go_live" and use_case.status == UseCase.Status.PILOT:
                 self.fields["decision"].initial = Review.Decision.GO_LIVE
@@ -306,19 +327,24 @@ class ReviewForm(forms.ModelForm):
         elif use_case.status != UseCase.Status.REVIEW:
             self.fields.pop("pilot_start", None)
 
-        if requested_action == "go_live":
-            for name in [
-                "ending_reason",
-                "data_and_access_handling",
-                "replacement_solution",
-                "final_assessment",
-                "lessons_learned",
-            ]:
-                self.fields.pop(name, None)
-
         selected_decision = self.fields["decision"].initial
         if self.is_bound:
             selected_decision = self.data.get("decision")
+
+        funding_available = bool(
+            self.pilot_start_only
+            or use_case.status in {UseCase.Status.REVIEW, UseCase.Status.PILOT}
+        )
+        if not funding_available:
+            self.fields.pop("funding_status", None)
+            self.fields.pop("funding_evidence", None)
+        elif self.is_bound and not self.pilot_start_only:
+            for name in ("funding_status", "funding_evidence"):
+                self.fields[name].disabled = selected_decision not in {
+                    Review.Decision.START_PILOT,
+                    Review.Decision.GO_LIVE,
+                }
+
         scale_visible = bool(
             not pilot_start_only
             and use_case.status == UseCase.Status.PILOT
@@ -363,6 +389,8 @@ class ReviewForm(forms.ModelForm):
                 "decision",
                 "new_status",
                 "rationale",
+                "funding_status",
+                "funding_evidence",
                 "scale_tailoring_level",
                 "scale_pilot_validation_confirmed",
                 "ml_score_data",
@@ -410,6 +438,7 @@ class ReviewForm(forms.ModelForm):
             "decision",
             "new_status",
             "action_owner",
+            "funding_status",
             "scale_tailoring_level",
             "ml_score_data",
             "ml_score_model",

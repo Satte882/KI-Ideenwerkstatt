@@ -200,6 +200,8 @@ def _review_data(use_case, pilot_start):
         "decision": Review.Decision.START_PILOT,
         "new_status": UseCase.Status.PILOT,
         "rationale": "Delivery ist übergeben; der Pilot wird fachlich gestartet.",
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
         "go_live_exception_confirmed": False,
         "open_actions": "",
         "action_owner": None,
@@ -217,6 +219,8 @@ def _pilot_start_payload(use_case, package, *, rationale):
         "review_date": timezone.localdate().isoformat(),
         "pilot_start": timezone.localdate(package.handed_over_at).isoformat(),
         "rationale": rationale,
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
         "open_actions": "",
         "action_owner": "",
         "action_due_date": "",
@@ -294,6 +298,76 @@ def test_golden_path_uses_one_use_case_from_value_stream_to_pilot(settings):
     assert outcome_steps["measurement"].state == "upcoming"
     assert outcome_steps["outcome_decision"].state == "upcoming"
     assert sum(step.state == "current" for step in outcome_steps.values()) == 1
+
+
+@pytest.mark.django_db
+def test_pilot_start_preserves_unknown_funding_without_blocking(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = ""
+    data["funding_evidence"] = ""
+
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert review.funding_status == ""
+    assert review.history.first().funding_status == ""
+
+
+@pytest.mark.django_db
+def test_pilot_start_preserves_open_funding_without_blocking(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.OPEN
+    data["funding_evidence"] = "Budgetentscheidung steht noch aus."
+
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert review.funding_status == Review.FundingStatus.OPEN
+    assert review.funding_evidence == "Budgetentscheidung steht noch aus."
+
+
+@pytest.mark.django_db
+def test_pilot_start_satisfied_funding_needs_evidence(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.SATISFIED
+    data["funding_evidence"] = ""
+
+    with pytest.raises(ValidationError, match="benötigt einen Nachweis"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
+def test_pilot_start_not_required_needs_reason(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.NOT_REQUIRED
+    data["funding_evidence"] = ""
+
+    with pytest.raises(ValidationError, match="muss begründet werden"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
+def test_pilot_start_persists_not_required_funding_reason(handed_over_candidate, coordinator):
+    use_case, package = handed_over_candidate
+    data = _review_data(use_case, timezone.localdate(package.handed_over_at))
+    data["funding_status"] = Review.FundingStatus.NOT_REQUIRED
+    data["funding_evidence"] = (
+        "Begrenzter Offline-Pilot nutzt bestehende Umgebung und benötigt kein separates Budget."
+    )
+
+    review = create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert review.funding_status == Review.FundingStatus.NOT_REQUIRED
+    assert "kein separates Budget" in review.funding_evidence
+    assert review.history.first().funding_status == Review.FundingStatus.NOT_REQUIRED
 
 
 @pytest.mark.django_db
@@ -454,6 +528,8 @@ def test_manipulated_owner_post_is_forced_to_pilot_start(
             "decision": Review.Decision.GO_LIVE,
             "new_status": UseCase.Status.OPERATION,
             "rationale": "Manipulierter POST darf den festen Pilotübergang nicht verändern.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
             "open_actions": "",
             "action_owner": "",
             "action_due_date": "",
@@ -600,6 +676,8 @@ def test_pilot_start_post_rejects_unauthorized_roles(
         "review_date": timezone.localdate().isoformat(),
         "pilot_start": timezone.localdate(package.handed_over_at).isoformat(),
         "rationale": "Nicht berechtigt.",
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
         "next_review_date": use_case.next_review_date.isoformat(),
     }
 
@@ -627,5 +705,7 @@ def test_pilot_start_form_defaults_to_today_and_limits_future_dates(
     assert form.fields["pilot_start"].initial == timezone.localdate()
     assert form.fields["pilot_start"].required is True
     assert form.fields["pilot_start"].widget.attrs["max"] == timezone.localdate().isoformat()
+    assert "funding_status" in form.fields
+    assert "funding_evidence" in form.fields
     assert response.context["pilot_start_only"] is True
     assert "Pilot starten" in response.content.decode()

@@ -67,6 +67,13 @@ class ReviewForm(LegacyReviewForm):
                 "Lifecycle-Rückstufungen sind nicht mehr vorgesehen; bitte Rework verwenden.",
             )
 
+        if decision not in {Review.Decision.START_PILOT, Review.Decision.GO_LIVE}:
+            for name in ("funding_status", "funding_evidence"):
+                if name in self.fields:
+                    cleaned[name] = ""
+                else:
+                    cleaned.pop(name, None)
+
         if (
             decision in {Review.Decision.PAUSE, Review.Decision.REWORK, Review.Decision.CONTINUE}
             and new_status != self.use_case.status

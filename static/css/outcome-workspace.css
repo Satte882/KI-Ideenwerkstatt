@@ -180,6 +180,28 @@
   color: var(--muted);
 }
 
+.outcome-funding-summary .outcome-scale-decision__heading {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.outcome-funding-summary .badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.outcome-funding-summary .outcome-scale-decision__facts {
+  grid-template-columns: 1fr;
+}
+
+.outcome-funding-summary .outcome-scale-decision__facts div {
+  display: grid;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
   .outcome-scale-decision__heading {
     align-items: stretch;

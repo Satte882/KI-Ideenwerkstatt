@@ -61,6 +61,17 @@
       </div>
       {% endif %}
 
+      {% if latest_pilot_review %}
+      {% if active_stage == "pilot" or active_stage == "decision" or active_stage == "operation" %}
+      {% include "reviews/includes/funding_summary.html" with funding_review=latest_pilot_review funding_phase="Pilotentscheidung" funding_id="outcome-pilot-funding" %}
+      {% endif %}
+      {% endif %}
+      {% if latest_go_live_review %}
+      {% if active_stage == "decision" or active_stage == "operation" or active_stage == "closure" %}
+      {% include "reviews/includes/funding_summary.html" with funding_review=latest_go_live_review funding_phase="Go-live-Entscheidung" funding_id="outcome-go-live-funding" %}
+      {% endif %}
+      {% endif %}
+
       {% if active_stage == "decision" %}
       <div class="alert alert-secondary mt-3 mb-0">
         <strong>Scale Readiness bündelt, dupliziert nicht.</strong>

@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from ki_radar.delivery.models import DeliveryPackage
 from ki_radar.reviews.forms import ReviewForm
+from ki_radar.reviews.lean_forms import ReviewForm as LeanReviewForm
 from ki_radar.reviews.models import Review
 from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseCase
 from ki_radar.use_cases.services import (
@@ -153,6 +154,53 @@ def test_running_pilot_opens_real_external_delivery_link(
     assert "outcome-stage-status" not in content
 
 
+@pytest.mark.parametrize(
+    "funding_status", ["", Review.FundingStatus.OPEN, Review.FundingStatus.NOT_REQUIRED]
+)
+@pytest.mark.django_db
+def test_running_pilot_shows_start_pilot_funding_evidence(
+    client,
+    coordinator,
+    owner,
+    business_unit,
+    funding_status,
+):
+    use_case = _use_case(owner, business_unit)
+    _package(use_case, coordinator)
+    review = Review.objects.create(
+        use_case=use_case,
+        review_date=timezone.localdate(),
+        reviewer=coordinator,
+        previous_status=UseCase.Status.REVIEW,
+        new_status=UseCase.Status.PILOT,
+        decision=Review.Decision.START_PILOT,
+        rationale="Pilotstart mit dokumentierter Finanzierung.",
+        funding_status=funding_status,
+        funding_evidence=(
+            "Begrenzter Offline-Pilot nutzt die vorhandene Umgebung; "
+            "kein separates Budget erforderlich."
+        ),
+    )
+    client.force_login(coordinator)
+
+    response = client.get(
+        reverse("reporting:outcome_workspace"),
+        {"stage": "pilot", "use_case": use_case.pk},
+    )
+
+    content = response.content.decode()
+    assert response.context["latest_pilot_review"] == review
+    assert 'id="outcome-pilot-funding"' in content
+    if funding_status == Review.FundingStatus.NOT_REQUIRED:
+        assert "Für diesen Scope nicht erforderlich" in content
+    else:
+        assert "Dieser Hinweis ist keine automatische Lifecycle-Sperre" in content
+        assert 'class="badge state-review"' in content
+        if not funding_status:
+            assert "Unbekannt / noch nicht eingeordnet" in content
+    assert "kein separates Budget erforderlich" in content
+
+
 @pytest.mark.django_db
 def test_invalid_current_handover_blocks_external_pilot_action(
     client,
@@ -251,6 +299,56 @@ def test_go_live_action_uses_existing_review_form(client, coordinator, owner, bu
     )
     assert form.fields["decision"].initial == Review.Decision.GO_LIVE
     assert form.fields["new_status"].initial == UseCase.Status.OPERATION
+    assert "funding_status" in form.fields
+    assert "funding_evidence" in form.fields
+
+
+@pytest.mark.django_db
+def test_funding_fields_follow_selected_command_without_failed_submit(
+    client,
+    coordinator,
+    owner,
+    business_unit,
+):
+    use_case = _use_case(owner, business_unit)
+    client.force_login(coordinator)
+    url = reverse("reviews:create", kwargs={"use_case_id": use_case.pk}) + "?action=go_live"
+
+    response = client.get(url)
+    content = response.content.decode()
+    js = Path("static/js/review-funding-evidence.js").read_text(encoding="utf-8")
+
+    assert response.status_code == 200
+    assert content.count("data-funding-evidence-group") >= 3
+    assert "review-funding-evidence.js" in content
+    assert 'new Set(["start_pilot", "go_live"])' in js
+    assert 'decision.addEventListener("change", syncDecision)' in js
+    assert "status.disabled = !relevant" in js
+    assert "evidence.disabled = !relevant" in js
+
+    form = LeanReviewForm(
+        {
+            "review_date": timezone.localdate().isoformat(),
+            "decision": Review.Decision.REWORK,
+            "new_status": UseCase.Status.PILOT,
+            "rationale": "Zurück in fachliche Nacharbeit.",
+            "funding_status": "invalid_hidden_value",
+            "funding_evidence": "Dieser Wert muss bei REWORK verworfen werden.",
+            "open_actions": "",
+            "action_owner": "",
+            "action_due_date": "",
+            "next_review_date": "",
+        },
+        use_case=use_case,
+        actor=coordinator,
+        requested_action="go_live",
+    )
+
+    assert "funding_status" in form.fields
+    assert "funding_evidence" in form.fields
+    assert form.is_valid()
+    assert form.cleaned_data["funding_status"] == ""
+    assert form.cleaned_data["funding_evidence"] == ""
 
 
 @pytest.mark.django_db
@@ -342,6 +440,8 @@ def test_due_operation_review_and_closure_use_existing_review_form(
     )
     assert form.fields["decision"].initial == Review.Decision.END
     assert form.fields["new_status"].initial == UseCase.Status.ENDED
+    assert "funding_status" not in form.fields
+    assert "funding_evidence" not in form.fields
 
 
 @pytest.mark.django_db

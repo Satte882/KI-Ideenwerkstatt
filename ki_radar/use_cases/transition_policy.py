@@ -64,6 +64,36 @@ def _bool(value) -> bool:
     return _text(value).casefold() in {"1", "true", "yes", "on"}
 
 
+def _funding_blockers(
+    *,
+    status: str,
+    evidence: str,
+    scope_label: str,
+) -> list[str]:
+    status = _text(status)
+    evidence = _text(evidence)
+    # Missing or open funding is a readiness gap, not proof that the scoped action
+    # is impossible. The responsible person retains the lifecycle decision.
+    if status in {"", "open"}:
+        return []
+    if status == "satisfied":
+        if not evidence:
+            return [
+                f"Finanzierung für {scope_label} benötigt einen Nachweis "
+                "(Referenz oder Bestätigung). "
+                "Nachweis ergänzen oder Finanzierung als offen einordnen"
+            ]
+        return []
+    if status == "not_required":
+        if not evidence:
+            return [
+                f"Nicht erforderliche Finanzierung für {scope_label} muss begründet werden. "
+                "Begründung ergänzen oder Finanzierung als offen einordnen"
+            ]
+        return []
+    return [f"Unbekannter Finanzierungsstatus für {scope_label}"]
+
+
 def validate_transition_shape(*, use_case: UseCase, decision: str, target_status: str) -> None:
     if decision == "return":
         raise ValidationError(
@@ -110,6 +140,8 @@ def validate_pilot_start(
     *,
     use_case: UseCase,
     pilot_start: date | None,
+    funding_status: str = "",
+    funding_evidence: str = "",
 ) -> None:
     blockers: list[str] = []
     if use_case.decision_status not in APPROVED_DECISION_STATUSES:
@@ -121,6 +153,13 @@ def validate_pilot_start(
     if not governance.has_screening:
         blockers.append("Governance-Screening")
     blockers.extend(required_governance_blockers(use_case))
+    blockers.extend(
+        _funding_blockers(
+            status=funding_status,
+            evidence=funding_evidence,
+            scope_label="den Pilotscope",
+        )
+    )
     if blockers:
         raise ValidationError("Pilotstart blockiert: " + "; ".join(blockers))
 
@@ -142,6 +181,8 @@ def validate_go_live(
     evidence: Mapping | None,
     go_live_exception_confirmed: bool,
     rationale: str,
+    funding_status: str = "",
+    funding_evidence: str = "",
 ) -> None:
     blockers: list[str] = []
     for field_name, label in (
@@ -169,6 +210,13 @@ def validate_go_live(
         blockers.append("Technical Owner")
     if not _text(use_case.support_responsibility):
         blockers.append("Support-Verantwortung")
+    blockers.extend(
+        _funding_blockers(
+            status=funding_status,
+            evidence=funding_evidence,
+            scope_label="den Produktivscope",
+        )
+    )
 
     if blockers:
         raise ValidationError("Go-live blockiert: " + "; ".join(blockers))
@@ -195,6 +243,8 @@ def validate_review_command(
     scale_evidence: Mapping | None = None,
     go_live_exception_confirmed: bool = False,
     rationale: str = "",
+    funding_status: str = "",
+    funding_evidence: str = "",
 ) -> None:
     validate_transition_shape(
         use_case=use_case,
@@ -203,11 +253,18 @@ def validate_review_command(
     )
     validate_actor(use_case=use_case, decision=decision, actor=actor)
     if decision == "start_pilot":
-        validate_pilot_start(use_case=use_case, pilot_start=pilot_start)
+        validate_pilot_start(
+            use_case=use_case,
+            pilot_start=pilot_start,
+            funding_status=funding_status,
+            funding_evidence=funding_evidence,
+        )
     elif decision == "go_live":
         validate_go_live(
             use_case=use_case,
             evidence=scale_evidence,
             go_live_exception_confirmed=go_live_exception_confirmed,
             rationale=rationale,
+            funding_status=funding_status,
+            funding_evidence=funding_evidence,
         )
