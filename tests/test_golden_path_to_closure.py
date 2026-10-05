@@ -42,6 +42,8 @@ def _start_pilot(use_case, package, coordinator):
             "decision": Review.Decision.START_PILOT,
             "new_status": UseCase.Status.PILOT,
             "rationale": "Delivery ist übergeben; der Pilot wird fachlich gestartet.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
             "go_live_exception_confirmed": False,
             "open_actions": "",
             "action_owner": None,
@@ -104,6 +106,8 @@ def _go_live_data(use_case, *, exception=False, rationale="Pilotziel erreicht; p
         "decision": Review.Decision.GO_LIVE,
         "new_status": UseCase.Status.OPERATION,
         "rationale": rationale,
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Betriebsbudget FIN-OPS-001 durch zuständige Stelle bestätigt.",
         "go_live_exception_confirmed": exception,
         "open_actions": (
             "Pilotabweichung im Betrieb nachmessen und nach drei Monaten erneut bewerten."
@@ -390,6 +394,8 @@ def test_exception_post_accepts_semantic_technical_admin_coordinator(
             "decision": Review.Decision.GO_LIVE,
             "new_status": UseCase.Status.OPERATION,
             "rationale": "Manipulierte Ausnahmebestätigung.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Betriebsbudget FIN-OPS-001 durch zuständige Stelle bestätigt.",
             "go_live_exception_confirmed": "on",
             "open_actions": "",
             "action_owner": "",
