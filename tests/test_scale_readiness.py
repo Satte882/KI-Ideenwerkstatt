@@ -198,6 +198,23 @@ def test_go_live_requires_funding_classification(scale_candidate):
 
 
 @pytest.mark.django_db
+def test_go_live_blocks_open_funding(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    data = _go_live_data(
+        coordinator,
+        funding_status=Review.FundingStatus.OPEN,
+        funding_evidence="Betriebsbudget ist noch nicht freigegeben.",
+    )
+
+    with pytest.raises(ValidationError, match="offen oder nicht zugesagt"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert use_case.reviews.filter(decision=Review.Decision.GO_LIVE).exists() is False
+
+
+@pytest.mark.django_db
 def test_go_live_satisfied_funding_needs_evidence(scale_candidate):
     use_case, _package, coordinator = scale_candidate
     data = _go_live_data(
