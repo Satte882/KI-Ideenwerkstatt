@@ -181,6 +181,83 @@ def test_readiness_gap_is_visible_but_does_not_become_lifecycle_enforcement(scal
 
 
 @pytest.mark.django_db
+def test_go_live_requires_funding_classification(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    data = _go_live_data(
+        coordinator,
+        funding_status="",
+        funding_evidence="",
+    )
+
+    with pytest.raises(ValidationError, match="Finanzierung für den Produktivscope"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert use_case.reviews.filter(decision=Review.Decision.GO_LIVE).exists() is False
+
+
+@pytest.mark.django_db
+def test_go_live_not_required_funding_needs_reason(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    data = _go_live_data(
+        coordinator,
+        funding_status=Review.FundingStatus.NOT_REQUIRED,
+        funding_evidence="",
+    )
+
+    with pytest.raises(ValidationError, match="muss begründet werden"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
+def test_go_live_persists_phase_specific_funding_evidence(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    evidence = "Betriebsbudget FIN-OPS-2026-04 durch zuständige Stelle bestätigt."
+
+    review = create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data=_go_live_data(
+            coordinator,
+            funding_status=Review.FundingStatus.SATISFIED,
+            funding_evidence=evidence,
+        ),
+    )
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.OPERATION
+    assert review.funding_status == Review.FundingStatus.SATISFIED
+    assert review.funding_evidence == evidence
+    assert review.history.first().funding_evidence == evidence
+
+
+@pytest.mark.django_db
+def test_rework_does_not_require_funding_evidence(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+
+    review = create_review(
+        use_case=use_case,
+        actor=coordinator,
+        data={
+            "review_date": timezone.localdate(),
+            "decision": Review.Decision.REWORK,
+            "new_status": UseCase.Status.PILOT,
+            "rationale": "Pilot wird fachlich nachgearbeitet.",
+            "open_actions": "",
+            "action_owner": None,
+            "action_due_date": None,
+            "next_review_date": timezone.localdate(),
+        },
+    )
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert review.funding_status == ""
+    assert review.funding_evidence == ""
+
+
+@pytest.mark.django_db
 def test_missing_rollback_is_non_overridable_scale_blocker(scale_candidate):
     use_case, _package, coordinator = scale_candidate
 
