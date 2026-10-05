@@ -113,6 +113,8 @@ def test_transition_to_pilot_succeeds(use_case, coordinator):
             "decision": Review.Decision.START_PILOT,
             "new_status": UseCase.Status.PILOT,
             "rationale": "Pilot ist fachlich vorbereitet.",
+            "funding_status": Review.FundingStatus.SATISFIED,
+            "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
             "open_actions": "",
             "action_owner": None,
             "action_due_date": None,
