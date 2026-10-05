@@ -38,10 +38,12 @@ class Review(TimeStampedModel):
         max_length=20,
         choices=FundingStatus.choices,
         blank=True,
+        default="",
         verbose_name="Finanzierung für diesen Entscheidungsscope",
     )
     funding_evidence = models.TextField(
         blank=True,
+        default="",
         verbose_name="Finanzierungsnachweis / Begründung",
     )
     go_live_exception_confirmed = models.BooleanField(
