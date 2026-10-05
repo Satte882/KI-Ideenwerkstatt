@@ -198,6 +198,19 @@ def test_go_live_requires_funding_classification(scale_candidate):
 
 
 @pytest.mark.django_db
+def test_go_live_satisfied_funding_needs_evidence(scale_candidate):
+    use_case, _package, coordinator = scale_candidate
+    data = _go_live_data(
+        coordinator,
+        funding_status=Review.FundingStatus.SATISFIED,
+        funding_evidence="",
+    )
+
+    with pytest.raises(ValidationError, match="belastbare Referenz"):
+        create_review(use_case=use_case, actor=coordinator, data=data)
+
+
+@pytest.mark.django_db
 def test_go_live_not_required_funding_needs_reason(scale_candidate):
     use_case, _package, coordinator = scale_candidate
     data = _go_live_data(
@@ -233,7 +246,19 @@ def test_go_live_persists_phase_specific_funding_evidence(scale_candidate):
 
 
 @pytest.mark.django_db
-def test_rework_does_not_require_funding_evidence(scale_candidate):
+@pytest.mark.parametrize(
+    ("decision", "target_status"),
+    [
+        (Review.Decision.CONTINUE, UseCase.Status.PILOT),
+        (Review.Decision.REWORK, UseCase.Status.PILOT),
+        (Review.Decision.END, UseCase.Status.ENDED),
+    ],
+)
+def test_non_funding_review_commands_do_not_require_funding_evidence(
+    scale_candidate,
+    decision,
+    target_status,
+):
     use_case, _package, coordinator = scale_candidate
 
     review = create_review(
@@ -241,18 +266,22 @@ def test_rework_does_not_require_funding_evidence(scale_candidate):
         actor=coordinator,
         data={
             "review_date": timezone.localdate(),
-            "decision": Review.Decision.REWORK,
-            "new_status": UseCase.Status.PILOT,
-            "rationale": "Pilot wird fachlich nachgearbeitet.",
+            "decision": decision,
+            "new_status": target_status,
+            "rationale": "Lifecycle-Review ohne Funding-Entscheidung.",
             "open_actions": "",
             "action_owner": None,
             "action_due_date": None,
             "next_review_date": timezone.localdate(),
+            "ending_reason": "Pilot wird beendet." if decision == Review.Decision.END else "",
+            "data_and_access_handling": (
+                "Testzugänge schließen." if decision == Review.Decision.END else ""
+            ),
         },
     )
 
     use_case.refresh_from_db()
-    assert use_case.status == UseCase.Status.PILOT
+    assert use_case.status == target_status
     assert review.funding_status == ""
     assert review.funding_evidence == ""
 
