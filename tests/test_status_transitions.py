@@ -1,8 +1,10 @@
 from decimal import Decimal
 
 import pytest
+from django import forms
 from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils import timezone
 
 from ki_radar.delivery.models import DeliveryPackage
@@ -127,3 +129,52 @@ def test_use_case_admin_keeps_lifecycle_status_read_only():
 
     assert "status" in model_admin.readonly_fields
     assert "decision_status" in model_admin.readonly_fields
+
+
+@pytest.mark.django_db
+def test_admin_post_cannot_change_lifecycle_status_without_review(
+    client,
+    technical_admin,
+    use_case,
+):
+    technical_admin.is_superuser = True
+    technical_admin.save(update_fields=["is_superuser"])
+    client.force_login(technical_admin)
+
+    use_case.status = UseCase.Status.PILOT
+    use_case.save(update_fields=["status"])
+    review_count = use_case.reviews.count()
+
+    url = reverse("admin:use_cases_usecase_change", args=[use_case.pk])
+    get_response = client.get(url)
+    assert get_response.status_code == 200
+
+    admin_form = get_response.context["adminform"].form
+    post_data = {}
+    for name, field in admin_form.fields.items():
+        value = admin_form.initial.get(name, field.initial)
+        if isinstance(field, forms.ModelMultipleChoiceField):
+            values = value.all() if hasattr(value, "all") else (value or [])
+            post_data[name] = [
+                str(item.pk if hasattr(item, "pk") else item) for item in values
+            ]
+        elif isinstance(field, forms.ModelChoiceField):
+            post_data[name] = (
+                str(value.pk if hasattr(value, "pk") else value) if value else ""
+            )
+        elif isinstance(field, forms.BooleanField):
+            if value:
+                post_data[name] = "on"
+        else:
+            post_data[name] = "" if value is None else str(value)
+
+    # Malicious/privileged payload: status is readonly and must be ignored by the admin form.
+    post_data["status"] = UseCase.Status.OPERATION
+    post_data["_save"] = "Speichern"
+
+    post_response = client.post(url, post_data)
+    assert post_response.status_code == 302
+
+    use_case.refresh_from_db()
+    assert use_case.status == UseCase.Status.PILOT
+    assert use_case.reviews.count() == review_count
