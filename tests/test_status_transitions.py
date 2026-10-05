@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
@@ -9,6 +10,7 @@ from ki_radar.delivery.services import hand_over_package
 from ki_radar.governance.models import GovernanceAssessment
 from ki_radar.reviews.models import Review
 from ki_radar.reviews.services import create_review
+from ki_radar.use_cases.admin import UseCaseAdmin
 from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseCase
 from ki_radar.use_cases.services import apply_status_transition
 
@@ -118,3 +120,10 @@ def test_transition_to_pilot_succeeds(use_case, coordinator):
     use_case.refresh_from_db()
     assert use_case.status == UseCase.Status.PILOT
     assert use_case.pilot_start == today
+
+
+def test_use_case_admin_keeps_lifecycle_status_read_only():
+    model_admin = UseCaseAdmin(UseCase, AdminSite())
+
+    assert "status" in model_admin.readonly_fields
+    assert "decision_status" in model_admin.readonly_fields
