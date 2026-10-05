@@ -664,6 +664,8 @@ def test_pilot_start_post_rejects_unauthorized_roles(
         "review_date": timezone.localdate().isoformat(),
         "pilot_start": timezone.localdate(package.handed_over_at).isoformat(),
         "rationale": "Nicht berechtigt.",
+        "funding_status": Review.FundingStatus.SATISFIED,
+        "funding_evidence": "Budgetfreigabe FIN-PILOT-001 durch zuständige Stelle.",
         "next_review_date": use_case.next_review_date.isoformat(),
     }
 
@@ -691,5 +693,7 @@ def test_pilot_start_form_defaults_to_today_and_limits_future_dates(
     assert form.fields["pilot_start"].initial == timezone.localdate()
     assert form.fields["pilot_start"].required is True
     assert form.fields["pilot_start"].widget.attrs["max"] == timezone.localdate().isoformat()
+    assert "funding_status" in form.fields
+    assert "funding_evidence" in form.fields
     assert response.context["pilot_start_only"] is True
     assert "Pilot starten" in response.content.decode()
