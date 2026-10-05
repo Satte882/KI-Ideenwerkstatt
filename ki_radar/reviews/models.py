@@ -17,6 +17,11 @@ class Review(TimeStampedModel):
         RETURN = "return", "In frühere Phase zurücksetzen"
         END = "end", "Beenden"
 
+    class FundingStatus(models.TextChoices):
+        SATISFIED = "satisfied", "Erfüllt / verbindlich zugesagt"
+        OPEN = "open", "Offen / nicht zugesagt"
+        NOT_REQUIRED = "not_required", "Für diesen Scope nicht erforderlich"
+
     use_case = models.ForeignKey(UseCase, on_delete=models.CASCADE, related_name="reviews")
     review_date = models.DateField()
     reviewer = models.ForeignKey(
@@ -29,6 +34,16 @@ class Review(TimeStampedModel):
     new_status = models.CharField(max_length=20, choices=UseCase.Status.choices)
     decision = models.CharField(max_length=30, choices=Decision.choices)
     rationale = models.TextField()
+    funding_status = models.CharField(
+        max_length=20,
+        choices=FundingStatus.choices,
+        blank=True,
+        verbose_name="Finanzierung für diesen Entscheidungsscope",
+    )
+    funding_evidence = models.TextField(
+        blank=True,
+        verbose_name="Finanzierungsnachweis / Begründung",
+    )
     go_live_exception_confirmed = models.BooleanField(
         default=False,
         verbose_name="Go-live-Ausnahme ausdrücklich bestätigt",
