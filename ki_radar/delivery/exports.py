@@ -8,6 +8,9 @@ from .readiness import delivery_status_snapshot, evaluate_delivery_readiness
 
 
 def _review_summary(package: DeliveryPackage) -> str:
+    from .ap3_autonomous import delivery_evidence_state
+
+    evidence_state = delivery_evidence_state(package)
     reviews = {review.section_key: review for review in package.section_reviews.all()}
     rows = ["| Sektion | Herkunft | Prüfstatus | Bestätigt durch |", "|---|---|---|---|"]
     for key, label in DELIVERY_SECTION_DEFINITIONS:
@@ -20,9 +23,12 @@ def _review_summary(package: DeliveryPackage) -> str:
             confirmed.append(f"fachlich: {review.business_confirmed_by}")
         if review.technical_confirmed_by:
             confirmed.append(f"technisch: {review.technical_confirmed_by}")
+        status = review.get_review_status_display()
+        if evidence_state["sections"].get(key):
+            status = "Erneute Prüfung erforderlich (frühere Bestätigung historisch)"
         rows.append(
             f"| {label} | {review.get_content_origin_display()} | "
-            f"{review.get_review_status_display()} | {', '.join(confirmed) or '-'} |"
+            f"{status} | {', '.join(confirmed) or '-'} |"
         )
     return "\n".join(rows)
 

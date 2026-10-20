@@ -601,6 +601,27 @@ def review_delivery_section(
     if not roles:
         raise ValidationError("Für diese Sektionsprüfung fehlt die erforderliche Rolle.")
 
+    from .ap3_autonomous import delivery_evidence_state
+
+    evidence_state = delivery_evidence_state(package)
+    if action.startswith("confirm") and evidence_state["sections"].get(section_key):
+        manifest = dict(review.source_manifest or {})
+        manifest.setdefault("confirmation_history", []).append(
+            {
+                "review_status": review.review_status,
+                "business_confirmed_by": review.business_confirmed_by_id,
+                "business_confirmed_at": _iso(review.business_confirmed_at),
+                "technical_confirmed_by": review.technical_confirmed_by_id,
+                "technical_confirmed_at": _iso(review.technical_confirmed_at),
+                "source_hashes": manifest.get("confirmation_source_hashes"),
+                "review_note": review.review_note,
+            }
+        )
+        review.source_manifest = manifest
+        review.save(update_fields=["source_manifest", "updated_at"])
+        reset_section_reviews(package, {section_key})
+        review.refresh_from_db()
+
     if action == "confirm":
         open_roles = [
             role
@@ -689,6 +710,11 @@ def review_delivery_section(
     else:
         raise ValidationError("Unbekannte Aktion für die Sektionsprüfung.")
 
+    if action in {"confirm_business", "confirm_technical", "not_applicable"}:
+        manifest = dict(review.source_manifest or {})
+        if evidence_state["source_hashes"]:
+            manifest["confirmation_source_hashes"] = evidence_state["source_hashes"]
+            review.source_manifest = manifest
     review.save()
     if package.status == DeliveryPackage.Status.READY:
         package.status = DeliveryPackage.Status.DRAFT

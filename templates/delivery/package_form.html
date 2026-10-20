@@ -34,7 +34,7 @@
         <span><strong>{{ row.finding_count }}</strong> Findings</span>
         <span><strong>{{ row.source_count }}</strong> Quellen</span>
       </div>
-      {% if row.review %}<div class="small text-muted">{{ row.review.get_content_origin_display }} · Sektionsprüfung: {{ row.review.get_review_status_display }}</div>{% endif %}
+      {% if row.review %}<div class="small text-muted">{{ row.review.get_content_origin_display }} · Sektionsprüfung: {% if row.evidence_changed %}Erneute Prüfung erforderlich (frühere Bestätigung historisch){% else %}{{ row.review.get_review_status_display }}{% endif %}</div>{% endif %}
       <div class="mt-3">
         {% if row.is_active %}<span class="badge badge-soft">Aktive Sektion</span>
         {% elif row.can_edit %}<a class="btn btn-sm btn-outline-secondary" href="{{ row.edit_url }}">Sektion öffnen</a>

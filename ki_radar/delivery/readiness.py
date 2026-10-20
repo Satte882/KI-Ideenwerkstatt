@@ -804,6 +804,20 @@ def evaluate_delivery_readiness(package: DeliveryPackage) -> list[ReadinessFindi
         )
 
     reviews = {review.section_key: review for review in package.section_reviews.all()}
+    from .ap3_autonomous import delivery_evidence_state
+
+    evidence_state = delivery_evidence_state(package)
+    for section_key, changed_sources in evidence_state["sections"].items():
+        if changed_sources:
+            findings.append(
+                ReadinessFinding(
+                    section_key,
+                    "SECTION_EVIDENCE_CHANGED",
+                    "blocker",
+                    "Quellenstand geändert; erneute Sektionsprüfung erforderlich. "
+                    "Frühere Bestätigungen bleiben historisch erhalten.",
+                )
+            )
     for section_key, section_label in DELIVERY_SECTION_DEFINITIONS:
         review = reviews.get(section_key)
         if review is None:

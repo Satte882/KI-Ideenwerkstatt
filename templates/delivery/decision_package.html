@@ -20,6 +20,10 @@
   </div>
 </header>
 
+{% if not ap3_evidence_state.verifier_current %}
+<div class="alert alert-warning" role="status">Frühere Verifikation ist historisch gültig, aber für den aktuellen Quellen- oder Inhaltsstand nicht mehr aktuell. Betroffene Sektionen erneut prüfen; die menschliche Auswahl bleibt unverändert.</div>
+{% endif %}
+
 <section class="cr-section decision-panel" aria-labelledby="decision-core-title">
   <header class="cr-section-heading">
     <div>
@@ -208,7 +212,7 @@
         <div class="mt-2">AP3 Synthese · Prompt {{ review.source_manifest.ap3_synthesis.prompt_version }} · Source Hash {{ review.source_manifest.ap3_synthesis.source_hash }}</div>
         {% endif %}
         {% if review.source_manifest.ap3_verifier %}
-        <div>AP3 Verifier · {{ review.source_manifest.ap3_verifier.verdict }} · Run {{ review.source_manifest.ap3_verifier.run_id }}</div>
+        <div>AP3 Verifier · {{ review.source_manifest.ap3_verifier.verdict }} · {% if not ap3_evidence_state.verifier_current %}historisch, nicht aktuell · {% endif %}Run {{ review.source_manifest.ap3_verifier.run_id }}</div>
         {% endif %}
       </div>
     </details>

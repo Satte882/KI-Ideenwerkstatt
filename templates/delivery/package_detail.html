@@ -179,7 +179,7 @@
           {% if row.can_edit and package.status != 'handed_over' %}<a class="btn btn-outline-secondary mb-3" href="{{ row.edit_url }}">Sektion fokussiert bearbeiten</a>{% endif %}
           {% if row.review %}
           <div class="small mb-3">
-            <div>Sektionsprüfung: {{ row.review.get_review_status_display }}</div>
+            <div>Sektionsprüfung: {% if row.evidence_changed %}Erneute Prüfung erforderlich (frühere Bestätigung historisch){% else %}{{ row.review.get_review_status_display }}{% endif %}</div>
             {% if row.requires_business %}<div>Fachlich: {% if row.review.business_confirmed_by %}{{ row.review.business_confirmed_by.get_display_name }}{% else %}offen{% endif %}{% if row.review.business_confirmation_role %} · {{ row.review.business_confirmation_role }}{% endif %}{% if row.review.business_confirmed_at %} · {{ row.review.business_confirmed_at|date:"d.m.Y H:i" }}{% endif %}</div>{% endif %}
             {% if row.requires_technical %}<div>Technisch: {% if row.review.technical_confirmed_by %}{{ row.review.technical_confirmed_by.get_display_name }}{% else %}offen{% endif %}{% if row.review.technical_confirmation_role %} · {{ row.review.technical_confirmation_role }}{% endif %}{% if row.review.technical_confirmed_at %} · {{ row.review.technical_confirmed_at|date:"d.m.Y H:i" }}{% endif %}</div>{% endif %}
           </div>
