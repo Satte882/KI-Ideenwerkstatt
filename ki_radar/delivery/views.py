@@ -126,6 +126,7 @@ def _section_rows(
         responsible_role, responsible_person = section_responsibility(package, section_key)
         review = reviews.get(section_key)
         findings = findings_by_section.get(section_key, [])
+        evidence_changed = any(f.code == "SECTION_EVIDENCE_CHANGED" for f in findings)
         state, state_label = _section_state(review, findings)
         roles = reviewer_roles(user, package, section_key)
         required = review.required_confirmations if review else frozenset()
@@ -139,6 +140,7 @@ def _section_rows(
                 "key": section_key,
                 "label": section_label,
                 "review": review,
+                "evidence_changed": evidence_changed,
                 "findings": findings,
                 "blocker_count": len(blockers),
                 "finding_count": len(findings),
@@ -157,6 +159,7 @@ def _section_rows(
                     and "business" in required
                     and (
                         review.business_confirmed_at is None
+                        or evidence_changed
                         or (review.has_role_collapse and review.business_confirmed_by_id != user.id)
                     )
                 ),
@@ -166,6 +169,7 @@ def _section_rows(
                     and "technical" in required
                     and (
                         review.technical_confirmed_at is None
+                        or evidence_changed
                         or (
                             review.has_role_collapse and review.technical_confirmed_by_id != user.id
                         )
@@ -176,8 +180,12 @@ def _section_rows(
                 ),
                 "requires_business": "business" in required,
                 "requires_technical": "technical" in required,
-                "business_complete": bool(review and review.business_confirmed_at),
-                "technical_complete": bool(review and review.technical_confirmed_at),
+                "business_complete": bool(
+                    review and review.business_confirmed_at and not evidence_changed
+                ),
+                "technical_complete": bool(
+                    review and review.technical_confirmed_at and not evidence_changed
+                ),
                 "responsible_role": responsible_role,
                 "responsible_person": responsible_person,
             }
@@ -327,6 +335,8 @@ def package_detail(request, pk):
 @login_required
 @require_GET
 def package_decision_package(request, pk):
+    from .ap3_autonomous import delivery_evidence_state
+
     package = get_object_or_404(_package_queryset(), pk=pk)
     if not can_view_package(request.user, package):
         raise PermissionDenied
@@ -388,6 +398,7 @@ def package_decision_package(request, pk):
             "primary_readiness_finding": primary_finding,
             "delivery_source_rows": delivery_source_differences(package),
             "section_reviews": package.section_reviews.all(),
+            "ap3_evidence_state": delivery_evidence_state(package),
         },
     )
 

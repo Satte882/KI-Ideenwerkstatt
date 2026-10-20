@@ -1275,17 +1275,123 @@ def _record_verification(
             "Das Delivery Package wurde während der Verifikation geändert.",
             code="candidate_stale",
         )
-    for review in package.section_reviews.select_for_update().all():
+    reviews = list(package.section_reviews.select_for_update().all())
+    source_hashes = _source_value_hashes(context, reviews)
+    for review in reviews:
         manifest = dict(review.source_manifest or {})
+        previous = manifest.get(VERIFIER_MANIFEST_KEY)
+        if previous and previous.get("run_id") != verification.run_id:
+            manifest.setdefault("ap3_verifier_history", []).append(previous)
+            # A new machine check must not renew an earlier human confirmation.
+            if "confirmation_source_hashes" not in manifest:
+                hashes = previous.get("source_hashes")
+                manifest["confirmation_source_hashes"] = (
+                    hashes if hashes is not None else _legacy_source_hashes(package)
+                )
         manifest[VERIFIER_MANIFEST_KEY] = {
             "run_id": verification.run_id,
             "source_hash": source_hash,
             "candidate_hash": candidate_hash,
             "verdict": verification.verdict,
             "findings": by_section.get(review.section_key, []),
+            "source_hashes": source_hashes,
         }
         review.source_manifest = manifest
         review.save(update_fields=["source_manifest", "updated_at"])
+
+
+def _source_value_hashes(context: AP3SourceContext, reviews=()) -> dict[str, str | None]:
+    # Object timestamps/versions alone do not change the meaning of evidence.
+    hashes = {source["source_id"]: _canonical_hash(source["value"]) for source in context.sources}
+    for review in reviews:
+        for source_id in _section_source_ids(review):
+            hashes.setdefault(source_id, None)
+    return hashes
+
+
+def _legacy_source_hashes(package) -> dict[str, str]:
+    """Recover only evidence actually retained by pre-fingerprint packages."""
+    hashes = {}
+    try:
+        origin = package.use_case.architecture_origin
+    except ObjectDoesNotExist:
+        return hashes
+    selection = (
+        origin.process_analysis.solution_selection_decisions.filter(
+            selected_option_id=origin.solution_option_id, decided_at__lte=package.created_at
+        )
+        .order_by("-decided_at")
+        .first()
+    )
+    if selection:
+        for name, value in selection.diagnosis_snapshot.items():
+            if name != "validation":
+                hashes[f"PA.{name}"] = _canonical_hash(_clean(value))
+    return hashes
+
+
+def _section_source_ids(review) -> set[str]:
+    manifest = review.source_manifest or {}
+    ids = {
+        source_id
+        for entry in (manifest.get(SYNTHESIS_MANIFEST_KEY, {}).get("fields") or {}).values()
+        for source_id in entry.get("source_ids", [])
+    }
+    # These sections validate feasibility of the chosen solution, its access path
+    # and its requirements even when a generated field cites a narrower source.
+    if review.section_key in {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }:
+        ids.add("PA.constraints")
+    from .readiness import READY_REQUIRED_FIELDS
+
+    ids.update(
+        f"DEL.{name}"
+        for name in READY_REQUIRED_FIELDS[review.section_key]
+        if name in INHERITED_CONTEXT_FIELDS
+    )
+    return ids
+
+
+def delivery_evidence_state(package: DeliveryPackage) -> dict:
+    """Read-only freshness projection; historical reviews and decisions stay intact."""
+    reviews = list(package.section_reviews.all())
+    if package.status == DeliveryPackage.Status.HANDED_OVER:
+        return {"sections": {}, "verifier_current": True, "source_hashes": {}}
+    if not any(review.source_manifest.get(VERIFIER_MANIFEST_KEY) for review in reviews):
+        return {"sections": {}, "verifier_current": True, "source_hashes": {}}
+    try:
+        context = build_ap3_source_context(package)
+    except AP3DeliveryError:
+        return {"sections": {}, "verifier_current": False, "source_hashes": {}}
+    current = _source_value_hashes(context, reviews)
+    sections = {}
+    verifier_current = True
+    for review in reviews:
+        manifest = review.source_manifest or {}
+        verifier = manifest.get(VERIFIER_MANIFEST_KEY) or {}
+        verified = verifier.get("source_hashes")
+        sources_current = (
+            verified == current
+            if verified is not None
+            else verifier.get("source_hash") == context.source_hash
+        )
+        candidate_current = verifier.get("candidate_hash") == _canonical_hash(
+            {"sources": verifier.get("source_hash"), "candidate": _candidate_payload(package)}
+        )
+        verifier_current = verifier_current and sources_current and candidate_current
+        baseline = manifest.get("confirmation_source_hashes")
+        if baseline is None:
+            baseline = verified if verified is not None else _legacy_source_hashes(package)
+        changed = sorted(
+            source_id
+            for source_id in _section_source_ids(review)
+            if source_id in baseline and baseline[source_id] != current.get(source_id)
+        )
+        sections[review.section_key] = changed
+    return {"sections": sections, "verifier_current": verifier_current, "source_hashes": current}
 
 
 def _current_pass_verification(

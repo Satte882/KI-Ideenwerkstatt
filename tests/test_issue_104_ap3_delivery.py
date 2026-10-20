@@ -25,10 +25,13 @@ from ki_radar.delivery.ap3_autonomous import (
     TARGET_FIELDS,
     AP3DeliveryError,
     AP3SourceContext,
+    delivery_evidence_state,
     prepare_autonomous_delivery_package,
     validate_synthesis_payload,
 )
 from ki_radar.delivery.models import DeliveryPackage, DeliverySectionReview
+from ki_radar.delivery.readiness import evaluate_delivery_readiness
+from ki_radar.delivery.services import review_delivery_section
 from ki_radar.governance.models import GovernanceAssessment, GovernanceReview
 from ki_radar.governance.services import create_screening_review_artifacts
 from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseCase
@@ -657,3 +660,245 @@ def test_ap3_decision_package_is_read_only_projection(client, owner, business_un
     assert "Provenance / Untersuchungsspur" in rendered
     assert f'action="{url}"' not in rendered
     assert client.post(url).status_code == 405
+
+
+@pytest.fixture
+def reviewed_ap3_package(owner, other_owner, business_unit, monkeypatch):
+    use_case, _approval = _approved_ap3_case(owner, business_unit)
+    use_case.technical_owner = other_owner
+    use_case.save(update_fields=["technical_owner", "updated_at"])
+
+    def provider(_prepared, *, response_format):
+        name = response_format["json_schema"]["name"]
+        if name == "ap3_delivery_synthesis":
+            return _provider_result(_synthesis_payload())
+        assert name == "ap3_delivery_verification"
+        return _provider_result(_verifier_payload())
+
+    monkeypatch.setattr("ki_radar.delivery.ap3_autonomous.request_llm_task_provider", provider)
+    package = prepare_autonomous_delivery_package(use_case=use_case, actor=owner).package
+    for review in package.section_reviews.all():
+        for role in review.required_confirmations:
+            review_delivery_section(
+                package=package,
+                section_key=review.section_key,
+                action=f"confirm_{role}",
+                actor=owner if role == "business" else other_owner,
+            )
+    return package
+
+
+def _fresh_package(package):
+    return DeliveryPackage.objects.get(pk=package.pk)
+
+
+def _changed_sections(package):
+    return {
+        finding.section_key
+        for finding in evaluate_delivery_readiness(package)
+        if finding.code == "SECTION_EVIDENCE_CHANGED"
+    }
+
+
+def test_evidence_constraint_change_invalidates_only_affected_reviews(
+    reviewed_ap3_package, client, owner
+):
+    from django.forms.models import model_to_dict
+
+    from ki_radar.architecture.forms import ProcessAnalysisForm
+
+    package = reviewed_ap3_package
+    process = package.use_case.architecture_origin.process_analysis
+    selection = process.solution_selection_decisions.first()
+    original_diagnosis = selection.diagnosis_snapshot
+    original_reviews = list(package.section_reviews.values("section_key", "source_manifest"))
+    client.force_login(owner)
+    payload = model_to_dict(process, fields=ProcessAnalysisForm._meta.fields)
+    payload["constraints"] += " Der lesende ERP-Export ist für den Pilot untersagt."
+    form = ProcessAnalysisForm(payload, instance=process)
+    assert form.is_valid(), form.errors
+    assert form.changed_data == ["constraints"]
+    response = client.post(
+        reverse("architecture:process_analysis_update", kwargs={"pk": process.pk}), payload
+    )
+    assert response.status_code == 302
+    package = _fresh_package(package)
+    assert _changed_sections(package) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
+    assert delivery_evidence_state(package)["verifier_current"] is False
+    selection.refresh_from_db()
+    assert selection.diagnosis_snapshot == original_diagnosis
+    assert (
+        package.use_case.architecture_origin.process_analysis.solution_selection_decisions.count()
+        == 1
+    )
+    assert (
+        list(package.section_reviews.values("section_key", "source_manifest")) == original_reviews
+    )
+    page = client.get(reverse("delivery:decision_package", kwargs={"pk": package.pk}))
+    assert "historisch gültig" in page.content.decode()
+    assert "historisch, nicht aktuell" in page.content.decode()
+    detail = client.get(package.get_absolute_url())
+    rows = {row["key"]: row for row in detail.context["section_rows"]}
+    assert rows["solution_direction"]["business_complete"] is False
+    assert rows["problem_and_target"]["business_complete"] is True
+    from ki_radar.delivery.exports import render_delivery_markdown
+
+    assert "Erneute Prüfung erforderlich (frühere Bestätigung historisch)" in (
+        render_delivery_markdown(package)
+    )
+
+
+def test_unchanged_source_values_keep_confirmations_current(reviewed_ap3_package):
+    package = reviewed_ap3_package
+    process = package.use_case.architecture_origin.process_analysis
+    process.version += 1
+    process.save(update_fields=["version", "updated_at"])
+    package = _fresh_package(package)
+    assert not _changed_sections(package)
+    assert delivery_evidence_state(package)["verifier_current"] is True
+
+
+def test_source_provenance_limits_impact_to_dependent_section(reviewed_ap3_package):
+    package = reviewed_ap3_package
+    review = package.section_reviews.get(section_key="acceptance_and_measurement")
+    manifest = review.source_manifest
+    manifest["ap3_synthesis"]["fields"]["measurement_plan"]["source_ids"] = ["UC.metric_name"]
+    review.save(update_fields=["source_manifest", "updated_at"])
+    use_case = package.use_case
+    use_case.metric_name = "Neue fachliche Erfolgsmetrik"
+    use_case.save(update_fields=["metric_name", "updated_at"])
+    package = _fresh_package(package)
+    assert _changed_sections(package) == {"acceptance_and_measurement"}
+
+
+def test_successful_reverification_does_not_replace_human_reconfirmation(
+    reviewed_ap3_package, owner, other_owner
+):
+    package = reviewed_ap3_package
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints += " Der lesende ERP-Export ist für den Pilot untersagt."
+    process.save(update_fields=["constraints", "updated_at"])
+    package = _fresh_package(package)
+    old_verifier = package.section_reviews.first().source_manifest["ap3_verifier"]
+    # Provider is stubbed by the fixture; this verifies state handling, not the
+    # semantic acceptability of continuing with the new restriction.
+    result = prepare_autonomous_delivery_package(use_case=package.use_case, actor=owner)
+    package = _fresh_package(result.package)
+    assert delivery_evidence_state(package)["verifier_current"] is True
+    assert _changed_sections(package) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
+    for section in sorted(_changed_sections(package)):
+        review = package.section_reviews.get(section_key=section)
+        assert old_verifier in review.source_manifest["ap3_verifier_history"]
+        for role in sorted(review.required_confirmations):
+            review_delivery_section(
+                package=package,
+                section_key=section,
+                action=f"confirm_{role}",
+                actor=owner if role == "business" else other_owner,
+            )
+            if section == "solution_direction" and role == "business":
+                review.refresh_from_db()
+                assert review.technical_confirmed_at is None
+                assert not review.confirmations_complete
+        review.refresh_from_db()
+        assert review.confirmations_complete
+        assert review.source_manifest["confirmation_history"]
+    assert not _changed_sections(_fresh_package(package))
+
+
+def test_legacy_verifier_detects_retained_constraint_evidence(reviewed_ap3_package):
+    package = reviewed_ap3_package
+    for review in package.section_reviews.all():
+        review.source_manifest.pop("confirmation_source_hashes", None)
+        review.source_manifest["ap3_verifier"].pop("source_hashes")
+        review.save(update_fields=["source_manifest", "updated_at"])
+    assert not _changed_sections(_fresh_package(package))
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints = "Kein ERP-Export erlaubt."
+    process.save(update_fields=["constraints", "updated_at"])
+    assert _changed_sections(_fresh_package(package)) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
+
+
+def test_handed_over_evidence_remains_historical_snapshot(reviewed_ap3_package):
+    package = reviewed_ap3_package
+    package.status = DeliveryPackage.Status.HANDED_OVER
+    package.save(update_fields=["status", "updated_at"])
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints = "Neue Randbedingung für die nächste Package-Version."
+    process.save(update_fields=["constraints", "updated_at"])
+    assert not _changed_sections(_fresh_package(package))
+
+
+@pytest.mark.parametrize("constraints", ["", "Neue Zugriffsbeschränkung"])
+def test_constraint_removal_or_addition_is_a_source_change(reviewed_ap3_package, constraints):
+    package = reviewed_ap3_package
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints = constraints
+    process.save(update_fields=["constraints", "updated_at"])
+    assert _changed_sections(_fresh_package(package)) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
+
+
+def test_no_current_confirmation_is_carried_over_from_legacy_reverification(
+    reviewed_ap3_package, owner
+):
+    package = reviewed_ap3_package
+    for review in package.section_reviews.all():
+        review.source_manifest.pop("confirmation_source_hashes", None)
+        review.source_manifest["ap3_verifier"].pop("source_hashes")
+        review.save(update_fields=["source_manifest", "updated_at"])
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints = "Kein ERP-Export erlaubt."
+    process.save(update_fields=["constraints", "updated_at"])
+    result = prepare_autonomous_delivery_package(
+        use_case=_fresh_package(package).use_case, actor=owner
+    )
+    assert _changed_sections(_fresh_package(result.package)) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
+
+
+def test_new_constraint_after_previously_empty_evidence_needs_review(
+    reviewed_ap3_package, owner, other_owner
+):
+    package = reviewed_ap3_package
+    process = package.use_case.architecture_origin.process_analysis
+    process.constraints = ""
+    process.save(update_fields=["constraints", "updated_at"])
+    package = prepare_autonomous_delivery_package(
+        use_case=_fresh_package(package).use_case, actor=owner
+    ).package
+    for section in _changed_sections(package):
+        review = package.section_reviews.get(section_key=section)
+        for role in review.required_confirmations:
+            review_delivery_section(
+                package=package,
+                section_key=section,
+                action=f"confirm_{role}",
+                actor=owner if role == "business" else other_owner,
+            )
+    assert not _changed_sections(_fresh_package(package))
+    process.constraints = "Neu belegt: ERP-Export untersagt."
+    process.save(update_fields=["constraints", "updated_at"])
+    assert _changed_sections(_fresh_package(package)) == {
+        "solution_direction",
+        "architecture_and_data",
+        "requirements_and_governance",
+    }
