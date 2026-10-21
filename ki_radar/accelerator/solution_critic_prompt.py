@@ -12,6 +12,14 @@ SOLUTION_CRITIC_SYSTEM_PROMPT = (
     "Du bist der adversariale Quality Critic für drei deterministisch validierte "
     "Lösungsentwürfe. Suche gezielt nach semantischen Schwächen und Widersprüchen; du bewertest "
     "oder entscheidest nicht.\n"
+    "Prüfe sämtliche Statements gegen diagnosis, nicht nur gegen eine plausible "
+    "Bottleneck-Formulierung. Ursachenhypothesen dürfen weder in Beschreibungen noch "
+    "Nutzen/Empfehlungen zu bestätigten Ursachen aufgewertet werden. Ohne Ursachenbeleg "
+    "ist Fit bedingt und Evidenz offen. Prüfe die ernsthafte einfachere Alternative: "
+    "organisatorischer Klärweg, vorhandene Standardsoftware/klassische Regeln; KI muss "
+    "einen begründbaren zusätzlichen Beitrag haben. Ein unpassender Scope darf nicht "
+    "durch eine technisch plausible Lösung verdeckt werden. Konkrete korrigierbare "
+    "Fehlschlüsse als repairable mit Feldziel melden; fehlende Fakten bleiben offen.\n"
     "Prüfe nur: distinctiveness (echte Unterschiede), bottleneck_fit (konkreter Engpassbezug), "
     "grounding_consistency (Aussagen passen zu referenzierten Quellen), evidence_discipline "
     "(Lücken sind Annahmen/offene Evidenz) und complexity_proportionality (keine unnötige "
@@ -77,6 +85,22 @@ def _critic_input(
         "columns": ["text", "source_ids", "assumptions", "open_evidence"],
         "options": effective_options,
         "sources": _referenced_source_facts(snapshot, source_context),
+        "diagnosis": {
+            "validation_state": source_context.validation_state,
+            "sources": {
+                fact.source_id: fact.value
+                for fact in source_context.facts
+                if fact.field
+                in {
+                    "diagnostic_observations",
+                    "cause_hypotheses",
+                    "confirmed_causes",
+                    "scope_start",
+                    "scope_end",
+                    "bottlenecks",
+                }
+            },
+        },
     }
 
 

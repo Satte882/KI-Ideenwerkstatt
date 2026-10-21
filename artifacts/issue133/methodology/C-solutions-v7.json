@@ -1,0 +1,577 @@
+{
+  "case": "C",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "8b4b194d4336c67cf71487e5e088f0ababa59bb08e862e8a4d207a0b73914d8b",
+    "ki_radar/accelerator/architect_contract.py": "dad564da77db8b3bfc6d8399a1599919d249002fe1c5ef33707fc99743090c5c"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "0c07f48a-bc43-46b0-a10b-370a9d6d7c8c",
+  "solution_preview": {
+    "schema_version": "1.0",
+    "prompt_version": "1.3",
+    "source_context": {
+      "source_schema_version": "block7_sources_v1",
+      "process_version": 1,
+      "validation_state": "not_validated",
+      "facts": [
+        {
+          "source_id": "process.name",
+          "field": "name",
+          "value": "Prozessanalyse Treffpunktprüfung und Kontaktaufnahme"
+        },
+        {
+          "source_id": "process.scope_start",
+          "field": "scope_start",
+          "value": "Identifikation abweichender Angaben in Reiseblatt und Nachricht"
+        },
+        {
+          "source_id": "process.scope_end",
+          "field": "scope_end",
+          "value": "Erhalt einer verbindlichen Treffpunktauskunft durch eine befugte Stelle"
+        },
+        {
+          "source_id": "process.trigger",
+          "field": "trigger",
+          "value": "Unsicherheit bezüglich Treffpunkt, Uhrzeit und Ansprechpartner"
+        },
+        {
+          "source_id": "process.outcome",
+          "field": "outcome",
+          "value": "Verbindliche Klärung des Treffpunkts durch eine befugte Stelle"
+        },
+        {
+          "source_id": "process.current_flow",
+          "field": "current_flow",
+          "value": "In der Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) stehen der Testperson das Reiseblatt mit einer Telefonnummer und ein Nachrichtenfragment zur Verfügung. Die Telefonnummer wurde bisher nicht angerufen. Bei zeitweise fehlendem Internetempfang sucht die Testperson nach einer befugten Stelle zur verbindlichen Klärung."
+        },
+        {
+          "source_id": "process.roles",
+          "field": "roles",
+          "value": "Reisende (Testperson), befugte Stelle"
+        },
+        {
+          "source_id": "process.systems",
+          "field": "systems",
+          "value": "Telefonie"
+        },
+        {
+          "source_id": "process.data_objects",
+          "field": "data_objects",
+          "value": "Reiseblatt (SYN-C-01), Nachrichtenfragment, Telefonnummer"
+        },
+        {
+          "source_id": "process.bottlenecks",
+          "field": "bottlenecks",
+          "value": "Ungeprüfte Erreichbarkeit der Telefonnummer; zeitweise fehlender Internetempfang."
+        },
+        {
+          "source_id": "process.baseline_metrics",
+          "field": "baseline_metrics",
+          "value": "Unbekannt; nicht bestätigt."
+        },
+        {
+          "source_id": "process.business_rules",
+          "field": "business_rules",
+          "value": "Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis begründet keinen bestätigten neuen Treffpunkt. Eine verbindliche Änderung erfordert die Bestätigung durch eine befugte Stelle."
+        },
+        {
+          "source_id": "process.exceptions",
+          "field": "exceptions",
+          "value": "Möglicher Ausfall der Telefonerreichbarkeit (bisher unbewertet und ungemessen)."
+        },
+        {
+          "source_id": "process.diagnostic_observations",
+          "field": "diagnostic_observations",
+          "value": "Das Reiseblatt gibt 08:30 Hotellobby an, die Nachricht 09:00 Seiteneingang. Die Testperson kann die zeitliche Reihenfolge der Unterlagen nicht sicher rekonstruieren und hat die Telefonnummer bisher nicht angerufen."
+        },
+        {
+          "source_id": "process.cause_hypotheses",
+          "field": "cause_hypotheses",
+          "value": "Es wurden laut den vorliegenden Quellen keine Ursachen für die Abweichung festgestellt."
+        },
+        {
+          "source_id": "stage.name",
+          "field": "name",
+          "value": "Exploration ohne Scopefreigabe"
+        }
+      ]
+    },
+    "options": {
+      "organizational": {
+        "name": {
+          "text": "Organisatorische Klärung: Zuständigkeit und Erreichbarkeit der befugten Stelle verbindlich regeln.",
+          "source_ids": [
+            "process.name",
+            "process.roles"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Der Regelungsgegenstand ist aus Name und Rollen ableitbar, die Wirkung ist nicht belegt."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Die Telefonnummer im Reiseblatt wurde bisher nicht angerufen, und bei zeitweise fehlendem Internetempfang wird eine befugte Stelle zur verbindlichen Klärung gesucht. Ursachenhypothese: laut Quellen keine Ursache festgestellt; bestätigte Ursache: keine. Der Entwurf regelt Zuständigkeit, Erreichbarkeit und einen alternativen Klärweg rein organisatorisch, ohne Technikänderung, und ist damit nur bedingt fit.",
+          "source_ids": [
+            "process.current_flow",
+            "process.roles",
+            "process.bottlenecks",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Annahme: Es existiert eine benennbare befugte Stelle mit erreichbarem Zugang."
+          ],
+          "open_evidence": [
+            "Offen: tatsächliche Erreichbarkeit und Reaktionsfähigkeit der befugten Stelle sind nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Kernursache und Erreichbarkeit sind unbelegt, der Nutzen daher nicht nachweisbar."
+          }
+        },
+        "expected_value": {
+          "text": "Der erwartete Nutzen ist rein qualitativ: Es wird festgelegt, wer verbindlich auskunftsfähig ist und wie die Klärung angestoßen wird. Eine Nutzen- oder Zielkennzahl ist in den Quellen nicht belegt.",
+          "source_ids": [
+            "process.outcome",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Ohne Baseline ist kein messbarer Nutzen belegbar."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Nutzen ist qualitativ ableitbar, aber nicht mit Kennzahlen belegt."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Beobachtung: Als Engpässe sind die ungeprüfte Erreichbarkeit der Telefonnummer und der zeitweise fehlende Internetempfang dokumentiert; Reiseblatt (08:30 Hotellobby) und Nachricht (09:00 Seiteneingang) weichen voneinander ab. Der Entwurf adressiert Erreichbarkeit und Klärweg, nicht die inhaltliche Abweichung selbst. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine, daher nur bedingte Abdeckung.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.diagnostic_observations",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: ob der fehlende Internetempfang die Klärung tatsächlich blockiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Zusammenhang zwischen Engpass und Ursache ist nicht belegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt werden die bereits vorhandenen Objekte Reiseblatt, Nachrichtenfragment und Telefonnummer. Zusätzlich erforderlich ist die organisatorische Kenntnis, welche Stelle befugt ist.",
+          "source_ids": [
+            "process.data_objects",
+            "process.roles"
+          ],
+          "assumptions": [
+            "Annahme: Das Reiseblatt enthält die aktuell gültige Telefonnummer."
+          ],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Datenobjekte sind belegt, ihre Aktualität nicht."
+          }
+        },
+        "application_impact": {
+          "text": "Keine Anwendungsänderung vorgesehen, da der Entwurf den organisatorischen Klärweg über die dokumentierte Telefonie nutzt. Eine Wirkung auf Anwendungen ist aus den Quellen nicht belegbar.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: ob Telefonie als einziger Kanal ausreicht."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Aussagen zur Anwendungswirkung sind quellenbedingt begrenzt."
+          }
+        },
+        "integration_impact": {
+          "text": "Es ist keine Systemintegration beschrieben, da keine Systemänderung angelegt wird. Beobachtung: Als System ist Telefonie dokumentiert, der Klärweg läuft zwischen Reisenden und befugter Stelle.",
+          "source_ids": [
+            "process.systems",
+            "process.roles",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Integrationsaussagen sind mangels Systemdetails nicht belegbar."
+          }
+        },
+        "technology_constraints": {
+          "text": "Beobachtung: Als vorhandenes System ist Telefonie dokumentiert, zeitweise fehlender Internetempfang ist als Engpass genannt. Ob die organisatorische Klärung über Telefonie unabhängig vom Internetempfang gelingt, ist nicht belegt.",
+          "source_ids": [
+            "process.systems",
+            "process.bottlenecks"
+          ],
+          "assumptions": [
+            "Annahme: Telefonie ist unabhängig vom Internetempfang nutzbar."
+          ],
+          "open_evidence": [
+            "Offen: technische Reichweite und Verfügbarkeit der Telefonie."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Technische Randbedingungen sind in den Quellen nur grob benannt."
+          }
+        },
+        "risks": {
+          "text": "Beobachtung: Ein möglicher Ausfall der Telefonerreichbarkeit ist unbewertet und ungemessen. Risiko: Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis könnte fälschlich als bestätigter Treffpunkt gewertet werden. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine.",
+          "source_ids": [
+            "process.exceptions",
+            "process.business_rules",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Wahrscheinlichkeit und Wirkung der Risiken sind unbelegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Der Entwurf passt insofern zum Prozessziel, als eine verbindliche Klärung durch eine befugte Stelle erreicht werden soll. Da keine bestätigte Ursache vorliegt, ist der Fit ausdrücklich bedingt; Zielarchitekturprinzipien sind nicht belegt.",
+          "source_ids": [
+            "process.outcome",
+            "process.scope_end",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Es liegen keine Zielarchitekturprinzipien als Quelle vor."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Fit ist ohne bestätigte Ursache und Zielarchitektur nicht belegbar."
+          }
+        }
+      },
+      "rule_automation": {
+        "name": {
+          "text": "Regelbasierte Prüfung der Absenderbefugnis mit Vorrang vorhandener Standardsoftware.",
+          "source_ids": [
+            "process.business_rules",
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Die Regel ist belegt, die Umsetzungsform nicht."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Die Geschäftsregel verlangt die Bestätigung einer verbindlichen Änderung durch eine befugte Stelle; als System ist Telefonie dokumentiert. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine, der Fit ist daher bedingt. Vor einer eigenen Automation ist zu prüfen, ob vorhandene Standardsoftware die Funktion bereits bietet; dazu liegen keine Quellen vor, eine eigene Automation ist nicht vorgegeben.",
+          "source_ids": [
+            "process.business_rules",
+            "process.systems",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Funktionsabdeckung vorhandener Standardsoftware ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ohne bestätigte Ursache und ohne Softwareprüfung ist der Lösungsfit nur bedingt."
+          }
+        },
+        "expected_value": {
+          "text": "Der erwartete Nutzen ist qualitativ: Angaben ohne nachgewiesene Absenderbefugnis werden konsistent als unbestätigt behandelt. Eine Nutzen- oder Zielkennzahl ist nicht belegt; die Baseline ist als unbekannt und nicht bestätigt dokumentiert.",
+          "source_ids": [
+            "process.business_rules",
+            "process.baseline_metrics"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Nutzenbewertung ist ohne Kennzahlen nicht möglich."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Nutzen ist rein qualitativ und quantitativ nicht belegbar."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Beobachtung: Engpässe sind die ungeprüfte Erreichbarkeit der Telefonnummer und der zeitweise fehlende Internetempfang. Eine Regelanwendung adressiert primär die Konsistenz der Treffpunktangaben, nicht den Erreichbarkeitsengpass. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine, daher nur bedingte Abdeckung.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Wirkung der Regel auf den Erreichbarkeitsengpass."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Die Ursache des Engpasses ist nicht belegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt werden Reiseblatt, Nachrichtenfragment und Telefonnummer als Prüfgegenstände. Zusätzlich wäre ein Merkmal erforderlich, das die Absenderbefugnis belegt.",
+          "source_ids": [
+            "process.data_objects",
+            "process.business_rules"
+          ],
+          "assumptions": [
+            "Annahme: Ein Nachweis der Absenderbefugnis ist überhaupt prüfbar vorhanden."
+          ],
+          "open_evidence": [
+            "Offen: Existenz und Format eines Befugnishinweises."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Erforderliche Datenmerkmale sind nicht belegt."
+          }
+        },
+        "application_impact": {
+          "text": "Beobachtung: Als vorhandenes System ist Telefonie dokumentiert; wo eine solche Regel umgesetzt würde, ist nicht belegt. Vor eigener Umsetzung ist die Funktionsabdeckung vorhandener Standardsoftware zu prüfen.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Welche vorhandene Anwendung die Prüfung bereits bietet."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Anwendungsbezug ist nicht dokumentiert."
+          }
+        },
+        "integration_impact": {
+          "text": "Eine Integration wäre nur nötig, wenn die Regel außerhalb der vorhandenen Telefonie beziehungsweise einer vorhandenen Anwendung läge; belegt ist keine Schnittstelle. Der dokumentierte Ablauf sieht einen Klärweg über eine befugte Stelle vor.",
+          "source_ids": [
+            "process.current_flow",
+            "process.roles"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Schnittstellen und Datenflüsse sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Integrationsbedarf ist aus den Quellen nicht ableitbar."
+          }
+        },
+        "technology_constraints": {
+          "text": "Beobachtung: Telefonie ist das dokumentierte System, der zeitweise fehlende Internetempfang ist ein Engpass. Eine eigene Automatisierungslösung ist nicht vorgegeben und ohne belegte Lücke in vorhandener Standardsoftware nicht begründbar.",
+          "source_ids": [
+            "process.systems",
+            "process.bottlenecks"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Betriebsumgebung und technische Verfügbarkeit sind unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Technische Randbedingungen sind nicht belegt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Eine Regel könnte eine unbestätigte Angabe als bestätigt behandeln, obwohl nur eine befugte Stelle bestätigen darf. Beobachtung: Ein möglicher Ausfall der Telefonerreichbarkeit ist unbewertet und ungemessen. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine.",
+          "source_ids": [
+            "process.business_rules",
+            "process.exceptions",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Fehlwirkung und Ausfallrisiko sind nicht messbar belegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Eine regelbasierte Prüfung ist anschlussfähig an den Grundsatz, dass nur eine befugte Stelle verbindlich bestätigt. Da keine bestätigte Ursache vorliegt und die Prüfung vorhandener Standardsoftware fehlt, ist der Fit bedingt.",
+          "source_ids": [
+            "process.business_rules",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Zielarchitektur und Funktionsumfang vorhandener Software sind nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Fit ist ohne Ursachenbeleg und Softwareprüfung nicht belegbar."
+          }
+        }
+      },
+      "assistant": {
+        "name": {
+          "text": "KI-Assistenz zur Einordnung der Treffpunktangaben mit ausdrücklichem Nutzenvorbehalt.",
+          "source_ids": [
+            "process.data_objects",
+            "process.trigger"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Anwendungsfall ist belegt, der Zusatznutzen nicht."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Es liegen zwei abweichende Angaben vor (08:30 Hotellobby, 09:00 Seiteneingang), und die zeitliche Reihenfolge der Unterlagen lässt sich nicht sicher rekonstruieren. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine. Gegenüber dem einfachen Klärweg über eine befugte Stelle hat KI hier keinen belegten Zusatznutzen, da ohne Absenderbefugnis kein neuer Treffpunkt bestätigt werden darf.",
+          "source_ids": [
+            "process.diagnostic_observations",
+            "process.business_rules",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Nutzennachweis einer KI-Unterstützung fehlt vollständig."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Weder Ursache noch Mehrwert sind belegt."
+          }
+        },
+        "expected_value": {
+          "text": "Der erwartete Nutzen ist rein qualitativ und nicht belegt; eine Nutzen- oder Zielkennzahl fehlt, die Baseline ist als unbekannt und nicht bestätigt dokumentiert. Ausdrücklich gilt: Gegenüber dem einfachen Klärweg über eine befugte Stelle ist kein Zusatznutzen belegt.",
+          "source_ids": [
+            "process.baseline_metrics",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Vergleichsmessung zwischen Assistenz und Klärweg fehlt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Kein belegter Zusatznutzen gegenüber einem einfachen Klärweg."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Beobachtung: Engpässe sind die ungeprüfte Erreichbarkeit der Telefonnummer und der zeitweise fehlende Internetempfang, der eine netzbasierte Assistenz selbst einschränken würde. Da die Engpässe die Erreichbarkeit betreffen, deckt ein Assistenzsystem sie nicht belegt ab. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.systems"
+          ],
+          "assumptions": [
+            "Annahme: Ein Assistenzsystem benötigt Netzwerkzugang."
+          ],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Abdeckung der Engpässe durch Assistenz ist nicht belegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt würden Reiseblatt, Nachrichtenfragment und Telefonnummer als Eingaben. Ein Merkmal zur Absenderbefugnis fehlt; ohne dieses kann ein Assistenzsystem keine verbindliche Aussage stützen.",
+          "source_ids": [
+            "process.data_objects",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Datenqualität und tatsächliche Verfügbarkeit der Objekte."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Entscheidende Datenmerkmale sind nicht belegt."
+          }
+        },
+        "application_impact": {
+          "text": "Beobachtung: Als System ist Telefonie dokumentiert; ein Assistenzsystem wäre eine zusätzliche Anwendung, deren Notwendigkeit nicht belegt ist.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: ob vorhandene Standardsoftware die Unterstützung bereits leistet."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Anwendungsbezug und Alternativen sind nicht dokumentiert."
+          }
+        },
+        "integration_impact": {
+          "text": "Eine Integration in vorhandene Systeme ist nicht beschrieben und aus den Quellen nicht ableitbar. Der dokumentierte Ablauf sieht einen Klärweg zwischen Reisenden und befugter Stelle vor.",
+          "source_ids": [
+            "process.current_flow",
+            "process.roles"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Schnittstellen und Betriebsmodell sind unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Integrationsaussagen sind nicht belegbar."
+          }
+        },
+        "technology_constraints": {
+          "text": "Beobachtung: Telefonie ist das dokumentierte System, der zeitweise fehlende Internetempfang kann netzbasierte Assistenz einschränken. Eine KI-Lösung ist nicht vorgegeben und ohne belegten Zusatznutzen nicht begründet.",
+          "source_ids": [
+            "process.systems",
+            "process.bottlenecks"
+          ],
+          "assumptions": [
+            "Annahme: Netzbasierte Assistenz ist bei fehlendem Internetempfang nicht nutzbar."
+          ],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Technische Randbedingungen sind nur grob belegt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Ein Assistenzsystem könnte eine unbestätigte Nachricht als verbindlichen Treffpunkt darstellen, obwohl nur eine befugte Stelle bestätigen darf. Beobachtung: Ein möglicher Ausfall der Telefonerreichbarkeit ist unbewertet und ungemessen. Ursachenhypothese: keine festgestellt, bestätigte Ursache: keine.",
+          "source_ids": [
+            "process.business_rules",
+            "process.exceptions",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Fehlwirkung und Risikohöhe sind nicht belegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Ein Assistenzsystem ist kein belegter Bestandteil des beschriebenen Zielpfads, der die verbindliche Klärung durch eine befugte Stelle vorsieht. Da keine bestätigte Ursache vorliegt und kein Zusatznutzen belegt ist, ist der Fit bedingt.",
+          "source_ids": [
+            "process.outcome",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Offen: Zielarchitekturprinzipien liegen nicht vor."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Fit ist ohne Ursachen- und Nutzennachweis nicht belegbar."
+          }
+        }
+      }
+    },
+    "edits": {}
+  },
+  "quality_runs": [
+    {
+      "status": "failed",
+      "step_type": "initial_critic",
+      "error_code": "output_truncated",
+      "result_payload": {}
+    }
+  ],
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}

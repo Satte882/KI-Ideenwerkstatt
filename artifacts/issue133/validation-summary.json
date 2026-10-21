@@ -1,0 +1,47 @@
+{
+  "issue": "https://github.com/Satte882/KI-Ideenwerkstatt/issues/133",
+  "date_europe_berlin": "2026-10-21",
+  "product_commit": "095062aa52efe5b2a9a3770b6bd04b1a3f41907e",
+  "summary_type": "reviewer_record_of_observed_tool_results",
+  "environment": "Django test client, fresh SQLite test DB, temporary source directory",
+  "runner": "scripts/validate_rsd_issue133.py",
+  "external_socket_connections": "denied process-wide by runner",
+  "scenario_provider_responses": "none; actual not_configured failure, not a simulated success",
+  "product_changes": false,
+  "regression": {
+    "passed": 123,
+    "failed": 0,
+    "warnings": 11,
+    "seconds": 46.61,
+    "files": [
+      "tests/test_issue133_rsd_validation.py",
+      "tests/test_issue_422_idea_inbox.py",
+      "tests/test_idea_autonomous_discovery.py",
+      "tests/test_stage_focus_and_process_findings.py",
+      "tests/test_solution_selection_ux.py",
+      "tests/test_guided_intake_hard_gates.py",
+      "tests/test_golden_path_to_closure.py",
+      "tests/test_scale_readiness.py"
+    ],
+    "scope": "existing mechanism regressions; some use simulated provider responses and prepared evidence"
+  },
+  "final_scenario_rerun_after_text_refinement": {
+    "passed": 1,
+    "failed": 0,
+    "warnings": 11,
+    "seconds": 20.76
+  },
+  "ruff_check": "passed for the two added Python files",
+  "ruff_format_check": "passed for the two added Python files",
+  "scenario_endpoint": "autonomous discovery unavailable; manually supported diagnosis and option drafts; no cause confirmation or solution decision",
+  "unproven": [
+    "autonomous semantic discovery quality",
+    "automatic provenance from Inbox into manually created process",
+    "validated business cause and preferred solution",
+    "business benefit, baseline, target or pilot impact",
+    "scenario-specific governance, approval, delivery, pilot and operations",
+    "current browser usability and PostgreSQL concurrency",
+    "executed scenarios B-D"
+  ],
+  "evidence_scope": "historical offline first run only; see live/results-summary.json for authorized real-model follow-up"
+}

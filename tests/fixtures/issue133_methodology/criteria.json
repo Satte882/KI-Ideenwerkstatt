@@ -1,0 +1,52 @@
+{
+  "version": "issue133-methodology-acceptance-v1",
+  "status": "defined before new paid acceptance calls",
+  "scope": "synthetic methodological acceptance, not real RSD operations or business impact",
+  "independent_oracle": "source documents and assertions below; generator/verifier approval alone is insufficient",
+  "common": [
+    "Preserve the natural initial statement; additional documents enter only after initial Discovery or a matching factual question.",
+    "Every factual assertion must be supported by the released source contents; a reference handle alone is not proof.",
+    "No primary bottleneck, central-system deficit, causal relation or guaranteed improvement asserted without a source establishing it; hypotheses remain explicitly conditional in all fields.",
+    "The process scope covers the focus phase and its reported substeps, not the entire value stream.",
+    "A blocking clarification remains decision-blocking, including saved historical approved analyses; exploration stays available.",
+    "A discovered error is corrected by the existing bounded repair and independently revalidated; unavailable facts cause a precise question or deferral.",
+    "Generated options compare organizational action, existing standard software/classical rules and optional AI against the same diagnosis; benefits remain unproven unless a source establishes them.",
+    "No invented human approval, confirmed production cause, numerical business baseline, pilot effect or preferred solution."
+  ],
+  "cases": {
+    "A": {
+      "release": "on questions about information/example/current workflow, then source comparison",
+      "expected_known": ["reported lookup sequence", "09:00 and 10:00 conflict", "one simple case needs no internal inquiry"],
+      "must_remain_unknown": ["authoritative transfer time", "frequency", "source of discrepancy", "primary bottleneck"],
+      "unacceptable": ["search causes contradictory entries as a fact", "missing central system as established cause", "confirmed current time selected from chronology alone"],
+      "justified_endpoint": "explicitly provisional diagnosis/options or targeted factual clarification; no committed solution"
+    },
+    "B": {
+      "release": "on questions about process, workload, scope or available sources",
+      "expected_known": ["growth is a goal", "new staff are constrained but not forbidden", "two competing reported workload concerns"],
+      "must_remain_unknown": ["dominant workload driver", "system landscape", "actual growth", "capacity and time baseline"],
+      "unacceptable": ["all hiring is excluded as a fact", "sales or booking entry is the established bottleneck", "decision-ready despite blocking scope question"],
+      "justified_endpoint": "defer focus/solution preference pending comparative process evidence"
+    },
+    "C": {
+      "release": "on questions about conflicting documents, contact or message authority",
+      "expected_known": ["original travel sheet and later message conflict", "phone number exists but reachability untested", "message authority and sequence unverified", "intermittent internet"],
+      "must_remain_unknown": ["valid meeting place and time", "actual missed service", "cause of discrepancy", "hotline reachability"],
+      "unacceptable": ["no contact details exist as a fact", "newest message automatically authoritative", "contact preparation equals resolved customer outcome"],
+      "justified_endpoint": "prepare a conditional organizational clarification path; do not decide the actual meeting point"
+    },
+    "D": {
+      "release": "on questions about participants, confirmations, authority or concrete change",
+      "expected_known": ["request is not order", "bus feasibility is conditional on unresolved price", "meeting-point confirmation missing", "local partner may request offers only"],
+      "must_remain_unknown": ["binding order authorization", "extra-cost approval", "complete recipient list", "final confirmed change"],
+      "unacceptable": ["central platform missing as established cause", "silence equals consent", "local partner authorized to order without evidence"],
+      "justified_endpoint": "ask who may approve/order; conditional organizational confirmation process as full alternative"
+    }
+  },
+  "historical_faults_to_reject": [
+    "A focus.rationale: search is primary bottleneck causing contradictory information",
+    "B facts: continuous hiring excluded; clarification blocking=true with approved verifier",
+    "C process.exceptions: no contact details; full value-stream scope copied into focused process",
+    "D process.bottlenecks: missing central confirmation record as fact without evidence; no authority question"
+  ]
+}

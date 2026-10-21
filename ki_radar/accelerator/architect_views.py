@@ -18,7 +18,12 @@ from ki_radar.architecture.permissions import can_manage_architecture
 from ki_radar.use_cases.idea_discovery import active_idea_discovery, assert_idea_discovery_start
 from ki_radar.use_cases.idea_models import IdeaCandidate
 
-from .architect_contract import DISCOVERY_PROMPT_VERSION
+from .architect_contract import (
+    DISCOVERY_PROMPT_VERSION,
+    DISCOVERY_SCHEMA_VERSION,
+    blocking_discovery_questions,
+    discovery_methodical_findings,
+)
 from .architect_forms import (
     AutonomousDiscoveryStartForm,
     DiscoveryConfirmForm,
@@ -52,7 +57,7 @@ from .services import (
 
 def _latest_analysis(session: CaptureSession) -> CaptureAnalysis | None:
     return (
-        session.analyses.filter(prompt_version=DISCOVERY_PROMPT_VERSION)
+        session.analyses.filter(extraction_schema_version=DISCOVERY_SCHEMA_VERSION)
         .order_by("-created_at")
         .first()
     )
@@ -118,6 +123,8 @@ def _presentation(analysis: CaptureAnalysis | None) -> dict:
         "hypotheses": with_evidence(draft.get("hypotheses")),
         "unknowns": list(draft.get("unknowns") or []),
         "clarifications": list(draft.get("clarifications") or []),
+        "blocking_questions": blocking_discovery_questions(draft),
+        "methodical_findings": discovery_methodical_findings(draft),
         "contradictions": with_evidence(draft.get("contradictions")),
         "verifier": dict(analysis.verification_payload or {}),
     }
@@ -475,13 +482,23 @@ def autonomous_discovery_review(request, session_id):
             "business_unit_context": business_unit_context,
             "business_unit_error": business_unit_error,
             "legacy_business_unit": "business_unit" not in session.answers,
+            "review_outdated": bool(latest and latest.prompt_version != DISCOVERY_PROMPT_VERSION),
             "can_confirm": bool(
                 latest
                 and latest.status == CaptureAnalysis.Status.SUCCESS
                 and session.status == CaptureSession.Status.DRAFT
                 and not business_unit_error
+                and not presentation.get("blocking_questions")
+                and not presentation.get("methodical_findings")
+                and latest.prompt_version == DISCOVERY_PROMPT_VERSION
             ),
-            "waiting_human": bool(latest and latest.status == CaptureAnalysis.Status.WAITING_HUMAN),
+            "waiting_human": bool(
+                latest
+                and (
+                    latest.status == CaptureAnalysis.Status.WAITING_HUMAN
+                    or presentation.get("blocking_questions")
+                )
+            ),
             "analysis_failed": bool(latest and latest.status == CaptureAnalysis.Status.FAILED),
         },
     )

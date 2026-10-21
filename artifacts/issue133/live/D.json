@@ -1,0 +1,482 @@
+{
+  "case": "D",
+  "synthetic": true,
+  "initial": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+  "source": "scenario document; no K1-K3 cards in initial request",
+  "operator_action": "answer model clarification with documented synthetic card information",
+  "http": {
+    "status": 302,
+    "messages": []
+  },
+  "session_id": "07f619de-6ea9-4114-90d0-b2b9164549b4",
+  "session_revision": 1,
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133 D] Touristik"
+    },
+    "problem_statement": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Antwort auf die Fragen nach Kommunikationsmitteln und Beteiligten, ausschließlich synthetisch aus D-K1:\nDie Testperson ist ein lokaler Leistungspartner, der die Busse für eine Reisegruppe organisiert. Im Beispiel SYN-D-01 fragt die Reiseorganisation eine spätere Abholung an. Der lokale Partner fragt hierzu beim Busunternehmen und bei der Reiseleitung nach. Die Erstbeschreibung nennt Telefonate und schriftliche Nachrichten; ob E-Mail, SMS oder andere Programme genutzt werden, ist nicht bekannt. Eine Anfrage ist noch kein bestätigter Auftrag. Eine vollständige Liste aller je nach Änderung zu informierenden Personen ist nicht verfügbar.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "180e404f-3f12-443a-a106-5a7f8e2d5e15",
+      "title": "[SYNTHETISCH #133 D] Touristik-Problem",
+      "source_note": "Synthetische Testperson; keine realen RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T10:29:46.471586+00:00",
+      "idea_updated_at": "2026-10-21T10:29:46.422283+00:00",
+      "origin_source_filename": "ideenbox-180e404f-3f12-443a-a106-5a7f8e2d5e15.md",
+      "origin_source_sha256": "7b2519432556766d51eebc91b51f504ea9a280d805a9a065bfef555dfaef7664"
+    }
+  },
+  "analyses": [
+    {
+      "id": "202b8d1f-2dc6-4127-b040-7f35ab3fc726",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "40d47dd38851008ce2f10c80d3064c053ea3f9b7d42d0e1acc1acca5f732a9ad",
+      "prompt_version": "ap1-discovery-v1",
+      "extraction_schema_version": "ap1-discovery-v1",
+      "duration_ms": 40616,
+      "model_name": "google/gemini-3.6-flash",
+      "cost": "0.023174",
+      "prompt_tokens": 3444,
+      "completion_tokens": 5491,
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Busreisen-Organisation und Anpassung vor Ort",
+            "description": "End-to-End-Prozess von der initialen Planung der Busreise über die Durchführung und flexible Abstimmung bei Änderungen vor Ort bis hin zur finalen Busbestellung.",
+            "trigger": "Bedarf an der Organisation einer Busreise für eine Reisegruppe",
+            "outcome": "Erfolgreich durchgeführte und bei Bedarf angepasste Busreise",
+            "scope_in": "Organisation, Abstimmung von Änderungen vor Ort und Festlegung der Busbestellung",
+            "scope_out": "Abrechnung der Fahrtkosten und langfristige Fuhrparkplanung",
+            "strategic_objective": "Sicherstellung reibungsloser Reiseabläufe und klarer Abstimmungswege bei Ablaufänderungen vor Ort",
+            "stakeholders": "Reiseleiter / Organisator vor Ort, Kontaktdaten-Partner, Busunternehmer / Busfahrer",
+            "constraints": "Keine expliziten Einschränkungen angegeben",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG_PLANNING",
+              "sequence": 1,
+              "name": "Initialplanung der Busbestellung",
+              "description": "Erstmalige Organisation und Bestellung der Busse für die Reisegruppe.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_CHANGE_COMM",
+              "sequence": 2,
+              "name": "Abstimmung von Ablaufänderungen vor Ort",
+              "description": "Kommunikation per Telefon und Schriftverkehr mit mehreren Beteiligten bei Ablaufänderungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Telefonate und Nachrichten mit mehreren Beteiligten; Unsicherheit bezüglich des Kenntnisstands aller Personen",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_REORDER",
+              "sequence": 3,
+              "name": "Anpassung der Busbestellung",
+              "description": "Entscheidung und Durchführung der Umbestellung des Busses auf Basis der Abstimmung.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG_CHANGE_COMM",
+            "business_domain": "logistics",
+            "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Die Abstimmungsphase bei Ablaufänderungen verursacht die größte Unsicherheit und den höchsten manuellen Kommunikationsaufwand.",
+            "tradeoffs": [
+              "Eine Fokussierung auf die Abstimmungsphase behebt nicht Ursachen für Ablaufänderungen."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationskanäle derzeit genutzt werden.",
+              "Wer alle beteiligten Absender und Empfänger sind."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abstimmung von Ablaufänderungen vor Ort",
+            "scope_start": "Eintritt einer Änderung im geplanten Ablauf vor Ort",
+            "scope_end": "Klärung der Informationslage und Vorbereitung der Busanpassung",
+            "trigger": "Änderung im Reiseablauf vor Ort",
+            "outcome": "Transparenz über den Wissensstand aller Beteiligten und Klarheit über Anpassungsbedarf der Busbestellung",
+            "current_flow": "STG_PLANNING (Initialplanung der Busbestellung) -> STG_CHANGE_COMM (Abstimmung von Ablaufänderungen vor Ort) -> STG_REORDER (Anpassung der Busbestellung)",
+            "roles": "Organisator vor Ort",
+            "systems": "",
+            "data_objects": "Informationen zu Fahrplan- und Ablaufänderungen",
+            "business_rules": "",
+            "handoffs": "Informationsaustausch zwischen Organisator und mehreren externen/internen Ansprechpartnern",
+            "bottlenecks": "Mehrkanalige und unstrukturierte Kommunikation (Telefonate und Nachrichten) mit mehreren Beteiligten",
+            "observations": "Nach Abstimmungen besteht Unsicherheit über den Kenntnisstand der Beteiligten sowie über die Erforderlichkeit einer geänderten Busbestellung",
+            "cause_hypotheses": "Fehlen eines zentralen Abstimmungskanals führt zu unvollständigem Informationsfluss und Unsicherheit",
+            "constraints": "",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Änderungen erfolgt die Kommunikation telefonisch und schriftlich mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Beteiligten Bescheid wissen und ob der Bus umbestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die dezentrale Kommunikation über unterschiedliche Kanäle führt zu Unklarheiten bei Folgeentscheidungen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Anzahl und Rollen der beteiligten Kommunikationspartner",
+              "impact": "Erschwert die genaue Beschreibung der Schnittstellen."
+            },
+            {
+              "statement": "Eingesetzte Nachrichtenkanäle und Dokumentationsmittel",
+              "impact": "Erschwert die Analyse von Medienbrüchen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+              "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+              "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "39a578c2-c4a4-454f-8880-08e4d80e4736"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+          "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+          "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+          "blocking": false
+        }
+      ],
+      "contradictions": []
+    },
+    {
+      "id": "5767f863-333f-4a98-a8c0-8b4eddff4f1c",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "d3f6fc08b729c44cc6b88ea6dee18105aeab789c2b0b1e3df6bc4c6630452170",
+      "prompt_version": "ap1-discovery-v1",
+      "extraction_schema_version": "ap1-discovery-v1",
+      "duration_ms": 43403,
+      "model_name": "google/gemini-3.6-flash",
+      "cost": "0.027964",
+      "prompt_tokens": 3710,
+      "completion_tokens": 6715,
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Buslogistik- und Änderungskoordination bei Gruppenreisen",
+            "description": "Koordination von Fahrplanänderungen und Bestellanpassungen für Busse von Reisegruppen vor Ort.",
+            "trigger": "Anfrage zur Änderung von Busabholzeiten",
+            "outcome": "Abgeklärter Informationsstand zur Vorbereitung einer Anpassung der Busbestellung",
+            "scope_in": "Erfassung von Änderungsanfragen, Rückfragen bei Partnern und Informationsweitergabe",
+            "scope_out": "Durchführung der Busfahrt und Rechnungsabwicklung",
+            "strategic_objective": "Erhöhung der Transparenz und Verlässlichkeit bei Fahrplanänderungen",
+            "stakeholders": "Lokaler Leistungspartner, Reiseorganisation, Busunternehmen, Reiseleitung",
+            "constraints": "Konkrete Kommunikationsmedien unklar; Empfängerliste unvollständig; Anfragen sind keine bestätigten Aufträge",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG-1",
+              "sequence": 1,
+              "name": "Eingang der Änderungsanfrage",
+              "description": "Empfang einer Anfrage zur Anpassung der Busabholung durch die Reiseorganisation.",
+              "roles": "Reiseorganisation, Lokaler Leistungspartner",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG-2",
+              "sequence": 2,
+              "name": "Abstimmung und Informationsverteilung",
+              "description": "Telefonische und schriftliche Rückfragen beim Busunternehmen und bei der Reiseleitung.",
+              "roles": "Lokaler Leistungspartner, Busunternehmen, Reiseleitung",
+              "systems": "",
+              "documents": "Schriftliche Nachrichten",
+              "pain_points": "Unsicherheit, ob alle beteiligten Personen informiert sind.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG-3",
+              "sequence": 3,
+              "name": "Statusklärung und Entscheidungsvorbereitung",
+              "description": "Prüfung des Informationsstands und Klärung, ob der Bus anders bestellt werden soll.",
+              "roles": "Lokaler Leistungspartner",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit über den aktuellen Bestell- und Bestätigungsstatus.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG-2",
+            "business_domain": "logistics",
+            "capability": "Änderungskoordination und Transportabstimmung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In der Abstimmungsphase entstehen die maßgeblichen Unsicherheiten bezüglich des Informationsstands aller beteiligten Parteien.",
+            "tradeoffs": [
+              "Konzentration auf Koordination lässt spätere operative Fahrtdurchführung unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Spezifische Kommunikationsprogramme sind nicht bekannt.",
+              "Vollständige Empfängerliste ist unvollständig."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozess der Busänderungskoordination",
+            "scope_start": "Eingang der Änderungsanfrage",
+            "scope_end": "Vorbereitung der Entscheidung zur Busumbestellung",
+            "trigger": "Anfrage der Reiseorganisation für eine spätere Abholung",
+            "outcome": "Geklärter Informationsstand unter den beteiligten Akteuren",
+            "current_flow": "STG-1: Eingang der Änderungsanfrage -> STG-2: Abstimmung und Informationsverteilung -> STG-3: Statusklärung und Entscheidungsvorbereitung",
+            "roles": "Lokaler Leistungspartner, Reiseorganisation, Busunternehmen, Reiseleitung",
+            "systems": "",
+            "data_objects": "Schriftliche Nachrichten, Änderungsanfragen",
+            "business_rules": "Eine Anfrage ist noch kein bestätigter Auftrag.",
+            "handoffs": "Anfrage von Reiseorganisation an Leistungspartner; Rückfragen an Busunternehmen und Reiseleitung.",
+            "bottlenecks": "Mehrkanalige Abstimmung über Telefon und schriftliche Nachrichten ohne zentralen Bestätigungsnachweis.",
+            "observations": "Nach der Kommunikation bleibt Unsicherheit über den Informationsstand aller Beteiligten und den Bestellstatus bestehen.",
+            "cause_hypotheses": "Unstrukturierte und mehrkanalige Kommunikation führt zu Unklarheit über den Wissensstand der Beteiligten.",
+            "constraints": "Genaue Kommunikationsmedien sowie vollständige Empfängerlisten sind unvollständig.",
+            "exceptions": "Abweichende Kommunikationswege je nach Einzelfall.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der lokale Leistungspartner organisiert vor Ort Busse für Reisegruppen und stimmt Änderungen per Telefonat und schriftlicher Nachricht ab.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei einer Anfrage nach späterer Abholung fragt der lokale Partner beim Busunternehmen und bei der Reiseleitung nach.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Eine Anfrage stellt noch keinen bestätigten Auftrag dar.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Durch unstrukturierte Kommunikationswege entsteht Unklarheit darüber, ob alle Beteiligten informiert sind.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Spezifische genutzte Medien für schriftliche Nachrichten (z. B. E-Mail, SMS oder andere Programme) sind nicht bekannt.",
+              "impact": "Erschwert die genaue Analyse der genutzten Kommunikationskanäle."
+            },
+            {
+              "statement": "Eine vollständige Liste aller je nach Änderung zu informierenden Personen liegt nicht vor.",
+              "impact": "Kann dazu führen, dass relevante Schnittstellen im Prozess unberücksichtigt bleiben."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche konkreten Kommunikationsmittel werden verwendet und welche Personen müssen bei einer Änderung informiert werden?",
+              "impact": "Relevant für die detaillierte Definition des Soll-Prozesses.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "39a578c2-c4a4-454f-8880-08e4d80e4736"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche konkreten Kommunikationsmittel werden verwendet und welche Personen müssen bei einer Änderung informiert werden?",
+          "impact": "Relevant für die detaillierte Definition des Soll-Prozesses.",
+          "blocking": false
+        }
+      ],
+      "contradictions": []
+    }
+  ],
+  "materialized_value_stream_count": 0,
+  "scope_confirmation_submitted": false,
+  "human_time_measured": false
+}

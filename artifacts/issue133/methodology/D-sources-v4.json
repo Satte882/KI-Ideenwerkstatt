@@ -1,0 +1,536 @@
+{
+  "case": "D",
+  "phase": "sources",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "technical_retry_of": "D-sources-v4.technical-attempt.json",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "efa474290790bfab013e8d6cba2ecafa6722ef746b38728a02eff9086a35a11d",
+    "ki_radar/accelerator/architect_contract.py": "ce68ebd00bdf31058528fed3f973e115aec5fefeff649bff240e6aa602fa34ec"
+  },
+  "preceding_model_questions": [
+    {
+      "question": "Welche konkreten Rollen nehmen die kontaktierten Personen ein und wer besitzt die Vollmacht, eine Busumbestellung verbindlich auszulösen?",
+      "impact": "Klärt die Prozessverantwortung und Abgrenzung zwischen Abstimmung und Umbestellung.",
+      "blocking": false
+    }
+  ],
+  "released_sources": [
+    {
+      "filename": "01_request.md",
+      "sha256": "3c3433c9b0a9eef9eb8b270a2d433a30eb650d70ccf14caf460712fa73b68639"
+    },
+    {
+      "filename": "02_responses.md",
+      "sha256": "abe745a0c5a411cafd53e559d8bbdccd13797e4700a61ee3dbfd6f7783d7766a"
+    },
+    {
+      "filename": "03_authority.md",
+      "sha256": "711ad91f80a07534f358b881d8ce81fa9a23202232e1f6a7f52795e8168307b4"
+    }
+  ],
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik D"
+    },
+    "problem_statement": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "4892e83e-8656-42e0-9d60-37af6535123e",
+      "title": "[SYNTHETISCH #133 D/fresh-recovery] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:29:21.501426+00:00",
+      "idea_updated_at": "2026-10-21T11:29:21.470474+00:00",
+      "origin_source_filename": "ideenbox-4892e83e-8656-42e0-9d60-37af6535123e.md",
+      "origin_source_sha256": "d4eda03748f3f18461d883e15cc422bd9c2796c12ea12cf102e58dbcf0c152b7"
+    }
+  },
+  "analyses": [
+    {
+      "id": "991d7d05-5b00-438d-ba08-e2606616ea13",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "1a22cfeefc30ec0d26192f64caca50a7890a5f09c0d7aadf07debed95748b2ba",
+      "prompt_version": "ap1-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Personentransport- und Busorganisation für Reisegruppen",
+            "description": "Gesamtheitlicher Ablauf der Organisation, Abstimmung und Anpassung von Bustransporten für eine Reisegruppe vor Ort.",
+            "trigger": "Anforderung oder Anlass zur Organisation von Bustransporten für eine Reisegruppe vor Ort",
+            "outcome": "Durchgeführter Transport der Reisegruppe gemäß abstimmungsgemäßem Bedarf",
+            "scope_in": "Erfassung des Busbedarfs vor Ort, Abstimmung von Fahrplan- und Ablaufänderungen mit Beteiligten sowie Erteilung von Anpassungs- bzw. Bestellentscheidungen.",
+            "scope_out": "Vertragliche Grundvereinbarungen mit Reiseanbietern oder finanzielle Nachberechnung und Abrechnung nach Abschluss der Reise.",
+            "strategic_objective": "Zielvorschlag: Erhöhung der Transparenz und Verlässlichkeit bei der Vor-Ort-Transportabstimmung im Änderungsfall.",
+            "stakeholders": "Organisator vor Ort, Reisegruppe, Kommunikationspartner (z. B. Busunternehmen, Reiseleitung)",
+            "constraints": "Keine Vorgaben bezüglich spezifischer Software oder Tools; direkte Interaktion findet vor Ort statt.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stg_1_bedarf_erfassung",
+              "sequence": 1,
+              "name": "Transportbedarf erfassen",
+              "description": "Ersterfassung der notwendigen Fahrten und Gruppengrößen für den Bustransport vor Ort.",
+              "roles": "Organisator vor Ort",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Keine expliziten Angaben im Input enthalten.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stg_2_aenderung_abstimmung",
+              "sequence": 2,
+              "name": "Änderungen abstimmen und kommunizieren",
+              "description": "Telefonische und schriftliche Kontaktaufnahme mit mehreren Beteiligten bei auftretenden Planänderungen.",
+              "roles": "Organisator vor Ort, mehrere unbenannte Ansprechpartner",
+              "systems": "Telefon, schriftliche Nachrichtenmedien",
+              "documents": "Unbekannt",
+              "pain_points": "Unsicherheit darüber, ob alle Beteiligten die Information erhalten haben und ob der Bus umbestellt werden muss.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stg_3_bus_bestellung_anpassung",
+              "sequence": 3,
+              "name": "Busbestellung anpassen",
+              "description": "Verbindliche Anpassung oder Auslösung der veränderten Busbestellung beim Transportdienstleister.",
+              "roles": "Organisator vor Ort, Busunternehmen",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Unsicherheit bezüglich des passenden Auslösezeitpunkts für die geänderte Bestellung.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stg_2_aenderung_abstimmung",
+            "business_domain": "logistics",
+            "capability": "Transport- und Kommunikationsabstimmung im Änderungsfall",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Der berichtete Hauptschmerzpunkt liegt in der Abstimmungsphase bei Änderungen: Es entsteht Unsicherheit über den Informationsstand der Beteiligten und über die Notwendigkeit der Busumbestellung.",
+            "tradeoffs": [
+              "Die Fokussierung auf die Abstimmung adressiert nicht direkt die spätere Ausführung der Busumbestellung, behebt aber den Auslöser der Unsicherheit."
+            ],
+            "uncertainties": [
+              "Genaue Rollen, Anzahl der Personen und Befugnisse zur verbindlichen Umbestellung sind bisher nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozess der Abstimmung von Planänderungen vor Ort",
+            "scope_start": "Eintritt einer zeitlichen oder ablaufbezogenen Änderung bei der Busorganisation vor Ort",
+            "scope_end": "Erlangen von Klarheit über den Informationsstand aller Beteiligten und Vorbereitung der Bestellentscheidung",
+            "trigger": "Plan- oder Zeitenänderung bei der Reisegruppe vor Ort",
+            "outcome": "Informierte Beteiligte und fundierte Entscheidungsgrundlage für die Anpassung der Busbestellung",
+            "current_flow": "stg_2_aenderung_abstimmung (Änderungen abstimmen und kommunizieren): Bei einer Planänderung telefoniert und schreibt der Organisator mit mehreren Personen. Im Anschluss besteht Unsicherheit, ob alle Personen informiert sind und ob der Bus umbestellt werden soll.",
+            "roles": "Organisator vor Ort, mehrere Kommunikationspartner",
+            "systems": "Telefon, schriftliche Kommunikationsmittel",
+            "data_objects": "Änderungsinformationen, Kontaktinformationen",
+            "business_rules": "Nicht dokumentiert; Regeln für die Auslösung von Umbestellungen fehlen oder sind nicht klar definiert.",
+            "handoffs": "Informationsübermittlung zwischen Organisator und mehreren externen/internen Ansprechpartnern.",
+            "bottlenecks": "Fehlendes oder unklares Feedback zum Informationsempfang bei den Zielpersonen.",
+            "observations": "Berichtetes Gefühl der Unsicherheit nach der Kontaktaufnahme bzgl. Informationsstand und Bestellnotwendigkeit.",
+            "cause_hypotheses": "Mögliches Fehlen von verbindlichen Empfangsbestätigungen oder unklare Zuständigkeiten/Vollmachten für Busumbestellungen.",
+            "constraints": "Abstimmung findet unter Vor-Ort-Bedingungen statt; keine Prämissen zu bestehenden Softwarelösungen.",
+            "exceptions": "Unbekannt",
+            "baseline_metrics": "Keine quantitativ erfassten Daten verfügbar.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator koordiniert vor Ort Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Planänderungen telefoniert und schreibt der Organisator mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht beim Organisator manchmal Unsicherheit, ob alle Bescheid wissen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht beim Organisator manchmal Unsicherheit, ob der Bus anders bestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Fehlende Rückmeldeschleifen oder unklare Vollmachten könnten die Ursache für die Unsicherheit bezüglich Informationsstand und Bestellentscheidung sein.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Wer die konkreten Gesprächs- und Schreibpartner sind (z. B. Reiseleiter, Busunternehmer, Fahrer).",
+              "impact": "Macht die Zuordnung von Schnittstellen und Informationspflichten unklar."
+            },
+            {
+              "statement": "Ob der Organisator vor Ort die Befugnis hat, Busumbestellungen eigenständig vorzunehmen.",
+              "impact": "Beeinflusst die Entscheidungslogik im Prozess der Busanpassung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche konkreten Rollen nehmen die kontaktierten Personen ein und wer besitzt die Vollmacht, eine Busumbestellung verbindlich auszulösen?",
+              "impact": "Klärt die Prozessverantwortung und Abgrenzung zwischen Abstimmung und Umbestellung.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "18cb85dd-112e-4159-989e-d9cc9db36c1c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche konkreten Rollen nehmen die kontaktierten Personen ein und wer besitzt die Vollmacht, eine Busumbestellung verbindlich auszulösen?",
+          "impact": "Klärt die Prozessverantwortung und Abgrenzung zwischen Abstimmung und Umbestellung.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.029056"
+    },
+    {
+      "id": "a9858727-3e8a-4f9f-862c-43c3bb49f4e2",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "ddbb898596d967591c25b3933e38a0d27c1778735044acfaaa62b3d3bdc37719",
+      "prompt_version": "ap1-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Abwicklung von Fahrplanänderungen für Reisegruppen",
+            "description": "End-to-End-Koordinationsprozess zur Aufnahme, Abstimmung und Vorbereitung von Änderungen der Busabholzeiten vor Ort.",
+            "trigger": "Eingang einer Änderungsanfrage zur Busabholung durch die Reiseorganisation",
+            "outcome": "Konsolidierter Abstimmungsstatus und Vorbereitung der Grundlagen für eine Entscheidungs- oder Auftragsfreigabe",
+            "scope_in": "Aufnahme der Änderungsanfrage der Reiseorganisation bis zur Einholung der Rückmeldungen aller beteiligten Akteure",
+            "scope_out": "Verbindliche kostenpflichtige Nachbestellung oder Umbuchung des Busses ohne geklärte Vollmacht und Kostenfreigabe",
+            "strategic_objective": "Vorschlag zur Absicherung und Erhöhung der Transparenz bei der Koordination von Fahrplanänderungen vor Ort",
+            "stakeholders": "Lokaler Leistungspartner, Reiseorganisation, Busunternehmen, Reiseleitung",
+            "constraints": "Befugnis zur verbindlichen Bestellung und Mehrkostenfreigabe ist ungeklärt; Frist, Empfängerliste und Eskalationskontakt sind unbekannt",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "request_receipt",
+              "sequence": 1,
+              "name": "Anfrageeingang",
+              "description": "Aufnahme der Anfrage der Reiseorganisation nach einer geänderten Abholzeit.",
+              "roles": "Reiseorganisation, Lokaler Leistungspartner",
+              "systems": "Unbekannt",
+              "documents": "Änderungsanfrage SYN-D-01",
+              "pain_points": "Unklarheit über Vollmachten zur verbindlichen Änderung",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "key": "partner_coordination",
+              "sequence": 2,
+              "name": "Partnerabstimmung",
+              "description": "Einholung von Rückmeldungen zur Machbarkeit und Bestätigung bei Busunternehmen und Reiseleitung.",
+              "roles": "Lokaler Leistungspartner, Busunternehmen, Reiseleitung",
+              "systems": "Telefonat, schriftliche Nachrichten (konkrete Nachrichtenprogramme unbekannt)",
+              "documents": "Anfragen an Busunternehmen und Reiseleitung",
+              "pain_points": "Unsicherheit über den Informationsstand aller Beteiligten; Preis bleibt beim Busunternehmen offen; Bestätigung der Reiseleitung fehlt",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "key": "decision_preparation",
+              "sequence": 3,
+              "name": "Entscheidungsvorbereitung",
+              "description": "Zusammenfassung der Rückmeldungen und Feststellung des Freigabestatus vor einer Bestellung.",
+              "roles": "Lokaler Leistungspartner",
+              "systems": "Unbekannt",
+              "documents": "Offene Rückmeldungsübersicht",
+              "pain_points": "Weder verbindlich bestätigte Gesamtänderung noch Kostenfreigabe vorhanden",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "S2",
+                "S3"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "partner_coordination",
+            "business_domain": "logistics",
+            "capability": "Partnerkoordination und Abstimmungsmanagement",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In der Phase Partnerabstimmung entstehen die zentralen Unsicherheiten bezüglich Informationsstand und Vollständigkeit der Rückmeldungen von Busunternehmen und Reiseleitung.",
+            "tradeoffs": [
+              "Eine intensivere Abstimmung ohne geklärte Vollmachten sichert die Informationskette, löst jedoch nicht die finale Freigabebefugnis."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationskanäle und Fristen genutzt werden sollen."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2"
+            ]
+          },
+          "process_analysis": {
+            "name": "Detailanalyse der Partnerabstimmung bei Busänderungen",
+            "scope_start": "Eingang der Änderungsanfrage beim lokalen Leistungspartner",
+            "scope_end": "Vorliegen aller Rückmeldungen von Busunternehmen und Reiseleitung",
+            "trigger": "Eingang der Änderungsanfrage SYN-D-01",
+            "outcome": "Vorliegende Teilrückmeldungen von Busunternehmen und Reiseleitung",
+            "current_flow": "Phase partner_coordination (Partnerabstimmung): Der lokale Leistungspartner fragt beim Busunternehmen und bei der Reiseleitung nach. Das Busunternehmen erklärt eine spätere Abholung für grundsätzlich möglich, lässt den Zusatzpreis jedoch offen. Die Reiseleitung hat den Treffpunkt noch nicht bestätigt.",
+            "roles": "Lokaler Leistungspartner, Busunternehmen, Reiseleitung",
+            "systems": "Telefon, schriftliche Mitteilungen (konkrete Programme unbekannt)",
+            "data_objects": "Änderungsanfrage SYN-D-01, Rückmeldung Busunternehmen, Rückmeldung Reiseleitung",
+            "business_rules": "Eine Anfrage ist kein bestätigter Auftrag. Aus einer fehlenden Rückmeldung folgt keine Zustimmung.",
+            "handoffs": "Reiseorganisation an lokalen Leistungspartner; lokaler Leistungspartner an Busunternehmen und Reiseleitung",
+            "bottlenecks": "Offener Zusatzpreis des Busunternehmens und fehlende Bestätigung des Treffpunkts durch die Reiseleitung",
+            "observations": "Der Organisator ist unsicher, ob alle Beteiligten informiert sind und ob der Bus bereits geändert bestellt werden soll.",
+            "cause_hypotheses": "Unklare Zuständigkeiten, fehlende Bestätigungsregeln oder unvollständige Kontaktdaten könnten die Ursache für die Unsicherheit sein (unbestätigt).",
+            "constraints": "Befugnis zur verbindlichen Bestellung und Mehrkostenfreigabe ist ungeklärt; Frist, Empfängerliste und Eskalationskontakt fehlen.",
+            "exceptions": "Reiseleitung gibt keine Rückmeldung zum Treffpunkt. Busunternehmen nennt keinen konkreten Preis.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Die Reiseorganisation fragt den lokalen Leistungspartner nach einer späteren Abholung.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Der lokale Leistungspartner stimmt sich per Telefonat und schriftlichen Nachrichten mit dem Busunternehmen und der Reiseleitung ab.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Das Busunternehmen meldet eine spätere Abholung als grundsätzlich möglich, lässt den Zusatzpreis aber offen.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Von der Reiseleitung fehlt die Bestätigung des Treffpunkts.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Eine Anfrage ist kein bestätigter Auftrag und aus einer fehlenden Rückmeldung folgt keine Zustimmung.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "statement": "Der lokale Partner darf Angebote einholen, aber wer eine verbindliche Änderung bestellen und Mehrkosten freigeben darf, ist ungeklärt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Klare Zuständigkeiten und eindeutige Bestätigungsregeln könnten die Unsicherheit bei der Busbestellung verringern.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Spezifische genutzte Nachrichtenprogramme für die schriftliche Kommunikation.",
+              "impact": "Erschwert die Vorgabe von Kommunikationsstandards."
+            },
+            {
+              "statement": "Befugnis zur verbindlichen Umbuchung und Mehrkostenfreigabe.",
+              "impact": "Verhindert den verbindlichen Abschluss der Busumstellung."
+            },
+            {
+              "statement": "Geltende Fristen, vollständige Empfängerliste und Eskalationskontakt.",
+              "impact": "Führt zu zeitlicher Unsicherheit und unvollständiger Informierung aller Beteiligten."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Wer ist berechtigt, eine verbindliche Änderung zu bestellen und Mehrkosten freizugeben?",
+              "impact": "Ohne Klärung dieser Vollmacht kann keine verbindliche Umbuchung durchgeführt werden.",
+              "blocking": true
+            },
+            {
+              "question": "Welche Fristen, Empfängerlisten und Eskalationskontakte sind für den Änderungsprozess definiert?",
+              "impact": "Bestimmt den Ablauf und die Verbindlichkeit der Abstimmung.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_request.md",
+          "S2": "02_responses.md",
+          "S3": "03_authority.md"
+        },
+        "discovery_snapshot_id": "cd63ce1c-74e6-495e-a0dc-85e614a10b54"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "decision_blocking_clarification",
+            "message": "Wer ist berechtigt, eine verbindliche Änderung zu bestellen und Mehrkosten freizugeben?"
+          }
+        ],
+        "repair_instructions": "",
+        "human_question": "Wer ist berechtigt, eine verbindliche Änderung zu bestellen und Mehrkosten freizugeben?"
+      },
+      "open_questions": [
+        {
+          "question": "Wer ist berechtigt, eine verbindliche Änderung zu bestellen und Mehrkosten freizugeben?",
+          "impact": "Ohne Klärung dieser Vollmacht kann keine verbindliche Umbuchung durchgeführt werden.",
+          "blocking": true
+        },
+        {
+          "question": "Welche Fristen, Empfängerlisten und Eskalationskontakte sind für den Änderungsprozess definiert?",
+          "impact": "Bestimmt den Ablauf und die Verbindlichkeit der Abstimmung.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.032230"
+    }
+  ],
+  "scope_confirmed": false
+}

@@ -227,6 +227,8 @@ def _normalized_signature(option: dict[str, Any]) -> tuple[str, ...]:
 def validate_solution_generation_payload(
     payload: dict[str, Any],
     source_context: SolutionGenerationSourceContext,
+    *,
+    allow_historical: bool = False,
 ) -> dict[str, Any]:
     errors: list[str] = []
     root = _as_dict(payload, "$", errors)
@@ -244,7 +246,10 @@ def validate_solution_generation_payload(
     )
     if schema_version and schema_version != GENERATION_SCHEMA_VERSION:
         errors.append("$.schema_version: Nicht unterstützte Schema-Version.")
-    if prompt_version and prompt_version != GENERATION_PROMPT_VERSION:
+    supported_prompts = {GENERATION_PROMPT_VERSION}
+    if allow_historical:
+        supported_prompts.add("1.2")  # unchanged schema; historical previews remain readable
+    if prompt_version and prompt_version not in supported_prompts:
         errors.append("$.prompt_version: Nicht unterstützte Prompt-Version.")
 
     options = _as_dict(root.get("options"), "$.options", errors)

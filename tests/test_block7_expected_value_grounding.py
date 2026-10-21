@@ -182,7 +182,7 @@ def test_baseline_metrics_reach_provider_and_prompt_matches_fail_closed_numeric_
     assert generation_input["generation_rules"]["expected_value"] == EXPECTED_VALUE_RULE
     assert QUANTITATIVE_GROUNDING_RULE in SOLUTION_GENERATION_SYSTEM_PROMPT
     assert EXPECTED_VALUE_RULE in SOLUTION_GENERATION_SYSTEM_PROMPT
-    assert GENERATION_PROMPT_VERSION == "1.2"
+    assert GENERATION_PROMPT_VERSION == "1.3"
 
 
 @pytest.mark.django_db

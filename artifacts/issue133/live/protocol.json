@@ -1,0 +1,16 @@
+{
+  "authorization": "User: du hast die freigabe",
+  "strategy": "one unchanged initial input per case, sequential; at most one factual answer revision to actual model questions; preserve all revisions and failures",
+  "initial_card_release": "none",
+  "follow_up": "only matching prepared synthetic cards; unknown facts remain unknown; no manual rewriting of model output",
+  "model": "google/gemini-3.6-flash (effective existing Discovery default)",
+  "product_commit": "095062aa52efe5b2a9a3770b6bd04b1a3f41907e",
+  "isolation": "separate SQLite DB/source directory per case; existing views, prompts, transport and validations unchanged",
+  "test_envelope": "5 USD shared ledger; conservative reservation before each call; no application quota bypass",
+  "stop": "no invented scope confirmations, cause validation, preferred solution, governance approval, pilot result or operational release",
+  "evaluation": "source grounding, scope/focus fit, facts versus hypotheses, uncertainty, solution neutrality only if reached, provenance, counted intervention events; human minutes unmeasured",
+  "sampling_limit": "four qualitative cases, no reliability rate or generalized model ranking",
+  "plan_record": "recorded during execution; strategy announced to user before calls, not a formally preregistered experiment",
+  "observed_deviation": "C and D clarification runs overlapped; complete ledgers reconciled without a rerun; exclusive starter lock added and tested",
+  "github_evidence": "https://github.com/Satte882/KI-Ideenwerkstatt/issues/133#issuecomment-6313951190"
+}

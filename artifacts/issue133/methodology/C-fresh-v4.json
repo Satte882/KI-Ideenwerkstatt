@@ -1,0 +1,252 @@
+{
+  "case": "C",
+  "phase": "fresh",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "technical_retry_of": "C-fresh-v4.technical-attempt.json",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "efa474290790bfab013e8d6cba2ecafa6722ef746b38728a02eff9086a35a11d",
+    "ki_radar/accelerator/architect_contract.py": "84014cce49f9aadf1ba9ccf54a219d4ee60ed17b8e8e107c4c1c7f9c35eefc1d"
+  },
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik C"
+    },
+    "problem_statement": "Ich bin gerade auf der Reise. Für morgen habe ich einen Treffpunkt in meinen Unterlagen und eine andere Angabe in einer Nachricht. Jetzt bin ich unsicher, wo ich wann sein soll und wen ich fragen kann.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "18cfe8d6-d01b-4f18-9b54-6bdd9d5c95d7",
+      "title": "[SYNTHETISCH #133 C/fresh-recovery] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:26:18.394820+00:00",
+      "idea_updated_at": "2026-10-21T11:26:18.349050+00:00",
+      "origin_source_filename": "ideenbox-18cfe8d6-d01b-4f18-9b54-6bdd9d5c95d7.md",
+      "origin_source_sha256": "dee8056b65f3e720dc2e58f0661a67c6623463a3e568cc9b3c69dbf7a4cb77fd"
+    }
+  },
+  "analyses": [
+    {
+      "id": "8ee6b41d-6734-4e0c-af29-bc9273d3c3ea",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "66c8e46389055bec07ba796442cb74fe283fc36a8ee080cacbbebf8930dd2268",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reise- und Terminkoordination",
+            "description": "End-to-End-Ablauf von der Bereitstellung von Reiseinformationen bis zur Klärung von Termindetails vor Ort.",
+            "trigger": "Bevorstehender Termin während einer Reise am nächsten Tag",
+            "outcome": "Klarheit über Ort, Zeitpunkt und Ansprechpartner des morgigen Treffpunkts",
+            "scope_in": "Vorliegen von Reiseunterlagen und Erhalt von Nachrichten mit Terminangaben",
+            "scope_out": "Durchführung des Treffens selbst",
+            "strategic_objective": "Vorschlag: Sicherstellung einer verlässlichen Orientierung und Erreichbarkeit bei Terminabweichungen",
+            "stakeholders": "Reisende Person",
+            "constraints": "Unklarheit bezüglich des zuständigen Ansprechpartners zur Klärung der Terminabweichung",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "unterlagen_prüfung",
+              "sequence": 1,
+              "name": "Unterlagenprüfung",
+              "description": "Sichtung der vorliegenden Reiseunterlagen auf Ort und Zeit des morgigen Treffpunkts.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "Reiseunterlagen",
+              "pain_points": "Die Angaben in den Unterlagen weichen von einer erhaltenen Nachricht ab.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "nachrichten_abgleich",
+              "sequence": 2,
+              "name": "Nachrichtenabgleich",
+              "description": "Abgleich der Informationen aus der erhaltenen Nachricht mit den Daten der Reiseunterlagen.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "Nachricht, Reiseunterlagen",
+              "pain_points": "Widersprüchliche Zeit- und Ortsangaben erzeugen Unsicherheit über den tatsächlichen Treffpunkt.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "ansprechpartner_ermittlung",
+              "sequence": 3,
+              "name": "Ansprechpartnerermittlung",
+              "description": "Suche nach Kontaktdaten oder Verantwortlichen zur Klärung der Terminabweichung.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Es ist unbekannt, wer bezüglich der Terminabweichung kontaktiert werden kann.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "nachrichten_abgleich",
+            "business_domain": "corporate_services",
+            "capability": "Termin- und Reisedatenabgleich",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Vorschlag: Der Abgleich der widersprüchlichen Angaben zwischen Unterlagen und Nachricht deckt die primäre Unsicherheit auf und bildet die Grundlage für den Klärungsbedarf.",
+            "tradeoffs": [
+              "Eine Fokussierung auf den Abgleich behebt allein noch nicht die Unklarheit bezüglich des zuständigen Ansprechpartners."
+            ],
+            "uncertainties": [
+              "Es ist unklar, welche Angabe (Unterlage oder Nachricht) aktueller ist."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse der Terminabweichung",
+            "scope_start": "Wahrnehmung unterschiedlicher Treffpunktangaben in Unterlagen und Nachricht",
+            "scope_end": "Feststellung der Unsicherheit über Ort, Zeit und Ansprechpartner",
+            "trigger": "Bevorstehender Termin für den morgigen Tag mit abweichenden Angaben",
+            "outcome": "Identifizierte Unklarheit bezüglich Treffpunkt, Uhrzeit und Kontaktperson",
+            "current_flow": "Phase nachrichten_abgleich (Nachrichtenabgleich): Die reisende Person vergleicht die Angaben in den Reiseunterlagen mit der empfangenen Nachricht und stellt eine Abweichung fest. Ein weiterer Ist-Ablauf zur Kontaktaufnahme ist aktuell unbekannt.",
+            "roles": "Reisende Person",
+            "systems": "",
+            "data_objects": "Reiseunterlagen, Nachricht",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Unklarheit über die geeignete Ansprechperson zur Klärung der Abweichung.",
+            "observations": "In den Unterlagen steht ein anderer Treffpunkt/Zeitpunkt als in der Nachricht.",
+            "cause_hypotheses": "Mögliche Ursache könnte eine kurzfristige Planänderung oder eine zeitversetzte Übermittlung sein (nicht bestätigt).",
+            "constraints": "Unklarheit bezüglich der zuständigen Ansprechperson für Rückfragen.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Reisende hat in seinen Unterlagen eine Angabe zum morgigen Treffpunkt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Reisende hat in einer Nachricht eine andere Angabe zum morgigen Treffpunkt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Reisende ist unsicher bezüglich Ort, Zeit und Ansprechpartner für den morgigen Termin.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die Nachricht könnte eine neuere Aktualisierung der Reiseunterlagen darstellen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Zuständiger Ansprechpartner für Rückfragen.",
+              "impact": "Verhindert die direkte Rückfrage zur Beseitigung der Unsicherheit."
+            },
+            {
+              "statement": "Zeitpunkt des Eingangs und Gültigkeit der Nachricht im Vergleich zu den Unterlagen.",
+              "impact": "Erschwert die Bewertung, welche Angabe korrekt ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?",
+              "impact": "Ermöglicht die Klärung des Treffpunkts und entscheidet über den weiteren Prozessablauf.",
+              "blocking": true
+            },
+            {
+              "question": "Wann und auf welchem Kanal wurde die abweichende Nachricht empfangen?",
+              "impact": "Hilft bei der zeitlichen Einordnung der Aktualität.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "0802ee41-0c01-4b8b-b695-fa0717faf00a"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?"
+      },
+      "open_questions": [
+        {
+          "question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?",
+          "impact": "Ermöglicht die Klärung des Treffpunkts und entscheidet über den weiteren Prozessablauf.",
+          "blocking": true
+        },
+        {
+          "question": "Wann und auf welchem Kanal wurde die abweichende Nachricht empfangen?",
+          "impact": "Hilft bei der zeitlichen Einordnung der Aktualität.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.041596"
+    }
+  ],
+  "scope_confirmed": false
+}

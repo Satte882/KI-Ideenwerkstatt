@@ -1,0 +1,489 @@
+{
+  "case": "C",
+  "synthetic": true,
+  "initial": "Ich bin gerade auf der Reise. Für morgen habe ich einen Treffpunkt in meinen Unterlagen und eine andere Angabe in einer Nachricht. Jetzt bin ich unsicher, wo ich wann sein soll und wen ich fragen kann.",
+  "source": "scenario document; no K1-K3 cards in initial request",
+  "operator_action": "answer model clarification with documented synthetic card information",
+  "http": {
+    "status": 302,
+    "messages": []
+  },
+  "session_id": "6cafde12-58b1-4b37-881c-39e7d8006dbf",
+  "session_revision": 1,
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133 C] Touristik"
+    },
+    "problem_statement": "Ich bin gerade auf der Reise. Für morgen habe ich einen Treffpunkt in meinen Unterlagen und eine andere Angabe in einer Nachricht. Jetzt bin ich unsicher, wo ich wann sein soll und wen ich fragen kann.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Antwort auf die Frage nach Nachrichtenkanal und Kontaktdaten, ausschließlich synthetisch aus C-K2:\nDer konkrete Kanal der Nachricht und die zeitliche Reihenfolge der Unterlagen sind der Testperson nicht sicher bekannt. Im Reiseblatt steht eine Telefonnummer. Die Nummer wurde im Test noch nicht angerufen. Die Testperson hat zeitweise keinen Internetempfang. Absenderbefugnis und Gültigkeit der Nachricht sind nicht geklärt. Dies ist keine Aussage darüber, dass die Hotline erreichbar oder eine bestimmte Angabe verbindlich ist.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "967bad92-f296-43fd-9df9-6f4e478be3dc",
+      "title": "[SYNTHETISCH #133 C] Touristik-Problem",
+      "source_note": "Synthetische Testperson; keine realen RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T10:28:34.658534+00:00",
+      "idea_updated_at": "2026-10-21T10:28:34.619873+00:00",
+      "origin_source_filename": "ideenbox-967bad92-f296-43fd-9df9-6f4e478be3dc.md",
+      "origin_source_sha256": "6e9877a9c17aff6137ab3479d8dc0185a57a4c78dccd11e9d4fc1a8e0b6c5f3a"
+    }
+  },
+  "analyses": [
+    {
+      "id": "e35a4199-dd91-407f-91bc-903941db88eb",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "7d4e94b5f1aacbd33f2068efccb54e46f6604ba92c27031e0f6a06a8ffd7f589",
+      "prompt_version": "ap1-discovery-v1",
+      "extraction_schema_version": "ap1-discovery-v1",
+      "duration_ms": 38481,
+      "model_name": "google/gemini-3.6-flash",
+      "cost": "0.022431",
+      "prompt_tokens": 3358,
+      "completion_tokens": 5310,
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseinformation und Reisebegleitung",
+            "description": "Bereitstellung, Abgleich und Klärung von Reiseinformationen und Treffpunkten während einer Reise.",
+            "trigger": "Reiseantritt und Erhalt von Reiseunterlagen oder Benachrichtigungen",
+            "outcome": "Klärung von Treffpunkten und Kontaktdaten für den Reisenden",
+            "scope_in": "Einsicht von Reiseunterlagen und Nachrichten, Abgleich von Treffpunktdaten und Identifikation von Ansprechpartnern",
+            "scope_out": "Reisebuchung, Zahlungsabwicklung und Nachbereitung nach der Reise",
+            "strategic_objective": "Sicherstellung konsistenter und verlässlicher Reiseinformationen für Kunden während der Reise",
+            "stakeholders": "Reisender, Kundenbetreuung, Reiseveranstalter",
+            "constraints": "Reisender befindet sich bereits auf der Reise; begrenzte Informationsquellen vor Ort",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "reiseinformation_empfang",
+              "sequence": 1,
+              "name": "Empfang von Reiseinformationen",
+              "description": "Erhalt und Einsicht von Reiseunterlagen sowie Benachrichtigungen.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Erhalts verschiedener Angaben über unterschiedliche Kanäle",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "reisedaten_abgleich",
+              "sequence": 2,
+              "name": "Abgleich der Treffpunktangaben",
+              "description": "Prüfung und Vergleich von Treffpunkt- und Zeitangaben aus Reiseunterlagen und Nachrichten.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Abweichende Treffpunkte und Zeiten erzeugen Unsicherheit über den Ablauf",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "kundenservice_kontakt",
+              "sequence": 3,
+              "name": "Klärung und Kontaktaufnahme",
+              "description": "Identifikation und Kontaktaufnahme mit einem Ansprechpartner zur Klärung der Abweichung.",
+              "roles": "Reisender, Ansprechpartner",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, wer als Ansprechpartner kontaktiert werden kann",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "reisedaten_abgleich",
+            "business_domain": "customer_service",
+            "capability": "Reiseinformations-Konsolidierung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase tritt die akute Unsicherheit durch widersprüchliche Angaben auf. Eine Klärung an dieser Stelle ist entscheidend für das Kundenerlebnis.",
+            "tradeoffs": [
+              "Eine reine Informationskonsolidierung löst nicht automatisch Erreichbarkeitsprobleme im Support."
+            ],
+            "uncertainties": [
+              "Welche konkreten Systemquellen die abweichenden Nachrichten erzeugt haben."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abgleich und Klärung von Treffpunktangaben während der Reise",
+            "scope_start": "Sichtung der Reiseunterlagen und empfangenen Nachrichten",
+            "scope_end": "Identifikation der Abweichungen und Feststellung des Klärungsbedarfs",
+            "trigger": "Erhalt abweichender Treffpunktangaben in Unterlagen und Nachricht",
+            "outcome": "Identifizierter Klärungsbedarf bezüglich Ort, Zeit und Ansprechpartner",
+            "current_flow": "reiseinformation_empfang -> reisedaten_abgleich -> kundenservice_kontakt",
+            "roles": "Reisender",
+            "systems": "",
+            "data_objects": "Reiseunterlagen, Nachricht, Treffpunktangaben",
+            "business_rules": "",
+            "handoffs": "Übergang vom Abgleich der Daten zur Suche nach Ansprechpartnern",
+            "bottlenecks": "Fehlende oder unklare Ansprechpartnerdaten bei auftretenden Diskrepanzen",
+            "observations": "Reisender hat unterschiedliche Treffpunktangaben und weiß nicht, wo er sein soll oder wen er fragen kann.",
+            "cause_hypotheses": "Kurzfristige Aktualisierungen wurden nicht mit den ursprünglichen Reiseunterlagen synchronisiert.",
+            "constraints": "Reisender ist bereits unterwegs.",
+            "exceptions": "Keine Kontaktdaten in den Unterlagen auffindbar.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Reisende befindet sich auf der Reise und hat für morgen abweichende Treffpunktangaben in seinen Unterlagen und in einer Nachricht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es herrscht Unsicherheit darüber, wo und wann der Treffpunkt ist und wer als Ansprechpartner kontaktiert werden kann.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Informationen zu Änderungen des Treffpunkts werden nicht konsistent über alle Kanäle hinweg aktualisiert.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Kommunikationskanäle der Nachricht sowie vorhandene Servicenummern in den Unterlagen.",
+              "impact": "Erschwert die Ermittlung der Ursache für die Datenabweichung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+              "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "aacbfb95-2b1e-4541-b7c1-1a748335ea23"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+          "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+          "blocking": false
+        }
+      ],
+      "contradictions": []
+    },
+    {
+      "id": "36b64f84-39c2-4fd3-bf8b-f2819223e203",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "ed3368a293afc86a15c08ed6ddbf9b33c82e0653cd9926491e79b3b149734879",
+      "prompt_version": "ap1-discovery-v1",
+      "extraction_schema_version": "ap1-discovery-v1",
+      "duration_ms": 101496,
+      "model_name": "google/gemini-3.6-flash",
+      "cost": "0.070071",
+      "prompt_tokens": 11413,
+      "completion_tokens": 16403,
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseinformation und Treffpunktklärung",
+            "description": "End-to-End-Prozess zur Bereitstellung, zum Empfang und zum Abgleich von Reiseinformationen bei abweichenden Angaben.",
+            "trigger": "Bevorstehender Reisetag und Erhalt widersprüchlicher Treffpunktinformationen",
+            "outcome": "Feststellung der Abweichung und Vorbereitung der Kontaktaufnahme zur Treffpunktklärung",
+            "scope_in": "Erhalt von Reiseunterlagen, Empfang von Nachrichten, Abgleich der Treffpunktangaben und Ermittlung von Kontaktmöglichkeiten",
+            "scope_out": "Durchführung der eigentlichen Reiseleistung und finale Treffpunktabstimmung vor Ort",
+            "strategic_objective": "Gewährleistung von Informationssicherheit und Verlässlichkeit für Reisende",
+            "stakeholders": "Reisende, Kundenservice",
+            "constraints": "Zeitweise fehlender Internetempfang, ungeklärte Absenderbefugnis und Nachrichtengültigkeit",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STAGE_1_UNTERLAGEN_ERHALT",
+              "sequence": 1,
+              "name": "Erzeugung und Bereitstellung der Reiseunterlagen",
+              "description": "Bereitstellung des Reiseblatts mit Treffpunktangabe und Telefonnummer an den Reisenden.",
+              "roles": "Reisende",
+              "systems": "",
+              "documents": "Reiseblatt",
+              "pain_points": "Zeitliche Reihenfolge und Aktualität der Unterlagen sind nicht sicher bekannt.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STAGE_2_NACHRICHTENEMPFANG",
+              "sequence": 2,
+              "name": "Empfang abweichender Benachrichtigungen",
+              "description": "Eingang einer Nachricht mit einer vom Reiseblatt abweichenden Treffpunktangabe.",
+              "roles": "Reisende",
+              "systems": "",
+              "documents": "Nachricht",
+              "pain_points": "Konkreter Nachrichtenkanal unbekannt, Absenderbefugnis und Gültigkeit ungeklärt, zeitweise kein Internetempfang.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STAGE_3_INFORMATION_ABGLEICH",
+              "sequence": 3,
+              "name": "Informationen abgleichen und Kontakt suchen",
+              "description": "Identifikation der Abweichung zwischen Unterlagen und Nachricht sowie Aufsuchen von Kontaktdaten zur Klärung.",
+              "roles": "Reisende",
+              "systems": "",
+              "documents": "Reiseblatt, Nachricht",
+              "pain_points": "Unsicherheit über Ort und Zeit, Unklarheit über Ansprechpartner, Erreichbarkeit der Hotline und Verbindlichkeit der Nachricht unklar.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STAGE_3_INFORMATION_ABGLEICH",
+            "business_domain": "customer_service",
+            "capability": "Reiseinformations- und Treffpunktklärung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase tritt die akute Unsicherheit des Reisenden bezüglich Ort, Zeit und Ansprechpartner auf, verstärkt durch unklare Gültigkeit der Nachricht und fehlenden Internetempfang.",
+            "tradeoffs": [
+              "Erhöhter Klärungsaufwand bei eingeschränkter Konnektivität"
+            ],
+            "uncertainties": [
+              "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer",
+              "Gültigkeit und Verbindlichkeit der empfangenen Nachricht"
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozess zur Treffpunktklärung bei abweichenden Reiseinformationen",
+            "scope_start": "STAGE_2_NACHRICHTENEMPFANG: Empfang abweichender Benachrichtigungen",
+            "scope_end": "STAGE_3_INFORMATION_ABGLEICH: Informationen abgleichen und Kontakt suchen",
+            "trigger": "Abweichende Treffpunktangaben in Reiseunterlagen und empfangener Nachricht",
+            "outcome": "Identifizierte Informationsabweichung und ermittelte Kontaktoption",
+            "current_flow": "STAGE_2_NACHRICHTENEMPFANG: Empfang abweichender Benachrichtigungen -> STAGE_3_INFORMATION_ABGLEICH: Informationen abgleichen und Kontakt suchen",
+            "roles": "Reisende",
+            "systems": "",
+            "data_objects": "Reiseblatt, Nachricht, Telefonnummer",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Zeitweise fehlender Internetempfang, unklare Absenderbefugnis der Nachricht, nicht verifizierte Erreichbarkeit der Telefonnummer",
+            "observations": "Die im Reiseblatt angegebene Telefonnummer wurde bisher noch nicht angerufen.",
+            "cause_hypotheses": "Widersprüchliche Informationen auf verschiedenen Kanälen ohne Gültigkeitskennzeichnung erzeugen Orientierungslosigkeit.",
+            "constraints": "Zeitweise fehlender Internetempfang.",
+            "exceptions": "Unklarheit über Gültigkeit der Nachricht und Aktualität der Reiseunterlagen.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "In den Reiseunterlagen (Reiseblatt) befinden sich Angaben zum Treffpunkt und eine Telefonnummer.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es liegt eine Nachricht mit einer abweichenden Treffpunktangabe vor.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Die Telefonnummer auf dem Reiseblatt wurde bisher nicht angerufen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Die Testperson hat zeitweise keinen Internetempfang.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der konkrete Nachrichtenkanal und die zeitliche Reihenfolge der Unterlagen sind der Testperson nicht sicher bekannt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Absenderbefugnis und Gültigkeit der Nachricht sind ungeklärt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Ein Anruf unter der im Reiseblatt angegebenen Telefonnummer könnte zur Klärung des Treffpunkts führen, falls die Nummer erreichbar ist.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Erreichbarkeit der Telefonnummer auf dem Reiseblatt",
+              "impact": "Erschwert die telefonische Klärung bei fehlendem Internetempfang."
+            },
+            {
+              "statement": "Verbindlichkeit und Absender der erhaltenen Nachricht",
+              "impact": "Verhindert die eigenständige Beurteilung, welche Treffpunktangabe gültig ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell und erreichbar?",
+              "impact": "Bestimmt, ob ein telefonischer Klärungsweg ohne Internetverbindung erfolgreich durchgeführt werden kann.",
+              "blocking": false
+            },
+            {
+              "question": "Über welchen Kanal ging die Nachricht ein und ist der Absender autorisiert?",
+              "impact": "Ermöglicht die Feststellung der Verbindlichkeit der neuen Angaben.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "aacbfb95-2b1e-4541-b7c1-1a748335ea23"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell und erreichbar?",
+          "impact": "Bestimmt, ob ein telefonischer Klärungsweg ohne Internetverbindung erfolgreich durchgeführt werden kann.",
+          "blocking": false
+        },
+        {
+          "question": "Über welchen Kanal ging die Nachricht ein und ist der Absender autorisiert?",
+          "impact": "Ermöglicht die Feststellung der Verbindlichkeit der neuen Angaben.",
+          "blocking": false
+        }
+      ],
+      "contradictions": []
+    }
+  ],
+  "materialized_value_stream_count": 0,
+  "scope_confirmation_submitted": false,
+  "human_time_measured": false
+}

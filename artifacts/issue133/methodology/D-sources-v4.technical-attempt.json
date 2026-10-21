@@ -1,0 +1,80 @@
+{
+  "case": "D",
+  "phase": "sources",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "efa474290790bfab013e8d6cba2ecafa6722ef746b38728a02eff9086a35a11d",
+    "ki_radar/accelerator/architect_contract.py": "04c458cdf3f1c60a219bf21ae9d2ec8a6bb790ed50a61a3bf11d3de52df26da4"
+  },
+  "preceding_model_questions": [],
+  "released_sources": [
+    {
+      "filename": "01_request.md",
+      "sha256": "3c3433c9b0a9eef9eb8b270a2d433a30eb650d70ccf14caf460712fa73b68639"
+    },
+    {
+      "filename": "02_responses.md",
+      "sha256": "abe745a0c5a411cafd53e559d8bbdccd13797e4700a61ee3dbfd6f7783d7766a"
+    },
+    {
+      "filename": "03_authority.md",
+      "sha256": "711ad91f80a07534f358b881d8ce81fa9a23202232e1f6a7f52795e8168307b4"
+    }
+  ],
+  "error": {
+    "code": "test_budget",
+    "message": "Methodology test budget exhausted"
+  },
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik D"
+    },
+    "problem_statement": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "ff242c95-66a9-485b-b9fc-ddb3ea21ae2c",
+      "title": "[SYNTHETISCH #133 D/fresh] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:20:07.719451+00:00",
+      "idea_updated_at": "2026-10-21T11:20:07.686639+00:00",
+      "origin_source_filename": "ideenbox-ff242c95-66a9-485b-b9fc-ddb3ea21ae2c.md",
+      "origin_source_sha256": "651134dc20f0f368176cebcdbaf3d87d33ac4892b16cb4cab8c2a59394325144"
+    }
+  },
+  "analyses": [
+    {
+      "id": "056021d4-4ad4-4383-befa-e450395bef81",
+      "status": "failed",
+      "error_code": "test_budget",
+      "source_revision": 0,
+      "source_hash": "447199f11dedfb80c1e38f20632cfbb3bdcd8f2432841e9f3c7d2b7fcacbb989",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    },
+    {
+      "id": "7da3ae19-3837-4d42-9cac-e360a9ab2eeb",
+      "status": "failed",
+      "error_code": "test_budget",
+      "source_revision": 1,
+      "source_hash": "ddbb898596d967591c25b3933e38a0d27c1778735044acfaaa62b3d3bdc37719",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    }
+  ],
+  "scope_confirmed": false
+}

@@ -1,0 +1,72 @@
+{
+  "cases": [
+    {
+      "case": "A",
+      "model_calls": 4,
+      "provider_cost_usd": "0.06813225",
+      "revisions": [
+        0,
+        1
+      ],
+      "statuses": [
+        "success",
+        "success"
+      ],
+      "provider_seconds": 96.508,
+      "scope_confirmation_submitted": false,
+      "human_time_measured": false
+    },
+    {
+      "case": "B",
+      "model_calls": 4,
+      "provider_cost_usd": "0.06398100",
+      "revisions": [
+        0,
+        1
+      ],
+      "statuses": [
+        "success",
+        "success"
+      ],
+      "provider_seconds": 100.262,
+      "scope_confirmation_submitted": false,
+      "human_time_measured": false
+    },
+    {
+      "case": "C",
+      "model_calls": 6,
+      "provider_cost_usd": "0.09250200",
+      "revisions": [
+        0,
+        1
+      ],
+      "statuses": [
+        "success",
+        "success"
+      ],
+      "provider_seconds": 139.705,
+      "scope_confirmation_submitted": false,
+      "human_time_measured": false
+    },
+    {
+      "case": "D",
+      "model_calls": 4,
+      "provider_cost_usd": "0.05113800",
+      "revisions": [
+        0,
+        1
+      ],
+      "statuses": [
+        "success",
+        "success"
+      ],
+      "provider_seconds": 83.833,
+      "scope_confirmation_submitted": false,
+      "human_time_measured": false
+    }
+  ],
+  "provider_calls": 18,
+  "provider_cost_usd": "0.27575325",
+  "accounting_reconciliation": "18 complete raw responses; per-case costs reconcile to persisted application analyses within Decimal field rounding",
+  "deviation": "C/D clarification runs overlapped; original shared ledger recovered from file snapshots; no rerun; test starter now enforces exclusive lock"
+}

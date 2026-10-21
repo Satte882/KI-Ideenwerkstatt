@@ -1,0 +1,24 @@
+{
+  "case": "A",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "8b4b194d4336c67cf71487e5e088f0ababa59bb08e862e8a4d207a0b73914d8b",
+    "ki_radar/accelerator/architect_contract.py": "f12d47c22fd716080469ef163ef4a92a2a9b43222a0a78b1972219ebbbf96bcb"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "26ced317-f933-434e-a395-52a2bea3b8fc",
+  "error": {
+    "type": "SolutionGenerationError",
+    "code": "empty_response",
+    "message": "OpenRouter hat keine Analyse zurückgegeben."
+  },
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}

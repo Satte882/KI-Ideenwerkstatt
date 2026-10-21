@@ -94,7 +94,10 @@ def normalize_solution_generation_machine_repair(
             "Der gespeicherte Machine Repair hat keinen gültigen Input-Hash.",
             code="invalid_preview_repair",
         )
-    if prompt_version != REPAIR_PROMPT_VERSION or schema_version != REPAIR_SCHEMA_VERSION:
+    if (
+        prompt_version not in {"1.0", REPAIR_PROMPT_VERSION}
+        or schema_version != REPAIR_SCHEMA_VERSION
+    ):
         raise SolutionGenerationEffectivePayloadError(
             "Der gespeicherte Machine Repair verwendet einen unbekannten Vertrag.",
             code="invalid_preview_repair",
@@ -171,7 +174,9 @@ def build_validated_effective_solution_payload(
         "options": preview_payload.get("options"),
     }
     try:
-        validated = validate_solution_generation_payload(raw_payload, source_context)
+        validated = validate_solution_generation_payload(
+            raw_payload, source_context, allow_historical=True
+        )
     except SolutionGenerationContractError as exc:
         raise SolutionGenerationEffectivePayloadError(
             "Die gespeicherte KI-Vorschau ist nicht mehr vertragskonform. Bitte neu generieren.",
@@ -183,7 +188,9 @@ def build_validated_effective_solution_payload(
         for patch in machine_repair["patches"]:
             validated["options"][patch["option"]][patch["field"]] = deepcopy(patch["statement"])
         try:
-            validated = validate_solution_generation_payload(validated, source_context)
+            validated = validate_solution_generation_payload(
+                validated, source_context, allow_historical=True
+            )
         except SolutionGenerationContractError as exc:
             raise SolutionGenerationEffectivePayloadError(
                 "Der gespeicherte Machine Repair verletzt die Quellen- oder Inhaltsregeln.",
@@ -195,7 +202,9 @@ def build_validated_effective_solution_payload(
             validated["options"][lane][field_name]["text"] = value
 
     try:
-        return validate_solution_generation_payload(validated, source_context)
+        return validate_solution_generation_payload(
+            validated, source_context, allow_historical=True
+        )
     except SolutionGenerationContractError as exc:
         raise SolutionGenerationEffectivePayloadError(
             "Eine Bearbeitung verletzt die Quellen- oder Inhaltsregeln. Bitte den Entwurf prüfen.",

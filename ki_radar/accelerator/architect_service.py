@@ -28,6 +28,10 @@ from .architect_contract import (
     DiscoveryContractError,
     build_discovery_json_schema,
     build_discovery_verifier_schema,
+    discovery_methodical_findings,
+    discovery_modality_findings,
+    enforce_discovery_methodology,
+    enforce_discovery_readiness,
     validate_discovery_payload,
     validate_verifier_payload,
 )
@@ -80,6 +84,33 @@ Regeln:
 - Eine Clarification ist nur blocking=true, wenn Scope/Fokus ohne die Antwort nicht
   verantwortbar entschieden werden kann.
 - Leere Detailfelder sind zulässig, wenn der Input nichts Belastbares hergibt.
+- Erkenntnisdisziplin gilt für ALLE Freitextfelder, insbesondere focus.rationale,
+  bottlenecks, constraints, exceptions, strategische Ziele und Zusammenfassungen:
+  Eine beobachtete Suche oder ein Widerspruch belegt keine Ursache, keinen primären
+  Engpass und keine fehlende zentrale Plattform. Solche Erklärungen gehören als
+  ausdrücklich unbestätigte Möglichkeiten in hypotheses/cause_hypotheses.
+  In den übrigen Feldern nur berichtete Beobachtungen und Grenzen beschreiben.
+  Auch qualitative Maßnahmenwirkungen wie 'sichert die Informationskette' sind
+  ohne Beleg nur bedingte Erwartungen, keine feststehenden Wirkungen.
+- Bewahre die Stärke und Modalität der Quelle: eingeschränkte Neueinstellungen
+  sind kein Einstellungsverbot; nicht bekannte Kontaktdaten sind keine fehlenden
+  Kontaktdaten. Unbekannte Erreichbarkeit ist kein nachgewiesener Bottleneck.
+- Ein Zielvorschlag ist als Vorschlag zu kennzeichnen. Qualitative Ratings sind
+  vorläufig; begründe keine hohe Relevanz durch erfundene Mengen oder gesicherte Ursachen.
+- Process Scope und current_flow beschreiben nur die empfohlene Fokusphase und
+  deren belegte Teilschritte, nicht erneut alle Value-Stream-Phasen. Ein unbekannter
+  Ist-Ablauf darf als unbekannt stehen bleiben; ergänze stattdessen eine konkrete Frage.
+- Ergebnisvorbereitung darf nicht als bereits erreichtes Kundenergebnis erscheinen.
+  Bei Partnern explizit zwischen Information, Anfrage, Bestätigung und Vollmacht
+  für verbindliche Änderung oder Mehrkosten unterscheiden; fehlende Vollmacht erfragen.
+- Ohne tragfähigen Vergleich keine Ursache oder Fokusüberlegenheit behaupten.
+  Stelle eine blocking-Frage, wenn konkurrierende Untersuchungsbereiche ohne
+  weitere Fakten nicht verantwortbar abgegrenzt werden können.
+- Nicht durchgeführte Schritte dürfen nicht als Ist-Handoffs oder erreichte Ergebnisse
+  erscheinen. Kennzeichne Vorschläge und mögliche Ausnahmen direkt im jeweiligen Feld,
+  etwa 'Möglicher Ausnahmefall, nicht beobachtet'. Ungeprüfte Erreichbarkeit ist eine
+  offene Voraussetzung, kein beobachteter Ausfall. Behaupte keinen 'einzigen Weg', wenn
+  andere Wege lediglich unbekannt sind.
 Gib ausschließlich das verlangte JSON-Objekt zurück."""
 
 VERIFIER_SYSTEM_PROMPT = """Du bist ein unabhängiger Reviewer für einen Business-Discovery-Draft.
@@ -100,6 +131,28 @@ Kritisch sind insbesondere:
 - Hypothesen werden als Fakten behandelt;
 - entscheidungsrelevante Unknowns fehlen;
 - Widersprüche zwischen Quellen werden geglättet.
+- Prüfe JEDE kausale Aussage auch in Fokusbegründung, Bottleneck, Constraint,
+  Ausnahme, Ziel und Zusammenfassung. Eine Hypothesenliste heilt keine daneben
+  als Tatsache behauptete Hauptursache. Quelle U0 ist keine pauschale Bestätigung.
+  Prüfe auch qualitative Wirkungsversprechen in tradeoffs: 'sichert/gewährleistet'
+  braucht einen Beleg oder eine ausdrückliche bedingte Erwartung im selben Satz.
+- Prüfe Modalität: aus einem eingeschränkten Können darf kein vollständiges Verbot
+  werden; aus nicht bekannten Kontaktdaten kein erwiesenes Fehlen. Bloße plausible
+  Zentralisierungs-/Synchronisationsannahmen dürfen kein gesicherter Befund werden.
+- Prüfe den konkreten Umfang des Ist-Ablaufs gegen die Fokusphase. Wenn current_flow
+  wieder alle Wertstromphasen umfasst, ist scope_quality=false und Repair erforderlich.
+- Prüfe Partner-Vollmacht und Verbindlichkeit von Änderungen als entscheidungsrelevante
+  Unbekannte, sofern dazu keine autorisierte Grundlage vorliegt.
+- Erstelle intern für JEDEN Satz außerhalb hypotheses/unknowns einen Quellenabgleich:
+  berichtet, unbekannt oder bloß vorgeschlagen? Prüfe insbesondere exceptions, handoffs,
+  bottlenecks und focus.rationale. Ein nie versuchter Telefonkontakt belegt keinen Ausfall;
+  eine mögliche Ausnahme muss im selben Feld als Möglichkeit bezeichnet sein. Ein
+  gewünschter Kontakt ist kein bereits ausgeführter Handoff. 'Einziger belegter Weg'
+  verlangt den Beleg der Ausschließlichkeit, nicht nur einen bekannten möglichen Weg.
+  Konkrete solche Quellüberschreitungen sind grounding-/hypothesis-Findings und zuerst
+  zu reparieren, AUCH wenn der Draft außerdem korrekt auf waiting_human enden muss.
+  Eine offene Entscheidung erlaubt keine unbelegten Nebenaussagen. Liste alle konkreten
+  betroffenen Felder zusammen, damit die einmalige Reparatur den Zusammenhang korrigiert.
 
 Kalibrierung der Checks:
 - Fordere keine eigene Phase für bloßes Warten oder einen nur implizierten Übergang,
@@ -113,6 +166,13 @@ Kalibrierung der Checks:
   weil sich noch weitere Fragen formulieren ließen.
 - Eine direkt durch eine Quelle berichtete Phasenbeschreibung ist qualitativ
   belegt (indicative), auch wenn für die Phase keine Messwerte vorliegen.
+- Ein Feld darf einen Vorschlag oder möglichen Ausnahmefall enthalten, wenn die
+  Nichtdurchführung bzw. Unsicherheit DIREKT IM FELD unmissverständlich steht.
+  'Geplante Kontaktaufnahme (noch nicht durchgeführt)' behauptet keinen vollzogenen
+  Handoff und ist kein Grounding-Fehler. Verlange dafür keine neue Fachinformation
+  und keine rein redaktionelle weitere Reparatur. Gleiches gilt für ein als möglich
+  und nicht beobachtet markiertes Ausfallszenario. Prüfe die Aussage, nicht nur
+  ihren Feldnamen; eine korrekte Qualifikation muss nach Repair anerkannt werden.
 - Markiere nur Findings als kritisch, die Scope, Fokus, Quellenwahrheit oder
   Materialisierung tatsächlich beeinträchtigen. Repair-Anweisungen müssen sich
   auf diese konkreten Findings beschränken.
@@ -122,6 +182,9 @@ Status:
 - repair: Draft kann ohne neue menschliche Information gezielt korrigiert werden.
 - waiting_human: eine entscheidungskritische Information fehlt; stelle genau die präzise
   fachliche Frage, die Scope/Fokus entscheidet.
+- Bei unbelegten Aussagen zuerst repair: entferne oder relativiere sie mit konkreten
+  Feldzielen. Fehlen danach erforderliche Fakten, bleibt der reparierte Entwurf offen
+  mit gezielter blocking-Clarification und waiting_human. Kein approved bei blocking=true.
 Gib ausschließlich das verlangte JSON-Objekt zurück."""
 
 REPAIR_SYSTEM_PROMPT = """Du reparierst einen Business-Discovery-Draft anhand eines unabhängigen
@@ -140,6 +203,15 @@ getroffene Entscheidung oder Beauftragung.
 Für evidence_basis gilt: direkt berichtete qualitative Phasentätigkeit = indicative;
 nur abgeleitete Tätigkeit = hypothesis; measured nur mit Messbeleg. Die Einschätzung
 bezieht sich auf die Phasenbeschreibung, nicht auf low/medium/high-Screening-Ratings.
+Repariere den gesamten fachlich betroffenen Zusammenhang: eine unbelegte Kausalität
+aus Fakten, Fokusbegründung, Bottleneck, Constraints und Empfehlungen entfernen;
+nur als unbestätigte Hypothese erhalten. Erfinde keine Bestätigung. Bewahre Modalität
+und Quellenwidersprüche. Grenze current_flow auf die Fokusphase ein. Fehlende Fakten
+als konkrete Clarification mit blocking=true führen, wenn sie Scope/Fokus verhindern.
+Ohne neue Fakten ist eine begründete offene Entscheidung das korrekte Ergebnis.
+Prüfe nach der Korrektur auch exceptions, handoffs und focus.rationale: mögliche Ausfälle
+als nicht beobachtete Möglichkeiten, geplante Kontakte als Vorschläge formulieren. Keine
+Exklusivität eines Klärweges ohne Beleg. Ungeprüfte Voraussetzungen bleiben unbekannt.
 Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
 
 
@@ -281,6 +353,16 @@ def _provider_call(
 
 
 def _prompt_payload(system_prompt: str, document: dict[str, Any]) -> list[dict[str, str]]:
+    if system_prompt == VERIFIER_SYSTEM_PROMPT and isinstance(document.get("draft"), dict):
+        document = {
+            **document,
+            "server_methodical_findings": (
+                *discovery_methodical_findings(document["draft"]),
+                *discovery_modality_findings(
+                    document["draft"], json.dumps(document.get("input", {}), ensure_ascii=False)
+                ),
+            ),
+        }
     return [
         {"role": "system", "content": system_prompt},
         {
@@ -476,6 +558,43 @@ def execute_autonomous_business_discovery(
                 "draft": producer_payload,
                 "contract_errors": list(contract_exc.errors),
             }
+            # Gather semantic findings before spending the single repair on a
+            # structurally readable but methodically invalid draft. Otherwise a
+            # scope-only repair can conceal a causal error until the final review.
+            if discovery_methodical_findings(producer_payload) or discovery_modality_findings(
+                producer_payload, evidence_text
+            ):
+                pre_review_messages = _prompt_payload(
+                    VERIFIER_SYSTEM_PROMPT, {"input": document, "draft": producer_payload}
+                )
+                if _input_chars(pre_review_messages) > policy.discovery_max_input_chars:
+                    raise DiscoveryAnalysisError(
+                        "Die fachliche Prüfung überschreitet das Eingabelimit.",
+                        code="verifier_input_too_large",
+                    ) from contract_exc
+                pre_review_result = _provider_call(
+                    actor=actor,
+                    session=session,
+                    policy=policy,
+                    messages=pre_review_messages,
+                    schema_name="autonomous_business_discovery_verifier_v1",
+                    schema=build_discovery_verifier_schema(),
+                )
+                results.append(pre_review_result)
+                last_result = pre_review_result
+                pre_review = enforce_discovery_methodology(
+                    producer_payload,
+                    validate_verifier_payload(
+                        _decode_json(pre_review_result, code="invalid_verifier_response")
+                    ),
+                )
+                contract_repair_document["verifier"] = pre_review
+                _store_failure_diagnostics(
+                    analysis_id=analysis.pk,
+                    draft=producer_payload,
+                    verifier=pre_review,
+                    snapshot_id=snapshot.pk,
+                )
             contract_repair_messages = _prompt_payload(
                 REPAIR_SYSTEM_PROMPT,
                 contract_repair_document,
@@ -522,6 +641,7 @@ def execute_autonomous_business_discovery(
         verifier = validate_verifier_payload(
             _decode_json(verifier_result, code="invalid_verifier_response")
         )
+        verifier = enforce_discovery_methodology(draft, verifier)
 
         if verifier["status"] == "repair":
             _store_failure_diagnostics(
@@ -588,6 +708,7 @@ def execute_autonomous_business_discovery(
             verifier = validate_verifier_payload(
                 _decode_json(second_verifier_result, code="invalid_verifier_response")
             )
+            verifier = enforce_discovery_methodology(draft, verifier)
             if verifier["status"] == "repair":
                 _store_failure_diagnostics(
                     analysis_id=analysis.pk,
@@ -600,6 +721,7 @@ def execute_autonomous_business_discovery(
                     code="verification_not_converged",
                 )
 
+        verifier = enforce_discovery_readiness(draft, verifier)
         source_labels = {"U0": "Problem, Kontext und Nutzerkorrekturen"}
         for source in document["sources"]:
             source_labels[source["ref"]] = source["filename"]

@@ -1,0 +1,36 @@
+{
+  "assessment": "not_accepted",
+  "assessor": "Codex source comparison outside the generating Gemini/DeepSeek runs; no RSD business approval",
+  "criteria_file": "tests/fixtures/issue133_methodology/criteria.json",
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "scope": "Synthetic methodological acceptance only. No real pilot or economic evidence required.",
+  "source_stage": {
+    "A": {"artifact": "A-revalidate-v7.json", "result": "justified_deferral", "known": "09:00/10:00 conflict and simple counterexample preserved", "unresolved": "authoritative transfer time and cause", "blocking_question": "Rules determining authority of change message versus booking note", "binding_decision": false},
+    "B": {"artifact": "B-revalidate-v7.json", "result": "justified_deferral", "known": "Competing unmeasured workload reports and limited, not forbidden, hiring", "unresolved": "which process actually warrants focus", "blocking_question": "Comparative factual workload evidence for sales versus travel organization", "binding_decision": false},
+    "C": {"artifact": "C-revalidate-v7.json", "result": "justified_deferral_after_automatic_correction", "known": "Contradictory time/place and existing but uncalled phone number", "unresolved": "valid meeting point, phone reachability and authority", "correction_trace_calls": [42, 43, 44, 48, 61], "note": "Call 44 was a false positive against an explicitly planned, unexecuted handoff; later reviews recognize the qualification", "binding_decision": false},
+    "D": {"artifact": "D-revalidate-v7.json", "result": "justified_deferral_after_automatic_correction", "known": "Request is not order; bus price and meeting confirmation remain open", "unresolved": "who may order and approve additional cost", "correction_trace_calls": [62, 63, 64], "note": "Unqualified qualitative effect in focus.tradeoffs corrected to intended effect; authority question remains blocking", "binding_decision": false}
+  },
+  "historical_fault_replay": {
+    "A": {"artifact": "A-replay-v7.json", "trace_calls": [65, 66, 67, 68], "result": "original_primary_cause_and_scope_fault_repaired_and_reverified", "limitation": "Approval is not a complete source-truth proof: stage_3 pain_points still attributes delay to office-staff availability without a supplied factual example; strategic_objective is not locally marked as proposal"},
+    "B": {"artifact": "B-replay-v7.json", "trace_calls": [69, 70, 71, 72], "result": "verification_not_converged", "blocker": "Initial verifier reports only the hiring-modality fault; repair retains invented customer-data entry/validation workflow and ungrounded manual rework; final verifier identifies these only after the one repair is spent", "application_safely_stopped": true},
+    "C": {"artifact": "C-replay-v7.json", "trace_calls": [73, 74, 75, 76], "result": "recorded_scope_fault_repaired_and_reverified", "limitation": "Technical success permits scope review, not confirmed meeting point or a binding solution"},
+    "D": {"artifact": "D-replay-v7.json", "trace_calls": [77, 78, 79], "result": "invalid_discovery_contract", "blocker": "The conservative guard did not recognize the explicit qualifier 'hypothetisch' in the repair", "subsequent_correction": "Qualifier recognition fixed and covered by offline regression. No new paid run or terminal success is invented for this failed historical replay."}
+  },
+  "solution_stage": {
+    "A": {"artifact": "A-solutions-v7.json", "calls": [80], "result": "empty_response", "semantic_result": "not_available"},
+    "B": {"artifact": "B-solutions-v7.json", "calls": [81, 82], "result": "preview_available_critic_output_truncated", "source_comparison": "Organization is concrete; standard software is explicitly checked before custom rules; AI has no evidenced added value; fit and missing evidence are conditional", "scope_limitation": "Manual DRAFT fixture on a still-unresolved process focus; not an autonomous preference decision"},
+    "C": {"artifact": "C-solutions-v7.json", "calls": [83, 84], "result": "preview_available_critic_output_truncated", "source_comparison": "Organization/standard rules/AI are distinct; AI added value expressly unproven; no valid meeting time selected", "limitation": "Several bottleneck_coverage statements call untested phone reachability an observed bottleneck although the dossier establishes only an open prerequisite; no successful critic/repair evidence corrects this"},
+    "D": {"artifact": "D-solutions-v7.json", "calls": [85], "result": "timeout", "semantic_result": "not_available"}
+  },
+  "acceptance": {
+    "causal_discipline_all_fields": "partial; residual unsupported causal language in the accepted A replay",
+    "blocking_gaps_enforced": "demonstrated in all four source-stage runs and UI/service regressions",
+    "scope_and_option_fit": "partial; narrowed focus drafts but original B repair retains invented process",
+    "non_ai_alternatives": "demonstrated in B/C generated previews; not proof of a validated option decision",
+    "verifier_reliability": "not demonstrated; selective B first review and A false negatives remain",
+    "automatic_correction_all_four": "not met; B does not converge, D final replay remains failed and solution critics lack usable output",
+    "invented_real_data_or_approvals": "none; synthetic source facts and model-produced assumptions explicitly separated",
+    "overall": "not_accepted; keep issue 133 open and do not merge as completed"
+  },
+  "budget": {"limit_usd": "3", "real_attempts": 85, "completed_reported_cost_usd": "1.06028208", "failed_unknown_charge_upper_bound_usd": "0.59838165", "accounted_upper_bound_usd": "1.65866373", "no_more_provider_calls_planned": true}
+}

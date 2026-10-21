@@ -1,0 +1,295 @@
+{
+  "case": "A",
+  "phase": "replay",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "historical_draft_review": {
+    "schema_version": "ap1-discovery-verifier-v1",
+    "status": "repair",
+    "checks": {
+      "source_grounding": true,
+      "scope_quality": false,
+      "stage_sequence": true,
+      "focus_fit": true,
+      "hypothesis_separation": true,
+      "unknowns_visible": true,
+      "contradictions_preserved": true
+    },
+    "critical_findings": [
+      {
+        "code": "PROCESS_SCOPE_TOO_BROAD",
+        "message": "Der Ist-Ablauf (current_flow) in der Prozessanalyse erstreckt sich über alle Phasen des Wertstroms (stage_1 bis stage_4) und ist nicht auf die gewählte Fokusphase (stage_2_datensuche) verengt."
+      }
+    ],
+    "repair_instructions": "Grenze den Scope der Prozessanalyse (process_analysis) auf die Fokusphase 'stage_2_datensuche' ein. Passe scope_start, scope_end, current_flow sowie die zugehörigen Prozessdetails so an, dass nur der eigentliche Ablauf der Informationssuche analysiert wird.",
+    "human_question": ""
+  },
+  "status": "success",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik A"
+    },
+    "problem_statement": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "21067acd-a57e-4930-a5ea-f253346387a3",
+      "title": "[SYNTHETISCH #133 A/replay] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:03:27.402756+00:00",
+      "idea_updated_at": "2026-10-21T11:03:27.375515+00:00",
+      "origin_source_filename": "ideenbox-21067acd-a57e-4930-a5ea-f253346387a3.md",
+      "origin_source_sha256": "0e0499595f03a9bfb72071ab7c581d699810203d1fb71776909a2882852646c0"
+    }
+  },
+  "analyses": [
+    {
+      "id": "f3c2c3b2-ab16-4758-827b-abac00d987c8",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "b617abd40966fe9c7a28f59404b215aa8f6ff1caf313853768b2f8aa20278981",
+      "prompt_version": "ap1-discovery-methodology-v2",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice-Auskunft bei gebuchten Reisen",
+            "description": "End-to-End-Prozess von der Anrufannahme eines Kunden bezüglich einer gebuchten Reise bis zur Auskunftserteilung über den aktuellen Status.",
+            "trigger": "Eingang eines Kundenanrufs bezüglich einer gebuchten Reise",
+            "outcome": "Auskunft zum aktuellen Status der gebuchten Reise an den Kunden erteilt",
+            "scope_in": "Entgegennahme des Anrufs, Erfassung des Anliegens, Informationsermittlung und Auskunftserteilung am Telefon",
+            "scope_out": "Nachgelagerte Bearbeitung von Umbuchungen, Stornierungen oder schriftliche Bestätigungen nach Beendigung des Telefonats",
+            "strategic_objective": "Erhöhung der Erstkontakt-Lösungsquote und Verbesserung der Kundenzufriedenheit im Touristik-Kundenservice",
+            "stakeholders": "Kundenservice-Mitarbeiter, Kunden, Büromitarbeiter",
+            "constraints": "Keine konkreten technischen Einschränkungen oder Systemvorgaben im Quellkontext genannt",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_1_anrufeingang",
+              "sequence": 1,
+              "name": "Anrufeingang und Anliegenaufnahme",
+              "description": "Entgegennahme des Anrufs eines Kunden, der Fragen zu seiner gebuchten Reise hat.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Telefonie",
+              "documents": "",
+              "pain_points": "Kunde muss während der Klärung am Telefon warten.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_2_datensuche",
+              "sequence": 2,
+              "name": "Informationssuche in Buchung und E-Mails",
+              "description": "Mitarbeiter sucht zuerst in den Buchungsdaten und anschließend in alten E-Mails nach dem aktuellen Status der Reise.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Buchungssystem, E-Mail-Programm",
+              "documents": "Buchungsdaten, E-Mails",
+              "pain_points": "Informationen sind auf verschiedene Medien verteilt; langwierige Suche in alten E-Mails.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "medium",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_3_interne_rueckfrage",
+              "sequence": 3,
+              "name": "Interne Rückfrage im Büro",
+              "description": "Falls die benötigten Informationen im Buchungssystem und den E-Mails fehlen, erfolgt eine mündliche oder interne Nachfrage bei Kollegen im Büro.",
+              "roles": "Kundenservice-Mitarbeiter, Büromitarbeiter",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Zusätzliche Verzögerung durch Abhängigkeit von der Verfügbarkeit der Büromitarbeiter.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_4_auskunftserteilung",
+              "sequence": 4,
+              "name": "Auskunftserteilung am Telefon",
+              "description": "Mitarbeiter informiert den am Telefon wartenden Kunden über den aktuellen Status seiner Reise.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Telefonie",
+              "documents": "",
+              "pain_points": "Mitarbeiter kann dem Kunden nicht direkt sagen, was gerade gilt.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_2_datensuche",
+            "business_domain": "customer_service",
+            "capability": "Informationskonsolidierung und Auskunftsfähigkeit bei Kundenanfragen",
+            "strategic_impact": "high",
+            "economic_potential": "high",
+            "pain_intensity": "high",
+            "data_accessibility": "medium",
+            "change_effort": "medium",
+            "rationale": "Die dezentrale und manuelle Suche in Buchungsdaten und alten E-Mails stellt den primären Engpass dar, der zu langen Wartezeiten führt und eine unmittelbare Auskunft am Telefon verhindert.",
+            "tradeoffs": [
+              "Die Optimierung der Datenzugänglichkeit in der Suche behebt nicht zwingend unvollständige Dokumentationsdisziplin bei internen Absprachen im Büro."
+            ],
+            "uncertainties": [
+              "Unklarheit über die Anzahl und technische Struktur der betroffenen Buchungssysteme und E-Mail-Ablagen."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Informationssuche in Buchung und E-Mails",
+            "scope_start": "Beginn der Suche in den Buchungsdaten",
+            "scope_end": "Abschluss der Durchsuchen alter E-Mails",
+            "trigger": "Identifizierung des Informationsbedarfs zur gebuchten Reise",
+            "outcome": "Durchsuchung von Buchungssystem und E-Mails abgeschlossen",
+            "current_flow": "Suche nach der gebuchten Reise im Buchungssystem -> Suche nach ergänzenden Informationen in alten E-Mails",
+            "roles": "Kundenservice-Mitarbeiter",
+            "systems": "Buchungssystem, E-Mail-Programm",
+            "data_objects": "Buchungsdaten, E-Mails",
+            "business_rules": "Informationen zur gebuchten Reise werden zuerst im Buchungssystem und bei Bedarf in E-Mails gesucht.",
+            "handoffs": "Medienwechsel zwischen Buchungssystem und E-Mail-Programm.",
+            "bottlenecks": "Sequenzielle und manuelle Suche in getrennten Informationsquellen (Buchungssystem und alte E-Mails).",
+            "observations": "Kunden warten am Telefon, während der Mitarbeiter zweistufig in Buchung und alten E-Mails sucht.",
+            "cause_hypotheses": "Statusinformationen sind nicht zentral im Buchungssystem konsolidiert, sondern verbleiben teilweise in E-Mail-Verläufen.",
+            "constraints": "Keine Vorgaben aus dem Quellkontext vorhanden.",
+            "exceptions": "Informationen sind weder in der Buchung noch in den E-Mails auffindbar.",
+            "baseline_metrics": "Keine quantitativen Daten im Input vorhanden.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Anrufen zu gebuchten Reisen wird zuerst im Buchungssystem und anschließend in alten E-Mails gesucht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "In manchen Fällen ist eine Nachfrage im Büro erforderlich, um Auskunft geben zu können.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Kunde wartet am Telefon, während der Mitarbeiter nach den Informationen sucht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Mitarbeiter kann dem Anrufer nicht sofort sagen, welcher Status aktuell gilt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Änderungen am Reisestatus werden nicht konsistent im Buchungssystem gepflegt, sondern verbleiben in E-Mail-Verläufen oder bei einzelnen Büromitarbeitern.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Konkrete Bezeichnung und Anzahl der genutzten Buchungssysteme und E-Mail-Programme.",
+              "impact": "Erschwert die genaue Einschätzung des technischen Aufwands für Informationsverknüpfungen."
+            },
+            {
+              "statement": "Durchschnittliche Dauer der Telefongespräche und Wartezeiten der Kunden.",
+              "impact": "Fehlende quantitative Baseline zur Erfolgsmessung von Prozessverbesserungen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Informationen fehlen im Buchungssystem, sodass alte E-Mails oder das Büro konsultiert werden müssen?",
+              "impact": "Hilft zu bestimmen, ob es sich um ein Prozess- oder Systemdokumentationsproblem handelt.",
+              "blocking": false
+            },
+            {
+              "question": "Wie häufig kommt der Fall vor, dass eine Rückfrage im Büro notwendig ist?",
+              "impact": "Dient der besseren Gewichtung der Optimierungspotenziale zwischen Datensuche und interner Kommunikation.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "ae6b9387-e6b1-4016-bddf-26b61f3a7dcd"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Informationen fehlen im Buchungssystem, sodass alte E-Mails oder das Büro konsultiert werden müssen?",
+          "impact": "Hilft zu bestimmen, ob es sich um ein Prozess- oder Systemdokumentationsproblem handelt.",
+          "blocking": false
+        },
+        {
+          "question": "Wie häufig kommt der Fall vor, dass eine Rückfrage im Büro notwendig ist?",
+          "impact": "Dient der besseren Gewichtung der Optimierungspotenziale zwischen Datensuche und interner Kommunikation.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.026631"
+    }
+  ],
+  "scope_confirmed": false
+}

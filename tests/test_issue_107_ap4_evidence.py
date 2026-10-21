@@ -405,6 +405,8 @@ def test_ap4_real_evidence_does_not_turn_scripted_operator_time_into_pass(monkey
     # reader contract; neither product versions nor archived records are rewritten.
     with monkeypatch.context() as historical:
         for name, version in {
+            "DISCOVERY_PROMPT_VERSION": "ap1-discovery-v1",
+            "DISCOVERY_VERIFIER_PROMPT_VERSION": "ap1-discovery-verifier-v1",
             "LOOP_VERSION": "vs1-agent-loop-v19",
             "SYNTHESIS_PROMPT_VERSION": "vs1-synthesis-v15",
             "SYNTHESIS_SCHEMA_VERSION": "vs1-synthesis-schema-v5",
