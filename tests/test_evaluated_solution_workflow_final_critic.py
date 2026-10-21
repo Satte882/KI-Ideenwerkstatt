@@ -332,7 +332,8 @@ def test_final_critic_uses_same_structured_contract_once_and_preserves_repaired_
 
     assert request_mock.call_count == 1
     kwargs = request_mock.call_args.kwargs
-    assert kwargs["max_tokens"] == 4096
+    assert kwargs["max_tokens"] == 8192
+    assert kwargs["reasoning_effort"] == "high"
     assert kwargs["timeout_seconds"] == 17
     assert kwargs["temperature"] is None
     assert kwargs["provider"] == {"require_parameters": True}

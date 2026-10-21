@@ -1,0 +1,302 @@
+{
+  "case": "B",
+  "phase": "sources",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "efa474290790bfab013e8d6cba2ecafa6722ef746b38728a02eff9086a35a11d",
+    "ki_radar/accelerator/architect_contract.py": "04c458cdf3f1c60a219bf21ae9d2ec8a6bb790ed50a61a3bf11d3de52df26da4"
+  },
+  "preceding_model_questions": [
+    {
+      "question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?",
+      "impact": "Ohne diese Information kann nicht verantwortbar entschieden werden, welche Phase der primäre Engpass ist.",
+      "blocking": true
+    },
+    {
+      "question": "Welche Rahmenbedingungen oder Vorgaben existieren bezüglich der Personalplanung?",
+      "impact": "Hilft bei der Bewertung realistischer Maßnahmen zur Arbeitsentlastung.",
+      "blocking": false
+    }
+  ],
+  "released_sources": [
+    {
+      "filename": "01_goal.md",
+      "sha256": "27a35b0b0e3a90f28cbf5a32e5e43ae2f03516e10a94084e95cd309e9f1e6a1a"
+    },
+    {
+      "filename": "02_reports.md",
+      "sha256": "d09fc368f7f5f5e706b804f5c85891ff5b4c6d7c13ae7d749502319cf83b38d5"
+    },
+    {
+      "filename": "03_unknowns.md",
+      "sha256": "548c46ac1930fa00ef10a8e5d0cf86931f14d48a8aa5ded144a25e5abb2d00b4"
+    }
+  ],
+  "error": {
+    "code": "provider_unavailable",
+    "message": "OpenRouter ist derzeit nicht verfügbar."
+  },
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik B"
+    },
+    "problem_statement": "Ich möchte mehr Reisen verkaufen. Gleichzeitig können wir nicht immer neue Leute einstellen. Ich weiß noch nicht, an welchen Stellen uns mehr Buchungen besonders viel zusätzliche Arbeit machen und was wir daran ändern könnten.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "a2d9ac52-13cd-4db5-b16e-eebe94b27296",
+      "title": "[SYNTHETISCH #133 B/fresh] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:18:21.282373+00:00",
+      "idea_updated_at": "2026-10-21T11:18:21.257105+00:00",
+      "origin_source_filename": "ideenbox-a2d9ac52-13cd-4db5-b16e-eebe94b27296.md",
+      "origin_source_sha256": "ecbe368696cf65edf84793f3d289c0a9a03be67c53b458c80aa9a033ec5ba16c"
+    }
+  },
+  "analyses": [
+    {
+      "id": "b04abf96-99fb-4283-9ae9-30e24d8ac454",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "245974db3dd4cba7c7a4b0a3b2d3dc1069a1e7195ab05423e61df245f50dcead",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reiseverkauf und -abwicklung",
+            "description": "Gesamter Wertstrom von der ersten Kundenanfrage und Beratung über die Buchungsabwicklung bis hin zur Nachbetreuung.",
+            "trigger": "Kundenanfrage oder Kundeninteresse an einer Reisebuchung",
+            "outcome": "Erfolgreich abgewickelte Reise und abgeschlossene Kundenbetreuung",
+            "scope_in": "Annahme von Reiseanfragen, Erstkontakt, Angebotserstellung, Buchungsdurchführung",
+            "scope_out": "Langfristige Produktentwicklung von Reiseangeboten sowie allgemeines Marketing",
+            "strategic_objective": "Steigerung des Reiseverkaufs bei eingeschränkter Möglichkeit zur Personaleinstellung (Vorschlag)",
+            "stakeholders": "Vertrieb, Kundenservice, Reisesuchende",
+            "constraints": "Eingeschränkte Möglichkeiten für Neueinstellungen von Personal",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "beratung_angebot",
+              "sequence": 1,
+              "name": "Reiseberatung und Angebotserstellung",
+              "description": "Erfassung der Kundenwünsche und Erstellung passender Reiseangebote.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Möglicher Mehraufwand bei steigender Anzahl an Anfragen ungeklärt.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "buchung_abwicklung",
+              "sequence": 2,
+              "name": "Buchungsabwicklung",
+              "description": "Verbindliche Erfassung und Abwicklung von Reisebuchungen.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unbekannter genauer Arbeitsaufwand pro Buchung bei steigendem Volumen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "reisevorbereitung_betreuung",
+              "sequence": 3,
+              "name": "Reisevorbereitung und Nachbetreuung",
+              "description": "Bereitstellung von Reiseunterlagen und Betreuung vor oder nach der Reise.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Arbeitsbelastung bei Nachfragen derzeit nicht näher quantifiziert.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "buchung_abwicklung",
+            "business_domain": "sales",
+            "capability": "Buchungsabwicklung und Auftragsbearbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Die Buchungsabwicklung stellt eine direkte Schnittstelle zwischen Verkaufserfolg und operativer Arbeitsbelastung dar. Da der genaue Engpass laut Quellenlage noch unbekannt ist, dient diese Phase als vorläufiger Untersuchungsschwerpunkt.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungsabwicklung lässt eventuelle Aufwände in der vorgelagerten Beratung vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Unklar, in welcher Phase die höchste zusätzliche Arbeitsbelastung pro zusätzlicher Buchung entsteht."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse der Buchungsabwicklung",
+            "scope_start": "Eingang des Buchungswunsches",
+            "scope_end": "Abschluss der Buchungsbestätigung",
+            "trigger": "Kunde möchte eine Reise verbindlich buchen",
+            "outcome": "Bestätigte Buchung und erfasste Vorgangsdaten",
+            "current_flow": "Der detaillierte Ist-Ablauf der Buchungsabwicklung ist aktuell nicht ausreichend bekannt und muss in weiteren Untersuchungen aufgenommen werden.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Beobachtete Unklarheit darüber, welche Teilprozessschritte bei höheren Buchungszahlen zu Mehrarbeit führen.",
+            "observations": "Es liegt bisher keine quantitative Messung oder genaue Prozessdokumentation vor.",
+            "cause_hypotheses": "Möglicherweise führen manuelle Erfassungsschritte oder Schnittstellen bei steigendem Volumen zu erhöhtem Zeitaufwand.",
+            "constraints": "Eingeschränkte Möglichkeiten für Neueinstellungen von Personal.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Ziel ist der Verkauf von mehr Reisen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es können nicht unbegrenzt neue Mitarbeiter eingestellt werden.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell nicht bekannt, an welchen Stellen zusätzliche Buchungen besonders viel Mehrarbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Manuelle Prozessschritte bei der Buchungserfassung könnten bei steigendem Volumen den primären Kapazitätsengpass darstellen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Verteilung der Arbeitszeit auf die einzelnen Phasen des Reiseverkaufs.",
+              "impact": "Erschwert die gezielte Identifikation von Effizienzpotenzialen."
+            },
+            {
+              "statement": "Konkrete Kapazitätsgrenzen des bestehenden Teams.",
+              "impact": "Beurteilung des Skalierungspotenzials ohne neue Einstellungen unklar."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?",
+              "impact": "Ohne diese Information kann nicht verantwortbar entschieden werden, welche Phase der primäre Engpass ist.",
+              "blocking": true
+            },
+            {
+              "question": "Welche Rahmenbedingungen oder Vorgaben existieren bezüglich der Personalplanung?",
+              "impact": "Hilft bei der Bewertung realistischer Maßnahmen zur Arbeitsentlastung.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "8d412c8c-a93e-491b-a5bd-9c51871fca18"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "decision_blocking_clarification",
+            "message": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?"
+          }
+        ],
+        "repair_instructions": "",
+        "human_question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?"
+      },
+      "open_questions": [
+        {
+          "question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?",
+          "impact": "Ohne diese Information kann nicht verantwortbar entschieden werden, welche Phase der primäre Engpass ist.",
+          "blocking": true
+        },
+        {
+          "question": "Welche Rahmenbedingungen oder Vorgaben existieren bezüglich der Personalplanung?",
+          "impact": "Hilft bei der Bewertung realistischer Maßnahmen zur Arbeitsentlastung.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.026986"
+    },
+    {
+      "id": "995cdf3b-7fc4-461f-84d6-9c851750143a",
+      "status": "failed",
+      "error_code": "provider_unavailable",
+      "source_revision": 1,
+      "source_hash": "cbe67c5a74ed206dbf010daa7a1e4b8a5d19a0f07021b19f2500be887afa5083",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    }
+  ],
+  "scope_confirmed": false
+}

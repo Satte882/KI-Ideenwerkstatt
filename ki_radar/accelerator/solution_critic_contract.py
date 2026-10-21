@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Iterable
 from typing import Any
 
@@ -29,6 +30,115 @@ class SolutionCriticContractError(ValueError):
     def __init__(self, errors: list[str] | tuple[str, ...]) -> None:
         self.errors = tuple(errors)
         super().__init__("; ".join(self.errors))
+
+
+def unconfirmed_solution_fit_findings(options, source_context, findings):
+    """Supplement the semantic critic using its existing bound-repair contract."""
+    if source_context.validation_state != "not_validated" or any(
+        fact.field == "confirmed_causes" and fact.value.strip() for fact in source_context.facts
+    ):
+        return []
+    source_ids = [fact.source_id for fact in source_context.facts if fact.field == "bottlenecks"]
+    if not source_ids:
+        return []
+    covered = set()
+    for finding in findings:
+        if not isinstance(finding, dict) or not finding.get("repairable"):
+            continue
+        covered.add((finding.get("option"), finding.get("field")))
+        covered.update(
+            (target.get("option"), target.get("field"))
+            for target in finding.get("related_targets", [])
+            if isinstance(target, dict)
+        )
+    claim = re.compile(r"\b(?:adressiert|reduziert|beseitigt|löst|deckt)\b|\bsetzt\b.+\ban\b", re.I)
+    qualified = re.compile(
+        r"\b(?:kann|könn\w*|würde\w*|wäre\w*|falls|sofern|möglich\w*|bedingt\w*|"
+        r"unbestätigt\w*|unbewiesen\w*|Hypothes\w*|berichtet\w*|subjektiv\w*|soll\w*)\b|"
+        r"nicht (?:belegt|nachgewiesen|bestätigt|bewiesen)",
+        re.I,
+    )
+    result = []
+    for lane in OPTION_LANES:
+        field = "bottleneck_coverage"
+        if (lane, field) in covered:
+            continue
+        text = options[lane][field]["text"]
+        if any(
+            claim.search(sentence) and not qualified.search(sentence)
+            for sentence in re.split(r"[.;\n]", text)
+        ):
+            result.append(
+                {
+                    "criterion": "evidence_discipline",
+                    "option": lane,
+                    "field": field,
+                    "finding": "Serverseitige Claim-Prüfung: Bei unvalidierter Diagnose ohne "
+                    "bestätigte Ursache muss jeder Satz zum Engpass-Fit ausdrücklich bedingt "
+                    "formuliert sein. Ein späterer Evidenzvorbehalt bestätigt den Fit nicht.",
+                    "source_ids": source_ids,
+                    "repairable": True,
+                    "related_targets": [],
+                }
+            )
+    for lane in OPTION_LANES:
+        field = "technology_constraints"
+        statement = options[lane].get(field, {})
+        if (lane, field) in covered:
+            continue
+        if any(
+            re.search(r"\bEngp(?:ass|äss)\w*\b", sentence, re.I)
+            and not qualified.search(sentence)
+            and not re.search(r"\bkein\w*\b", sentence, re.I)
+            for sentence in re.split(r"[.;\n]", statement.get("text", ""))
+        ):
+            result.append(
+                {
+                    "criterion": "evidence_discipline",
+                    "option": lane,
+                    "field": field,
+                    "finding": "Serverseitige Claim-Prüfung: Eine berichtete technische "
+                    "Einschränkung ist ohne Wirkungsbeleg kein nachgewiesener Engpass. "
+                    "Bericht erhalten, kausale Blockierungswirkung ausdrücklich offen lassen, "
+                    "auch in uncertainty.reason und offenen Evidenzfragen.",
+                    "source_ids": source_ids,
+                    "repairable": True,
+                    "related_targets": [],
+                }
+            )
+    systems = next((fact for fact in source_context.facts if fact.field == "systems"), None)
+    if systems and not re.search(r"integrat|anbind|schnittstell", systems.value, re.I):
+        necessity = re.compile(r"erforderlich|notwendig|nötig|\bmuss\b|\bmüsst\w*", re.I)
+        conditional = re.compile(
+            r"^\s*ob\b|"
+            r"\b(?:falls|sofern|wenn|gegebenenfalls|eventuell|möglicherweise|kann|könnte\w*|offen)\b|"
+            r"\b(?:kein\w*|nicht)\b[^.;]{0,80}\b(?:erforderlich|notwendig|nötig)\b",
+            re.I,
+        )
+        for lane in OPTION_LANES:
+            field = "integration_impact"
+            statement = options[lane].get(field, {})
+            if (lane, field) in covered or statement.get("source_ids") != [systems.source_id]:
+                continue
+            if any(
+                necessity.search(sentence) and not conditional.search(sentence)
+                for sentence in re.split(r"[.;\n]", statement["text"])
+            ):
+                result.append(
+                    {
+                        "criterion": "evidence_discipline",
+                        "option": lane,
+                        "field": field,
+                        "finding": "Serverseitige Claim-Prüfung: Ausschließlich referenzierte "
+                        "Systemnamen belegen keine notwendige Integration. Ob eine Anbindung "
+                        "erforderlich wäre, bleibt ohne konkrete Anforderung offen; "
+                        "bedingt formulieren.",
+                        "source_ids": [systems.source_id],
+                        "repairable": True,
+                        "related_targets": [],
+                    }
+                )
+    return result
 
 
 def _exact_fields(

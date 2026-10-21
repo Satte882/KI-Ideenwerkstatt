@@ -127,7 +127,7 @@ def test_structural_contract_accepts_complete_shape_and_prompt_repeats_requireme
     validated = validate_solution_generation_payload(valid_payload(), source_context())
     messages = build_solution_generation_messages(source_context())
 
-    assert validated["prompt_version"] == "1.2"
+    assert validated["prompt_version"] == GENERATION_PROMPT_VERSION
     assert STRUCTURAL_OUTPUT_RULE in messages[0]["content"]
     assert '"statement_shape"' in messages[1]["content"]
     assert '"assumptions":[]' in messages[1]["content"]

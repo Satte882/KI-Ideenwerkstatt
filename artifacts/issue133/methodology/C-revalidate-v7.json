@@ -1,0 +1,1269 @@
+{
+  "case": "C",
+  "phase": "revalidate",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "revalidated_analysis_id": "815088c3-2576-4ad7-9c16-3062f4f309e4",
+  "reused_real_call_id": 43,
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "8b4b194d4336c67cf71487e5e088f0ababa59bb08e862e8a4d207a0b73914d8b",
+    "ki_radar/accelerator/architect_contract.py": "f12d47c22fd716080469ef163ef4a92a2a9b43222a0a78b1972219ebbbf96bcb"
+  },
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik C"
+    },
+    "problem_statement": "Ich bin gerade auf der Reise. Für morgen habe ich einen Treffpunkt in meinen Unterlagen und eine andere Angabe in einer Nachricht. Jetzt bin ich unsicher, wo ich wann sein soll und wen ich fragen kann.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "18cfe8d6-d01b-4f18-9b54-6bdd9d5c95d7",
+      "title": "[SYNTHETISCH #133 C/fresh-recovery] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:26:18.394820+00:00",
+      "idea_updated_at": "2026-10-21T11:26:18.349050+00:00",
+      "origin_source_filename": "ideenbox-18cfe8d6-d01b-4f18-9b54-6bdd9d5c95d7.md",
+      "origin_source_sha256": "dee8056b65f3e720dc2e58f0661a67c6623463a3e568cc9b3c69dbf7a4cb77fd"
+    }
+  },
+  "analyses": [
+    {
+      "id": "8ee6b41d-6734-4e0c-af29-bc9273d3c3ea",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "66c8e46389055bec07ba796442cb74fe283fc36a8ee080cacbbebf8930dd2268",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reise- und Terminkoordination",
+            "description": "End-to-End-Ablauf von der Bereitstellung von Reiseinformationen bis zur Klärung von Termindetails vor Ort.",
+            "trigger": "Bevorstehender Termin während einer Reise am nächsten Tag",
+            "outcome": "Klarheit über Ort, Zeitpunkt und Ansprechpartner des morgigen Treffpunkts",
+            "scope_in": "Vorliegen von Reiseunterlagen und Erhalt von Nachrichten mit Terminangaben",
+            "scope_out": "Durchführung des Treffens selbst",
+            "strategic_objective": "Vorschlag: Sicherstellung einer verlässlichen Orientierung und Erreichbarkeit bei Terminabweichungen",
+            "stakeholders": "Reisende Person",
+            "constraints": "Unklarheit bezüglich des zuständigen Ansprechpartners zur Klärung der Terminabweichung",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "unterlagen_prüfung",
+              "sequence": 1,
+              "name": "Unterlagenprüfung",
+              "description": "Sichtung der vorliegenden Reiseunterlagen auf Ort und Zeit des morgigen Treffpunkts.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "Reiseunterlagen",
+              "pain_points": "Die Angaben in den Unterlagen weichen von einer erhaltenen Nachricht ab.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "nachrichten_abgleich",
+              "sequence": 2,
+              "name": "Nachrichtenabgleich",
+              "description": "Abgleich der Informationen aus der erhaltenen Nachricht mit den Daten der Reiseunterlagen.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "Nachricht, Reiseunterlagen",
+              "pain_points": "Widersprüchliche Zeit- und Ortsangaben erzeugen Unsicherheit über den tatsächlichen Treffpunkt.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "ansprechpartner_ermittlung",
+              "sequence": 3,
+              "name": "Ansprechpartnerermittlung",
+              "description": "Suche nach Kontaktdaten oder Verantwortlichen zur Klärung der Terminabweichung.",
+              "roles": "Reisende Person",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Es ist unbekannt, wer bezüglich der Terminabweichung kontaktiert werden kann.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "nachrichten_abgleich",
+            "business_domain": "corporate_services",
+            "capability": "Termin- und Reisedatenabgleich",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Vorschlag: Der Abgleich der widersprüchlichen Angaben zwischen Unterlagen und Nachricht deckt die primäre Unsicherheit auf und bildet die Grundlage für den Klärungsbedarf.",
+            "tradeoffs": [
+              "Eine Fokussierung auf den Abgleich behebt allein noch nicht die Unklarheit bezüglich des zuständigen Ansprechpartners."
+            ],
+            "uncertainties": [
+              "Es ist unklar, welche Angabe (Unterlage oder Nachricht) aktueller ist."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse der Terminabweichung",
+            "scope_start": "Wahrnehmung unterschiedlicher Treffpunktangaben in Unterlagen und Nachricht",
+            "scope_end": "Feststellung der Unsicherheit über Ort, Zeit und Ansprechpartner",
+            "trigger": "Bevorstehender Termin für den morgigen Tag mit abweichenden Angaben",
+            "outcome": "Identifizierte Unklarheit bezüglich Treffpunkt, Uhrzeit und Kontaktperson",
+            "current_flow": "Phase nachrichten_abgleich (Nachrichtenabgleich): Die reisende Person vergleicht die Angaben in den Reiseunterlagen mit der empfangenen Nachricht und stellt eine Abweichung fest. Ein weiterer Ist-Ablauf zur Kontaktaufnahme ist aktuell unbekannt.",
+            "roles": "Reisende Person",
+            "systems": "",
+            "data_objects": "Reiseunterlagen, Nachricht",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Unklarheit über die geeignete Ansprechperson zur Klärung der Abweichung.",
+            "observations": "In den Unterlagen steht ein anderer Treffpunkt/Zeitpunkt als in der Nachricht.",
+            "cause_hypotheses": "Mögliche Ursache könnte eine kurzfristige Planänderung oder eine zeitversetzte Übermittlung sein (nicht bestätigt).",
+            "constraints": "Unklarheit bezüglich der zuständigen Ansprechperson für Rückfragen.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Reisende hat in seinen Unterlagen eine Angabe zum morgigen Treffpunkt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Reisende hat in einer Nachricht eine andere Angabe zum morgigen Treffpunkt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Reisende ist unsicher bezüglich Ort, Zeit und Ansprechpartner für den morgigen Termin.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die Nachricht könnte eine neuere Aktualisierung der Reiseunterlagen darstellen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Zuständiger Ansprechpartner für Rückfragen.",
+              "impact": "Verhindert die direkte Rückfrage zur Beseitigung der Unsicherheit."
+            },
+            {
+              "statement": "Zeitpunkt des Eingangs und Gültigkeit der Nachricht im Vergleich zu den Unterlagen.",
+              "impact": "Erschwert die Bewertung, welche Angabe korrekt ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?",
+              "impact": "Ermöglicht die Klärung des Treffpunkts und entscheidet über den weiteren Prozessablauf.",
+              "blocking": true
+            },
+            {
+              "question": "Wann und auf welchem Kanal wurde die abweichende Nachricht empfangen?",
+              "impact": "Hilft bei der zeitlichen Einordnung der Aktualität.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "0802ee41-0c01-4b8b-b695-fa0717faf00a"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?"
+      },
+      "open_questions": [
+        {
+          "question": "Welcher Ansprechpartner oder welche Servicestelle kann für Rückfragen zum morgigen Termin kontaktiert werden?",
+          "impact": "Ermöglicht die Klärung des Treffpunkts und entscheidet über den weiteren Prozessablauf.",
+          "blocking": true
+        },
+        {
+          "question": "Wann und auf welchem Kanal wurde die abweichende Nachricht empfangen?",
+          "impact": "Hilft bei der zeitlichen Einordnung der Aktualität.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.041596"
+    },
+    {
+      "id": "df3043ac-15f0-4708-838c-7f0aa36448f6",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "41470e45423b50e9fb682668e6a2d56bcdd31df7f90b8f492b2575a2fa61b9fe",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseorganisation und Treffpunktbestätigung",
+            "description": "End-to-End-Ablauf vom Erhalt der Reiseinformationen über die Identifikation von Abweichungen bis zur verbindlichen Klärung des Treffpunkts.",
+            "trigger": "Erhalt von Reiseunterlagen und Benachrichtigungen",
+            "outcome": "Erhalt einer verbindlichen Klärung des Treffpunkts durch eine befugte Stelle",
+            "scope_in": "Prüfung von Reiseblatt und Nachrichten sowie Kontaktaufnahme zur Bestätigung",
+            "scope_out": "Durchführung des gewählten Treffens oder Nachbereitung der Reise",
+            "strategic_objective": "Vorschlag: Sicherstellung verlässlicher und eindeutiger Orts- und Zeitangaben für Reisetreffen",
+            "stakeholders": "Reisende (Testperson), befugte Stelle zur Auskunftserteilung",
+            "constraints": "Zeitweise fehlender Internetempfang; ungeprüfte Erreichbarkeit und Gültigkeit der vorliegenden Kontaktwege und Dokumente",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_1_unterlagenerhalt",
+              "sequence": 1,
+              "name": "Unterlagen- und Nachrichtenerhalt",
+              "description": "Reisende erhalten Dokumente und Nachrichten mit voneinander abweichenden Angaben zu Zeit und Ort eines Treffpunkts.",
+              "roles": "Reisende (Testperson)",
+              "systems": "Unbekannt",
+              "documents": "Reiseblatt (SYN-C-01), Nachrichtenfragment",
+              "pain_points": "Widersprüchliche Treffpunktangaben (08:30 Hotellobby vs. 09:00 Seiteneingang); zeitliche Reihenfolge der Unterlagen nicht rekonstruierbar.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "high",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_2_klaerung",
+              "sequence": 2,
+              "name": "Treffpunktprüfung und Kontaktaufnahme",
+              "description": "Überprüfung vorhandener Kontaktoptionen und Einholung einer verbindlichen Bestätigung bei einer befugten Stelle.",
+              "roles": "Reisende (Testperson), befugte Stelle",
+              "systems": "Telefonie",
+              "documents": "Reiseblatt mit Telefonnummer",
+              "pain_points": "Telefonnummer im Reiseblatt wurde noch nicht angerufen; Erreichbarkeit der Nummer sowie Absenderbefugnis des Nachrichtenfragments nicht nachgewiesen; zeitweise kein Internetempfang.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_2_klaerung",
+            "business_domain": "corporate_services",
+            "capability": "Treffpunktverifikation und Erstkontakt zur Klärung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "low",
+            "rationale": "Die Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) adressiert direkt die Verunsicherung der Testperson. Da aus dem Nachrichtenfragment kein bestätigter neuer Treffpunkt folgt und eine Auskunft durch eine befugte Stelle erforderlich ist, bietet die Kontaktaufnahme den einzigen belegten Weg zur Klärung.",
+            "tradeoffs": [
+              "Fokus auf Kontaktaufnahme behebt nicht die Entstehung widersprüchlicher Dokumente in vorgelagerten Schritten.",
+              "Erfolg hängt von der tatsächlichen Erreichbarkeit der Telefonnummer ab."
+            ],
+            "uncertainties": [
+              "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer",
+              "Gültigkeit und Befugnis des Absenders des Nachrichtenfragments"
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozessanalyse Treffpunktprüfung und Kontaktaufnahme",
+            "scope_start": "Identifikation abweichender Angaben in Reiseblatt und Nachricht",
+            "scope_end": "Erhalt einer verbindlichen Treffpunktauskunft durch eine befugte Stelle",
+            "trigger": "Unsicherheit bezüglich Treffpunkt, Uhrzeit und Ansprechpartner",
+            "outcome": "Verbindliche Klärung des Treffpunkts durch eine befugte Stelle",
+            "current_flow": "In der Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) stehen der Testperson das Reiseblatt mit einer Telefonnummer und ein Nachrichtenfragment zur Verfügung. Die Telefonnummer wurde bisher nicht angerufen. Bei zeitweise fehlendem Internetempfang sucht die Testperson nach einer befugten Stelle zur verbindlichen Klärung.",
+            "roles": "Reisende (Testperson), befugte Stelle",
+            "systems": "Telefonie",
+            "data_objects": "Reiseblatt (SYN-C-01), Nachrichtenfragment, Telefonnummer",
+            "business_rules": "Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis begründet keinen bestätigten neuen Treffpunkt. Eine verbindliche Änderung erfordert die Bestätigung durch eine befugte Stelle.",
+            "handoffs": "Anfrage der Testperson an die befugte Stelle per Telefon.",
+            "bottlenecks": "Ungeprüfte Erreichbarkeit der Telefonnummer; zeitweise fehlender Internetempfang.",
+            "observations": "Das Reiseblatt gibt 08:30 Hotellobby an, die Nachricht 09:00 Seiteneingang. Die Testperson kann die zeitliche Reihenfolge der Unterlagen nicht sicher rekonstruieren und hat die Telefonnummer bisher nicht angerufen.",
+            "cause_hypotheses": "Es wurden laut den vorliegenden Quellen keine Ursachen für die Abweichung festgestellt.",
+            "constraints": "Zeitweise kein Internetempfang; Unklarheit über Aktualität und Befugnis.",
+            "exceptions": "Telefonnummer nicht erreichbar oder unvollständig.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Das Reiseblatt nennt für morgen 08:30 an der Hotellobby und enthält eine Telefonnummer als Rückfragemöglichkeit.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Das Nachrichtenfragment nennt für morgen 09:00 am Seiteneingang.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Die Telefonnummer im Reiseblatt wurde noch nicht angerufen; ihre Existenz ist bekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson hat zeitweise keinen Internetempfang.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson ist unsicher bezüglich des Treffpunkts, der Uhrzeit und des Ansprechpartners.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Weder verpasste Leistungen noch eine Ursache der Abweichung sind festgestellt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die im Reiseblatt angegebene Telefonnummer könnte eine Verbindung zu einer befugten Stelle herstellen.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Abweichung der Zeit- und Ortsangaben könnte durch eine nachträgliche Programmänderung entstanden sein.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer.",
+              "impact": "Beeinflusst die Möglichkeit, eine telefonische Klärung direkt durchzuführen."
+            },
+            {
+              "statement": "Absenderbefugnis und Gültigkeit des Nachrichtenfragments.",
+              "impact": "Bestimmt, ob die Angabe 09:00 Seiteneingang als relevant angesehen werden kann."
+            },
+            {
+              "statement": "Zeitliche Reihenfolge der Erstellung von Reiseblatt und Nachrichtenfragment.",
+              "impact": "Erschwert die Feststellung, welche Information jünger ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+              "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+              "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Das Reiseblatt nennt als Treffpunkt morgen 08:30 an der Hotellobby, während das Nachrichtenfragment morgen 09:00 am Seiteneingang nennt.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_travel_sheet.md",
+          "S2": "02_message.md",
+          "S3": "03_contact.md"
+        },
+        "discovery_snapshot_id": "ac5c0f2e-2420-4bf7-a972-073ea06550c2"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?"
+      },
+      "open_questions": [
+        {
+          "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+          "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+          "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.037708"
+    },
+    {
+      "id": "08085f9d-5415-4420-8b16-037cdffe5078",
+      "status": "failed",
+      "error_code": "verification_not_converged",
+      "source_revision": 1,
+      "source_hash": "41470e45423b50e9fb682668e6a2d56bcdd31df7f90b8f492b2575a2fa61b9fe",
+      "prompt_version": "ap1-methodology-v5",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseorganisation und Treffpunktbestätigung",
+            "description": "End-to-End-Ablauf vom Erhalt der Reiseinformationen über die Identifikation von Abweichungen bis zur verbindlichen Klärung des Treffpunkts.",
+            "trigger": "Erhalt von Reiseunterlagen und Benachrichtigungen",
+            "outcome": "Erhalt einer verbindlichen Klärung des Treffpunkts durch eine befugte Stelle",
+            "scope_in": "Prüfung von Reiseblatt und Nachrichten sowie Kontaktaufnahme zur Bestätigung",
+            "scope_out": "Durchführung des gewählten Treffens oder Nachbereitung der Reise",
+            "strategic_objective": "Vorschlag: Sicherstellung verlässlicher und eindeutiger Orts- und Zeitangaben für Reisetreffen",
+            "stakeholders": "Reisende (Testperson), befugte Stelle zur Auskunftserteilung",
+            "constraints": "Zeitweise fehlender Internetempfang; ungeprüfte Erreichbarkeit und Gültigkeit der vorliegenden Kontaktwege und Dokumente",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_1_unterlagenerhalt",
+              "sequence": 1,
+              "name": "Unterlagen- und Nachrichtenerhalt",
+              "description": "Reisende erhalten Dokumente und Nachrichten mit voneinander abweichenden Angaben zu Zeit und Ort eines Treffpunkts.",
+              "roles": "Reisende (Testperson)",
+              "systems": "Unbekannt",
+              "documents": "Reiseblatt (SYN-C-01), Nachrichtenfragment",
+              "pain_points": "Widersprüchliche Treffpunktangaben (08:30 Hotellobby vs. 09:00 Seiteneingang); zeitliche Reihenfolge der Unterlagen nicht rekonstruierbar.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "high",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_2_klaerung",
+              "sequence": 2,
+              "name": "Treffpunktprüfung und Kontaktaufnahme",
+              "description": "Überprüfung vorhandener Kontaktoptionen und Einholung einer verbindlichen Bestätigung bei einer befugten Stelle.",
+              "roles": "Reisende (Testperson), befugte Stelle",
+              "systems": "Telefonie",
+              "documents": "Reiseblatt mit Telefonnummer",
+              "pain_points": "Telefonnummer im Reiseblatt wurde noch nicht angerufen; Erreichbarkeit der Nummer sowie Absenderbefugnis des Nachrichtenfragments nicht nachgewiesen; zeitweise kein Internetempfang.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_2_klaerung",
+            "business_domain": "corporate_services",
+            "capability": "Treffpunktverifikation und Erstkontakt zur Klärung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "low",
+            "rationale": "Die Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) adressiert direkt die Verunsicherung der Testperson. Da aus dem Nachrichtenfragment kein bestätigter neuer Treffpunkt folgt und eine Auskunft durch eine befugte Stelle erforderlich ist, bietet die Kontaktaufnahme eine bekannte Möglichkeit zur Klärung.",
+            "tradeoffs": [
+              "Fokus auf Kontaktaufnahme behebt nicht die Entstehung widersprüchlicher Dokumente in vorgelagerten Schritten.",
+              "Erfolg hängt von der tatsächlichen Erreichbarkeit der Telefonnummer ab."
+            ],
+            "uncertainties": [
+              "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer",
+              "Gültigkeit und Befugnis des Absenders des Nachrichtenfragments"
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozessanalyse Treffpunktprüfung und Kontaktaufnahme",
+            "scope_start": "Identifikation abweichender Angaben in Reiseblatt und Nachricht",
+            "scope_end": "Erhalt einer verbindlichen Treffpunktauskunft durch eine befugte Stelle",
+            "trigger": "Unsicherheit bezüglich Treffpunkt, Uhrzeit und Ansprechpartner",
+            "outcome": "Verbindliche Klärung des Treffpunkts durch eine befugte Stelle",
+            "current_flow": "In der Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) stehen der Testperson das Reiseblatt mit einer Telefonnummer und ein Nachrichtenfragment zur Verfügung. Die Telefonnummer wurde bisher nicht angerufen. Bei zeitweise fehlendem Internetempfang sucht die Testperson nach einer befugten Stelle zur verbindlichen Klärung.",
+            "roles": "Reisende (Testperson), befugte Stelle",
+            "systems": "Telefonie",
+            "data_objects": "Reiseblatt (SYN-C-01), Nachrichtenfragment, Telefonnummer",
+            "business_rules": "Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis begründet keinen bestätigten neuen Treffpunkt. Eine verbindliche Änderung erfordert die Bestätigung durch eine befugte Stelle.",
+            "handoffs": "Geplante Kontaktaufnahme der Testperson an eine befugte Stelle per Telefon (noch nicht durchgeführt).",
+            "bottlenecks": "Ungeprüfte Erreichbarkeit der Telefonnummer; zeitweise fehlender Internetempfang.",
+            "observations": "Das Reiseblatt gibt 08:30 Hotellobby an, die Nachricht 09:00 Seiteneingang. Die Testperson kann die zeitliche Reihenfolge der Unterlagen nicht sicher rekonstruieren und hat die Telefonnummer bisher nicht angerufen.",
+            "cause_hypotheses": "Es wurden laut den vorliegenden Quellen keine Ursachen für die Abweichung festgestellt.",
+            "constraints": "Zeitweise kein Internetempfang; Unklarheit über Aktualität und Befugnis.",
+            "exceptions": "Möglicher Ausfall der Telefonerreichbarkeit (bisher unbewertet und ungemessen).",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Das Reiseblatt nennt für morgen 08:30 an der Hotellobby und enthält eine Telefonnummer als Rückfragemöglichkeit.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Das Nachrichtenfragment nennt für morgen 09:00 am Seiteneingang.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Die Telefonnummer im Reiseblatt wurde noch nicht angerufen; ihre Existenz ist bekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson hat zeitweise keinen Internetempfang.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson ist unsicher bezüglich des Treffpunkts, der Uhrzeit und des Ansprechpartners.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Weder verpasste Leistungen noch eine Ursache der Abweichung sind festgestellt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die im Reiseblatt angegebene Telefonnummer könnte eine Verbindung zu einer befugten Stelle herstellen.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Abweichung der Zeit- und Ortsangaben könnte durch eine nachträgliche Programmänderung entstanden sein.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer.",
+              "impact": "Beeinflusst die Möglichkeit, eine telefonische Klärung direkt durchzuführen."
+            },
+            {
+              "statement": "Absenderbefugnis und Gültigkeit des Nachrichtenfragments.",
+              "impact": "Bestimmt, ob die Angabe 09:00 Seiteneingang als relevant angesehen werden kann."
+            },
+            {
+              "statement": "Zeitliche Reihenfolge der Erstellung von Reiseblatt und Nachrichtenfragment.",
+              "impact": "Erschwert die Feststellung, welche Information jünger ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+              "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+              "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Das Reiseblatt nennt als Treffpunkt morgen 08:30 an der Hotellobby, während das Nachrichtenfragment morgen 09:00 am Seiteneingang nennt.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ]
+        },
+        "discovery_snapshot_id": "ac5c0f2e-2420-4bf7-a972-073ea06550c2"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": false,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "GROUNDING_HANDOFF_NOT_EXECUTED",
+            "message": "In 'process_analysis.handoffs' wird eine geplante Kontaktaufnahme als Handoff ausgewiesen, obwohl laut Quelle S3 bisher keine Kontaktaufnahme stattgefunden hat."
+          }
+        ],
+        "repair_instructions": "Passe das Feld 'process_analysis.handoffs' an: Ein noch nicht durchgeführter Anruf stellt keinen vollzogenen Handoff dar. Korrigiere den Eintrag dahin gehend, dass aktuell kein vollzogener Handoff vorliegt.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+          "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+          "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.013866"
+    },
+    {
+      "id": "815088c3-2576-4ad7-9c16-3062f4f309e4",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "41470e45423b50e9fb682668e6a2d56bcdd31df7f90b8f492b2575a2fa61b9fe",
+      "prompt_version": "ap1-methodology-v6",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseorganisation und Treffpunktbestätigung",
+            "description": "End-to-End-Ablauf vom Erhalt der Reiseinformationen über die Identifikation von Abweichungen bis zur verbindlichen Klärung des Treffpunkts.",
+            "trigger": "Erhalt von Reiseunterlagen und Benachrichtigungen",
+            "outcome": "Erhalt einer verbindlichen Klärung des Treffpunkts durch eine befugte Stelle",
+            "scope_in": "Prüfung von Reiseblatt und Nachrichten sowie Kontaktaufnahme zur Bestätigung",
+            "scope_out": "Durchführung des gewählten Treffens oder Nachbereitung der Reise",
+            "strategic_objective": "Vorschlag: Sicherstellung verlässlicher und eindeutiger Orts- und Zeitangaben für Reisetreffen",
+            "stakeholders": "Reisende (Testperson), befugte Stelle zur Auskunftserteilung",
+            "constraints": "Zeitweise fehlender Internetempfang; ungeprüfte Erreichbarkeit und Gültigkeit der vorliegenden Kontaktwege und Dokumente",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_1_unterlagenerhalt",
+              "sequence": 1,
+              "name": "Unterlagen- und Nachrichtenerhalt",
+              "description": "Reisende erhalten Dokumente und Nachrichten mit voneinander abweichenden Angaben zu Zeit und Ort eines Treffpunkts.",
+              "roles": "Reisende (Testperson)",
+              "systems": "Unbekannt",
+              "documents": "Reiseblatt (SYN-C-01), Nachrichtenfragment",
+              "pain_points": "Widersprüchliche Treffpunktangaben (08:30 Hotellobby vs. 09:00 Seiteneingang); zeitliche Reihenfolge der Unterlagen nicht rekonstruierbar.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "high",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_2_klaerung",
+              "sequence": 2,
+              "name": "Treffpunktprüfung und Kontaktaufnahme",
+              "description": "Überprüfung vorhandener Kontaktoptionen und Einholung einer verbindlichen Bestätigung bei einer befugten Stelle.",
+              "roles": "Reisende (Testperson), befugte Stelle",
+              "systems": "Telefonie",
+              "documents": "Reiseblatt mit Telefonnummer",
+              "pain_points": "Telefonnummer im Reiseblatt wurde noch nicht angerufen; Erreichbarkeit der Nummer sowie Absenderbefugnis des Nachrichtenfragments nicht nachgewiesen; zeitweise kein Internetempfang.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_2_klaerung",
+            "business_domain": "corporate_services",
+            "capability": "Treffpunktverifikation und Erstkontakt zur Klärung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "low",
+            "rationale": "Die Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) adressiert direkt die Verunsicherung der Testperson. Da aus dem Nachrichtenfragment kein bestätigter neuer Treffpunkt folgt und eine Auskunft durch eine befugte Stelle erforderlich ist, bietet die Kontaktaufnahme eine bekannte Möglichkeit zur Klärung.",
+            "tradeoffs": [
+              "Fokus auf Kontaktaufnahme behebt nicht die Entstehung widersprüchlicher Dokumente in vorgelagerten Schritten.",
+              "Erfolg hängt von der tatsächlichen Erreichbarkeit der Telefonnummer ab."
+            ],
+            "uncertainties": [
+              "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer",
+              "Gültigkeit und Befugnis des Absenders des Nachrichtenfragments"
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozessanalyse Treffpunktprüfung und Kontaktaufnahme",
+            "scope_start": "Identifikation abweichender Angaben in Reiseblatt und Nachricht",
+            "scope_end": "Erhalt einer verbindlichen Treffpunktauskunft durch eine befugte Stelle",
+            "trigger": "Unsicherheit bezüglich Treffpunkt, Uhrzeit und Ansprechpartner",
+            "outcome": "Verbindliche Klärung des Treffpunkts durch eine befugte Stelle",
+            "current_flow": "In der Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) stehen der Testperson das Reiseblatt mit einer Telefonnummer und ein Nachrichtenfragment zur Verfügung. Die Telefonnummer wurde bisher nicht angerufen. Bei zeitweise fehlendem Internetempfang sucht die Testperson nach einer befugten Stelle zur verbindlichen Klärung.",
+            "roles": "Reisende (Testperson), befugte Stelle",
+            "systems": "Telefonie",
+            "data_objects": "Reiseblatt (SYN-C-01), Nachrichtenfragment, Telefonnummer",
+            "business_rules": "Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis begründet keinen bestätigten neuen Treffpunkt. Eine verbindliche Änderung erfordert die Bestätigung durch eine befugte Stelle.",
+            "handoffs": "Geplante Kontaktaufnahme der Testperson an eine befugte Stelle per Telefon (noch nicht durchgeführt).",
+            "bottlenecks": "Ungeprüfte Erreichbarkeit der Telefonnummer; zeitweise fehlender Internetempfang.",
+            "observations": "Das Reiseblatt gibt 08:30 Hotellobby an, die Nachricht 09:00 Seiteneingang. Die Testperson kann die zeitliche Reihenfolge der Unterlagen nicht sicher rekonstruieren und hat die Telefonnummer bisher nicht angerufen.",
+            "cause_hypotheses": "Es wurden laut den vorliegenden Quellen keine Ursachen für die Abweichung festgestellt.",
+            "constraints": "Zeitweise kein Internetempfang; Unklarheit über Aktualität und Befugnis.",
+            "exceptions": "Möglicher Ausfall der Telefonerreichbarkeit (bisher unbewertet und ungemessen).",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Das Reiseblatt nennt für morgen 08:30 an der Hotellobby und enthält eine Telefonnummer als Rückfragemöglichkeit.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Das Nachrichtenfragment nennt für morgen 09:00 am Seiteneingang.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Die Telefonnummer im Reiseblatt wurde noch nicht angerufen; ihre Existenz ist bekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson hat zeitweise keinen Internetempfang.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson ist unsicher bezüglich des Treffpunkts, der Uhrzeit und des Ansprechpartners.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Weder verpasste Leistungen noch eine Ursache der Abweichung sind festgestellt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die im Reiseblatt angegebene Telefonnummer könnte eine Verbindung zu einer befugten Stelle herstellen.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Abweichung der Zeit- und Ortsangaben könnte durch eine nachträgliche Programmänderung entstanden sein.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer.",
+              "impact": "Beeinflusst die Möglichkeit, eine telefonische Klärung direkt durchzuführen."
+            },
+            {
+              "statement": "Absenderbefugnis und Gültigkeit des Nachrichtenfragments.",
+              "impact": "Bestimmt, ob die Angabe 09:00 Seiteneingang als relevant angesehen werden kann."
+            },
+            {
+              "statement": "Zeitliche Reihenfolge der Erstellung von Reiseblatt und Nachrichtenfragment.",
+              "impact": "Erschwert die Feststellung, welche Information jünger ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+              "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+              "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Das Reiseblatt nennt als Treffpunkt morgen 08:30 an der Hotellobby, während das Nachrichtenfragment morgen 09:00 am Seiteneingang nennt.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_travel_sheet.md",
+          "S2": "02_message.md",
+          "S3": "03_contact.md"
+        },
+        "discovery_snapshot_id": "ac5c0f2e-2420-4bf7-a972-073ea06550c2"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?"
+      },
+      "open_questions": [
+        {
+          "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+          "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+          "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.011746"
+    },
+    {
+      "id": "0c07f48a-bc43-46b0-a10b-370a9d6d7c8c",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "41470e45423b50e9fb682668e6a2d56bcdd31df7f90b8f492b2575a2fa61b9fe",
+      "prompt_version": "ap1-methodology-v7",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseorganisation und Treffpunktbestätigung",
+            "description": "End-to-End-Ablauf vom Erhalt der Reiseinformationen über die Identifikation von Abweichungen bis zur verbindlichen Klärung des Treffpunkts.",
+            "trigger": "Erhalt von Reiseunterlagen und Benachrichtigungen",
+            "outcome": "Erhalt einer verbindlichen Klärung des Treffpunkts durch eine befugte Stelle",
+            "scope_in": "Prüfung von Reiseblatt und Nachrichten sowie Kontaktaufnahme zur Bestätigung",
+            "scope_out": "Durchführung des gewählten Treffens oder Nachbereitung der Reise",
+            "strategic_objective": "Vorschlag: Sicherstellung verlässlicher und eindeutiger Orts- und Zeitangaben für Reisetreffen",
+            "stakeholders": "Reisende (Testperson), befugte Stelle zur Auskunftserteilung",
+            "constraints": "Zeitweise fehlender Internetempfang; ungeprüfte Erreichbarkeit und Gültigkeit der vorliegenden Kontaktwege und Dokumente",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_1_unterlagenerhalt",
+              "sequence": 1,
+              "name": "Unterlagen- und Nachrichtenerhalt",
+              "description": "Reisende erhalten Dokumente und Nachrichten mit voneinander abweichenden Angaben zu Zeit und Ort eines Treffpunkts.",
+              "roles": "Reisende (Testperson)",
+              "systems": "Unbekannt",
+              "documents": "Reiseblatt (SYN-C-01), Nachrichtenfragment",
+              "pain_points": "Widersprüchliche Treffpunktangaben (08:30 Hotellobby vs. 09:00 Seiteneingang); zeitliche Reihenfolge der Unterlagen nicht rekonstruierbar.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "high",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_2_klaerung",
+              "sequence": 2,
+              "name": "Treffpunktprüfung und Kontaktaufnahme",
+              "description": "Überprüfung vorhandener Kontaktoptionen und Einholung einer verbindlichen Bestätigung bei einer befugten Stelle.",
+              "roles": "Reisende (Testperson), befugte Stelle",
+              "systems": "Telefonie",
+              "documents": "Reiseblatt mit Telefonnummer",
+              "pain_points": "Telefonnummer im Reiseblatt wurde noch nicht angerufen; Erreichbarkeit der Nummer sowie Absenderbefugnis des Nachrichtenfragments nicht nachgewiesen; zeitweise kein Internetempfang.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_2_klaerung",
+            "business_domain": "corporate_services",
+            "capability": "Treffpunktverifikation und Erstkontakt zur Klärung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "low",
+            "rationale": "Die Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) adressiert direkt die Verunsicherung der Testperson. Da aus dem Nachrichtenfragment kein bestätigter neuer Treffpunkt folgt und eine Auskunft durch eine befugte Stelle erforderlich ist, bietet die Kontaktaufnahme eine bekannte Möglichkeit zur Klärung.",
+            "tradeoffs": [
+              "Fokus auf Kontaktaufnahme behebt nicht die Entstehung widersprüchlicher Dokumente in vorgelagerten Schritten.",
+              "Erfolg hängt von der tatsächlichen Erreichbarkeit der Telefonnummer ab."
+            ],
+            "uncertainties": [
+              "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer",
+              "Gültigkeit und Befugnis des Absenders des Nachrichtenfragments"
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozessanalyse Treffpunktprüfung und Kontaktaufnahme",
+            "scope_start": "Identifikation abweichender Angaben in Reiseblatt und Nachricht",
+            "scope_end": "Erhalt einer verbindlichen Treffpunktauskunft durch eine befugte Stelle",
+            "trigger": "Unsicherheit bezüglich Treffpunkt, Uhrzeit und Ansprechpartner",
+            "outcome": "Verbindliche Klärung des Treffpunkts durch eine befugte Stelle",
+            "current_flow": "In der Phase stage_2_klaerung (Treffpunktprüfung und Kontaktaufnahme) stehen der Testperson das Reiseblatt mit einer Telefonnummer und ein Nachrichtenfragment zur Verfügung. Die Telefonnummer wurde bisher nicht angerufen. Bei zeitweise fehlendem Internetempfang sucht die Testperson nach einer befugten Stelle zur verbindlichen Klärung.",
+            "roles": "Reisende (Testperson), befugte Stelle",
+            "systems": "Telefonie",
+            "data_objects": "Reiseblatt (SYN-C-01), Nachrichtenfragment, Telefonnummer",
+            "business_rules": "Ein Nachrichtenfragment ohne nachgewiesene Absenderbefugnis begründet keinen bestätigten neuen Treffpunkt. Eine verbindliche Änderung erfordert die Bestätigung durch eine befugte Stelle.",
+            "handoffs": "Geplante Kontaktaufnahme der Testperson an eine befugte Stelle per Telefon (noch nicht durchgeführt).",
+            "bottlenecks": "Ungeprüfte Erreichbarkeit der Telefonnummer; zeitweise fehlender Internetempfang.",
+            "observations": "Das Reiseblatt gibt 08:30 Hotellobby an, die Nachricht 09:00 Seiteneingang. Die Testperson kann die zeitliche Reihenfolge der Unterlagen nicht sicher rekonstruieren und hat die Telefonnummer bisher nicht angerufen.",
+            "cause_hypotheses": "Es wurden laut den vorliegenden Quellen keine Ursachen für die Abweichung festgestellt.",
+            "constraints": "Zeitweise kein Internetempfang; Unklarheit über Aktualität und Befugnis.",
+            "exceptions": "Möglicher Ausfall der Telefonerreichbarkeit (bisher unbewertet und ungemessen).",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Das Reiseblatt nennt für morgen 08:30 an der Hotellobby und enthält eine Telefonnummer als Rückfragemöglichkeit.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Das Nachrichtenfragment nennt für morgen 09:00 am Seiteneingang.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Die Telefonnummer im Reiseblatt wurde noch nicht angerufen; ihre Existenz ist bekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson hat zeitweise keinen Internetempfang.",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Testperson ist unsicher bezüglich des Treffpunkts, der Uhrzeit und des Ansprechpartners.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Weder verpasste Leistungen noch eine Ursache der Abweichung sind festgestellt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die im Reiseblatt angegebene Telefonnummer könnte eine Verbindung zu einer befugten Stelle herstellen.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "statement": "Die Abweichung der Zeit- und Ortsangaben könnte durch eine nachträgliche Programmänderung entstanden sein.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Erreichbarkeit der im Reiseblatt angegebenen Telefonnummer.",
+              "impact": "Beeinflusst die Möglichkeit, eine telefonische Klärung direkt durchzuführen."
+            },
+            {
+              "statement": "Absenderbefugnis und Gültigkeit des Nachrichtenfragments.",
+              "impact": "Bestimmt, ob die Angabe 09:00 Seiteneingang als relevant angesehen werden kann."
+            },
+            {
+              "statement": "Zeitliche Reihenfolge der Erstellung von Reiseblatt und Nachrichtenfragment.",
+              "impact": "Erschwert die Feststellung, welche Information jünger ist."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+              "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+              "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Das Reiseblatt nennt als Treffpunkt morgen 08:30 an der Hotellobby, während das Nachrichtenfragment morgen 09:00 am Seiteneingang nennt.",
+              "evidence_refs": [
+                "S1",
+                "S2"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_travel_sheet.md",
+          "S2": "02_message.md",
+          "S3": "03_contact.md"
+        },
+        "discovery_snapshot_id": "ac5c0f2e-2420-4bf7-a972-073ea06550c2"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?"
+      },
+      "open_questions": [
+        {
+          "question": "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?",
+          "impact": "Entscheidet darüber, ob die Fokusphase unmittelbar zur verbindlichen Klärung führt.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es abgesehen vom Telefonanschluss einen weiteren definierten Ansprechpartner für die Testperson vor Ort?",
+          "impact": "Bietet Ausweichmöglichkeiten bei fehlender telefonischer Erreichbarkeit.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.011734"
+    }
+  ],
+  "scope_confirmed": false
+}

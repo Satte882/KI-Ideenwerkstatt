@@ -7,9 +7,9 @@ from ki_radar.architecture.models import EvidenceBasis, TimeToValue
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 DISCOVERY_SCHEMA_VERSION = "ap1-discovery-v1"
-DISCOVERY_PROMPT_VERSION = "ap1-discovery-v1"
+DISCOVERY_PROMPT_VERSION = "ap1-methodology-v13"
 DISCOVERY_VERIFIER_SCHEMA_VERSION = "ap1-discovery-verifier-v1"
-DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-discovery-verifier-v1"
+DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-ver-method-v13"
 MAX_DISCOVERY_STAGES = 12
 
 _STAGE_FIELDS = frozenset(
@@ -106,6 +106,131 @@ class DiscoveryContractError(ValueError):
     def __init__(self, errors: list[str] | tuple[str, ...]):
         self.errors = tuple(errors)
         super().__init__("; ".join(self.errors))
+
+
+def blocking_discovery_questions(draft: Any) -> tuple[str, ...]:
+    """Project decision gaps from the persisted draft, including historical analyses."""
+    if not isinstance(draft, dict):
+        return ()
+    return tuple(
+        str(item.get("question") or "Entscheidungsrelevante Klärung fehlt.").strip()
+        for item in (draft.get("clarifications") or [])
+        if isinstance(item, dict) and item.get("blocking") is True
+    )
+
+
+def enforce_discovery_readiness(draft: dict, verifier: dict) -> dict:
+    """Technical review success cannot resolve a question whose answer is missing.
+
+    Keep repair findings first: correcting unsupported assertions is still possible
+    without inventing an answer. Apply the decision boundary after that repair.
+    """
+    questions = blocking_discovery_questions(draft)
+    if not questions or verifier.get("status") != "approved":
+        return verifier
+    return {
+        **verifier,
+        "status": "waiting_human",
+        "human_question": questions[0],
+        "critical_findings": [
+            {"code": "decision_blocking_clarification", "message": question}
+            for question in questions
+        ],
+    }
+
+
+def discovery_methodical_findings(draft: dict) -> tuple[str, ...]:
+    """Conservative language/shape boundary, not a general causal truth classifier.
+
+    Discovery has no human-confirmed cause field. Assertive causal explanations
+    in summaries must be explicit source reports or qualified hypotheses.
+    """
+    if not isinstance(draft, dict):
+        return ()
+    findings = []
+    causal = re.compile(
+        r"\b(?:primär\w*|systembestimmend\w*)\s+Engpass\b|\bHauptursache\b|"
+        r"\b(?:verursacht|verzögert|sichert|gewährleistet|garantiert)\b|"
+        r"\b(?:führt|führen)\b[^.;\n]{0,120}\bzu\b|"
+        r"\b(?:Verzögerung|Wartezeit|Engpass|Aufwand)\w*\s+durch\b",
+        re.IGNORECASE,
+    )
+    qualified = re.compile(
+        r"\b(?:Hypothes\w*|hypothetisch\w*|unbestätigt\w*|vermut\w*|könnte\w*|möglicherweise|"
+        r"vorläufig\w*|berichtet\w*|laut|falls|wenn|kann|können|soll\w*|würde\w*)\b|"
+        r"nicht (?:belegt|nachgewiesen|bestätigt)",
+        re.IGNORECASE,
+    )
+
+    def walk(value, path):
+        if isinstance(value, dict):
+            for name, child in value.items():
+                if name not in {"cause_hypotheses", "hypotheses", "clarifications", "unknowns"}:
+                    walk(child, f"{path}.{name}" if path else name)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{path}[{index}]")
+        elif isinstance(value, str):
+            for sentence in re.split(r"[.;\n]", value):
+                if causal.search(sentence) and not qualified.search(sentence):
+                    findings.append(
+                        f"{path}: unqualifizierte Kausalbehauptung; als berichtete "
+                        "Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                    )
+
+    walk(draft, "")
+    stages = draft.get("stages")
+    keys = (
+        [str(s.get("key") or "") for s in stages if isinstance(s, dict)]
+        if isinstance(stages, list)
+        else []
+    )
+    process = draft.get("process_analysis")
+    flow = str(process.get("current_flow") or "") if isinstance(process, dict) else ""
+    if len(keys) > 1 and all(
+        key and re.search(r"(?<!\w)" + re.escape(key) + r"(?!\w)", flow) for key in keys
+    ):
+        findings.append(
+            "process_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; "
+            "auf die Fokusphase und deren belegte Teilschritte begrenzen."
+        )
+    return tuple(dict.fromkeys(findings))
+
+
+def enforce_discovery_methodology(draft: dict, verifier: dict) -> dict:
+    findings = discovery_methodical_findings(draft)
+    if not findings:
+        return verifier
+    return {
+        **verifier,
+        "status": "repair",
+        "checks": {**verifier["checks"], "source_grounding": False},
+        "critical_findings": list(verifier.get("critical_findings") or [])
+        + [{"code": "methodical_contract", "message": finding} for finding in findings],
+        "repair_instructions": "\n".join([verifier.get("repair_instructions", ""), *findings]),
+        "human_question": "",
+    }
+
+
+def discovery_modality_findings(draft: dict, evidence_text: str) -> tuple[str, ...]:
+    """Catch newly introduced absolute wording in reported facts, like numeric grounding."""
+    if not isinstance(draft, dict):
+        return ()
+    findings = []
+    facts = draft.get("facts")
+    if not isinstance(facts, list):
+        return ()
+    for index, fact in enumerate(facts):
+        if not isinstance(fact, dict):
+            continue
+        text = str(fact.get("statement") or "").casefold()
+        for term in ("ausgeschlossen", "verboten", "garantiert", "niemals"):
+            if term in text and term not in evidence_text.casefold():
+                findings.append(
+                    f"facts[{index}].statement: absolute Modalität {term!r} ist im Input "
+                    "nicht belegt; die Stärke der berichteten Aussage erhalten."
+                )
+    return tuple(findings)
 
 
 def _text_schema(*, min_length: int = 0) -> dict[str, Any]:
@@ -483,6 +608,7 @@ def validate_discovery_payload(
         )
     if len(stage_keys) != len(set(stage_keys)):
         errors.append("stages: Phasenschlüssel müssen eindeutig sein.")
+    errors.extend(discovery_methodical_findings(root))
     if focus.get("recommended_stage_key") not in stage_keys:
         errors.append("focus.recommended_stage_key: Fokus verweist auf keine erzeugte Phase.")
 
@@ -528,6 +654,7 @@ def validate_discovery_payload(
             errors.append(f"{list_name}: Liste erwartet.")
 
     _validate_numbers(root, evidence_text, errors)
+    errors.extend(discovery_modality_findings(root, evidence_text))
     if errors:
         raise DiscoveryContractError(errors)
     return root

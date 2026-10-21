@@ -1,0 +1,573 @@
+{
+  "case": "A",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "fc2bfb27479d0c235db67a71e3056b112d313a467e25b2673d9319a55b102e88",
+    "ki_radar/accelerator/architect_contract.py": "d103ee807c777aa5f94d01316034d1db83fccc5d9a36d65cd6c81040affd05f3"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "9f6cca08-0a80-4d3b-98e1-3cb765208259",
+  "solution_preview": {
+    "schema_version": "1.0",
+    "prompt_version": "1.3",
+    "source_context": {
+      "source_schema_version": "block7_sources_v1",
+      "process_version": 1,
+      "validation_state": "not_validated",
+      "facts": [
+        {
+          "source_id": "process.name",
+          "field": "name",
+          "value": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen"
+        },
+        {
+          "source_id": "process.scope_start",
+          "field": "scope_start",
+          "value": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise"
+        },
+        {
+          "source_id": "process.scope_end",
+          "field": "scope_end",
+          "value": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach"
+        },
+        {
+          "source_id": "process.trigger",
+          "field": "trigger",
+          "value": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten"
+        },
+        {
+          "source_id": "process.outcome",
+          "field": "outcome",
+          "value": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage"
+        },
+        {
+          "source_id": "process.current_flow",
+          "field": "current_flow",
+          "value": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach."
+        },
+        {
+          "source_id": "process.roles",
+          "field": "roles",
+          "value": "Kundenservice"
+        },
+        {
+          "source_id": "process.systems",
+          "field": "systems",
+          "value": "Buchungsmaske, gemeinsames E-Mail-Postfach"
+        },
+        {
+          "source_id": "process.data_objects",
+          "field": "data_objects",
+          "value": "Buchungsdaten, E-Mails, Änderungsnachrichten"
+        },
+        {
+          "source_id": "process.bottlenecks",
+          "field": "bottlenecks",
+          "value": "Mögliche Verzögerung durch nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach (unbestätigte Beobachtung/Hypothese); ein systembestimmender Engpass ist nicht nachgewiesen."
+        },
+        {
+          "source_id": "process.baseline_metrics",
+          "field": "baseline_metrics",
+          "value": "Keine verifizierten Messwerte vorhanden"
+        },
+        {
+          "source_id": "process.business_rules",
+          "field": "business_rules",
+          "value": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden."
+        },
+        {
+          "source_id": "process.exceptions",
+          "field": "exceptions",
+          "value": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit."
+        },
+        {
+          "source_id": "process.diagnostic_observations",
+          "field": "diagnostic_observations",
+          "value": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf."
+        },
+        {
+          "source_id": "process.cause_hypotheses",
+          "field": "cause_hypotheses",
+          "value": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen."
+        },
+        {
+          "source_id": "stage.name",
+          "field": "name",
+          "value": "Exploration ohne Scopefreigabe"
+        }
+      ]
+    },
+    "options": {
+      "organizational": {
+        "name": {
+          "text": "Organisatorische Klärung: eindeutige Zuständigkeit und Dokumentationsweg für Statusänderungen im Kundenservice.",
+          "source_ids": [
+            "process.roles",
+            "process.business_rules",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Zuständigkeiten lassen sich ohne neue Technik festlegen."
+          ],
+          "open_evidence": [
+            "Ob eine zentrale Stelle zur Statusdokumentation fehlt, ist nicht bestätigt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Die Ursache ist nur als Hypothese belegt."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Die Recherche läuft nacheinander in der Buchungsmaske und anschließend im gemeinsamen E-Mail-Postfach. Hypothese: möglicherweise fehlt eine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen. Eine bestätigte Ursache liegt nicht vor.",
+          "source_ids": [
+            "process.current_flow",
+            "process.cause_hypotheses",
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Nachweis der fehlenden zentralen Statusdokumentation steht aus."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Der Lösungsfit stützt sich nur auf eine unbestätigte Ursachenhypothese."
+          }
+        },
+        "expected_value": {
+          "text": "Qualitativer Nutzen: klarere Zuständigkeit für Rückfragen und für die nach Geschäftsregel vorgesehene Abstimmung mit der Reiseorganisation. Eine Nutzenkennzahl ist in den Quellen nicht genannt.",
+          "source_ids": [
+            "process.business_rules",
+            "process.baseline_metrics"
+          ],
+          "assumptions": [
+            "Klarere Zuständigkeit verringert Klärungsbedarf."
+          ],
+          "open_evidence": [
+            "Keine verifizierten Messwerte als Ausgangsbasis vorhanden."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Wirkung ist ohne Messwerte und ohne bestätigte Ursache nicht belegbar."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Adressiert die als unbestätigt beschriebene Verzögerung durch nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach. Ein systembestimmender Engpass ist nicht nachgewiesen.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Engpassnachweis fehlt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Die Engpassbeschreibung ist ausdrücklich unbestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt keine neuen Daten; verwendet werden die bestehenden Objekte Buchungsdaten, E-Mails und Änderungsnachrichten.",
+          "source_ids": [
+            "process.data_objects"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "low",
+            "reason": "Die verwendeten Datenobjekte sind in den Quellen benannt."
+          }
+        },
+        "application_impact": {
+          "text": "Betrifft die Arbeit des Kundenservice in Buchungsmaske und gemeinsamem E-Mail-Postfach. Neue Anwendungen sind nicht belegt.",
+          "source_ids": [
+            "process.roles",
+            "process.systems",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "low",
+            "reason": "Betroffene Rolle und Systeme sind in den Quellen benannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Es ist keine Systemintegration belegt; die Abstimmung bei Unklarheiten erfolgt organisatorisch mit der Reiseorganisation.",
+          "source_ids": [
+            "process.business_rules",
+            "process.systems"
+          ],
+          "assumptions": [
+            "Die Abstimmung bleibt organisatorisch und nicht systemgestützt."
+          ],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Integrationswirkung ist in den Quellen nicht belegt."
+          }
+        },
+        "technology_constraints": {
+          "text": "In den Quellen sind keine Technologievorgaben oder technischen Einschränkungen benannt.",
+          "source_ids": [],
+          "assumptions": [],
+          "open_evidence": [
+            "Technische Rahmenbedingungen sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Ohne dokumentierte Rahmenbedingungen bleibt die Aussage bedingt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Die Klärung bleibt wirkungslos, wenn die vermutete Ursache nicht zutrifft. Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist nicht beobachtet.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirksamkeit der Klärung ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Ausnahme sind nur als Möglichkeit beschrieben."
+          }
+        },
+        "architecture_fit": {
+          "text": "Bedingt: Die bestehenden Systeme sind Buchungsmaske und gemeinsames E-Mail-Postfach, eine Architekturänderung ist nicht belegt.",
+          "source_ids": [
+            "process.systems",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Architekturbezug ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Einordnung bleibt bedingt, da keine bestätigte Ursache vorliegt."
+          }
+        }
+      },
+      "rule_automation": {
+        "name": {
+          "text": "Regelbasierte Automatisierung: Statusabgleich über vorhandene Standardfunktionen prüfen.",
+          "source_ids": [
+            "process.systems",
+            "process.current_flow"
+          ],
+          "assumptions": [
+            "Statusregeln lassen sich eindeutig formulieren."
+          ],
+          "open_evidence": [
+            "Regelwerk und Statuslogik sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Regelbarkeit ist mangels dokumentierter Regeln nicht belegt."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Die Recherche erfolgt nacheinander in Buchungsmaske und E-Mail-Postfach. Zuerst ist zu prüfen, ob vorhandene Standardsoftware diese Statusübersicht bereits bietet; eigene Automation ist keine Vorgabe. Die Hypothese einer fehlenden zentralen Dokumentationsstelle ist nicht bestätigt.",
+          "source_ids": [
+            "process.current_flow",
+            "process.systems",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Funktionsumfang der vorhandenen Standardsoftware ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Der Fit hängt von ungeprüften Standardfunktionen und einer unbestätigten Ursache ab."
+          }
+        },
+        "expected_value": {
+          "text": "Qualitativer Nutzen nur bei belegter Ursache; die Quellen nennen keine Nutzenkennzahl. Als Ausgangswert ist dokumentiert, dass keine verifizierten Messwerte vorhanden sind.",
+          "source_ids": [
+            "process.baseline_metrics",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Kein Nachweis, dass Automatisierung die vermutete Ursache trifft."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ohne Messwerte und bestätigte Ursache ist kein belegter Nutzen ableitbar."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Kann die unbestätigte Verzögerung durch nacheinander gelagerte Recherche adressieren, sofern die Hypothese zutrifft. Ein systembestimmender Engpass ist nicht nachgewiesen.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Engpassnachweis fehlt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Die Engpassbeschreibung ist ausdrücklich unbestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Erfordert Buchungsdaten, E-Mails und Änderungsnachrichten. Ob Statusänderungen zentral dokumentiert vorliegen, ist offen.",
+          "source_ids": [
+            "process.data_objects",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Zentrale Statusführung ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Datenobjekte sind benannt, ihre zentrale Verfügbarkeit nicht."
+          }
+        },
+        "application_impact": {
+          "text": "Betrifft die bestehenden Anwendungen Buchungsmaske und gemeinsames E-Mail-Postfach.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "low",
+            "reason": "Die betroffenen Systeme sind in den Quellen benannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Eine Integration zwischen Buchungsmaske und E-Mail-Postfach ist nicht belegt; ein Bedarf entstünde nur, wenn Standardfunktionen nicht ausreichen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [
+            "Standardfunktionen könnten die benötigte Übersicht bereits bieten."
+          ],
+          "open_evidence": [
+            "Integrationsbedarf ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Aussage beruht auf nicht geprüftem Funktionsumfang."
+          }
+        },
+        "technology_constraints": {
+          "text": "Keine Technologievorgaben in den Quellen; die Geschäftsregel verlangt bei Unklarheiten interne Abstimmung vor Abgabe. Eindeutige Statusregeln sind nicht belegt.",
+          "source_ids": [
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Statusregeln und Standardfunktionen sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Regelgrundlage ist nicht belegt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Automatisierung ohne bestätigte Ursache behebt nichts nachweislich. Bei Unklarheiten ist laut Geschäftsregel eine interne Abstimmung mit der Reiseorganisation vorgesehen.",
+          "source_ids": [
+            "process.business_rules",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirksamkeit der Regelautomation ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache ist nur vermutet."
+          }
+        },
+        "architecture_fit": {
+          "text": "Bedingt: Vorhanden sind Buchungsmaske und gemeinsames E-Mail-Postfach. Ob Standardfunktionen genügen oder eigene Regeln nötig sind, ist offen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Funktionsumfang der Standardsoftware ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Architekturfit ist mangels Systemdetails nicht belegt."
+          }
+        }
+      },
+      "assistant": {
+        "name": {
+          "text": "Assistenzsystem zur Rechercheunterstützung im Kundenservice.",
+          "source_ids": [
+            "process.roles",
+            "process.current_flow"
+          ],
+          "assumptions": [
+            "Ein Assistenzsystem ließe sich in die Recherche einbetten."
+          ],
+          "open_evidence": [
+            "Anforderungen an ein Assistenzsystem sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Einbindung ist nur angenommen."
+          }
+        },
+        "description": {
+          "text": "Beobachtung: Die Servicekraft sucht zuerst in der Buchungsmaske und danach im gemeinsamen E-Mail-Postfach. Hypothese: möglicherweise fehlt eine zentrale Dokumentation von Statusänderungen. Ein belegter Zusatznutzen von KI gegenüber einem einfachen Klärweg ist nicht erkennbar.",
+          "source_ids": [
+            "process.current_flow",
+            "process.cause_hypotheses",
+            "process.diagnostic_observations"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Nutzen von KI gegenüber organisatorischer Klärung ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Kein belegter KI-spezifischer Zusatznutzen und keine bestätigte Ursache."
+          }
+        },
+        "expected_value": {
+          "text": "Qualitativ nur bedingt: Die Quellen nennen keine Nutzenkennzahl. Ein belegter Zusatznutzen von KI gegenüber einem einfachen Klärweg fehlt; dokumentiert ist, dass keine verifizierten Messwerte vorhanden sind.",
+          "source_ids": [
+            "process.baseline_metrics",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Kein Nutzennachweis für den KI-Einsatz."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Nutzen ist weder gemessen noch belegt."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Kann die unbestätigte Verzögerung der nacheinander gelagerten Recherche unterstützen. Ein systembestimmender Engpass ist nicht nachgewiesen.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Engpassnachweis fehlt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Die Engpassbeschreibung ist ausdrücklich unbestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Würde Buchungsdaten, E-Mails und Änderungsnachrichten nutzen. Datenqualität und zentrale Statusführung sind nicht belegt.",
+          "source_ids": [
+            "process.data_objects",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Datenqualität ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Datenobjekte sind benannt, ihre Eignung nicht."
+          }
+        },
+        "application_impact": {
+          "text": "Betrifft den Kundenservice in Buchungsmaske und E-Mail-Postfach. Einfache Anfragen sind laut Beobachtung direkt über übereinstimmende Buchungsdaten beantwortbar.",
+          "source_ids": [
+            "process.roles",
+            "process.systems",
+            "process.diagnostic_observations"
+          ],
+          "assumptions": [],
+          "open_evidence": [],
+          "uncertainty": {
+            "level": "low",
+            "reason": "Rolle, Systeme und Beobachtung sind in den Quellen benannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Keine Integration belegt; ein Assistenzsystem müsste an die bestehenden Systeme angebunden werden, ein Bedarf ist nicht nachgewiesen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Anbindungsbedarf ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Integrationswirkung ist nicht belegt."
+          }
+        },
+        "technology_constraints": {
+          "text": "In den Quellen sind keine Technologievorgaben benannt; Anforderungen an einen KI-Einsatz sind nicht dokumentiert.",
+          "source_ids": [],
+          "assumptions": [],
+          "open_evidence": [
+            "Technische und fachliche Anforderungen an KI sind nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Ohne dokumentierte Anforderungen bleibt die Aussage bedingt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: KI-Einsatz ohne belegte Ursache und ohne Nutzennachweis. Bei Unklarheiten gilt die interne Abstimmung mit der Reiseorganisation.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Fehlender Nutzennachweis ist offen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Nutzen sind nicht belegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Bedingt: Die bestehenden Systeme sind Buchungsmaske und gemeinsames E-Mail-Postfach; ein KI-Bezug ist nicht belegt.",
+          "source_ids": [
+            "process.systems",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "KI-Architekturbezug ist nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Einordnung bleibt bedingt, da keine bestätigte Ursache vorliegt."
+          }
+        }
+      }
+    },
+    "edits": {}
+  },
+  "quality_runs": [
+    {
+      "status": "failed",
+      "step_type": "initial_critic",
+      "error_code": "test_budget",
+      "result_payload": {}
+    }
+  ],
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}

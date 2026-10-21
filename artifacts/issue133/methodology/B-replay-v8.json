@@ -1,0 +1,1361 @@
+{
+  "case": "B",
+  "phase": "replay",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "d40ba1ab12fca2b1efab447fab1029adee1d21bab15938e14b8663a817255588",
+    "ki_radar/accelerator/architect_contract.py": "4fa753e63ba27419d39223899d961d6a97de58d34655d66fcace4cd6acd02bf2"
+  },
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik B"
+    },
+    "problem_statement": "Ich möchte mehr Reisen verkaufen. Gleichzeitig können wir nicht immer neue Leute einstellen. Ich weiß noch nicht, an welchen Stellen uns mehr Buchungen besonders viel zusätzliche Arbeit machen und was wir daran ändern könnten.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "9fcc5698-19a6-4233-a5f3-f9646c0cb684",
+      "title": "[SYNTHETISCH #133 B/replay] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:04:53.926056+00:00",
+      "idea_updated_at": "2026-10-21T11:04:53.901775+00:00",
+      "origin_source_filename": "ideenbox-9fcc5698-19a6-4233-a5f3-f9646c0cb684.md",
+      "origin_source_sha256": "04051cdd99f5a1ebde4ff8ed50506e8ae80f168193cc43f440f35ee1a02f9d87"
+    }
+  },
+  "analyses": [
+    {
+      "id": "5e7f6bf5-a345-43c3-9125-2216b2544590",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "3d3c91be8f63f45a7d837cfdbade862ff24eb5b948057bcbd3584b6424bd862e",
+      "prompt_version": "ap1-discovery-methodology-v2",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+            "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+            "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+            "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+            "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+            "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+            "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+            "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+            "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_kundenberatung_angebot",
+              "sequence": 1,
+              "name": "Kundenberatung und Angebotserstellung",
+              "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Hypothese: Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungserfassung_verarbeitung",
+              "sequence": 2,
+              "name": "Buchungserfassung und -verarbeitung",
+              "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungsvorbereitung_abschluss",
+              "sequence": 3,
+              "name": "Buchungsvorbereitung und Vorgangsabschluss",
+              "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Hypothese: Manuelle Nacharbeiten bei unvollständigen Erfassungen im vorherigen Schritt.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+            "business_domain": "sales",
+            "capability": "Reisebuchungserfassung und -verarbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "high",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Diese Phase steht im Vermutungsfokus für Mehraufwände bei steigenden Buchungszahlen, da bei höherem Buchungsvolumen hier Arbeitsspitzen vermutet werden.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+            ],
+            "uncertainties": [
+              "Die exakten Zeitaufwände und Prozessschritte je Buchung sind mangels vorliegender Daten noch nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+            "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+            "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+            "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+            "outcome": "Buchung ist vollständig erfasset und für den Vorgangsabschluss bereitgestellt",
+            "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung ist der konkrete Ist-Ablauf derzeit nicht im Detail dokumentiert und muss erst ermittelt werden.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Derzeit unklar; es muss erst identifiziert werden, an welchen konkreten Stellen im Prozess Mehraufwände entstehen.",
+            "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+            "cause_hypotheses": "Möglicher Arbeitsaufwand durch manuelle Schnittstellen oder unklare Bearbeitungsschritte bei steigendem Volumen.",
+            "constraints": "Keine Aufstockung des Personalstands vorgesehen.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Ein kontinuierlicher Personalaufbau zur Bewältigung des Mehraufwands ist ausgeschlossen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht linear und wird bei höherem Volumen zum operativen Nadelöhr.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "In der Buchungsvorbereitung entstehen manuelle Nacharbeiten durch unvollständige Erfassungen im vorherigen Schritt.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+              "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+            },
+            {
+              "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+              "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+              "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+              "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "6ba0457e-d15f-4f9c-bbab-521c8bf55bb6"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welche konkreten Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+          "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+          "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.046555"
+    },
+    {
+      "id": "de2fb437-8247-46d7-900e-748aea0585dc",
+      "status": "failed",
+      "error_code": "verification_not_converged",
+      "source_revision": 0,
+      "source_hash": "3d3c91be8f63f45a7d837cfdbade862ff24eb5b948057bcbd3584b6424bd862e",
+      "prompt_version": "ap1-discovery-methodology-v3",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+            "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+            "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+            "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+            "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+            "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+            "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+            "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+            "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_kundenberatung_angebot",
+              "sequence": 1,
+              "name": "Kundenberatung und Angebotserstellung",
+              "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungserfassung_verarbeitung",
+              "sequence": 2,
+              "name": "Buchungserfassung und -verarbeitung",
+              "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungsvorbereitung_abschluss",
+              "sequence": 3,
+              "name": "Buchungsvorbereitung und Vorgangsabschluss",
+              "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+            "business_domain": "sales",
+            "capability": "Reisebuchungserfassung und -verarbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "high",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Diese Phase ist direkt betroffen, wenn mehr Buchungen getätigt werden. Hier wird der direkte Zusammenhang zwischen Buchungsvolumen und Arbeitsaufwand am stärksten vermutet.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+            ],
+            "uncertainties": [
+              "Die exakten Zeitaufwände je Buchungsschritt sind mangels vorliegender Messdaten noch nicht quantifizierbar."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+            "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+            "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+            "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+            "outcome": "Buchung ist vollständig im System erfasst und für den Vorgangsabschluss bereitgestellt",
+            "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung (Buchungserfassung und -verarbeitung): Aufrufen der Kundendaten, Erfassung der gewünschten Reisedetails, Validierung der Buchungsdaten und Übergabe an die Buchungsvorbereitung.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "Kundendaten, Reise- und Buchungsdaten",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Manuelle Erfassungsaufwände bei steigenden Buchungszahlen, die ohne zusätzliches Personal zu Engpässen führen.",
+            "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+            "cause_hypotheses": "Manuelle Datenübertragungen und mehrfache Prüfungen führen bei steigenden Buchungszahlen zu linearem Aufwandswachstum.",
+            "constraints": "Keine Aufstockung des Personalstands vorgesehen.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Ein kontinuierlicher Personalaufbau zur Bewältigung des Mehraufwands ist ausgeschlossen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht linear und wird bei höherem Volumen zum operativen Nadelöhr.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "In der Buchungsvorbereitung fallen möglicherweise manuelle Nacharbeiten durch unvollständige Erfassungen im vorherigen Schritt an.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+              "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+            },
+            {
+              "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+              "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+              "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+              "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "discovery_snapshot_id": "6ba0457e-d15f-4f9c-bbab-521c8bf55bb6"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": false,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": false,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "UNGROUNDED_FLOW_AND_FACTS",
+            "message": "In process_analysis.current_flow wurden konkrete Teilschritte (Kundendaten aufrufen, Reisedetails erfassen, Daten validieren) ergänzt, die nicht in U0 belegt sind. In facts[1] wird die Modalität überspätzt ('ausgeschlossen' statt 'können nicht immer neue Leute einstellen')."
+          },
+          {
+            "code": "HYPOTHESIS_AS_FACT",
+            "message": "In process_analysis.bottlenecks wird ein manueller Erfassungsengpass als feststehendes Nadelöhr behauptet, obwohl laut U0 explizit unklar ist, an welchen Stellen der Mehraufwand entsteht."
+          },
+          {
+            "code": "INCORRECT_EVIDENCE_BASIS",
+            "message": "Für stage_buchungserfassung_verarbeitung ist evidence_basis als 'indicative' markiert, obwohl U0 keine spezifische Phasenbeschreibung enthält."
+          }
+        ],
+        "repair_instructions": "1. process_analysis.current_flow: Entferne nicht belegte Detailaktivitäten und beschreibe den Ablauf rein hypothetisch bzw. auf hohem Abstraktionsniveau. 2. facts: Passe die Aussage zur Personaleinstellung exakt an die Modalität von U0 an ('Neueinstellungen sind nicht beliebig/immer möglich'). 3. process_analysis.bottlenecks: Relativiere die Aussage als Vermutung/Hypothese oder verweise auf die bestehende Unklarheit. 4. stages[1].evidence_basis: Ändere den Wert von 'indicative' auf 'hypothesis'.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+          "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+          "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.017177"
+    },
+    {
+      "id": "2db8755e-6e1f-4752-b72e-89adf9e2f2e9",
+      "status": "failed",
+      "error_code": "user_quota_exceeded",
+      "source_revision": 0,
+      "source_hash": "3d3c91be8f63f45a7d837cfdbade862ff24eb5b948057bcbd3584b6424bd862e",
+      "prompt_version": "ap1-methodology-v6",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    },
+    {
+      "id": "9e294531-87c8-465b-a7cf-34f8b3078a69",
+      "status": "failed",
+      "error_code": "verification_not_converged",
+      "source_revision": 0,
+      "source_hash": "3d3c91be8f63f45a7d837cfdbade862ff24eb5b948057bcbd3584b6424bd862e",
+      "prompt_version": "ap1-methodology-v7",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+            "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+            "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+            "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+            "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+            "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+            "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+            "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+            "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_kundenberatung_angebot",
+              "sequence": 1,
+              "name": "Kundenberatung und Angebotserstellung",
+              "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungserfassung_verarbeitung",
+              "sequence": 2,
+              "name": "Buchungserfassung und -verarbeitung",
+              "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungsvorbereitung_abschluss",
+              "sequence": 3,
+              "name": "Buchungsvorbereitung und Vorgangsabschluss",
+              "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Manuelle Nacharbeiten bei unvollständigen Erfassungen im vorherigen Schritt.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+            "business_domain": "sales",
+            "capability": "Reisebuchungserfassung und -verarbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "high",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Diese Phase ist direkt betroffen, wenn mehr Buchungen getätigt werden. Hier wird der direkte Zusammenhang zwischen Buchungsvolumen und Arbeitsaufwand am stärksten vermutet.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+            ],
+            "uncertainties": [
+              "Die exakten Zeitaufwände je Buchungsschritt sind mangels vorliegender Messdaten noch nicht quantifizierbar."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+            "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+            "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+            "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+            "outcome": "Buchung ist vollständig im System erfasst und für den Vorgangsabschluss bereitgestellt",
+            "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung (Buchungserfassung und -verarbeitung): Aufrufen der Kundendaten, Erfassung der gewünschten Reisedetails, Validierung der Buchungsdaten und Übergabe an die Buchungsvorbereitung.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "Kundendaten, Reise- und Buchungsdaten",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Manuelle Erfassungsaufwände bei steigenden Buchungszahlen, die ohne zusätzliches Personal zu Engpässen führen.",
+            "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+            "cause_hypotheses": "Manuelle Datenübertragungen und mehrfache Prüfungen führen bei steigenden Buchungszahlen zu linearem Aufwandswachstum.",
+            "constraints": "Keine Aufstockung des Personalstands vorgesehen.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Neueinstellungen sind nicht immer möglich.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht linear und wird bei höherem Volumen zum operativen Nadelöhr.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+              "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+            },
+            {
+              "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+              "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+              "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+              "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "discovery_snapshot_id": "6ba0457e-d15f-4f9c-bbab-521c8bf55bb6"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": false,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": false,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "GROUNDING_UNSUBSTANTIATED_FLOW_AND_PAIN_POINTS",
+            "message": "In process_analysis.current_flow und stage_buchungsvorbereitung_abschluss.pain_points werden konkrete manuelle Teilschritte und Nacharbeiten behauptet, die in U0 nicht enthalten sind."
+          },
+          {
+            "code": "INCORRECT_EVIDENCE_BASIS",
+            "message": "In stage_buchungserfassung_verarbeitung ist evidence_basis als indicative angegeben, obwohl U0 keine spezifischen Belege oder Messwerte für diese Phase liefert."
+          }
+        ],
+        "repair_instructions": "1. Ändere stage_buchungserfassung_verarbeitung.evidence_basis von indicative auf hypothesis. 2. Entferne oder relativiere unbelegte Prozessschritte in process_analysis.current_flow sowie Behauptungen zu manuellen Nacharbeiten in stage_buchungsvorbereitung_abschluss.pain_points.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+          "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+          "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.010903"
+    },
+    {
+      "id": "539a29ef-8b5e-4910-b7ed-d48f9df7a2da",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "3d3c91be8f63f45a7d837cfdbade862ff24eb5b948057bcbd3584b6424bd862e",
+      "prompt_version": "ap1-methodology-v8",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+            "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+            "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+            "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+            "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+            "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+            "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+            "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+            "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_kundenberatung_angebot",
+              "sequence": 1,
+              "name": "Kundenberatung und Angebotserstellung",
+              "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungserfassung_verarbeitung",
+              "sequence": 2,
+              "name": "Buchungserfassung und -verarbeitung",
+              "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stage_buchungsvorbereitung_abschluss",
+              "sequence": 3,
+              "name": "Buchungsvorbereitung und Vorgangsabschluss",
+              "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unbekannt. Es liegen derzeit keine Berichte über konkrete Probleme oder Nacharbeiten in dieser Phase vor.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "medium",
+              "evidence_basis": "hypothesis",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+            "business_domain": "sales",
+            "capability": "Reisebuchungserfassung und -verarbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "high",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Diese Phase ist direkt betroffen, wenn mehr Buchungen getätigt werden. Es wird vermutet, dass hier der Mehraufwand bei steigenden Buchungszahlen am stärksten ins Gewicht fällt.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+            ],
+            "uncertainties": [
+              "Die exakten Zeitaufwände je Buchungsschritt sind mangels vorliegender Messdaten noch nicht quantifizierbar."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+            "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+            "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+            "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+            "outcome": "Buchung ist vollständig im System erfasst und für den Vorgangsabschluss bereitgestellt",
+            "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung (Buchungserfassung und -verarbeitung): Der genaue Ist-Ablauf und die einzelnen Bearbeitungsschritte sind derzeit im Detail unbekannt.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "Kundendaten, Reise- und Buchungsdaten",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Arbeitsmehraufwand bei steigenden Buchungszahlen, dessen genaue Ursachen im Einzelnen noch unbekannt sind.",
+            "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+            "cause_hypotheses": "Manuelle Datenübertragungen oder unklare Abläufe könnten bei steigenden Buchungszahlen zu übermäßigem Aufwand führen.",
+            "constraints": "Eine ständige Neu-Einstellung von Personal ist nicht uneingeschränkt möglich.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Neue Mitarbeiter können nicht unbegrenzt bzw. nicht immer eingestellt werden.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht optimal und erzeugt bei höherem Volumen vermeidbare Mehrarbeit.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+              "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+            },
+            {
+              "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+              "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+              "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+              "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "review_history": [
+          {
+            "repair_count": 0,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+                "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+                "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+                "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+                "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+                "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+                "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+                "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+                "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "stage_kundenberatung_angebot",
+                  "sequence": 1,
+                  "name": "Kundenberatung und Angebotserstellung",
+                  "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "medium",
+                  "evidence_basis": "hypothesis",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "stage_buchungserfassung_verarbeitung",
+                  "sequence": 2,
+                  "name": "Buchungserfassung und -verarbeitung",
+                  "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "high",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "short",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "stage_buchungsvorbereitung_abschluss",
+                  "sequence": 3,
+                  "name": "Buchungsvorbereitung und Vorgangsabschluss",
+                  "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Manuelle Nacharbeiten bei unvollständigen Erfassungen im vorherigen Schritt.",
+                  "baseline_metrics": "",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "medium",
+                  "evidence_basis": "hypothesis",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+                "business_domain": "sales",
+                "capability": "Reisebuchungserfassung und -verarbeitung",
+                "strategic_impact": "high",
+                "economic_potential": "high",
+                "pain_intensity": "high",
+                "data_accessibility": "low",
+                "change_effort": "medium",
+                "rationale": "Diese Phase ist direkt betroffen, wenn mehr Buchungen getätigt werden. Hier wird der direkte Zusammenhang zwischen Buchungsvolumen und Arbeitsaufwand am stärksten vermutet.",
+                "tradeoffs": [
+                  "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+                ],
+                "uncertainties": [
+                  "Die exakten Zeitaufwände je Buchungsschritt sind mangels vorliegender Messdaten noch nicht quantifizierbar."
+                ],
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "process_analysis": {
+                "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+                "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+                "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+                "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+                "outcome": "Buchung ist vollständig im System erfasst und für den Vorgangsabschluss bereitgestellt",
+                "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung (Buchungserfassung und -verarbeitung): Aufrufen der Kundendaten, Erfassung der gewünschten Reisedetails, Validierung der Buchungsdaten und Übergabe an die Buchungsvorbereitung.",
+                "roles": "",
+                "systems": "",
+                "data_objects": "Kundendaten, Reise- und Buchungsdaten",
+                "business_rules": "",
+                "handoffs": "",
+                "bottlenecks": "Manuelle Erfassungsaufwände bei steigenden Buchungszahlen, die ohne zusätzliches Personal zu Engpässen führen.",
+                "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+                "cause_hypotheses": "Manuelle Datenübertragungen und mehrfache Prüfungen führen bei steigenden Buchungszahlen zu linearem Aufwandswachstum.",
+                "constraints": "Keine Aufstockung des Personalstands vorgesehen.",
+                "exceptions": "",
+                "baseline_metrics": "",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Ein kontinuierlicher Personalaufbau zur Bewältigung des Mehraufwands ist ausgeschlossen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht linear und wird bei höherem Volumen zum operativen Nadelöhr.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+                  "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+                },
+                {
+                  "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+                  "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+                  "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+                  "blocking": true
+                },
+                {
+                  "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+                  "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": []
+            },
+            "contract_errors": [
+              "facts[1].statement: absolute Modalität 'ausgeschlossen' ist im Input nicht belegt; die Stärke der berichteten Aussage erhalten."
+            ],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": false,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "MODALITY_OVERSTATEMENT",
+                  "message": "facts[1].statement: Die Formulierung 'ist ausgeschlossen' verschärft die Quellenaussage U0 ('können nicht immer neue Leute einstellen')."
+                },
+                {
+                  "code": "UNGROUNDED_FLOW_DETAILS",
+                  "message": "process_analysis.current_flow: Der beschriebene Ablauf (Aufrufen der Kundendaten, Erfassung der Reisedetails, Validierung) enthält nicht belegte Detailannahmen."
+                },
+                {
+                  "code": "UNGROUNDED_PAIN_POINT",
+                  "message": "stages[2].pain_points: Die Behauptung manueller Nacharbeiten bei unvollständigen Erfassungen ist durch U0 nicht belegt."
+                },
+                {
+                  "code": "discovery_contract",
+                  "message": "facts[1].statement: absolute Modalität 'ausgeschlossen' ist im Input nicht belegt; die Stärke der berichteten Aussage erhalten."
+                }
+              ],
+              "repair_instructions": "1. Schwäche facts[1].statement ab, sodass die Formulierung der Quelle U0 entspricht (z. B. 'Eine ständige Aufstockung des Personals ist nicht uneingeschränkt möglich'). 2. Reduziere process_analysis.current_flow auf die in U0 tatsächlich belegten Fakten oder kennzeichne den detaillierten Ablauf explizit als Annahme/Hypothese. 3. Entferne unbelegte Details in stages[2].pain_points oder kennzeichne sie als ungeprüfte Vermutung.\nfacts[1].statement: absolute Modalität 'ausgeschlossen' ist im Input nicht belegt; die Stärke der berichteten Aussage erhalten.",
+              "human_question": ""
+            }
+          },
+          {
+            "repair_count": 1,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "End-to-End Reisevermarktung und Buchungsabwicklung",
+                "description": "Gesamthafter Wertstrom von der Erstberatung über den Verkauf von Reisen bis zur Vorbereitung der Buchungsabwicklung.",
+                "trigger": "Anfrage oder Kaufinteresse eines Kunden für eine Reise",
+                "outcome": "Vorbereitete Buchungsabwicklung für die Kundschaft",
+                "scope_in": "Von der Aufnahme des Kundeninteresses über Beratung und Angebotserstellung bis zur Buchungserfassung und Erfassungsabschluss.",
+                "scope_out": "Nachgelagerte operative Reisedurchführung, Kundenservice vor Ort sowie Reklamationsbearbeitung.",
+                "strategic_objective": "Steigerung des Reiseverkaufs ohne proportionalen Personalaufbau.",
+                "stakeholders": "Vertrieb, Kundenberatung, Operative Buchungsbearbeitung, Unternehmensführung",
+                "constraints": "Keine unbegrenzte Neueinstellung von Personal möglich.",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "stage_kundenberatung_angebot",
+                  "sequence": 1,
+                  "name": "Kundenberatung und Angebotserstellung",
+                  "description": "Aufnahme von Kundenanfragen, Beratung zu Reiseangeboten und Angebotserstellung.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Möglicher hoher manueller Beratungsaufwand bei steigenden Anfragezahlen.",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "medium",
+                  "evidence_basis": "hypothesis",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "stage_buchungserfassung_verarbeitung",
+                  "sequence": 2,
+                  "name": "Buchungserfassung und -verarbeitung",
+                  "description": "Entgegennahme verbindlicher Buchungen sowie Erfassung der relevanten Vorgangs- und Kundendaten.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unklarheit darüber, welche konkreten Teilschritte bei steigendem Volumen den meisten Mehraufwand erzeugen.",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "high",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "short",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "stage_buchungsvorbereitung_abschluss",
+                  "sequence": 3,
+                  "name": "Buchungsvorbereitung und Vorgangsabschluss",
+                  "description": "Prüfung und Aufbereitung der finalen Unterlagen für die Buchungsabwicklung.",
+                  "roles": "",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unbekannt. Es liegen derzeit keine Berichte über konkrete Probleme oder Nacharbeiten in dieser Phase vor.",
+                  "baseline_metrics": "",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "medium",
+                  "evidence_basis": "hypothesis",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "stage_buchungserfassung_verarbeitung",
+                "business_domain": "sales",
+                "capability": "Reisebuchungserfassung und -verarbeitung",
+                "strategic_impact": "high",
+                "economic_potential": "high",
+                "pain_intensity": "high",
+                "data_accessibility": "low",
+                "change_effort": "medium",
+                "rationale": "Diese Phase ist direkt betroffen, wenn mehr Buchungen getätigt werden. Es wird vermutet, dass hier der Mehraufwand bei steigenden Buchungszahlen am stärksten ins Gewicht fällt.",
+                "tradeoffs": [
+                  "Fokussierung auf die Buchungserfassung adressiert vorgelagerte Beratungsprozesse vorerst nicht."
+                ],
+                "uncertainties": [
+                  "Die exakten Zeitaufwände je Buchungsschritt sind mangels vorliegender Messdaten noch nicht quantifizierbar."
+                ],
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "process_analysis": {
+                "name": "Analyse des Buchungserfassungs- und Verarbeitungsprozesses",
+                "scope_start": "Vorliegen einer Buchungsentscheidung durch den Kunden",
+                "scope_end": "Vollständige Erfassung und Aufbereitung der Buchung",
+                "trigger": "Kunde bestätigt den Kaufabschluss einer Reise",
+                "outcome": "Buchung ist vollständig im System erfasst und für den Vorgangsabschluss bereitgestellt",
+                "current_flow": "Im Rahmen der Phase stage_buchungserfassung_verarbeitung (Buchungserfassung und -verarbeitung): Der genaue Ist-Ablauf und die einzelnen Bearbeitungsschritte sind derzeit im Detail unbekannt.",
+                "roles": "",
+                "systems": "",
+                "data_objects": "Kundendaten, Reise- und Buchungsdaten",
+                "business_rules": "",
+                "handoffs": "",
+                "bottlenecks": "Arbeitsmehraufwand bei steigenden Buchungszahlen, dessen genaue Ursachen im Einzelnen noch unbekannt sind.",
+                "observations": "Aktuell fehlt die Transparenz, welche konkreten Bearbeitungsschritte den höchsten Arbeitsaufwand erzeugen.",
+                "cause_hypotheses": "Manuelle Datenübertragungen oder unklare Abläufe könnten bei steigenden Buchungszahlen zu übermäßigem Aufwand führen.",
+                "constraints": "Eine ständige Neu-Einstellung von Personal ist nicht uneingeschränkt möglich.",
+                "exceptions": "",
+                "baseline_metrics": "",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Es besteht das Geschäftsziel, mehr Reisen zu verkaufen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Neue Mitarbeiter können nicht unbegrenzt bzw. nicht immer eingestellt werden.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Es ist aktuell unklar, an welchen konkreten Stellen im Prozess mehr Buchungen besonders viel zusätzliche Arbeit verursachen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Der Buchungserfassungsprozess skaliert aktuell nicht optimal und erzeugt bei höherem Volumen vermeidbare Mehrarbeit.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Welche konkreten Prozessschritte bei der Buchungsverarbeitung derzeit die meiste Arbeitszeit beanspruchen.",
+                  "impact": "Verhindert die gezielte Identifikation von Prozessoptimierungen."
+                },
+                {
+                  "statement": "Welche IT-Systeme und Rollen aktuell im Buchungsablauf eingesetzt werden.",
+                  "impact": "Erschwert die technische und organisatorische Bewertung von Veränderungen."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+                  "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+                  "blocking": true
+                },
+                {
+                  "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+                  "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": []
+            },
+            "contract_errors": [],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "waiting_human",
+              "checks": {
+                "source_grounding": true,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": true,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [],
+              "repair_instructions": "",
+              "human_question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss, und an welchen Stellen entsteht dabei der größte Arbeitsaufwand?"
+            }
+          }
+        ],
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "6ba0457e-d15f-4f9c-bbab-521c8bf55bb6"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss, und an welchen Stellen entsteht dabei der größte Arbeitsaufwand?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Teilschritte, Rollen und IT-Systeme durchlaufen Reisebuchungen derzeit von der Anfrage bis zum Abschluss?",
+          "impact": "Erforderlich für eine genaue Prozessanalyse und Abgrenzung der Handlungsfelder.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es bereits Schätzungen oder Erfahrungswerte bezüglich des zeitlichen Aufwands pro Buchung?",
+          "impact": "Hilft bei der Quantifizierung der Kapazitätsgrenzen.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.046590"
+    }
+  ],
+  "scope_confirmed": false
+}

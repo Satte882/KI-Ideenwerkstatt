@@ -1,0 +1,576 @@
+[
+  {
+    "step": "01 Inbox: initial statement only",
+    "method": "POST",
+    "url": "/use-cases/ideas/new/",
+    "input": {
+      "title": "[SYNTHETISCH #133 A] Rückfragen zur gebuchten Reise",
+      "description": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+      "business_unit": 7,
+      "source_note": "Synthetische Testperson Kundenservice; keine RSD-Aussage"
+    },
+    "status": 302,
+    "redirect": "/use-cases/ideas/de7ad635-642e-42b7-931f-4641db151c87/",
+    "messages": [
+      "Eintrag wurde in der Inbox erfasst."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "02 Discovery entry prefill",
+    "status": 200,
+    "prefilled_problem": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt."
+  },
+  {
+    "step": "03 Autonomous Discovery: no later context, no provider",
+    "method": "POST",
+    "url": "/accelerator/value-stream/autonomous/start/",
+    "input": {
+      "idea_candidate": "de7ad635-642e-42b7-931f-4641db151c87",
+      "business_unit": 7,
+      "problem_statement": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+      "business_context": ""
+    },
+    "status": 302,
+    "redirect": "/accelerator/value-stream/autonomous/68afe0ad-25aa-45ac-93aa-f4ea87380b01/review/",
+    "messages": [
+      "Discovery konnte nicht abgeschlossen werden: Kein OpenRouter API-Key konfiguriert."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "04 Actual Discovery review",
+    "method": "GET",
+    "url": "/accelerator/value-stream/autonomous/68afe0ad-25aa-45ac-93aa-f4ea87380b01/review/",
+    "input": null,
+    "status": 200,
+    "redirect": null,
+    "messages": [
+      "Discovery konnte nicht abgeschlossen werden: Kein OpenRouter API-Key konfiguriert."
+    ],
+    "form_errors": {}
+  },
+  {
+    "session_status": "draft",
+    "analysis": [
+      {
+        "status": "failed",
+        "error_code": "not_configured"
+      }
+    ],
+    "automatic_value_stream_count": 0
+  },
+  {
+    "step": "K1 released by test author before manual continuation",
+    "asked_by": "test author, not the application",
+    "question": "Was wird gefragt, wie gehen Sie vor und wer hilft bei Unklarheit?",
+    "card": "A-K1",
+    "answer": "Synthetisch: Transferzeit oder Leistung; Buchung und gemeinsames Postfach prüfen, bei Unklarheit Reiseorganisation fragen. Produktnamen und Frist unbekannt.",
+    "targets": [
+      "manual stream/stage proposal",
+      "later process fields with A-K1 prefix"
+    ],
+    "status": "synthetic report, not validated"
+  },
+  {
+    "step": "05 Manual stream draft",
+    "method": "POST",
+    "url": "/architecture/new/",
+    "input": {
+      "name": "[SYNTHETISCH #133 A] Reiseanliegen bis geklärte Antwort",
+      "business_unit": 7,
+      "owner": 1,
+      "status": "draft",
+      "description": "Testautor-Entwurf aus A-K1; unbestätigt",
+      "trigger": "Rückfrage zu einer bereits gebuchten Reise geht ein",
+      "outcome": "Kunde erhält eine geprüfte Antwort; offene Klärfälle bleiben offen",
+      "scope_in": "Anliegen aufnehmen, Angaben klären, Antwort prüfen und mitteilen",
+      "scope_out": "Neue Buchung, Reiseausführung und Erstattungsentscheidung",
+      "strategic_objective": "Hypothese: verlässlichere Antworten; Wirkung unbekannt",
+      "stakeholders": "Kunde, Kundenservice, Reiseorganisation",
+      "constraints": "Nur berechtigte Einsicht; widersprüchliche Angaben vor Auskunft klären",
+      "business_domain": "customer_service",
+      "capability": "Kundenanliegen klären",
+      "focus_status": "not_screened"
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "06.1 Manual stage proposal",
+    "method": "POST",
+    "url": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/stages/new/",
+    "input": {
+      "sequence": 1,
+      "name": "Anliegen zugeordnet",
+      "description": "Testautoren-Hypothese aus A-K1: Aus der Rückfrage entsteht ein zugeordnetes Buchungsanliegen."
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "06.2 Manual stage proposal",
+    "method": "POST",
+    "url": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/stages/new/",
+    "input": {
+      "sequence": 2,
+      "name": "Antwortgrundlage geklärt",
+      "description": "Testautoren-Hypothese aus A-K1: Aus den Angaben entsteht eine geprüfte Antwortgrundlage; Widersprüche bleiben bis zur Rückfrage offen."
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "06.3 Manual stage proposal",
+    "method": "POST",
+    "url": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/stages/new/",
+    "input": {
+      "sequence": 3,
+      "name": "Antwort mitgeteilt",
+      "description": "Testautoren-Hypothese aus A-K1: Aus der geprüften Grundlage erhält der Kunde eine Antwort."
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "07 Guard before screening",
+    "method": "GET",
+    "url": "/architecture/stages/4b7d9155-b514-4868-b198-4bba068ac6a9/processes/new/",
+    "input": null,
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "08 Provisional manual screening",
+    "method": "POST",
+    "url": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/edit/",
+    "input": {
+      "name": "[SYNTHETISCH #133 A] Reiseanliegen bis geklärte Antwort",
+      "business_unit": 7,
+      "owner": 1,
+      "status": "active",
+      "description": "Testautor-Entwurf aus A-K1; unbestätigt",
+      "trigger": "Rückfrage zu einer bereits gebuchten Reise geht ein",
+      "outcome": "Kunde erhält eine geprüfte Antwort; offene Klärfälle bleiben offen",
+      "scope_in": "Anliegen aufnehmen, Angaben klären, Antwort prüfen und mitteilen",
+      "scope_out": "Neue Buchung, Reiseausführung und Erstattungsentscheidung",
+      "strategic_objective": "Hypothese: verlässlichere Antworten; Wirkung unbekannt",
+      "stakeholders": "Kunde, Kundenservice, Reiseorganisation",
+      "constraints": "Nur berechtigte Einsicht; widersprüchliche Angaben vor Auskunft klären",
+      "business_domain": "customer_service",
+      "capability": "Kundenanliegen klären",
+      "focus_status": "selected",
+      "strategic_impact": "medium",
+      "economic_potential": "medium",
+      "pain_intensity": "medium",
+      "data_accessibility": "medium",
+      "change_effort": "medium",
+      "focus_rationale": "Synthetische Testautoren-Einschätzung, keine Messung oder RSD-Freigabe; begrenzte Klärung im Kundenservice, wirtschaftliche Relevanz offen."
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "09 Manual phase comparison",
+    "method": "POST",
+    "url": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/stages/focus/",
+    "input": {
+      "selected_stage": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+      "rationale": "Unbestätigter Testfokus: hier berichtet A die Suche; keine Ursache belegt.",
+      "impact_38b58a514408451dbde284ebcfeed2e1": "medium",
+      "pain_intensity_38b58a514408451dbde284ebcfeed2e1": "medium",
+      "improvement_potential_38b58a514408451dbde284ebcfeed2e1": "medium",
+      "data_accessibility_38b58a514408451dbde284ebcfeed2e1": "medium",
+      "change_effort_38b58a514408451dbde284ebcfeed2e1": "medium",
+      "time_to_value_38b58a514408451dbde284ebcfeed2e1": "unknown",
+      "evidence_basis_38b58a514408451dbde284ebcfeed2e1": "hypothesis",
+      "impact_4b7d9155b5144868b1984bba068ac6a9": "medium",
+      "pain_intensity_4b7d9155b5144868b1984bba068ac6a9": "medium",
+      "improvement_potential_4b7d9155b5144868b1984bba068ac6a9": "medium",
+      "data_accessibility_4b7d9155b5144868b1984bba068ac6a9": "medium",
+      "change_effort_4b7d9155b5144868b1984bba068ac6a9": "medium",
+      "time_to_value_4b7d9155b5144868b1984bba068ac6a9": "unknown",
+      "evidence_basis_4b7d9155b5144868b1984bba068ac6a9": "hypothesis",
+      "impact_fef609987b0e423ba102caf02fc8d9ad": "medium",
+      "pain_intensity_fef609987b0e423ba102caf02fc8d9ad": "medium",
+      "improvement_potential_fef609987b0e423ba102caf02fc8d9ad": "medium",
+      "data_accessibility_fef609987b0e423ba102caf02fc8d9ad": "medium",
+      "change_effort_fef609987b0e423ba102caf02fc8d9ad": "medium",
+      "time_to_value_fef609987b0e423ba102caf02fc8d9ad": "unknown",
+      "evidence_basis_fef609987b0e423ba102caf02fc8d9ad": "hypothesis"
+    },
+    "status": 302,
+    "redirect": "/architecture/71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "K2-K3 released during manual clarification before process draft",
+    "asked_by": "test author, not the application",
+    "question": "Gibt es einen konkreten Fall, Gegenbeispiele und gemessene Zeiten?",
+    "cards": [
+      "A-K2",
+      "A-K3"
+    ],
+    "answers": [
+      "SYN-A-01: Buchungsnotiz 09:00, spätere Transfernachricht 10:00; Zustellung und endgültige Gültigkeit nicht dokumentiert.",
+      "SYN-A-02: Leistungsfrage mit übereinstimmenden Angaben beantwortbar; keine Zeitstichprobe, Mengen, Fehlerquote oder Kostendaten."
+    ],
+    "targets": [
+      "data_objects",
+      "exceptions",
+      "cause_hypotheses",
+      "baseline_metrics"
+    ],
+    "status": "synthetic examples, no causal proof"
+  },
+  {
+    "step": "10 Manual discovery cards K1-K3",
+    "method": "POST",
+    "url": "/architecture/stages/4b7d9155-b514-4868-b198-4bba068ac6a9/processes/new/",
+    "input": {
+      "name": "[SYNTHETISCH #133 A] Antwortgrundlage klären",
+      "status": "draft",
+      "scope_start": "Zugeordnete Rückfrage zur bestehenden Buchung",
+      "scope_end": "Grundlage für Antwort oder benannter offener Klärbedarf",
+      "trigger": "Kunde fragt nach aktuellem Stand",
+      "outcome": "Prüfbare Antwortgrundlage",
+      "current_flow": "A-K1, synthetisch berichtet: Buchung öffnen, E-Mails prüfen, bei Unklarheit Reiseorganisation fragen; keine beobachtete Prozessaufnahme.",
+      "roles": "A-K1: Kundenservice, Reiseorganisation",
+      "systems": "A-K1: Buchungsmaske und gemeinsames Postfach; Produktnamen unbekannt",
+      "data_objects": "A-K2, synthetisch: SYN-A-01 Buchungsnotiz Transfer 09:00, spätere Nachricht 10:00; Zustellung an Kunden und endgültige Gültigkeit nicht dokumentiert.",
+      "business_rules": "A-K1: unklaren Reisestand vor verbindlicher Auskunft rückfragen",
+      "handoffs": "A-K1: Kundenservice fragt Reiseorganisation; Antwortfrist unbekannt",
+      "bottlenecks": "Nur berichtetes lokales Suchproblem; systemweiter Engpass unbekannt",
+      "diagnostic_observations": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+      "cause_hypotheses": "H1: Standangaben widersprechen sich. H2: Zugriffsrechte fehlen. H3: Rückmeldungen kommen spät. Alle unbestätigt; A-K2 nur ein Fall.",
+      "confirmed_causes": "",
+      "constraints": "",
+      "exceptions": "A-K2: widersprechende Transferzeit; A-K3: Standardfall ohne Widerspruch",
+      "baseline_metrics": "Nicht erhoben. Geplant: Such- und Wartezeit getrennt, Antwortkorrektheit und Wiederholkontakte; keine Zielwerte bekannt.",
+      "target_state_principles": "Berechtigte, aktuelle, nachvollziehbare Auskunft; Lösung offen"
+    },
+    "status": 302,
+    "redirect": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert.",
+      "Prozessanalyse wurde angelegt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "11 Manual solution hypothesis",
+    "method": "POST",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/options/new/",
+    "input": {
+      "name": "Klärweg und zuständige Person festhalten",
+      "option_type": "organizational",
+      "evaluation_status": "draft",
+      "evidence_basis": "hypothesis",
+      "description": "Hypothese: Zuständigkeit und aktueller Stand werden nach Rückfrage festgehalten.",
+      "expected_value": "Nutzen unbewiesen; Vergleich mit unverändertem Ablauf erforderlich",
+      "time_to_value": "unknown",
+      "feasibility": "not_assessed",
+      "integration_effort": "not_assessed"
+    },
+    "status": 302,
+    "redirect": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert.",
+      "Prozessanalyse wurde angelegt.",
+      "Lösungsoption wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "11 Manual solution hypothesis",
+    "method": "POST",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/options/new/",
+    "input": {
+      "name": "Vorhandene Buchungsansicht mit Verweisen prüfen",
+      "option_type": "standard_software",
+      "evaluation_status": "draft",
+      "evidence_basis": "hypothesis",
+      "description": "Hypothese: vorhandene Ansicht kann freigegebene Informationen erreichbar machen.",
+      "expected_value": "Nutzen unbewiesen; Vergleich mit unverändertem Ablauf erforderlich",
+      "time_to_value": "unknown",
+      "feasibility": "not_assessed",
+      "integration_effort": "not_assessed"
+    },
+    "status": 302,
+    "redirect": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert.",
+      "Prozessanalyse wurde angelegt.",
+      "Lösungsoption wurde ergänzt.",
+      "Lösungsoption wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "11 Manual solution hypothesis",
+    "method": "POST",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/options/new/",
+    "input": {
+      "name": "Quellengebundene Suchhilfe prüfen",
+      "option_type": "assistant",
+      "evaluation_status": "draft",
+      "evidence_basis": "hypothesis",
+      "description": "Hypothese: Suchhilfe zeigt Quellen und Widersprüche; keine verbindliche Auskunft.",
+      "expected_value": "Nutzen unbewiesen; Vergleich mit unverändertem Ablauf erforderlich",
+      "time_to_value": "unknown",
+      "feasibility": "not_assessed",
+      "integration_effort": "not_assessed"
+    },
+    "status": 302,
+    "redirect": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/",
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert.",
+      "Prozessanalyse wurde angelegt.",
+      "Lösungsoption wurde ergänzt.",
+      "Lösungsoption wurde ergänzt.",
+      "Lösungsoption wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "step": "12 Actual comparison and blockers",
+    "method": "GET",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/options/compare/",
+    "input": null,
+    "status": 200,
+    "redirect": null,
+    "messages": [
+      "Value Stream wurde angelegt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Value-Stream-Phase wurde ergänzt.",
+      "Der Value Stream ist noch im Entwurf. Ergänze zuerst die End-to-End-Phasen und setze den Status anschließend auf Aktiv.",
+      "Value Stream und Fokusentscheidung wurden aktualisiert.",
+      "Fokusphase, Kriterien und Auswahlbegründung wurden gespeichert.",
+      "Prozessanalyse wurde angelegt.",
+      "Lösungsoption wurde ergänzt.",
+      "Lösungsoption wurde ergänzt.",
+      "Lösungsoption wurde ergänzt."
+    ],
+    "form_errors": {}
+  },
+  {
+    "comparison_blockers": [
+      "Folgende Optionen sind noch nicht vollständig bewertet: Klärweg und zuständige Person festhalten, Vorhandene Buchungsansicht mit Verweisen prüfen, Quellengebundene Suchhilfe prüfen"
+    ],
+    "diagnosis_blockers": [
+      "bestätigte Ursache"
+    ]
+  },
+  {
+    "step": "13 Selection without cause confirmation is rejected",
+    "method": "POST",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/options/compare/",
+    "input": {
+      "selected_option": "98d70889-6b58-423e-a202-aed5a4e2179c",
+      "process_version": 1,
+      "rationale": "Negativprobe: keine verbindliche Auswahl zulässig",
+      "confirmed_causes": ""
+    },
+    "status": 200,
+    "redirect": null,
+    "messages": [],
+    "form_errors": {
+      "confirmed_causes": [
+        {
+          "message": "Bitte den Kernbefund fachlich bestätigen oder korrigieren.",
+          "code": ""
+        }
+      ]
+    }
+  },
+  {
+    "step": "14 Actual process decision surface",
+    "method": "GET",
+    "url": "/architecture/processes/2f0d6676-d168-48ac-8258-691e50231987/",
+    "input": null,
+    "status": 200,
+    "redirect": null,
+    "messages": [],
+    "form_errors": {}
+  },
+  {
+    "process_decision_surface": null
+  },
+  {
+    "final_state": {
+      "idea_description": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+      "idea_state": "open",
+      "idea_discovery_process_analysis_id": null,
+      "process_status": "draft",
+      "confirmed_causes": "",
+      "baseline_metrics": "Nicht erhoben. Geplant: Such- und Wartezeit getrennt, Antwortkorrektheit und Wiederholkontakte; keine Zielwerte bekannt.",
+      "process_source_snapshot": {
+        "name": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "name",
+          "value": "Antwortgrundlage geklärt",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "trigger": {
+          "kind": "value_stream",
+          "label": "Value Stream",
+          "id": "71d103c3-7f17-4c8a-bd4b-cb8ad9673c7b",
+          "field": "trigger",
+          "value": "Rückfrage zu einer bereits gebuchten Reise geht ein",
+          "updated_at": "2026-10-21T10:11:59.761109+00:00"
+        },
+        "outcome": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "description",
+          "value": "Testautoren-Hypothese aus A-K1: Aus den Angaben entsteht eine geprüfte Antwortgrundlage; Widersprüche bleiben bis zur Rückfrage offen.",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "roles": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "actors",
+          "value": "",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "systems": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "systems",
+          "value": "",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "data_objects": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "documents",
+          "value": "",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "bottlenecks": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "pain_points",
+          "value": "",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        },
+        "baseline_metrics": {
+          "kind": "value_stream_stage",
+          "label": "Value-Stream-Phase",
+          "id": "4b7d9155-b514-4868-b198-4bba068ac6a9",
+          "field": "baseline_metrics",
+          "value": "",
+          "updated_at": "2026-10-21T10:11:59.738226+00:00"
+        }
+      },
+      "options": [
+        {
+          "name": "Klärweg und zuständige Person festhalten",
+          "option_type": "organizational",
+          "evidence_basis": "hypothesis",
+          "evaluation_status": "draft",
+          "recommendation": "candidate"
+        },
+        {
+          "name": "Quellengebundene Suchhilfe prüfen",
+          "option_type": "assistant",
+          "evidence_basis": "hypothesis",
+          "evaluation_status": "draft",
+          "recommendation": "candidate"
+        },
+        {
+          "name": "Vorhandene Buchungsansicht mit Verweisen prüfen",
+          "option_type": "standard_software",
+          "evidence_basis": "hypothesis",
+          "evaluation_status": "draft",
+          "recommendation": "candidate"
+        }
+      ],
+      "process_validations": 0,
+      "selection_decisions": 0,
+      "use_cases": 0,
+      "delivery_packages": 0,
+      "lifecycle_reviews": 0
+    }
+  }
+]

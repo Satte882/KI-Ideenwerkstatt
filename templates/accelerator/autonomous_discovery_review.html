@@ -60,11 +60,23 @@
 {% endif %}
 {% endif %}
 
+{% if review_outdated and session.status == 'draft' %}
+<div class="alert alert-warning" role="alert">Der gespeicherte Entwurf bleibt lesbar. Vor einer verbindlichen Übernahme muss er mit der aktuellen fachlichen Prüfung erneut analysiert werden.</div>
+{% if not analysis_failed %}<form method="post" class="mb-4">{% csrf_token %}<input type="hidden" name="action" value="retry"><button class="btn btn-outline-secondary" type="submit">Mit aktueller Methodik prüfen</button></form>{% endif %}
+{% endif %}
+
 {% if waiting_human %}
 <div class="alert alert-warning" role="alert">
   <strong>Eine Scope-/Fokus-Klärung ist erforderlich.</strong>
-  <div class="mt-2">{{ presentation.verifier.human_question }}</div>
+  {% if presentation.blocking_questions %}
+  <ul class="mt-2 mb-0">{% for question in presentation.blocking_questions %}<li>{{ question }}</li>{% endfor %}</ul>
+  {% else %}<div class="mt-2">{{ presentation.verifier.human_question }}</div>{% endif %}
+  <div class="mt-2">Der technische Entwurf bleibt zur Exploration verfügbar. Eine verbindliche Übernahme ist erst nach dieser fachlichen Klärung möglich.</div>
 </div>
+{% endif %}
+
+{% if presentation.methodical_findings %}
+<div class="alert alert-warning" role="alert"><strong>Fachliche Korrektur erforderlich.</strong><ul class="mb-0">{% for finding in presentation.methodical_findings %}<li>{{ finding }}</li>{% endfor %}</ul></div>
 {% endif %}
 
 {% if presentation.draft %}
@@ -119,7 +131,8 @@
       <dt class="col-md-3">Start</dt><dd class="col-md-9">{{ presentation.process.scope_start }}</dd>
       <dt class="col-md-3">Ende</dt><dd class="col-md-9">{{ presentation.process.scope_end }}</dd>
       <dt class="col-md-3">Ist-Ablauf</dt><dd class="col-md-9">{{ presentation.process.current_flow }}</dd>
-      <dt class="col-md-3">Bottlenecks</dt><dd class="col-md-9">{{ presentation.process.bottlenecks }}</dd>
+      <dt class="col-md-3">Beobachtetes Problem</dt><dd class="col-md-9">{{ presentation.process.observations|default:presentation.process.bottlenecks }}</dd>
+      <dt class="col-md-3">Unbestätigte Ursachenhypothesen</dt><dd class="col-md-9">{{ presentation.process.cause_hypotheses|default:"Keine Ursache belegt" }}</dd>
       <dt class="col-md-3">Rollen</dt><dd class="col-md-9">{{ presentation.process.roles|default:"Nicht belegt" }}</dd>
       <dt class="col-md-3">Systeme</dt><dd class="col-md-9">{{ presentation.process.systems|default:"Nicht belegt" }}</dd>
       <dt class="col-md-3">Daten / Dokumente</dt><dd class="col-md-9">{{ presentation.process.data_objects|default:"Nicht belegt" }}</dd>

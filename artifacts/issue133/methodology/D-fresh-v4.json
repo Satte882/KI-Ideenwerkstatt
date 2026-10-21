@@ -1,0 +1,248 @@
+{
+  "case": "D",
+  "phase": "fresh",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "technical_retry_of": "D-fresh-v4.technical-attempt.json",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "efa474290790bfab013e8d6cba2ecafa6722ef746b38728a02eff9086a35a11d",
+    "ki_radar/accelerator/architect_contract.py": "ce68ebd00bdf31058528fed3f973e115aec5fefeff649bff240e6aa602fa34ec"
+  },
+  "status": "success",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik D"
+    },
+    "problem_statement": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "4892e83e-8656-42e0-9d60-37af6535123e",
+      "title": "[SYNTHETISCH #133 D/fresh-recovery] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:29:21.501426+00:00",
+      "idea_updated_at": "2026-10-21T11:29:21.470474+00:00",
+      "origin_source_filename": "ideenbox-4892e83e-8656-42e0-9d60-37af6535123e.md",
+      "origin_source_sha256": "d4eda03748f3f18461d883e15cc422bd9c2796c12ea12cf102e58dbcf0c152b7"
+    }
+  },
+  "analyses": [
+    {
+      "id": "991d7d05-5b00-438d-ba08-e2606616ea13",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "1a22cfeefc30ec0d26192f64caca50a7890a5f09c0d7aadf07debed95748b2ba",
+      "prompt_version": "ap1-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Personentransport- und Busorganisation für Reisegruppen",
+            "description": "Gesamtheitlicher Ablauf der Organisation, Abstimmung und Anpassung von Bustransporten für eine Reisegruppe vor Ort.",
+            "trigger": "Anforderung oder Anlass zur Organisation von Bustransporten für eine Reisegruppe vor Ort",
+            "outcome": "Durchgeführter Transport der Reisegruppe gemäß abstimmungsgemäßem Bedarf",
+            "scope_in": "Erfassung des Busbedarfs vor Ort, Abstimmung von Fahrplan- und Ablaufänderungen mit Beteiligten sowie Erteilung von Anpassungs- bzw. Bestellentscheidungen.",
+            "scope_out": "Vertragliche Grundvereinbarungen mit Reiseanbietern oder finanzielle Nachberechnung und Abrechnung nach Abschluss der Reise.",
+            "strategic_objective": "Zielvorschlag: Erhöhung der Transparenz und Verlässlichkeit bei der Vor-Ort-Transportabstimmung im Änderungsfall.",
+            "stakeholders": "Organisator vor Ort, Reisegruppe, Kommunikationspartner (z. B. Busunternehmen, Reiseleitung)",
+            "constraints": "Keine Vorgaben bezüglich spezifischer Software oder Tools; direkte Interaktion findet vor Ort statt.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stg_1_bedarf_erfassung",
+              "sequence": 1,
+              "name": "Transportbedarf erfassen",
+              "description": "Ersterfassung der notwendigen Fahrten und Gruppengrößen für den Bustransport vor Ort.",
+              "roles": "Organisator vor Ort",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Keine expliziten Angaben im Input enthalten.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stg_2_aenderung_abstimmung",
+              "sequence": 2,
+              "name": "Änderungen abstimmen und kommunizieren",
+              "description": "Telefonische und schriftliche Kontaktaufnahme mit mehreren Beteiligten bei auftretenden Planänderungen.",
+              "roles": "Organisator vor Ort, mehrere unbenannte Ansprechpartner",
+              "systems": "Telefon, schriftliche Nachrichtenmedien",
+              "documents": "Unbekannt",
+              "pain_points": "Unsicherheit darüber, ob alle Beteiligten die Information erhalten haben und ob der Bus umbestellt werden muss.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "stg_3_bus_bestellung_anpassung",
+              "sequence": 3,
+              "name": "Busbestellung anpassen",
+              "description": "Verbindliche Anpassung oder Auslösung der veränderten Busbestellung beim Transportdienstleister.",
+              "roles": "Organisator vor Ort, Busunternehmen",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Unsicherheit bezüglich des passenden Auslösezeitpunkts für die geänderte Bestellung.",
+              "baseline_metrics": "Keine Messwerte verfügbar.",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stg_2_aenderung_abstimmung",
+            "business_domain": "logistics",
+            "capability": "Transport- und Kommunikationsabstimmung im Änderungsfall",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Der berichtete Hauptschmerzpunkt liegt in der Abstimmungsphase bei Änderungen: Es entsteht Unsicherheit über den Informationsstand der Beteiligten und über die Notwendigkeit der Busumbestellung.",
+            "tradeoffs": [
+              "Die Fokussierung auf die Abstimmung adressiert nicht direkt die spätere Ausführung der Busumbestellung, behebt aber den Auslöser der Unsicherheit."
+            ],
+            "uncertainties": [
+              "Genaue Rollen, Anzahl der Personen und Befugnisse zur verbindlichen Umbestellung sind bisher nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Prozess der Abstimmung von Planänderungen vor Ort",
+            "scope_start": "Eintritt einer zeitlichen oder ablaufbezogenen Änderung bei der Busorganisation vor Ort",
+            "scope_end": "Erlangen von Klarheit über den Informationsstand aller Beteiligten und Vorbereitung der Bestellentscheidung",
+            "trigger": "Plan- oder Zeitenänderung bei der Reisegruppe vor Ort",
+            "outcome": "Informierte Beteiligte und fundierte Entscheidungsgrundlage für die Anpassung der Busbestellung",
+            "current_flow": "stg_2_aenderung_abstimmung (Änderungen abstimmen und kommunizieren): Bei einer Planänderung telefoniert und schreibt der Organisator mit mehreren Personen. Im Anschluss besteht Unsicherheit, ob alle Personen informiert sind und ob der Bus umbestellt werden soll.",
+            "roles": "Organisator vor Ort, mehrere Kommunikationspartner",
+            "systems": "Telefon, schriftliche Kommunikationsmittel",
+            "data_objects": "Änderungsinformationen, Kontaktinformationen",
+            "business_rules": "Nicht dokumentiert; Regeln für die Auslösung von Umbestellungen fehlen oder sind nicht klar definiert.",
+            "handoffs": "Informationsübermittlung zwischen Organisator und mehreren externen/internen Ansprechpartnern.",
+            "bottlenecks": "Fehlendes oder unklares Feedback zum Informationsempfang bei den Zielpersonen.",
+            "observations": "Berichtetes Gefühl der Unsicherheit nach der Kontaktaufnahme bzgl. Informationsstand und Bestellnotwendigkeit.",
+            "cause_hypotheses": "Mögliches Fehlen von verbindlichen Empfangsbestätigungen oder unklare Zuständigkeiten/Vollmachten für Busumbestellungen.",
+            "constraints": "Abstimmung findet unter Vor-Ort-Bedingungen statt; keine Prämissen zu bestehenden Softwarelösungen.",
+            "exceptions": "Unbekannt",
+            "baseline_metrics": "Keine quantitativ erfassten Daten verfügbar.",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator koordiniert vor Ort Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Planänderungen telefoniert und schreibt der Organisator mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht beim Organisator manchmal Unsicherheit, ob alle Bescheid wissen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht beim Organisator manchmal Unsicherheit, ob der Bus anders bestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Fehlende Rückmeldeschleifen oder unklare Vollmachten könnten die Ursache für die Unsicherheit bezüglich Informationsstand und Bestellentscheidung sein.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Wer die konkreten Gesprächs- und Schreibpartner sind (z. B. Reiseleiter, Busunternehmer, Fahrer).",
+              "impact": "Macht die Zuordnung von Schnittstellen und Informationspflichten unklar."
+            },
+            {
+              "statement": "Ob der Organisator vor Ort die Befugnis hat, Busumbestellungen eigenständig vorzunehmen.",
+              "impact": "Beeinflusst die Entscheidungslogik im Prozess der Busanpassung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche konkreten Rollen nehmen die kontaktierten Personen ein und wer besitzt die Vollmacht, eine Busumbestellung verbindlich auszulösen?",
+              "impact": "Klärt die Prozessverantwortung und Abgrenzung zwischen Abstimmung und Umbestellung.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "18cb85dd-112e-4159-989e-d9cc9db36c1c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche konkreten Rollen nehmen die kontaktierten Personen ein und wer besitzt die Vollmacht, eine Busumbestellung verbindlich auszulösen?",
+          "impact": "Klärt die Prozessverantwortung und Abgrenzung zwischen Abstimmung und Umbestellung.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.029056"
+    }
+  ],
+  "scope_confirmed": false
+}

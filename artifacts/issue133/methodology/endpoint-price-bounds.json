@@ -1,0 +1,16 @@
+{
+  "google/gemini-3.6-flash": {
+    "max_endpoint_pricing": {
+      "prompt": "0.00000135",
+      "completion": "0.00000675"
+    },
+    "endpoint_count": 7
+  },
+  "deepseek/deepseek-v4.1-flash": {
+    "max_endpoint_pricing": {
+      "prompt": "6E-7",
+      "completion": "0.0000024"
+    },
+    "endpoint_count": 38
+  }
+}

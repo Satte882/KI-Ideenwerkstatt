@@ -405,6 +405,7 @@ def request_solution_generation_provider(
             max_tokens=prepared.policy.solution_generation_max_output_tokens,
             timeout_seconds=prepared.policy.timeout_seconds,
             temperature=None,
+            reasoning_effort="medium",
             response_format={
                 "type": "json_schema",
                 "json_schema": {

@@ -9,3 +9,9 @@ tests/fixtures/accelerator/*.sha256 text eol=lf
 /artifacts/issue106/exp118/*.json -text whitespace=cr-at-eol
 /artifacts/issue106/exp118/C2C_8_RUN_REVIEW_PACKET.md -text whitespace=cr-at-eol,-blank-at-eol
 /artifacts/issue106/exp118/historical/*.txt -text whitespace=cr-at-eol
+
+# Preserve #133 provider evidence and hashed synthetic source packs across platforms.
+/artifacts/issue133/**/*.json -text whitespace=cr-at-eol
+/artifacts/issue133/**/*.md -text whitespace=cr-at-eol,-blank-at-eol
+/tests/fixtures/issue133_methodology/**/*.md text eol=lf
+/tests/fixtures/issue133_methodology/criteria.json text eol=lf

@@ -196,7 +196,7 @@ def test_quality_snapshot_becomes_stale_when_critic_contract_version_changes(mon
 
     monkeypatch.setattr(
         "ki_radar.accelerator.solution_quality_snapshot.CRITIC_PROMPT_VERSION",
-        "2.0",
+        before.document["critic_prompt_version"] + "-changed",
     )
     after = build_solution_quality_snapshot(
         preview_payload=payload,
@@ -205,4 +205,7 @@ def test_quality_snapshot_becomes_stale_when_critic_contract_version_changes(mon
 
     assert before.snapshot_hash != after.snapshot_hash
     assert before.document["critic_prompt_version"] == CRITIC_PROMPT_VERSION
-    assert after.document["critic_prompt_version"] == "2.0"
+    assert (
+        after.document["critic_prompt_version"]
+        == before.document["critic_prompt_version"] + "-changed"
+    )

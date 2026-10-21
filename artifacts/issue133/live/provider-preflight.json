@@ -1,0 +1,16 @@
+{
+  "scope": "local process environment plus repository .env and referenced key file; no remote host audit",
+  "env_file_exists": true,
+  "effective_openrouter_key_present": true,
+  "openai_key_present": false,
+  "provider_hostname": "openrouter.ai",
+  "base_model": "deepseek/deepseek-v4.1-flash",
+  "discovery_model": "",
+  "key_validity_or_credit_checked": false,
+  "provider_requests_started": 0,
+  "network_used_by_audit": false,
+  "effective_discovery_model": "google/gemini-3.6-flash",
+  "discovery_model_configuration": "base.py default; absent .env value",
+  "authorization": "explicit user approval after initial audit",
+  "audit_phase": "preflight; requests_started=0 describes audit only"
+}

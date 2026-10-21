@@ -10,6 +10,7 @@ from django.urls import reverse
 
 from ki_radar.accelerator import block7_demo
 from ki_radar.accelerator.models import SolutionGenerationRun
+from ki_radar.accelerator.solution_generation_contract import GENERATION_PROMPT_VERSION
 from ki_radar.accounts.models import User
 from ki_radar.architecture.models import (
     ProcessAnalysis,
@@ -22,9 +23,14 @@ FIXTURE_PATH = FIXTURE_DIR / "block7_real_demo.v1.json"
 CHECKSUM_PATH = FIXTURE_DIR / "block7_real_demo.v1.sha256"
 
 
-def _expected_report() -> dict:
+def _expected_report(*, current_prompt=False) -> dict:
     content = FIXTURE_PATH.read_text(encoding="utf-8")
-    return json.loads(content)
+    report = json.loads(content)
+    if current_prompt:
+        # Preserve the frozen baseline; the current deterministic demo uses the
+        # active generator prompt while its domain/gate behavior remains identical.
+        report["generation"]["prompt_version"] = GENERATION_PROMPT_VERSION
+    return report
 
 
 def test_block7_real_demo_fixture_checksum_prevents_silent_drift():
@@ -42,7 +48,7 @@ def test_block7_real_demo_fixture_checksum_prevents_silent_drift():
 def test_block7_real_demo_matches_governed_reference():
     report = block7_demo.run_block7_real_demo()
 
-    assert report == _expected_report()
+    assert report == _expected_report(current_prompt=True)
     assert report["adoption"]["option_count"] == 3
     assert report["rollback"] == {
         "error": "simulated_persistence_failure",
@@ -65,7 +71,7 @@ def test_block7_real_demo_management_command_is_reproducible(tmp_path):
     second = json.loads(second_text)
 
     assert first == second
-    assert second == _expected_report()
+    assert second == _expected_report(current_prompt=True)
 
 
 @pytest.mark.django_db

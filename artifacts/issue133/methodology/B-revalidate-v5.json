@@ -1,0 +1,735 @@
+{
+  "case": "B",
+  "phase": "revalidate",
+  "synthetic": true,
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "revalidated_analysis_id": "0eb1c098-d12b-4560-b859-6ae21e513adf",
+  "reused_real_call_id": 29,
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "2535882ce0ea0188e37ff776e3d06a030e0896534d9722f7da7eafc8f0183421",
+    "ki_radar/accelerator/architect_contract.py": "aa8bfb0299a4866ca9e3b398d761f4a9358a3c8b2607905fbc0a3a29567ce315"
+  },
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik B"
+    },
+    "problem_statement": "Ich möchte mehr Reisen verkaufen. Gleichzeitig können wir nicht immer neue Leute einstellen. Ich weiß noch nicht, an welchen Stellen uns mehr Buchungen besonders viel zusätzliche Arbeit machen und was wir daran ändern könnten.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "a2d9ac52-13cd-4db5-b16e-eebe94b27296",
+      "title": "[SYNTHETISCH #133 B/fresh] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:18:21.282373+00:00",
+      "idea_updated_at": "2026-10-21T11:18:21.257105+00:00",
+      "origin_source_filename": "ideenbox-a2d9ac52-13cd-4db5-b16e-eebe94b27296.md",
+      "origin_source_sha256": "ecbe368696cf65edf84793f3d289c0a9a03be67c53b458c80aa9a033ec5ba16c"
+    }
+  },
+  "analyses": [
+    {
+      "id": "b04abf96-99fb-4283-9ae9-30e24d8ac454",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "245974db3dd4cba7c7a4b0a3b2d3dc1069a1e7195ab05423e61df245f50dcead",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "End-to-End Reiseverkauf und -abwicklung",
+            "description": "Gesamter Wertstrom von der ersten Kundenanfrage und Beratung über die Buchungsabwicklung bis hin zur Nachbetreuung.",
+            "trigger": "Kundenanfrage oder Kundeninteresse an einer Reisebuchung",
+            "outcome": "Erfolgreich abgewickelte Reise und abgeschlossene Kundenbetreuung",
+            "scope_in": "Annahme von Reiseanfragen, Erstkontakt, Angebotserstellung, Buchungsdurchführung",
+            "scope_out": "Langfristige Produktentwicklung von Reiseangeboten sowie allgemeines Marketing",
+            "strategic_objective": "Steigerung des Reiseverkaufs bei eingeschränkter Möglichkeit zur Personaleinstellung (Vorschlag)",
+            "stakeholders": "Vertrieb, Kundenservice, Reisesuchende",
+            "constraints": "Eingeschränkte Möglichkeiten für Neueinstellungen von Personal",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "beratung_angebot",
+              "sequence": 1,
+              "name": "Reiseberatung und Angebotserstellung",
+              "description": "Erfassung der Kundenwünsche und Erstellung passender Reiseangebote.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Möglicher Mehraufwand bei steigender Anzahl an Anfragen ungeklärt.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "buchung_abwicklung",
+              "sequence": 2,
+              "name": "Buchungsabwicklung",
+              "description": "Verbindliche Erfassung und Abwicklung von Reisebuchungen.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unbekannter genauer Arbeitsaufwand pro Buchung bei steigendem Volumen.",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "reisevorbereitung_betreuung",
+              "sequence": 3,
+              "name": "Reisevorbereitung und Nachbetreuung",
+              "description": "Bereitstellung von Reiseunterlagen und Betreuung vor oder nach der Reise.",
+              "roles": "",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Arbeitsbelastung bei Nachfragen derzeit nicht näher quantifiziert.",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "buchung_abwicklung",
+            "business_domain": "sales",
+            "capability": "Buchungsabwicklung und Auftragsbearbeitung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Die Buchungsabwicklung stellt eine direkte Schnittstelle zwischen Verkaufserfolg und operativer Arbeitsbelastung dar. Da der genaue Engpass laut Quellenlage noch unbekannt ist, dient diese Phase als vorläufiger Untersuchungsschwerpunkt.",
+            "tradeoffs": [
+              "Fokussierung auf die Buchungsabwicklung lässt eventuelle Aufwände in der vorgelagerten Beratung vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Unklar, in welcher Phase die höchste zusätzliche Arbeitsbelastung pro zusätzlicher Buchung entsteht."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse der Buchungsabwicklung",
+            "scope_start": "Eingang des Buchungswunsches",
+            "scope_end": "Abschluss der Buchungsbestätigung",
+            "trigger": "Kunde möchte eine Reise verbindlich buchen",
+            "outcome": "Bestätigte Buchung und erfasste Vorgangsdaten",
+            "current_flow": "Der detaillierte Ist-Ablauf der Buchungsabwicklung ist aktuell nicht ausreichend bekannt und muss in weiteren Untersuchungen aufgenommen werden.",
+            "roles": "",
+            "systems": "",
+            "data_objects": "",
+            "business_rules": "",
+            "handoffs": "",
+            "bottlenecks": "Beobachtete Unklarheit darüber, welche Teilprozessschritte bei höheren Buchungszahlen zu Mehrarbeit führen.",
+            "observations": "Es liegt bisher keine quantitative Messung oder genaue Prozessdokumentation vor.",
+            "cause_hypotheses": "Möglicherweise führen manuelle Erfassungsschritte oder Schnittstellen bei steigendem Volumen zu erhöhtem Zeitaufwand.",
+            "constraints": "Eingeschränkte Möglichkeiten für Neueinstellungen von Personal.",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Ziel ist der Verkauf von mehr Reisen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es können nicht unbegrenzt neue Mitarbeiter eingestellt werden.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es ist aktuell nicht bekannt, an welchen Stellen zusätzliche Buchungen besonders viel Mehrarbeit verursachen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Manuelle Prozessschritte bei der Buchungserfassung könnten bei steigendem Volumen den primären Kapazitätsengpass darstellen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Verteilung der Arbeitszeit auf die einzelnen Phasen des Reiseverkaufs.",
+              "impact": "Erschwert die gezielte Identifikation von Effizienzpotenzialen."
+            },
+            {
+              "statement": "Konkrete Kapazitätsgrenzen des bestehenden Teams.",
+              "impact": "Beurteilung des Skalierungspotenzials ohne neue Einstellungen unklar."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?",
+              "impact": "Ohne diese Information kann nicht verantwortbar entschieden werden, welche Phase der primäre Engpass ist.",
+              "blocking": true
+            },
+            {
+              "question": "Welche Rahmenbedingungen oder Vorgaben existieren bezüglich der Personalplanung?",
+              "impact": "Hilft bei der Bewertung realistischer Maßnahmen zur Arbeitsentlastung.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "8d412c8c-a93e-491b-a5bd-9c51871fca18"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "decision_blocking_clarification",
+            "message": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?"
+          }
+        ],
+        "repair_instructions": "",
+        "human_question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?"
+      },
+      "open_questions": [
+        {
+          "question": "An welchen konkreten Prozessschritten oder Schnittstellen entsteht bei einem Anstieg der Buchungszahlen derzeit die meiste manuelle Arbeit?",
+          "impact": "Ohne diese Information kann nicht verantwortbar entschieden werden, welche Phase der primäre Engpass ist.",
+          "blocking": true
+        },
+        {
+          "question": "Welche Rahmenbedingungen oder Vorgaben existieren bezüglich der Personalplanung?",
+          "impact": "Hilft bei der Bewertung realistischer Maßnahmen zur Arbeitsentlastung.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.026986"
+    },
+    {
+      "id": "995cdf3b-7fc4-461f-84d6-9c851750143a",
+      "status": "failed",
+      "error_code": "provider_unavailable",
+      "source_revision": 1,
+      "source_hash": "cbe67c5a74ed206dbf010daa7a1e4b8a5d19a0f07021b19f2500be887afa5083",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    },
+    {
+      "id": "0eb1c098-d12b-4560-b859-6ae21e513adf",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "cbe67c5a74ed206dbf010daa7a1e4b8a5d19a0f07021b19f2500be887afa5083",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseabwicklung und Kundenbetreuung",
+            "description": "Gesamter Wertstrom von der ersten Kundenanfrage im Verkauf bis zur organisatorischen Vorbereitung der Reise.",
+            "trigger": "Eingang einer Kundenanfrage oder eines Buchungswunsches",
+            "outcome": "Vorbereitete Reiseorganisation und geklärte Kundenanfrage",
+            "scope_in": "Aufnahme von Anfragen, Kundenberatung und Bearbeitung von Reiseänderungen",
+            "scope_out": "Eigentliche Durchführung der Reise und Nachbereitung nach Reiserückkehr",
+            "strategic_objective": "Vorschlag: Abwicklung von mehr Buchungen mit dem vorhandenen Team bei gleichbleibend verlässlichen Auskünften und erreichbarem Service.",
+            "stakeholders": "Geschäftsführung, Verkaufspersonal, Reiseorganisation, Kunden",
+            "constraints": "Neueinstellungen sind nicht beliebig möglich, aber nicht generell verboten.",
+            "evidence_refs": [
+              "U0",
+              "S1"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_verkauf",
+              "sequence": 1,
+              "name": "Verkauf und Kundenanfragen",
+              "description": "Beratung von Kunden und Bearbeitung von eingehenden Anfragen sowie Rückfragen.",
+              "roles": "Testperson im Verkauf",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Rückfragen werden subjektiv als aufwendig wahrgenommen.",
+              "baseline_metrics": "Keine Messdaten oder Zeitreihen vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_reiseorganisation",
+              "sequence": 2,
+              "name": "Reiseorganisation",
+              "description": "Organisatorische Abwicklung gebuchter Reisen und Bearbeitung von Änderungen.",
+              "roles": "Testperson in der Reiseorganisation",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kurzfristige Änderungen verursachen subjektiv wahrgenommenen Aufwand.",
+              "baseline_metrics": "Keine Messdaten oder Zeitreihen vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "S2"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_verkauf",
+            "business_domain": "sales",
+            "capability": "Kundenberatung und Anfragenbearbeitung",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Vorläufiger Untersuchungsfokus auf den Verkauf, da dort der erste Kundenkontakt entsteht. Es ist jedoch noch nicht belegt, ob der Verkauf oder die Reiseorganisation den dominanten Aufwandstreiber darstellt.",
+            "tradeoffs": [
+              "Die Fokussierung auf den Verkauf blendet mögliche Aufwandstreiber in der Reiseorganisation vorerst aus."
+            ],
+            "uncertainties": [
+              "Es fehlen quantitative Daten zur genauen Aufwandsverteilung zwischen Verkauf und Reiseorganisation."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Detailbetrachtung Verkauf und Kundenanfragen",
+            "scope_start": "Eingang einer Kundenanfrage",
+            "scope_end": "Abschluss der Kundenberatung und Bearbeitung von Rückfragen",
+            "trigger": "Eingegangene Kundenanfrage",
+            "outcome": "Bearbeitete Kundenanfrage und geklärte Rückfragen",
+            "current_flow": "Der genaue Ist-Ablauf für stage_verkauf (Verkauf und Kundenanfragen) ist in den vorliegenden Quellen noch nicht beschrieben und derzeit unbekannt.",
+            "roles": "Testperson im Verkauf",
+            "systems": "Unbekannt",
+            "data_objects": "Anfragen (Details unbekannt)",
+            "business_rules": "Unbekannt",
+            "handoffs": "Schnittstelle zur Reiseorganisation (Details unbekannt)",
+            "bottlenecks": "Subjektiv berichteter Aufwand bei Rückfragen (noch nicht quantitativ bestätigt).",
+            "observations": "Es liegen bisher ausschließlich subjektive Einschätzungen einzelner Testpersonen ohne Messwerte vor.",
+            "cause_hypotheses": "Rückfragen könnten durch unvollständige Informationen bei der Erstanfrage entstehen.",
+            "constraints": "Neueinstellungen sind nicht beliebig möglich.",
+            "exceptions": "Unbekannt",
+            "baseline_metrics": "Keine Arbeitszeitdaten, Buchungslisten oder Kennzahlen verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Die Geschäftsführung möchte mehr Buchungen mit dem vorhandenen Team bewältigen, während Service und Auskünfte verlässlich bleiben sollen.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Neueinstellungen sind nicht beliebig möglich, aber nicht generell verboten.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Es gibt kein beschlossenes Wachstumsziel, keine Entlassungsvorgabe und keinen bestätigten Personalengpass.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine Testperson im Verkauf hält Rückfragen für aufwendig, während eine Testperson in der Reiseorganisation kurzfristige Änderungen nennt.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Beide Berichte sind ungemessene Einschätzungen; kein Bereich ist als dominanter Aufwandstreiber belegt.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Vollständiger Prozessablauf, eingesetzte Systeme und Arbeitszeitdaten sind aktuell noch unbekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Rückfragen im Verkauf binden einen erheblichen Teil der Arbeitszeit des Teams.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Kurzfristige Änderungen in der Reiseorganisation erzeugen wesentlichen Zusatzaufwand.",
+              "evidence_refs": [
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Quantitativer Arbeitszeitaufwand und reale Verteilung der Aufwände zwischen Verkauf und Reiseorganisation.",
+              "impact": "Verhindert die zweifelsfreie Ermittlung des primären Engpasses."
+            },
+            {
+              "statement": "Eingesetzte IT-Systeme und detaillierte Prozessschritte.",
+              "impact": "Erschwert die Erhebung des Ist-Ablaufs und die gezielte Prozessverbesserung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach objektiven Daten (z. B. Kontaktzählung, Arbeitszeiten) den höheren Aufwand?",
+              "impact": "Notwendig für eine fachlich begründete Fokusentscheidung zwischen den beiden Bereichen.",
+              "blocking": true
+            },
+            {
+              "question": "Welche konkreten IT-Systeme und Dokumente werden in den Bearbeitungsschritten genutzt?",
+              "impact": "Erforderlich zur Detaillierung des Ist-Prozesses.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_goal.md",
+          "S2": "02_reports.md",
+          "S3": "03_unknowns.md"
+        },
+        "discovery_snapshot_id": "f9abfd69-28ca-4898-a0c2-b0cb4101d434"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach vorliegenden Daten oder Arbeitszeiterkenntnissen den höheren Aufwand?"
+      },
+      "open_questions": [
+        {
+          "question": "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach objektiven Daten (z. B. Kontaktzählung, Arbeitszeiten) den höheren Aufwand?",
+          "impact": "Notwendig für eine fachlich begründete Fokusentscheidung zwischen den beiden Bereichen.",
+          "blocking": true
+        },
+        {
+          "question": "Welche konkreten IT-Systeme und Dokumente werden in den Bearbeitungsschritten genutzt?",
+          "impact": "Erforderlich zur Detaillierung des Ist-Prozesses.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.048478"
+    },
+    {
+      "id": "52394663-9452-4977-b204-7a57c75ab6c7",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "cbe67c5a74ed206dbf010daa7a1e4b8a5d19a0f07021b19f2500be887afa5083",
+      "prompt_version": "ap1-methodology-v5",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseabwicklung und Kundenbetreuung",
+            "description": "Gesamter Wertstrom von der ersten Kundenanfrage im Verkauf bis zur organisatorischen Vorbereitung der Reise.",
+            "trigger": "Eingang einer Kundenanfrage oder eines Buchungswunsches",
+            "outcome": "Vorbereitete Reiseorganisation und geklärte Kundenanfrage",
+            "scope_in": "Aufnahme von Anfragen, Kundenberatung und Bearbeitung von Reiseänderungen",
+            "scope_out": "Eigentliche Durchführung der Reise und Nachbereitung nach Reiserückkehr",
+            "strategic_objective": "Vorschlag: Abwicklung von mehr Buchungen mit dem vorhandenen Team bei gleichbleibend verlässlichen Auskünften und erreichbarem Service.",
+            "stakeholders": "Geschäftsführung, Verkaufspersonal, Reiseorganisation, Kunden",
+            "constraints": "Neueinstellungen sind nicht beliebig möglich, aber nicht generell verboten.",
+            "evidence_refs": [
+              "U0",
+              "S1"
+            ]
+          },
+          "stages": [
+            {
+              "key": "stage_verkauf",
+              "sequence": 1,
+              "name": "Verkauf und Kundenanfragen",
+              "description": "Beratung von Kunden und Bearbeitung von eingehenden Anfragen sowie Rückfragen.",
+              "roles": "Testperson im Verkauf",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Rückfragen werden subjektiv als aufwendig wahrgenommen.",
+              "baseline_metrics": "Keine Messdaten oder Zeitreihen vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "key": "stage_reiseorganisation",
+              "sequence": 2,
+              "name": "Reiseorganisation",
+              "description": "Organisatorische Abwicklung gebuchter Reisen und Bearbeitung von Änderungen.",
+              "roles": "Testperson in der Reiseorganisation",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kurzfristige Änderungen verursachen subjektiv wahrgenommenen Aufwand.",
+              "baseline_metrics": "Keine Messdaten oder Zeitreihen vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "S2"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "stage_verkauf",
+            "business_domain": "sales",
+            "capability": "Kundenberatung und Anfragenbearbeitung",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Vorläufiger Untersuchungsfokus auf den Verkauf, da dort der erste Kundenkontakt entsteht. Es ist jedoch noch nicht belegt, ob der Verkauf oder die Reiseorganisation den dominanten Aufwandstreiber darstellt.",
+            "tradeoffs": [
+              "Die Fokussierung auf den Verkauf blendet mögliche Aufwandstreiber in der Reiseorganisation vorerst aus."
+            ],
+            "uncertainties": [
+              "Es fehlen quantitative Daten zur genauen Aufwandsverteilung zwischen Verkauf und Reiseorganisation."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S2",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Detailbetrachtung Verkauf und Kundenanfragen",
+            "scope_start": "Eingang einer Kundenanfrage",
+            "scope_end": "Abschluss der Kundenberatung und Bearbeitung von Rückfragen",
+            "trigger": "Eingegangene Kundenanfrage",
+            "outcome": "Bearbeitete Kundenanfrage und geklärte Rückfragen",
+            "current_flow": "Der genaue Ist-Ablauf für stage_verkauf (Verkauf und Kundenanfragen) ist in den vorliegenden Quellen noch nicht beschrieben und derzeit unbekannt.",
+            "roles": "Testperson im Verkauf",
+            "systems": "Unbekannt",
+            "data_objects": "Anfragen (Details unbekannt)",
+            "business_rules": "Unbekannt",
+            "handoffs": "Schnittstelle zur Reiseorganisation (Details unbekannt)",
+            "bottlenecks": "Subjektiv berichteter Aufwand bei Rückfragen (noch nicht quantitativ bestätigt).",
+            "observations": "Es liegen bisher ausschließlich subjektive Einschätzungen einzelner Testpersonen ohne Messwerte vor.",
+            "cause_hypotheses": "Rückfragen könnten durch unvollständige Informationen bei der Erstanfrage entstehen.",
+            "constraints": "Neueinstellungen sind nicht beliebig möglich.",
+            "exceptions": "Unbekannt",
+            "baseline_metrics": "Keine Arbeitszeitdaten, Buchungslisten oder Kennzahlen verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S2",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Die Geschäftsführung möchte mehr Buchungen mit dem vorhandenen Team bewältigen, während Service und Auskünfte verlässlich bleiben sollen.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Neueinstellungen sind nicht beliebig möglich, aber nicht generell verboten.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Es gibt kein beschlossenes Wachstumsziel, keine Entlassungsvorgabe und keinen bestätigten Personalengpass.",
+              "evidence_refs": [
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine Testperson im Verkauf hält Rückfragen für aufwendig, während eine Testperson in der Reiseorganisation kurzfristige Änderungen nennt.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Beide Berichte sind ungemessene Einschätzungen; kein Bereich ist als dominanter Aufwandstreiber belegt.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Vollständiger Prozessablauf, eingesetzte Systeme und Arbeitszeitdaten sind aktuell noch unbekannt.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Rückfragen im Verkauf binden einen erheblichen Teil der Arbeitszeit des Teams.",
+              "evidence_refs": [
+                "S2"
+              ]
+            },
+            {
+              "statement": "Kurzfristige Änderungen in der Reiseorganisation erzeugen wesentlichen Zusatzaufwand.",
+              "evidence_refs": [
+                "S2"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Quantitativer Arbeitszeitaufwand und reale Verteilung der Aufwände zwischen Verkauf und Reiseorganisation.",
+              "impact": "Verhindert die zweifelsfreie Ermittlung des primären Engpasses."
+            },
+            {
+              "statement": "Eingesetzte IT-Systeme und detaillierte Prozessschritte.",
+              "impact": "Erschwert die Erhebung des Ist-Ablaufs und die gezielte Prozessverbesserung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach objektiven Daten (z. B. Kontaktzählung, Arbeitszeiten) den höheren Aufwand?",
+              "impact": "Notwendig für eine fachlich begründete Fokusentscheidung zwischen den beiden Bereichen.",
+              "blocking": true
+            },
+            {
+              "question": "Welche konkreten IT-Systeme und Dokumente werden in den Bearbeitungsschritten genutzt?",
+              "impact": "Erforderlich zur Detaillierung des Ist-Prozesses.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_goal.md",
+          "S2": "02_reports.md",
+          "S3": "03_unknowns.md"
+        },
+        "discovery_snapshot_id": "f9abfd69-28ca-4898-a0c2-b0cb4101d434"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welcher Bereich (Verkauf oder Reiseorganisation) verursacht den größeren Aufwand bzw. auf welchen Bereich soll die tiefergehende Prozessanalyse primär fokussiert werden?"
+      },
+      "open_questions": [
+        {
+          "question": "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach objektiven Daten (z. B. Kontaktzählung, Arbeitszeiten) den höheren Aufwand?",
+          "impact": "Notwendig für eine fachlich begründete Fokusentscheidung zwischen den beiden Bereichen.",
+          "blocking": true
+        },
+        {
+          "question": "Welche konkreten IT-Systeme und Dokumente werden in den Bearbeitungsschritten genutzt?",
+          "impact": "Erforderlich zur Detaillierung des Ist-Prozesses.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.012298"
+    }
+  ],
+  "scope_confirmed": false
+}

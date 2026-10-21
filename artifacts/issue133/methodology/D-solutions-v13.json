@@ -1,0 +1,582 @@
+{
+  "case": "D",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "fc2bfb27479d0c235db67a71e3056b112d313a467e25b2673d9319a55b102e88",
+    "ki_radar/accelerator/architect_contract.py": "c94e35fdb32895e8e0571f04ac245300f9172cf64b2b73374483dbc3ca7c9ddd"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "baa751a0-618e-4568-bd98-6c14ff974d05",
+  "solution_preview": {
+    "schema_version": "1.0",
+    "prompt_version": "1.3",
+    "source_context": {
+      "source_schema_version": "block7_sources_v1",
+      "process_version": 1,
+      "validation_state": "not_validated",
+      "facts": [
+        {
+          "source_id": "process.name",
+          "field": "name",
+          "value": "Detailanalyse der Partnerabstimmung bei Busänderungen"
+        },
+        {
+          "source_id": "process.scope_start",
+          "field": "scope_start",
+          "value": "Eingang der Änderungsanfrage beim lokalen Leistungspartner"
+        },
+        {
+          "source_id": "process.scope_end",
+          "field": "scope_end",
+          "value": "Vorliegen aller Rückmeldungen von Busunternehmen und Reiseleitung"
+        },
+        {
+          "source_id": "process.trigger",
+          "field": "trigger",
+          "value": "Eingang der Änderungsanfrage SYN-D-01"
+        },
+        {
+          "source_id": "process.outcome",
+          "field": "outcome",
+          "value": "Vorliegende Teilrückmeldungen von Busunternehmen und Reiseleitung"
+        },
+        {
+          "source_id": "process.current_flow",
+          "field": "current_flow",
+          "value": "Phase partner_coordination (Partnerabstimmung): Der lokale Leistungspartner fragt beim Busunternehmen und bei der Reiseleitung nach. Das Busunternehmen erklärt eine spätere Abholung für grundsätzlich möglich, lässt den Zusatzpreis jedoch offen. Die Reiseleitung hat den Treffpunkt noch nicht bestätigt."
+        },
+        {
+          "source_id": "process.roles",
+          "field": "roles",
+          "value": "Lokaler Leistungspartner, Busunternehmen, Reiseleitung"
+        },
+        {
+          "source_id": "process.systems",
+          "field": "systems",
+          "value": "Telefon, schriftliche Mitteilungen (konkrete Programme unbekannt)"
+        },
+        {
+          "source_id": "process.data_objects",
+          "field": "data_objects",
+          "value": "Änderungsanfrage SYN-D-01, Rückmeldung Busunternehmen, Rückmeldung Reiseleitung"
+        },
+        {
+          "source_id": "process.bottlenecks",
+          "field": "bottlenecks",
+          "value": "Offener Zusatzpreis des Busunternehmens und fehlende Bestätigung des Treffpunkts durch die Reiseleitung"
+        },
+        {
+          "source_id": "process.baseline_metrics",
+          "field": "baseline_metrics",
+          "value": "Unbekannt; nicht bestätigt."
+        },
+        {
+          "source_id": "process.business_rules",
+          "field": "business_rules",
+          "value": "Eine Anfrage ist kein bestätigter Auftrag. Aus einer fehlenden Rückmeldung folgt keine Zustimmung."
+        },
+        {
+          "source_id": "process.exceptions",
+          "field": "exceptions",
+          "value": "Reiseleitung gibt keine Rückmeldung zum Treffpunkt. Busunternehmen nennt keinen konkreten Preis."
+        },
+        {
+          "source_id": "process.diagnostic_observations",
+          "field": "diagnostic_observations",
+          "value": "Der Organisator ist unsicher, ob alle Beteiligten informiert sind und ob der Bus bereits geändert bestellt werden soll."
+        },
+        {
+          "source_id": "process.cause_hypotheses",
+          "field": "cause_hypotheses",
+          "value": "Unklare Zuständigkeiten, fehlende Bestätigungsregeln oder unvollständige Kontaktdaten könnten die Ursache für die Unsicherheit sein (unbestätigt)."
+        },
+        {
+          "source_id": "stage.name",
+          "field": "name",
+          "value": "Exploration ohne Scopefreigabe"
+        }
+      ]
+    },
+    "options": {
+      "organizational": {
+        "name": {
+          "text": "Organisatorische Klärung von Zuständigkeit und Bestätigungsregeln in der Partnerabstimmung.",
+          "source_ids": [
+            "process.name",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Unklare Zuständigkeiten sind eine unbestätigte Ursachenhypothese."
+          ],
+          "open_evidence": [
+            "Ob unklare Zuständigkeit tatsächlich ursächlich wirkt, ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursachenhypothese unbestätigt und Quellen nicht validiert."
+          }
+        },
+        "description": {
+          "text": "Beobachtet ist: Der lokale Leistungspartner fragt Busunternehmen und Reiseleitung an; der Zusatzpreis bleibt offen und der Treffpunkt ist nicht bestätigt. Laut Geschäftsregel ist eine Anfrage kein bestätigter Auftrag und fehlende Rückmeldung keine Zustimmung. Die organisatorische Option klärt daher Zuständigkeit und Bestätigungsregeln, ohne die vermutete Ursache als belegt zu behandeln.",
+          "source_ids": [
+            "process.current_flow",
+            "process.business_rules",
+            "process.roles",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Zuständigkeitsklärung adressiert die vermutete Ursache."
+          ],
+          "open_evidence": [
+            "Kein Nachweis, dass unklare Zuständigkeit die Unsicherheit verursacht."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Wirkung auf unbestätigte Ursache gestützt."
+          }
+        },
+        "expected_value": {
+          "text": "Erwarteter Nutzen rein qualitativ: klarere Verantwortlichkeit und nachvollziehbare Bestätigung. Eine konkrete Nutzen- oder Zielkennzahl ist in den Quellen nicht belegt.",
+          "source_ids": [
+            "process.business_rules",
+            "process.baseline_metrics"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Baseline ist unbekannt und nicht bestätigt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine belegte Nutzenkennzahl vorhanden."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Setzt an beiden genannten Engpässen an: offener Zusatzpreis des Busunternehmens und fehlende Treffpunktbestätigung der Reiseleitung. Dies geschieht über festgelegte Klärungs- und Bestätigungsregeln.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.business_rules"
+          ],
+          "assumptions": [
+            "Regelklärung reduziert die Engpässe."
+          ],
+          "open_evidence": [
+            "Wirksamkeitsnachweis fehlt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Engpasswirkung nicht belegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt die genannten Datenobjekte: Änderungsanfrage SYN-D-01 sowie Rückmeldungen von Busunternehmen und Reiseleitung. Konkrete Datenformate sind nicht belegt.",
+          "source_ids": [
+            "process.data_objects"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Datenformate und Ablagestrukturen unbekannt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Datenobjekte benannt, Formate offen."
+          }
+        },
+        "application_impact": {
+          "text": "Betrifft vor allem die bekannten Kommunikationswege Telefon und schriftliche Mitteilungen. Konkrete Programme sind unbekannt.",
+          "source_ids": [
+            "process.systems",
+            "process.roles"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Anwendungsänderungen sind nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Systemlandschaft nur unkonkret bekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Keine belegte Systemintegration erforderlich, da die Maßnahme organisatorisch auf Rollen und Regeln wirkt. Systeme sind nur unkonkret bekannt.",
+          "source_ids": [
+            "process.systems",
+            "process.roles"
+          ],
+          "assumptions": [
+            "Die organisatorische Klärung kommt ohne neue Systemintegration aus."
+          ],
+          "open_evidence": [
+            "Integrationserfordernisse sind nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Integration nicht belegt."
+          }
+        },
+        "technology_constraints": {
+          "text": "Keine Technologievorgaben aus Quellen belegt. Bekannt sind nur Telefon und schriftliche Mitteilungen als Kommunikationswege.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Technische Randbedingungen unbelegt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Technikrahmen unbekannt."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Regeln könnten die vermutete, aber unbestätigte Ursache nicht treffen. Zusatzpreis und Treffpunkt können weiter offen bleiben.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.bottlenecks",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Kein Nachweis der Ursache-Wirkung."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache unbelegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Passt als organisatorische Klärung ohne belegte Architekturänderung. Ob sie zum Zielzustand passt, ist ohne validierte Architekturquellen offen.",
+          "source_ids": [
+            "process.roles",
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Zielarchitektur nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Architekturfit nicht belegbar."
+          }
+        }
+      },
+      "rule_automation": {
+        "name": {
+          "text": "Regelbasierte Status- und Rückmeldeautomatisierung – vorrangig Prüfung vorhandener Standardsoftware.",
+          "source_ids": [
+            "process.name",
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Ob Standardsoftware die Funktion bereits bietet, ist nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Standardsoftware-Funktionsumfang unbekannt."
+          }
+        },
+        "description": {
+          "text": "Regelbasiert könnte der Status 'keine Rückmeldung = keine Zustimmung' geführt und bei offenem Zusatzpreis nachgefasst werden. Zuerst ist zu prüfen, ob vorhandene Standardsoftware dies leistet; eine eigene Automation ist keine Vorgabe. Die Ursache der Unsicherheit bleibt dabei unbestätigt.",
+          "source_ids": [
+            "process.current_flow",
+            "process.business_rules",
+            "process.exceptions",
+            "process.systems"
+          ],
+          "assumptions": [
+            "Regelbasierte Erinnerungen adressieren die Engpässe."
+          ],
+          "open_evidence": [
+            "Funktionsumfang vorhandener Standardsoftware unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Standardsoftware-Fähigkeit offen."
+          }
+        },
+        "expected_value": {
+          "text": "Erwarteter Nutzen rein qualitativ: frühzeitigere oder vollständigere Rückmeldungen sind denkbar. Eine belegte Nutzenkennzahl fehlt.",
+          "source_ids": [
+            "process.baseline_metrics",
+            "process.bottlenecks"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Nutzen nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine belegte Kennzahl."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Adressiert offenen Zusatzpreis und fehlende Treffpunktbestätigung über Regel- und Erinnerungslogik. Die Wirksamkeit ist nicht belegt.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirksamkeit unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Wirkung nicht belegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt die genannten Datenobjekte: Änderungsanfrage SYN-D-01 sowie Rückmeldungen von Busunternehmen und Reiseleitung. Weitere für Automatisierung nötige Felder sind nicht belegt.",
+          "source_ids": [
+            "process.data_objects"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Zusätzliche Datenanforderungen nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Datenbedarf unvollständig belegt."
+          }
+        },
+        "application_impact": {
+          "text": "Betrifft die bekannten Kommunikationswege Telefon und schriftliche Mitteilungen. Falls Standardsoftware genutzt wird, könnten diese Systeme betroffen sein; konkrete Programme sind unbekannt.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Programme und Funktionsumfang unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Anwendungslandschaft unbekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Integration wäre nur erforderlich, falls Standardsoftware angebunden werden muss. Eine belegte Integrationsanforderung liegt nicht vor.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Integrationsbedarf unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Integration nicht belegt."
+          }
+        },
+        "technology_constraints": {
+          "text": "Technische Randbedingungen sind nicht belegt. Unbekannt ist, welche Regel- oder Workflow-Funktionen vorhanden sind.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Standardsoftware-Fähigkeiten offen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Technikvorgaben fehlen."
+          }
+        },
+        "risks": {
+          "text": "Risiko: Automatisierung einer unbestätigten Ursache. Die Regel 'fehlende Rückmeldung = keine Zustimmung' darf nicht als Zustimmung fehlinterpretiert werden.",
+          "source_ids": [
+            "process.business_rules",
+            "process.cause_hypotheses",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Ursache unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Regelwirkung nicht belegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Eine regelbasierte Ergänzung kann nur bedingt beurteilt werden, da Zielarchitektur und Standardsoftware-Landschaft unbekannt sind.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Architekturinformationen fehlen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Architekturfit nicht belegbar."
+          }
+        }
+      },
+      "assistant": {
+        "name": {
+          "text": "Assistenzsystem zur Bündelung und Erinnerung von Partnerrückmeldungen – KI nur bei belegtem Zusatznutzen.",
+          "source_ids": [
+            "process.name",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "KI-Mehrwert gegenüber einfachem Klärweg nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Zusatznutzen unbelegt."
+          }
+        },
+        "description": {
+          "text": "Beobachtet ist, dass Rückmeldungen von Busunternehmen und Reiseleitung ausstehen und der Organisator unsicher ist. Ein einfacher Klärweg über Zuständigkeit und Regeln könnte ausreichen; ein belegter Zusatznutzen von KI gegenüber diesem Weg ist in den Quellen nicht erkennbar.",
+          "source_ids": [
+            "process.current_flow",
+            "process.diagnostic_observations",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "KI-Nutzen nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "KI-Mehrwert offen."
+          }
+        },
+        "expected_value": {
+          "text": "Erwarteter Nutzen rein qualitativ: Bündelung und Sichtbarkeit von Rückmeldungen sind denkbar. Eine belegte Nutzen- oder Zielkennzahl fehlt.",
+          "source_ids": [
+            "process.baseline_metrics"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Kennzahl belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Nutzen nicht belegt."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Kann Rückmeldungen bündeln und Engpässe sichtbar machen. Ohne belegte Ursache bleibt die Wirkung auf offenen Zusatzpreis und fehlende Treffpunktbestätigung bedingt.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung auf Engpässe unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache unbelegt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt die genannten Datenobjekte: Änderungsanfrage SYN-D-01 sowie Rückmeldungen von Busunternehmen und Reiseleitung. Eine für Assistenz nötige Datenbasis ist nicht spezifiziert.",
+          "source_ids": [
+            "process.data_objects"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Datenbasis nicht spezifiziert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Datenbedarf unklar."
+          }
+        },
+        "application_impact": {
+          "text": "Setzt auf den bekannten Kommunikationswegen Telefon und schriftliche Mitteilungen auf. Konkrete Programme sind unbekannt.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Anwendungsänderungen nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Systeme nur unkonkret bekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Eine Integration in unbekannte Systeme wäre erforderlich; eine belegte Anforderung liegt nicht vor.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Integrationsbedarf unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Integration nicht belegt."
+          }
+        },
+        "technology_constraints": {
+          "text": "KI-spezifische technische Randbedingungen sind nicht belegt. Bekannt sind nur Telefon und schriftliche Mitteilungen als Kommunikationswege.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "KI-Randbedingungen unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Technikvorgaben fehlen."
+          }
+        },
+        "risks": {
+          "text": "Risiko: KI ohne belegten Zusatznutzen. Fehlende Rückmeldungen dürfen nicht als Zustimmung fehlinterpretiert werden.",
+          "source_ids": [
+            "process.business_rules",
+            "process.cause_hypotheses",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "KI-Nutzen und Ursache nicht belegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Nutzen und Ursache offen."
+          }
+        },
+        "architecture_fit": {
+          "text": "Der Architekturfit ist bedingt, da Zielarchitektur und KI-Vorgaben fehlen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Architektur- und KI-Vorgaben fehlen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Architekturfit nicht belegbar."
+          }
+        }
+      }
+    },
+    "edits": {}
+  },
+  "quality_runs": [
+    {
+      "status": "failed",
+      "step_type": "initial_critic",
+      "error_code": "invalid_critic_payload",
+      "result_payload": {}
+    }
+  ],
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}

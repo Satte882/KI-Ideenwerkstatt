@@ -1,0 +1,2679 @@
+{
+  "case": "A",
+  "phase": "revalidate",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "revalidated_analysis_id": "26ced317-f933-434e-a395-52a2bea3b8fc",
+  "reused_real_call_id": 23,
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "879104f49a63368ca9156ee88d3d4cdcee5ec468ffca238a94f0a3e989a8b8ca",
+    "ki_radar/accelerator/architect_contract.py": "f6ad01167f7febbefa5e9abacdd3b92a91febe68e8ff99a154d998d983f44b7c"
+  },
+  "error": {
+    "code": "verification_not_converged",
+    "message": "Der Discovery-Draft konvergiert nach den begrenzten Repairs nicht."
+  },
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik A"
+    },
+    "problem_statement": "Wenn jemand wegen seiner gebuchten Reise anruft, suche ich oft erst in der Buchung und dann noch in alten E-Mails. Manchmal muss ich im Büro nachfragen. Die Person wartet am Telefon, und ich kann ihr nicht gleich sagen, was gerade gilt.",
+    "business_context": "",
+    "corrections": [
+      {
+        "text": "Für die fachliche Klärung liegen nun die ausdrücklich synthetischen Fallunterlagen vor. Unbekannte Angaben bleiben unbekannt.",
+        "revision": 1
+      }
+    ],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "4a5b1230-44f7-4db6-afa0-c1d9784576dd",
+      "title": "[SYNTHETISCH #133 A/fresh] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:16:23.542841+00:00",
+      "idea_updated_at": "2026-10-21T11:16:23.517800+00:00",
+      "origin_source_filename": "ideenbox-4a5b1230-44f7-4db6-afa0-c1d9784576dd.md",
+      "origin_source_sha256": "d060510dc7fd15d9ac34bdb755036d9ff70896aa2046900c2c2602705222047c"
+    }
+  },
+  "analyses": [
+    {
+      "id": "6e7e4a2d-2ae9-460a-ab41-a57ca3d26703",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "24bd5eed048b9819cdefe86ecaaca532469783f829e28552c1fb938d4274c25b",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice für gebuchte Reisen",
+            "description": "End-to-End-Abwicklung von telefonischen Kundenanfragen zum Status bereits gebuchter Reisen.",
+            "trigger": "Anruf einer Person bezüglich ihrer gebuchten Reise",
+            "outcome": "Erteilte Auskunft über den aktuellen Reise-Status an den Anrufer",
+            "scope_in": "Entgegennahme des Anrufs, Ermittlung des aktuellen Reisestatus über Buchungsdaten, E-Mails und Bürorückfragen sowie Auskunftserteilung am Telefon",
+            "scope_out": "Durchführung von Reiseumbuchungen, Stornierungen oder Neuverkäufen",
+            "strategic_objective": "Erhöhung der Sofortauskunftsfähigkeit und Verkürzung der Wartezeiten am Telefon (Zielvorschlag)",
+            "stakeholders": "Anrufer (Kunden), Sachbearbeiter im Kundenservice, Kollegium im Büro",
+            "constraints": "Keine Vorgaben oder Einschränkungen im Input genannt",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "anrufeingang_aufnahme",
+              "sequence": 1,
+              "name": "Anrufeingang und Anliegenaufnahme",
+              "description": "Entgegennahme des Telefongesprächs und Erfassung des Anliegens zur gebuchten Reise.",
+              "roles": "Anrufer, Sachbearbeiter",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "low",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "statusrecherche_auskunftsvorbereitung",
+              "sequence": 2,
+              "name": "Statusrecherche und Auskunftsvorbereitung",
+              "description": "Recherche zum aktuellen Reisestatus in Buchungsdaten und E-Mails sowie eventuelle Rückfrage im Büro während der Anrufer wartet.",
+              "roles": "Sachbearbeiter, Bürokollegen",
+              "systems": "Buchungssystem, E-Mail-System",
+              "documents": "Buchungsdaten, E-Mails",
+              "pain_points": "Mehrstufige Suche in Buchung und E-Mails, Notwendigkeit von Rückfragen im Büro, Wartezeit für den Anrufer am Telefon",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "medium",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "auskunftserteilung_abschluss",
+              "sequence": 3,
+              "name": "Auskunftserteilung und Anrufabschluss",
+              "description": "Mitteilung des aktuellen Reisestatus an die wartende Person am Telefon und Beendigung des Gespraechs.",
+              "roles": "Anrufer, Sachbearbeiter",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Verzögerte Auskunftserteilung im Erstkontakt",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "statusrecherche_auskunftsvorbereitung",
+            "business_domain": "customer_service",
+            "capability": "Auskunftsfähigkeit und Statusermittlung im Kundenservice",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "medium",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase treten die beobachteten Suchverzögerungen in Buchung und E-Mails sowie die Nachfragen im Büro auf, die direkt zu den Wartezeiten am Telefon führen.",
+            "tradeoffs": [
+              "Eine Fokussierung auf die Recherche im Anruffall adressiert noch nicht eventuelle vorgelagerte Dokumentationsprozesse im Büro."
+            ],
+            "uncertainties": [
+              "Die genaue Häufigkeit von E-Mail-Suchen und Bürorückfragen ist nicht quantifiziert."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Analyse der Statusrecherche und Auskunftsvorbereitung",
+            "scope_start": "Anliegen zur gebuchten Reise ist am Telefon aufgenommen",
+            "scope_end": "Aktueller Status der Reise liegt zur Auskunftserteilung vor",
+            "trigger": "Bedarf nach Ermittlung des aktuellen Reisestatus während des Telefonats",
+            "outcome": "Recherchierter aktueller Reisestatus",
+            "current_flow": "Innerhalb der Phase statusrecherche_auskunftsvorbereitung (Statusrecherche und Auskunftsvorbereitung) sucht der Sachbearbeiter zunächst in den Buchungsdaten und anschließend in alten E-Mails. Bei verbleibenden Unklarheiten erfolgt eine Nachfrage im Büro, während der Anrufer am Telefon wartet.",
+            "roles": "Sachbearbeiter, Kollegium im Büro",
+            "systems": "Buchungssystem, E-Mail-System",
+            "data_objects": "Buchungsdaten, E-Mails, Reisestatus",
+            "business_rules": "Keine expliziten Geschäftsregeln berichtet",
+            "handoffs": "Informationsanfrage des Sachbearbeiters an das Bürokollegium",
+            "bottlenecks": "Recherche über getrennte Quellen (Buchung, E-Mails) und Abhängigkeit von Auskünften aus dem Büro während des Telefonats",
+            "observations": "Anrufer wartet am Telefon; direkte Auskunft zum aktuellen Status ist nicht sofort möglich; gestaffelte Suche in Buchung und E-Mails.",
+            "cause_hypotheses": "Möglicherweise sind relevante Statusinformationen nicht vollständig im Buchungssystem konsolidiert (unbestätigte Vermutung).",
+            "constraints": "Keine spezifischen Vorgaben im Input genannt",
+            "exceptions": "Die Nachfrage im Büro ist nicht bei jedem Anruf erforderlich ('manchmal').",
+            "baseline_metrics": "Keine quantitativen Messwerte im Input enthalten",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Anrufen zu gebuchten Reisen wird zuerst in der Buchung und anschließend in alten E-Mails nach Informationen gesucht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "In manchen Fällen muss zusätzlich im Büro nachgefragt werden, um den aktuellen Status zu ermitteln.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Der Anrufer wartet während der Recherche am Telefon, und der aktuelle Status kann nicht sofort mitgeteilt werden.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Eine unvollständige Dokumentation im Buchungssystem könnte die Ursache für die zusätzliche Suche in E-Mails und Nachfragen im Büro sein.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Durchschnittliche Dauer der Recherche und der Telefonate",
+              "impact": "Erschwert die genaue Quantifizierung des Zeiteinsparpotenzials."
+            },
+            {
+              "statement": "Anzahl der täglichen Anrufe zu gebuchten Reisen",
+              "impact": "Erschwert die Bewertung der Gesamtauswirkung auf den Betrieb."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche konkreten Buchungs- und E-Mail-Systeme werden für die Recherche genutzt?",
+              "impact": "Erforderlich für spätere technische Detailanalysen, jedoch nicht blockierend für die Abgrenzung des Prozess-Scopes.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "fa3ae926-a94e-4208-9736-ac5aa698056d"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche konkreten Buchungs- und E-Mail-Systeme werden für die Recherche genutzt?",
+          "impact": "Erforderlich für spätere technische Detailanalysen, jedoch nicht blockierend für die Abgrenzung des Prozess-Scopes.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.024196"
+    },
+    {
+      "id": "d54e9edf-25c8-4880-a30d-687828d6d420",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "b50e7f2ddca96dff112a5edbcfffe0f4bdb5e319e681351d2e22a025e5458165",
+      "prompt_version": "ap1-discovery-methodology-v4",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice bei Reiserückfragen",
+            "description": "Bearbeitung von Kundenanfragen zu gebuchten Leistungen und Transferzeiten im Kundenservice.",
+            "trigger": "Anruf eines Kunden bezüglich einer gebuchten Reise",
+            "outcome": "Information des Anrufers über den aktuellen Bearbeitungs- oder Leistungsstatus",
+            "scope_in": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_out": "Verbindliche Leistungsanpassung, Reiseabwicklung oder weitere Nachbearbeitung nach der Auskunftserteilung",
+            "strategic_objective": "Erhöhung der Erstauskunftsfähigkeit im Kundenservice (Zielvorschlag)",
+            "stakeholders": "Kundenservice, Reiseorganisation, Anrufer/Kunde",
+            "constraints": "Keine Zeitstichproben, Fehlerquoten oder Häufigkeitsmessungen vorhanden. Produktnamen und Fristen unbekannt.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "data_lookup",
+              "sequence": 1,
+              "name": "Prüfung von Buchung und Postfach",
+              "description": "Öffnen der Buchungsmaske und Durchsuchen des gemeinsamen E-Mail-Postfachs nach relevanten Buchungsdaten und Änderungsnachrichten.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+              "documents": "Buchungsnotiz, E-Mail-Nachrichten / Änderungsnachrichten",
+              "pain_points": "Suchen in mehreren Quellen (Buchung und Postfach); unklare Gültigkeit bei abweichenden Angaben.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "key": "internal_clarification",
+              "sequence": 2,
+              "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+              "description": "Nachfrage bei der Reiseorganisation im Büro im Falle von Unklarheiten oder widersprüchlichen Angaben.",
+              "roles": "Kundenservice-Mitarbeiter, Reiseorganisation / Büro",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kunde wartet am Telefon; Nachfrage ist nicht bei jeder Anfrage erforderlich.",
+              "baseline_metrics": "Keine Häufigkeitsmessung oder Zeitstichprobe vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "key": "customer_response",
+              "sequence": 3,
+              "name": "Auskunftserteilung an den Kunden",
+              "description": "Mitteilung des ermittelten Sachstands oder der geklärten Information an den Anrufer.",
+              "roles": "Kundenservice-Mitarbeiter, Anrufer / Kunde",
+              "systems": "Telefonie",
+              "documents": "Keine",
+              "pain_points": "Verzögerung der Auskunft, solange Daten oder Gültigkeiten ungeklärt sind.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "data_lookup",
+            "business_domain": "customer_service",
+            "capability": "Auskunftsfähigkeit und Informationsrecherche im Kundenservice",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Die Datenprüfung in der Buchungsmaske und im Postfach bildet den ersten Recherche-Schritt bei jedem Anruf. Da hier Abweichungen (z. B. Transferzeiten) auftreten und der genaue Bedarf für eine interne Rückfrage erst hier entsteht, ist dies die logische Fokusphase.",
+            "tradeoffs": [
+              "Eine primäre Betrachtung der Datenprüfung lässt organisatorische Klärungswege mit der Reiseorganisation vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Aufgrund fehlender Stichproben ist das genaue Mengenverhältnis von einfachen Anfragen zu unklaren Anfragen nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Recherche und Datenprüfung bei Kundenanrufen",
+            "scope_start": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_end": "Abschluss der Recherche in Buchungsmaske und Postfach",
+            "trigger": "Anruf des Kunden wegen gebuchter Reise oder Transferzeiten",
+            "outcome": "Geprüfter Datenstand aus Buchung und E-Mail-Postfach zur Vorbereitung der Kundenauskunft",
+            "current_flow": "data_lookup (Prüfung von Buchung und Postfach): Nach Entgegennahme des Anrufs öffnet der Kundenservice-Mitarbeiter die Buchungsmaske und durchsucht zusätzlich das gemeinsame E-Mail-Postfach nach relevanten Vorgängen und Äraenderungsnachrichten.",
+            "roles": "Kundenservice-Mitarbeiter",
+            "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+            "data_objects": "Buchung, E-Mail-Nachrichten, Buchungsnotiz, E-Mail-Änderungsnachricht",
+            "business_rules": "Bei einfachen Fragen reicht der Datenabgleich der Buchungsangaben aus. Verbindlichkeitsregeln bei abweichenden Notizen oder zeitlich späteren E-Mails sind nicht dokumentiert.",
+            "handoffs": "Übergabe an die Reiseorganisation / das Büro, wenn Informationen unklar sind.",
+            "bottlenecks": "Beobachtete parallele Suche in zwei Informationsquellen (Buchung und E-Mails) sowie unklare Gültigkeit bei Abweichungen.",
+            "observations": "Fall SYN-A-01 zeigt abweichende Angaben (Transfer 09:00 in Notiz vs. Transfer 10:00 in Nachricht). Fall SYN-A-02 zeigt, dass einfache Fragen ohne Rückfrage beantwortet werden können.",
+            "cause_hypotheses": "Mögliche Ursachen für verzögerte Auskünfte könnten eine fehlende Eindeutigkeit über die Priorität von Postfacheinträgen gegenüber Buchungsnotizen oder eine fehlende direkte Datenverknüpfung sein (unbestätigte Hypothesen).",
+            "constraints": "Keine Häufigkeitsmessung, Zeitstichprobe oder festgestellte Fehlerquote vorhanden. Produktnamen und Fristen unbekannt.",
+            "exceptions": "Einfache Anfragen mit übereinstimmenden Daten erfordern keine Büro-Rückfrage.",
+            "baseline_metrics": "Keine Messwerte verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3",
+              "S4"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Rückfragen zu gebuchten Leistungen oder Transferzeiten prüft die Testperson die Buchungsmaske, das gemeinsame Postfach und fragt bei Unklarheiten im Büro bzw. bei der Reiseorganisation nach.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine einfache Leistungsfrage kann anhand übereinstimmender Buchungsangaben ohne Rückfrage im Büro beantwortet werden (Fall SYN-A-02).",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Für Fall SYN-A-01 existiert eine Buchungsnotiz mit 'Transfer 09:00' sowie eine spätere Änderungsnachricht mit 'Transfer 10:00'.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "statement": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben, Fehlerquoten, Produktnamen oder vereinbarte Antwortfristen vor.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die getrennte Aufbewahrung von Buchungsnotizen und E-Mail-Änderungsnachrichten führt möglicherweise zu erhöhtem Suchaufwand und Unklarheiten über den aktuellen Gültigkeitsstand.",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche Angabe bei abweichenden Notizen und Nachrichten (wie in SYN-A-01) verbindlich gilt und ob die Änderungsnachricht dem Kunden zugestellt wurde, ist nicht dokumentiert.",
+              "impact": "Erschwert die Beurteilung, ob Kunden falsche Auskünfte erhalten."
+            },
+            {
+              "statement": "Das quantitative Anrufvolumen sowie der Anteil von einfachen zu unklaren Anfragen sind unbekannt.",
+              "impact": "Verhindert die genaue Messung des wirtschaftlichen Potenzials."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+              "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+              "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Für den Fall SYN-A-01 liegen unterschiedliche Zeitangaben für den Transfer vor (Buchungsnotiz: Transfer 09:00 vs. spätere Änderungsnachricht: Transfer 10:00).",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_case.md",
+          "S2": "02_conflict.md",
+          "S3": "03_counterexample.md",
+          "S4": "04_change_message.md"
+        },
+        "discovery_snapshot_id": "abdc3e58-e187-4ad7-a541-3dce1ccc68ef"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "decision_blocking_clarification",
+            "message": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+          }
+        ],
+        "repair_instructions": "",
+        "human_question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+          "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+          "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.042697"
+    },
+    {
+      "id": "4a85b8df-1d00-48f8-b8da-749ed99878a0",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "b50e7f2ddca96dff112a5edbcfffe0f4bdb5e319e681351d2e22a025e5458165",
+      "prompt_version": "ap1-methodology-v5",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice bei Reiserückfragen",
+            "description": "Bearbeitung von Kundenanfragen zu gebuchten Leistungen und Transferzeiten im Kundenservice.",
+            "trigger": "Anruf eines Kunden bezüglich einer gebuchten Reise",
+            "outcome": "Information des Anrufers über den aktuellen Bearbeitungs- oder Leistungsstatus",
+            "scope_in": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_out": "Verbindliche Leistungsanpassung, Reiseabwicklung oder weitere Nachbearbeitung nach der Auskunftserteilung",
+            "strategic_objective": "Erhöhung der Erstauskunftsfähigkeit im Kundenservice (Zielvorschlag)",
+            "stakeholders": "Kundenservice, Reiseorganisation, Anrufer/Kunde",
+            "constraints": "Keine Zeitstichproben, Fehlerquoten oder Häufigkeitsmessungen vorhanden. Produktnamen und Fristen unbekannt.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "data_lookup",
+              "sequence": 1,
+              "name": "Prüfung von Buchung und Postfach",
+              "description": "Öffnen der Buchungsmaske und Durchsuchen des gemeinsamen E-Mail-Postfachs nach relevanten Buchungsdaten und Änderungsnachrichten.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+              "documents": "Buchungsnotiz, E-Mail-Nachrichten / Änderungsnachrichten",
+              "pain_points": "Suchen in mehreren Quellen (Buchung und Postfach); unklare Gültigkeit bei abweichenden Angaben.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "key": "internal_clarification",
+              "sequence": 2,
+              "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+              "description": "Nachfrage bei der Reiseorganisation im Büro im Falle von Unklarheiten oder widersprüchlichen Angaben.",
+              "roles": "Kundenservice-Mitarbeiter, Reiseorganisation / Büro",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kunde wartet am Telefon; Nachfrage ist nicht bei jeder Anfrage erforderlich.",
+              "baseline_metrics": "Keine Häufigkeitsmessung oder Zeitstichprobe vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "key": "customer_response",
+              "sequence": 3,
+              "name": "Auskunftserteilung an den Kunden",
+              "description": "Mitteilung des ermittelten Sachstands oder der geklärten Information an den Anrufer.",
+              "roles": "Kundenservice-Mitarbeiter, Anrufer / Kunde",
+              "systems": "Telefonie",
+              "documents": "Keine",
+              "pain_points": "Verzögerung der Auskunft, solange Daten oder Gültigkeiten ungeklärt sind.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "data_lookup",
+            "business_domain": "customer_service",
+            "capability": "Auskunftsfähigkeit und Informationsrecherche im Kundenservice",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Die Datenprüfung in der Buchungsmaske und im Postfach bildet den ersten Recherche-Schritt bei jedem Anruf. Da hier Abweichungen (z. B. Transferzeiten) auftreten und der genaue Bedarf für eine interne Rückfrage erst hier entsteht, ist dies die logische Fokusphase.",
+            "tradeoffs": [
+              "Eine primäre Betrachtung der Datenprüfung lässt organisatorische Klärungswege mit der Reiseorganisation vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Aufgrund fehlender Stichproben ist das genaue Mengenverhältnis von einfachen Anfragen zu unklaren Anfragen nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Recherche und Datenprüfung bei Kundenanrufen",
+            "scope_start": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_end": "Abschluss der Recherche in Buchungsmaske und Postfach",
+            "trigger": "Anruf des Kunden wegen gebuchter Reise oder Transferzeiten",
+            "outcome": "Geprüfter Datenstand aus Buchung und E-Mail-Postfach zur Vorbereitung der Kundenauskunft",
+            "current_flow": "data_lookup (Prüfung von Buchung und Postfach): Nach Entgegennahme des Anrufs öffnet der Kundenservice-Mitarbeiter die Buchungsmaske und durchsucht zusätzlich das gemeinsame E-Mail-Postfach nach relevanten Vorgängen und Äraenderungsnachrichten.",
+            "roles": "Kundenservice-Mitarbeiter",
+            "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+            "data_objects": "Buchung, E-Mail-Nachrichten, Buchungsnotiz, E-Mail-Änderungsnachricht",
+            "business_rules": "Bei einfachen Fragen reicht der Datenabgleich der Buchungsangaben aus. Verbindlichkeitsregeln bei abweichenden Notizen oder zeitlich späteren E-Mails sind nicht dokumentiert.",
+            "handoffs": "Übergabe an die Reiseorganisation / das Büro, wenn Informationen unklar sind.",
+            "bottlenecks": "Beobachtete parallele Suche in zwei Informationsquellen (Buchung und E-Mails) sowie unklare Gültigkeit bei Abweichungen.",
+            "observations": "Fall SYN-A-01 zeigt abweichende Angaben (Transfer 09:00 in Notiz vs. Transfer 10:00 in Nachricht). Fall SYN-A-02 zeigt, dass einfache Fragen ohne Rückfrage beantwortet werden können.",
+            "cause_hypotheses": "Mögliche Ursachen für verzögerte Auskünfte könnten eine fehlende Eindeutigkeit über die Priorität von Postfacheinträgen gegenüber Buchungsnotizen oder eine fehlende direkte Datenverknüpfung sein (unbestätigte Hypothesen).",
+            "constraints": "Keine Häufigkeitsmessung, Zeitstichprobe oder festgestellte Fehlerquote vorhanden. Produktnamen und Fristen unbekannt.",
+            "exceptions": "Einfache Anfragen mit übereinstimmenden Daten erfordern keine Büro-Rückfrage.",
+            "baseline_metrics": "Keine Messwerte verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3",
+              "S4"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Rückfragen zu gebuchten Leistungen oder Transferzeiten prüft die Testperson die Buchungsmaske, das gemeinsame Postfach und fragt bei Unklarheiten im Büro bzw. bei der Reiseorganisation nach.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine einfache Leistungsfrage kann anhand übereinstimmender Buchungsangaben ohne Rückfrage im Büro beantwortet werden (Fall SYN-A-02).",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Für Fall SYN-A-01 existiert eine Buchungsnotiz mit 'Transfer 09:00' sowie eine spätere Änderungsnachricht mit 'Transfer 10:00'.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "statement": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben, Fehlerquoten, Produktnamen oder vereinbarte Antwortfristen vor.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die getrennte Aufbewahrung von Buchungsnotizen und E-Mail-Änderungsnachrichten führt möglicherweise zu erhöhtem Suchaufwand und Unklarheiten über den aktuellen Gültigkeitsstand.",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche Angabe bei abweichenden Notizen und Nachrichten (wie in SYN-A-01) verbindlich gilt und ob die Änderungsnachricht dem Kunden zugestellt wurde, ist nicht dokumentiert.",
+              "impact": "Erschwert die Beurteilung, ob Kunden falsche Auskünfte erhalten."
+            },
+            {
+              "statement": "Das quantitative Anrufvolumen sowie der Anteil von einfachen zu unklaren Anfragen sind unbekannt.",
+              "impact": "Verhindert die genaue Messung des wirtschaftlichen Potenzials."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+              "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+              "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Für den Fall SYN-A-01 liegen unterschiedliche Zeitangaben für den Transfer vor (Buchungsnotiz: Transfer 09:00 vs. spätere Änderungsnachricht: Transfer 10:00).",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_case.md",
+          "S2": "02_conflict.md",
+          "S3": "03_counterexample.md",
+          "S4": "04_change_message.md"
+        },
+        "discovery_snapshot_id": "abdc3e58-e187-4ad7-a541-3dce1ccc68ef"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "decision_blocking_clarification",
+            "message": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+          }
+        ],
+        "repair_instructions": "",
+        "human_question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+          "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+          "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.023068"
+    },
+    {
+      "id": "a2ce2234-6652-4d43-8a64-34cf3d0233de",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "b50e7f2ddca96dff112a5edbcfffe0f4bdb5e319e681351d2e22a025e5458165",
+      "prompt_version": "ap1-methodology-v6",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice bei Reiserückfragen",
+            "description": "Bearbeitung von Kundenanfragen zu gebuchten Leistungen und Transferzeiten im Kundenservice.",
+            "trigger": "Anruf eines Kunden bezüglich einer gebuchten Reise",
+            "outcome": "Information des Anrufers über den aktuellen Bearbeitungs- oder Leistungsstatus",
+            "scope_in": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_out": "Verbindliche Leistungsanpassung, Reiseabwicklung oder weitere Nachbearbeitung nach der Auskunftserteilung",
+            "strategic_objective": "Erhöhung der Erstauskunftsfähigkeit im Kundenservice (Zielvorschlag)",
+            "stakeholders": "Kundenservice, Reiseorganisation, Anrufer/Kunde",
+            "constraints": "Keine Zeitstichproben, Fehlerquoten oder Häufigkeitsmessungen vorhanden. Produktnamen und Fristen unbekannt.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "data_lookup",
+              "sequence": 1,
+              "name": "Prüfung von Buchung und Postfach",
+              "description": "Öffnen der Buchungsmaske und Durchsuchen des gemeinsamen E-Mail-Postfachs nach relevanten Buchungsdaten und Änderungsnachrichten.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+              "documents": "Buchungsnotiz, E-Mail-Nachrichten / Änderungsnachrichten",
+              "pain_points": "Suchen in mehreren Quellen (Buchung und Postfach); unklare Gültigkeit bei abweichenden Angaben.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "key": "internal_clarification",
+              "sequence": 2,
+              "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+              "description": "Nachfrage bei der Reiseorganisation im Büro im Falle von Unklarheiten oder widersprüchlichen Angaben.",
+              "roles": "Kundenservice-Mitarbeiter, Reiseorganisation / Büro",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kunde wartet am Telefon; Nachfrage ist nicht bei jeder Anfrage erforderlich.",
+              "baseline_metrics": "Keine Häufigkeitsmessung oder Zeitstichprobe vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "key": "customer_response",
+              "sequence": 3,
+              "name": "Auskunftserteilung an den Kunden",
+              "description": "Mitteilung des ermittelten Sachstands oder der geklärten Information an den Anrufer.",
+              "roles": "Kundenservice-Mitarbeiter, Anrufer / Kunde",
+              "systems": "Telefonie",
+              "documents": "Keine",
+              "pain_points": "Verzögerung der Auskunft, solange Daten oder Gültigkeiten ungeklärt sind.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "data_lookup",
+            "business_domain": "customer_service",
+            "capability": "Auskunftsfähigkeit und Informationsrecherche im Kundenservice",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Die Datenprüfung in der Buchungsmaske und im Postfach bildet den ersten Recherche-Schritt bei jedem Anruf. Da hier Abweichungen (z. B. Transferzeiten) auftreten und der genaue Bedarf für eine interne Rückfrage erst hier entsteht, ist dies die logische Fokusphase.",
+            "tradeoffs": [
+              "Eine primäre Betrachtung der Datenprüfung lässt organisatorische Klärungswege mit der Reiseorganisation vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Aufgrund fehlender Stichproben ist das genaue Mengenverhältnis von einfachen Anfragen zu unklaren Anfragen nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Recherche und Datenprüfung bei Kundenanrufen",
+            "scope_start": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_end": "Abschluss der Recherche in Buchungsmaske und Postfach",
+            "trigger": "Anruf des Kunden wegen gebuchter Reise oder Transferzeiten",
+            "outcome": "Geprüfter Datenstand aus Buchung und E-Mail-Postfach zur Vorbereitung der Kundenauskunft",
+            "current_flow": "data_lookup (Prüfung von Buchung und Postfach): Nach Entgegennahme des Anrufs öffnet der Kundenservice-Mitarbeiter die Buchungsmaske und durchsucht zusätzlich das gemeinsame E-Mail-Postfach nach relevanten Vorgängen und Äraenderungsnachrichten.",
+            "roles": "Kundenservice-Mitarbeiter",
+            "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+            "data_objects": "Buchung, E-Mail-Nachrichten, Buchungsnotiz, E-Mail-Änderungsnachricht",
+            "business_rules": "Bei einfachen Fragen reicht der Datenabgleich der Buchungsangaben aus. Verbindlichkeitsregeln bei abweichenden Notizen oder zeitlich späteren E-Mails sind nicht dokumentiert.",
+            "handoffs": "Übergabe an die Reiseorganisation / das Büro, wenn Informationen unklar sind.",
+            "bottlenecks": "Beobachtete parallele Suche in zwei Informationsquellen (Buchung und E-Mails) sowie unklare Gültigkeit bei Abweichungen.",
+            "observations": "Fall SYN-A-01 zeigt abweichende Angaben (Transfer 09:00 in Notiz vs. Transfer 10:00 in Nachricht). Fall SYN-A-02 zeigt, dass einfache Fragen ohne Rückfrage beantwortet werden können.",
+            "cause_hypotheses": "Mögliche Ursachen für verzögerte Auskünfte könnten eine fehlende Eindeutigkeit über die Priorität von Postfacheinträgen gegenüber Buchungsnotizen oder eine fehlende direkte Datenverknüpfung sein (unbestätigte Hypothesen).",
+            "constraints": "Keine Häufigkeitsmessung, Zeitstichprobe oder festgestellte Fehlerquote vorhanden. Produktnamen und Fristen unbekannt.",
+            "exceptions": "Einfache Anfragen mit übereinstimmenden Daten erfordern keine Büro-Rückfrage.",
+            "baseline_metrics": "Keine Messwerte verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3",
+              "S4"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Rückfragen zu gebuchten Leistungen oder Transferzeiten prüft die Testperson die Buchungsmaske, das gemeinsame Postfach und fragt bei Unklarheiten im Büro bzw. bei der Reiseorganisation nach.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine einfache Leistungsfrage kann anhand übereinstimmender Buchungsangaben ohne Rückfrage im Büro beantwortet werden (Fall SYN-A-02).",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Für Fall SYN-A-01 existiert eine Buchungsnotiz mit 'Transfer 09:00' sowie eine spätere Änderungsnachricht mit 'Transfer 10:00'.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "statement": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben, Fehlerquoten, Produktnamen oder vereinbarte Antwortfristen vor.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die getrennte Aufbewahrung von Buchungsnotizen und E-Mail-Änderungsnachrichten führt möglicherweise zu erhöhtem Suchaufwand und Unklarheiten über den aktuellen Gültigkeitsstand.",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche Angabe bei abweichenden Notizen und Nachrichten (wie in SYN-A-01) verbindlich gilt und ob die Änderungsnachricht dem Kunden zugestellt wurde, ist nicht dokumentiert.",
+              "impact": "Erschwert die Beurteilung, ob Kunden falsche Auskünfte erhalten."
+            },
+            {
+              "statement": "Das quantitative Anrufvolumen sowie der Anteil von einfachen zu unklaren Anfragen sind unbekannt.",
+              "impact": "Verhindert die genaue Messung des wirtschaftlichen Potenzials."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+              "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+              "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Für den Fall SYN-A-01 liegen unterschiedliche Zeitangaben für den Transfer vor (Buchungsnotiz: Transfer 09:00 vs. spätere Änderungsnachricht: Transfer 10:00).",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_case.md",
+          "S2": "02_conflict.md",
+          "S3": "03_counterexample.md",
+          "S4": "04_change_message.md"
+        },
+        "discovery_snapshot_id": "abdc3e58-e187-4ad7-a541-3dce1ccc68ef"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+          "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+          "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.012109"
+    },
+    {
+      "id": "26ced317-f933-434e-a395-52a2bea3b8fc",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 1,
+      "source_hash": "b50e7f2ddca96dff112a5edbcfffe0f4bdb5e319e681351d2e22a025e5458165",
+      "prompt_version": "ap1-methodology-v7",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Kundenservice bei Reiserückfragen",
+            "description": "Bearbeitung von Kundenanfragen zu gebuchten Leistungen und Transferzeiten im Kundenservice.",
+            "trigger": "Anruf eines Kunden bezüglich einer gebuchten Reise",
+            "outcome": "Information des Anrufers über den aktuellen Bearbeitungs- oder Leistungsstatus",
+            "scope_in": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_out": "Verbindliche Leistungsanpassung, Reiseabwicklung oder weitere Nachbearbeitung nach der Auskunftserteilung",
+            "strategic_objective": "Erhöhung der Erstauskunftsfähigkeit im Kundenservice (Zielvorschlag)",
+            "stakeholders": "Kundenservice, Reiseorganisation, Anrufer/Kunde",
+            "constraints": "Keine Zeitstichproben, Fehlerquoten oder Häufigkeitsmessungen vorhanden. Produktnamen und Fristen unbekannt.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "stages": [
+            {
+              "key": "data_lookup",
+              "sequence": 1,
+              "name": "Prüfung von Buchung und Postfach",
+              "description": "Öffnen der Buchungsmaske und Durchsuchen des gemeinsamen E-Mail-Postfachs nach relevanten Buchungsdaten und Änderungsnachrichten.",
+              "roles": "Kundenservice-Mitarbeiter",
+              "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+              "documents": "Buchungsnotiz, E-Mail-Nachrichten / Änderungsnachrichten",
+              "pain_points": "Suchen in mehreren Quellen (Buchung und Postfach); unklare Gültigkeit bei abweichenden Angaben.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "key": "internal_clarification",
+              "sequence": 2,
+              "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+              "description": "Nachfrage bei der Reiseorganisation im Büro im Falle von Unklarheiten oder widersprüchlichen Angaben.",
+              "roles": "Kundenservice-Mitarbeiter, Reiseorganisation / Büro",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Kunde wartet am Telefon; Nachfrage ist nicht bei jeder Anfrage erforderlich.",
+              "baseline_metrics": "Keine Häufigkeitsmessung oder Zeitstichprobe vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "key": "customer_response",
+              "sequence": 3,
+              "name": "Auskunftserteilung an den Kunden",
+              "description": "Mitteilung des ermittelten Sachstands oder der geklärten Information an den Anrufer.",
+              "roles": "Kundenservice-Mitarbeiter, Anrufer / Kunde",
+              "systems": "Telefonie",
+              "documents": "Keine",
+              "pain_points": "Verzögerung der Auskunft, solange Daten oder Gültigkeiten ungeklärt sind.",
+              "baseline_metrics": "Keine Messwerte vorhanden.",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "data_lookup",
+            "business_domain": "customer_service",
+            "capability": "Auskunftsfähigkeit und Informationsrecherche im Kundenservice",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Die Datenprüfung in der Buchungsmaske und im Postfach bildet den ersten Recherche-Schritt bei jedem Anruf. Da hier Abweichungen (z. B. Transferzeiten) auftreten und der genaue Bedarf für eine interne Rückfrage erst hier entsteht, ist dies die logische Fokusphase.",
+            "tradeoffs": [
+              "Eine primäre Betrachtung der Datenprüfung lässt organisatorische Klärungswege mit der Reiseorganisation vorerst unberücksichtigt."
+            ],
+            "uncertainties": [
+              "Aufgrund fehlender Stichproben ist das genaue Mengenverhältnis von einfachen Anfragen zu unklaren Anfragen nicht bekannt."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "process_analysis": {
+            "name": "Recherche und Datenprüfung bei Kundenanrufen",
+            "scope_start": "Eingang des Kundenanrufs zur gebuchten Reise",
+            "scope_end": "Abschluss der Recherche in Buchungsmaske und Postfach",
+            "trigger": "Anruf des Kunden wegen gebuchter Reise oder Transferzeiten",
+            "outcome": "Geprüfter Datenstand aus Buchung und E-Mail-Postfach zur Vorbereitung der Kundenauskunft",
+            "current_flow": "data_lookup (Prüfung von Buchung und Postfach): Nach Entgegennahme des Anrufs öffnet der Kundenservice-Mitarbeiter die Buchungsmaske und durchsucht zusätzlich das gemeinsame E-Mail-Postfach nach relevanten Vorgängen und Äraenderungsnachrichten.",
+            "roles": "Kundenservice-Mitarbeiter",
+            "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+            "data_objects": "Buchung, E-Mail-Nachrichten, Buchungsnotiz, E-Mail-Änderungsnachricht",
+            "business_rules": "Bei einfachen Fragen reicht der Datenabgleich der Buchungsangaben aus. Verbindlichkeitsregeln bei abweichenden Notizen oder zeitlich späteren E-Mails sind nicht dokumentiert.",
+            "handoffs": "Übergabe an die Reiseorganisation / das Büro, wenn Informationen unklar sind.",
+            "bottlenecks": "Beobachtete parallele Suche in zwei Informationsquellen (Buchung und E-Mails) sowie unklare Gültigkeit bei Abweichungen.",
+            "observations": "Fall SYN-A-01 zeigt abweichende Angaben (Transfer 09:00 in Notiz vs. Transfer 10:00 in Nachricht). Fall SYN-A-02 zeigt, dass einfache Fragen ohne Rückfrage beantwortet werden können.",
+            "cause_hypotheses": "Mögliche Ursachen für verzögerte Auskünfte könnten eine fehlende Eindeutigkeit über die Priorität von Postfacheinträgen gegenüber Buchungsnotizen oder eine fehlende direkte Datenverknüpfung sein (unbestätigte Hypothesen).",
+            "constraints": "Keine Häufigkeitsmessung, Zeitstichprobe oder festgestellte Fehlerquote vorhanden. Produktnamen und Fristen unbekannt.",
+            "exceptions": "Einfache Anfragen mit übereinstimmenden Daten erfordern keine Büro-Rückfrage.",
+            "baseline_metrics": "Keine Messwerte verfügbar.",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S2",
+              "S3",
+              "S4"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Rückfragen zu gebuchten Leistungen oder Transferzeiten prüft die Testperson die Buchungsmaske, das gemeinsame Postfach und fragt bei Unklarheiten im Büro bzw. bei der Reiseorganisation nach.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Eine einfache Leistungsfrage kann anhand übereinstimmender Buchungsangaben ohne Rückfrage im Büro beantwortet werden (Fall SYN-A-02).",
+              "evidence_refs": [
+                "S3"
+              ]
+            },
+            {
+              "statement": "Für Fall SYN-A-01 existiert eine Buchungsnotiz mit 'Transfer 09:00' sowie eine spätere Änderungsnachricht mit 'Transfer 10:00'.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            },
+            {
+              "statement": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben, Fehlerquoten, Produktnamen oder vereinbarte Antwortfristen vor.",
+              "evidence_refs": [
+                "S1",
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die getrennte Aufbewahrung von Buchungsnotizen und E-Mail-Änderungsnachrichten führt möglicherweise zu erhöhtem Suchaufwand und Unklarheiten über den aktuellen Gültigkeitsstand.",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S2",
+                "S4"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Welche Angabe bei abweichenden Notizen und Nachrichten (wie in SYN-A-01) verbindlich gilt und ob die Änderungsnachricht dem Kunden zugestellt wurde, ist nicht dokumentiert.",
+              "impact": "Erschwert die Beurteilung, ob Kunden falsche Auskünfte erhalten."
+            },
+            {
+              "statement": "Das quantitative Anrufvolumen sowie der Anteil von einfachen zu unklaren Anfragen sind unbekannt.",
+              "impact": "Verhindert die genaue Messung des wirtschaftlichen Potenzials."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+              "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+              "blocking": true
+            },
+            {
+              "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+              "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "Für den Fall SYN-A-01 liegen unterschiedliche Zeitangaben für den Transfer vor (Buchungsnotiz: Transfer 09:00 vs. spätere Änderungsnachricht: Transfer 10:00).",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ]
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen",
+          "S1": "01_case.md",
+          "S2": "02_conflict.md",
+          "S3": "03_counterexample.md",
+          "S4": "04_change_message.md"
+        },
+        "discovery_snapshot_id": "abdc3e58-e187-4ad7-a541-3dce1ccc68ef"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+          "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+          "blocking": true
+        },
+        {
+          "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+          "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.013969"
+    },
+    {
+      "id": "7248b6da-9ce0-477f-9e98-feed8793932b",
+      "status": "failed",
+      "error_code": "verification_not_converged",
+      "source_revision": 1,
+      "source_hash": "b50e7f2ddca96dff112a5edbcfffe0f4bdb5e319e681351d2e22a025e5458165",
+      "prompt_version": "ap1-methodology-v11",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Bearbeitung von Anfragen zu gebuchten Reisen",
+            "description": "Aufnahme und Bearbeitung telefonischer Kundenrückfragen zu gebuchten Reiseleistungen oder Transferzeiten.",
+            "trigger": "Telefonischer Anruf eines Kunden bezüglich einer gebuchten Reise",
+            "outcome": "Erteilte Auskunft an den Kunden zum aktuellen Stand der Buchung",
+            "scope_in": "Recherche in der Buchungsmaske, Überprüfung des E-Mail-Postfachs und sporadische interne Rückfrage im Büro",
+            "scope_out": "Langfristige Systemarchitekturentscheidungen und externe Dienstleistersteuerung",
+            "strategic_objective": "Zielvorschlag: Erhöhung der Erstauskunftsfähigkeit im Kundenservice bei Reiseanfragen",
+            "stakeholders": "Kundenservice, Reiseorganisation / Büro, Kunden",
+            "constraints": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten vor.",
+            "evidence_refs": [
+              "U0",
+              "S1"
+            ]
+          },
+          "stages": [
+            {
+              "key": "data_lookup",
+              "sequence": 1,
+              "name": "Prüfung von Buchung und Postfach",
+              "description": "Die Servicekraft sucht bei Anfragen nacheinander in der Buchungsmaske und im gemeinsamen E-Mail-Postfach nach Angaben zur gebuchten Reise.",
+              "roles": "Kundenservice",
+              "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+              "documents": "Buchungsnotiz, E-Mails / Änderungsnachrichten",
+              "pain_points": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+              "baseline_metrics": "Keine Zeitstichproben oder Messdaten vorhanden",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "medium",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "key": "internal_clarification",
+              "sequence": 2,
+              "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+              "description": "Bei Unklarheiten fragt die Servicekraft bei der Reiseorganisation bzw. im Büro nach.",
+              "roles": "Kundenservice, Reiseorganisation / Büro",
+              "systems": "Unbekannt",
+              "documents": "Unbekannt",
+              "pain_points": "Der Kunde wartet am Telefon, während der Status intern abgeklärt werden muss.",
+              "baseline_metrics": "Keine Messdaten zur Häufigkeit vorhanden",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1",
+                "S3"
+              ]
+            },
+            {
+              "key": "customer_response",
+              "sequence": 3,
+              "name": "Auskunftserteilung an den Kunden",
+              "description": "Übermittlung der aktuellen Information zur Buchung an den wartenden Anrufer.",
+              "roles": "Kundenservice",
+              "systems": "Telefon",
+              "documents": "Unbekannt",
+              "pain_points": "Keine sofortige Verbindlichkeit der Auskunft möglich, wenn Status unklar ist.",
+              "baseline_metrics": "Keine Messdaten vorhanden",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "data_lookup",
+            "business_domain": "customer_service",
+            "capability": "Informationsrecherche bei telefonischen Kundenanfragen",
+            "strategic_impact": "medium",
+            "economic_potential": "medium",
+            "pain_intensity": "medium",
+            "data_accessibility": "medium",
+            "change_effort": "low",
+            "rationale": "Laut Erfahrungsbericht erfolgt die Recherche nacheinander in Buchungsmaske und E-Mail-Postfach oft bei Anfragen zu gebuchten Reisen, was zu beobachteten Wartezeiten am Telefon führen kann. Dies stellt eine unbestätigte Beobachtung dar; ein systembestimmender Engpass ist laut den Fallunterlagen nicht nachgewiesen.",
+            "tradeoffs": [
+              "Die Optimierung des Nachschlagens löst nicht das Problem unklarer Gültigkeiten von abweichenden Änderungsnachrichten."
+            ],
+            "uncertainties": [
+              "Unbekannt, wie oft eine Recherche in E-Mails tatsächlich erforderlich ist.",
+              "Unbekannt, welche Produktnamen und Antwortfristen vereinbart sind."
+            ],
+            "evidence_refs": [
+              "U0",
+              "S1"
+            ]
+          },
+          "process_analysis": {
+            "name": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen",
+            "scope_start": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise",
+            "scope_end": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach",
+            "trigger": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten",
+            "outcome": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage",
+            "current_flow": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach.",
+            "roles": "Kundenservice",
+            "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+            "data_objects": "Buchungsdaten, E-Mails, Änderungsnachrichten",
+            "business_rules": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden.",
+            "handoffs": "Vorgesehene Übergabe an die Reiseorganisation / das Büro bei unklaren Datenständen.",
+            "bottlenecks": "Mögliche Verzögerung durch nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach (unbestätigte Beobachtung/Hypothese); ein systembestimmender Engpass ist nicht nachgewiesen.",
+            "observations": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf.",
+            "cause_hypotheses": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen.",
+            "constraints": "Keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten.",
+            "exceptions": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit.",
+            "baseline_metrics": "Keine verifizierten Messwerte vorhanden",
+            "evidence_refs": [
+              "U0",
+              "S1",
+              "S3"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Bei Anfragen zu gebuchten Reisen wird oft zuerst in der Buchung und danach in alten E-Mails gesucht.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Manchmal erfolgt eine interne Rückfrage beim Büro / der Reiseorganisation.",
+              "evidence_refs": [
+                "U0",
+                "S1"
+              ]
+            },
+            {
+              "statement": "Einfache Leistungsfragen können ohne interne Rückfrage beantwortet werden, wenn die Buchungsangaben übereinstimmen.",
+              "evidence_refs": [
+                "S3"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die Suchzeit in unterschiedlichen Quellen erhöht die durchschnittliche Bearbeitungszeit pro Anruf.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Abweichungen zwischen Buchungsnotiz und Änderungsnachricht könnten durch verzögerte Systemaktualisierungen entstehen.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Es ist nicht bekannt, welche Produktnamen und vereinbarten Antwortfristen im Kundenservice gelten.",
+              "impact": "Erschwert die genaue Definition von Vorgaben für Bearbeitungszeiten."
+            },
+            {
+              "statement": "Es ist unklar, welche Angabe zur Transferzeit im Fall SYN-A-01 (09:00 vs. 10:00) aktuell gültig ist.",
+              "impact": "Kann zu Fehlinformationen gegenüber Kunden führen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+              "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+              "blocking": true
+            },
+            {
+              "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+              "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+              "blocking": false
+            }
+          ],
+          "contradictions": [
+            {
+              "statement": "In Fall SYN-A-01 nennt die Buchungsnotiz einen Transfer um 09:00 Uhr, während eine spätere Nachricht 10:00 Uhr angibt. Es ist nicht dokumentiert, welche Angabe gültig ist.",
+              "evidence_refs": [
+                "S2",
+                "S4"
+              ]
+            }
+          ]
+        },
+        "review_history": [
+          {
+            "repair_count": 0,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Kundenservice bei Reiserückfragen",
+                "description": "Bearbeitung von Kundenanfragen zu gebuchten Leistungen und Transferzeiten im Kundenservice.",
+                "trigger": "Anruf eines Kunden bezüglich einer gebuchten Reise",
+                "outcome": "Information des Anrufers über den aktuellen Bearbeitungs- oder Leistungsstatus",
+                "scope_in": "Eingang des Kundenanrufs zur gebuchten Reise",
+                "scope_out": "Verbindliche Leistungsanpassung, Reiseabwicklung oder weitere Nachbearbeitung nach der Auskunftserteilung",
+                "strategic_objective": "Erhöhung der Erstauskunftsfähigkeit im Kundenservice (Zielvorschlag)",
+                "stakeholders": "Kundenservice, Reiseorganisation, Anrufer/Kunde",
+                "constraints": "Keine Zeitstichproben, Fehlerquoten oder Häufigkeitsmessungen vorhanden. Produktnamen und Fristen unbekannt.",
+                "evidence_refs": [
+                  "U0",
+                  "S1",
+                  "S3"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "data_lookup",
+                  "sequence": 1,
+                  "name": "Prüfung von Buchung und Postfach",
+                  "description": "Öffnen der Buchungsmaske und Durchsuchen des gemeinsamen E-Mail-Postfachs nach relevanten Buchungsdaten und Änderungsnachrichten.",
+                  "roles": "Kundenservice-Mitarbeiter",
+                  "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+                  "documents": "Buchungsnotiz, E-Mail-Nachrichten / Änderungsnachrichten",
+                  "pain_points": "Suchen in mehreren Quellen (Buchung und Postfach); unklare Gültigkeit bei abweichenden Angaben.",
+                  "baseline_metrics": "Keine Messwerte vorhanden.",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "medium",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S2",
+                    "S4"
+                  ]
+                },
+                {
+                  "key": "internal_clarification",
+                  "sequence": 2,
+                  "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+                  "description": "Nachfrage bei der Reiseorganisation im Büro im Falle von Unklarheiten oder widersprüchlichen Angaben.",
+                  "roles": "Kundenservice-Mitarbeiter, Reiseorganisation / Büro",
+                  "systems": "Unbekannt",
+                  "documents": "Unbekannt",
+                  "pain_points": "Kunde wartet am Telefon; Nachfrage ist nicht bei jeder Anfrage erforderlich.",
+                  "baseline_metrics": "Keine Häufigkeitsmessung oder Zeitstichprobe vorhanden.",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S3"
+                  ]
+                },
+                {
+                  "key": "customer_response",
+                  "sequence": 3,
+                  "name": "Auskunftserteilung an den Kunden",
+                  "description": "Mitteilung des ermittelten Sachstands oder der geklärten Information an den Anrufer.",
+                  "roles": "Kundenservice-Mitarbeiter, Anrufer / Kunde",
+                  "systems": "Telefonie",
+                  "documents": "Keine",
+                  "pain_points": "Verzögerung der Auskunft, solange Daten oder Gültigkeiten ungeklärt sind.",
+                  "baseline_metrics": "Keine Messwerte vorhanden.",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "data_lookup",
+                "business_domain": "customer_service",
+                "capability": "Auskunftsfähigkeit und Informationsrecherche im Kundenservice",
+                "strategic_impact": "medium",
+                "economic_potential": "medium",
+                "pain_intensity": "medium",
+                "data_accessibility": "medium",
+                "change_effort": "low",
+                "rationale": "Die Datenprüfung in der Buchungsmaske und im Postfach bildet den ersten Recherche-Schritt bei jedem Anruf. Da hier Abweichungen (z. B. Transferzeiten) auftreten und der genaue Bedarf für eine interne Rückfrage erst hier entsteht, ist dies die logische Fokusphase.",
+                "tradeoffs": [
+                  "Eine primäre Betrachtung der Datenprüfung lässt organisatorische Klärungswege mit der Reiseorganisation vorerst unberücksichtigt."
+                ],
+                "uncertainties": [
+                  "Aufgrund fehlender Stichproben ist das genaue Mengenverhältnis von einfachen Anfragen zu unklaren Anfragen nicht bekannt."
+                ],
+                "evidence_refs": [
+                  "U0",
+                  "S1",
+                  "S3"
+                ]
+              },
+              "process_analysis": {
+                "name": "Recherche und Datenprüfung bei Kundenanrufen",
+                "scope_start": "Eingang des Kundenanrufs zur gebuchten Reise",
+                "scope_end": "Abschluss der Recherche in Buchungsmaske und Postfach",
+                "trigger": "Anruf des Kunden wegen gebuchter Reise oder Transferzeiten",
+                "outcome": "Geprüfter Datenstand aus Buchung und E-Mail-Postfach zur Vorbereitung der Kundenauskunft",
+                "current_flow": "data_lookup (Prüfung von Buchung und Postfach): Nach Entgegennahme des Anrufs öffnet der Kundenservice-Mitarbeiter die Buchungsmaske und durchsucht zusätzlich das gemeinsame E-Mail-Postfach nach relevanten Vorgängen und Äraenderungsnachrichten.",
+                "roles": "Kundenservice-Mitarbeiter",
+                "systems": "Buchungsmaske, E-Mail-System (gemeinsames Postfach)",
+                "data_objects": "Buchung, E-Mail-Nachrichten, Buchungsnotiz, E-Mail-Änderungsnachricht",
+                "business_rules": "Bei einfachen Fragen reicht der Datenabgleich der Buchungsangaben aus. Verbindlichkeitsregeln bei abweichenden Notizen oder zeitlich späteren E-Mails sind nicht dokumentiert.",
+                "handoffs": "Übergabe an die Reiseorganisation / das Büro, wenn Informationen unklar sind.",
+                "bottlenecks": "Beobachtete parallele Suche in zwei Informationsquellen (Buchung und E-Mails) sowie unklare Gültigkeit bei Abweichungen.",
+                "observations": "Fall SYN-A-01 zeigt abweichende Angaben (Transfer 09:00 in Notiz vs. Transfer 10:00 in Nachricht). Fall SYN-A-02 zeigt, dass einfache Fragen ohne Rückfrage beantwortet werden können.",
+                "cause_hypotheses": "Mögliche Ursachen für verzögerte Auskünfte könnten eine fehlende Eindeutigkeit über die Priorität von Postfacheinträgen gegenüber Buchungsnotizen oder eine fehlende direkte Datenverknüpfung sein (unbestätigte Hypothesen).",
+                "constraints": "Keine Häufigkeitsmessung, Zeitstichprobe oder festgestellte Fehlerquote vorhanden. Produktnamen und Fristen unbekannt.",
+                "exceptions": "Einfache Anfragen mit übereinstimmenden Daten erfordern keine Büro-Rückfrage.",
+                "baseline_metrics": "Keine Messwerte verfügbar.",
+                "evidence_refs": [
+                  "U0",
+                  "S1",
+                  "S2",
+                  "S3",
+                  "S4"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Bei Rückfragen zu gebuchten Leistungen oder Transferzeiten prüft die Testperson die Buchungsmaske, das gemeinsame Postfach und fragt bei Unklarheiten im Büro bzw. bei der Reiseorganisation nach.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "statement": "Eine einfache Leistungsfrage kann anhand übereinstimmender Buchungsangaben ohne Rückfrage im Büro beantwortet werden (Fall SYN-A-02).",
+                  "evidence_refs": [
+                    "S3"
+                  ]
+                },
+                {
+                  "statement": "Für Fall SYN-A-01 existiert eine Buchungsnotiz mit 'Transfer 09:00' sowie eine spätere Änderungsnachricht mit 'Transfer 10:00'.",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                },
+                {
+                  "statement": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben, Fehlerquoten, Produktnamen oder vereinbarte Antwortfristen vor.",
+                  "evidence_refs": [
+                    "S1",
+                    "S3"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die getrennte Aufbewahrung von Buchungsnotizen und E-Mail-Änderungsnachrichten führt möglicherweise zu erhöhtem Suchaufwand und Unklarheiten über den aktuellen Gültigkeitsstand.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Welche Angabe bei abweichenden Notizen und Nachrichten (wie in SYN-A-01) verbindlich gilt und ob die Änderungsnachricht dem Kunden zugestellt wurde, ist nicht dokumentiert.",
+                  "impact": "Erschwert die Beurteilung, ob Kunden falsche Auskünfte erhalten."
+                },
+                {
+                  "statement": "Das quantitative Anrufvolumen sowie der Anteil von einfachen zu unklaren Anfragen sind unbekannt.",
+                  "impact": "Verhindert die genaue Messung des wirtschaftlichen Potenzials."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche Regeln bestimmen die Verbindlichkeit und Gültigkeit von E-Mail-Änderungsnachrichten gegenüber Buchungsnotizen im System?",
+                  "impact": "Entscheidend für die Abgrenzung, ob Auskünfte direkt aus den Quellen erteilt werden dürfen.",
+                  "blocking": true
+                },
+                {
+                  "question": "Gibt es vereinbarte Antwortfristen oder spezifische Kommunikationskanäle für die Nachfrage bei der Reiseorganisation?",
+                  "impact": "Relevant für die Bewertung der Wartezeiten am Telefon.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": [
+                {
+                  "statement": "Für den Fall SYN-A-01 liegen unterschiedliche Zeitangaben für den Transfer vor (Buchungsnotiz: Transfer 09:00 vs. spätere Änderungsnachricht: Transfer 10:00).",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ]
+            },
+            "contract_errors": [],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": true,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "GROUNDING_SEARCH_SEQUENCE",
+                  "message": "In 'process_analysis.bottlenecks' wird von einer 'parallelen Suche in zwei Informationsquellen' gesprochen. Laut U0 erfolgt die Recherche jedoch nacheinander ('erst in der Buchung und dann noch in alten E-Mails')."
+                },
+                {
+                  "code": "GROUNDING_CALL_FREQUENCY",
+                  "message": "In 'focus.rationale' wird behauptet, dass die Recherche 'bei jedem Anruf' erfolgt. Laut U0 und S1 betrifft dies Anfragen zu gebuchten Reisen/Transferzeiten und geschieht laut U0 'oft', jedoch nicht nachweislich bei jedem beliebigen Anruf."
+                }
+              ],
+              "repair_instructions": "In 'process_analysis.bottlenecks' den Begriff 'parallele Suche' durch 'nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach' ersetzen. In 'focus.rationale' den Ausdruck 'bei jedem Anruf' in 'bei Anfragen zu gebuchten Reisen' anpassen.",
+              "human_question": ""
+            },
+            "incoming_repair": null
+          },
+          {
+            "repair_count": 1,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Bearbeitung von Anfragen zu gebuchten Reisen",
+                "description": "Aufnahme und Bearbeitung telefonischer Kundenrückfragen zu gebuchten Reiseleistungen oder Transferzeiten.",
+                "trigger": "Telefonischer Anruf eines Kunden bezüglich einer gebuchten Reise",
+                "outcome": "Erteilte Auskunft an den Kunden zum aktuellen Stand der Buchung",
+                "scope_in": "Recherche in der Buchungsmaske, Überprüfung des E-Mail-Postfachs und sporadische interne Rückfrage im Büro",
+                "scope_out": "Langfristige Systemarchitekturentscheidungen und externe Dienstleistersteuerung",
+                "strategic_objective": "Zielvorschlag: Erhöhung der Erstauskunftsfähigkeit im Kundenservice bei Reiseanfragen",
+                "stakeholders": "Kundenservice, Reiseorganisation / Büro, Kunden",
+                "constraints": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten vor.",
+                "evidence_refs": [
+                  "U0",
+                  "S1"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "data_lookup",
+                  "sequence": 1,
+                  "name": "Prüfung von Buchung und Postfach",
+                  "description": "Die Servicekraft sucht bei Anfragen nacheinander in der Buchungsmaske und im gemeinsamen E-Mail-Postfach nach Angaben zur gebuchten Reise.",
+                  "roles": "Kundenservice",
+                  "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                  "documents": "Buchungsnotiz, E-Mails / Änderungsnachrichten",
+                  "pain_points": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+                  "baseline_metrics": "Keine Zeitstichproben oder Messdaten vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "medium",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "key": "internal_clarification",
+                  "sequence": 2,
+                  "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+                  "description": "Bei Unklarheiten fragt die Servicekraft bei der Reiseorganisation bzw. im Büro nach.",
+                  "roles": "Kundenservice, Reiseorganisation / Büro",
+                  "systems": "Unbekannt",
+                  "documents": "Unbekannt",
+                  "pain_points": "Der Kunde wartet am Telefon, während der Status intern abgeklärt werden muss.",
+                  "baseline_metrics": "Keine Messdaten zur Häufigkeit vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S3"
+                  ]
+                },
+                {
+                  "key": "customer_response",
+                  "sequence": 3,
+                  "name": "Auskunftserteilung an den Kunden",
+                  "description": "Übermittlung der aktuellen Information zur Buchung an den wartenden Anrufer.",
+                  "roles": "Kundenservice",
+                  "systems": "Telefon",
+                  "documents": "Unbekannt",
+                  "pain_points": "Keine sofortige Verbindlichkeit der Auskunft möglich, wenn Status unklar ist.",
+                  "baseline_metrics": "Keine Messdaten vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "data_lookup",
+                "business_domain": "customer_service",
+                "capability": "Informationsrecherche bei telefonischen Kundenanfragen",
+                "strategic_impact": "medium",
+                "economic_potential": "medium",
+                "pain_intensity": "medium",
+                "data_accessibility": "medium",
+                "change_effort": "low",
+                "rationale": "Die Recherche nacheinander in Buchungsmaske und E-Mail-Postfach erfolgt oft bei Anfragen zu gebuchten Reisen und führt zu Wartezeiten am Telefon. Eine Optimierung dieser Datensuche bietet einen direkten Ansatzpunkt.",
+                "tradeoffs": [
+                  "Die Optimierung des Nachschlagens löst nicht das Problem unklarer Gültigkeiten von abweichenden Änderungsnachrichten."
+                ],
+                "uncertainties": [
+                  "Unbekannt, wie oft eine Recherche in E-Mails tatsächlich erforderlich ist.",
+                  "Unbekannt, welche Produktnamen und Antwortfristen vereinbart sind."
+                ],
+                "evidence_refs": [
+                  "U0",
+                  "S1"
+                ]
+              },
+              "process_analysis": {
+                "name": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen",
+                "scope_start": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise",
+                "scope_end": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach",
+                "trigger": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten",
+                "outcome": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage",
+                "current_flow": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach.",
+                "roles": "Kundenservice",
+                "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                "data_objects": "Buchungsdaten, E-Mails, Änderungsnachrichten",
+                "business_rules": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden.",
+                "handoffs": "Vorgesehene Übergabe an die Reiseorganisation / das Büro bei unklaren Datenständen.",
+                "bottlenecks": "Nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach, die zu Wartezeiten am Telefon führt.",
+                "observations": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf.",
+                "cause_hypotheses": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen.",
+                "constraints": "Keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten.",
+                "exceptions": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit.",
+                "baseline_metrics": "Keine verifizierten Messwerte vorhanden",
+                "evidence_refs": [
+                  "U0",
+                  "S1",
+                  "S3"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Bei Anfragen zu gebuchten Reisen wird oft zuerst in der Buchung und danach in alten E-Mails gesucht.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "statement": "Manchmal erfolgt eine interne Rückfrage beim Büro / der Reiseorganisation.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "statement": "Einfache Leistungsfragen können ohne interne Rückfrage beantwortet werden, wenn die Buchungsangaben übereinstimmen.",
+                  "evidence_refs": [
+                    "S3"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die Suchzeit in unterschiedlichen Quellen erhöht die durchschnittliche Bearbeitungszeit pro Anruf.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Abweichungen zwischen Buchungsnotiz und Änderungsnachricht könnten durch verzögerte Systemaktualisierungen entstehen.",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Es ist nicht bekannt, welche Produktnamen und vereinbarten Antwortfristen im Kundenservice gelten.",
+                  "impact": "Erschwert die genaue Definition von Vorgaben für Bearbeitungszeiten."
+                },
+                {
+                  "statement": "Es ist unklar, welche Angabe zur Transferzeit im Fall SYN-A-01 (09:00 vs. 10:00) aktuell gültig ist.",
+                  "impact": "Kann zu Fehlinformationen gegenüber Kunden führen."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+                  "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+                  "blocking": true
+                },
+                {
+                  "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+                  "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": [
+                {
+                  "statement": "In Fall SYN-A-01 nennt die Buchungsnotiz einen Transfer um 09:00 Uhr, während eine spätere Nachricht 10:00 Uhr angibt. Es ist nicht dokumentiert, welche Angabe gültig ist.",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ]
+            },
+            "contract_errors": [
+              "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+            ],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": false,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "UNGROUNDED_CAUSAL_CLAIM",
+                  "message": "In 'focus.rationale' und 'process_analysis.bottlenecks' werden Kausalbehauptungen und Engpässe als gesicherte Tatsachen behauptet, obwohl laut Quelle S1 nur ein subjektiver Erfahrungsbericht vorliegt und S3 ausdrücklich festhält, dass kein systembestimmender Engpass nachgewiesen ist."
+                },
+                {
+                  "code": "methodical_contract",
+                  "message": "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                },
+                {
+                  "code": "discovery_contract",
+                  "message": "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                }
+              ],
+              "repair_instructions": "Relativieren Sie die Aussagen in 'focus.rationale' und 'process_analysis.bottlenecks': Kennzeichnen Sie die Verzögerung durch die nacheinander gelagerte Recherche als unbestätigte Beobachtung bzw. Hypothese und weisen Sie darauf hin, dass ein fester Engpass nicht nachgewiesen ist.\nfocus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nfocus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.",
+              "human_question": ""
+            },
+            "incoming_repair": {
+              "allowed_fields": [],
+              "raw_proposal": {
+                "schema_version": "ap1-discovery-v1",
+                "value_stream": {
+                  "name": "Bearbeitung von Anfragen zu gebuchten Reisen",
+                  "description": "Aufnahme und Bearbeitung telefonischer Kundenrückfragen zu gebuchten Reiseleistungen oder Transferzeiten.",
+                  "trigger": "Telefonischer Anruf eines Kunden bezüglich einer gebuchten Reise",
+                  "outcome": "Erteilte Auskunft an den Kunden zum aktuellen Stand der Buchung",
+                  "scope_in": "Recherche in der Buchungsmaske, Überprüfung des E-Mail-Postfachs und sporadische interne Rückfrage im Büro",
+                  "scope_out": "Langfristige Systemarchitekturentscheidungen und externe Dienstleistersteuerung",
+                  "strategic_objective": "Zielvorschlag: Erhöhung der Erstauskunftsfähigkeit im Kundenservice bei Reiseanfragen",
+                  "stakeholders": "Kundenservice, Reiseorganisation / Büro, Kunden",
+                  "constraints": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten vor.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                "stages": [
+                  {
+                    "key": "data_lookup",
+                    "sequence": 1,
+                    "name": "Prüfung von Buchung und Postfach",
+                    "description": "Die Servicekraft sucht bei Anfragen nacheinander in der Buchungsmaske und im gemeinsamen E-Mail-Postfach nach Angaben zur gebuchten Reise.",
+                    "roles": "Kundenservice",
+                    "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                    "documents": "Buchungsnotiz, E-Mails / Änderungsnachrichten",
+                    "pain_points": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+                    "baseline_metrics": "Keine Zeitstichproben oder Messdaten vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "medium",
+                    "change_effort": "low",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "key": "internal_clarification",
+                    "sequence": 2,
+                    "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+                    "description": "Bei Unklarheiten fragt die Servicekraft bei der Reiseorganisation bzw. im Büro nach.",
+                    "roles": "Kundenservice, Reiseorganisation / Büro",
+                    "systems": "Unbekannt",
+                    "documents": "Unbekannt",
+                    "pain_points": "Der Kunde wartet am Telefon, während der Status intern abgeklärt werden muss.",
+                    "baseline_metrics": "Keine Messdaten zur Häufigkeit vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "low",
+                    "change_effort": "medium",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1",
+                      "S3"
+                    ]
+                  },
+                  {
+                    "key": "customer_response",
+                    "sequence": 3,
+                    "name": "Auskunftserteilung an den Kunden",
+                    "description": "Übermittlung der aktuellen Information zur Buchung an den wartenden Anrufer.",
+                    "roles": "Kundenservice",
+                    "systems": "Telefon",
+                    "documents": "Unbekannt",
+                    "pain_points": "Keine sofortige Verbindlichkeit der Auskunft möglich, wenn Status unklar ist.",
+                    "baseline_metrics": "Keine Messdaten vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "low",
+                    "change_effort": "low",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  }
+                ],
+                "focus": {
+                  "recommended_stage_key": "data_lookup",
+                  "business_domain": "customer_service",
+                  "capability": "Informationsrecherche bei telefonischen Kundenanfragen",
+                  "strategic_impact": "medium",
+                  "economic_potential": "medium",
+                  "pain_intensity": "medium",
+                  "data_accessibility": "medium",
+                  "change_effort": "low",
+                  "rationale": "Die Recherche nacheinander in Buchungsmaske und E-Mail-Postfach erfolgt oft bei Anfragen zu gebuchten Reisen und führt zu Wartezeiten am Telefon. Eine Optimierung dieser Datensuche bietet einen direkten Ansatzpunkt.",
+                  "tradeoffs": [
+                    "Die Optimierung des Nachschlagens löst nicht das Problem unklarer Gültigkeiten von abweichenden Änderungsnachrichten."
+                  ],
+                  "uncertainties": [
+                    "Unbekannt, wie oft eine Recherche in E-Mails tatsächlich erforderlich ist.",
+                    "Unbekannt, welche Produktnamen und Antwortfristen vereinbart sind."
+                  ],
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                "process_analysis": {
+                  "name": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen",
+                  "scope_start": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise",
+                  "scope_end": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach",
+                  "trigger": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten",
+                  "outcome": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage",
+                  "current_flow": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach.",
+                  "roles": "Kundenservice",
+                  "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                  "data_objects": "Buchungsdaten, E-Mails, Änderungsnachrichten",
+                  "business_rules": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden.",
+                  "handoffs": "Vorgesehene Übergabe an die Reiseorganisation / das Büro bei unklaren Datenständen.",
+                  "bottlenecks": "Nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach, die zu Wartezeiten am Telefon führt.",
+                  "observations": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf.",
+                  "cause_hypotheses": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen.",
+                  "constraints": "Keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten.",
+                  "exceptions": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit.",
+                  "baseline_metrics": "Keine verifizierten Messwerte vorhanden",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S3"
+                  ]
+                },
+                "facts": [
+                  {
+                    "statement": "Bei Anfragen zu gebuchten Reisen wird oft zuerst in der Buchung und danach in alten E-Mails gesucht.",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "statement": "Manchmal erfolgt eine interne Rückfrage beim Büro / der Reiseorganisation.",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "statement": "Einfache Leistungsfragen können ohne interne Rückfrage beantwortet werden, wenn die Buchungsangaben übereinstimmen.",
+                    "evidence_refs": [
+                      "S3"
+                    ]
+                  }
+                ],
+                "hypotheses": [
+                  {
+                    "statement": "Die Suchzeit in unterschiedlichen Quellen erhöht die durchschnittliche Bearbeitungszeit pro Anruf.",
+                    "evidence_refs": [
+                      "U0"
+                    ]
+                  },
+                  {
+                    "statement": "Abweichungen zwischen Buchungsnotiz und Änderungsnachricht könnten durch verzögerte Systemaktualisierungen entstehen.",
+                    "evidence_refs": [
+                      "S2",
+                      "S4"
+                    ]
+                  }
+                ],
+                "unknowns": [
+                  {
+                    "statement": "Es ist nicht bekannt, welche Produktnamen und vereinbarten Antwortfristen im Kundenservice gelten.",
+                    "impact": "Erschwert die genaue Definition von Vorgaben für Bearbeitungszeiten."
+                  },
+                  {
+                    "statement": "Es ist unklar, welche Angabe zur Transferzeit im Fall SYN-A-01 (09:00 vs. 10:00) aktuell gültig ist.",
+                    "impact": "Kann zu Fehlinformationen gegenüber Kunden führen."
+                  }
+                ],
+                "clarifications": [
+                  {
+                    "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+                    "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+                    "blocking": true
+                  },
+                  {
+                    "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+                    "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+                    "blocking": false
+                  }
+                ],
+                "contradictions": [
+                  {
+                    "statement": "In Fall SYN-A-01 nennt die Buchungsnotiz einen Transfer um 09:00 Uhr, während eine spätere Nachricht 10:00 Uhr angibt. Es ist nicht dokumentiert, welche Angabe gültig ist.",
+                    "evidence_refs": [
+                      "S2",
+                      "S4"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "repair_count": 2,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Bearbeitung von Anfragen zu gebuchten Reisen",
+                "description": "Aufnahme und Bearbeitung telefonischer Kundenrückfragen zu gebuchten Reiseleistungen oder Transferzeiten.",
+                "trigger": "Telefonischer Anruf eines Kunden bezüglich einer gebuchten Reise",
+                "outcome": "Erteilte Auskunft an den Kunden zum aktuellen Stand der Buchung",
+                "scope_in": "Recherche in der Buchungsmaske, Überprüfung des E-Mail-Postfachs und sporadische interne Rückfrage im Büro",
+                "scope_out": "Langfristige Systemarchitekturentscheidungen und externe Dienstleistersteuerung",
+                "strategic_objective": "Zielvorschlag: Erhöhung der Erstauskunftsfähigkeit im Kundenservice bei Reiseanfragen",
+                "stakeholders": "Kundenservice, Reiseorganisation / Büro, Kunden",
+                "constraints": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten vor.",
+                "evidence_refs": [
+                  "U0",
+                  "S1"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "data_lookup",
+                  "sequence": 1,
+                  "name": "Prüfung von Buchung und Postfach",
+                  "description": "Die Servicekraft sucht bei Anfragen nacheinander in der Buchungsmaske und im gemeinsamen E-Mail-Postfach nach Angaben zur gebuchten Reise.",
+                  "roles": "Kundenservice",
+                  "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                  "documents": "Buchungsnotiz, E-Mails / Änderungsnachrichten",
+                  "pain_points": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+                  "baseline_metrics": "Keine Zeitstichproben oder Messdaten vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "medium",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "key": "internal_clarification",
+                  "sequence": 2,
+                  "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+                  "description": "Bei Unklarheiten fragt die Servicekraft bei der Reiseorganisation bzw. im Büro nach.",
+                  "roles": "Kundenservice, Reiseorganisation / Büro",
+                  "systems": "Unbekannt",
+                  "documents": "Unbekannt",
+                  "pain_points": "Der Kunde wartet am Telefon, während der Status intern abgeklärt werden muss.",
+                  "baseline_metrics": "Keine Messdaten zur Häufigkeit vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S3"
+                  ]
+                },
+                {
+                  "key": "customer_response",
+                  "sequence": 3,
+                  "name": "Auskunftserteilung an den Kunden",
+                  "description": "Übermittlung der aktuellen Information zur Buchung an den wartenden Anrufer.",
+                  "roles": "Kundenservice",
+                  "systems": "Telefon",
+                  "documents": "Unbekannt",
+                  "pain_points": "Keine sofortige Verbindlichkeit der Auskunft möglich, wenn Status unklar ist.",
+                  "baseline_metrics": "Keine Messdaten vorhanden",
+                  "impact": "medium",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "low",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "data_lookup",
+                "business_domain": "customer_service",
+                "capability": "Informationsrecherche bei telefonischen Kundenanfragen",
+                "strategic_impact": "medium",
+                "economic_potential": "medium",
+                "pain_intensity": "medium",
+                "data_accessibility": "medium",
+                "change_effort": "low",
+                "rationale": "Laut Erfahrungsbericht erfolgt die Recherche nacheinander in Buchungsmaske und E-Mail-Postfach oft bei Anfragen zu gebuchten Reisen, was zu beobachteten Wartezeiten am Telefon führen kann. Dies stellt eine unbestätigte Beobachtung dar; ein systembestimmender Engpass ist laut den Fallunterlagen nicht nachgewiesen.",
+                "tradeoffs": [
+                  "Die Optimierung des Nachschlagens löst nicht das Problem unklarer Gültigkeiten von abweichenden Änderungsnachrichten."
+                ],
+                "uncertainties": [
+                  "Unbekannt, wie oft eine Recherche in E-Mails tatsächlich erforderlich ist.",
+                  "Unbekannt, welche Produktnamen und Antwortfristen vereinbart sind."
+                ],
+                "evidence_refs": [
+                  "U0",
+                  "S1"
+                ]
+              },
+              "process_analysis": {
+                "name": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen",
+                "scope_start": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise",
+                "scope_end": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach",
+                "trigger": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten",
+                "outcome": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage",
+                "current_flow": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach.",
+                "roles": "Kundenservice",
+                "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                "data_objects": "Buchungsdaten, E-Mails, Änderungsnachrichten",
+                "business_rules": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden.",
+                "handoffs": "Vorgesehene Übergabe an die Reiseorganisation / das Büro bei unklaren Datenständen.",
+                "bottlenecks": "Mögliche Verzögerung durch nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach (unbestätigte Beobachtung/Hypothese); ein systembestimmender Engpass ist nicht nachgewiesen.",
+                "observations": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf.",
+                "cause_hypotheses": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen.",
+                "constraints": "Keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten.",
+                "exceptions": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit.",
+                "baseline_metrics": "Keine verifizierten Messwerte vorhanden",
+                "evidence_refs": [
+                  "U0",
+                  "S1",
+                  "S3"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Bei Anfragen zu gebuchten Reisen wird oft zuerst in der Buchung und danach in alten E-Mails gesucht.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "statement": "Manchmal erfolgt eine interne Rückfrage beim Büro / der Reiseorganisation.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                {
+                  "statement": "Einfache Leistungsfragen können ohne interne Rückfrage beantwortet werden, wenn die Buchungsangaben übereinstimmen.",
+                  "evidence_refs": [
+                    "S3"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die Suchzeit in unterschiedlichen Quellen erhöht die durchschnittliche Bearbeitungszeit pro Anruf.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Abweichungen zwischen Buchungsnotiz und Änderungsnachricht könnten durch verzögerte Systemaktualisierungen entstehen.",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Es ist nicht bekannt, welche Produktnamen und vereinbarten Antwortfristen im Kundenservice gelten.",
+                  "impact": "Erschwert die genaue Definition von Vorgaben für Bearbeitungszeiten."
+                },
+                {
+                  "statement": "Es ist unklar, welche Angabe zur Transferzeit im Fall SYN-A-01 (09:00 vs. 10:00) aktuell gültig ist.",
+                  "impact": "Kann zu Fehlinformationen gegenüber Kunden führen."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+                  "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+                  "blocking": true
+                },
+                {
+                  "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+                  "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": [
+                {
+                  "statement": "In Fall SYN-A-01 nennt die Buchungsnotiz einen Transfer um 09:00 Uhr, während eine spätere Nachricht 10:00 Uhr angibt. Es ist nicht dokumentiert, welche Angabe gültig ist.",
+                  "evidence_refs": [
+                    "S2",
+                    "S4"
+                  ]
+                }
+              ]
+            },
+            "contract_errors": [
+              "process_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+            ],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": false,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "UNGROUNDED_BUSINESS_RULE",
+                  "message": "In 'process_analysis.business_rules' wird eine verbindliche Vorgabe zur internen Abstimmung behauptet, für die es in den Quellen U0 und S1 keinen Beleg gibt."
+                },
+                {
+                  "code": "UNQUALIFIED_CAUSAL_CLAIM",
+                  "message": "In 'process_analysis.bottlenecks' wird eine kausale Verzögerung durch die nacheinander gelagerte Recherche behauptet, anstatt die Wirkungsbehauptung rein als unbestätigte Hypothese zu formulieren."
+                },
+                {
+                  "code": "UNGROUNDED_HANDOFF",
+                  "message": "In 'process_analysis.handoffs' wird ein fester Prozessübergang an das Büro behauptet, der in den Quellen nur als sporadische, formlos berichtete Nachfrage belegt ist."
+                },
+                {
+                  "code": "methodical_contract",
+                  "message": "process_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                },
+                {
+                  "code": "discovery_contract",
+                  "message": "process_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                }
+              ],
+              "repair_instructions": "Passe 'process_analysis.business_rules' so an, dass keine unbelegte geschäftliche Regel behauptet wird. Entferne oder qualifiziere in 'process_analysis.bottlenecks' die Kausalbehauptung ('Verzögerung durch...') als reine Hypothese. Formulieren Sie 'process_analysis.handoffs' so um, dass keine formelle Prozessübergabe behauptet wird.\nprocess_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nprocess_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.",
+              "human_question": ""
+            },
+            "incoming_repair": {
+              "allowed_fields": [
+                "focus.rationale",
+                "process_analysis.bottlenecks"
+              ],
+              "raw_proposal": {
+                "schema_version": "ap1-discovery-v1",
+                "value_stream": {
+                  "name": "Bearbeitung von Anfragen zu gebuchten Reisen",
+                  "description": "Aufnahme und Bearbeitung telefonischer Kundenrückfragen zu gebuchten Reiseleistungen oder Transferzeiten.",
+                  "trigger": "Telefonischer Anruf eines Kunden bezüglich einer gebuchten Reise",
+                  "outcome": "Erteilte Auskunft an den Kunden zum aktuellen Stand der Buchung",
+                  "scope_in": "Recherche in der Buchungsmaske, Überprüfung des E-Mail-Postfachs und sporadische interne Rückfrage im Büro",
+                  "scope_out": "Langfristige Systemarchitekturentscheidungen und externe Dienstleistersteuerung",
+                  "strategic_objective": "Zielvorschlag: Erhöhung der Erstauskunftsfähigkeit im Kundenservice bei Reiseanfragen",
+                  "stakeholders": "Kundenservice, Reiseorganisation / Büro, Kunden",
+                  "constraints": "Es liegen keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten vor.",
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                "stages": [
+                  {
+                    "key": "data_lookup",
+                    "sequence": 1,
+                    "name": "Prüfung von Buchung und Postfach",
+                    "description": "Die Servicekraft sucht bei Anfragen nacheinander in der Buchungsmaske und im gemeinsamen E-Mail-Postfach nach Angaben zur gebuchten Reise.",
+                    "roles": "Kundenservice",
+                    "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                    "documents": "Buchungsnotiz, E-Mails / Änderungsnachrichten",
+                    "pain_points": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+                    "baseline_metrics": "Keine Zeitstichproben oder Messdaten vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "medium",
+                    "change_effort": "low",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "key": "internal_clarification",
+                    "sequence": 2,
+                    "name": "Interne Rückfrage im Büro / bei Reiseorganisation",
+                    "description": "Bei Unklarheiten fragt die Servicekraft bei der Reiseorganisation bzw. im Büro nach.",
+                    "roles": "Kundenservice, Reiseorganisation / Büro",
+                    "systems": "Unbekannt",
+                    "documents": "Unbekannt",
+                    "pain_points": "Der Kunde wartet am Telefon, während der Status intern abgeklärt werden muss.",
+                    "baseline_metrics": "Keine Messdaten zur Häufigkeit vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "low",
+                    "change_effort": "medium",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1",
+                      "S3"
+                    ]
+                  },
+                  {
+                    "key": "customer_response",
+                    "sequence": 3,
+                    "name": "Auskunftserteilung an den Kunden",
+                    "description": "Übermittlung der aktuellen Information zur Buchung an den wartenden Anrufer.",
+                    "roles": "Kundenservice",
+                    "systems": "Telefon",
+                    "documents": "Unbekannt",
+                    "pain_points": "Keine sofortige Verbindlichkeit der Auskunft möglich, wenn Status unklar ist.",
+                    "baseline_metrics": "Keine Messdaten vorhanden",
+                    "impact": "medium",
+                    "pain_intensity": "medium",
+                    "improvement_potential": "medium",
+                    "data_accessibility": "low",
+                    "change_effort": "low",
+                    "time_to_value": "unknown",
+                    "evidence_basis": "indicative",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  }
+                ],
+                "focus": {
+                  "recommended_stage_key": "data_lookup",
+                  "business_domain": "customer_service",
+                  "capability": "Informationsrecherche bei telefonischen Kundenanfragen",
+                  "strategic_impact": "medium",
+                  "economic_potential": "medium",
+                  "pain_intensity": "medium",
+                  "data_accessibility": "medium",
+                  "change_effort": "low",
+                  "rationale": "Laut Erfahrungsbericht erfolgt die Recherche nacheinander in Buchungsmaske und E-Mail-Postfach oft bei Anfragen zu gebuchten Reisen, was zu beobachteten Wartezeiten am Telefon führen kann. Dies stellt eine unbestätigte Beobachtung dar; ein systembestimmender Engpass ist laut den Fallunterlagen nicht nachgewiesen.",
+                  "tradeoffs": [
+                    "Die Optimierung des Nachschlagens löst nicht das Problem unklarer Gültigkeiten von abweichenden Änderungsnachrichten."
+                  ],
+                  "uncertainties": [
+                    "Unbekannt, wie oft eine Recherche in E-Mails tatsächlich erforderlich ist.",
+                    "Unbekannt, welche Produktnamen und Antwortfristen vereinbart sind."
+                  ],
+                  "evidence_refs": [
+                    "U0",
+                    "S1"
+                  ]
+                },
+                "process_analysis": {
+                  "name": "Recherche im Kundenservice bei Kundenanfragen zu gebuchten Reisen",
+                  "scope_start": "Eingang des Kundenanrufs bezüglich einer gebuchten Reise",
+                  "scope_end": "Abschluss der Informationssuche in Buchung und E-Mail-Postfach",
+                  "trigger": "Telefonischer Anruf eines Kunden mit Rückfragen zur Buchung oder Transferzeiten",
+                  "outcome": "Ermittelter Datenstand zur Beantwortung der Kundenanfrage",
+                  "current_flow": "Bei Anrufeingang sucht die Servicekraft zuerst in der Buchungsmaske. Wenn der Status dort nicht eindeutig ist, sucht sie anschließend im gemeinsamen E-Mail-Postfach.",
+                  "roles": "Kundenservice",
+                  "systems": "Buchungsmaske, gemeinsames E-Mail-Postfach",
+                  "data_objects": "Buchungsdaten, E-Mails, Änderungsnachrichten",
+                  "business_rules": "Auskünfte sollen bei Unklarheiten vor Abgabe intern mit der Reiseorganisation abgestimmt werden.",
+                  "handoffs": "Vorgesehene Übergabe an die Reiseorganisation / das Büro bei unklaren Datenständen.",
+                  "bottlenecks": "Mögliche Verzögerung durch nacheinander gelagerte Recherche in Buchungsmaske und E-Mail-Postfach (unbestätigte Beobachtung/Hypothese); ein systembestimmender Engpass ist nicht nachgewiesen.",
+                  "observations": "Einfache Anfragen können direkt über übereinstimmende Buchungsdaten beantwortet werden; bei Abweichungen entsteht Klärungsbedarf.",
+                  "cause_hypotheses": "Möglicherweise existiert keine zentrale Stelle zur eindeutigen Dokumentation von Statusänderungen.",
+                  "constraints": "Keine Häufigkeitsmessungen, Zeitstichproben oder festgestellte Fehlerquoten.",
+                  "exceptions": "Eine eventuelle Nicht-Erreichbarkeit des Büros bei internen Rückfragen ist eine nicht beobachtete Möglichkeit.",
+                  "baseline_metrics": "Keine verifizierten Messwerte vorhanden",
+                  "evidence_refs": [
+                    "U0",
+                    "S1",
+                    "S3"
+                  ]
+                },
+                "facts": [
+                  {
+                    "statement": "Bei Anfragen zu gebuchten Reisen wird oft zuerst in der Buchung und danach in alten E-Mails gesucht.",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "statement": "Manchmal erfolgt eine interne Rückfrage beim Büro / der Reiseorganisation.",
+                    "evidence_refs": [
+                      "U0",
+                      "S1"
+                    ]
+                  },
+                  {
+                    "statement": "Einfache Leistungsfragen können ohne interne Rückfrage beantwortet werden, wenn die Buchungsangaben übereinstimmen.",
+                    "evidence_refs": [
+                      "S3"
+                    ]
+                  }
+                ],
+                "hypotheses": [
+                  {
+                    "statement": "Die Suchzeit in unterschiedlichen Quellen erhöht die durchschnittliche Bearbeitungszeit pro Anruf.",
+                    "evidence_refs": [
+                      "U0"
+                    ]
+                  },
+                  {
+                    "statement": "Abweichungen zwischen Buchungsnotiz und Änderungsnachricht könnten durch verzögerte Systemaktualisierungen entstehen.",
+                    "evidence_refs": [
+                      "S2",
+                      "S4"
+                    ]
+                  }
+                ],
+                "unknowns": [
+                  {
+                    "statement": "Es ist nicht bekannt, welche Produktnamen und vereinbarten Antwortfristen im Kundenservice gelten.",
+                    "impact": "Erschwert die genaue Definition von Vorgaben für Bearbeitungszeiten."
+                  },
+                  {
+                    "statement": "Es ist unklar, welche Angabe zur Transferzeit im Fall SYN-A-01 (09:00 vs. 10:00) aktuell gültig ist.",
+                    "impact": "Kann zu Fehlinformationen gegenüber Kunden führen."
+                  }
+                ],
+                "clarifications": [
+                  {
+                    "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+                    "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+                    "blocking": true
+                  },
+                  {
+                    "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+                    "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+                    "blocking": false
+                  }
+                ],
+                "contradictions": [
+                  {
+                    "statement": "In Fall SYN-A-01 nennt die Buchungsnotiz einen Transfer um 09:00 Uhr, während eine spätere Nachricht 10:00 Uhr angibt. Es ist nicht dokumentiert, welche Angabe gültig ist.",
+                    "evidence_refs": [
+                      "S2",
+                      "S4"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "discovery_snapshot_id": "abdc3e58-e187-4ad7-a541-3dce1ccc68ef"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": false,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": false,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "UNGROUNDED_BUSINESS_RULE",
+            "message": "In 'process_analysis.business_rules' wird eine verbindliche Vorgabe zur internen Abstimmung behauptet, für die es in den Quellen U0 und S1 keinen Beleg gibt."
+          },
+          {
+            "code": "UNQUALIFIED_CAUSAL_CLAIM",
+            "message": "In 'process_analysis.bottlenecks' wird eine kausale Verzögerung durch die nacheinander gelagerte Recherche behauptet, anstatt die Wirkungsbehauptung rein als unbestätigte Hypothese zu formulieren."
+          },
+          {
+            "code": "UNGROUNDED_HANDOFF",
+            "message": "In 'process_analysis.handoffs' wird ein fester Prozessübergang an das Büro behauptet, der in den Quellen nur als sporadische, formlos berichtete Nachfrage belegt ist."
+          },
+          {
+            "code": "methodical_contract",
+            "message": "process_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+          },
+          {
+            "code": "discovery_contract",
+            "message": "process_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+          }
+        ],
+        "repair_instructions": "Passe 'process_analysis.business_rules' so an, dass keine unbelegte geschäftliche Regel behauptet wird. Entferne oder qualifiziere in 'process_analysis.bottlenecks' die Kausalbehauptung ('Verzögerung durch...') als reine Hypothese. Formulieren Sie 'process_analysis.handoffs' so um, dass keine formelle Prozessübergabe behauptet wird.\nprocess_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nprocess_analysis.bottlenecks: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?",
+          "impact": "Bestimmt die Korrektheit der Auskunft an den Kunden.",
+          "blocking": true
+        },
+        {
+          "question": "Welche Antwortfristen und Kennzahlen gelten für den Kundenservice?",
+          "impact": "Ermöglicht eine quantitative Bewertung von Prozessleistung und Engpässen.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.026506"
+    }
+  ],
+  "scope_confirmed": false
+}

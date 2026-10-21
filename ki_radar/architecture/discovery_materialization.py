@@ -227,6 +227,31 @@ def materialize_discovery_and_start_investigation(
             "Der strukturierte Discovery-Draft fehlt.",
             code="missing_discovery_payload",
         )
+    from ki_radar.accelerator.architect_contract import (
+        DISCOVERY_PROMPT_VERSION,
+        blocking_discovery_questions,
+        discovery_methodical_findings,
+    )
+
+    if analysis.prompt_version != DISCOVERY_PROMPT_VERSION:
+        raise DiscoveryMaterializationError(
+            "Der gespeicherte Entwurf bleibt lesbar. Vor der verbindlichen Übernahme "
+            "ist eine aktuelle fachliche Prüfung erforderlich.",
+            code="analysis_review_outdated",
+        )
+
+    questions = blocking_discovery_questions(draft)
+    if questions:
+        raise DiscoveryMaterializationError(
+            "Scope-/Fokusentscheidung noch offen: " + " ".join(questions),
+            code="decision_blocking_clarification",
+        )
+    findings = discovery_methodical_findings(draft)
+    if findings:
+        raise DiscoveryMaterializationError(
+            "Der Entwurf benötigt eine fachliche Korrektur: " + " ".join(findings),
+            code="invalid_discovery_contract",
+        )
     stage_drafts = draft.get("stages")
     if not isinstance(stage_drafts, list) or not stage_drafts:
         raise DiscoveryMaterializationError(

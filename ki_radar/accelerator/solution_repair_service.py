@@ -5,6 +5,7 @@ import logging
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
@@ -28,6 +29,7 @@ from .solution_quality_runs import (
     mark_solution_quality_step_success,
 )
 from .solution_quality_snapshot import build_solution_quality_snapshot
+from .solution_quality_versions import REPAIR_PROMPT_VERSION
 from .solution_repair_contract import (
     SolutionRepairContractError,
     SolutionRepairPlan,
@@ -315,9 +317,11 @@ def run_targeted_solution_repair(
     try:
         result = request_openrouter(
             messages=messages,
-            max_tokens=policy.max_output_tokens,
+            max_tokens=policy.solution_generation_max_output_tokens,
             timeout_seconds=policy.timeout_seconds,
             temperature=None,
+            reasoning_effort="medium",
+            model_override=settings.ACCELERATOR_DISCOVERY_MODEL or None,
             response_format={
                 "type": "json_schema",
                 "json_schema": {
@@ -360,6 +364,15 @@ def run_targeted_solution_repair(
             result=result,
         )
 
+    if payload.get("prompt_version") != REPAIR_PROMPT_VERSION:
+        logger.warning(
+            "solution_repair prompt_version_echo quality_run_id=%s echoed=%r executed=%s",
+            quality_run.pk,
+            payload.get("prompt_version"),
+            REPAIR_PROMPT_VERSION,
+        )
+    if isinstance(payload.get("prompt_version"), str) and payload["prompt_version"].strip():
+        payload["prompt_version"] = REPAIR_PROMPT_VERSION
     try:
         validated = validate_solution_repair_payload(
             payload,

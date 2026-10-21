@@ -1,0 +1,1592 @@
+{
+  "case": "D",
+  "phase": "replay",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "1a7f997ec46e3341b3805d6fb0964a514ff42e268cf38b6a286475936d3d18fe",
+    "ki_radar/accelerator/architect_contract.py": "4fa753e63ba27419d39223899d961d6a97de58d34655d66fcace4cd6acd02bf2"
+  },
+  "status": "waiting_human",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik D"
+    },
+    "problem_statement": "Ich organisiere vor Ort die Busse für eine Reisegruppe. Wenn sich etwas ändert, telefoniere und schreibe ich mit mehreren Leuten. Danach bin ich manchmal unsicher, ob alle Bescheid wissen und ob ich den Bus schon anders bestellen soll.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "3085befd-7728-4224-87a8-7db4c5758cec",
+      "title": "[SYNTHETISCH #133 D/replay] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:13:21.658961+00:00",
+      "idea_updated_at": "2026-10-21T11:13:21.637234+00:00",
+      "origin_source_filename": "ideenbox-3085befd-7728-4224-87a8-7db4c5758cec.md",
+      "origin_source_sha256": "b9d8ac92f65a443b2ef067640476327654206ea770582ae48fa8b8ac6a323011"
+    }
+  },
+  "analyses": [
+    {
+      "id": "371fdf12-0b21-496e-bbe2-0e8a870d5ed2",
+      "status": "failed",
+      "error_code": "verification_not_converged",
+      "source_revision": 0,
+      "source_hash": "e675486539cca566b9faadb81d10536d58b973373f261cfda9ed691894216e5a",
+      "prompt_version": "ap1-discovery-methodology-v3",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Busreisen-Organisation und Anpassung vor Ort",
+            "description": "End-to-End-Prozess von der initialen Planung der Busreise über die Durchführung und flexible Abstimmung bei Änderungen vor Ort bis hin zur finalen Busbestellung.",
+            "trigger": "Bedarf an der Organisation einer Busreise für eine Reisegruppe",
+            "outcome": "Erfolgreich durchgeführte und bei Bedarf angepasste Busreise",
+            "scope_in": "Organisation, Abstimmung von Änderungen vor Ort und Festlegung der Busbestellung",
+            "scope_out": "Abrechnung der Fahrtkosten und langfristige Fuhrparkplanung",
+            "strategic_objective": "Sicherstellung reibungsloser Reiseabläufe und klarer Abstimmungswege bei Ablaufänderungen vor Ort",
+            "stakeholders": "Reiseleiter / Organisator vor Ort, Kontaktdaten-Partner, Busunternehmer / Busfahrer",
+            "constraints": "Keine expliziten Einschränkungen angegeben",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG_PLANNING",
+              "sequence": 1,
+              "name": "Initialplanung der Busbestellung",
+              "description": "Erstmalige Organisation und Bestellung der Busse für die Reisegruppe.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_CHANGE_COMM",
+              "sequence": 2,
+              "name": "Abstimmung von Ablaufänderungen vor Ort",
+              "description": "Kommunikation per Telefon und Schriftverkehr mit mehreren Beteiligten bei Ablaufänderungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Telefonate und Nachrichten mit mehreren Beteiligten; Unsicherheit bezüglich des Kenntnisstands aller Personen",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_REORDER",
+              "sequence": 3,
+              "name": "Anpassung der Busbestellung",
+              "description": "Entscheidung und Durchführung der Umbestellung des Busses auf Basis der Abstimmung.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG_CHANGE_COMM",
+            "business_domain": "logistics",
+            "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase berichten die Beteiligten von telefonischer und schriftlicher Kommunikation mit mehreren Personen bei Ablaufänderungen, woraus Unsicherheit bezüglich des Informationsstands der Betroffenen entsteht.",
+            "tradeoffs": [
+              "Eine Fokussierung auf die Abstimmungsphase behebt nicht Ursachen für Ablaufänderungen."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationskanäle derzeit genutzt werden.",
+              "Wer alle beteiligten Absender und Empfänger sind."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abstimmung von Ablaufänderungen vor Ort",
+            "scope_start": "Eintritt einer Änderung im geplanten Ablauf vor Ort",
+            "scope_end": "Klärung der Informationslage und Vorbereitung der Busanpassung",
+            "trigger": "Änderung im Reiseablauf vor Ort",
+            "outcome": "Transparenz über den Wissensstand aller Beteiligten und Klarheit über Anpassungsbedarf der Busbestellung",
+            "current_flow": "Eintritt einer Ablaufänderung -> Durchführung von Telefonaten und Verfassen von Nachrichten an mehrere Beteiligte -> Entstehen von Unsicherheit über den Kenntnisstand der Beteiligten",
+            "roles": "Organisator vor Ort",
+            "systems": "",
+            "data_objects": "Informationen zu Fahrplan- und Ablaufänderungen",
+            "business_rules": "",
+            "handoffs": "Informationsaustausch zwischen Organisator und mehreren externen/internen Ansprechpartnern",
+            "bottlenecks": "Mehrkanalige und unstrukturierte Kommunikation (Telefonate und Nachrichten) mit mehreren Beteiligten",
+            "observations": "Nach Abstimmungen besteht Unsicherheit über den Kenntnisstand der Beteiligten sowie über die Erforderlichkeit einer geänderten Busbestellung",
+            "cause_hypotheses": "Fehlen eines zentralen Abstimmungskanals führt zu unvollständigem Informationsfluss und Unsicherheit",
+            "constraints": "",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Änderungen erfolgt die Kommunikation telefonisch und schriftlich mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Beteiligten Bescheid wissen und ob der Bus umbestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die dezentrale Kommunikation über unterschiedliche Kanäle führt zu Unklarheiten bei Folgeentscheidungen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Anzahl und Rollen der beteiligten Kommunikationspartner",
+              "impact": "Erschwert die genaue Beschreibung der Schnittstellen."
+            },
+            {
+              "statement": "Eingesetzte Nachrichtenkanäle und Dokumentationsmittel",
+              "impact": "Erschwert die Analyse von Medienbrüchen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+              "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+              "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "discovery_snapshot_id": "e0bcd18e-daab-44b6-983f-0d9d925ca59c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": false,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "MISSING_DECISION_UNKNOWNS",
+            "message": "Entscheidungsrelevante Unbekannte zur Verbindlichkeit von Ablaufänderungen sowie den Vollmachten/Befugnissen der Kommunikationspartner fehlen."
+          }
+        ],
+        "repair_instructions": "Ergänze in den 'unknowns' die entscheidungsrelevanten Unbekannten bezüglich der Verbindlichkeit von mitgeteilten Ablaufänderungen und den Befugnissen/Vollmachten der kontaktierten Personen. Ersetze zudem den unbegründeten Stakeholder-Begriff 'Kontaktdaten-Partner' durch 'Kommunikationspartner / Ansprechpartner vor Ort'.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+          "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+          "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.009292"
+    },
+    {
+      "id": "8e59b68f-ac6d-4eba-b2d8-40aa24b0a30b",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "e675486539cca566b9faadb81d10536d58b973373f261cfda9ed691894216e5a",
+      "prompt_version": "ap1-methodology-v6",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Busreisen-Organisation und Anpassung vor Ort",
+            "description": "End-to-End-Prozess von der initialen Planung der Busreise über die Durchführung und flexible Abstimmung bei Änderungen vor Ort bis hin zur Anforderung von Busanpassungen.",
+            "trigger": "Bedarf an der Organisation einer Busreise für eine Reisegruppe",
+            "outcome": "Erfolgreich durchgeführte Abstimmung bei Ablaufänderungen vor Ort",
+            "scope_in": "Organisation der Busse vor Ort und Abstimmung bei Ablaufänderungen",
+            "scope_out": "Abrechnung der Fahrtkosten und langfristige Fuhrparkplanung",
+            "strategic_objective": "Sicherstellung reibungsloser Reiseabläufe und klarer Abstimmungswege bei Ablaufänderungen vor Ort",
+            "stakeholders": "Reiseleiter / Organisator vor Ort, Kontaktdaten-Partner, Busunternehmer / Busfahrer",
+            "constraints": "Keine expliziten Einschränkungen angegeben",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG_PLANNING",
+              "sequence": 1,
+              "name": "Initialplanung der Busbestellung",
+              "description": "Erstmalige Organisation und Bestellung der Busse für die Reisegruppe.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_CHANGE_COMM",
+              "sequence": 2,
+              "name": "Abstimmung von Ablaufänderungen vor Ort",
+              "description": "Kommunikation per Telefon und Schriftverkehr mit mehreren Beteiligten bei Ablaufänderungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Telefonate und Nachrichten mit mehreren Beteiligten; Unsicherheit bezüglich des Kenntnisstands aller Personen",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_REORDER",
+              "sequence": 3,
+              "name": "Anpassung der Busbestellung",
+              "description": "Entscheidung und Durchführung der Umbestellung des Busses auf Basis der Abstimmung.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG_CHANGE_COMM",
+            "business_domain": "logistics",
+            "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In der Phase der Abstimmung von Ablaufänderungen tritt die berichtete Unsicherheit bezüglich des Kenntnisstands der Beteiligten und der Erforderlichkeit einer Busumbestellung auf.",
+            "tradeoffs": [
+              "Eine Fokussierung auf die Abstimmungsphase behebt nicht Ursachen für Ablaufänderungen."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationskanäle derzeit genutzt werden.",
+              "Wer alle beteiligten Absender und Empfänger sind."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abstimmung von Ablaufänderungen vor Ort",
+            "scope_start": "Eintritt einer Änderung im geplanten Ablauf vor Ort",
+            "scope_end": "Klärung der Informationslage und Vorbereitung der Busanpassung",
+            "trigger": "Änderung im Reiseablauf vor Ort",
+            "outcome": "Transparenz über den Wissensstand aller Beteiligten und Klarheit über Anpassungsbedarf der Busbestellung",
+            "current_flow": "Eintritt einer Änderung -> Telefonate und Nachrichten an mehrere Personen -> Abwarten und Unsicherheit bezüglich des Kenntnisstands der Beteiligten",
+            "roles": "Organisator vor Ort",
+            "systems": "",
+            "data_objects": "Informationen zu Fahrplan- und Ablaufänderungen",
+            "business_rules": "",
+            "handoffs": "Informationsaustausch zwischen Organisator und mehreren Ansprechpartnern",
+            "bottlenecks": "Mehrkanalige Kommunikation (Telefonate und Nachrichten) mit mehreren Beteiligten",
+            "observations": "Nach Abstimmungen besteht Unsicherheit über den Kenntnisstand der Beteiligten sowie über die Erforderlichkeit einer geänderten Busbestellung",
+            "cause_hypotheses": "Fehlen eines zentralen Abstimmungskanals führt zu unvollständigem Informationsfluss und Unsicherheit",
+            "constraints": "",
+            "exceptions": "Mögliche Nicht-Erreichbarkeit einzelner Ansprechpartner während der Abstimmung",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Änderungen erfolgt die Kommunikation telefonisch und schriftlich mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Beteiligten Bescheid wissen und ob der Bus umbestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die dezentrale Kommunikation über unterschiedliche Kanäle führt zu Unklarheiten bei Folgeentscheidungen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Anzahl und Rollen der beteiligten Kommunikationspartner",
+              "impact": "Erschwert die genaue Beschreibung der Schnittstellen."
+            },
+            {
+              "statement": "Eingesetzte Nachrichtenkanäle und Dokumentationsmittel",
+              "impact": "Erschwert die Analyse von Medienbrüchen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+              "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+              "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "e0bcd18e-daab-44b6-983f-0d9d925ca59c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+          "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+          "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.032570"
+    },
+    {
+      "id": "0c84b762-a4c7-42b6-bccf-69192583a368",
+      "status": "failed",
+      "error_code": "invalid_discovery_contract",
+      "source_revision": 0,
+      "source_hash": "e675486539cca566b9faadb81d10536d58b973373f261cfda9ed691894216e5a",
+      "prompt_version": "ap1-methodology-v7",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Busreisen-Organisation und Anpassung vor Ort",
+            "description": "End-to-End-Prozess von der initialen Planung der Busreise über die Durchführung und flexible Abstimmung bei Änderungen vor Ort bis hin zur finalen Busbestellung.",
+            "trigger": "Bedarf an der Organisation einer Busreise für eine Reisegruppe",
+            "outcome": "Erfolgreich durchgeführte und bei Bedarf angepasste Busreise",
+            "scope_in": "Organisation, Abstimmung von Änderungen vor Ort und Festlegung der Busbestellung",
+            "scope_out": "Abrechnung der Fahrtkosten und langfristige Fuhrparkplanung",
+            "strategic_objective": "Sicherstellung reibungsloser Reiseabläufe und klarer Abstimmungswege bei Ablaufänderungen vor Ort",
+            "stakeholders": "Reiseleiter / Organisator vor Ort, Kontaktdaten-Partner, Busunternehmer / Busfahrer",
+            "constraints": "Keine expliziten Einschränkungen angegeben",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG_PLANNING",
+              "sequence": 1,
+              "name": "Initialplanung der Busbestellung",
+              "description": "Erstmalige Organisation und Bestellung der Busse für die Reisegruppe.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_CHANGE_COMM",
+              "sequence": 2,
+              "name": "Abstimmung von Ablaufänderungen vor Ort",
+              "description": "Kommunikation per Telefon und Schriftverkehr mit mehreren Beteiligten bei Ablaufänderungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Telefonate und Nachrichten mit mehreren Beteiligten; Unsicherheit bezüglich des Kenntnisstands aller Personen",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_REORDER",
+              "sequence": 3,
+              "name": "Anpassung der Busbestellung",
+              "description": "Entscheidung und Durchführung der Umbestellung des Busses auf Basis der Abstimmung.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG_CHANGE_COMM",
+            "business_domain": "logistics",
+            "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "Die Abstimmungsphase bei Ablaufänderungen verursacht die größte Unsicherheit und den höchsten manuellen Kommunikationsaufwand.",
+            "tradeoffs": [
+              "Eine Fokussierung auf die Abstimmungsphase behebt nicht Ursachen für Ablaufänderungen."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationskanäle derzeit genutzt werden.",
+              "Wer alle beteiligten Absender und Empfänger sind."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abstimmung von Ablaufänderungen vor Ort",
+            "scope_start": "Eintritt einer Änderung im geplanten Ablauf vor Ort",
+            "scope_end": "Klärung der Informationslage und Vorbereitung der Busanpassung",
+            "trigger": "Änderung im Reiseablauf vor Ort",
+            "outcome": "Transparenz über den Wissensstand aller Beteiligten und Klarheit über Anpassungsbedarf der Busbestellung",
+            "current_flow": "STG_PLANNING (Initialplanung der Busbestellung) -> STG_CHANGE_COMM (Abstimmung von Ablaufänderungen vor Ort) -> STG_REORDER (Anpassung der Busbestellung)",
+            "roles": "Organisator vor Ort",
+            "systems": "",
+            "data_objects": "Informationen zu Fahrplan- und Ablaufänderungen",
+            "business_rules": "",
+            "handoffs": "Informationsaustausch zwischen Organisator und mehreren externen/internen Ansprechpartnern",
+            "bottlenecks": "Mehrkanalige und unstrukturierte Kommunikation (Telefonate und Nachrichten) mit mehreren Beteiligten",
+            "observations": "Nach Abstimmungen besteht Unsicherheit über den Kenntnisstand der Beteiligten sowie über die Erforderlichkeit einer geänderten Busbestellung",
+            "cause_hypotheses": "Fehlen eines zentralen Abstimmungskanals führt zu unvollständigem Informationsfluss und Unsicherheit",
+            "constraints": "",
+            "exceptions": "",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Änderungen erfolgt die Kommunikation telefonisch und schriftlich mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Beteiligten Bescheid wissen und ob der Bus umbestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die dezentrale Kommunikation über unterschiedliche Kanäle führt zu Unklarheiten bei Folgeentscheidungen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Anzahl und Rollen der beteiligten Kommunikationspartner",
+              "impact": "Erschwert die genaue Beschreibung der Schnittstellen."
+            },
+            {
+              "statement": "Eingesetzte Nachrichtenkanäle und Dokumentationsmittel",
+              "impact": "Erschwert die Analyse von Medienbrüchen."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+              "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+              "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "discovery_snapshot_id": "e0bcd18e-daab-44b6-983f-0d9d925ca59c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "repair",
+        "checks": {
+          "source_grounding": false,
+          "scope_quality": false,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": false,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [
+          {
+            "code": "SCOPE_OVERFLOW_CURRENT_FLOW",
+            "message": "process_analysis.current_flow wiederholt sämtliche Phasen des Wertstroms (STG_PLANNING -> STG_CHANGE_COMM -> STG_REORDER), anstatt den Ist-Ablauf auf die ausgewählte Fokusphase STG_CHANGE_COMM zu beschränken."
+          },
+          {
+            "code": "UNGROUNDED_CAUSAL_CLAIM",
+            "message": "focus.rationale behauptet eine ursächliche Wirkung ('verursacht die größte Unsicherheit'), die in U0 nicht als bewiesene Kausalität belegt ist."
+          },
+          {
+            "code": "methodical_contract",
+            "message": "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+          },
+          {
+            "code": "methodical_contract",
+            "message": "process_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen."
+          }
+        ],
+        "repair_instructions": "1. Begrenze process_analysis.current_flow auf die Teilschritte innerhalb der Fokusphase STG_CHANGE_COMM (z. B. Eintritt einer Änderung -> Kontaktaufnahme per Telefon/Nachrichten mit mehreren Personen -> Entstehen von Unsicherheit über Kenntnisstand und Umbestellbedarf).\n2. Formuliere focus.rationale um, sodass die Kausalbehauptung ('verursacht') durch eine berichtete Beobachtung ersetzt oder als unbestätigte Vermutung relativiert wird.\nfocus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nprocess_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen.",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+          "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+          "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.016605"
+    },
+    {
+      "id": "50ff60a6-5906-4f86-a181-c8eff6a1495b",
+      "status": "waiting_human",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "e675486539cca566b9faadb81d10536d58b973373f261cfda9ed691894216e5a",
+      "prompt_version": "ap1-methodology-v8",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Busreisen-Organisation und Abstimmung vor Ort",
+            "description": "Prozess zur Organisation von Bussen für eine Reisegruppe sowie zur Abstimmung und Anpassung bei Änderungen vor Ort.",
+            "trigger": "Bedarf an der Organisation von Bussen für eine Reisegruppe vor Ort",
+            "outcome": "Organisierte und bei Bedarf abgestimmte Busreise",
+            "scope_in": "Organisation vor Ort und Abstimmung bei Ablaufänderungen per Telefon und Nachricht",
+            "scope_out": "Prozesse außerhalb der direkten Organisation und Abstimmung vor Ort",
+            "strategic_objective": "Sicherstellung klarer Abstimmungswege und Transparenz bei Ablaufänderungen vor Ort",
+            "stakeholders": "Organisator vor Ort, mehrere Kommunikationspartner",
+            "constraints": "Keine expliziten Einschränkungen angegeben",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "STG_PLANNING",
+              "sequence": 1,
+              "name": "Initialorganisation der Busse",
+              "description": "Organisation der Busse für die Reisegruppe vor Ort.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "low",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "unknown",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_CHANGE_COMM",
+              "sequence": 2,
+              "name": "Abstimmung von Ablaufänderungen",
+              "description": "Telefonische und schriftliche Kommunikation mit mehreren Personen bei Ablaufänderungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob alle beteiligten Personen informiert sind",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "STG_REORDER",
+              "sequence": 3,
+              "name": "Anpassung der Busbestellung",
+              "description": "Entscheidung über eine veränderte Busbestellung im Anschluss an die Abstimmungen.",
+              "roles": "Organisator vor Ort",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "medium",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "medium",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "STG_CHANGE_COMM",
+            "business_domain": "logistics",
+            "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase wird laut Schilderung direkte Unsicherheit bezüglich des Kenntnisstands der Beteiligten berichtet.",
+            "tradeoffs": [
+              "Eine Verbesserung der Abstimmungsphase verhindert nicht das Auftreten von Ablaufänderungen selbst."
+            ],
+            "uncertainties": [
+              "Welche konkreten Kommunikationswege und Nachrichten-Apps genutzt werden.",
+              "Wer die genauen Ansprechpartner und Empfänger bei Änderungen sind."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abstimmung von Ablaufänderungen vor Ort",
+            "scope_start": "Eintritt einer Ablaufänderung vor Ort",
+            "scope_end": "Abschluss der Nachrichten und Telefonate zur Klärung des Informationsstands",
+            "trigger": "Änderung im geplanten Ablauf vor Ort",
+            "outcome": "Durchgeführte Kontaktaufnahme zur Information der Beteiligten",
+            "current_flow": "Eintritt einer Ablaufänderung -> Telefonate und schriftliche Nachrichten an mehrere Personen -> Auftreten von Unsicherheit über den Wissensstand der Beteiligten",
+            "roles": "Organisator vor Ort",
+            "systems": "",
+            "data_objects": "Informationen zu Ablaufänderungen",
+            "business_rules": "",
+            "handoffs": "Kommunikation zwischen Organisator und mehreren Personen",
+            "bottlenecks": "Kommunikation per Telefonat und Nachricht mit mehreren Personen, die im Anschluss zu Unsicherheit über den Kenntnisstand der Beteiligten führt",
+            "observations": "Nach der Kommunikation bleibt teilweise unklar, ob alle informiert sind und ob eine Anpassung der Busbestellung erfolgen muss.",
+            "cause_hypotheses": "Mögliche fehlende Transparenz oder Rückmeldungen in den genutzten Kommunikationswegen erzeugen die Unsicherheit.",
+            "constraints": "",
+            "exceptions": "Möglicher Ausfall oder Nicht-Erreichbarkeit einzelner Ansprechpartner",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Bei Ablaufänderungen telefoniert und schreibt der Organisator mit mehreren Personen.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Personen Bescheid wissen und ob der Bus anders bestellt werden soll.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Die Nutzung unstrukturierter Kommunikationskanäle ohne verlässliche Lesebestätigung verursacht die Unsicherheit bezüglich des Kenntnisstands.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Rollen und Anzahl der beteiligten Gesprächspartner",
+              "impact": "Erschwert die Definition gezielter Empfängergruppen."
+            },
+            {
+              "statement": "Verwendete Nachrichtenkanäle und Medien",
+              "impact": "Erschwert die Identifikation konkreter Schwachstellen im Übertragungsweg."
+            },
+            {
+              "statement": "Vollmacht und Befugnis der Ansprechpartner vor Ort zur Bestätigung von Programmansprüchen",
+              "impact": "Erschwert die Feststellung, wer Ablaufänderungen verbindlich freigeben darf."
+            },
+            {
+              "statement": "Verbindlichkeit der erhaltenen Informationen zu Ablaufänderungen als Entscheidungsgrundlage",
+              "impact": "Verhindert eine fundierte Entscheidung darüber, ob der Bus umbestellt werden muss."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Welche konkreten Kommunikationsmittel (z. B. Telefonat, Messenger, SMS) werden verwendet?",
+              "impact": "Hilft bei der Analyse des Informationsflusses.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Personen müssen bei Änderungen zwingend benachrichtigt werden?",
+              "impact": "Ermöglicht eine genaue Zuordnung der Beteiligten.",
+              "blocking": false
+            },
+            {
+              "question": "Welche Ansprechpartner sind befugt, Verbindlichkeit über Ablaufänderungen und Busumbestellungen herzustellen?",
+              "impact": "Notwendig zur Klärung der Entscheidungsgrundlage für eine Umbestellung des Busses.",
+              "blocking": true
+            }
+          ],
+          "contradictions": []
+        },
+        "review_history": [
+          {
+            "repair_count": 0,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Busreisen-Organisation und Anpassung vor Ort",
+                "description": "End-to-End-Prozess von der initialen Planung der Busreise über die Durchführung und flexible Abstimmung bei Änderungen vor Ort bis hin zur finalen Busbestellung.",
+                "trigger": "Bedarf an der Organisation einer Busreise für eine Reisegruppe",
+                "outcome": "Erfolgreich durchgeführte und bei Bedarf angepasste Busreise",
+                "scope_in": "Organisation, Abstimmung von Änderungen vor Ort und Festlegung der Busbestellung",
+                "scope_out": "Abrechnung der Fahrtkosten und langfristige Fuhrparkplanung",
+                "strategic_objective": "Sicherstellung reibungsloser Reiseabläufe und klarer Abstimmungswege bei Ablaufänderungen vor Ort",
+                "stakeholders": "Reiseleiter / Organisator vor Ort, Kontaktdaten-Partner, Busunternehmer / Busfahrer",
+                "constraints": "Keine expliziten Einschränkungen angegeben",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "STG_PLANNING",
+                  "sequence": 1,
+                  "name": "Initialplanung der Busbestellung",
+                  "description": "Erstmalige Organisation und Bestellung der Busse für die Reisegruppe.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "",
+                  "baseline_metrics": "",
+                  "impact": "medium",
+                  "pain_intensity": "low",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_CHANGE_COMM",
+                  "sequence": 2,
+                  "name": "Abstimmung von Ablaufänderungen vor Ort",
+                  "description": "Kommunikation per Telefon und Schriftverkehr mit mehreren Beteiligten bei Ablaufänderungen.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Telefonate und Nachrichten mit mehreren Beteiligten; Unsicherheit bezüglich des Kenntnisstands aller Personen",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "high",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "short",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_REORDER",
+                  "sequence": 3,
+                  "name": "Anpassung der Busbestellung",
+                  "description": "Entscheidung und Durchführung der Umbestellung des Busses auf Basis der Abstimmung.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "medium",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "STG_CHANGE_COMM",
+                "business_domain": "logistics",
+                "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+                "strategic_impact": "high",
+                "economic_potential": "medium",
+                "pain_intensity": "high",
+                "data_accessibility": "low",
+                "change_effort": "medium",
+                "rationale": "Die Abstimmungsphase bei Ablaufänderungen verursacht die größte Unsicherheit und den höchsten manuellen Kommunikationsaufwand.",
+                "tradeoffs": [
+                  "Eine Fokussierung auf die Abstimmungsphase behebt nicht Ursachen für Ablaufänderungen."
+                ],
+                "uncertainties": [
+                  "Welche konkreten Kommunikationskanäle derzeit genutzt werden.",
+                  "Wer alle beteiligten Absender und Empfänger sind."
+                ],
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "process_analysis": {
+                "name": "Abstimmung von Ablaufänderungen vor Ort",
+                "scope_start": "Eintritt einer Änderung im geplanten Ablauf vor Ort",
+                "scope_end": "Klärung der Informationslage und Vorbereitung der Busanpassung",
+                "trigger": "Änderung im Reiseablauf vor Ort",
+                "outcome": "Transparenz über den Wissensstand aller Beteiligten und Klarheit über Anpassungsbedarf der Busbestellung",
+                "current_flow": "STG_PLANNING (Initialplanung der Busbestellung) -> STG_CHANGE_COMM (Abstimmung von Ablaufänderungen vor Ort) -> STG_REORDER (Anpassung der Busbestellung)",
+                "roles": "Organisator vor Ort",
+                "systems": "",
+                "data_objects": "Informationen zu Fahrplan- und Ablaufänderungen",
+                "business_rules": "",
+                "handoffs": "Informationsaustausch zwischen Organisator und mehreren externen/internen Ansprechpartnern",
+                "bottlenecks": "Mehrkanalige und unstrukturierte Kommunikation (Telefonate und Nachrichten) mit mehreren Beteiligten",
+                "observations": "Nach Abstimmungen besteht Unsicherheit über den Kenntnisstand der Beteiligten sowie über die Erforderlichkeit einer geänderten Busbestellung",
+                "cause_hypotheses": "Fehlen eines zentralen Abstimmungskanals führt zu unvollständigem Informationsfluss und Unsicherheit",
+                "constraints": "",
+                "exceptions": "",
+                "baseline_metrics": "",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Bei Änderungen erfolgt die Kommunikation telefonisch und schriftlich mit mehreren Personen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Beteiligten Bescheid wissen und ob der Bus umbestellt werden soll.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die dezentrale Kommunikation über unterschiedliche Kanäle führt zu Unklarheiten bei Folgeentscheidungen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Genaue Anzahl und Rollen der beteiligten Kommunikationspartner",
+                  "impact": "Erschwert die genaue Beschreibung der Schnittstellen."
+                },
+                {
+                  "statement": "Eingesetzte Nachrichtenkanäle und Dokumentationsmittel",
+                  "impact": "Erschwert die Analyse von Medienbrüchen."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche spezifischen Kommunikationsmittel (z. B. WhatsApp, SMS, E-Mail, Anrufe) werden zur Abstimmung genutzt?",
+                  "impact": "Hilft bei der Identifikation der Ursachen für Informationsverluste.",
+                  "blocking": false
+                },
+                {
+                  "question": "Welche Personen genau müssen bei einer Änderung informiert werden?",
+                  "impact": "Ermöglicht eine exaktere Rollen- und Schnittstellendefinition.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": []
+            },
+            "contract_errors": [
+              "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.",
+              "process_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen."
+            ],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": false,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": false,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "CURRENT_FLOW_SCOPE_EXCEEDED",
+                  "message": "process_analysis.current_flow umfasst den gesamten Wertstrom (STG_PLANNING -> STG_CHANGE_COMM -> STG_REORDER) anstatt den Ist-Ablauf strikt auf die Teilschritte der Fokusphase STG_CHANGE_COMM zu begrenzen."
+                },
+                {
+                  "code": "UNGROUNDED_CAUSAL_RATIONALE",
+                  "message": "focus.rationale formuliert mit 'verursacht die größte Unsicherheit' eine unbelegte Kausalbehauptung als Tatsache, statt sie als berichtete Beobachtung oder Hypothese zu qualifizieren."
+                },
+                {
+                  "code": "UNGROUNDED_EXTRAPOLATIONS",
+                  "message": "value_stream.stakeholders und value_stream.scope_out enthalten spezifische Details (z. B. Kontaktdaten-Partner, Fuhrparkplanung), die nicht in U0 belegt sind."
+                },
+                {
+                  "code": "methodical_contract",
+                  "message": "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                },
+                {
+                  "code": "methodical_contract",
+                  "message": "process_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen."
+                },
+                {
+                  "code": "discovery_contract",
+                  "message": "focus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+                },
+                {
+                  "code": "discovery_contract",
+                  "message": "process_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen."
+                }
+              ],
+              "repair_instructions": "1. Begrenze process_analysis.current_flow auf die belegten Teilschritte innerhalb der Fokusphase STG_CHANGE_COMM (z. B. Eintritt von Ablaufänderung -> Telefonate und Nachrichten an mehrere Personen -> Bewertung des Informationsstands). 2. Relativiere focus.rationale so, dass Wirkungen nicht als unumstößlicher Fakt behauptet werden (z. B. 'In der Abstimmungsphase wurden die stärksten Unsicherheiten beobachtet'). 3. Entferne unbelegte Rollen und Ausschlüsse in value_stream.stakeholders und value_stream.scope_out und beschränke dich auf die in U0 erwähnten Beteiligten.\nfocus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nprocess_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen.\nfocus.rationale: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen.\nprocess_analysis.current_flow: Process Scope wiederholt alle Value-Stream-Phasen; auf die Fokusphase und deren belegte Teilschritte begrenzen.",
+              "human_question": ""
+            }
+          },
+          {
+            "repair_count": 1,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Busreisen-Organisation und Abstimmung vor Ort",
+                "description": "Prozess zur Organisation von Bussen für eine Reisegruppe sowie zur Abstimmung und Anpassung bei Änderungen vor Ort.",
+                "trigger": "Bedarf an der Organisation von Bussen für eine Reisegruppe vor Ort",
+                "outcome": "Organisierte und bei Bedarf abgestimmte Busreise",
+                "scope_in": "Organisation vor Ort und Abstimmung bei Ablaufänderungen per Telefon und Nachricht",
+                "scope_out": "Prozesse außerhalb der direkten Organisation und Abstimmung vor Ort",
+                "strategic_objective": "Sicherstellung klarer Abstimmungswege und Transparenz bei Ablaufänderungen vor Ort",
+                "stakeholders": "Organisator vor Ort, mehrere Kommunikationspartner",
+                "constraints": "Keine expliziten Einschränkungen angegeben",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "STG_PLANNING",
+                  "sequence": 1,
+                  "name": "Initialorganisation der Busse",
+                  "description": "Organisation der Busse für die Reisegruppe vor Ort.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "",
+                  "baseline_metrics": "",
+                  "impact": "medium",
+                  "pain_intensity": "low",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_CHANGE_COMM",
+                  "sequence": 2,
+                  "name": "Abstimmung von Ablaufänderungen",
+                  "description": "Telefonische und schriftliche Kommunikation mit mehreren Personen bei Ablaufänderungen.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unsicherheit, ob alle beteiligten Personen informiert sind",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "high",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "short",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_REORDER",
+                  "sequence": 3,
+                  "name": "Anpassung der Busbestellung",
+                  "description": "Entscheidung über eine veränderte Busbestellung im Anschluss an die Abstimmungen.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "medium",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "STG_CHANGE_COMM",
+                "business_domain": "logistics",
+                "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+                "strategic_impact": "high",
+                "economic_potential": "medium",
+                "pain_intensity": "high",
+                "data_accessibility": "low",
+                "change_effort": "medium",
+                "rationale": "In dieser Phase wird laut Schilderung direkte Unsicherheit bezüglich des Kenntnisstands der Beteiligten berichtet.",
+                "tradeoffs": [
+                  "Eine Verbesserung der Abstimmungsphase verhindert nicht das Auftreten von Ablaufänderungen selbst."
+                ],
+                "uncertainties": [
+                  "Welche konkreten Kommunikationswege und Nachrichten-Apps genutzt werden.",
+                  "Wer die genauen Ansprechpartner und Empfänger bei Änderungen sind."
+                ],
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "process_analysis": {
+                "name": "Abstimmung von Ablaufänderungen vor Ort",
+                "scope_start": "Eintritt einer Ablaufänderung vor Ort",
+                "scope_end": "Abschluss der Nachrichten und Telefonate zur Klärung des Informationsstands",
+                "trigger": "Änderung im geplanten Ablauf vor Ort",
+                "outcome": "Durchgeführte Kontaktaufnahme zur Information der Beteiligten",
+                "current_flow": "Eintritt einer Ablaufänderung -> Telefonate und schriftliche Nachrichten an mehrere Personen -> Auftreten von Unsicherheit über den Wissensstand der Beteiligten",
+                "roles": "Organisator vor Ort",
+                "systems": "",
+                "data_objects": "Informationen zu Ablaufänderungen",
+                "business_rules": "",
+                "handoffs": "Kommunikation zwischen Organisator und mehreren Personen",
+                "bottlenecks": "Multi-Kanal-Kommunikation per Telefonat und Nachricht ohne Rückmeldebestätigung",
+                "observations": "Nach der Kommunikation bleibt teilweise unklar, ob alle informiert sind und ob eine Anpassung der Busbestellung erfolgen muss.",
+                "cause_hypotheses": "Fehlende Bestätigungsschleifen in den genutzten Kommunikationswegen erzeugen die Unsicherheit.",
+                "constraints": "",
+                "exceptions": "",
+                "baseline_metrics": "",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Bei Ablaufänderungen telefoniert und schreibt der Organisator mit mehreren Personen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Personen Bescheid wissen und ob der Bus anders bestellt werden soll.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die Nutzung unstrukturierter Kommunikationskanäle ohne verlässliche Lesebestätigung verursacht die Unsicherheit bezüglich des Kenntnisstands.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Genaue Rollen und Anzahl der beteiligten Gesprächspartner",
+                  "impact": "Erschwert die Definition gezielter Empfängergruppen."
+                },
+                {
+                  "statement": "Verwendete Nachrichtenkanäle und Medien",
+                  "impact": "Erschwert die Identifikation konkreter Schwachstellen im Übertragungsweg."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche konkreten Kommunikationsmittel (z. B. Telefonat, Messenger, SMS) werden verwendet?",
+                  "impact": "Hilft bei der Analyse des Informationsflusses.",
+                  "blocking": false
+                },
+                {
+                  "question": "Welche Personen müssen bei Änderungen zwingend benachrichtigt werden?",
+                  "impact": "Ermöglicht eine genaue Zuordnung der Beteiligten.",
+                  "blocking": false
+                }
+              ],
+              "contradictions": []
+            },
+            "contract_errors": [],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "repair",
+              "checks": {
+                "source_grounding": false,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": false,
+                "unknowns_visible": false,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [
+                {
+                  "code": "UNGROUNDED_BOTTLENECK_ASSERTION",
+                  "message": "In process_analysis.bottlenecks wird das Fehlen von Rückmeldebestätigungen als Tatsache behauptet ('ohne Rückmeldebestätigung'), obwohl Quelle U0 nur die Unsicherheit über den Kenntnisstand berichtet."
+                },
+                {
+                  "code": "MISSING_DECISION_CRITICAL_UNKNOWNS",
+                  "message": "Es fehlen entscheidungsrelevante Unbekannte zur Vollmacht der Ansprechpartner vor Ort sowie zur Verbindlichkeit von Ablaufänderungen als Grundlage für eine Busumbestellung."
+                }
+              ],
+              "repair_instructions": "1. In process_analysis.bottlenecks die unbelegte Aussage 'ohne Rückmeldebestätigung' entfernen und den Engpass strikt auf die in U0 berichtete Unsicherheit nach der Multi-Kanal-Kommunikation begrenzen. 2. In unknowns die entscheidungsrelevanten Lücken bezüglich der Vollmacht/Befugnis der Kommunikationspartner sowie der Verbindlichkeit der Informationen für eine Umbestellung des Busses ergänzen.",
+              "human_question": ""
+            }
+          },
+          {
+            "repair_count": 2,
+            "draft": {
+              "schema_version": "ap1-discovery-v1",
+              "value_stream": {
+                "name": "Busreisen-Organisation und Abstimmung vor Ort",
+                "description": "Prozess zur Organisation von Bussen für eine Reisegruppe sowie zur Abstimmung und Anpassung bei Änderungen vor Ort.",
+                "trigger": "Bedarf an der Organisation von Bussen für eine Reisegruppe vor Ort",
+                "outcome": "Organisierte und bei Bedarf abgestimmte Busreise",
+                "scope_in": "Organisation vor Ort und Abstimmung bei Ablaufänderungen per Telefon und Nachricht",
+                "scope_out": "Prozesse außerhalb der direkten Organisation und Abstimmung vor Ort",
+                "strategic_objective": "Sicherstellung klarer Abstimmungswege und Transparenz bei Ablaufänderungen vor Ort",
+                "stakeholders": "Organisator vor Ort, mehrere Kommunikationspartner",
+                "constraints": "Keine expliziten Einschränkungen angegeben",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "stages": [
+                {
+                  "key": "STG_PLANNING",
+                  "sequence": 1,
+                  "name": "Initialorganisation der Busse",
+                  "description": "Organisation der Busse für die Reisegruppe vor Ort.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "",
+                  "baseline_metrics": "",
+                  "impact": "medium",
+                  "pain_intensity": "low",
+                  "improvement_potential": "medium",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "unknown",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_CHANGE_COMM",
+                  "sequence": 2,
+                  "name": "Abstimmung von Ablaufänderungen",
+                  "description": "Telefonische und schriftliche Kommunikation mit mehreren Personen bei Ablaufänderungen.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unsicherheit, ob alle beteiligten Personen informiert sind",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "high",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "short",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "key": "STG_REORDER",
+                  "sequence": 3,
+                  "name": "Anpassung der Busbestellung",
+                  "description": "Entscheidung über eine veränderte Busbestellung im Anschluss an die Abstimmungen.",
+                  "roles": "Organisator vor Ort",
+                  "systems": "",
+                  "documents": "",
+                  "pain_points": "Unsicherheit, ob der Bus bereits anders bestellt werden soll",
+                  "baseline_metrics": "",
+                  "impact": "high",
+                  "pain_intensity": "medium",
+                  "improvement_potential": "high",
+                  "data_accessibility": "low",
+                  "change_effort": "medium",
+                  "time_to_value": "medium",
+                  "evidence_basis": "indicative",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "focus": {
+                "recommended_stage_key": "STG_CHANGE_COMM",
+                "business_domain": "logistics",
+                "capability": "Kommunikation und Abstimmung bei Ablaufänderungen vor Ort",
+                "strategic_impact": "high",
+                "economic_potential": "medium",
+                "pain_intensity": "high",
+                "data_accessibility": "low",
+                "change_effort": "medium",
+                "rationale": "In dieser Phase wird laut Schilderung direkte Unsicherheit bezüglich des Kenntnisstands der Beteiligten berichtet.",
+                "tradeoffs": [
+                  "Eine Verbesserung der Abstimmungsphase verhindert nicht das Auftreten von Ablaufänderungen selbst."
+                ],
+                "uncertainties": [
+                  "Welche konkreten Kommunikationswege und Nachrichten-Apps genutzt werden.",
+                  "Wer die genauen Ansprechpartner und Empfänger bei Änderungen sind."
+                ],
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "process_analysis": {
+                "name": "Abstimmung von Ablaufänderungen vor Ort",
+                "scope_start": "Eintritt einer Ablaufänderung vor Ort",
+                "scope_end": "Abschluss der Nachrichten und Telefonate zur Klärung des Informationsstands",
+                "trigger": "Änderung im geplanten Ablauf vor Ort",
+                "outcome": "Durchgeführte Kontaktaufnahme zur Information der Beteiligten",
+                "current_flow": "Eintritt einer Ablaufänderung -> Telefonate und schriftliche Nachrichten an mehrere Personen -> Auftreten von Unsicherheit über den Wissensstand der Beteiligten",
+                "roles": "Organisator vor Ort",
+                "systems": "",
+                "data_objects": "Informationen zu Ablaufänderungen",
+                "business_rules": "",
+                "handoffs": "Kommunikation zwischen Organisator und mehreren Personen",
+                "bottlenecks": "Kommunikation per Telefonat und Nachricht mit mehreren Personen, die im Anschluss zu Unsicherheit über den Kenntnisstand der Beteiligten führt",
+                "observations": "Nach der Kommunikation bleibt teilweise unklar, ob alle informiert sind und ob eine Anpassung der Busbestellung erfolgen muss.",
+                "cause_hypotheses": "Mögliche fehlende Transparenz oder Rückmeldungen in den genutzten Kommunikationswegen erzeugen die Unsicherheit.",
+                "constraints": "",
+                "exceptions": "Möglicher Ausfall oder Nicht-Erreichbarkeit einzelner Ansprechpartner",
+                "baseline_metrics": "",
+                "evidence_refs": [
+                  "U0"
+                ]
+              },
+              "facts": [
+                {
+                  "statement": "Der Organisator kümmert sich vor Ort um die Busse für eine Reisegruppe.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Bei Ablaufänderungen telefoniert und schreibt der Organisator mit mehreren Personen.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                },
+                {
+                  "statement": "Nach der Kommunikation besteht Unsicherheit, ob alle Personen Bescheid wissen und ob der Bus anders bestellt werden soll.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "hypotheses": [
+                {
+                  "statement": "Die Nutzung unstrukturierter Kommunikationskanäle ohne verlässliche Lesebestätigung verursacht die Unsicherheit bezüglich des Kenntnisstands.",
+                  "evidence_refs": [
+                    "U0"
+                  ]
+                }
+              ],
+              "unknowns": [
+                {
+                  "statement": "Genaue Rollen und Anzahl der beteiligten Gesprächspartner",
+                  "impact": "Erschwert die Definition gezielter Empfängergruppen."
+                },
+                {
+                  "statement": "Verwendete Nachrichtenkanäle und Medien",
+                  "impact": "Erschwert die Identifikation konkreter Schwachstellen im Übertragungsweg."
+                },
+                {
+                  "statement": "Vollmacht und Befugnis der Ansprechpartner vor Ort zur Bestätigung von Programmansprüchen",
+                  "impact": "Erschwert die Feststellung, wer Ablaufänderungen verbindlich freigeben darf."
+                },
+                {
+                  "statement": "Verbindlichkeit der erhaltenen Informationen zu Ablaufänderungen als Entscheidungsgrundlage",
+                  "impact": "Verhindert eine fundierte Entscheidung darüber, ob der Bus umbestellt werden muss."
+                }
+              ],
+              "clarifications": [
+                {
+                  "question": "Welche konkreten Kommunikationsmittel (z. B. Telefonat, Messenger, SMS) werden verwendet?",
+                  "impact": "Hilft bei der Analyse des Informationsflusses.",
+                  "blocking": false
+                },
+                {
+                  "question": "Welche Personen müssen bei Änderungen zwingend benachrichtigt werden?",
+                  "impact": "Ermöglicht eine genaue Zuordnung der Beteiligten.",
+                  "blocking": false
+                },
+                {
+                  "question": "Welche Ansprechpartner sind befugt, Verbindlichkeit über Ablaufänderungen und Busumbestellungen herzustellen?",
+                  "impact": "Notwendig zur Klärung der Entscheidungsgrundlage für eine Umbestellung des Busses.",
+                  "blocking": true
+                }
+              ],
+              "contradictions": []
+            },
+            "contract_errors": [],
+            "verifier": {
+              "schema_version": "ap1-discovery-verifier-v1",
+              "status": "waiting_human",
+              "checks": {
+                "source_grounding": true,
+                "scope_quality": true,
+                "stage_sequence": true,
+                "focus_fit": true,
+                "hypothesis_separation": true,
+                "unknowns_visible": true,
+                "contradictions_preserved": true
+              },
+              "critical_findings": [],
+              "repair_instructions": "",
+              "human_question": "Welche Ansprechpartner sind befugt, Verbindlichkeit über Ablaufänderungen und Busumbestellungen herzustellen?"
+            }
+          }
+        ],
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "e0bcd18e-daab-44b6-983f-0d9d925ca59c"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "waiting_human",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": "Welche Ansprechpartner sind befugt, Verbindlichkeit über Ablaufänderungen und Busumbestellungen herzustellen?"
+      },
+      "open_questions": [
+        {
+          "question": "Welche konkreten Kommunikationsmittel (z. B. Telefonat, Messenger, SMS) werden verwendet?",
+          "impact": "Hilft bei der Analyse des Informationsflusses.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Personen müssen bei Änderungen zwingend benachrichtigt werden?",
+          "impact": "Ermöglicht eine genaue Zuordnung der Beteiligten.",
+          "blocking": false
+        },
+        {
+          "question": "Welche Ansprechpartner sind befugt, Verbindlichkeit über Ablaufänderungen und Busumbestellungen herzustellen?",
+          "impact": "Notwendig zur Klärung der Entscheidungsgrundlage für eine Umbestellung des Busses.",
+          "blocking": true
+        }
+      ],
+      "cost": "0.090544"
+    }
+  ],
+  "scope_confirmed": false
+}

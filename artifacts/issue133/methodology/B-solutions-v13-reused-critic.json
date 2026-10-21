@@ -1,0 +1,6 @@
+{
+  "origin": "Exact identical provider request; unchanged real response",
+  "historical_call_id": 127,
+  "request_sha256": "1e90fe2983f93a50b7c5b63be3341ba3457b145f5ea22a4a4ff9fd7a56510f4d",
+  "content": "{\"schema_version\":\"1.0\",\"prompt_version\":\"1.0\",\"findings\":[]}"
+}

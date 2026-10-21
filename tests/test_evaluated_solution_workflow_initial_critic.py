@@ -201,7 +201,7 @@ def provider_result(payload=None, *, finish_reason="stop") -> OpenRouterResult:
 
 
 @pytest.mark.django_db
-@override_settings(**VALID_LIMITS)
+@override_settings(**VALID_LIMITS, ACCELERATOR_DISCOVERY_MODEL="quality/test-model")
 def test_initial_critic_uses_one_structured_provider_call_and_persists_findings(
     owner,
     business_unit,
@@ -217,7 +217,9 @@ def test_initial_critic_uses_one_structured_provider_call_and_persists_findings(
 
     assert request_mock.call_count == 1
     kwargs = request_mock.call_args.kwargs
-    assert kwargs["max_tokens"] == 4096
+    assert kwargs["max_tokens"] == 8192
+    assert kwargs["reasoning_effort"] == "high"
+    assert kwargs["model_override"] == "quality/test-model"
     assert kwargs["timeout_seconds"] == 17
     assert kwargs["temperature"] is None
     assert kwargs["provider"] == {"require_parameters": True}
@@ -268,6 +270,40 @@ def test_initial_critic_is_one_shot_before_a_second_provider_call(owner, busines
         ).count()
         == 1
     )
+
+
+@pytest.mark.django_db
+@override_settings(**VALID_LIMITS)
+def test_critic_binds_executed_prompt_version_without_changing_findings(owner, business_unit):
+    run = make_generation_run(owner, business_unit)
+    payload = critic_payload()
+    payload["prompt_version"] = "1.0"
+    with patch(
+        "ki_radar.accelerator.solution_critic_service.request_openrouter",
+        return_value=provider_result(payload),
+    ):
+        result = run_initial_solution_critic(solution_generation_run_id=run.pk)
+    assert result.status == SolutionQualityRun.Status.SUCCESS
+    assert result.result_payload["prompt_version"] == CRITIC_PROMPT_VERSION
+    assert result.result_payload["findings"][0]["finding"] == payload["findings"][0]["finding"]
+
+
+@pytest.mark.django_db
+@override_settings(**VALID_LIMITS)
+@pytest.mark.parametrize("invalid_field", ["schema_version", "prompt_version"])
+def test_critic_metadata_binding_does_not_accept_invalid_schema_or_missing_prompt(
+    owner, business_unit, invalid_field
+):
+    run = make_generation_run(owner, business_unit)
+    payload = critic_payload()
+    payload[invalid_field] = None
+    with patch(
+        "ki_radar.accelerator.solution_critic_service.request_openrouter",
+        return_value=provider_result(payload),
+    ):
+        result = run_initial_solution_critic(solution_generation_run_id=run.pk)
+    assert result.status == SolutionQualityRun.Status.FAILED
+    assert result.error_code == "invalid_critic_payload"
 
 
 @pytest.mark.django_db

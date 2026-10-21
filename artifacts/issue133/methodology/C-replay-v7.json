@@ -1,0 +1,467 @@
+{
+  "case": "C",
+  "phase": "replay",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "8b4b194d4336c67cf71487e5e088f0ababa59bb08e862e8a4d207a0b73914d8b",
+    "ki_radar/accelerator/architect_contract.py": "f12d47c22fd716080469ef163ef4a92a2a9b43222a0a78b1972219ebbbf96bcb"
+  },
+  "historical_draft_review": {
+    "schema_version": "ap1-discovery-verifier-v1",
+    "status": "repair",
+    "checks": {
+      "source_grounding": true,
+      "scope_quality": false,
+      "stage_sequence": true,
+      "focus_fit": true,
+      "hypothesis_separation": true,
+      "unknowns_visible": true,
+      "contradictions_preserved": true
+    },
+    "critical_findings": [
+      {
+        "code": "SCOPE_OVERLAP",
+        "message": "Der Ist-Ablauf in process_analysis.current_flow wiederholt alle Wertstromphasen, anstatt auf die konkreten Teilschritte der Fokusphase 'reisedaten_abgleich' beschränkt zu sein."
+      }
+    ],
+    "repair_instructions": "Begrenze process_analysis.current_flow auf die konkreten Teilschritte innerhalb der Fokusphase 'reisedaten_abgleich' (z. B. Sichtung der Treffpunktangaben in den Unterlagen -> Abgleich mit der empfangenen Nachricht -> Identifikation der Abweichung), anstatt die gesamten Wertstromphasen abzubilden.",
+    "human_question": ""
+  },
+  "status": "success",
+  "session_answers": {
+    "business_unit": {
+      "id": 7,
+      "name": "[SYNTHETISCH #133] Methodik C"
+    },
+    "problem_statement": "Ich bin gerade auf der Reise. Für morgen habe ich einen Treffpunkt in meinen Unterlagen und eine andere Angabe in einer Nachricht. Jetzt bin ich unsicher, wo ich wann sein soll und wen ich fragen kann.",
+    "business_context": "",
+    "corrections": [],
+    "origin": {
+      "type": "idea_candidate",
+      "idea_candidate_id": "44ece76d-574e-4cfe-a892-e40687ba8dc1",
+      "title": "[SYNTHETISCH #133 C/replay] Methodische Probe",
+      "source_note": "Synthetische Testperson; keine RSD-Unternehmensdaten",
+      "captured_at": "2026-10-21T11:12:06.218917+00:00",
+      "idea_updated_at": "2026-10-21T11:12:06.191097+00:00",
+      "origin_source_filename": "ideenbox-44ece76d-574e-4cfe-a892-e40687ba8dc1.md",
+      "origin_source_sha256": "500bb5affac5226f70746d527518820b3978965da49416c50b677487d1abf910"
+    }
+  },
+  "analyses": [
+    {
+      "id": "695a6608-a58c-4044-9d9b-79ae426fb42a",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "f9c7cb68225f20bc2a2215a363888873f37969334e4010289f163b69750c1130",
+      "prompt_version": "ap1-discovery-methodology-v3",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseinformation und Reisebegleitung",
+            "description": "Bereitstellung, Abgleich und Klärung von Reiseinformationen und Treffpunkten während einer Reise.",
+            "trigger": "Reiseantritt und Erhalt von Reiseunterlagen oder Benachrichtigungen",
+            "outcome": "Klärung von Treffpunkten und Kontaktdaten für den Reisenden",
+            "scope_in": "Einsicht von Reiseunterlagen und Nachrichten, Abgleich von Treffpunktdaten und Identifikation von Ansprechpartnern",
+            "scope_out": "Reisebuchung, Zahlungsabwicklung und Nachbereitung nach der Reise",
+            "strategic_objective": "Sicherstellung konsistenter und verlässlicher Reiseinformationen für Kunden während der Reise",
+            "stakeholders": "Reisender, Kundenbetreuung, Reiseveranstalter",
+            "constraints": "Reisender befindet sich bereits auf der Reise; begrenzte Informationsquellen vor Ort",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "reiseinformation_empfang",
+              "sequence": 1,
+              "name": "Empfang von Reiseinformationen",
+              "description": "Erhalt und Einsicht von Reiseunterlagen sowie Benachrichtigungen.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Erhalt verschiedener Angaben über unterschiedliche Kanäle",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "reisedaten_abgleich",
+              "sequence": 2,
+              "name": "Abgleich der Treffpunktangaben",
+              "description": "Prüfung und Vergleich von Treffpunkt- und Zeitangaben aus Reiseunterlagen und Nachrichten.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Abweichende Treffpunkte und Zeiten erzeugen Unsicherheit über den Ablauf",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "kundenservice_kontakt",
+              "sequence": 3,
+              "name": "Klärung und Kontaktaufnahme",
+              "description": "Identifikation und Kontaktaufnahme mit einem Ansprechpartner zur Klärung der Abweichung.",
+              "roles": "Reisender, Ansprechpartner",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, wer als Ansprechpartner kontaktiert werden kann",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "reisedaten_abgleich",
+            "business_domain": "customer_service",
+            "capability": "Reiseinformations-Konsolidierung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase tritt die akute Unsicherheit durch widersprüchliche Angaben auf. Eine Klärung an dieser Stelle ist entscheidend für das Kundenerlebnis.",
+            "tradeoffs": [
+              "Eine reine Informationskonsolidierung löst nicht automatisch Erreichbarkeitsprobleme im Support."
+            ],
+            "uncertainties": [
+              "Welche konkreten Systemquellen die abweichenden Nachrichten erzeugt haben."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abgleich und Klärung von Treffpunktangaben während der Reise",
+            "scope_start": "Sichtung der Reiseunterlagen und empfangenen Nachrichten",
+            "scope_end": "Identifikation der Abweichungen und Feststellung des Klärungsbedarfs",
+            "trigger": "Erhalt abweichender Treffpunktangaben in Unterlagen und Nachricht",
+            "outcome": "Identifizierter Klärungsbedarf bezüglich Ort, Zeit und Ansprechpartner",
+            "current_flow": "Prüfung der Reiseunterlagen und der Nachricht -> Gegenüberstellung von Treffpunkt und Uhrzeit -> Feststellung der Abweichung und Entstehen von Unsicherheit",
+            "roles": "Reisender",
+            "systems": "",
+            "data_objects": "Reiseunterlagen, Nachricht, Treffpunktangaben",
+            "business_rules": "",
+            "handoffs": "Übergang vom Abgleich der Daten zur Suche nach Ansprechpartnern",
+            "bottlenecks": "Fehlende oder unklare Ansprechpartnerdaten bei auftretenden Diskrepanzen",
+            "observations": "Reisender hat unterschiedliche Treffpunktangaben und weiß nicht, wo er sein soll oder wen er fragen kann.",
+            "cause_hypotheses": "Kurzfristige Aktualisierungen wurden nicht mit den ursprünglichen Reiseunterlagen synchronisiert.",
+            "constraints": "Reisender ist bereits unterwegs.",
+            "exceptions": "Keine Kontaktdaten in den Unterlagen auffindbar.",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Reisende befindet sich auf der Reise und hat für morgen abweichende Treffpunktangaben in seinen Unterlagen und in einer Nachricht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es herrscht Unsicherheit darüber, wo und wann der Treffpunkt ist und wer als Ansprechpartner kontaktiert werden kann.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Informationen zu Änderungen des Treffpunkts werden nicht konsistent über alle Kanäle hinweg aktualisiert.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Kommunikationskanäle der Nachricht sowie vorhandene Servicenummern in den Unterlagen.",
+              "impact": "Erschwert die Ermittlung der Ursache für die Datenabweichung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+              "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "6ebe60b0-c54c-483f-8af0-7d447b851333"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+          "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.021335"
+    },
+    {
+      "id": "b30d0392-4d19-4740-8bee-6bba98394456",
+      "status": "failed",
+      "error_code": "user_quota_exceeded",
+      "source_revision": 0,
+      "source_hash": "f9c7cb68225f20bc2a2215a363888873f37969334e4010289f163b69750c1130",
+      "prompt_version": "ap1-methodology-v6",
+      "result_payload": {},
+      "verification_payload": {},
+      "open_questions": [],
+      "cost": null
+    },
+    {
+      "id": "332d8a88-5f56-4f37-9b39-2159fed06653",
+      "status": "success",
+      "error_code": "",
+      "source_revision": 0,
+      "source_hash": "f9c7cb68225f20bc2a2215a363888873f37969334e4010289f163b69750c1130",
+      "prompt_version": "ap1-methodology-v7",
+      "result_payload": {
+        "draft": {
+          "schema_version": "ap1-discovery-v1",
+          "value_stream": {
+            "name": "Reiseinformation und Reisebegleitung",
+            "description": "Bereitstellung, Abgleich und Klärung von Reiseinformationen und Treffpunkten während einer Reise.",
+            "trigger": "Reiseantritt und Erhalt von Reiseunterlagen oder Benachrichtigungen",
+            "outcome": "Klärung von Treffpunkten und Kontaktdaten für den Reisenden",
+            "scope_in": "Einsicht von Reiseunterlagen und Nachrichten, Abgleich von Treffpunktdaten und Identifikation von Ansprechpartnern",
+            "scope_out": "Reisebuchung, Zahlungsabwicklung und Nachbereitung nach der Reise",
+            "strategic_objective": "Sicherstellung konsistenter und verlässlicher Reiseinformationen für Kunden während der Reise",
+            "stakeholders": "Reisender, Kundenbetreuung, Reiseveranstalter",
+            "constraints": "Reisender befindet sich bereits auf der Reise; begrenzte Informationsquellen vor Ort",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "stages": [
+            {
+              "key": "reiseinformation_empfang",
+              "sequence": 1,
+              "name": "Empfang von Reiseinformationen",
+              "description": "Erhalt und Einsicht von Reiseunterlagen sowie Benachrichtigungen.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Erhalts verschiedener Angaben über unterschiedliche Kanäle",
+              "baseline_metrics": "",
+              "impact": "medium",
+              "pain_intensity": "medium",
+              "improvement_potential": "medium",
+              "data_accessibility": "low",
+              "change_effort": "low",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "reisedaten_abgleich",
+              "sequence": 2,
+              "name": "Abgleich der Treffpunktangaben",
+              "description": "Prüfung und Vergleich von Treffpunkt- und Zeitangaben aus Reiseunterlagen und Nachrichten.",
+              "roles": "Reisender",
+              "systems": "",
+              "documents": "Reiseunterlagen, Nachrichten",
+              "pain_points": "Abweichende Treffpunkte und Zeiten erzeugen Unsicherheit über den Ablauf",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "key": "kundenservice_kontakt",
+              "sequence": 3,
+              "name": "Klärung und Kontaktaufnahme",
+              "description": "Identifikation und Kontaktaufnahme mit einem Ansprechpartner zur Klärung der Abweichung.",
+              "roles": "Reisender, Ansprechpartner",
+              "systems": "",
+              "documents": "",
+              "pain_points": "Unklarheit darüber, wer als Ansprechpartner kontaktiert werden kann",
+              "baseline_metrics": "",
+              "impact": "high",
+              "pain_intensity": "high",
+              "improvement_potential": "high",
+              "data_accessibility": "low",
+              "change_effort": "medium",
+              "time_to_value": "short",
+              "evidence_basis": "indicative",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "focus": {
+            "recommended_stage_key": "reisedaten_abgleich",
+            "business_domain": "customer_service",
+            "capability": "Reiseinformations-Konsolidierung",
+            "strategic_impact": "high",
+            "economic_potential": "medium",
+            "pain_intensity": "high",
+            "data_accessibility": "low",
+            "change_effort": "medium",
+            "rationale": "In dieser Phase tritt die akute Unsicherheit durch widersprüchliche Angaben auf. Eine Klärung an dieser Stelle ist entscheidend für das Kundenerlebnis.",
+            "tradeoffs": [
+              "Eine reine Informationskonsolidierung löst nicht automatisch Erreichbarkeitsprobleme im Support."
+            ],
+            "uncertainties": [
+              "Welche konkreten Systemquellen die abweichenden Nachrichten erzeugt haben."
+            ],
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "process_analysis": {
+            "name": "Abgleich und Klärung von Treffpunktangaben während der Reise",
+            "scope_start": "Sichtung der Reiseunterlagen und empfangenen Nachrichten",
+            "scope_end": "Identifikation der Abweichungen und Feststellung des Klärungsbedarfs",
+            "trigger": "Erhalt abweichender Treffpunktangaben in Unterlagen und Nachricht",
+            "outcome": "Identifizierter Klärungsbedarf bezüglich Ort, Zeit und Ansprechpartner",
+            "current_flow": "Sichtung der Reiseunterlagen und der Nachricht -> Abgleich der angegebenen Treffpunkte und Zeiten -> Identifikation der Abweichung und des Klärungsbedarfs",
+            "roles": "Reisender",
+            "systems": "",
+            "data_objects": "Reiseunterlagen, Nachricht, Treffpunktangaben",
+            "business_rules": "",
+            "handoffs": "Mögliche Übergabe an Ansprechpartner zur Klärung als vorgeschlagener Schritt",
+            "bottlenecks": "Fehlende oder unklare Ansprechpartnerdaten bei auftretenden Diskrepanzen",
+            "observations": "Reisender hat unterschiedliche Treffpunktangaben und weiß nicht, wo er sein soll oder wen er fragen kann.",
+            "cause_hypotheses": "Kurzfristige Aktualisierungen wurden nicht mit den ursprünglichen Reiseunterlagen synchronisiert.",
+            "constraints": "Reisender ist bereits unterwegs.",
+            "exceptions": "Keine Kontaktdaten in den Unterlagen auffindbar als unbeobachtete Möglichkeit",
+            "baseline_metrics": "",
+            "evidence_refs": [
+              "U0"
+            ]
+          },
+          "facts": [
+            {
+              "statement": "Der Reisende befindet sich auf der Reise und hat für morgen abweichende Treffpunktangaben in seinen Unterlagen und in einer Nachricht.",
+              "evidence_refs": [
+                "U0"
+              ]
+            },
+            {
+              "statement": "Es herrscht Unsicherheit darüber, wo und wann der Treffpunkt ist und wer als Ansprechpartner kontaktiert werden kann.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "hypotheses": [
+            {
+              "statement": "Informationen zu Änderungen des Treffpunkts werden nicht konsistent über alle Kanäle hinweg aktualisiert.",
+              "evidence_refs": [
+                "U0"
+              ]
+            }
+          ],
+          "unknowns": [
+            {
+              "statement": "Genaue Kommunikationskanäle der Nachricht sowie vorhandene Servicenummern in den Unterlagen.",
+              "impact": "Erschwert die Ermittlung der Ursache für die Datenabweichung."
+            }
+          ],
+          "clarifications": [
+            {
+              "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+              "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+              "blocking": false
+            }
+          ],
+          "contradictions": []
+        },
+        "source_labels": {
+          "U0": "Problem, Kontext und Nutzerkorrekturen"
+        },
+        "discovery_snapshot_id": "6ebe60b0-c54c-483f-8af0-7d447b851333"
+      },
+      "verification_payload": {
+        "schema_version": "ap1-discovery-verifier-v1",
+        "status": "approved",
+        "checks": {
+          "source_grounding": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "focus_fit": true,
+          "hypothesis_separation": true,
+          "unknowns_visible": true,
+          "contradictions_preserved": true
+        },
+        "critical_findings": [],
+        "repair_instructions": "",
+        "human_question": ""
+      },
+      "open_questions": [
+        {
+          "question": "Über welchen Kanal ging die Nachricht ein und welche Kontaktdaten sind in den Unterlagen angegeben?",
+          "impact": "Hilft bei der Eingrenzung der betroffenen Kommunikations- und Supportkanäle.",
+          "blocking": false
+        }
+      ],
+      "cost": "0.033130"
+    }
+  ],
+  "scope_confirmed": false
+}
