@@ -84,7 +84,7 @@ FIELD_SOURCES = {
 }
 
 REPAIRED_BOTTLENECK_TEXT = (
-    "Die Assistenz adressiert den dokumentierten Engpass der manuellen Rückfragen gezielt."
+    "Die Assistenz könnte den berichteten Engpass der manuellen Rückfragen gezielt adressieren."
 )
 
 
@@ -231,9 +231,7 @@ class DeterministicRealDemoProvider:
             raise AssertionError("Unexpected critic provider input")
         try:
             document = json.loads(str(messages[1]["content"]))
-            lane_index = list(OPTION_LANES).index("assistant")
-            field_index = list(GENERATED_OPTION_FIELDS).index("bottleneck_coverage")
-            target_text = document["options"][lane_index][field_index][0]
+            target_text = document["options"]["assistant"]["bottleneck_coverage"]["text"]
         except (KeyError, TypeError, ValueError, IndexError, json.JSONDecodeError) as exc:
             raise AssertionError("Unknown critic input rejected fail-closed") from exc
 

@@ -118,7 +118,7 @@ def test_discovery_provider_retains_quality_reasoning_effort(monkeypatch, schema
         schema={"type": "object"},
     )
 
-    assert observed["reasoning_effort"] == "medium"
+    assert observed["reasoning_effort"] == ("high" if "verifier" in schema_name else "medium")
     assert observed["model_override"] == "test/discovery-model"
     assert observed["max_tokens"] == policy.capture_max_output_tokens
     assert observed["timeout_seconds"] == policy.timeout_seconds
@@ -693,7 +693,7 @@ def test_discovery_repairs_one_deterministic_contract_violation(owner, tmp_path,
 
 
 @pytest.mark.django_db
-def test_contract_repair_consumes_the_single_repair_budget(owner, tmp_path, monkeypatch):
+def test_contract_and_semantic_repairs_share_the_bounded_budget(owner, tmp_path, monkeypatch):
     session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
     invalid = _draft()
     invalid["contradictions"] = [
@@ -714,6 +714,13 @@ def test_contract_repair_consumes_the_single_repair_budget(owner, tmp_path, monk
             )
         ),
     ]
+    calls.extend(
+        [
+            _result(repaired),
+            _result(_verifier("repair", repair_instructions="Weiterhin unbelegte Aussage.")),
+        ]
+        * (architect_service.MAX_DISCOVERY_REPAIRS - 1)
+    )
     observed = []
 
     def fake_call(**kwargs):
@@ -722,18 +729,22 @@ def test_contract_repair_consumes_the_single_repair_budget(owner, tmp_path, monk
 
     monkeypatch.setattr(architect_service, "_provider_call", fake_call)
 
-    with pytest.raises(DiscoveryAnalysisError, match="einmaligen Repair"):
+    with pytest.raises(DiscoveryAnalysisError, match="begrenzten Repairs"):
         execute_autonomous_business_discovery(
             actor=owner,
             session_id=session.pk,
             snapshot_id=snapshot.pk,
         )
 
-    assert observed == [
-        "autonomous_business_discovery_v1",
-        "autonomous_business_discovery_repair_v1",
-        "autonomous_business_discovery_verifier_v1",
-    ]
+    assert (
+        observed
+        == ["autonomous_business_discovery_v1"]
+        + [
+            "autonomous_business_discovery_repair_v1",
+            "autonomous_business_discovery_verifier_v1",
+        ]
+        * architect_service.MAX_DISCOVERY_REPAIRS
+    )
     failed = CaptureAnalysis.objects.get(session=session)
     assert failed.status == CaptureAnalysis.Status.FAILED
     assert failed.error_code == "verification_not_converged"

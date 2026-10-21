@@ -69,6 +69,171 @@ def test_hypothetically_qualified_causality_is_accepted_in_same_sentence():
     assert not discovery_methodical_findings(draft)
 
 
+def test_accepted_a_replay_nominal_side_cause_is_now_rejected():
+    record = json.loads(
+        (
+            Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology/A-replay-v7.json"
+        ).read_text(encoding="utf-8")
+    )
+    draft = record["analyses"][-1]["result_payload"]["draft"]
+    assert any("pain_points" in error for error in discovery_methodical_findings(draft))
+
+
+def test_a_source_review_still_contains_an_unqualified_secondary_cause():
+    path = Path(__file__).resolve().parents[1] / (
+        "artifacts/issue133/methodology/A-revalidate-v12.json"
+    )
+    draft = json.loads(path.read_text(encoding="utf-8"))["analyses"][-1]["result_payload"]["draft"]
+    assert any(
+        "stages[0].pain_points" in finding for finding in discovery_methodical_findings(draft)
+    )
+
+
+@pytest.mark.parametrize(
+    ("case", "path"), [("A", "stages[0].pain_points"), ("B", "focus.rationale")]
+)
+def test_real_source_repairs_preserve_all_unaffected_fields_and_decision_gaps(case, path):
+    evidence = Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology"
+    record = json.loads((evidence / f"{case}-revalidate-v13.json").read_text(encoding="utf-8"))
+    analysis = record["analyses"][-1]
+    history = analysis["result_payload"]["review_history"]
+    assert len(history) == 2
+    assert history[1]["incoming_repair"]["allowed_fields"] == [path]
+    # Independently remove only the allowed leaf and compare the complete drafts.
+    before, after = copy.deepcopy(history[0]["draft"]), copy.deepcopy(history[1]["draft"])
+    if case == "A":
+        assert "unbestätigte" in after["stages"][0]["pain_points"]
+        before["stages"][0].pop("pain_points")
+        after["stages"][0].pop("pain_points")
+    else:
+        assert "erste Kundenkontakt" not in after["focus"]["rationale"]
+        before["focus"].pop("rationale")
+        after["focus"].pop("rationale")
+    assert before == after
+    assert analysis["status"] == "waiting_human"
+    assert blocking_discovery_questions(history[-1]["draft"])
+    assert not discovery_methodical_findings(history[-1]["draft"])
+
+
+@pytest.mark.parametrize("version", ["v14", "v15"])
+def test_real_c_solution_repair_does_not_turn_unknown_reachability_into_an_outage(version):
+    evidence = Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology"
+    record = json.loads((evidence / f"C-solutions-{version}.json").read_text(encoding="utf-8"))
+    runs = {run["step_type"]: run for run in record["quality_runs"]}
+    assert runs["initial_critic"]["result_payload"]["findings"][0]["repairable"]
+    patches = record["solution_preview"]["machine_repair"]["patches"]
+    assert {patch["option"] for patch in patches} == {
+        "organizational",
+        "rule_automation",
+        "assistant",
+    }
+    for patch in patches:
+        assert patch["field"] == "bottleneck_coverage"
+        assert "offene Voraussetzung" in patch["statement"]["text"]
+        assert "bestätigte Ursache: keine" in patch["statement"]["text"]
+    assert runs["final_critic"]["status"] == "success"
+    assert not record["cause_confirmed"]
+    assert not record["scope_confirmed"]
+
+
+def test_real_d_solution_repair_leaves_integration_need_explicitly_unknown():
+    evidence = Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology"
+    record = json.loads((evidence / "D-solutions-v15.json").read_text(encoding="utf-8"))
+    patches = record["solution_preview"]["machine_repair"]["patches"]
+    assert len(patches) == 1
+    assert patches[0]["option"] == "assistant"
+    assert patches[0]["field"] == "integration_impact"
+    assert "ist offen, ob" in patches[0]["statement"]["text"]
+    runs = {run["step_type"]: run for run in record["quality_runs"]}
+    assert runs["initial_critic"]["result_payload"]["findings"][0]["repairable"]
+    assert runs["final_critic"]["status"] == "success"
+    assert not record["cause_confirmed"]
+    assert not record["scope_confirmed"]
+
+
+def test_v15_c_late_finding_is_not_mistaken_for_semantic_acceptance():
+    evidence = Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology"
+    record = json.loads((evidence / "C-solutions-v15.json").read_text(encoding="utf-8"))
+    final = next(run for run in record["quality_runs"] if run["step_type"] == "final_critic")
+    assert final["status"] == "success"  # transport success is not semantic acceptance
+    assert any(
+        item["repairable"] and item["field"] == "technology_constraints"
+        for item in final["result_payload"]["findings"]
+    )
+
+
+def test_current_c_critic_collects_the_complete_cross_field_correction_before_repair():
+    evidence = Path(__file__).resolve().parents[1] / "artifacts/issue133/methodology"
+    record = json.loads((evidence / "C-solutions-v16.json").read_text(encoding="utf-8"))
+    patches = record["solution_preview"]["machine_repair"]["patches"]
+    assert {(patch["option"], patch["field"]) for patch in patches} == {
+        ("organizational", "bottleneck_coverage"),
+        ("organizational", "technology_constraints"),
+        ("rule_automation", "bottleneck_coverage"),
+        ("rule_automation", "technology_constraints"),
+        ("assistant", "bottleneck_coverage"),
+    }
+    for patch in patches:
+        assert "ungeprüft" in patch["statement"]["text"]
+        assert "Engpässe sind" not in patch["statement"]["text"]
+        assert "ist ein Engpass" not in patch["statement"]["text"]
+    final = next(run for run in record["quality_runs"] if run["step_type"] == "final_critic")
+    assert final["status"] == "success"
+    assert final["result_payload"]["findings"] == []
+
+
+def test_targeted_discovery_repair_cannot_regress_other_fields():
+    base = _draft()
+    proposed = copy.deepcopy(base)
+    proposed["process_analysis"]["business_rules"] = "Unbekannt"
+    proposed["focus"]["rationale"] = "Die Suche verursacht sicher alle Verzögerungen."
+    review = _verifier("repair", repair_instructions="Regel unbelegt")
+    review["critical_findings"] = [
+        {"code": "unsupported_rule", "message": "process_analysis.business_rules ist unbelegt."}
+    ]
+    targets = architect_service._repair_field_targets(base, review)
+    assert targets == ("process_analysis.business_rules",)
+    result = architect_service._apply_discovery_field_repair(base, proposed, targets)
+    assert result["process_analysis"]["business_rules"] == "Unbekannt"
+    assert result["focus"] == base["focus"]
+    assert base["process_analysis"]["business_rules"] != "Unbekannt"
+
+
+@pytest.mark.django_db
+def test_late_semantic_finding_is_corrected_and_review_history_is_retained(
+    owner, tmp_path, monkeypatch
+):
+    session, snapshot = _session_and_snapshot(owner=owner, tmp_path=tmp_path)
+    first, second, final = _draft(), _draft(), _draft()
+    second["process_analysis"]["current_flow"] = "Unbelegter Arbeitsschritt"
+    final["process_analysis"]["current_flow"] = "Unbekannt"
+    final["clarifications"] = [
+        {"question": "Wie läuft es tatsächlich ab?", "impact": "Scope ungeklärt", "blocking": True}
+    ]
+    responses = iter(
+        [
+            _result(first),
+            _result(_verifier("repair", repair_instructions="Modalität korrigieren")),
+            _result(second),
+            _result(_verifier("repair", repair_instructions="Arbeitsschritt unbelegt")),
+            _result(final),
+            _result(_verifier()),
+        ]
+    )
+    monkeypatch.setattr(architect_service, "_provider_call", lambda **kwargs: next(responses))
+    analysis = architect_service.execute_autonomous_business_discovery(
+        actor=owner, session_id=session.pk, snapshot_id=snapshot.pk
+    )
+    assert analysis.status == "waiting_human"
+    history = analysis.result_payload["review_history"]
+    assert len(history) == 3
+    assert history[0]["draft"] == first
+    assert history[1]["draft"] == second
+    assert history[2]["draft"] == final
+    assert history[1]["verifier"]["status"] == "repair"
+    assert not ValueStream.objects.exists()
+
+
 @pytest.mark.django_db
 def test_historical_solution_preview_is_readable_but_not_a_fresh_provider_contract(
     owner, business_unit
@@ -199,6 +364,11 @@ def test_methodical_contract_collects_semantic_findings_before_single_repair(
     repair_document = json.loads(observed[2]["messages"][1]["content"])
     assert repair_document["contract_errors"]
     assert "Personalvorgabe" in repair_document["verifier"]["repair_instructions"]
+    assert "draft" not in repair_document
+    assert repair_document["input"]["problem_statement"]
+    outline = repair_document["untrusted_proposal_outline"]
+    assert outline["recommended_stage_key"] == original["focus"]["recommended_stage_key"]
+    assert all(set(stage) == {"key", "name"} for stage in outline["stages"])
     assert analysis.status == "success"
     assert analysis.result_payload["draft"] == repaired
 

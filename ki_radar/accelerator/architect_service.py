@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
+from copy import deepcopy
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -44,6 +46,7 @@ from .models import CaptureAnalysis, CaptureSession
 from .services import get_owned_autonomous_capture_session
 
 logger = logging.getLogger(__name__)
+MAX_DISCOVERY_REPAIRS = 3
 
 DISCOVERY_SYSTEM_PROMPT = """Du arbeitest als autonomer Business Architect.
 Erzeuge ausschließlich aus dem bereitgestellten Problem, Geschäftskontext, Nutzerkorrekturen
@@ -104,6 +107,8 @@ Regeln:
   Bei Partnern explizit zwischen Information, Anfrage, Bestätigung und Vollmacht
   für verbindliche Änderung oder Mehrkosten unterscheiden; fehlende Vollmacht erfragen.
 - Ohne tragfähigen Vergleich keine Ursache oder Fokusüberlegenheit behaupten.
+  Auch plausible Begründungen wie 'dort entsteht der erste Kundenkontakt' brauchen
+  einen berichteten Ablauf; sie folgen nicht aus dem bloßen Namen 'Verkauf'.
   Stelle eine blocking-Frage, wenn konkurrierende Untersuchungsbereiche ohne
   weitere Fakten nicht verantwortbar abgegrenzt werden können.
 - Nicht durchgeführte Schritte dürfen nicht als Ist-Handoffs oder erreichte Ergebnisse
@@ -141,6 +146,10 @@ Kritisch sind insbesondere:
   Zentralisierungs-/Synchronisationsannahmen dürfen kein gesicherter Befund werden.
 - Prüfe den konkreten Umfang des Ist-Ablaufs gegen die Fokusphase. Wenn current_flow
   wieder alle Wertstromphasen umfasst, ist scope_quality=false und Repair erforderlich.
+- Auch eine plausible Fokusbegründung wie 'hier entsteht der erste Kundenkontakt'
+  ist ohne berichteten Ablauf unbelegt. Ein Phasenname ist kein Ablaufbeleg. Bei
+  konkurrierenden ungemessenen Bereichen nur einen vorläufigen Untersuchungsbereich
+  benennen und die Vergleichsfrage offen halten, keine sachliche Überlegenheit erfinden.
 - Prüfe Partner-Vollmacht und Verbindlichkeit von Änderungen als entscheidungsrelevante
   Unbekannte, sofern dazu keine autorisierte Grundlage vorliegt.
 - Erstelle intern für JEDEN Satz außerhalb hypotheses/unknowns einen Quellenabgleich:
@@ -152,7 +161,14 @@ Kritisch sind insbesondere:
   Konkrete solche Quellüberschreitungen sind grounding-/hypothesis-Findings und zuerst
   zu reparieren, AUCH wenn der Draft außerdem korrekt auf waiting_human enden muss.
   Eine offene Entscheidung erlaubt keine unbelegten Nebenaussagen. Liste alle konkreten
-  betroffenen Felder zusammen, damit die einmalige Reparatur den Zusammenhang korrigiert.
+  betroffenen Felder zusammen, damit die begrenzte Reparatur den Zusammenhang korrigiert.
+- Die serverseitige Liste evidence_assertions ist die vollständige Prüfliste der
+  Textfelder. Prüfe jeden Eintrag gegen den ORIGINAL-Input, einschließlich Nebensätze
+  und Voraussetzungen. Melde ALLE unbelegten Aussagen gemeinsam, nicht nur das erste
+  auffällige Finding. Ein Quellenhandle oder plausible Touristikpraxis ist kein Beleg.
+  Nominale Erklärungen wie Verzögerung durch Mitarbeiterverfügbarkeit sind ebenfalls
+  Kausalbehauptungen. Ein gewünschtes strategisches Ziel ist nur ein Zielvorschlag.
+  Ein fehlender Ursachenbeleg darf nicht als vorhandener Engpass umgedeutet werden.
 
 Kalibrierung der Checks:
 - Fordere keine eigene Phase für bloßes Warten oder einen nur implizierten Übergang,
@@ -173,6 +189,12 @@ Kalibrierung der Checks:
   und keine rein redaktionelle weitere Reparatur. Gleiches gilt für ein als möglich
   und nicht beobachtet markiertes Ausfallszenario. Prüfe die Aussage, nicht nur
   ihren Feldnamen; eine korrekte Qualifikation muss nach Repair anerkannt werden.
+- Eine ausdrücklich als 'mögliche, unbestätigte Hypothese' bezeichnete Kausalität
+  ist kein gesicherter Ursachenbefund und benötigt keinen Beweis als Tatsache.
+  Beanstande nicht allein das Vorhandensein kausaler Wörter. 'Ein Engpass ist nicht
+  nachgewiesen' behauptet ebenfalls keinen Engpass. Ein Handoff muss nicht formal
+  geregelt sein: Eine berichtete gelegentliche Nachfrage belegt einen informellen
+  Informationsübergang. Verlange dafür keine zusätzliche formale Prozessvorschrift.
 - Markiere nur Findings als kritisch, die Scope, Fokus, Quellenwahrheit oder
   Materialisierung tatsächlich beeinträchtigen. Repair-Anweisungen müssen sich
   auf diese konkreten Findings beschränken.
@@ -212,6 +234,28 @@ Ohne neue Fakten ist eine begründete offene Entscheidung das korrekte Ergebnis.
 Prüfe nach der Korrektur auch exceptions, handoffs und focus.rationale: mögliche Ausfälle
 als nicht beobachtete Möglichkeiten, geplante Kontakte als Vorschläge formulieren. Keine
 Exklusivität eines Klärweges ohne Beleg. Ungeprüfte Voraussetzungen bleiben unbekannt.
+Prüfe zusätzlich jedes Textfeld selbst erneut am ORIGINAL-Input, auch wenn das Finding
+nur ein anderes Feld nennt. Entferne plausible, aber nicht berichtete Arbeitsschritte,
+Nacharbeiten und Personalvorgaben. Ersetze erfundene Ist-Details durch 'Unbekannt' und
+eine konkrete Frage; vermutete Phasen als hypothesis kennzeichnen. Zielvorschläge
+ausdrücklich benennen. Eine zweite begrenzte Korrektur darf keine neuen Tatsachen einführen.
+Der bisherige Draft ist keine Evidenz. Im ersten Repair werden nur Gliederung
+und Findings mitgegeben; im späteren gezielten Repair dient edit_base lediglich
+als unveränderliche Bearbeitungsbasis, nicht als Quelle. Rekonstruiere Fakten aus input und
+den dort berichteten Tätigkeiten. Die Findings erklären, welche Fehlschlüsse zu
+vermeiden sind. Prüfe auch nicht beanstandete Felder neu: Ziele als Zielvorschlag,
+vermutete Tätigkeit als hypothesis, fehlende Abläufe als unbekannt und noch nicht
+berichtete Ausnahmefälle nur ausdrücklich als möglich. Trade-offs dürfen keine
+unbelegte mangelhafte Dokumentation oder andere Ursache voraussetzen.
+untrusted_proposal_outline enthält nur bisherige Phasennamen und die Fokusreferenz,
+keine fachlichen Fakten. Bewahre diese Gliederung bei einer reinen Text-/Evidenzkorrektur,
+wenn die Quellen sie tragen. Insbesondere darf eine reparierte enge Fokusphase nicht
+versehentlich wieder mit dem ganzen Wertstrom verschmelzen. Bei einem Scope-Finding
+darfst du die Gliederung quellengebunden korrigieren; erfundene Tätigkeiten bleiben
+auch dort unzulässig. Wiederhole nie den ganzen Wertstrom als fokussierten Ist-Prozess.
+Wenn edit_base und allowed_field_paths vorliegen, ändere ausschließlich diese
+Textfelder. Alle übrigen Werte bleiben exakt erhalten. previous_findings sind
+bereits erkannte Fehler: Führe diese beim Beheben eines anderen Felds nie wieder ein.
 Gib den vollständigen korrigierten Draft im verlangten JSON-Schema zurück."""
 
 
@@ -330,7 +374,7 @@ def _provider_call(
                 max_tokens=policy.capture_max_output_tokens,
                 timeout_seconds=policy.timeout_seconds,
                 temperature=policy.capture_temperature,
-                reasoning_effort="medium",
+                reasoning_effort="high" if "verifier" in schema_name else "medium",
                 model_override=settings.ACCELERATOR_DISCOVERY_MODEL or None,
                 response_format={
                     "type": "json_schema",
@@ -353,9 +397,28 @@ def _provider_call(
 
 
 def _prompt_payload(system_prompt: str, document: dict[str, Any]) -> list[dict[str, str]]:
+    if system_prompt == REPAIR_SYSTEM_PROMPT:
+        previous = document.get("draft") or {}
+        phases = previous.get("stages") or []
+        if not isinstance(phases, list):
+            phases = []
+        focus = previous.get("focus") or {}
+        if not isinstance(focus, dict):
+            focus = {}
+        outline = {
+            "stages": [
+                {"key": stage.get("key"), "name": stage.get("name")}
+                for stage in phases
+                if isinstance(stage, dict)
+            ],
+            "recommended_stage_key": focus.get("recommended_stage_key"),
+        }
+        document = {key: value for key, value in document.items() if key != "draft"}
+        document["untrusted_proposal_outline"] = outline
     if system_prompt == VERIFIER_SYSTEM_PROMPT and isinstance(document.get("draft"), dict):
         document = {
             **document,
+            "evidence_assertions": _evidence_assertions(document["draft"]),
             "server_methodical_findings": (
                 *discovery_methodical_findings(document["draft"]),
                 *discovery_modality_findings(
@@ -372,8 +435,65 @@ def _prompt_payload(system_prompt: str, document: dict[str, Any]) -> list[dict[s
     ]
 
 
+def _evidence_assertions(draft: dict) -> list[dict]:
+    """Expose nested claims to the existing reviewer; never treat a handle as proof."""
+    assertions = []
+
+    def walk(value, path="", refs=()):
+        if isinstance(value, dict):
+            refs = value.get("evidence_refs", refs)
+            for name, child in value.items():
+                if name not in {"evidence_refs", "schema_version", "key"}:
+                    walk(child, f"{path}.{name}" if path else name, refs)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{path}[{index}]", refs)
+        elif isinstance(value, str):
+            # Resolve the complete text in draft without duplicating long fields.
+            assertions.append({"field": path, "evidence_refs": refs})
+
+    walk(draft)
+    return assertions
+
+
 def _input_chars(messages: list[dict[str, str]]) -> int:
     return sum(len(message["content"]) for message in messages)
+
+
+def _repair_field_targets(draft: dict, verifier: dict) -> tuple[str, ...]:
+    """Only patch fields explicitly named in every finding; never guess targets."""
+    fields = [item["field"] for item in _evidence_assertions(draft)]
+    targets = set()
+    for finding in verifier.get("critical_findings", []):
+        if not isinstance(finding, dict):
+            return ()
+        message = str(finding.get("message") or "")
+        matched = {
+            path for path in fields if re.search(rf"(?<![\w.]){re.escape(path)}(?![\w.])", message)
+        }
+        if not matched:
+            return ()
+        targets.update(matched)
+    return tuple(sorted(targets))
+
+
+def _apply_discovery_field_repair(base: dict, proposal: dict, targets: tuple[str, ...]) -> dict:
+    revised = deepcopy(base)
+    for path in targets:
+        parts = re.findall(r"[^.\[\]]+", path)
+        old, new = revised, proposal
+        try:
+            for part in parts[:-1]:
+                old = old[int(part)] if isinstance(old, list) else old[part]
+                new = new[int(part)] if isinstance(new, list) else new[part]
+            key = int(parts[-1]) if isinstance(old, list) else parts[-1]
+            value = new[key]
+            if not isinstance(value, str):
+                raise TypeError(path)
+            old[key] = value
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise DiscoveryContractError([f"{path}: Ziel des gezielten Repairs fehlt."]) from exc
+    return revised
 
 
 def _analysis_source_hash(snapshot, session: CaptureSession) -> str:
@@ -389,6 +509,7 @@ def _store_terminal_analysis(
     source_labels: dict[str, str],
     snapshot_id,
     results: list[OpenRouterResult],
+    review_history: list | None = None,
 ) -> CaptureAnalysis:
     with transaction.atomic():
         analysis = CaptureAnalysis.objects.select_for_update().get(pk=analysis_id)
@@ -416,6 +537,7 @@ def _store_terminal_analysis(
         analysis.contradictions = list(draft.get("contradictions") or [])
         analysis.result_payload = {
             "draft": draft,
+            "review_history": review_history or [],
             "source_labels": source_labels,
             "discovery_snapshot_id": str(snapshot_id),
         }
@@ -450,6 +572,7 @@ def _store_failure_diagnostics(
     draft: dict[str, Any],
     verifier: dict[str, Any],
     snapshot_id,
+    review_history: list | None = None,
 ) -> None:
     """Persist the last validated draft/reviewer finding before fail-closed termination."""
     with transaction.atomic():
@@ -460,6 +583,7 @@ def _store_failure_diagnostics(
         analysis.contradictions = list(draft.get("contradictions") or [])
         analysis.result_payload = {
             "draft": draft,
+            "review_history": review_history or [],
             "discovery_snapshot_id": str(snapshot_id),
         }
         analysis.verification_payload = verifier
@@ -474,7 +598,17 @@ def _store_failure_diagnostics(
         )
 
 
-@sensitive_variables("document", "producer_messages", "verifier_document", "repair_document")
+@sensitive_variables(
+    "document",
+    "producer_messages",
+    "repair_document",
+    "messages",
+    "draft",
+    "producer_payload",
+    "review_history",
+    "contract_errors",
+    "verifier",
+)
 def execute_autonomous_business_discovery(
     *,
     actor,
@@ -545,181 +679,129 @@ def execute_autonomous_business_discovery(
         results.append(producer)
         last_result = producer
         producer_payload = _decode_json(producer, code="invalid_discovery_response")
-        repair_used = False
-        try:
-            draft = validate_discovery_payload(
-                producer_payload,
-                allowed_refs=allowed_refs,
-                evidence_text=evidence_text,
-            )
-        except DiscoveryContractError as contract_exc:
-            contract_repair_document = {
-                "input": document,
-                "draft": producer_payload,
-                "contract_errors": list(contract_exc.errors),
-            }
-            # Gather semantic findings before spending the single repair on a
-            # structurally readable but methodically invalid draft. Otherwise a
-            # scope-only repair can conceal a causal error until the final review.
-            if discovery_methodical_findings(producer_payload) or discovery_modality_findings(
-                producer_payload, evidence_text
-            ):
-                pre_review_messages = _prompt_payload(
-                    VERIFIER_SYSTEM_PROMPT, {"input": document, "draft": producer_payload}
+        repair_count = 0
+        review_history = []
+        incoming_repair = None
+        while True:
+            contract_errors = []
+            try:
+                draft = validate_discovery_payload(
+                    producer_payload, allowed_refs=allowed_refs, evidence_text=evidence_text
                 )
-                if _input_chars(pre_review_messages) > policy.discovery_max_input_chars:
+            except DiscoveryContractError as exc:
+                draft = producer_payload
+                contract_errors = list(exc.errors)
+
+            semantic_review = not contract_errors or bool(
+                discovery_methodical_findings(draft)
+                or discovery_modality_findings(draft, evidence_text)
+            )
+            if semantic_review:
+                messages = _prompt_payload(
+                    VERIFIER_SYSTEM_PROMPT, {"input": document, "draft": draft}
+                )
+                if _input_chars(messages) > policy.discovery_max_input_chars:
                     raise DiscoveryAnalysisError(
-                        "Die fachliche Prüfung überschreitet das Eingabelimit.",
+                        "Der Discovery-Draft überschreitet zusammen mit den Quellen "
+                        "das Verifier-Limit.",
                         code="verifier_input_too_large",
-                    ) from contract_exc
-                pre_review_result = _provider_call(
+                    )
+                result = _provider_call(
                     actor=actor,
                     session=session,
                     policy=policy,
-                    messages=pre_review_messages,
+                    messages=messages,
                     schema_name="autonomous_business_discovery_verifier_v1",
                     schema=build_discovery_verifier_schema(),
                 )
-                results.append(pre_review_result)
-                last_result = pre_review_result
-                pre_review = enforce_discovery_methodology(
-                    producer_payload,
+                results.append(result)
+                last_result = result
+                verifier = enforce_discovery_methodology(
+                    draft,
                     validate_verifier_payload(
-                        _decode_json(pre_review_result, code="invalid_verifier_response")
+                        _decode_json(result, code="invalid_verifier_response")
                     ),
                 )
-                contract_repair_document["verifier"] = pre_review
-                _store_failure_diagnostics(
-                    analysis_id=analysis.pk,
-                    draft=producer_payload,
-                    verifier=pre_review,
-                    snapshot_id=snapshot.pk,
-                )
-            contract_repair_messages = _prompt_payload(
-                REPAIR_SYSTEM_PROMPT,
-                contract_repair_document,
+            else:
+                verifier = {
+                    "schema_version": "ap1-discovery-verifier-v1",
+                    "status": "repair",
+                    "checks": {},
+                    "critical_findings": [],
+                    "repair_instructions": "",
+                    "human_question": "",
+                }
+            if contract_errors:
+                verifier = {
+                    **verifier,
+                    "status": "repair",
+                    "human_question": "",
+                    "critical_findings": verifier["critical_findings"]
+                    + [
+                        {"code": "discovery_contract", "message": error}
+                        for error in contract_errors
+                    ],
+                    "repair_instructions": "\n".join(
+                        [verifier["repair_instructions"], *contract_errors]
+                    ),
+                }
+            review_history.append(
+                {
+                    "repair_count": repair_count,
+                    "draft": draft,
+                    "contract_errors": contract_errors,
+                    "verifier": verifier,
+                    "incoming_repair": incoming_repair,
+                }
             )
-            if _input_chars(contract_repair_messages) > policy.discovery_max_input_chars:
-                raise DiscoveryAnalysisError(
-                    "Der Contract-Repair überschreitet das Eingabelimit.",
-                    code="repair_input_too_large",
-                ) from contract_exc
-            repair_result = _provider_call(
-                actor=actor,
-                session=session,
-                policy=policy,
-                messages=contract_repair_messages,
-                schema_name="autonomous_business_discovery_repair_v1",
-                schema=build_discovery_json_schema(),
-            )
-            results.append(repair_result)
-            last_result = repair_result
-            draft = validate_discovery_payload(
-                _decode_json(repair_result, code="invalid_repair_response"),
-                allowed_refs=allowed_refs,
-                evidence_text=evidence_text,
-            )
-            repair_used = True
-
-        verifier_document = {"input": document, "draft": draft}
-        verifier_messages = _prompt_payload(VERIFIER_SYSTEM_PROMPT, verifier_document)
-        if _input_chars(verifier_messages) > policy.discovery_max_input_chars:
-            raise DiscoveryAnalysisError(
-                "Der Discovery-Draft überschreitet zusammen mit den Quellen das Verifier-Limit.",
-                code="verifier_input_too_large",
-            )
-        verifier_result = _provider_call(
-            actor=actor,
-            session=session,
-            policy=policy,
-            messages=verifier_messages,
-            schema_name="autonomous_business_discovery_verifier_v1",
-            schema=build_discovery_verifier_schema(),
-        )
-        results.append(verifier_result)
-        last_result = verifier_result
-        verifier = validate_verifier_payload(
-            _decode_json(verifier_result, code="invalid_verifier_response")
-        )
-        verifier = enforce_discovery_methodology(draft, verifier)
-
-        if verifier["status"] == "repair":
             _store_failure_diagnostics(
                 analysis_id=analysis.pk,
                 draft=draft,
                 verifier=verifier,
                 snapshot_id=snapshot.pk,
+                review_history=review_history,
             )
-            if repair_used:
+            if verifier["status"] != "repair":
+                break
+            if repair_count >= MAX_DISCOVERY_REPAIRS:
                 raise DiscoveryAnalysisError(
-                    "Der Discovery-Draft benötigt nach dem einmaligen Repair weitere Korrekturen.",
+                    "Der Discovery-Draft konvergiert nach den begrenzten Repairs nicht.",
                     code="verification_not_converged",
                 )
-            repair_document = {
-                "input": document,
-                "draft": draft,
-                "verifier": verifier,
-            }
-            repair_messages = _prompt_payload(REPAIR_SYSTEM_PROMPT, repair_document)
-            if _input_chars(repair_messages) > policy.discovery_max_input_chars:
+            repair_document = {"input": document, "draft": draft, "verifier": verifier}
+            repair_document["previous_findings"] = [
+                finding
+                for step in review_history
+                for finding in step["verifier"]["critical_findings"]
+            ]
+            targets = _repair_field_targets(draft, verifier)
+            if targets:
+                repair_document["edit_base"] = draft
+                repair_document["allowed_field_paths"] = targets
+            if contract_errors:
+                repair_document["contract_errors"] = contract_errors
+            messages = _prompt_payload(REPAIR_SYSTEM_PROMPT, repair_document)
+            if _input_chars(messages) > policy.discovery_max_input_chars:
                 raise DiscoveryAnalysisError(
                     "Der gezielte Discovery-Repair überschreitet das Eingabelimit.",
                     code="repair_input_too_large",
                 )
-            repair_result = _provider_call(
+            result = _provider_call(
                 actor=actor,
                 session=session,
                 policy=policy,
-                messages=repair_messages,
+                messages=messages,
                 schema_name="autonomous_business_discovery_repair_v1",
                 schema=build_discovery_json_schema(),
             )
-            results.append(repair_result)
-            last_result = repair_result
-            draft = validate_discovery_payload(
-                _decode_json(repair_result, code="invalid_repair_response"),
-                allowed_refs=allowed_refs,
-                evidence_text=evidence_text,
+            results.append(result)
+            last_result = result
+            proposal = _decode_json(result, code="invalid_repair_response")
+            producer_payload = (
+                _apply_discovery_field_repair(draft, proposal, targets) if targets else proposal
             )
-
-            second_verifier_document = {"input": document, "draft": draft}
-            second_verifier_messages = _prompt_payload(
-                VERIFIER_SYSTEM_PROMPT,
-                second_verifier_document,
-            )
-            if _input_chars(second_verifier_messages) > policy.discovery_max_input_chars:
-                raise DiscoveryAnalysisError(
-                    (
-                        "Der reparierte Draft überschreitet zusammen mit den Quellen "
-                        "das Verifier-Limit."
-                    ),
-                    code="verifier_input_too_large",
-                )
-            second_verifier_result = _provider_call(
-                actor=actor,
-                session=session,
-                policy=policy,
-                messages=second_verifier_messages,
-                schema_name="autonomous_business_discovery_verifier_v1",
-                schema=build_discovery_verifier_schema(),
-            )
-            results.append(second_verifier_result)
-            last_result = second_verifier_result
-            verifier = validate_verifier_payload(
-                _decode_json(second_verifier_result, code="invalid_verifier_response")
-            )
-            verifier = enforce_discovery_methodology(draft, verifier)
-            if verifier["status"] == "repair":
-                _store_failure_diagnostics(
-                    analysis_id=analysis.pk,
-                    draft=draft,
-                    verifier=verifier,
-                    snapshot_id=snapshot.pk,
-                )
-                raise DiscoveryAnalysisError(
-                    "Der Discovery-Draft konvergiert nach dem begrenzten Repair nicht.",
-                    code="verification_not_converged",
-                )
+            incoming_repair = {"allowed_fields": targets, "raw_proposal": proposal}
+            repair_count += 1
 
         verifier = enforce_discovery_readiness(draft, verifier)
         source_labels = {"U0": "Problem, Kontext und Nutzerkorrekturen"}
@@ -739,6 +821,7 @@ def execute_autonomous_business_discovery(
             source_labels=source_labels,
             snapshot_id=snapshot.pk,
             results=results,
+            review_history=review_history,
         )
     except DiscoveryContractError as exc:
         mark_capture_analysis_failed(

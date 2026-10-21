@@ -38,18 +38,30 @@ def main():
     parser.add_argument("--resume-technical", action="store_true")
     args = parser.parse_args()
     case, phase = args.case, args.phase
-    version = "v7" if phase in {"replay", "revalidate", "solutions"} else "v4"
+    version = (
+        "v19" if phase == "solutions" else "v13" if phase in {"replay", "revalidate"} else "v4"
+    )
     target = OUT / f"{case}-{phase}-{version}.json"
     prior = json.loads(target.read_text(encoding="utf-8")) if target.exists() else None
     if prior and args.resume_technical:
-        if prior.get("error", {}).get("code") not in {
+        failure_codes = {prior.get("error", {}).get("code")} | {
+            run.get("error_code")
+            for run in prior.get("quality_runs", [])
+            if run.get("status") == "failed"
+        }
+        failure_codes.discard(None)
+        failure_codes.discard("")
+        if not failure_codes or not failure_codes <= {
             "provider_unavailable",
             "test_budget",
             "empty_response",
+            "timeout",
+            "user_quota_exceeded",
+            "global_quota_exceeded",
         }:
             raise SystemExit("Resume is limited to incomplete technical attempts")
         archive = target.with_suffix(".technical-attempt.json")
-        if archive.exists():
+        if archive.exists() and json.loads(archive.read_text(encoding="utf-8")) != prior:
             raise SystemExit("A technical retry has already been attempted")
         save(archive, prior)
     elif target.exists():
@@ -75,9 +87,10 @@ def main():
     settings.ALLOWED_HOSTS = ["testserver"]
     # Isolated acceptance campaign: retain quota enforcement, but permit the
     # authorized bounded matrix rather than the ordinary per-person day limit.
-    # The shared 3 USD ledger remains the tighter campaign-wide hard boundary.
-    settings.ACCELERATOR_LLM_MAX_CALLS_PER_USER_DAY = 80
-    settings.ACCELERATOR_LLM_MAX_CALLS_GLOBAL_DAY = 100
+    # The shared ledger enforces the currently authorized campaign ceiling.
+    settings.ACCELERATOR_LLM_MAX_CALLS_PER_USER_DAY = 120
+    settings.ACCELERATOR_LLM_MAX_CALLS_GLOBAL_DAY = 200
+    settings.ACCELERATOR_LLM_TIMEOUT_SECONDS = "120"
     import django
 
     django.setup()
@@ -89,10 +102,6 @@ def main():
     from django.urls import reverse
 
     from ki_radar.accelerator import architect_service, architect_views
-    from ki_radar.accelerator.architect_contract import (
-        build_discovery_verifier_schema,
-        validate_verifier_payload,
-    )
     from ki_radar.accelerator.investigation_ingestion import create_managed_discovery_source_folder
     from ki_radar.accelerator.investigation_models import InvestigationSourceSnapshot
     from ki_radar.accelerator.investigation_tools import (
@@ -148,26 +157,72 @@ def main():
             pricing["prompt"]
         ) + Decimal(request["max_tokens"]) * Decimal(pricing["completion"])
 
-    for call in ledger["calls"]:
-        if call["status"] != "completed" and "prior_reservation_usd" not in call:
-            call["prior_reservation_usd"] = call["accounted_usd"]
-            call["accounted_usd"] = str(reservation(call["request"]))
-            call["reservation_basis"] = (
-                "Maximum published endpoint rates, input bytes + 1024, maximum output; "
-                "charge remains unknown"
-            )
-    save(ledger_path, ledger)
     seed = None
+    solution_seed = None
 
     def observed(**kwargs):
-        nonlocal seed
+        nonlocal seed, solution_seed
         schema = kwargs.get("response_format", {}).get("json_schema", {}).get("name", "")
+        if schema == "accelerator_solution_critic_v1":
+            cached = next(
+                (
+                    c
+                    for c in reversed(ledger["calls"])
+                    if c["status"] == "completed" and c.get("request") == kwargs
+                ),
+                None,
+            )
+            if cached:
+                save(
+                    OUT / f"{case}-solutions-{version}-reused-critic.json",
+                    {
+                        "origin": "Exact identical provider request; unchanged real response",
+                        "historical_call_id": cached["call_id"],
+                        "request_sha256": hashlib.sha256(
+                            json.dumps(kwargs, sort_keys=True, ensure_ascii=False).encode()
+                        ).hexdigest(),
+                        "content": cached["content"],
+                    },
+                )
+                return OpenRouterResult(
+                    content=cached["content"],
+                    model=cached["model"],
+                    usage={},
+                    output_chars=len(cached["content"]),
+                    finish_reason=cached["finish_reason"],
+                )
+        if solution_seed is not None and schema == "accelerator_solution_generation_v1":
+            content = solution_seed["content"]
+            save(
+                OUT / f"{case}-solutions-{version}-reused-generator.json",
+                {
+                    "historical_call_id": solution_seed["call_id"],
+                    "sha256": hashlib.sha256(content.encode()).hexdigest(),
+                    "content": content,
+                    "origin": solution_seed.get(
+                        "origin", "unchanged real option generator response; new critic/repair"
+                    ),
+                    "source_run_id": solution_seed.get("source_run_id"),
+                    "source_artifact": solution_seed.get("source_artifact"),
+                },
+            )
+            solution_seed = None
+            return OpenRouterResult(
+                content=content,
+                model="historical-provider-evidence",
+                usage={},
+                output_chars=len(content),
+                finish_reason="stop",
+            )
         if seed is not None and schema == "autonomous_business_discovery_v1":
             content = seed["content"]
             save(
                 OUT / f"{case}-{phase}-{version}-reused-generator.json",
                 {
-                    "origin": "unchanged saved real provider text; no new generation",
+                    "origin": seed.get(
+                        "origin", "unchanged saved real provider text; no new generation"
+                    ),
+                    "source_analysis_id": seed.get("source_analysis_id"),
                     "historical_call_id": seed["call_id"],
                     "sha256": hashlib.sha256(content.encode()).hexdigest(),
                     "content": content,
@@ -201,6 +256,7 @@ def main():
             result = request_openrouter(**kwargs)
         except OpenRouterUnavailable as exc:
             entry.update(status="failed", error_code=exc.code, message=str(exc))
+            entry["diagnostics"] = getattr(exc, "diagnostics", {})
             raise
         else:
             entry.update(
@@ -261,7 +317,12 @@ def main():
         "case": case,
         "phase": phase,
         "synthetic": True,
-        "isolated_test_limits": {"user_day": 80, "global_day": 100, "campaign_usd": "3"},
+        "isolated_test_limits": {
+            "user_day": 120,
+            "global_day": 200,
+            "campaign_usd": ledger["budget_usd"],
+            "timeout_seconds": settings.ACCELERATOR_LLM_TIMEOUT_SECONDS,
+        },
         "criteria_sha256": hashlib.sha256((FIXTURES / "criteria.json").read_bytes()).hexdigest(),
     }
     if prior and args.resume_technical:
@@ -276,14 +337,27 @@ def main():
         previous = session.analyses.order_by("-created_at").first()
         draft = previous.result_payload["draft"]
         seed = next(
-            call
-            for call in reversed(ledger["calls"])
-            if call["case"] == case
-            and call["status"] == "completed"
-            and call.get("schema")
-            in {"autonomous_business_discovery_v1", "autonomous_business_discovery_repair_v1"}
-            and json.loads(call["content"]) == draft
+            (
+                call
+                for call in reversed(ledger["calls"])
+                if call["case"] == case
+                and call["status"] == "completed"
+                and call.get("schema")
+                in {"autonomous_business_discovery_v1", "autonomous_business_discovery_repair_v1"}
+                and json.loads(call["content"]) == draft
+            ),
+            None,
         )
+        if seed is None:
+            seed = {
+                "call_id": None,
+                "content": json.dumps(draft, ensure_ascii=False),
+                "source_analysis_id": str(previous.pk),
+                "origin": (
+                    "stored application draft after real targeted field repair; "
+                    "not a new model generation"
+                ),
+            }
         output["revalidated_analysis_id"] = str(previous.pk)
         output["reused_real_call_id"] = seed["call_id"]
     output["implementation_sha256"] = {
@@ -302,21 +376,6 @@ def main():
             for c in historical["calls"]
             if c["case"] == case and c["schema"] == "autonomous_business_discovery_v1"
         )
-        draft = json.loads(original["content"])
-        document, _refs, _text = architect_service._source_document(
-            session=session, snapshot=snapshot
-        )
-        review = architect_service._provider_call(
-            actor=owner,
-            session=session,
-            policy=architect_service.get_accelerator_llm_policy(),
-            messages=architect_service._prompt_payload(
-                architect_service.VERIFIER_SYSTEM_PROMPT, {"input": document, "draft": draft}
-            ),
-            schema_name="autonomous_business_discovery_verifier_v1",
-            schema=build_discovery_verifier_schema(),
-        )
-        output["historical_draft_review"] = validate_verifier_payload(json.loads(review.content))
         seed = original
     if phase == "sources" and prior and args.resume_technical and identity == "fresh":
         output["preceding_model_questions"] = prior.get("preceding_model_questions", [])
@@ -354,6 +413,17 @@ def main():
         state[identity]["snapshot_id"] = str(snapshot.pk)
         save(state_path, state)
     if phase == "solutions":
+        solution_seed = next(
+            (
+                c
+                for c in ledger["calls"]
+                if c["case"] == case
+                and c["phase"] == "solutions"
+                and c["schema"] == "accelerator_solution_generation_v1"
+                and c["status"] == "completed"
+            ),
+            None,
+        )
         from ki_radar.accelerator import (
             solution_critic_service,
             solution_generation_service,
@@ -361,6 +431,37 @@ def main():
         )
         from ki_radar.accelerator.models import SolutionQualityRun
         from ki_radar.architecture.models import ProcessAnalysis, ValueStream, ValueStreamStage
+
+        if (
+            prior
+            and args.resume_technical
+            and prior.get("solution_preview", {}).get("machine_repair")
+        ):
+            from ki_radar.accelerator.solution_generation_effective import (
+                build_validated_effective_solution_payload,
+            )
+
+            previous_run = (
+                SolutionQualityRun.objects.select_related("solution_generation_run")
+                .get(pk=prior["solution_preview"]["machine_repair"]["quality_run_id"])
+                .solution_generation_run
+            )
+            if previous_run.preview_payload.get("edits"):
+                raise SystemExit("Technical continuation cannot reuse human-edited text")
+            effective = build_validated_effective_solution_payload(
+                previous_run.preview_payload,
+                solution_critic_service._source_context_from_generation_run(previous_run),
+            )
+            solution_seed = {
+                "call_id": None,
+                "content": json.dumps(effective, ensure_ascii=False),
+                "origin": (
+                    "stored application effective preview after real machine repair; "
+                    "technical continuation, not a new raw generation"
+                ),
+                "source_run_id": str(previous_run.pk),
+                "source_artifact": archive.name,
+            }
 
         for module in (
             solution_critic_service,

@@ -7,6 +7,7 @@ from ki_radar.accelerator.solution_critic_contract import (
     FINDING_ALLOWED_FIELDS,
     SolutionCriticContractError,
     build_solution_critic_json_schema,
+    unconfirmed_solution_fit_findings,
     validate_solution_critic_payload,
 )
 from ki_radar.accelerator.solution_critic_prompt import (
@@ -91,6 +92,125 @@ def test_empty_findings_are_valid() -> None:
         "prompt_version": CRITIC_PROMPT_VERSION,
         "findings": [],
     }
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Adressiert die Rückfragen. Die Wirksamkeit ist nicht belegt.", True),
+        ("Setzt am Engpass an. Die Ursache ist unbestätigt.", True),
+        ("Könnte die Rückfragen adressieren, sofern die Hypothese zutrifft.", False),
+        ("Adressiert möglicherweise die Rückfragen; Wirkung nicht belegt.", False),
+        ("Die Option setzt am subjektiv berichteten Aufwand an.", False),
+    ],
+)
+def test_unvalidated_fit_claims_require_local_qualification(text, expected):
+    source = source_context()
+    source.validation_state = "not_validated"
+    options = {lane: {"bottleneck_coverage": {"text": text}} for lane in OPTION_LANES}
+    findings = unconfirmed_solution_fit_findings(options, source, [])
+    assert bool(findings) is expected
+    if expected:
+        assert {item["option"] for item in findings} == set(OPTION_LANES)
+        validated = validate_solution_critic_payload(payload_with(findings), source)
+        assert all(item["repairable"] for item in validated["findings"])
+
+
+def test_fit_guard_does_not_duplicate_existing_bound_repair_targets():
+    source = source_context()
+    source.validation_state = "not_validated"
+    options = {
+        lane: {"bottleneck_coverage": {"text": "Adressiert den Engpass."}} for lane in OPTION_LANES
+    }
+    existing = finding(
+        related_targets=[{"option": "organizational", "field": "bottleneck_coverage"}]
+    )
+    assert [
+        item["option"] for item in unconfirmed_solution_fit_findings(options, source, [existing])
+    ] == ["rule_automation"]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Eine Integration wäre erforderlich; eine belegte Anforderung fehlt.", True),
+        ("Das Assistenzsystem müsste an bestehende Systeme angebunden werden.", True),
+        ("Ob eine Integration nötig wäre, ist offen.", False),
+        (
+            "Ob das System angebunden werden müsste, ist ohne konkrete Anforderung nicht belegt.",
+            False,
+        ),
+        (
+            "Integration wäre nur erforderlich, falls Standardsoftware angebunden werden muss.",
+            False,
+        ),
+        ("Eine Integration könnte erforderlich sein.", False),
+        ("Keine belegte Systemintegration erforderlich.", False),
+    ],
+)
+def test_system_names_do_not_prove_a_necessary_integration(text, expected):
+    source = source_context()
+    source.validation_state = "not_validated"
+    options = {
+        lane: {
+            "bottleneck_coverage": {"text": "Fit unbekannt."},
+            "integration_impact": {"text": text, "source_ids": ["process.systems"]},
+        }
+        for lane in OPTION_LANES
+    }
+    findings = unconfirmed_solution_fit_findings(options, source, [])
+    assert bool(findings) is expected
+    if expected:
+        validated = validate_solution_critic_payload(payload_with(findings), source)
+        assert all(item["field"] == "integration_impact" for item in validated["findings"])
+
+
+def test_explicit_integration_constraints_remain_for_semantic_source_review():
+    source = source_context()
+    source.validation_state = "not_validated"
+    source.facts += (
+        SourceFact(
+            source_id="process.constraints",
+            field="constraints",
+            value="API-Anbindung vorgeschrieben.",
+        ),
+    )
+    options = {
+        lane: {
+            "bottleneck_coverage": {"text": "Fit unbekannt."},
+            "integration_impact": {
+                "text": "Eine Integration wäre erforderlich.",
+                "source_ids": ["process.systems", "process.constraints"],
+            },
+        }
+        for lane in OPTION_LANES
+    }
+    assert not unconfirmed_solution_fit_findings(options, source, [])
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Zeitweise fehlender Internetempfang ist als Engpass belegt.", True),
+        ("Der Internetempfang ist ein Engpass.", True),
+        ("Ob der berichtete Internetmangel einen Engpass darstellt, ist nicht belegt.", False),
+        ("Ein kausaler Engpass ist nicht bewiesen.", False),
+        ("Die Einordnung als Engpass bleibt eine unbewiesene Hypothese.", False),
+    ],
+)
+def test_reported_technical_restriction_is_not_a_proven_bottleneck(text, expected):
+    source = source_context()
+    source.validation_state = "not_validated"
+    options = {
+        lane: {
+            "bottleneck_coverage": {"text": "Fit unbekannt."},
+            "technology_constraints": {"text": text},
+        }
+        for lane in OPTION_LANES
+    }
+    findings = unconfirmed_solution_fit_findings(options, source, [])
+    assert bool(findings) is expected
+    assert all(item["field"] == "technology_constraints" for item in findings)
 
 
 def test_valid_finding_gets_server_generated_stable_id() -> None:
@@ -288,15 +408,12 @@ def test_critic_messages_include_frozen_preview_and_source_context() -> None:
         "source_ids",
         "assumptions",
         "open_evidence",
+        "uncertainty",
     ]
-    assistant_index = user_document["lanes"].index("assistant")
-    description_index = user_document["fields"].index("description")
-    assert user_document["options"][assistant_index][description_index] == [
-        statement["text"],
-        ["process.bottlenecks"],
-        [],
-        statement["open_evidence"],
-    ]
+    assert user_document["options"]["assistant"]["description"] == {
+        key: statement[key]
+        for key in ("text", "source_ids", "assumptions", "open_evidence", "uncertainty")
+    }
     assert user_document["sources"] == {
         "process.bottlenecks": ("Die manuelle Angebotsprüfung ist der dokumentierte Engpass.")
     }

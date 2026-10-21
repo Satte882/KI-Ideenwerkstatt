@@ -5,6 +5,7 @@ import logging
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
@@ -16,6 +17,7 @@ from .models import SolutionGenerationRun, SolutionQualityRun
 from .solution_critic_contract import (
     SolutionCriticContractError,
     build_solution_critic_json_schema,
+    unconfirmed_solution_fit_findings,
     validate_solution_critic_payload,
 )
 from .solution_critic_prompt import build_solution_critic_messages
@@ -302,9 +304,12 @@ def _run_solution_critic(
     try:
         result = request_openrouter(
             messages=messages,
-            max_tokens=policy.max_output_tokens,
+            # Three complete options plus reasoning exceed compact task capacity.
+            max_tokens=policy.solution_generation_max_output_tokens,
             timeout_seconds=policy.timeout_seconds,
             temperature=None,
+            reasoning_effort="high",
+            model_override=settings.ACCELERATOR_DISCOVERY_MODEL or None,
             response_format={
                 "type": "json_schema",
                 "json_schema": {
@@ -348,8 +353,29 @@ def _run_solution_critic(
             result=result,
         )
 
+    # Execution metadata belongs to the server. Some providers echo the schema
+    # version here despite receiving the current prompt; do not discard their
+    # substantive findings because of an incorrect prompt-version echo.
+    if payload.get("prompt_version") != CRITIC_PROMPT_VERSION:
+        logger.warning(
+            "solution_critic prompt_version_echo quality_run_id=%s echoed=%r executed=%s",
+            quality_run.pk,
+            payload.get("prompt_version"),
+            CRITIC_PROMPT_VERSION,
+        )
+    if isinstance(payload.get("prompt_version"), str) and payload["prompt_version"].strip():
+        payload["prompt_version"] = CRITIC_PROMPT_VERSION
     try:
         validated = validate_solution_critic_payload(payload, source_context)
+        additional = unconfirmed_solution_fit_findings(
+            snapshot.document["effective_payload"]["options"],
+            source_context,
+            payload["findings"],
+        )
+        if additional:
+            validated = validate_solution_critic_payload(
+                {**payload, "findings": [*payload["findings"], *additional]}, source_context
+            )
     except SolutionCriticContractError as exc:
         logger.warning(
             "solution_critic contract_failure generation_run_id=%s quality_run_id=%s "

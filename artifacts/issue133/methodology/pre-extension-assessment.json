@@ -1,0 +1,165 @@
+{
+  "assessment": "not_accepted",
+  "assessor": "Codex textual source comparison outside provider generator/critic outputs; no RSD approval",
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "historical_assessment_preserved": "independent-assessment.json",
+  "source_stage": {
+    "A": {
+      "artifact": "A-revalidate-v12.json",
+      "recorded_status": "waiting_human",
+      "current_deterministic_findings": [
+        "stages[0].pain_points: unqualifizierte Kausalbehauptung; als berichtete Beobachtung formulieren oder ausdrücklich unbestätigte Hypothese nennen."
+      ],
+      "confirmed_scope": false,
+      "confirmed_cause": false
+    },
+    "B": {
+      "artifact": "B-revalidate-v11.json",
+      "recorded_status": "waiting_human",
+      "current_deterministic_findings": [],
+      "confirmed_scope": false,
+      "confirmed_cause": false
+    },
+    "C": {
+      "artifact": "C-revalidate-v11.json",
+      "recorded_status": "waiting_human",
+      "current_deterministic_findings": [],
+      "confirmed_scope": false,
+      "confirmed_cause": false
+    },
+    "D": {
+      "artifact": "D-revalidate-v11.json",
+      "recorded_status": "waiting_human",
+      "current_deterministic_findings": [],
+      "confirmed_scope": false,
+      "confirmed_cause": false
+    }
+  },
+  "original_fault_repair": {
+    "A": {
+      "artifact": "A-replay-v11.json",
+      "calls": [
+        112,
+        113,
+        114,
+        115,
+        116
+      ],
+      "result": "two automatic corrections and revalidation; source-stage coverage still incomplete"
+    },
+    "B": {
+      "artifact": "B-replay-v8.json",
+      "calls": [
+        86,
+        87,
+        88
+      ],
+      "result": "invented detailed workflow removed automatically; factual scope question remains blocking"
+    },
+    "C": {
+      "artifact": "C-replay-v8.json",
+      "calls": [
+        94,
+        95,
+        96
+      ],
+      "result": "scope corrected automatically and revalidated"
+    },
+    "D": {
+      "artifact": "D-replay-v8.json",
+      "calls": [
+        97,
+        98,
+        99,
+        100,
+        101
+      ],
+      "result": "automatic correction and revalidation; authority remains unknown"
+    }
+  },
+  "solution_stage": {
+    "A": {
+      "artifact": "A-solutions-v14.json",
+      "result": "current critic blocked by budget",
+      "prior_artifact": "A-solutions-v13.json",
+      "prior_calls": [
+        129,
+        130
+      ],
+      "limitation": "prior critic succeeded under 1.4; no assertion of current 1.5 validation"
+    },
+    "B": {
+      "artifact": "B-solutions-v13.json",
+      "real_origin_calls": [
+        81,
+        127
+      ],
+      "result": "generator reused; exact identical critic request/response reused after server metadata fix",
+      "limitation": "critic 1.4; current 1.5 not paid again; focus preference remains unjustified"
+    },
+    "C": {
+      "artifact": "C-solutions-v14.json",
+      "real_origin_calls": [
+        83,
+        133,
+        134,
+        135
+      ],
+      "result": "critic detects untested reachability falsely labeled bottleneck; repairs all three bound fields; final critic completes",
+      "independent_text_check": "effective patches explicitly call reachability an open prerequisite, not observed outage; conflicting times remain unresolved"
+    },
+    "D": {
+      "artifact": "D-solutions-v14.json",
+      "real_origin_calls": [
+        131,
+        136
+      ],
+      "result": "generator and current critic complete; no binding change, cost approval or solution preference",
+      "limitation": "assistant.integration_impact still says integration would be required although system requirements are unknown; critic empty finding list is not full source-truth proof"
+    }
+  },
+  "remaining_blockers": [
+    {
+      "case": "A",
+      "artifact": "A-revalidate-v12.json",
+      "field": "stages[0].pain_points",
+      "text": "Nacheinander gelagerte Recherche in zwei unterschiedlichen Quellen verzögert die Auskunft.",
+      "source_comparison": "U0/S1 report lookup and waiting, not a proven attribution of the delay. Current guard rejects this unqualified causal verb; real automatic source repair/revalidation not demonstrated."
+    },
+    {
+      "case": "B",
+      "artifact": "B-revalidate-v11.json",
+      "field": "focus.rationale",
+      "source_comparison": "The claimed first customer contact in sales is plausible but not documented in the provided reports. It cannot justify selecting sales over travel operations."
+    },
+    {
+      "case": "D",
+      "artifact": "D-solutions-v14.json",
+      "field": "assistant.integration_impact",
+      "source_comparison": "Unknown systems do not establish an integration requirement. The simultaneously stated missing evidence/high uncertainty limits the proposal, but does not substantiate this requirement."
+    },
+    {
+      "type": "budget",
+      "artifact": "A-solutions-v14-budget-refusal.json",
+      "result": "No further real calls; latest method not completely validated A-D within remaining authorization."
+    }
+  ],
+  "budget": {
+    "limit_usd": "3",
+    "attempts": 136,
+    "completed_responses": 130,
+    "failed_unknown_charge_attempts": 6,
+    "reported_cost_usd": "1.89058548",
+    "unknown_charge_reservation_usd": "0.97609950",
+    "accounted_usd": "2.86668498",
+    "remaining_usd": "0.13331502",
+    "note": "Remaining funds are not zero; the next conservatively reserved request does not fit. No unknown fee is waived."
+  },
+  "human_work": [
+    "provide natural input and staged synthetic sources",
+    "configure isolated test fixtures; no authority approval",
+    "compare actual statements with predeclared source-based criteria",
+    "implement documented method corrections; no manual editing of model answers"
+  ],
+  "decision": "Push reviewed draft and evidence; keep PR143 draft and issue133 open. No merge or fictitious acceptance."
+}

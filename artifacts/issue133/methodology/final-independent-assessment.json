@@ -1,0 +1,272 @@
+{
+  "assessment": "accepted_synthetic_methodological_package",
+  "technical_merge_condition": "Complete green CI for PR143 HEAD is additionally required before merge; record commit and workflow in PR/issue.",
+  "assessor": "Codex textual comparison against predeclared criteria and source dossiers, outside Gemini/DeepSeek generator and critic outputs; not a real RSD business approval",
+  "criteria_file": "tests/fixtures/issue133_methodology/criteria.json",
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "source_dossiers": "tests/fixtures/issue133_methodology/A-D, released only after matching questions; original natural inputs preserved",
+  "cases": {
+    "A": {
+      "source_artifact": "A-revalidate-v13.json",
+      "source_analysis_id": "96b53d87-d3aa-4282-882e-4843968e83c0",
+      "result": "justified_factual_deferral",
+      "blocking_questions": [
+        "Welche Angabe zur Transferzeit (09:00 oder 10:00) ist im Fall SYN-A-01 gültig und wie wird die Verbindlichkeit von Nachrichten geregelt?"
+      ],
+      "solution_artifact": "A-solutions-v19.json",
+      "solution_result": "conditional_exploration_without_preference_or_authority_approval",
+      "real_calls": [
+        137,
+        138,
+        139,
+        192,
+        193,
+        194
+      ],
+      "generator_origin_call": 129,
+      "binding_decision": false,
+      "independent_source_comparison": "Only the unsupported secondary delay attribution changed, now explicitly an unconfirmed conjecture. U0/S1 support reported search and waiting; S2/S4 remain conflicting and S3 remains a counterexample. No authoritative transfer time, frequency or main cause selected. The additional unsupported assistant integration requirement was automatically replaced with an explicitly conditional dependency and revalidated.",
+      "autonomous_correction": {
+        "source": "stages[0].pain_points",
+        "allowed_fields": [
+          "stages[0].pain_points"
+        ],
+        "solution": "one bound integration_impact patch",
+        "reverified": true
+      },
+      "detection_attribution": {
+        "raw_model_findings": [],
+        "additional_server_claim_findings": [
+          {
+            "criterion": "evidence_discipline",
+            "option": "assistant",
+            "finding": "Serverseitige Claim-Prüfung: Ausschließlich referenzierte Systemnamen belegen keine notwendige Integration. Ob eine Anbindung erforderlich wäre, bleibt ohne konkrete Anforderung offen; bedingt formulieren.",
+            "source_ids": [
+              "process.systems"
+            ],
+            "repairable": true,
+            "related_targets": [],
+            "field": "integration_impact",
+            "finding_id": "finding_bf3367ac95ae7fb73dd206aa"
+          }
+        ],
+        "note": "Application autonomy combines model review and explicit claim guards; a server finding is not attributed to the LLM. Repairs and final reviews are real model calls."
+      }
+    },
+    "B": {
+      "source_artifact": "B-revalidate-v13.json",
+      "source_analysis_id": "6342c66c-001e-46e5-8aeb-76677a1b27ef",
+      "result": "justified_factual_deferral",
+      "blocking_questions": [
+        "Welcher Bereich (Verkauf oder Reiseorganisation) erzeugt nach objektiven Daten (z. B. Kontaktzählung, Arbeitszeiten) den höheren Aufwand?"
+      ],
+      "solution_artifact": "B-solutions-v19.json",
+      "solution_result": "conditional_exploration_without_preference_or_authority_approval",
+      "real_calls": [
+        140,
+        141,
+        142,
+        195
+      ],
+      "generator_origin_call": 81,
+      "binding_decision": false,
+      "independent_source_comparison": "Invented workflow and absolute hiring prohibition removed in original replay. Source-stage focus rationale no longer invents first customer contact. Both subjective workload reports remain competing; unknown workflow/system landscape and comparative focus evidence remain open.",
+      "autonomous_correction": {
+        "original_replay": "B-replay-v8.json",
+        "calls": [
+          86,
+          87,
+          88
+        ],
+        "source": "focus.rationale",
+        "reverified": true
+      },
+      "detection_attribution": {
+        "raw_model_findings": [],
+        "additional_server_claim_findings": [],
+        "note": "Application autonomy combines model review and explicit claim guards; a server finding is not attributed to the LLM. Repairs and final reviews are real model calls."
+      }
+    },
+    "C": {
+      "source_artifact": "C-revalidate-v13.json",
+      "source_analysis_id": "8c796959-dd1d-4f61-b0e7-0f6d6298b03f",
+      "result": "justified_factual_deferral",
+      "blocking_questions": [
+        "Ist die im Reiseblatt angegebene Telefonnummer aktuell erreichbar und gehört sie zu einer befugten Stelle zur Treffpunktbestätigung?"
+      ],
+      "solution_artifact": "C-solutions-v19.json",
+      "solution_result": "conditional_exploration_without_preference_or_authority_approval",
+      "real_calls": [
+        143,
+        186,
+        187,
+        188
+      ],
+      "generator_origin_call": 83,
+      "binding_decision": false,
+      "independent_source_comparison": "Phone exists but was never called, so no outage follows. Effective machine patches in affected bottleneck_coverage and technology_constraints fields now preserve open prerequisites and lack of confirmed cause. Intermittent internet remains a reported restriction, not proof that it blocks clarification. Both source times/places remain unresolved; organizational clarification is a full option. The v15 late finding and v18 timeout/recovery are retained; acceptance uses a new complete uninterrupted v19 application cycle from the original real candidate.",
+      "autonomous_correction": {
+        "original_replay": "C-replay-v8.json",
+        "calls": [
+          94,
+          95,
+          96
+        ],
+        "solution": "all bound patches across bottleneck_coverage and technology_constraints",
+        "reverified": true
+      },
+      "detection_attribution": {
+        "raw_model_findings": [
+          {
+            "criterion": "bottleneck_fit",
+            "option": "organizational",
+            "field": "bottleneck_coverage",
+            "finding": "Bei dem Validierungsstatus not_validated stellen die ungeprüfte Erreichbarkeit der Telefonnummer eine offene Voraussetzung und der zeitweise fehlende Internetempfang eine berichtete Beobachtung dar. Ihre direkte Bezeichnung als dokumentierte oder feststehende Engpässe ohne belegte Blockierungswirkung wertet offene Voraussetzungen unzulässig zu bestätigten Engpassdiagnosen auf. Die Aussagen in bottleneck_coverage und technology_constraints müssen als offene Annahmen beziehungsweise unbewiesene Einschränkungen umformuliert werden.",
+            "source_ids": [
+              "process.bottlenecks"
+            ],
+            "repairable": true,
+            "related_targets": [
+              {
+                "option": "organizational",
+                "field": "technology_constraints"
+              },
+              {
+                "option": "rule_automation",
+                "field": "bottleneck_coverage"
+              },
+              {
+                "option": "rule_automation",
+                "field": "technology_constraints"
+              },
+              {
+                "option": "assistant",
+                "field": "bottleneck_coverage"
+              }
+            ]
+          }
+        ],
+        "additional_server_claim_findings": [],
+        "note": "Application autonomy combines model review and explicit claim guards; a server finding is not attributed to the LLM. Repairs and final reviews are real model calls."
+      }
+    },
+    "D": {
+      "source_artifact": "D-revalidate-v13.json",
+      "source_analysis_id": "1060b8c2-e2c4-4c94-b453-df7489b891eb",
+      "result": "justified_factual_deferral",
+      "blocking_questions": [
+        "Wer ist berechtigt, eine verbindliche Änderung zu bestellen und Mehrkosten freizugeben?"
+      ],
+      "solution_artifact": "D-solutions-v19.json",
+      "solution_result": "conditional_exploration_without_preference_or_authority_approval",
+      "real_calls": [
+        144,
+        189,
+        190,
+        191
+      ],
+      "generator_origin_call": 131,
+      "binding_decision": false,
+      "independent_source_comparison": "Request, conditional bus availability and missing meeting confirmation are preserved separately. No silence-as-consent, order or cost authority inferred. Effective assistant.integration_impact now explicitly says whether integration is necessary remains unknown; no system requirement invented.",
+      "autonomous_correction": {
+        "original_replay": "D-replay-v8.json",
+        "calls": [
+          97,
+          98,
+          99,
+          100,
+          101
+        ],
+        "solution": "one bound integration_impact patch",
+        "reverified": true
+      },
+      "detection_attribution": {
+        "raw_model_findings": [
+          {
+            "criterion": "evidence_discipline",
+            "option": "assistant",
+            "field": "integration_impact",
+            "finding": "Aus unvollständig bekannten Systemen folgt keine zwingende Integrationsnotwendigkeit. Die Behauptung 'Eine Integration in unbekannte Systeme wäre erforderlich' formuliert eine unbegründete Notwendigkeit. Die Aussage muss bedingt gefasst werden (z. B. 'Ob eine Integration nötig wäre, ist offen; nur falls...').",
+            "source_ids": [
+              "process.systems"
+            ],
+            "repairable": true,
+            "related_targets": []
+          }
+        ],
+        "additional_server_claim_findings": [
+          {
+            "criterion": "evidence_discipline",
+            "option": "organizational",
+            "finding": "Serverseitige Claim-Prüfung: Bei unvalidierter Diagnose ohne bestätigte Ursache muss jeder Satz zum Engpass-Fit ausdrücklich bedingt formuliert sein. Ein späterer Evidenzvorbehalt bestätigt den Fit nicht.",
+            "source_ids": [
+              "process.bottlenecks"
+            ],
+            "repairable": true,
+            "related_targets": [],
+            "field": "bottleneck_coverage",
+            "finding_id": "finding_cb33f65ae50abc4eadeaf894"
+          },
+          {
+            "criterion": "evidence_discipline",
+            "option": "rule_automation",
+            "finding": "Serverseitige Claim-Prüfung: Bei unvalidierter Diagnose ohne bestätigte Ursache muss jeder Satz zum Engpass-Fit ausdrücklich bedingt formuliert sein. Ein späterer Evidenzvorbehalt bestätigt den Fit nicht.",
+            "source_ids": [
+              "process.bottlenecks"
+            ],
+            "repairable": true,
+            "related_targets": [],
+            "field": "bottleneck_coverage",
+            "finding_id": "finding_c2faa051ebbe04820245a0aa"
+          }
+        ],
+        "note": "Application autonomy combines model review and explicit claim guards; a server finding is not attributed to the LLM. Repairs and final reviews are real model calls."
+      }
+    }
+  },
+  "criteria_results": {
+    "unproven_causes_not_facts": "passed for the inspected final A-D package; earlier failures retained",
+    "blocking_gaps_effective": "passed: all source runs waiting_human; UI/materialization and historical-state regressions",
+    "scope_and_option_fit": "passed: corrected focused scopes, B comparative focus deferred, conditional options only",
+    "non_ai_alternatives": "passed: organizational clarification and existing standard software/classical automation alongside assistance; no preferred solution invented",
+    "documented_errors_detected": "passed: actual model findings plus conservative server guards; C/D semantic findings lead to real model repair",
+    "automatic_repair_and_revalidation": "passed: original fault replays and A/B source corrections, C/D solution patches and final critics",
+    "deferral_allowed": "passed: no answer to source conflicts or authority questions fabricated",
+    "no_fake_data_approval_or_pilot": "passed within synthetic package: no production facts, confirmed cause, human scope approval or pilot impact claimed"
+  },
+  "historical_negative_assessments": [
+    "independent-assessment.json",
+    "pre-extension-assessment.json"
+  ],
+  "calibration_limits_preserved": [
+    "C v15 late correctable finding despite successful final-critic transport",
+    "D v16 late fit claims, fixed by an explicit conservative claim boundary",
+    "D v17 false positive on a clear conditional integration statement, calibrated with negative controls",
+    "A v17 model misses integration necessity; server guard now supplements it",
+    "A v18 quota interruption and overconservative guard on an indirect question; technical recovery and a negative-control fix preserved",
+    "C v18 final-review timeout and subsequent technical continuation; final acceptance uses uninterrupted v19 runs"
+  ],
+  "human_support": [
+    "natural inputs and staged synthetic source provisioning",
+    "isolated canonical DRAFT solution fixtures; not autonomous materialization",
+    "independent textual source comparison and product corrections; no editing provider answers to pass"
+  ],
+  "limits": [
+    "No general semantic reliability rate inferred from four curated cases",
+    "No autonomous collection of real business evidence demonstrated",
+    "No binding focus approval, solution selection, governance approval, pilot, economic baseline or production outcome",
+    "Earlier false negatives and false positives remain in evidence; model agreement alone is insufficient"
+  ],
+  "budget": {
+    "authorized_ceiling_usd": "5",
+    "authorization_event_after_call": 136,
+    "attempts": 195,
+    "completed_responses": 188,
+    "reported_cost_usd": "2.83300698",
+    "unknown_charge_attempts": 7,
+    "unknown_charge_reservation_usd": "1.12494240",
+    "accounted_usd": "3.95794938",
+    "remaining_usd": "1.04205062",
+    "note": "User explicitly extended original 3 USD authorization. No historical failed fee waived; accounting is not a performance/economic test."
+  }
+}

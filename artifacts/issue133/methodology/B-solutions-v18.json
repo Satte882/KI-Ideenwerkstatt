@@ -1,0 +1,604 @@
+{
+  "case": "B",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "5"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "579b1af11b4d02c1de9b678253b746ba847d56c6ecb0c10f4f32ed828602e4e2",
+    "ki_radar/accelerator/architect_contract.py": "c23444658f3d7e67d660ab0ba41a8151b642dfcb0388eaa6f3a6dceef74164c0"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "6342c66c-001e-46e5-8aeb-76677a1b27ef",
+  "solution_preview": {
+    "schema_version": "1.0",
+    "prompt_version": "1.3",
+    "source_context": {
+      "source_schema_version": "block7_sources_v1",
+      "process_version": 1,
+      "validation_state": "not_validated",
+      "facts": [
+        {
+          "source_id": "process.name",
+          "field": "name",
+          "value": "Detailbetrachtung Verkauf und Kundenanfragen"
+        },
+        {
+          "source_id": "process.scope_start",
+          "field": "scope_start",
+          "value": "Eingang einer Kundenanfrage"
+        },
+        {
+          "source_id": "process.scope_end",
+          "field": "scope_end",
+          "value": "Abschluss der Kundenberatung und Bearbeitung von Rückfragen"
+        },
+        {
+          "source_id": "process.trigger",
+          "field": "trigger",
+          "value": "Eingegangene Kundenanfrage"
+        },
+        {
+          "source_id": "process.outcome",
+          "field": "outcome",
+          "value": "Bearbeitete Kundenanfrage und geklärte Rückfragen"
+        },
+        {
+          "source_id": "process.current_flow",
+          "field": "current_flow",
+          "value": "Der genaue Ist-Ablauf für stage_verkauf (Verkauf und Kundenanfragen) ist in den vorliegenden Quellen noch nicht beschrieben und derzeit unbekannt."
+        },
+        {
+          "source_id": "process.roles",
+          "field": "roles",
+          "value": "Testperson im Verkauf"
+        },
+        {
+          "source_id": "process.systems",
+          "field": "systems",
+          "value": "Unbekannt"
+        },
+        {
+          "source_id": "process.data_objects",
+          "field": "data_objects",
+          "value": "Anfragen (Details unbekannt)"
+        },
+        {
+          "source_id": "process.bottlenecks",
+          "field": "bottlenecks",
+          "value": "Subjektiv berichteter Aufwand bei Rückfragen (noch nicht quantitativ bestätigt)."
+        },
+        {
+          "source_id": "process.baseline_metrics",
+          "field": "baseline_metrics",
+          "value": "Keine Arbeitszeitdaten, Buchungslisten oder Kennzahlen verfügbar."
+        },
+        {
+          "source_id": "process.business_rules",
+          "field": "business_rules",
+          "value": "Unbekannt"
+        },
+        {
+          "source_id": "process.exceptions",
+          "field": "exceptions",
+          "value": "Unbekannt"
+        },
+        {
+          "source_id": "process.diagnostic_observations",
+          "field": "diagnostic_observations",
+          "value": "Es liegen bisher ausschließlich subjektive Einschätzungen einzelner Testpersonen ohne Messwerte vor."
+        },
+        {
+          "source_id": "process.cause_hypotheses",
+          "field": "cause_hypotheses",
+          "value": "Rückfragen könnten durch unvollständige Informationen bei der Erstanfrage entstehen."
+        },
+        {
+          "source_id": "stage.name",
+          "field": "name",
+          "value": "Exploration ohne Scopefreigabe"
+        }
+      ]
+    },
+    "options": {
+      "organizational": {
+        "name": {
+          "text": "Organisatorische Klärung von Zuständigkeit und Abschlusskriterien für Kundenrückfragen.",
+          "source_ids": [
+            "process.name",
+            "process.roles",
+            "process.outcome"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Zuständigkeiten und Abschlusskriterien sind in den Quellen nicht beschrieben."
+          ],
+          "uncertainty": {
+            "level": "medium",
+            "reason": "Rollen sind nur als Testperson im Verkauf belegt."
+          }
+        },
+        "description": {
+          "text": "Die Option klärt, wer Rückfragen nach der Erstanfrage übernimmt und wann eine Rückfrage als geklärt gilt. Der Ist-Ablauf für Verkauf und Kundenanfragen ist in den Quellen unbekannt.",
+          "source_ids": [
+            "process.current_flow",
+            "process.scope_start",
+            "process.scope_end",
+            "process.trigger",
+            "process.outcome"
+          ],
+          "assumptions": [
+            "Es gibt eine Übergabe zwischen Erstanfrage und Rückfragenbearbeitung."
+          ],
+          "open_evidence": [
+            "Ist-Ablauf nicht beschrieben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Der Kernablauf ist in den Quellen unbekannt."
+          }
+        },
+        "expected_value": {
+          "text": "Erwarteter Nutzen ist eine klarere Zuständigkeit und ein definierter Abschluss von Rückfragen. Belegte Nutzenkennzahlen fehlen.",
+          "source_ids": [
+            "process.baseline_metrics"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Arbeitszeitdaten, Buchungslisten oder Kennzahlen in den Quellen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ohne Kennzahlen ist kein Nutzennachweis möglich."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Die Option setzt am subjektiv berichteten Aufwand bei Rückfragen an. Die vermutete Ursache unvollständiger Erstanfragen ist nicht bestätigt.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.cause_hypotheses",
+            "process.diagnostic_observations"
+          ],
+          "assumptions": [
+            "Der berichtete Aufwand entsteht in der Rückfragenbearbeitung."
+          ],
+          "open_evidence": [
+            "Nur subjektive Einschätzungen ohne Messwerte."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Bottleneck und Ursache sind nicht quantitativ bestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt werden Angaben zu Rollen, Ist-Ablauf und Inhalt der Anfragen. Details zu den Datenobjekten sind unbekannt.",
+          "source_ids": [
+            "process.roles",
+            "process.current_flow",
+            "process.data_objects"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Anfragedetails unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Datenlage ist in den Quellen nicht beschrieben."
+          }
+        },
+        "application_impact": {
+          "text": "Eine Wirkung auf Anwendungen ist aus den Quellen nicht ableitbar, da die Systeme unbekannt sind.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Systemlandschaft nicht dokumentiert."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Systeme sind unbekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Aus den Quellen sind keine Integrationspunkte belegt. Ob überhaupt Systeme beteiligt sind, ist offen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Schnittstelleninformationen vorhanden."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Systeme und Schnittstellen sind unbekannt."
+          }
+        },
+        "technology_constraints": {
+          "text": "Technische Rahmenbedingungen sind nicht belegt. Die Quellen nennen weder Systeme noch Geschäftsregeln.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Technik- und Regelstand unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine Technik- oder Regelangaben in den Quellen."
+          }
+        },
+        "risks": {
+          "text": "Ohne bekannten Ist-Ablauf kann eine Zuständigkeitsregel an der falschen Stelle ansetzen. Die Ursachenhypothese zu unvollständigen Erstanfragen bleibt unbelegt.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.current_flow",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Ausnahmen und Ursache nicht beschrieben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Ausnahmen sind nur vermutet bzw. unbekannt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Eine Einordnung in eine Zielarchitektur ist nicht belegbar. Systeme und Geschäftsregeln als Bezugspunkte fehlen.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Architekturinformationen in den Quellen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Bezugsgrößen für die Architektureinordnung fehlen."
+          }
+        }
+      },
+      "rule_automation": {
+        "name": {
+          "text": "Regelbasierte Automatisierung der Rückfragenbearbeitung, beginnend mit der Prüfung vorhandener Standardsoftware.",
+          "source_ids": [
+            "process.name",
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Systemlandschaft unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ohne bekannte Systeme ist ein Standardsoftware-Abgleich nicht prüfbar."
+          }
+        },
+        "description": {
+          "text": "Zuerst ist zu prüfen, ob vorhandene Standardsoftware die benötigte Funktion bereits bietet; eigene Automatisierung wird nicht vorausgesetzt. Klassische Regeln könnten Rückfragen anhand von Merkmalen der Erstanfrage zuordnen. Die Geschäftsregeln sind in den Quellen unbekannt.",
+          "source_ids": [
+            "process.business_rules",
+            "process.systems",
+            "process.current_flow",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Rückfragen lassen sich über Merkmale der Erstanfrage unterscheiden."
+          ],
+          "open_evidence": [
+            "Geschäftsregeln unbekannt.",
+            "Ist-Ablauf unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Regelgrundlage und Ablauf sind nicht belegt."
+          }
+        },
+        "expected_value": {
+          "text": "Erwarteter Nutzen ist eine einheitlichere Bearbeitung von Rückfragen durch feste Regeln. Belegte Nutzenkennzahlen fehlen.",
+          "source_ids": [
+            "process.baseline_metrics"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Kennzahlen in den Quellen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Kein belegter Nutzenwert vorhanden."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Adressiert den subjektiv berichteten Aufwand bei Rückfragen. Ob unvollständige Erstanfragen die Ursache sind, ist nur Hypothese.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.cause_hypotheses",
+            "process.diagnostic_observations"
+          ],
+          "assumptions": [
+            "Der Aufwand entsteht durch Rückfragen nach der Erstanfrage."
+          ],
+          "open_evidence": [
+            "Keine Messwerte zum Aufwand."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache ist nicht bestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Benötigt werden Geschäftsregeln, Merkmale der Anfragen und der Ist-Ablauf. Alle drei sind in den Quellen unbekannt bzw. nicht beschrieben.",
+          "source_ids": [
+            "process.business_rules",
+            "process.data_objects",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Regeln, Anfragedetails oder Ablaufdaten vorhanden."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Erforderliche Datenbasis fehlt in den Quellen."
+          }
+        },
+        "application_impact": {
+          "text": "Eine Wirkung auf Anwendungen ist nicht beschreibbar, solange die Systeme unbekannt sind.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Systeminformationen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Systeme sind unbekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Integrationspunkte sind nicht belegt. Ob Standardsoftware die Funktion abdeckt, ist vor jeder eigenen Umsetzung offen.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Schnittstellen und Standardfunktionen unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine Integrations- oder Systemangaben vorhanden."
+          }
+        },
+        "technology_constraints": {
+          "text": "Technische Grenzen sind nicht belegt. Die Quellen nennen keine Systeme und keine Geschäftsregeln, daher ist auch eine Regelausführung nicht belegbar.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Technik- und Regelstand unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine technischen Angaben in den Quellen."
+          }
+        },
+        "risks": {
+          "text": "Feste Regeln können fehlgehen, wenn die vermutete Ursache unvollständiger Erstanfragen nicht zutrifft. Zudem ist unbekannt, welche Ausnahmen auftreten.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Ausnahmen nicht beschrieben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursache und Ausnahmen sind unbelegt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Eine Architektureinordnung ist nicht belegbar, da Systeme und Geschäftsregeln fehlen. Ohne diesen Bezug bleibt auch die Frage Standardsoftware gegenüber Eigenlösung offen.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Architekturangaben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Bezugspunkte für eine Einordnung fehlen."
+          }
+        }
+      },
+      "assistant": {
+        "name": {
+          "text": "Assistenzsystem zur Unterstützung bei Kundenrückfragen, einschließlich ausdrücklicher Prüfung eines KI-Zusatznutzens.",
+          "source_ids": [
+            "process.name",
+            "process.roles"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Angaben zu Assistenzbedarf oder eingesetzten Systemen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Grundlage für Assistenz ist in den Quellen nicht beschrieben."
+          }
+        },
+        "description": {
+          "text": "Ein Assistenzsystem könnte Beschäftigte im Verkauf bei der Beantwortung von Rückfragen unterstützen. In den Quellen ist kein belegter Zusatznutzen gegenüber einem einfachen Klärweg erkennbar, da weder Ablauf noch Regeln oder Kennzahlen bekannt sind. KI wird daher nicht als vorrangig gesetzt.",
+          "source_ids": [
+            "process.current_flow",
+            "process.business_rules",
+            "process.baseline_metrics",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [
+            "Assistenz würde an der Rückfragenbearbeitung ansetzen."
+          ],
+          "open_evidence": [
+            "Kein Ablauf, keine Regeln, keine Kennzahlen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Kein belegter Zusatznutzen gegenüber einem Klärweg."
+          }
+        },
+        "expected_value": {
+          "text": "Qualitativer möglicher Nutzen wäre Unterstützung bei Rückfragen. Ein belegter Zusatznutzen gegenüber organisatorischer Klärung oder einfachen Regeln ist aus den Quellen nicht ableitbar.",
+          "source_ids": [
+            "process.baseline_metrics",
+            "process.cause_hypotheses"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Nutzenkennzahl in den Quellen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Nutzen ist ohne Kennzahlen nicht belegbar."
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "Bezug ist der subjektiv berichtete Aufwand bei Rückfragen. Da die Ursache nur als Hypothese vorliegt, deckt ein Assistenzsystem den Bottleneck nicht belegt ab.",
+          "source_ids": [
+            "process.bottlenecks",
+            "process.cause_hypotheses",
+            "process.diagnostic_observations"
+          ],
+          "assumptions": [
+            "Der Aufwand entsteht in der Rückfragenbearbeitung."
+          ],
+          "open_evidence": [
+            "Keine Messwerte vorhanden."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Bottleneck und Ursache sind nicht bestätigt."
+          }
+        },
+        "data_requirements": {
+          "text": "Für ein Assistenzsystem wären Inhalte der Anfragen, Regeln und Ablaufdaten nötig. Diese sind in den Quellen unbekannt oder nicht beschrieben.",
+          "source_ids": [
+            "process.data_objects",
+            "process.business_rules",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Anfragedetails, Regeln und Ablauf fehlen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Datenbasis ist nicht belegt."
+          }
+        },
+        "application_impact": {
+          "text": "Eine Wirkung auf Anwendungen ist nicht beschreibbar, da die Systeme unbekannt sind.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Systemangaben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Systeme sind unbekannt."
+          }
+        },
+        "integration_impact": {
+          "text": "Integrationspunkte sind nicht belegt. Ob ein Assistenzsystem an bestehende Systeme angebunden werden müsste, ist offen.",
+          "source_ids": [
+            "process.systems"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Schnittstellenangaben."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Schnittstellen sind unbekannt."
+          }
+        },
+        "technology_constraints": {
+          "text": "Technische Rahmenbedingungen und Regelwerk sind nicht belegt. Die Quellen nennen keine Systeme und keine Geschäftsregeln.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Technik- und Regelstand unbekannt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Keine technischen Angaben vorhanden."
+          }
+        },
+        "risks": {
+          "text": "Ein Assistenzsystem kann eine unbestätigte Ursache stützen, wenn unvollständige Erstanfragen nicht der tatsächliche Grund für Rückfragen sind. Bei unbekannten Ausnahmen bleibt die Unterstützung unzuverlässig.",
+          "source_ids": [
+            "process.cause_hypotheses",
+            "process.exceptions"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Ursache und Ausnahmen unbelegt."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Ursachen- und Ausnahmewissen fehlt."
+          }
+        },
+        "architecture_fit": {
+          "text": "Eine Architektureinordnung ist nicht belegbar. Ohne bekannte Systeme, Regeln und Abläufe fehlt jeder Bezugspunkt.",
+          "source_ids": [
+            "process.systems",
+            "process.business_rules",
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Keine Architekturangaben in den Quellen."
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Bezugspunkte für die Einordnung fehlen."
+          }
+        }
+      }
+    },
+    "edits": {}
+  },
+  "quality_runs": [
+    {
+      "status": "success",
+      "step_type": "initial_critic",
+      "error_code": "",
+      "result_payload": {
+        "schema_version": "1.0",
+        "prompt_version": "1.9",
+        "findings": []
+      }
+    }
+  ],
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}

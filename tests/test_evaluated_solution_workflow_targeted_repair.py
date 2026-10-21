@@ -331,17 +331,22 @@ def test_repair_payload_rejects_missing_and_duplicate_targets(owner, business_un
 
 @pytest.mark.django_db
 @override_settings(**VALID_LIMITS)
+@pytest.mark.parametrize("echoed_prompt_version", [None, "1.0"])
 def test_targeted_repair_uses_one_provider_call_and_activates_only_bound_statements(
     owner,
     business_unit,
+    echoed_prompt_version,
 ):
     run = _make_generation_run(owner, business_unit)
     _make_initial_critic(run)
     preview_before = copy.deepcopy(run.preview_payload)
+    response = _repair_payload()
+    if echoed_prompt_version is not None:
+        response["prompt_version"] = echoed_prompt_version
 
     with patch(
         "ki_radar.accelerator.solution_repair_service.request_openrouter",
-        return_value=_provider_result(),
+        return_value=_provider_result(response),
     ) as request_mock:
         repair_run = run_targeted_solution_repair(
             solution_generation_run_id=run.pk,
@@ -350,7 +355,8 @@ def test_targeted_repair_uses_one_provider_call_and_activates_only_bound_stateme
 
     assert request_mock.call_count == 1
     kwargs = request_mock.call_args.kwargs
-    assert kwargs["max_tokens"] == 4096
+    assert kwargs["max_tokens"] == 8192
+    assert kwargs["reasoning_effort"] == "medium"
     assert kwargs["timeout_seconds"] == 17
     assert kwargs["temperature"] is None
     assert kwargs["provider"] == {"require_parameters": True}

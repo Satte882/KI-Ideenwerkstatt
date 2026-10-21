@@ -7,9 +7,9 @@ from ki_radar.architecture.models import EvidenceBasis, TimeToValue
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
 DISCOVERY_SCHEMA_VERSION = "ap1-discovery-v1"
-DISCOVERY_PROMPT_VERSION = "ap1-methodology-v7"
+DISCOVERY_PROMPT_VERSION = "ap1-methodology-v13"
 DISCOVERY_VERIFIER_SCHEMA_VERSION = "ap1-discovery-verifier-v1"
-DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-ver-method-v7"
+DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-ver-method-v13"
 MAX_DISCOVERY_STAGES = 12
 
 _STAGE_FIELDS = frozenset(
@@ -150,12 +150,15 @@ def discovery_methodical_findings(draft: dict) -> tuple[str, ...]:
     findings = []
     causal = re.compile(
         r"\b(?:primär\w*|systembestimmend\w*)\s+Engpass\b|\bHauptursache\b|"
-        r"\b(?:verursacht|sichert|gewährleistet|garantiert)\b|\bführt\b[^.;\n]{0,120}\bzu\b",
+        r"\b(?:verursacht|verzögert|sichert|gewährleistet|garantiert)\b|"
+        r"\b(?:führt|führen)\b[^.;\n]{0,120}\bzu\b|"
+        r"\b(?:Verzögerung|Wartezeit|Engpass|Aufwand)\w*\s+durch\b",
         re.IGNORECASE,
     )
     qualified = re.compile(
         r"\b(?:Hypothes\w*|hypothetisch\w*|unbestätigt\w*|vermut\w*|könnte\w*|möglicherweise|"
-        r"vorläufig\w*|berichtet\w*|laut|falls|wenn|kann|können|soll\w*|würde\w*)\b|nicht belegt",
+        r"vorläufig\w*|berichtet\w*|laut|falls|wenn|kann|können|soll\w*|würde\w*)\b|"
+        r"nicht (?:belegt|nachgewiesen|bestätigt)",
         re.IGNORECASE,
     )
 

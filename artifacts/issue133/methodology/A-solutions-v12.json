@@ -1,0 +1,24 @@
+{
+  "case": "A",
+  "phase": "solutions",
+  "synthetic": true,
+  "isolated_test_limits": {
+    "user_day": 80,
+    "global_day": 100,
+    "campaign_usd": "3"
+  },
+  "criteria_sha256": "19a311c50cacaf8cb39c1516cb605b08df2aead6dce24bee5d882fd1f94e0d0a",
+  "implementation_sha256": {
+    "ki_radar/accelerator/architect_service.py": "fc2bfb27479d0c235db67a71e3056b112d313a467e25b2673d9319a55b102e88",
+    "ki_radar/accelerator/architect_contract.py": "c94e35fdb32895e8e0571f04ac245300f9172cf64b2b73374483dbc3ca7c9ddd"
+  },
+  "test_setup": "Canonical DRAFT ProcessAnalysis populated from generated source-stage draft; explicit test setup, not autonomous materialization or human scope/cause approval.",
+  "source_analysis_id": "9f6cca08-0a80-4d3b-98e1-3cb765208259",
+  "error": {
+    "type": "SolutionGenerationError",
+    "code": "provider_error",
+    "message": "Die OpenRouter-Anfrage wurde abgelehnt."
+  },
+  "scope_confirmed": false,
+  "cause_confirmed": false
+}
