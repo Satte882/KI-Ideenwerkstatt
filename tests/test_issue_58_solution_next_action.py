@@ -65,6 +65,7 @@ def _complete_process(coordinator) -> ProcessAnalysis:
         baseline_metrics="Zwanzig Minuten je Vorgang",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Vorgangsbearbeitung",
         status=ProcessAnalysis.Status.TARGET_DEFINED,

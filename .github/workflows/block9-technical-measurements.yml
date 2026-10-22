@@ -67,14 +67,14 @@ jobs:
       - name: Run technical controls
         run: >-
           uv run python manage.py run_block9_technical_measurements
-          --output artifacts/block9/raw-technical.jsonl
-          --interactive-manifest artifacts/block9/interactive-status.json
+          --output "${RUNNER_TEMP}/block9-${GITHUB_RUN_ID}/raw-technical.jsonl"
+          --interactive-manifest "${RUNNER_TEMP}/block9-${GITHUB_RUN_ID}/interactive-status.json"
 
       - name: Upload raw measurement artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: block9-ap9-raw-${{ github.run_id }}
-          path: artifacts/block9/
+          path: ${{ runner.temp }}/block9-${{ github.run_id }}/
           if-no-files-found: error
           retention-days: 30

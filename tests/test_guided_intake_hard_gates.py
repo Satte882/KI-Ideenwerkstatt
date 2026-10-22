@@ -89,6 +89,7 @@ def second_approver(db, business_unit):
 @pytest.fixture
 def decision_ready_use_case(owner, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Preserve the pre-outcome approval regression.
         title="Rechnungsprüfung unterstützen",
         summary="Eingehende Rechnungen werden heute manuell geprüft.",
         problem_statement="Die manuelle Prüfung bindet Kapazität und verlängert die Durchlaufzeit.",

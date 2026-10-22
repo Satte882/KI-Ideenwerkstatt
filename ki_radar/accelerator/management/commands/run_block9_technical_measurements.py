@@ -16,6 +16,7 @@ from ki_radar.accelerator.benchmark_measurement import (
     append_raw_record,
     build_raw_record,
 )
+from ki_radar.architecture.models import UseCaseOrigin
 from ki_radar.core.scenario_blueprint import load_blueprint_json
 from ki_radar.core.scenario_blueprint_run import run_blueprint
 from ki_radar.delivery.mapping_refresh import BLOCK8_MAPPING_MANIFEST_KEY
@@ -60,6 +61,28 @@ def _mapping_counts(package):
         "conflicts": statuses.count("conflict") + statuses.count("stale"),
         "manually_corrected_fields": 0,
     }
+
+
+def _historical_delivery_fixture(source):
+    """Freeze the old Delivery benchmark without downgrading the new Blueprint graph."""
+    values = {
+        field.name: getattr(source, field.name)
+        for field in UseCase._meta.concrete_fields
+        if field.name not in {
+            "id", "short_id", "demo_key", "created_at", "updated_at",
+            "outcome_contract_version",
+        }
+    }
+    fixture = UseCase.objects.create(**values, outcome_contract_version=0)
+    origin = source.architecture_origin
+    UseCaseOrigin.objects.create(
+        use_case=fixture,
+        stage=origin.stage,
+        process_analysis=origin.process_analysis,
+        solution_option=origin.solution_option,
+        source_snapshot=origin.source_snapshot,
+    )
+    return fixture
 
 
 def _prepare_final_approval(use_case):
@@ -174,34 +197,38 @@ class Command(BaseCommand):
         append_raw_record(output, blueprint_record)
 
         use_case = UseCase.objects.get(demo_key=REAL_DEMO_USE_CASE_KEY)
-        actor, _decision = _prepare_final_approval(use_case)
-        for run_number in range(1, 4):
-            with transaction.atomic():
-                started = perf_counter()
-                package = create_delivery_package(
-                    use_case=use_case,
-                    actor=actor,
-                    use_evidence_mapper=True,
-                )
-                elapsed = _elapsed_seconds(started)
-                delivery = _mapping_counts(package)
-                record = build_raw_record(
-                    run_id=f"delivery-A-{run_number}",
-                    path="delivery",
-                    case_key="A",
-                    status="completed",
-                    times={
-                        "system_wait_seconds": elapsed,
-                        "end_to_end_seconds": elapsed,
-                    },
-                    quality=_empty_quality(),
-                    delivery=delivery,
-                    notes=(
-                        "Secondary Block-8 mapper control; transaction rolled back after capture."
-                    ),
-                )
-                append_raw_record(output, record)
-                transaction.set_rollback(True)
+        with transaction.atomic():
+            use_case = _historical_delivery_fixture(use_case)
+            actor, _decision = _prepare_final_approval(use_case)
+            for run_number in range(1, 4):
+                with transaction.atomic():
+                    started = perf_counter()
+                    package = create_delivery_package(
+                        use_case=use_case,
+                        actor=actor,
+                        use_evidence_mapper=True,
+                    )
+                    elapsed = _elapsed_seconds(started)
+                    delivery = _mapping_counts(package)
+                    record = build_raw_record(
+                        run_id=f"delivery-A-{run_number}",
+                        path="delivery",
+                        case_key="A",
+                        status="completed",
+                        times={
+                            "system_wait_seconds": elapsed,
+                            "end_to_end_seconds": elapsed,
+                        },
+                        quality=_empty_quality(),
+                        delivery=delivery,
+                        notes=(
+                            "Secondary Block-8 mapper control; "
+                            "transaction rolled back after capture."
+                        ),
+                    )
+                    append_raw_record(output, record)
+                    transaction.set_rollback(True)
+            transaction.set_rollback(True)
 
         _write_interactive_manifest(options["interactive_manifest"])
         self.stdout.write(self.style.SUCCESS(f"Technical raw data written to {output}"))

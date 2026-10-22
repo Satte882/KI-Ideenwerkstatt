@@ -22,6 +22,7 @@ OUTCOME_KEYS = {
 
 def _use_case(owner, business_unit, *, status=UseCase.Status.PILOT):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Automatische Lieferantenauswahl",
         problem_statement="Lieferantenangebote werden manuell verglichen.",
         business_unit=business_unit,

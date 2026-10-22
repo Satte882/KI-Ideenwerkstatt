@@ -18,6 +18,7 @@ from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseC
 
 def _approved_use_case(*, owner, technical_owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Backfill-Test",
         problem_statement="Uneindeutige Quellenbasis",
         business_unit=business_unit,
@@ -97,6 +98,7 @@ def test_source_snapshot_backfill_covers_existing_process_and_use_case_origin(
         baseline_metrics="11 Minuten",
     )
     process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         source_snapshot={},

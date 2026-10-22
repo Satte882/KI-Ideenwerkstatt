@@ -62,6 +62,7 @@ def work_design_process(owner, business_unit):
         baseline_metrics="Drei Tage Durchlaufzeit",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvorbereitung",
         status=ProcessAnalysis.Status.VALIDATED,
@@ -857,6 +858,7 @@ def test_taskshift_e2e_selects_task_then_compares_real_solution_options(
     assert stored["source_solution_option_id"] == str(assistant_option.pk)
 
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title=assistant_option.name,
         problem_statement=process.bottlenecks,
         business_unit=process.stage.value_stream.business_unit,

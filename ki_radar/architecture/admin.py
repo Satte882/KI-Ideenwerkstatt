@@ -48,6 +48,7 @@ class ProcessAnalysisAdmin(admin.ModelAdmin):
 
 @admin.register(SolutionOption)
 class SolutionOptionAdmin(admin.ModelAdmin):
+    readonly_fields = ("recommendation",)
     list_display = (
         "name",
         "process_analysis",

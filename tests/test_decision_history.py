@@ -23,6 +23,7 @@ def make_coordinator(username, business_unit):
 
 def make_use_case(owner, coordinator, business_unit):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Auditierbarer Angebotsvergleich",
         summary="Angebote nachvollziehbar vergleichen.",
         problem_statement="Die bisherige Auswahl ist nicht ausreichend nachvollziehbar.",

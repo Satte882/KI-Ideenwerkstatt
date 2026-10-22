@@ -223,6 +223,12 @@ def save_stage_focus_decision(
         if not can_edit_initiative(actor, initiative):
             raise ValidationError("Für die Vorhabensentscheidung fehlt die Berechtigung.")
         previous = get_stage_focus_decision(value_stream, initiative=initiative)
+        if previous and all(
+            getattr(previous, key) == value
+            for key, value in defaults.items()
+            if key != "selected_by"
+        ):
+            return previous
         return InitiativeStageFocusDecision.objects.create(
             initiative=initiative,
             value_stream=value_stream,
@@ -310,7 +316,7 @@ def ensure_stage_focus_for_existing_path(*, stage, actor=None, source_label: str
 
 @receiver(post_save, sender="architecture.ProcessAnalysis")
 def persist_focus_from_existing_process(sender, instance, created, **kwargs):
-    if created and instance.initiative_id is None:
+    if created and instance.initiative_id is None and not instance.outcome_contract_version:
         ensure_stage_focus_for_existing_path(
             stage=instance.stage,
             actor=instance.analyzed_by,
@@ -323,7 +329,14 @@ def persist_focus_from_existing_origin(sender, instance, created, **kwargs):
     if (
         created
         and instance.use_case.initiative_id is None
-        and (not instance.process_analysis_id or instance.process_analysis.initiative_id is None)
+        and not instance.use_case.outcome_contract_version
+        and (
+            not instance.process_analysis_id
+            or (
+                instance.process_analysis.initiative_id is None
+                and not instance.process_analysis.outcome_contract_version
+            )
+        )
     ):
         ensure_stage_focus_for_existing_path(
             stage=instance.stage,

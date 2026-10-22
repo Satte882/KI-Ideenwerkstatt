@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Outcome-Bezug vorbereiten{% endblock %}
+{% block body_class %}page-form-workspace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">{% endblock %}
+{% block content %}
+<header class="cr-page-header"><div><h1>Geschäftsergebnis und Wirkannahme</h1>
+<p>{{ artifact }} · Entwurf jederzeit sichern. Erst die ausdrückliche Bestätigung ordnet das Vorhaben zu. Sie ist keine Lösungswahl und keine KI-Freigabe.</p>
+<p>Hypothese ist zulässig. Zahlenbaseline, Zielwert, Review-Termin und ein Systemkonto des Outcome Owners sind nicht erforderlich.</p></div></header>
+<div class="app-card"><form method="post" novalidate>{% csrf_token %}
+<div class="card-body">{{ form.non_field_errors }}
+{% for field in form %}{% if field.is_hidden %}{{ field }}{% else %}<div class="mb-3">
+<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+{{ field }}{{ field.errors }}
+{% if field.name == 'selected_initiative' %}<button class="btn btn-outline-secondary mt-2" type="submit" name="action" value="load">Vorhaben laden</button>{% endif %}
+</div>{% endif %}{% endfor %}
+{% if is_process %}<p>Der Pfad folgt der dokumentierten Herkunft. Ein Wechsel benötigt eine Begründung. Strategisches Potenzial bleibt ausdrücklich eine zu prüfende Hypothese; eine bestätigte Ursache wird dafür nicht erfunden.</p>{% endif %}
+</div><div class="card-footer d-flex flex-wrap gap-2">
+<button class="btn btn-primary" name="action" value="save_draft" type="submit">Als Entwurf sichern</button>
+<button class="btn btn-outline-secondary" name="action" value="confirm" type="submit">Wirkannahme fachlich annehmen und zuordnen</button>
+<a class="btn btn-outline-secondary" href="{{ return_url }}">Zur Entscheidung</a>
+</div></form></div>
+{% endblock %}

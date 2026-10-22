@@ -134,6 +134,7 @@ def test_optional_origin_is_persisted_only_for_valid_stage(
     value_stream_stage,
 ):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Angebote vergleichbar machen",
         problem_statement="Uneinheitliche Angebote erschweren die Auswahl.",
         business_unit=business_unit,
@@ -152,6 +153,7 @@ def test_optional_origin_is_persisted_only_for_valid_stage(
     assert origin.stage == value_stream_stage
 
     direct_use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Direkt erfasster Use Case",
         problem_statement="Ein anderer fachlicher Bedarf.",
         business_unit=business_unit,
@@ -174,6 +176,7 @@ def test_value_stream_detail_shows_traceable_use_case_origin(
     value_stream_stage,
 ):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Angebotsvergleich unterstützen",
         problem_statement="Vergleich ist manuell und langsam.",
         business_unit=business_unit,
@@ -203,6 +206,7 @@ def test_use_case_detail_shows_complete_architecture_origin_chain(
     value_stream_stage,
 ):
     process_analysis = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=value_stream_stage,
         name="Eingangsrechnungsprüfung",
         status=ProcessAnalysis.Status.VALIDATED,
@@ -229,6 +233,7 @@ def test_use_case_detail_shows_complete_architecture_origin_chain(
         created_by=owner,
     )
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Automatische Rechnungspruefung",
         problem_statement="Rechnungen werden manuell geprüft.",
         business_unit=business_unit,
@@ -303,6 +308,7 @@ def test_use_case_origin_stores_snapshot_and_shows_later_source_diff(
     value_stream_stage,
 ):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title=value_stream_stage.name,
         problem_statement=value_stream_stage.pain_points,
         business_unit=business_unit,

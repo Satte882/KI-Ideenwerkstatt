@@ -4,6 +4,8 @@
 {% block body_class %}page-decision-form{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
+{% if use_case.outcome_contract_version %}<section class="cr-inline-note mb-4" aria-label="Outcome-Bezug"><div><strong>Geschäftsergebnis und Wirkannahme</strong><p>{% if use_case.initiative_id %}{{ use_case.initiative.business_outcome }} · {{ use_case.initiative.impact_hypothesis }}{% else %}Vorhabensbezug noch offen. Entwurf und Bewertung bleiben möglich.{% endif %}</p></div><a href="{% url 'use_cases:prepare_outcome' kind='usecase' pk=use_case.pk %}">Outcome-Bezug vorbereiten / bestätigen</a></section>{% endif %}
+
 {% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Auswahl und Freigabe" lifecycle_context="Freigabe · Verbindliche Entscheidung" %}
 <header class="cr-page-header cr-work-header">
   <div class="cr-page-header__copy">

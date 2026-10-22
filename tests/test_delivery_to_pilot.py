@@ -111,6 +111,7 @@ def _complete_delivery_readiness(package):
 
 def _make_pilot_candidate(owner, coordinator, business_unit, *, technical_owner=None):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         summary="Angebote strukturiert vergleichen und Rückfragen reduzieren.",
         problem_statement="Uneinheitliche Angebote verlängern die Lieferantenauswahl.",

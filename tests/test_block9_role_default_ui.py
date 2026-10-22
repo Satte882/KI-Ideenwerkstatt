@@ -16,6 +16,7 @@ pytestmark = pytest.mark.django_db
 
 def _use_case(*, business_unit, owner, coordinator=None, technical_owner=None):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Block-9-UI-Testfall",
         problem_statement="Ein klarer fachlicher Testfall benötigt eine nachvollziehbare Rolle.",
         business_unit=business_unit,

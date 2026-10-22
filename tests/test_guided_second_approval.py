@@ -33,6 +33,7 @@ def coordinator_user(username, business_unit):
 
 def make_case(owner, first_decider, assessor, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         summary="Angebote strukturiert vergleichen.",
         problem_statement="Uneinheitliche Angebote verlängern die Auswahl.",

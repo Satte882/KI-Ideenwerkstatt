@@ -21,6 +21,7 @@ from ki_radar.use_cases.services import (
 @pytest.fixture
 def decision_use_case(owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Rechnungsprüfung",
         problem_statement="Rechnungen werden manuell geprüft.",
         business_unit=business_unit,

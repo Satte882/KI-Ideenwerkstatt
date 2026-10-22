@@ -51,6 +51,7 @@ def make_process(owner, business_unit):
         name="Angebote vergleichen",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Existing selection UX remains a legacy regression.
         stage=stage,
         name="Angebotsvergleich",
         scope_start="Angebote liegen vor",

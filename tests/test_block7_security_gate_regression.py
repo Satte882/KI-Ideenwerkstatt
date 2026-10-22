@@ -74,6 +74,7 @@ def make_process(owner, business_unit):
         baseline_metrics="11 Minuten pro Vergleich",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         scope_start="Angebote liegen vor",

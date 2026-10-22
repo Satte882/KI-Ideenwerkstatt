@@ -55,6 +55,7 @@ def architecture_context(owner, business_unit):
         baseline_metrics="Fünf Tage Durchlaufzeit",
     )
     process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         status=ProcessAnalysis.Status.VALIDATED,
@@ -269,6 +270,7 @@ def test_process_and_solution_origin_is_traceable(
 ):
     _stream, stage, process = architecture_context
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         problem_statement=("Uneinheitliche Angebote verlängern den Vergleich erheblich."),
         business_unit=business_unit,

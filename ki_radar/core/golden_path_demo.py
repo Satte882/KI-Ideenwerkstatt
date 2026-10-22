@@ -35,6 +35,7 @@ def seed_supplier_golden_path_demo() -> dict[str, int]:
     use_case, _ = UseCase.objects.update_or_create(
         demo_key=SUPPLIER_GOLDEN_PATH_USE_CASE_KEY,
         defaults={
+            "outcome_contract_version": 0,  # Canonical historical demo contract.
             "title": SUPPLIER_GOLDEN_PATH_TITLE,
             "summary": (
                 "Angebotsdaten extrahieren und vergleichen, fehlende Angaben erkennen, "
@@ -171,6 +172,7 @@ def seed_supplier_golden_path_demo() -> dict[str, int]:
         stage=stage,
         name="Angebote vergleichen und Lieferant vorauswählen",
         defaults={
+            "outcome_contract_version": 0,  # Canonical historical demo contract.
             "status": ProcessAnalysis.Status.TARGET_DEFINED,
             "scope_start": "Mindestens fünf Lieferantenangebote liegen vor.",
             "scope_end": "Eine begründete Vorauswahl liegt dem Einkauf zur Entscheidung vor.",

@@ -12,6 +12,8 @@ from simple_history.models import HistoricalRecords
 from ki_radar.accounts.models import BusinessUnit
 from ki_radar.core.models import TimeStampedModel
 
+from .outcome_guards import ApprovalManager, OutcomeManager, protect_cohort
+
 
 class UseCaseCounter(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -21,6 +23,8 @@ class UseCaseCounter(models.Model):
 
 
 class UseCase(TimeStampedModel):
+    objects = OutcomeManager()
+
     class Status(models.TextChoices):
         IDEA = "idea", "Idee"
         REVIEW = "review", "Prüfung"
@@ -92,7 +96,7 @@ class UseCase(TimeStampedModel):
         related_name="use_cases",
         editable=False,
     )
-    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
+    outcome_contract_version = models.PositiveSmallIntegerField(default=1, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     short_id = models.CharField(max_length=20, unique=True, blank=True)
     demo_key = models.SlugField(
@@ -277,6 +281,33 @@ class UseCase(TimeStampedModel):
         return f"{self.short_id or 'Neu'} - {self.title}"
 
     def save(self, *args, **kwargs):
+        protect_cohort(self)
+        if self.outcome_contract_version and self.decision_status in {
+            self.DecisionStatus.APPROVED,
+            self.DecisionStatus.APPROVED_WITH_CONDITIONS,
+        }:
+            previous = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("decision_status", flat=True)
+                .first()
+            )
+            if previous != self.decision_status:
+                decision = self.approval_decisions.filter(
+                    decision_status=self.decision_status,
+                    finalized_at__isnull=False,
+                ).first()
+                from .outcome_contract import snapshot_is_stale
+
+                if (
+                    decision is None
+                    or not decision.outcome_snapshot
+                    or snapshot_is_stale(
+                        self,
+                        decision.outcome_snapshot,
+                    )
+                ):
+                    raise ValidationError("Positive Freigabe nur über den Entscheidungsservice.")
         if not self.short_id:
             counter = UseCaseCounter.objects.create()
             self.short_id = f"KI-{counter.pk:04d}"
@@ -460,6 +491,8 @@ class DecisionAssessment(TimeStampedModel):
 
 
 class ApprovalDecision(TimeStampedModel):
+    objects = ApprovalManager()
+    outcome_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     use_case = models.ForeignKey(
         UseCase, on_delete=models.CASCADE, related_name="approval_decisions"
     )
@@ -516,6 +549,68 @@ class ApprovalDecision(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        previous = None
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).first()
+            if previous and previous.outcome_snapshot != self.outcome_snapshot:
+                raise ValidationError("Der Outcome-Entscheidungsstand ist unveränderlich.")
+            if (
+                previous
+                and previous.outcome_snapshot
+                and any(
+                    getattr(previous, key) != getattr(self, key)
+                    for key in (
+                        "use_case_id",
+                        "decision_status",
+                        "decided_by_id",
+                        "rationale",
+                        "assessment_id",
+                        "conditions",
+                        "condition_owner_id",
+                    )
+                )
+            ):
+                raise ValidationError("Der dokumentierte Freigabestand ist unveränderlich.")
+        if (
+            (
+                self._state.adding
+                or not previous
+                or previous.decision_status != self.decision_status
+                or (previous.finalized_at is None and self.finalized_at is not None)
+            )
+            and self.decision_status
+            in {
+                UseCase.DecisionStatus.APPROVED,
+                UseCase.DecisionStatus.APPROVED_WITH_CONDITIONS,
+            }
+            and self.use_case.outcome_contract_version
+        ):
+            from ki_radar.accounts.permissions import is_coordinator
+
+            if not getattr(self, "_outcome_authorized", False):
+                raise ValidationError("Freigabe nur über den zentralen Entscheidungsservice.")
+            if (
+                not self.decided_by_id
+                or not self.decided_by.is_active
+                or not is_coordinator(self.decided_by)
+            ):
+                raise ValidationError("Eine positive Freigabe benötigt eine berechtigte Person.")
+            from .outcome_contract import snapshot_is_stale, validate_decision_snapshot
+
+            if previous and previous.outcome_snapshot:
+                if snapshot_is_stale(self.use_case, self.outcome_snapshot):
+                    raise ValidationError("Outcome-Grundlage geändert: Neubewertung erforderlich.")
+            else:
+                validate_decision_snapshot(self.use_case, self.outcome_snapshot)
+        super().save(*args, **kwargs)
+
+    @property
+    def outcome_review_required(self):
+        from .outcome_contract import snapshot_is_stale
+
+        return snapshot_is_stale(self.use_case, self.outcome_snapshot)
 
     def __str__(self) -> str:
         return f"{self.use_case.short_id} - {self.get_decision_status_display()}"

@@ -66,7 +66,10 @@ def make_use_case(owner, business_unit, **overrides):
         "decision_status": UseCase.DecisionStatus.CLARIFICATION,
     }
     data.update(overrides)
-    return UseCase.objects.create(**data)
+    return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
+        **data,
+    )
 
 
 def approve_use_case(use_case, coordinator):
@@ -321,6 +324,7 @@ def test_delivery_package_uses_optional_architecture_origin(
         baseline_metrics="Fünf Tage",
     )
     process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         scope_start="Angebote liegen vor",

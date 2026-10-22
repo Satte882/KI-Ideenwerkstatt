@@ -115,6 +115,7 @@ def _make_process(owner, business_unit, *, suffix: str) -> ProcessAnalysis:
         baseline_metrics=process_data["baseline_metrics"],
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name=f"{process_data['name']} {suffix}",
         scope_start=process_data["scope_start"],

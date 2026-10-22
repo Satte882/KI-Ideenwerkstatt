@@ -159,6 +159,8 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
     )
     option = locked_decision.selected_option
     process = locked_decision.process_analysis
+    if locked_decision.outcome_review_required:
+        raise ValidationError("Die Outcome-Grundlage ist geändert; bitte die Lösung neu bewerten.")
     stage = process.stage
     value_stream = stage.value_stream
 
@@ -246,6 +248,8 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
         SolutionOption.OptionType.ASSISTANT: UseCase.SolutionType.ASSISTANT,
     }
     use_case = UseCase(
+        initiative=process.initiative,
+        outcome_contract_version=process.outcome_contract_version,
         title=option.name,
         summary=option.description,
         problem_statement=process.diagnostic_observations or process.bottlenecks,
@@ -723,6 +727,9 @@ def approval_check(
 
     assessment = use_case.decision_assessments.first()
     if target_status in APPROVAL_STATUSES:
+        from .outcome_contract import outcome_blockers
+
+        blockers.extend(outcome_blockers(use_case))
         if assessment is None:
             blockers.append("Aktuelle strukturierte Bewertung")
         blockers.extend(_missing_fields(use_case, POSITIVE_APPROVAL_CORE_REQUIREMENTS))
@@ -829,6 +836,7 @@ def can_review_conditional_decision(*, decision: ApprovalDecision, actor) -> boo
 
 def _save_approval_decision(**kwargs) -> ApprovalDecision:
     decision = ApprovalDecision(**kwargs)
+    decision._outcome_authorized = True
     decision.full_clean()
     decision.save()
     return decision
@@ -838,7 +846,15 @@ def _save_approval_decision(**kwargs) -> ApprovalDecision:
 def submit_approval_decision(*, use_case: UseCase, actor, data) -> ApprovalDecision:
     if not is_coordinator(actor):
         raise PermissionDenied
+    use_case = UseCase.objects.select_for_update().get(pk=use_case.pk)
+    data = dict(data)
+    if "outcome_snapshot" in data:
+        raise ValidationError("Der Outcome-Snapshot wird ausschließlich serverseitig erzeugt.")
     target_status = data["decision_status"]
+    if target_status in APPROVAL_STATUSES:
+        from .outcome_contract import build_outcome_snapshot
+
+        data["outcome_snapshot"] = build_outcome_snapshot(use_case, lock=True)
     check = approval_check(
         use_case=use_case,
         target_status=target_status,
@@ -892,6 +908,13 @@ def confirm_conditional_decision(*, decision: ApprovalDecision, actor) -> Approv
         raise PermissionDenied(
             "Für diese unabhängige Zweitprüfung fehlt die Berechtigung oder Personentrennung."
         )
+    decision = (
+        ApprovalDecision.objects.select_for_update().select_related("use_case").get(pk=decision.pk)
+    )
+    from .outcome_contract import snapshot_is_stale
+
+    if snapshot_is_stale(decision.use_case, decision.outcome_snapshot):
+        raise ValidationError("Outcome-Grundlage geändert: neue Freigabeentscheidung erforderlich.")
     current_assessment = decision.use_case.decision_assessments.first()
     if (
         decision.assessment_id is None
@@ -910,6 +933,7 @@ def confirm_conditional_decision(*, decision: ApprovalDecision, actor) -> Approv
         raise ValidationError("Freigabe blockiert: " + ", ".join(check.blockers))
 
     decision.second_approved_by = actor
+    decision._outcome_authorized = True
     decision.finalized_at = timezone.now()
     decision.full_clean()
     decision.save(update_fields=["second_approved_by", "finalized_at", "updated_at"])

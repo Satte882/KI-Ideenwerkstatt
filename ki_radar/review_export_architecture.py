@@ -262,6 +262,12 @@ def build_process_review_context(process_analysis: ProcessAnalysis, actor) -> Re
         context.upstream_context.extend(
             [
                 f"Vorhaben: {initiative.pk} · Revision {initiative.revision}",
+                f"Outcome-Revision: {initiative.outcome_revision}",
+                f"Geschäftsergebnis: {initiative.business_outcome or 'noch offen'}",
+                (
+                    f"Wirkannahme: {initiative.impact_hypothesis or 'noch offen'} "
+                    f"({initiative.evidence_level})"
+                ),
                 (
                     f"Vorhabensfokus: {decision.pk} · Revision {decision.revision}"
                     if decision

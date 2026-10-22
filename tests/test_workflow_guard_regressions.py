@@ -11,6 +11,7 @@ from ki_radar.use_cases.services import apply_status_transition, create_decision
 
 def _use_case(*, owner, business_unit, status=UseCase.Status.IDEA):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Workflow-Guard Regression",
         problem_statement="Gezielter Regressionstest für Lifecycle-Guards.",
         business_unit=business_unit,

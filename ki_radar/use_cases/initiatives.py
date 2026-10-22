@@ -1,6 +1,7 @@
-"""Shared preparation for #146. No outcome gates or cohort activation here."""
+"""Shared initiative editing and explicit associations; draft saves never enforce outcome gates."""
 
 from datetime import timedelta
+from unicodedata import normalize
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -21,6 +22,7 @@ OUTCOME_FIELDS = (
     "evidence_level",
     "evidence_note",
     "outcome_owner",
+    "target_group",
 )
 EDITABLE_FIELDS = (
     "title",
@@ -41,8 +43,28 @@ def can_edit_initiative(actor, initiative=None):
     )
 
 
+def _text(value):
+    return " ".join(normalize("NFC", str(value)).split())
+
+
+def _formal_text(value):
+    # Only whitespace, Unicode composition and one optional terminal full stop.
+    # Letter/number/negation, owner and evidence changes require fresh confirmation.
+    text = _text(value)
+    return text[:-1].rstrip() if text.endswith(".") and not text.endswith("..") else text
+
+
 @transaction.atomic
-def save_initiative(*, actor, data, initiative=None, expected_revision=None):
+def save_initiative(
+    *, actor, data, initiative=None, expected_revision=None, source="human", correction_reason=""
+):
+    from .outcome_contract import MATERIAL_FIELDS
+
+    data = dict(data)
+    if source not in {"human", "ai"}:
+        raise ValidationError("Unbekannte Herkunft der Wirkannahme.")
+    if source == "ai":
+        data["evidence_level"] = "hypothesis"
     if initiative is not None:
         initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
     if not can_edit_initiative(actor, initiative):
@@ -52,17 +74,41 @@ def save_initiative(*, actor, data, initiative=None, expected_revision=None):
     unknown = set(data) - set(EDITABLE_FIELDS)
     if unknown:
         raise ValidationError("Serververwaltete Vorhabensfelder dürfen nicht geändert werden.")
+    material_change = False
+    formal_correction = False
     if initiative is None:
         initiative = ImprovementInitiative(created_by=actor)
     else:
-        changed_outcome = any(
-            key in data and getattr(initiative, key) != data[key] for key in OUTCOME_FIELDS
+        changed_fields = {
+            key
+            for key in OUTCOME_FIELDS
+            if key in data and _text(getattr(initiative, key)) != _text(data[key])
+        }
+        formal_correction = bool(correction_reason.strip()) and all(
+            key in MATERIAL_FIELDS
+            and _formal_text(getattr(initiative, key)) == _formal_text(data[key])
+            for key in changed_fields
         )
+        material_change = bool(changed_fields) and not formal_correction
         initiative.revision += 1
-        if changed_outcome:
+        if material_change:
+            initiative.outcome_revision += 1
+        if material_change or source == "ai":
             initiative.confirmed_revision = None
             initiative.confirmed_by = None
             initiative.confirmed_at = None
+            initiative.confirmation_reason = ""
+        if correction_reason.strip():
+            label = "Schreibkorrektur" if formal_correction else "Änderung (erneut bestätigen)"
+            initiative._change_reason = (label + ": " + correction_reason.strip())[:100]
+    if "impact_hypothesis" in data and (
+        source == "ai"
+        or (
+            _text(data["impact_hypothesis"]) != _text(initiative.impact_hypothesis)
+            and not formal_correction
+        )
+    ):
+        initiative.hypothesis_origin = source
     for key, value in data.items():
         setattr(initiative, key, value)
     initiative.updated_by = actor
@@ -81,12 +127,12 @@ def bind_initiative(*, initiative, artifact, actor):
     from .models import UseCase
     from .permissions import can_edit_use_case, can_triage_idea
 
-    initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
-    if not can_edit_initiative(actor, initiative):
-        raise PermissionDenied
     if not isinstance(artifact, (IdeaCandidate, ProcessAnalysis, UseCase)):
         raise ValidationError("Dieses Objekt kann keinem Vorhaben zugeordnet werden.")
     artifact = type(artifact).objects.select_for_update().get(pk=artifact.pk)
+    initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
+    if not can_edit_initiative(actor, initiative):
+        raise PermissionDenied
     if isinstance(artifact, ProcessAnalysis):
         allowed = can_edit_value_stream(actor, artifact.stage.value_stream)
     elif isinstance(artifact, UseCase):

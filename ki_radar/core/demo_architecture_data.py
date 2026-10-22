@@ -167,6 +167,7 @@ def _seed_invoice_golden_path() -> tuple[ValueStream, ProcessAnalysis, int, int]
         stage=stage,
         name="Eingangsrechnungsprüfung",
         defaults={
+            "outcome_contract_version": 0,  # Canonical historical demo contract.
             "status": ProcessAnalysis.Status.TARGET_DEFINED,
             "scope_start": "Eine Rechnung ist eingegangen.",
             "scope_end": "Die Rechnung ist freigegeben oder zur Klärung zurückgegeben.",
@@ -310,6 +311,7 @@ def _seed_incomplete_supplier_discovery(
         stage=stage,
         name="Lieferantenvorauswahl und Angebotsvergleich",
         defaults={
+            "outcome_contract_version": 0,  # Canonical historical demo contract.
             "status": ProcessAnalysis.Status.DRAFT,
             "scope_start": "Der freigegebene Bedarf liegt dem Einkauf vor.",
             "scope_end": "Eine dokumentierte Vorauswahl liegt vor.",
@@ -372,6 +374,7 @@ def _seed_non_ai_order_approval(
         stage=stage,
         name="Freigabe kleiner Standardbestellungen",
         defaults={
+            "outcome_contract_version": 0,  # Canonical historical demo contract.
             "status": ProcessAnalysis.Status.TARGET_DEFINED,
             "scope_start": "Eine vollständige Bedarfsmeldung liegt vor.",
             "scope_end": "Die Bestellung ist freigegeben oder begründet abgelehnt.",

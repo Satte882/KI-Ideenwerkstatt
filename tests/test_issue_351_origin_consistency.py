@@ -76,6 +76,7 @@ def _make_origin_use_case(*, owner, business_unit, with_decision=True):
         baseline_metrics="Fünf Tage Durchlaufzeit",
     )
     process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebote vergleichbar machen",
         status=ProcessAnalysis.Status.VALIDATED,
@@ -134,6 +135,7 @@ def _make_origin_use_case(*, owner, business_unit, with_decision=True):
             decided_by=owner,
         )
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title=option.name,
         summary=process.current_flow,
         problem_statement=process.bottlenecks,
@@ -451,6 +453,7 @@ def test_detail_ui_hidden_without_origin_and_disabled_for_stale_origin(
     client, owner, business_unit
 ):
     no_origin = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Direkter Use Case",
         problem_statement="Direkt erfasster Use Case ohne Architekturherkunft.",
         business_unit=business_unit,

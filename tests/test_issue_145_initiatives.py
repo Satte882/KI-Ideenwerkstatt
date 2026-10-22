@@ -215,7 +215,9 @@ def test_bound_signals_never_seed_global_focus(owner, business_unit, stages):
     )
     UseCaseOrigin.objects.create(use_case=direct, stage=stages[0], process_analysis=process)
     assert not StageFocusDecision.objects.exists()
-    ProcessAnalysis.objects.create(stage=stages[1], name="Legacy", analyzed_by=owner)
+    ProcessAnalysis.objects.create(
+        stage=stages[1], name="Legacy", analyzed_by=owner, outcome_contract_version=0
+    )
     assert get_stage_focus_decision(stages[0].value_stream).selected_stage == stages[1]
 
 
@@ -230,7 +232,7 @@ def test_optional_links_and_explicit_shared_binding(owner, business_unit, stages
         assert artifact.initiative_id is None
         bound = bind_initiative(initiative=initiative, artifact=artifact, actor=owner)
         assert bound.initiative_id == initiative.pk
-    assert process.outcome_contract_version == case.outcome_contract_version == 0
+    assert process.outcome_contract_version == case.outcome_contract_version == 1
     with pytest.raises(ValidationError):
         bind_initiative(initiative=draft(owner, "Andere"), artifact=process, actor=owner)
     assert (
@@ -402,7 +404,7 @@ def test_process_create_edit_and_resume_without_initiative_or_confirmed_cause(
     assert client.get(process.get_absolute_url()).status_code == 200
     process.refresh_from_db()
     assert process.name == data["name"] and process.initiative_id is None
-    assert process.outcome_contract_version == 0
+    assert process.outcome_contract_version == 1
     assert not ImprovementInitiative.objects.exists()
 
 

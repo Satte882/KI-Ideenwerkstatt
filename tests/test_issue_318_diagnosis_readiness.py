@@ -60,6 +60,7 @@ def make_process(owner, business_unit, *, with_diagnosis=False):
             "confirmed_causes": "Angebotsdaten liegen nicht strukturiert vor.",
         }
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         status=ProcessAnalysis.Status.VALIDATED,
