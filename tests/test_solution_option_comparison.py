@@ -65,6 +65,7 @@ def comparison_process(owner, business_unit):
         baseline_metrics="Fünf Tage",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         status=ProcessAnalysis.Status.TARGET_DEFINED,
@@ -765,6 +766,7 @@ def test_selection_audit_rejects_bulk_changes_and_inconsistent_option(
         name="Andere Phase",
     )
     other_process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=other_stage,
         name="Anderer Prozess",
         scope_start="Start",

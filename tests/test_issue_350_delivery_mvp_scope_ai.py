@@ -39,6 +39,7 @@ TASK_SETTINGS = {
 
 def _make_package(*, owner, technical_owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Issue 350",
         summary="Angebote vergleichbar machen.",
         problem_statement="Uneinheitliche Angebote verursachen Rückfragen.",

@@ -19,6 +19,7 @@ from ki_radar.use_cases.transition_policy import validate_review_command
 
 def _use_case(owner, business_unit, *, status=UseCase.Status.REVIEW):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Lean Workflow",
         problem_statement="Ein klar beschriebenes Businessproblem.",
         business_unit=business_unit,

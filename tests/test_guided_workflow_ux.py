@@ -47,7 +47,10 @@ def make_use_case(owner, business_unit, **overrides):
         "next_review_date": timezone.localdate() + timedelta(days=14),
     }
     data.update(overrides)
-    return UseCase.objects.create(**data)
+    return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
+        **data,
+    )
 
 
 def approve_use_case(use_case, coordinator):

@@ -17,6 +17,7 @@ from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseC
 @pytest.fixture
 def use_case(owner, business_unit):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Idee",
         problem_statement="Problem",
         business_unit=business_unit,

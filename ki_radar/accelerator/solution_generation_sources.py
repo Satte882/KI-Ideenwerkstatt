@@ -30,9 +30,18 @@ OPTIONAL_PROCESS_FIELDS = (
 )
 
 PROCESS_SOURCE_FIELDS = REQUIRED_PROCESS_FIELDS + OPTIONAL_PROCESS_FIELDS
+INITIATIVE_SOURCE_FIELDS = (
+    "business_outcome",
+    "contribution",
+    "impact_hypothesis",
+    "evaluation_criteria",
+    "evidence_level",
+    "outcome_revision",
+)
 ALLOWED_SOURCE_IDS = tuple(
     [f"process.{field_name}" for field_name in PROCESS_SOURCE_FIELDS]
     + ["stage.name", "value_stream.constraints"]
+    + [f"initiative.{name}" for name in INITIATIVE_SOURCE_FIELDS]
 )
 
 
@@ -140,6 +149,11 @@ def _source_facts(process_analysis) -> tuple[SourceFact, ...]:
                 value=constraints,
             )
         )
+    if process_analysis.initiative_id:
+        for name in INITIATIVE_SOURCE_FIELDS:
+            value = _clean_text(getattr(process_analysis.initiative, name))
+            if value:
+                facts.append(SourceFact(source_id=f"initiative.{name}", field=name, value=value))
     return tuple(facts)
 
 

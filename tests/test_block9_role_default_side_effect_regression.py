@@ -45,6 +45,7 @@ def _coordinator_user(*, username, business_unit):
 
 def _use_case(*, business_unit, owner, coordinator=None, technical_owner=None):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Block-9-Nebenwirkungstest",
         problem_statement=(
             "Ein reproduzierbarer Testfall prüft, dass Rollenhinweise keine Gates auslösen."

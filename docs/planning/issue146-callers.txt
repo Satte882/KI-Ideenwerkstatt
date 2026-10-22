@@ -1,0 +1,117 @@
+ki_radar\delivery\ap3_autonomous.py:1327:        for name, value in selection.diagnosis_snapshot.items():
+ki_radar\delivery\evidence_snapshot.py:372:    for option_snapshot in selection_decision.comparison_snapshot or []:
+ki_radar\use_cases\services.py:138:def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSolutionUseCaseResult:
+ki_radar\use_cases\services.py:173:            for item in locked_decision.comparison_snapshot
+ki_radar\use_cases\services.py:710:def approval_check(
+ki_radar\use_cases\services.py:838:def submit_approval_decision(*, use_case: UseCase, actor, data) -> ApprovalDecision:
+ki_radar\use_cases\services.py:890:def confirm_conditional_decision(*, decision: ApprovalDecision, actor) -> ApprovalDecision:
+tests\test_block7_security_gate_regression.py:34:from ki_radar.architecture.solution_selection import select_preferred_solution
+tests\test_block7_security_gate_regression.py:287:    decision = select_preferred_solution(
+tests\test_block7_structural_contract_and_retirement.py:225:        comparison_snapshot=[],
+tests\test_block8_completion.py:20:from ki_radar.architecture.solution_selection import build_comparison_snapshot
+tests\test_block8_completion.py:93:        comparison_snapshot=build_comparison_snapshot([option]),
+tests\test_block8_completion.py:152:    approval = ApprovalDecision.objects.create(
+tests\test_block8_delivery_ui.py:59:    ApprovalDecision.objects.create(
+tests\test_block8_delivery_integration.py:68:    ApprovalDecision.objects.create(
+ki_radar\use_cases\origin_consistency.py:241:        for option in decision.comparison_snapshot or []
+ki_radar\use_cases\origin_consistency.py:330:    validation_snapshot = (decision.diagnosis_snapshot or {}).get("validation")
+ki_radar\use_cases\origin_consistency.py:434:    diagnosis = decision.diagnosis_snapshot or {}
+ki_radar\use_cases\models.py:95:    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
+tests\test_block9_role_default_side_effect_regression.py:86:    return ApprovalDecision.objects.create(
+tests\test_block8_residual_text.py:111:    ApprovalDecision.objects.create(
+tests\test_block8_evidence_snapshot.py:60:        comparison_snapshot=[
+tests\test_block8_evidence_snapshot.py:196:def test_solution_specific_evidence_comes_from_immutable_comparison_snapshot():
+tests\test_block8_evidence_snapshot.py:215:    second_decision.comparison_snapshot[0]["updated_at"] = "2030-01-01T00:00:00+00:00"
+tests\test_decision_history.py:82:    approval = ApprovalDecision.objects.create(
+tests\test_decision_history.py:132:    approval = ApprovalDecision.objects.create(
+tests\test_decision_history.py:175:    old_decision = ApprovalDecision.objects.create(
+tests\test_decision_history.py:194:    new_decision = ApprovalDecision.objects.create(
+tests\test_decision_quality.py:52:    decision = ApprovalDecision.objects.create(
+ki_radar\use_cases\migrations\0015_historicalusecase_outcome_contract_version_and_more.py:20:            name='outcome_contract_version',
+ki_radar\use_cases\migrations\0015_historicalusecase_outcome_contract_version_and_more.py:25:            name='outcome_contract_version',
+tests\test_delivery_to_pilot.py:171:    ApprovalDecision.objects.create(
+tests\test_delivery_readiness_v2.py:90:    ApprovalDecision.objects.create(
+tests\test_delivery_handover.py:92:    decision = ApprovalDecision.objects.create(
+tests\test_guided_workflow_ux.py:73:    decision = ApprovalDecision.objects.create(
+tests\test_issue_100_ap2_metric_pilot.py:17:from ki_radar.architecture.solution_selection import select_preferred_solution
+tests\test_issue_100_ap2_metric_pilot.py:136:    decision = select_preferred_solution(
+tests\test_issue_104_ap3_delivery.py:20:from ki_radar.architecture.solution_selection import select_preferred_solution
+tests\test_issue_104_ap3_delivery.py:142:    selection = select_preferred_solution(
+tests\test_issue_104_ap3_delivery.py:230:    approval = ApprovalDecision.objects.create(
+tests\test_issue_104_ap3_delivery.py:713:    original_diagnosis = selection.diagnosis_snapshot
+tests\test_issue_104_ap3_delivery.py:733:    assert selection.diagnosis_snapshot == original_diagnosis
+tests\test_issue_145_initiatives.py:233:    assert process.outcome_contract_version == case.outcome_contract_version == 0
+tests\test_issue_145_initiatives.py:405:    assert process.outcome_contract_version == 0
+tests\test_issue_145_initiatives.py:482:    assert current.initiative_id is None and current.outcome_contract_version == 0
+tests\test_issue_321_delivery_readiness_ux.py:67:    ApprovalDecision.objects.create(
+ki_radar\accelerator\management\commands\run_block9_technical_measurements.py:89:    decision = ApprovalDecision.objects.create(
+tests\test_issue_318_diagnosis_readiness.py:19:    select_preferred_solution,
+tests\test_issue_318_diagnosis_readiness.py:166:        select_preferred_solution(
+tests\test_issue_318_diagnosis_readiness.py:197:    decision = select_preferred_solution(
+tests\test_issue_318_diagnosis_readiness.py:207:    assert decision.diagnosis_snapshot == {
+tests\test_issue_318_diagnosis_readiness.py:221:    assert decision.diagnosis_snapshot["confirmed_causes"] == (
+tests\test_issue_318_diagnosis_integration.py:22:from ki_radar.architecture.solution_selection import select_preferred_solution
+tests\test_issue_318_diagnosis_integration.py:242:    decision = select_preferred_solution(
+tests\test_issue_350_delivery_mvp_scope_ai.py:85:    ApprovalDecision.objects.create(
+tests\test_issue_351_origin_consistency.py:19:    build_comparison_snapshot,
+tests\test_issue_351_origin_consistency.py:20:    build_diagnosis_snapshot,
+tests\test_issue_351_origin_consistency.py:131:            comparison_snapshot=build_comparison_snapshot([option]),
+tests\test_issue_351_origin_consistency.py:133:            diagnosis_snapshot=build_diagnosis_snapshot(process),
+tests\test_issue_351_origin_consistency.py:297:        comparison_snapshot=build_comparison_snapshot([option]),
+tests\test_issue_351_origin_consistency.py:299:        diagnosis_snapshot=build_diagnosis_snapshot(process),
+tests\test_issue_340_optional_intake_metrics.py:190:    assert use_case.outcome_contract_version == 0
+tests\test_issue_38_39_backfill.py:58:    ApprovalDecision.objects.create(
+tests\test_issue_38_39_hardening.py:56:    ApprovalDecision.objects.create(
+tests\test_issue_425_moscow_scope.py:75:    ApprovalDecision.objects.create(
+tests\test_issue_43_early_go_live_exception.py:74:    decision = ApprovalDecision.objects.create(
+tests\test_issue_49_50_55_delivery_workflow.py:60:    ApprovalDecision.objects.create(
+ki_radar\architecture\models.py:138:    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
+ki_radar\architecture\models.py:604:    comparison_snapshot = models.JSONField(default=list, editable=False)
+ki_radar\architecture\models.py:606:    diagnosis_snapshot = models.JSONField(default=dict, blank=True, editable=False)
+ki_radar\architecture\solution_selection.py:75:def build_comparison_snapshot(options: list[SolutionOption]) -> list[dict]:
+ki_radar\architecture\solution_selection.py:105:def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
+ki_radar\architecture\solution_selection.py:128:def confirm_diagnosis_and_select_solution(
+ki_radar\architecture\solution_selection.py:190:    return select_preferred_solution(
+ki_radar\architecture\solution_selection.py:199:def select_preferred_solution(
+ki_radar\architecture\solution_selection.py:247:        comparison_snapshot=build_comparison_snapshot(options),
+ki_radar\architecture\solution_selection.py:249:        diagnosis_snapshot=build_diagnosis_snapshot(process_analysis),
+ki_radar\architecture\solution_views.py:30:    confirm_diagnosis_and_select_solution,
+ki_radar\architecture\solution_views.py:34:    select_preferred_solution,
+ki_radar\architecture\solution_views.py:156:                    decision = confirm_diagnosis_and_select_solution(
+ki_radar\architecture\solution_views.py:165:                    decision = select_preferred_solution(
+ki_radar\architecture\migrations\0010_solution_option_comparison.py:61:            comparison_snapshot=snapshot,
+ki_radar\architecture\migrations\0010_solution_option_comparison.py:124:                ("comparison_snapshot", models.JSONField(default=list, editable=False)),
+tests\test_lean_transition_policy.py:64:    decision = ApprovalDecision.objects.create(
+ki_radar\architecture\migrations\0017_solutionselectiondecision_diagnosis_snapshot.py:12:            name="diagnosis_snapshot",
+ki_radar\architecture\migrations\0018_solutionoption_issue_331.py:25:        ("architecture", "0017_solutionselectiondecision_diagnosis_snapshot"),
+tests\test_outcome_journey_consistency.py:61:    return ApprovalDecision.objects.create(
+tests\test_outcome_workspace_actions.py:60:    return ApprovalDecision.objects.create(
+ki_radar\architecture\migrations\0023_processanalysis_initiative_and_more.py:12:        ('use_cases', '0015_historicalusecase_outcome_contract_version_and_more'),
+ki_radar\architecture\migrations\0023_processanalysis_initiative_and_more.py:24:            name='outcome_contract_version',
+tests\test_reviews.py:49:    return ApprovalDecision.objects.create(
+tests\test_solution_option_comparison.py:20:    confirm_diagnosis_and_select_solution,
+tests\test_solution_option_comparison.py:22:    select_preferred_solution,
+tests\test_solution_option_comparison.py:320:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:333:    assert decision.diagnosis_snapshot["diagnostic_observations"] == (
+tests\test_solution_option_comparison.py:336:    assert decision.diagnosis_snapshot["confirmed_causes"] == comparison_process.confirmed_causes
+tests\test_solution_option_comparison.py:337:    assert decision.diagnosis_snapshot["validation"] is None
+tests\test_solution_option_comparison.py:338:    assert decision.comparison_snapshot[0]["name"] == organizational.name
+tests\test_solution_option_comparison.py:339:    assert decision.comparison_snapshot[0]["time_to_value"] == TimeToValue.SHORT
+tests\test_solution_option_comparison.py:340:    assert decision.comparison_snapshot[0]["evidence_basis"] == EvidenceBasis.MEASURED
+tests\test_solution_option_comparison.py:341:    assert decision.comparison_snapshot[0]["contains_ai_component"] is False
+tests\test_solution_option_comparison.py:342:    assert decision.comparison_snapshot[1]["contains_ai_component"] is True
+tests\test_solution_option_comparison.py:343:    assert len(decision.comparison_snapshot) == 2
+tests\test_solution_option_comparison.py:375:    decision = confirm_diagnosis_and_select_solution(
+tests\test_solution_option_comparison.py:398:    assert decision.diagnosis_snapshot["confirmed_causes"] == comparison_process.confirmed_causes
+tests\test_solution_option_comparison.py:399:    assert decision.diagnosis_snapshot["validation"]["process_version"] == (
+tests\test_solution_option_comparison.py:433:        confirm_diagnosis_and_select_solution(
+tests\test_solution_option_comparison.py:468:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:523:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:557:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:590:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:620:        select_preferred_solution(
+tests\test_solution_option_comparison.py:739:    decision = select_preferred_solution(
+tests\test_solution_option_comparison.py:787:            comparison_snapshot=[],
+tests\test_solution_selection_ux.py:18:from ki_radar.architecture.solution_selection import select_preferred_solution
+tests\test_solution_selection_ux.py:630:        select_preferred_solution(
+tests\test_status_transitions.py:52:    return ApprovalDecision.objects.create(

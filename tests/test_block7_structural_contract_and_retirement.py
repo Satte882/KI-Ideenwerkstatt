@@ -150,6 +150,7 @@ def make_process(owner, business_unit):
         name="Angebote vergleichen",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         scope_start="Angebote liegen vor",
@@ -235,6 +236,7 @@ def test_retirement_blocks_use_case_linked_option(owner, business_unit):
     process = make_process(owner, business_unit)
     option = make_option(process, owner, "Mit Use Case")
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Angebotsvergleich",
         problem_statement="Manueller Vergleich",
         business_unit=business_unit,

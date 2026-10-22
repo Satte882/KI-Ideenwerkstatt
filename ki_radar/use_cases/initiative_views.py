@@ -25,7 +25,11 @@ class InitiativeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = (
-                "form-select" if isinstance(field.widget, forms.Select) else "form-control"
+                "form-select"
+                if isinstance(field.widget, forms.Select)
+                else "form-check-input"
+                if isinstance(field.widget, forms.CheckboxInput)
+                else "form-control"
             )
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs["rows"] = 3

@@ -115,6 +115,7 @@ def make_process(*, owner, business_unit, name="VS1/3 Fall"):
         baseline_metrics="Offen",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name=name,
         status=ProcessAnalysis.Status.DRAFT,

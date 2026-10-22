@@ -38,6 +38,7 @@ def make_mapped_package(owner, coordinator, business_unit):
         description="Angebote werden fachlich verglichen.",
     )
     process = ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         status=ProcessAnalysis.Status.VALIDATED,
@@ -54,6 +55,7 @@ def make_mapped_package(owner, coordinator, business_unit):
         analyzed_by=coordinator,
     )
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         summary="Angebote strukturiert vergleichen.",
         problem_statement="Uneinheitliche Angebote verlängern die Auswahl.",

@@ -793,6 +793,7 @@ def seed_demo_data(*, demo_user_password: str) -> dict[str, int]:
         use_case, _ = UseCase.objects.update_or_create(
             title=template.title,
             defaults={
+                "outcome_contract_version": 0,  # Canonical historical demo contract.
                 "summary": f"{DEMO_MARKER}: {template.expected_benefit}",
                 "problem_statement": template.problem_statement,
                 "business_unit": business_units[template.business_unit],

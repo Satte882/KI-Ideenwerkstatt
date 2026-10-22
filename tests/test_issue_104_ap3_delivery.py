@@ -76,6 +76,7 @@ def _process(owner, business_unit):
         baseline_metrics="Bearbeitungszeit wird pro Vorgang dokumentiert.",
     )
     return ProcessAnalysis.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
         scope_start="Angebote liegen vor",

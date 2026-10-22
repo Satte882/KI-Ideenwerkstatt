@@ -11,6 +11,7 @@ from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseC
 
 def _create_package(owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         summary="Angebote strukturiert vergleichen und Rückfragen reduzieren.",
         problem_statement="Uneinheitliche Angebote verlängern die Lieferantenauswahl.",

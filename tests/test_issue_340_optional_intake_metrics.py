@@ -187,7 +187,7 @@ def test_guided_intake_persists_unknown_metrics_as_null(client, owner, business_
     assert use_case.metric_baseline is None
     assert use_case.metric_target is None
     assert use_case.initiative_id is None
-    assert use_case.outcome_contract_version == 0
+    assert use_case.outcome_contract_version == 1
     assert use_case.next_review_date is None
     assert use_case.decision_status == UseCase.DecisionStatus.READY
     assert use_case.metric_result_label == "Metrik definiert · Baseline und Ziel offen"
@@ -196,6 +196,7 @@ def test_guided_intake_persists_unknown_metrics_as_null(client, owner, business_
 @pytest.mark.django_db
 def test_positive_approval_shows_baseline_and_target_as_readiness(owner, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Früher Use Case",
         problem_statement="Ein relevantes Problem ist beschrieben.",
         business_unit=business_unit,
@@ -229,6 +230,7 @@ def test_positive_approval_shows_baseline_and_target_as_readiness(owner, busines
 @pytest.mark.django_db
 def test_pilot_gate_keeps_metric_requirements_as_readiness(owner, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Pilot noch nicht messbereit",
         problem_statement="Ein relevantes Problem ist beschrieben.",
         business_unit=business_unit,

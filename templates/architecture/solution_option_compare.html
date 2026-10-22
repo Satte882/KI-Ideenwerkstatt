@@ -13,6 +13,14 @@
   <a class="btn btn-outline-secondary" href="{{ process_analysis.get_absolute_url }}">Zur Prozessanalyse</a>
 </div>
 
+{% if process_analysis.outcome_contract_version %}
+<section class="cr-inline-note mb-4" aria-label="Vorhabensbezogener Outcome-Vertrag">
+<div><strong>Gemeinsames Geschäftsergebnis</strong>
+{% if process_analysis.initiative_id %}<p>{{ process_analysis.initiative.business_outcome|default:"Noch offen" }}</p><p>Wirkannahme: {{ process_analysis.initiative.impact_hypothesis|default:"Noch offen" }} · {{ process_analysis.initiative.get_evidence_level_display }}</p>{% else %}<p>Vorhabensbezug noch offen. Erkunden und Entwürfe speichern bleibt möglich.</p>{% endif %}
+{% if latest_selection.outcome_review_required %}<p role="status">Outcome-Grundlage geändert – Neubewertung nötig. Der historische Snapshot bleibt erhalten.</p>{% endif %}
+</div>{% if can_select %}<a href="{% url 'use_cases:prepare_outcome' kind='process' pk=process_analysis.pk %}">Outcome-Bezug vorbereiten / bestätigen</a>{% endif %}
+</section>
+{% endif %}
 {% if latest_investigation_materialization %}
 <div class="cr-inline-note mb-4" data-testid="investigation-materialization-origin">
   <div>
@@ -74,6 +82,7 @@
       <thead><tr><th scope="col">Kriterium</th>{% for option in options %}<th scope="col"><span class="badge badge-soft">{{ option.get_option_type_display }}</span><div class="mt-2">{{ option.name }}</div><div class="small text-muted">{{ option.get_evaluation_status_display }}</div></th>{% endfor %}</tr></thead>
       <tbody>
         <tr><th scope="row">Lösungsbeschreibung</th>{% for option in options %}<td class="text-preline">{{ option.description }}</td>{% endfor %}</tr>
+        {% if process_analysis.outcome_contract_version %}<tr><th scope="row">Wirkung auf dasselbe Geschäftsergebnis</th>{% for option in options %}<td class="text-preline">{{ option.outcome_effect|default:"Noch offen – vor bindender Wahl fachlich bewerten" }}</td>{% endfor %}</tr>{% endif %}
         <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value }}</td>{% endfor %}</tr>
         <tr><th scope="row">Beleglage<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
@@ -293,6 +302,7 @@
             </dl>
           </details>
         {% endif %}
+        {% if decision.outcome_snapshot %}<details><summary>Outcome-, Evidenz- und Fokusstand der Entscheidung</summary><p>{{ decision.outcome_snapshot.fields.business_outcome }}</p><p>{{ decision.outcome_snapshot.fields.impact_hypothesis }} · {{ decision.outcome_snapshot.evidence_level }}</p><p>Vorhaben {{ decision.outcome_snapshot.initiative_id }} · Revision {{ decision.outcome_snapshot.outcome_revision }} · Fokusrevision {{ decision.outcome_snapshot.focus.revision }}</p><p>Pfad: {{ decision.outcome_snapshot.discovery_path.path }} · {{ decision.outcome_snapshot.discovery_path.origin_basis }} · {{ decision.outcome_snapshot.discovery_path.validation_step }}</p></details>{% else %}<p class="small text-muted">Historisch nicht gebunden</p>{% endif %}
         <div class="text-preline mt-2">{{ decision.rationale }}</div>
       </section>
     {% empty %}<p class="text-muted mb-0">Noch keine auditierbare Auswahl dokumentiert.</p>{% endfor %}

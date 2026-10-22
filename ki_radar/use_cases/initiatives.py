@@ -1,4 +1,4 @@
-"""Shared preparation for #146. No outcome gates or cohort activation here."""
+"""Shared initiative editing and explicit associations; draft saves never enforce outcome gates."""
 
 from datetime import timedelta
 
@@ -21,6 +21,7 @@ OUTCOME_FIELDS = (
     "evidence_level",
     "evidence_note",
     "outcome_owner",
+    "target_group",
 )
 EDITABLE_FIELDS = (
     "title",
@@ -42,7 +43,16 @@ def can_edit_initiative(actor, initiative=None):
 
 
 @transaction.atomic
-def save_initiative(*, actor, data, initiative=None, expected_revision=None):
+def save_initiative(
+    *, actor, data, initiative=None, expected_revision=None, source="human", correction_reason=""
+):
+    from .outcome_contract import MATERIAL_FIELDS
+
+    data = dict(data)
+    if source not in {"human", "ai"}:
+        raise ValidationError("Unbekannte Herkunft der Wirkannahme.")
+    if source == "ai":
+        data["evidence_level"] = "hypothesis"
     if initiative is not None:
         initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
     if not can_edit_initiative(actor, initiative):
@@ -56,13 +66,28 @@ def save_initiative(*, actor, data, initiative=None, expected_revision=None):
         initiative = ImprovementInitiative(created_by=actor)
     else:
         changed_outcome = any(
-            key in data and getattr(initiative, key) != data[key] for key in OUTCOME_FIELDS
+            key in data
+            and " ".join(str(getattr(initiative, key)).split()) != " ".join(str(data[key]).split())
+            for key in (*MATERIAL_FIELDS, "evidence_level", "evidence_note", "outcome_owner")
         )
         initiative.revision += 1
-        if changed_outcome:
+        if changed_outcome and not correction_reason.strip():
+            initiative.outcome_revision += 1
+        if (changed_outcome and not correction_reason.strip()) or source == "ai":
             initiative.confirmed_revision = None
             initiative.confirmed_by = None
             initiative.confirmed_at = None
+            initiative.confirmation_reason = ""
+        if correction_reason.strip():
+            initiative._change_reason = "Schreibkorrektur: " + correction_reason.strip()[:75]
+    if "impact_hypothesis" in data and (
+        source == "ai"
+        or (
+            data["impact_hypothesis"] != initiative.impact_hypothesis
+            and not correction_reason.strip()
+        )
+    ):
+        initiative.hypothesis_origin = source
     for key, value in data.items():
         setattr(initiative, key, value)
     initiative.updated_by = actor
@@ -81,12 +106,12 @@ def bind_initiative(*, initiative, artifact, actor):
     from .models import UseCase
     from .permissions import can_edit_use_case, can_triage_idea
 
-    initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
-    if not can_edit_initiative(actor, initiative):
-        raise PermissionDenied
     if not isinstance(artifact, (IdeaCandidate, ProcessAnalysis, UseCase)):
         raise ValidationError("Dieses Objekt kann keinem Vorhaben zugeordnet werden.")
     artifact = type(artifact).objects.select_for_update().get(pk=artifact.pk)
+    initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
+    if not can_edit_initiative(actor, initiative):
+        raise PermissionDenied
     if isinstance(artifact, ProcessAnalysis):
         allowed = can_edit_value_stream(actor, artifact.stage.value_stream)
     elif isinstance(artifact, UseCase):

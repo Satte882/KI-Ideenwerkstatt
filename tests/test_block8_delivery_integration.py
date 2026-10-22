@@ -17,6 +17,7 @@ from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseC
 @pytest.fixture
 def approved_use_case(owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistierter Angebotsvergleich",
         summary="Angebote strukturiert vergleichen.",
         problem_statement="Uneinheitliche Angebote verlängern die Auswahl.",

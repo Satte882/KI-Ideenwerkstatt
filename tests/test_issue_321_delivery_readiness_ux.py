@@ -18,6 +18,7 @@ def make_approved_use_case(
     *, owner, technical_owner, coordinator, business_unit, title="Issue 321"
 ):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title=title,
         summary="Angebote strukturiert vergleichen.",
         problem_statement="Uneinheitliche Angebote erzeugen Rückfragen.",

@@ -16,6 +16,7 @@ from ki_radar.use_cases.models import ApprovalDecision, DecisionAssessment, UseC
 
 def _approved_use_case(*, owner, technical_owner, coordinator, business_unit):
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Audit-Härtung",
         problem_statement="Uneindeutige Rollenquelle",
         business_unit=business_unit,

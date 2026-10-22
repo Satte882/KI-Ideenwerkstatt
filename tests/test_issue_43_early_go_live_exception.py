@@ -22,6 +22,7 @@ from ki_radar.use_cases.services import (
 def _early_go_live_candidate(owner, coordinator, business_unit):
     today = timezone.localdate()
     use_case = UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Früh entscheidbarer Pilot",
         summary="Der Pilot liefert früher als geplant belastbare Evidenz.",
         problem_statement="Der bestehende Prozess verursacht vermeidbare Bearbeitungszeit.",

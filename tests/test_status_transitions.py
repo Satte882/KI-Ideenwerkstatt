@@ -20,6 +20,7 @@ from ki_radar.use_cases.services import apply_status_transition
 @pytest.fixture
 def use_case(owner, business_unit):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Assistent",
         problem_statement="Wissen ist verteilt",
         business_unit=business_unit,

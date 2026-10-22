@@ -21,6 +21,7 @@ from ki_radar.use_cases.services import (
 
 def _use_case(owner, business_unit, *, status=UseCase.Status.PILOT):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Pilot für Lieferantenauswahl",
         problem_statement="Angebote werden manuell verglichen.",
         business_unit=business_unit,

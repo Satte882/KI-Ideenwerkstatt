@@ -8,12 +8,14 @@ from . import (
     intake_views,
     lean_decision_views,
     origin_consistency_views,
+    outcome_views,
     views,
 )
 
 app_name = "use_cases"
 urlpatterns = [
     path("", views.use_case_list, name="list"),
+    path("outcome/<str:kind>/<uuid:pk>/", outcome_views.prepare_outcome, name="prepare_outcome"),
     path("initiatives/new/", initiative_views.initiative_edit, name="initiative_create"),
     path("initiatives/<uuid:pk>/", initiative_views.initiative_edit, name="initiative_edit"),
     path("ideas/", idea_views.idea_list, name="idea_list"),

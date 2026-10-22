@@ -37,7 +37,10 @@ def make_use_case(owner, business_unit, **overrides):
         "solution_type": UseCase.SolutionType.ASSISTANT,
     }
     data.update(overrides)
-    return UseCase.objects.create(**data)
+    return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
+        **data,
+    )
 
 
 def add_assessment(use_case, coordinator, *, version=1, business_value, feasibility):

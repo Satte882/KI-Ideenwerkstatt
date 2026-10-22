@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from ki_radar.accounts.models import BusinessUnit
 from ki_radar.core.models import TimeStampedModel
+from ki_radar.use_cases.outcome_guards import OptionManager, OutcomeManager
 
 from .audit import ImmutableDecisionManager
 
@@ -121,6 +122,8 @@ class ValueStreamStage(TimeStampedModel):
 
 
 class ProcessAnalysis(TimeStampedModel):
+    objects = OutcomeManager()
+
     class Status(models.TextChoices):
         DRAFT = "draft", "Entwurf"
         REVIEW_REQUIRED = "review_required", "Prüfbedürftig"
@@ -135,7 +138,7 @@ class ProcessAnalysis(TimeStampedModel):
         related_name="process_analyses",
         editable=False,
     )
-    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
+    outcome_contract_version = models.PositiveSmallIntegerField(default=1, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     stage = models.ForeignKey(
         ValueStreamStage,
@@ -176,6 +179,12 @@ class ProcessAnalysis(TimeStampedModel):
 
     class Meta:
         ordering = ["stage__sequence", "name"]
+
+    def save(self, *args, **kwargs):
+        from ki_radar.use_cases.outcome_guards import protect_cohort
+
+        protect_cohort(self)
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
@@ -374,6 +383,8 @@ class WorkDesignTask(TimeStampedModel):
 
 
 class SolutionOption(TimeStampedModel):
+    objects = OptionManager()
+
     class OptionType(models.TextChoices):
         ORGANIZATIONAL = "organizational", "Organisatorische Änderung"
         RULE_AUTOMATION = "rule_automation", "Regelbasierte Automatisierung"
@@ -449,6 +460,7 @@ class SolutionOption(TimeStampedModel):
     )
     description = models.TextField(verbose_name="Lösungsbeschreibung")
     expected_value = models.TextField(verbose_name="Erwarteter Beitrag")
+    outcome_effect = models.TextField(blank=True, verbose_name="Wirkung auf das Geschäftsergebnis")
     time_to_value = models.CharField(
         max_length=20,
         choices=TimeToValue.choices,
@@ -540,6 +552,24 @@ class SolutionOption(TimeStampedModel):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
+        if (
+            self.recommendation == self.Recommendation.PREFERRED
+            and self.process_analysis.outcome_contract_version
+            and type(self)
+            .objects.filter(pk=self.pk)
+            .values_list("recommendation", flat=True)
+            .first()
+            != self.Recommendation.PREFERRED
+        ):
+            decision = self.selection_decisions.order_by("-decided_at").first()
+            if (
+                decision is None
+                or not decision.outcome_snapshot
+                or decision.outcome_review_required
+            ):
+                raise ValidationError(
+                    "Bevorzugte Option benötigt eine aktuelle bindende Entscheidung."
+                )
         if self.option_type in self.fixed_ai_option_types():
             self.contains_ai_component = True
         elif self.option_type in self.fixed_non_ai_option_types():
@@ -590,6 +620,7 @@ class SolutionOption(TimeStampedModel):
 
 
 class SolutionSelectionDecision(TimeStampedModel):
+    outcome_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     process_analysis = models.ForeignKey(
         ProcessAnalysis,
         on_delete=models.PROTECT,
@@ -620,6 +651,21 @@ class SolutionSelectionDecision(TimeStampedModel):
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValidationError("Eine dokumentierte Lösungsentscheidung ist unveränderlich.")
+        if self.process_analysis.outcome_contract_version:
+            from ki_radar.use_cases.outcome_contract import validate_decision_snapshot
+
+            from .permissions import can_edit_value_stream
+
+            if (
+                not self.decided_by_id
+                or not self.decided_by.is_active
+                or not can_edit_value_stream(
+                    self.decided_by,
+                    self.process_analysis.stage.value_stream,
+                )
+            ):
+                raise ValidationError("Die Lösungsentscheidung benötigt eine berechtigte Person.")
+            validate_decision_snapshot(self.process_analysis, self.outcome_snapshot)
         if (
             self.selected_option_id
             and self.process_analysis_id
@@ -635,6 +681,58 @@ class SolutionSelectionDecision(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.process_analysis}: {self.selected_option}"
+
+    @property
+    def outcome_review_required(self):
+        from ki_radar.use_cases.outcome_contract import snapshot_is_stale
+
+        if not self.outcome_snapshot:
+            return False
+        selected = SolutionOption.objects.get(pk=self.selected_option_id)
+        captured = next(
+            (row for row in self.comparison_snapshot if row.get("id") == str(selected.pk)), {}
+        )
+        return snapshot_is_stale(self.process_analysis, self.outcome_snapshot) or any(
+            captured.get(key) != getattr(selected, key)
+            for key in ("outcome_effect", "expected_value", "evidence_basis")
+        )
+
+
+class ProcessDiscoveryPathDecision(TimeStampedModel):
+    """Human-owned path provenance, recorded before the binding option command."""
+
+    process_analysis = models.ForeignKey(
+        ProcessAnalysis, on_delete=models.PROTECT, related_name="discovery_path_decisions"
+    )
+    path = models.CharField(
+        max_length=15,
+        choices=[("problem", "Problemgetrieben"), ("strategic", "Strategisches Potenzial")],
+    )
+    origin_basis = models.TextField()
+    change_reason = models.TextField(blank=True)
+    strategic_potential = models.TextField(blank=True)
+    validation_step = models.TextField(blank=True)
+    revision = models.PositiveIntegerField()
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    objects = ImmutableDecisionManager()
+
+    class Meta:
+        ordering = ["-revision"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["process_analysis", "revision"],
+                name="unique_process_discovery_path_revision",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValidationError("Die fachliche Pfadeinordnung ist unveränderlich.")
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Die fachliche Pfadeinordnung darf nicht gelöscht werden.")
 
 
 class UseCaseOrigin(TimeStampedModel):

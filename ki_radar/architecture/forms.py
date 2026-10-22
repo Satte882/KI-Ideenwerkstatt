@@ -580,6 +580,7 @@ class SolutionOptionForm(StyledModelForm):
             "evidence_basis",
             "description",
             "expected_value",
+            "outcome_effect",
             "time_to_value",
             "bottleneck_coverage",
             "feasibility",

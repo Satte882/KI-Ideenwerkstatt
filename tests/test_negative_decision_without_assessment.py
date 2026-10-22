@@ -9,6 +9,7 @@ from ki_radar.use_cases.workflow import build_use_case_journey
 
 def _use_case(owner, business_unit):
     return UseCase.objects.create(
+        outcome_contract_version=0,  # Historical regression cohort.
         title="Frühe Portfolioentscheidung",
         problem_statement="Das Vorhaben soll früh bewertet oder beendet werden.",
         business_unit=business_unit,

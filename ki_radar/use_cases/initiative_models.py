@@ -47,6 +47,10 @@ class ImprovementInitiative(TimeStampedModel):
         verbose_name="Outcome Owner (Person oder Funktion)",
     )
     revision = models.PositiveIntegerField(default=1, editable=False)
+    outcome_revision = models.PositiveIntegerField(default=1, editable=False)
+    target_group = models.TextField(blank=True, verbose_name="Betroffene Empfängergruppe")
+    hypothesis_origin = models.CharField(max_length=10, default="human", editable=False)
+    confirmation_reason = models.TextField(blank=True, editable=False)
     confirmed_revision = models.PositiveIntegerField(null=True, blank=True, editable=False)
     confirmed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

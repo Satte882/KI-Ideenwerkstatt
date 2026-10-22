@@ -64,6 +64,16 @@ def focus_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
 
 
 def diagnosis_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
+    if process_analysis.outcome_contract_version:
+        path = process_analysis.discovery_path_decisions.first()
+        if path is not None and path.path == "strategic":
+            return (
+                []
+                if path.strategic_potential.strip() and path.validation_step.strip()
+                else [
+                    "strategisches Potenzial und Validierungsschritt",
+                ]
+            )
     blockers: list[str] = []
     if not process_analysis.diagnostic_observations.strip():
         blockers.append("Beobachtung/Problem")
@@ -85,6 +95,7 @@ def build_comparison_snapshot(options: list[SolutionOption]) -> list[dict]:
             "evidence_basis_label": option.get_evidence_basis_display(),
             "description": option.description,
             "expected_value": option.expected_value,
+            "outcome_effect": option.outcome_effect,
             "time_to_value": option.time_to_value,
             "time_to_value_label": option.get_time_to_value_display(),
             "bottleneck_coverage": option.bottleneck_coverage,
@@ -146,6 +157,10 @@ def confirm_diagnosis_and_select_solution(
             "Die Prozessanalyse wurde seit dem Review geändert. "
             "Bitte den aktuellen Stand erneut prüfen; es wurde nichts überschrieben."
         )
+    if process.outcome_contract_version:
+        from ki_radar.use_cases.outcome_contract import build_outcome_snapshot
+
+        build_outcome_snapshot(process, lock=True)
 
     cause = confirmed_causes.strip()
     if not cause:
@@ -215,6 +230,9 @@ def select_preferred_solution(
         )
     if not can_edit_value_stream(actor, process_analysis.stage.value_stream):
         raise ValidationError("Für diese Lösungsentscheidung fehlt die Berechtigung.")
+    from ki_radar.use_cases.outcome_contract import build_outcome_snapshot
+
+    outcome_snapshot = build_outcome_snapshot(process_analysis, lock=True)
     if focus_readiness_blockers(process_analysis):
         raise ValidationError(
             "Eine bevorzugte Option kann erst nach einer dokumentierten "
@@ -224,6 +242,15 @@ def select_preferred_solution(
     blockers = comparison_blockers(options)
     if blockers:
         raise ValidationError(" | ".join(blockers))
+    if outcome_snapshot:
+        incomplete_effects = [
+            option.name for option in options if not option.outcome_effect.strip()
+        ]
+        if incomplete_effects:
+            raise ValidationError(
+                "Wirkung auf das gemeinsame Geschäftsergebnis fehlt: "
+                + ", ".join(incomplete_effects)
+            )
     selected = next((option for option in options if option.pk == selected_option.pk), None)
     if selected is None:
         raise ValidationError("Die gewählte Option gehört nicht zu den aktiven Lösungsoptionen.")
@@ -248,6 +275,7 @@ def select_preferred_solution(
         process_version=process_analysis.version,
         diagnosis_snapshot=build_diagnosis_snapshot(process_analysis),
         decided_by=actor,
+        outcome_snapshot=outcome_snapshot,
     )
     active_ids = [option.pk for option in options]
     process_analysis.solution_options.filter(pk__in=active_ids).exclude(pk=selected.pk).update(
