@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 from django.urls import reverse
 from test_issue_146_outcome_contract import bind_process
+from test_issue_146_outcome_contract import direct as direct_case
 from test_issue_146_outcome_contract import process as process_fixture
 
 from ki_radar.architecture.stage_focus import get_stage_focus_decision
@@ -139,6 +140,19 @@ def test_reader_cannot_load_or_save_outcome_or_start_ai_planning(client, reader,
     compare = reverse("architecture:solution_option_compare", args=[process.pk])
     assert client.post(compare, {"continue_ai_handoff": "1"}).status_code == 403
     assert not ImprovementInitiative.objects.exists()
+
+
+def test_direct_outcome_stays_in_use_case_context(client, owner, coordinator, business_unit):
+    case = direct_case(owner, coordinator, business_unit)
+    client.force_login(owner)
+    response = client.get(
+        reverse("use_cases:prepare_outcome", kwargs={"kind": "usecase", "pk": case.pk})
+    )
+    assert response.status_code == 200
+    assert not response.context["nav_is_analysis"]
+    assert response.context["nav_outcome_label"] == "Outcome-Bezug vorbereiten"
+    assert response.content.decode().count('aria-current="page"') == 1
+    assert 'aria-label="Lokaler Use-Case-Bereich"' in response.content.decode()
 
 
 def test_ai_selection_has_zero_generation_side_effects_and_explicit_planning_uses_existing_services(
