@@ -66,8 +66,13 @@ def capability_experiment_edit(request, initiative_id, pk=None):
         )
         initial["retest_of"] = previous.pk
 
+    data = request.POST.copy() if request.method == "POST" else None
+    if data is not None and request.POST.get("action") != "review":
+        # A title-only draft does not need explicit evidence or a data classification.
+        data.setdefault("finding", CapabilityExperiment.Finding.OPEN)
+        data.setdefault("data_kind", CapabilityExperiment.DataKind.SYNTHETIC)
     form = CapabilityExperimentForm(
-        request.POST if request.method == "POST" else None,
+        data,
         initiative=initiative,
         instance=experiment,
         initial=initial,
