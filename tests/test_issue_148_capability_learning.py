@@ -324,3 +324,35 @@ def test_reviewed_negative_capability_visible_on_solution_comparison(client, own
     assert "Capability nicht bestätigt" in html
     assert draft.title not in html
     assert "Geschäftsnutzen-Nachweis" in html
+
+
+def test_comparison_keeps_older_reviewed_findings_and_corrections_visible(client, owner, process):
+    initiative = bind_process(owner, process)
+    findings = [
+        save(
+            owner,
+            initiative,
+            evidence(
+                title=f"Geprüfter Befund {number}",
+                finding="not_supported",
+                holdout_case_ids=f"unseen-{number}",
+            ),
+            finalize=True,
+        )
+        for number in range(11)
+    ]
+    add_capability_correction(
+        experiment=findings[0], actor=owner, note="Alter Wert A; richtig B, Grund: Tippfehler"
+    )
+    draft = save(owner, initiative, {"title": "Ungeprüfter Entwurf bleibt unsichtbar"})
+    other = save_initiative(actor=owner, data={"title": "Anderes Vorhaben"})
+    unrelated = save(owner, other, evidence(title="Befund eines anderen Vorhabens"), finalize=True)
+    client.force_login(owner)
+    response = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert all(finding.title in html for finding in findings)
+    assert "Mit Berichtigungsvermerk" in html
+    assert draft.title not in html and unrelated.title not in html
+    assert not UseCase.objects.exists()
+    assert not process.solution_options.filter(recommendation="preferred").exists()

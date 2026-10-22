@@ -207,9 +207,9 @@ def solution_option_compare(request, pk):
         {
             "process_analysis": process_analysis,
             "capability_findings": (
-                process_analysis.initiative.capability_experiments.filter(
-                    reviewed_at__isnull=False
-                ).order_by("-reviewed_at", "-pk")[:10]
+                process_analysis.initiative.capability_experiments.filter(reviewed_at__isnull=False)
+                .prefetch_related("corrections")
+                .order_by("-reviewed_at", "-pk")
                 if process_analysis.initiative_id
                 else []
             ),
