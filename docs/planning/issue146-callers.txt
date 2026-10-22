@@ -115,3 +115,5 @@ tests\test_solution_option_comparison.py:787:            comparison_snapshot=[],
 tests\test_solution_selection_ux.py:18:from ki_radar.architecture.solution_selection import select_preferred_solution
 tests\test_solution_selection_ux.py:630:        select_preferred_solution(
 tests\test_status_transitions.py:52:    return ApprovalDecision.objects.create(
+
+Nachtrag aus vollständigem PostgreSQL-Regressionlauf: run_block9_technical_measurements._prepare_final_approval setzt eine synthetische Legacy-Freigabe. Delivery-Kontrolle isoliert auf zurückgerollte historische Fixture; importierter Blueprint behält Vertrag 1 und keine Freigabe. Gegenprobe test_block9_technical_measurements.

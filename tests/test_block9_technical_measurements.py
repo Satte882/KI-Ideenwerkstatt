@@ -4,6 +4,8 @@ import json
 import pytest
 from django.core.management import call_command
 
+from ki_radar.use_cases.models import UseCase
+
 REFERENCE_SHA256 = "a910863c3f677eb95b593e8031f48e54f811c5bb55295b4e601ae6f13a0b70d5"
 EXPECTED_TECHNICAL_RUNS = (
     "blueprint-A-control-1",
@@ -33,6 +35,13 @@ def test_block9_technical_runner_records_only_real_technical_controls(tmp_path):
         interactive_manifest=str(interactive_path),
         verbosity=0,
     )
+
+    # The generic Blueprint remains a new, unapproved cohort; the old Delivery
+    # control uses a rolled-back historical fixture, never a contract downgrade.
+    imported = UseCase.objects.get(demo_key="real-demo-assisted-offer-comparison")
+    assert imported.outcome_contract_version == 1
+    assert imported.decision_status == UseCase.DecisionStatus.CLARIFICATION
+    assert not imported.approval_decisions.exists()
 
     rows = [
         json.loads(line)

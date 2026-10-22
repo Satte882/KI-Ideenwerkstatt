@@ -41,6 +41,9 @@ bei bindender Auswahl / positiver Freigabe und liest den aktuellen servereigenen
 - `create_use_case_from_selected_solution` übernimmt Initiative und Kohorte aus der
   menschlichen Lösungsauswahl, prüft aktuellen Prozess-/Lösungs-/Outcome-Stand und
   erzeugt keine neue Outcome-Definition oder erneute Pflichtabfrage.
+- Der eingefrorene Block-9-Delivery-Benchmark verwendet eine ausdrücklich historische,
+  vollständig zurückgerollte Kopie seiner Quelldaten. Der generisch importierte
+  Blueprint-Graph bleibt Vertrag 1 und ohne Freigabe; kein Kohorten-Downgrade.
 - Model-/ORM-Grenzen schützen positive Statuswechsel, bevorzugte Optionen,
   Snapshot-Änderungen, unbestätigte Batch-Entscheidungen und Kohorten-Downgrades.
   Admin-Freigaben bleiben audit-only; Empfehlung ist im Lösungs-Admin schreibgeschützt.
