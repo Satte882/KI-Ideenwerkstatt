@@ -15,6 +15,8 @@ from ki_radar.delivery.services import current_handed_over_package
 from ki_radar.reviews.models import Review
 from ki_radar.use_cases.blockers import build_blocker_details
 from ki_radar.use_cases.classification import UseCaseClassification
+from ki_radar.use_cases.initiative_models import ImprovementInitiative
+from ki_radar.use_cases.initiatives import can_edit_initiative, initiative_review_summary
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.outcome_workspace import build_outcome_workspace_journey
 from ki_radar.use_cases.permissions import can_edit_use_case
@@ -439,6 +441,11 @@ def dashboard(request):
             for item in active
         ),
         "today": today,
+        "initiative_reviews": initiative_review_summary(today=today),
+        "initiatives": ImprovementInitiative.objects.filter(
+            status__in=[ImprovementInitiative.Status.DRAFT, ImprovementInitiative.Status.ACTIVE]
+        ).order_by("next_review_date", "title"),
+        "can_create_initiative": can_edit_initiative(request.user),
     }
     return render(request, "reporting/dashboard.html", context)
 

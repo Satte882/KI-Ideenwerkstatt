@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from ki_radar.core.models import TimeStampedModel
 from ki_radar.core.taxonomy import ScreeningLevel
+
+from .audit import ImmutableDecisionManager
 
 CRITERIA_KEYS = (
     "impact",
@@ -73,6 +75,62 @@ class StageFocusDecision(TimeStampedModel):
         return f"{self.value_stream}: {self.selected_stage}"
 
 
+class InitiativeStageFocusDecision(TimeStampedModel):
+    """Append-only focus history, isolated from the global legacy projection."""
+
+    initiative = models.ForeignKey(
+        "use_cases.ImprovementInitiative",
+        on_delete=models.PROTECT,
+        related_name="stage_focus_decisions",
+    )
+    value_stream = models.ForeignKey(
+        "architecture.ValueStream",
+        on_delete=models.PROTECT,
+        related_name="initiative_focus_decisions",
+    )
+    selected_stage = models.ForeignKey(
+        "architecture.ValueStreamStage",
+        on_delete=models.PROTECT,
+        related_name="initiative_focus_decisions",
+    )
+    revision = models.PositiveIntegerField()
+    criteria_snapshot = models.JSONField(default=dict, blank=True, editable=False)
+    rationale = models.TextField()
+    is_short_path = models.BooleanField(default=False)
+    short_path_reason = models.TextField(blank=True)
+    selected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="initiative_stage_focus_decisions",
+    )
+    objects = ImmutableDecisionManager()
+
+    class Meta:
+        ordering = ["-revision", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["initiative", "value_stream", "revision"],
+                name="unique_initiative_stream_focus_revision",
+            )
+        ]
+
+    def clean(self):
+        StageFocusDecision.clean(self)
+
+    def criteria_for(self, stage) -> dict:
+        return self.criteria_snapshot.get(str(stage.pk), {})
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValidationError("Eine dokumentierte Fokusentscheidung ist unveränderlich.")
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Eine dokumentierte Fokusentscheidung darf nicht gelöscht werden.")
+
+
+@transaction.atomic
 def save_stage_focus_decision(
     *,
     value_stream,
@@ -82,7 +140,8 @@ def save_stage_focus_decision(
     actor,
     is_short_path: bool = False,
     short_path_reason: str = "",
-) -> StageFocusDecision:
+    initiative=None,
+) -> StageFocusDecision | InitiativeStageFocusDecision:
     """Persist a focus decision through one domain-level invariant boundary."""
     from .models import EvidenceBasis, TimeToValue
     from .permissions import can_edit_value_stream
@@ -148,29 +207,49 @@ def save_stage_focus_decision(
         if errors:
             raise ValidationError(errors)
 
+    defaults = {
+        "selected_stage": selected_stage,
+        "criteria_snapshot": criteria_snapshot,
+        "rationale": rationale_text,
+        "is_short_path": is_short_path,
+        "short_path_reason": short_reason,
+        "selected_by": actor,
+    }
+    if initiative is not None:
+        from ki_radar.use_cases.initiative_models import ImprovementInitiative
+        from ki_radar.use_cases.initiatives import can_edit_initiative
+
+        initiative = ImprovementInitiative.objects.select_for_update().get(pk=initiative.pk)
+        if not can_edit_initiative(actor, initiative):
+            raise ValidationError("Für die Vorhabensentscheidung fehlt die Berechtigung.")
+        previous = get_stage_focus_decision(value_stream, initiative=initiative)
+        return InitiativeStageFocusDecision.objects.create(
+            initiative=initiative,
+            value_stream=value_stream,
+            revision=previous.revision + 1 if previous else 1,
+            **defaults,
+        )
     decision, _created = StageFocusDecision.objects.update_or_create(
         value_stream=value_stream,
-        defaults={
-            "selected_stage": selected_stage,
-            "criteria_snapshot": criteria_snapshot,
-            "rationale": rationale_text,
-            "is_short_path": is_short_path,
-            "short_path_reason": short_reason,
-            "selected_by": actor,
-        },
+        defaults=defaults,
     )
     return decision
 
 
-def get_stage_focus_decision(value_stream) -> StageFocusDecision | None:
+def get_stage_focus_decision(value_stream, *, initiative=None):
+    if initiative is not None:
+        return InitiativeStageFocusDecision.objects.filter(
+            initiative=initiative,
+            value_stream=value_stream,
+        ).first()
     try:
         return value_stream.stage_focus_decision
     except ObjectDoesNotExist:
         return None
 
 
-def stage_is_selected(stage) -> bool:
-    decision = get_stage_focus_decision(stage.value_stream)
+def stage_is_selected(stage, *, initiative=None) -> bool:
+    decision = get_stage_focus_decision(stage.value_stream, initiative=initiative)
     return bool(decision and decision.selected_stage_id == stage.pk)
 
 
@@ -231,7 +310,7 @@ def ensure_stage_focus_for_existing_path(*, stage, actor=None, source_label: str
 
 @receiver(post_save, sender="architecture.ProcessAnalysis")
 def persist_focus_from_existing_process(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.initiative_id is None:
         ensure_stage_focus_for_existing_path(
             stage=instance.stage,
             actor=instance.analyzed_by,
@@ -241,7 +320,11 @@ def persist_focus_from_existing_process(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender="architecture.UseCaseOrigin")
 def persist_focus_from_existing_origin(sender, instance, created, **kwargs):
-    if created:
+    if (
+        created
+        and instance.use_case.initiative_id is None
+        and (not instance.process_analysis_id or instance.process_analysis.initiative_id is None)
+    ):
         ensure_stage_focus_for_existing_path(
             stage=instance.stage,
             actor=getattr(instance.use_case, "created_by", None),

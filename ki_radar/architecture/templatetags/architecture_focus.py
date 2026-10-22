@@ -16,6 +16,14 @@ EVIDENCE_BASIS_LABELS = dict(EvidenceBasis.choices)
 
 
 @register.simple_tag
+def process_stage_focus_decision(process_analysis):
+    return get_stage_focus_decision(
+        process_analysis.stage.value_stream,
+        initiative=process_analysis.initiative,
+    )
+
+
+@register.simple_tag
 def stage_focus_item(decision, stage):
     if decision is None:
         return {}

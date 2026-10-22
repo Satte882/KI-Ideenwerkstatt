@@ -7,7 +7,7 @@ class UseCasesConfig(AppConfig):
 
     def import_models(self):
         super().import_models()
-        from . import idea_models  # noqa: F401
+        from . import idea_models, initiative_models  # noqa: F401
 
     def ready(self):
         from . import classification  # noqa: F401

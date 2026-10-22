@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from ki_radar.core.models import SystemJobRun
+from ki_radar.use_cases.initiatives import initiative_review_summary
 from ki_radar.use_cases.models import UseCase
 
 
@@ -24,6 +25,7 @@ class Command(BaseCommand):
                 "overdue": overdue,
                 "due_within_30_days": due_soon,
                 "missing_review_date": missing,
+                "initiatives": initiative_review_summary(today=today),
             }
             SystemJobRun.objects.create(
                 job_name="review_scan",

@@ -44,7 +44,7 @@ def test_dashboard_prioritizes_immediate_steering_metrics_in_status_strip():
     order = (
         "Überfällig",
         "Blockiert",
-        "Aktive Vorhaben",
+        "Aktive Use Cases",
         "Nutzen gemessen",
         "Ziel erreicht",
     )

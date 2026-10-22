@@ -122,3 +122,50 @@ Auch `getattr`, `select_related`, `prefetch_related`, `values`, Feldnamenlisten,
 Dieses Dokument ist die **in GitHub gelesene, belegte Ausgangsinventur**. Die fachliche ADR-Annahme durch den Nutzer am 22.10.2026 **ersetzt keinen technischen Vollscan**. Offen: Ergebnis des lokalen Vollscans einschließlich Trefferzahlen, Testaufrufer- und Templatekomplettheit sowie Review eventueller unbekannter Dynamik. Diese Lücke ist als **verbindlicher erster Arbeitsschritt in #145 vor jeder produktiven Migration/Modelländerung** zu schließen. Ein neuer, materieller Architekturkonflikt aus dem Scan erfordert eine erneute fachliche Entscheidung, keinen stillen Code-Workaround.
 
 **Keine lokalen Django-/DB-Tests liefen in diesem reinen Dokumentationsauftrag.** Das Projekt liegt hier nicht als ausführbarer Checkout vor; der direkte Clone scheiterte an fehlender DNS-Auflösung für GitHub. Ein vollständiger `rg`-Vollscan bleibt als **technische Vorbedingung von #145** offen. `.github/workflows/ci.yml` setzt `paths-ignore: docs/**/*.md`; reine Dokumentationsänderungen lösen kein CI aus. **Keine grünen CI-Tests behaupten.** Der ADR wurde am 22.10.2026 **fachlich angenommen**, nicht technisch durch Vollscan validiert.
+
+
+## H. Lokaler Vollscan #145 – 22.10.2026 vor Produktänderungen
+
+Basis: `origin/main@cb8b518`, sauberer Checkout, Branch `feat/145-improvement-initiative`.
+Die drei Befehle aus E wurden lokal mit allen angegebenen Suchwurzeln/Globs ausgeführt:
+**328 Fokus-, 1596 Outcome-/Metrik-, 1202 Herkunfts-/Export-Treffer**.
+Vollständige textuelle Trefferlisten mit Datei, Ausgangszeile, Referenz und Change Impact:
+[focus-scan.tsv](issue145/focus-scan.tsv), [outcome-scan.tsv](issue145/outcome-scan.tsv),
+[paths-scan.tsv](issue145/paths-scan.tsv). Zeilen gelten für die Scanbasis vor Änderungen.
+Die alten Einschränkungen oben beschreiben die #144-Ausgangsinventur, nicht diesen lokalen Lauf.
+
+Manuell abgeglichene indirekte Zugriffe: `getattr` in Fokus-Signalpayload/UseCaseOrigin,
+Django-Template-Relationen in `includes/next_action`, `use_cases/detail`,
+`architecture/value_stream_detail`, `work_design_workspace`; `select_related` in Dashboard;
+Admin-Feldlisten; historische `apps.get_model`-Migrationen; Blueprint-Feldpfade und
+Review-Export-Feldkataloge. Nichttextuelle Laufzeitvollständigkeit wird nicht behauptet.
+
+**Migrationsentscheidung:** Die bestehende OneToOne-`StageFocusDecision` bleibt als strikt
+isolierte Legacy-Projektion erhalten. Eine neue append-only vorhabensbezogene
+`InitiativeStageFocusDecision` nutzt dieselbe Validierungs-/Helpergrenze mit explizitem
+`initiative`-Argument. Ohne Argument bleibt der alte Vertrag unverändert; mit Argument
+kein globaler Fallback. Das vermeidet Brüche der direkten Reverse-OneToOne-Zugriffe,
+historischer Migrationen und Demo-/Blueprint-Replays. Aktueller Fokus ist die höchste
+Revision je Initiative und Value Stream; Serialisierung am Initiative-Row-Lock plus
+UniqueConstraint. Keine erfundenen Backfills und keine neue Kohorte aktivieren.
+Kein materieller Konflikt zum angenommenen ADR (isolierte Legacy-Projektion ist zugelassen).
+
+Additiv in #145: Outcome-Träger im bestehenden `use_cases`-Kontext, optionale FKs für
+Idee/Prozess/UseCase, gemeinsame bewusste Bindung als Servicevorbereitung, Revision und
+Bestätigungsstand, minimale Statussteuerung, separate Dashboard-/Scan-Kategorie.
+Signale überspringen gebundene Prozesse und Origins; Screening/DEMO_FOCUS_DEFAULTS bleiben
+unverändert. Intake, Lean, API/Admin-Altpersistenz, Accelerator-Contracts, `metric_*`,
+Governance/Pilot/Go-live und CSV-/Review-Export behalten ihren Legacy-Vertrag.
+Neue Vorhabensdaten werden nicht als globale Legacy-Fokusentscheidung exportiert.
+#146 aktiviert erst die neuen verbindlichen Gates, erweitert die Entscheidungssnapshots
+und die darauf bezogenen UI-/Export-/Accelerator-Aufrufer. Tests folgen nach Implementierung.
+
+Ergänzender dynamischer Kontrollscan während der Umsetzung: **721 Treffer** in
+[dynamic-scan.tsv](issue145/dynamic-scan.tsv), insbesondere String-Relationsnamen,
+`focus__`, `getattr`-Outcome/Metrikfelder, Template-Kontexte und `select_related`.
+Zusätzlicher konkreter Impact: `architecture/templatetags/architecture_focus.py`
+und `includes/process_focus_context.html` lesen für einen gebundenen Prozess ausschließlich
+seinen Vorhabensfokus (kein Legacy-Fallback). `review_export_architecture.py` ergänzt
+bei gebundenen Prozessen Vorhabens- und Fokus-ID/Revision als getrennten Upstream-Kontext.
+`analysis_navigation._first_process_analysis` bleibt globale VS-Navigation; ein expliziter
+Prozess aus dem Request hat dort bereits Vorrang. Keine Änderung des Screening-/Gate-Vertrags.

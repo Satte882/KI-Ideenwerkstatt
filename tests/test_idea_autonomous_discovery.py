@@ -678,4 +678,6 @@ def test_origin_migration_preserves_existing_idea_data(owner):
     finally:
         MigrationExecutor(connection).migrate(leaves)
     after = list(IdeaCandidate.objects.order_by("pk").values())
-    assert after == [{**row, "discovery_process_analysis_id": None} for row in before]
+    assert after == [
+        {**row, "discovery_process_analysis_id": None, "initiative_id": None} for row in before
+    ]

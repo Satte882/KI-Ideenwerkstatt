@@ -27,6 +27,14 @@ class IdeaCandidate(TimeStampedModel):
         FOUR = 4, "4"
         FIVE = 5, "5"
 
+    initiative = models.ForeignKey(
+        "use_cases.ImprovementInitiative",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="ideas",
+        editable=False,
+    )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     description = models.TextField()
