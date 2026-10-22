@@ -206,6 +206,13 @@ def solution_option_compare(request, pk):
         "architecture/solution_option_compare.html",
         {
             "process_analysis": process_analysis,
+            "capability_findings": (
+                process_analysis.initiative.capability_experiments.filter(
+                    reviewed_at__isnull=False
+                ).order_by("-reviewed_at", "-pk")[:10]
+                if process_analysis.initiative_id
+                else []
+            ),
             "options": options,
             "blockers": blockers,
             "diagnosis_blockers": diagnosis_blockers,
