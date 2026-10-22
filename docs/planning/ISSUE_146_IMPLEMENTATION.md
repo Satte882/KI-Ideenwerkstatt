@@ -63,8 +63,10 @@ bei bindender Auswahl / positiver Freigabe und liest den aktuellen servereigenen
 `outcome_revision` ist die fachliche Revisionsidentität. Ziel, Beitrag, Wirkmechanismus,
 Empfängergruppe, Prüfkriterien sowie Evidenz-/Owner-Änderungen erhöhen die fachliche
 Revision und entfernen die vorige Bestätigung. Reine Metadaten/Whitespace ändern sie
-nicht. Eine ausdrücklich begründete Schreibkorrektur bleibt auditierbar, ohne sämtliche
-bestehenden Entscheidungen unnötig zu sperren. Alte Snapshots bleiben immer unverändert.
+nicht. Eine begründete Formalkorrektur ist eng begrenzt: Whitespace/Unicode-Normalisierung
+und ein einzelner abschließender Satzpunkt dürfen die fachliche Revision erhalten.
+Wort-, Zahlen-, Owner- und Evidenzänderungen erfordern unabhängig vom angegebenen
+Korrekturgrund eine neue Bestätigung; der Entwurf wird trotzdem gespeichert. Alte Snapshots bleiben immer unverändert.
 
 `confirm_initiative` verlangt einen berechtigten identifizierbaren Nutzer, den geprüften
 Bearbeitungsstand und die dokumentierte fachliche Annahme. Owner darf Person/Funktion
@@ -107,3 +109,17 @@ Migrations-, Soft-Guidance-, KI-/Non-KI-, Herkunfts-, Snapshot-/Stale-, Admin-/O
 Zweitfreigabe- und UI-Gegenproben stehen in `tests/test_issue_146_outcome_contract.py`.
 Der endgültige PostgreSQL-/CI-Nachweis steht im PR. SQLite-Vorläufe sind kein Nachweis
 für die PostgreSQL-spezifischen Konkurrenz-/JSON-Prüfungen.
+
+
+## Review-Korrekturen zu PR #151
+
+Identische erneute Bestätigung bewahrt vorhandene Pfad-/Fokusreferenzen und die
+ursprüngliche fachliche Bestätigung. Die Services historisieren erst echte Änderungen;
+die Outcome-Vorbereitung ersetzt einen bestehenden vollständigen Fokus nicht durch
+einen neuen Kurzpfad. Unveränderliche Auswahl-/Freigabesnapshots bleiben erhalten.
+
+Leserechte: Der vorhandene Stand aus #145 erlaubt authentifizierten Nutzern das Lesen
+von Vorhaben (auch über `initiative_edit` GET); Dropdown und Vorbereitung folgen dieser
+bestehenden gemeinsamen Sichtbarkeit. Schreiben/Zuordnen/Bestätigen bleibt auf den
+berechtigten Ersteller bzw. Koordinator beschränkt. Dieses Review führt keine neue
+Organisations-/Mandanten-ACL ein.

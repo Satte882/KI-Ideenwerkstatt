@@ -596,3 +596,106 @@ def test_orm_approval_cannot_bypass_governance_with_valid_outcome(
             finalized_at=timezone.now(),
             outcome_snapshot=build_outcome_snapshot(case),
         )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("business_outcome", "Anderes Ziel"),
+        ("contribution", "Ganz anderer Pilotbeitrag"),
+        ("impact_hypothesis", "Weniger Rückfragen senken die Buchungen"),
+        ("target_group", "Andere Empfänger"),
+        ("evaluation_criteria", "Jetzt nur noch Kosten prüfen"),
+        ("outcome_owner", "Andere Leitung"),
+        ("evidence_level", "measured"),
+        ("evidence_note", "Andere Quelle"),
+    ],
+)
+def test_correction_reason_cannot_preserve_material_confirmation(process, owner, field, value):
+    initiative = bind_process(owner, process)
+    decision = select(owner, process)
+    frozen = deepcopy(decision.outcome_snapshot)
+    changed = save_initiative(
+        actor=owner,
+        initiative=initiative,
+        data={field: value},
+        correction_reason="Tippfehler" + ("x" * 200 if field == "business_outcome" else ""),
+    )
+    assert getattr(changed, field) == value  # Draft still saves, even if incomplete.
+    assert changed.outcome_revision == initiative.outcome_revision + 1
+    assert changed.confirmed_revision is None and changed.confirmed_by is None
+    assert changed.confirmed_at is None and not changed.confirmation_reason
+    assert decision.outcome_review_required
+    decision.refresh_from_db()
+    assert decision.outcome_snapshot == frozen
+    with pytest.raises(ValidationError, match="Outcome"):
+        select(owner, process)
+
+
+@pytest.mark.parametrize("ai", [False, True])
+def test_repeated_process_confirmation_preserves_decision_references(client, owner, process, ai):
+    initiative = bind_process(owner, process, path="strategic")
+    decision = select(owner, process, ai=ai)
+    frozen = deepcopy(decision.outcome_snapshot)
+    original_confirmation = (initiative.confirmed_by_id, initiative.confirmed_at)
+    original_path = process.discovery_path_decisions.first()
+    from ki_radar.architecture.stage_focus import get_stage_focus_decision
+
+    original_focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+    client.force_login(owner)
+    url = reverse("use_cases:prepare_outcome", kwargs={"kind": "process", "pk": process.pk})
+    for _ in range(2):
+        form = client.get(url).context["form"]
+        data = {name: form[name].value() or "" for name in form.fields}
+        data.update(action="confirm", confirmation_reason="Unverändert fachlich angenommen")
+        response = client.post(url, data)
+        assert response.status_code == 302
+    initiative.refresh_from_db()
+    assert (initiative.confirmed_by_id, initiative.confirmed_at) == original_confirmation
+    assert process.discovery_path_decisions.count() == 1
+    assert process.discovery_path_decisions.first().pk == original_path.pk
+    focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+    assert (focus.pk, focus.revision) == (original_focus.pk, original_focus.revision)
+    assert not decision.outcome_review_required
+    decision.refresh_from_db()
+    assert decision.outcome_snapshot == frozen
+    # A real provenance change still creates a revision and requires review.
+    set_discovery_path(
+        process=process,
+        actor=owner,
+        path=original_path.path,
+        origin_basis="Neu eingeordneter Auftrag",
+        strategic_potential=original_path.strategic_potential,
+        validation_step=original_path.validation_step,
+    )
+    assert process.discovery_path_decisions.count() == 2
+    assert decision.outcome_review_required
+
+
+def test_identical_focus_service_call_keeps_current_revision(process, owner):
+    from ki_radar.architecture.stage_focus import get_stage_focus_decision
+
+    initiative = bind_process(owner, process)
+    focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+    repeated = save_stage_focus_decision(
+        initiative=initiative,
+        value_stream=process.stage.value_stream,
+        selected_stage=process.stage,
+        criteria_snapshot=focus.criteria_snapshot,
+        rationale=focus.rationale,
+        actor=owner,
+        is_short_path=focus.is_short_path,
+        short_path_reason=focus.short_path_reason,
+    )
+    assert (repeated.pk, repeated.revision) == (focus.pk, focus.revision)
+    changed = save_stage_focus_decision(
+        initiative=initiative,
+        value_stream=process.stage.value_stream,
+        selected_stage=process.stage,
+        criteria_snapshot=focus.criteria_snapshot,
+        rationale="Neuer fachlicher Fokusgrund",
+        actor=owner,
+        is_short_path=True,
+        short_path_reason="Neu begründet",
+    )
+    assert changed.pk != focus.pk and changed.revision == focus.revision + 1

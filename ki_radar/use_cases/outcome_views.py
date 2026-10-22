@@ -11,7 +11,7 @@ from django.urls import reverse
 from ki_radar.accounts.permissions import is_coordinator
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream
-from ki_radar.architecture.stage_focus import save_stage_focus_decision
+from ki_radar.architecture.stage_focus import get_stage_focus_decision, save_stage_focus_decision
 
 from .initiative_models import ImprovementInitiative
 from .initiative_views import InitiativeForm
@@ -110,16 +110,22 @@ def _prepare(*, artifact, form, actor, confirm):
         )
         bind_initiative(initiative=initiative, artifact=process, actor=actor)
         reason = form.cleaned_data["focus_reason"].strip()
-        save_stage_focus_decision(
-            initiative=initiative,
-            value_stream=process.stage.value_stream,
-            selected_stage=process.stage,
-            actor=actor,
-            criteria_snapshot={},
-            rationale=reason,
-            is_short_path=True,
-            short_path_reason=reason,
-        )
+        focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+        if (
+            focus is None
+            or focus.selected_stage_id != process.stage_id
+            or (reason and reason != focus.rationale)
+        ):
+            save_stage_focus_decision(
+                initiative=initiative,
+                value_stream=process.stage.value_stream,
+                selected_stage=process.stage,
+                actor=actor,
+                criteria_snapshot={},
+                rationale=reason,
+                is_short_path=True,
+                short_path_reason=reason,
+            )
     if artifact._meta.model_name != "processanalysis":
         bind_initiative(initiative=initiative, artifact=artifact, actor=actor)
     initiative.refresh_from_db()

@@ -222,6 +222,12 @@ def confirm_initiative(*, initiative, actor, rationale, expected_revision):
         )
     if initiative.evidence_level != "hypothesis" and not initiative.evidence_note.strip():
         raise ValidationError("Für einen höheren Evidenzstand ist die Quelle erforderlich.")
+    if (
+        initiative.confirmed_revision == initiative.outcome_revision
+        and initiative.confirmed_by_id
+        and initiative.confirmed_at
+    ):
+        return initiative
     initiative.confirmed_revision = initiative.outcome_revision
     initiative.confirmed_by = actor
     initiative.confirmed_at = timezone.now()
@@ -260,6 +266,14 @@ def set_discovery_path(
         raise ValidationError("Pfad und dokumentierte fachliche Herkunft sind erforderlich.")
     if previous and previous.path != path and not change_reason.strip():
         raise ValidationError("Der Pfadwechsel benötigt eine explizite fachliche Begründung.")
+    values = {
+        "path": path,
+        "origin_basis": origin_basis.strip(),
+        "strategic_potential": strategic_potential.strip(),
+        "validation_step": validation_step.strip(),
+    }
+    if previous and all(getattr(previous, key) == value for key, value in values.items()):
+        return previous
     return ProcessDiscoveryPathDecision.objects.create(
         process_analysis=process,
         path=path,

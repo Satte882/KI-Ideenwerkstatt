@@ -223,6 +223,12 @@ def save_stage_focus_decision(
         if not can_edit_initiative(actor, initiative):
             raise ValidationError("Für die Vorhabensentscheidung fehlt die Berechtigung.")
         previous = get_stage_focus_decision(value_stream, initiative=initiative)
+        if previous and all(
+            getattr(previous, key) == value
+            for key, value in defaults.items()
+            if key != "selected_by"
+        ):
+            return previous
         return InitiativeStageFocusDecision.objects.create(
             initiative=initiative,
             value_stream=value_stream,

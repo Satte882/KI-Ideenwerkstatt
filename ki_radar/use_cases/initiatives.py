@@ -1,6 +1,7 @@
 """Shared initiative editing and explicit associations; draft saves never enforce outcome gates."""
 
 from datetime import timedelta
+from unicodedata import normalize
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -42,6 +43,17 @@ def can_edit_initiative(actor, initiative=None):
     )
 
 
+def _text(value):
+    return " ".join(normalize("NFC", str(value)).split())
+
+
+def _formal_text(value):
+    # Only whitespace, Unicode composition and one optional terminal full stop.
+    # Letter/number/negation, owner and evidence changes require fresh confirmation.
+    text = _text(value)
+    return text[:-1].rstrip() if text.endswith(".") and not text.endswith("..") else text
+
+
 @transaction.atomic
 def save_initiative(
     *, actor, data, initiative=None, expected_revision=None, source="human", correction_reason=""
@@ -62,29 +74,38 @@ def save_initiative(
     unknown = set(data) - set(EDITABLE_FIELDS)
     if unknown:
         raise ValidationError("Serververwaltete Vorhabensfelder dürfen nicht geändert werden.")
+    material_change = False
+    formal_correction = False
     if initiative is None:
         initiative = ImprovementInitiative(created_by=actor)
     else:
-        changed_outcome = any(
-            key in data
-            and " ".join(str(getattr(initiative, key)).split()) != " ".join(str(data[key]).split())
-            for key in (*MATERIAL_FIELDS, "evidence_level", "evidence_note", "outcome_owner")
+        changed_fields = {
+            key
+            for key in OUTCOME_FIELDS
+            if key in data and _text(getattr(initiative, key)) != _text(data[key])
+        }
+        formal_correction = bool(correction_reason.strip()) and all(
+            key in MATERIAL_FIELDS
+            and _formal_text(getattr(initiative, key)) == _formal_text(data[key])
+            for key in changed_fields
         )
+        material_change = bool(changed_fields) and not formal_correction
         initiative.revision += 1
-        if changed_outcome and not correction_reason.strip():
+        if material_change:
             initiative.outcome_revision += 1
-        if (changed_outcome and not correction_reason.strip()) or source == "ai":
+        if material_change or source == "ai":
             initiative.confirmed_revision = None
             initiative.confirmed_by = None
             initiative.confirmed_at = None
             initiative.confirmation_reason = ""
         if correction_reason.strip():
-            initiative._change_reason = "Schreibkorrektur: " + correction_reason.strip()[:75]
+            label = "Schreibkorrektur" if formal_correction else "Änderung (erneut bestätigen)"
+            initiative._change_reason = (label + ": " + correction_reason.strip())[:100]
     if "impact_hypothesis" in data and (
         source == "ai"
         or (
-            data["impact_hypothesis"] != initiative.impact_hypothesis
-            and not correction_reason.strip()
+            _text(data["impact_hypothesis"]) != _text(initiative.impact_hypothesis)
+            and not formal_correction
         )
     ):
         initiative.hypothesis_origin = source
