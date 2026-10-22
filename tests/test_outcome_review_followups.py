@@ -3,7 +3,6 @@
 from decimal import Decimal
 
 import pytest
-
 from django.core.exceptions import ValidationError
 
 from ki_radar.use_cases.impact_reviews import save_impact_review
