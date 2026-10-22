@@ -5,7 +5,7 @@
 
 ## Status und Methode
 
-Die folgenden Zeilen sind **konkret aus GitHub-Dateien gelesen**. Der GitHub-Code-Suchindex meldete für den Repository-Code `incomplete_results=true`; ein lokaler kompletter `rg`-Durchlauf war mangels geklontem/ausführbarem Repo **nicht verfügbar**. Deshalb ist diese Liste eine **belegte Mindestmenge**, ausdrücklich **kein behauptetes vollständiges Trefferprotokoll**. Vor der Annahme des ADR ist der unten definierte automatische Vollscan auf dem Checkout obligatorisch; nach dem Scan sind Trefferzahlen und möglicherweise fehlende Aufrufer nachzutragen.
+Die folgenden Zeilen sind **konkret aus GitHub-Dateien gelesen**. Der GitHub-Code-Suchindex meldete für den Repository-Code `incomplete_results=true`; ein lokaler kompletter `rg`-Durchlauf war mangels geklontem/ausführbarem Repo **nicht verfügbar**. Deshalb ist diese Liste eine **belegte Mindestmenge**, ausdrücklich **kein behauptetes vollständiges Trefferprotokoll**. **Technische Vorbedingung zu #145:** Der fachlich angenommene ADR bleibt gültig, aber **vor jeder Produktcode-/Migrationsänderung** ist der unten definierte vollständige Scan auf dem Checkout durchzuführen und das Inventar um Trefferzahlen, dynamische Aufrufer und Impact zu ergänzen. Der Scan wurde hier nicht ausgeführt; Vollständigkeit wird **nicht** behauptet.
 
 Auch direkte ORM-Relationen, Django-Template-Attribute und historische Datenmigrationen können Helper-Suchen umgehen. Nicht nur exakte importierte Funktionsnamen prüfen.
 
@@ -79,9 +79,9 @@ Auch direkte ORM-Relationen, Django-Template-Attribute und historische Datenmigr
 - Demo/Export: `tests/test_demo_architecture_data.py`, `tests/test_demo_data.py`, `tests/test_real_demo_blueprint.py`, weitere `review_export`-, Blueprint- und Delivery-Tests.
 - UI: `templates/architecture/{value_stream_detail,value_stream_form,stage_focus_form,solution_option_compare}.html`, `templates/accelerator/{autonomous_discovery_review,solution_generation_preview}.html`, `templates/use_cases/ideas/*.html`, `templates/reporting/outcome_workspace.html`, `templates/use_cases/assessment_form.html`, `templates/reviews/*.html`.
 
-## E. Reproduzierbarer Vollscan auf dem Repository-Checkout – noch auszuführen
+## E. Verpflichtender Vollscan zu Beginn von #145 – noch auszuführen
 
-Abnahme von #144 verlangt **eine vollständige Trefferliste** (Datei, Zeile, referenzierter Vertrag, geplante Änderung oder „unverändert“) für alle relevanten Treffer. Folgende Befehle erfassen auch indirekte Zugriffe und gängige dynamische Namen:
+Technischer Implementierungsstart in #145 verlangt **eine vollständige Trefferliste** (Datei, Zeile, referenzierter Vertrag, geplante Änderung oder „unverändert“) für alle relevanten Treffer. Folgende Befehle erfassen auch indirekte Zugriffe und gängige dynamische Namen:
 
 ```bash
 git status --short
@@ -119,6 +119,6 @@ Auch `getattr`, `select_related`, `prefetch_related`, `values`, Feldnamenlisten,
 
 ## F. Akzeptanzgrenze
 
-Dieses Dokument ist die **in GitHub gelesene, belegte Ausgangsinventur**. Noch offen: Ergebnis des lokalen Vollscans einschließlich Trefferzahlen, Testaufrufer- und Templatekomplettheit und Review eventueller unbekannter Dynamik. Diese Lücke darf vor fachlicher ADR-Annahme weder als „vollständig inventarisiert“ noch als „alles getestet“ gekennzeichnet werden.
+Dieses Dokument ist die **in GitHub gelesene, belegte Ausgangsinventur**. Die fachliche ADR-Annahme durch den Nutzer am 22.10.2026 **ersetzt keinen technischen Vollscan**. Offen: Ergebnis des lokalen Vollscans einschließlich Trefferzahlen, Testaufrufer- und Templatekomplettheit sowie Review eventueller unbekannter Dynamik. Diese Lücke ist als **verbindlicher erster Arbeitsschritt in #145 vor jeder produktiven Migration/Modelländerung** zu schließen. Ein neuer, materieller Architekturkonflikt aus dem Scan erfordert eine erneute fachliche Entscheidung, keinen stillen Code-Workaround.
 
-**Keine lokalen Django-/DB-Tests liefen in diesem reinen Dokumentationsauftrag.** Das Projekt liegt nicht als ausführbarer Checkout vor; direkter Clone aus der Containerumgebung scheiterte an fehlender DNS-Auflösung für GitHub. **CI und vollständiger `rg`-Vollscan sind weiterhin ausdrücklich offen** und vor ADR-Abnahme zu verifizieren; niemals als „grün“/„vollständig“ ausgeben, ohne reale Nachweise. Der vorgeschlagene ADR bleibt bis zur ausdrücklichen Nutzerannahme nur ein Vorschlag.
+**Keine lokalen Django-/DB-Tests liefen in diesem reinen Dokumentationsauftrag.** Das Projekt liegt hier nicht als ausführbarer Checkout vor; der direkte Clone scheiterte an fehlender DNS-Auflösung für GitHub. Ein vollständiger `rg`-Vollscan bleibt als **technische Vorbedingung von #145** offen. `.github/workflows/ci.yml` setzt `paths-ignore: docs/**/*.md`; reine Dokumentationsänderungen lösen kein CI aus. **Keine grünen CI-Tests behaupten.** Der ADR wurde am 22.10.2026 **fachlich angenommen**, nicht technisch durch Vollscan validiert.
