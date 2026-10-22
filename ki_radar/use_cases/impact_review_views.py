@@ -17,6 +17,7 @@ class ImpactReviewForm(forms.ModelForm):
         choices=[("", "Noch nicht eingeordnet"), *ImprovementInitiative.Effect.choices],
         required=False,
         label="Geschäftsergebnis: Wirkungsaussage",
+        help_text="Im Entwurf ungeprüft; der aktuelle Prüfabschluss bestätigt den Nachweisstand.",
     )
     effect_reason = forms.CharField(
         widget=forms.Textarea,

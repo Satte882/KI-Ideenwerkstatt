@@ -118,6 +118,20 @@ class ImprovementInitiative(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("use_cases:initiative_edit", kwargs={"pk": self.pk})
 
+    @property
+    def effect_statement_label(self):
+        """A saved statement is not evidence of business success."""
+        if not self.effect_status:
+            return "Noch nicht nachgewiesen"
+        try:
+            reviewed = not self.impact_review.review_required
+        except InitiativeImpactReview.DoesNotExist:
+            reviewed = False
+        qualifier = (
+            "Geprüfte Wirkungsaussage" if reviewed else "Ungeprüfte Wirkungsaussage (Entwurf)"
+        )
+        return f"{qualifier}: {self.get_effect_status_display()}"
+
     def __str__(self):
         return self.title
 

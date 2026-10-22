@@ -244,3 +244,85 @@ def test_failed_edit_does_not_display_unsaved_evidence_as_reviewed(client, owner
     assert response.context["impact_review"].business_measurement == ""
     assert response.context["impact_review"].reviewed_at == review.reviewed_at
     assert response.context["initiative"].effect_status == "unclear"
+
+
+@pytest.mark.parametrize("previous_review", [False, True])
+@pytest.mark.parametrize("read_only", [False, True])
+def test_draft_confirmed_statement_is_explicitly_unreviewed(
+    client, owner, reader, initiative, case, previous_review, read_only
+):
+    if previous_review:
+        review = save(
+            owner,
+            initiative,
+            {
+                "use_case": case,
+                "effect_status": "confirmed",
+                "effect_reason": "Geprüfter Befund",
+                "business_measurement": "Buchungsquote: 20 von 100 Angeboten im Juni",
+                "business_evidence": "CRM Juni",
+                "measurement_difference": "Quote statt Zeit",
+            },
+            finalize=True,
+        )
+        assert not review.review_required
+    review = save(
+        owner,
+        initiative,
+        {
+            "use_case": case,
+            "effect_status": "confirmed",
+            "effect_reason": "Ungeprüfte Behauptung",
+            "business_measurement": "",
+            "business_evidence": "",
+        },
+    )
+    initiative.refresh_from_db()
+    assert initiative.effect_status == "confirmed"  # Keep all draft input.
+    assert review.reviewed_at is None and review.review_required
+    assert initiative.effect_statement_label == "Ungeprüfte Wirkungsaussage (Entwurf): Bestätigt"
+    client.force_login(reader if read_only else owner)
+    html = client.get(initiative.get_absolute_url()).content.decode()
+    assert "Ungeprüfte Wirkungsaussage (Entwurf): Bestätigt" in html
+    assert "<dd>Bestätigt" not in html
+    assert "<dd>Geprüfte Wirkungsaussage" not in html
+    dashboard = client.get(reverse("reporting:dashboard")).content.decode()
+    assert "Wirkungsprüfung offen" in dashboard
+    assert "Wirkungsstand geprüft · Bestätigt" not in dashboard
+    if previous_review:
+        assert review.history.count() == 2
+        assert review.history.last().business_evidence == "CRM Juni"
+
+
+def test_business_statement_only_qualified_as_reviewed_for_current_review(owner, initiative, case):
+    # Also covers the existing initiative-edit path without a review record.
+    initiative = save_initiative(
+        actor=owner,
+        initiative=initiative,
+        data={
+            "effect_status": "confirmed",
+            "effect_reason": "Ungeprüfte Aussage",
+        },
+    )
+    assert initiative.effect_statement_label.startswith("Ungeprüfte")
+    save(
+        owner,
+        initiative,
+        {
+            "use_case": case,
+            "business_measurement": "Buchungsquote: 20 von 100 im Juni",
+            "business_evidence": "CRM Juni",
+            "measurement_difference": "Quote statt Zeit",
+        },
+        finalize=True,
+    )
+    initiative.refresh_from_db()
+    assert initiative.effect_statement_label == "Geprüfte Wirkungsaussage: Bestätigt"
+    initiative = save_initiative(
+        actor=owner,
+        initiative=initiative,
+        data={
+            "effect_reason": "Nachträglich geänderte Aussage",
+        },
+    )
+    assert initiative.effect_statement_label.startswith("Ungeprüfte")

@@ -6,12 +6,12 @@
   <p role="status">{% if impact_review.review_required %}Wirkungsprüfung offen / Neubewertung nötig.{% else %}Aktueller Stand geprüft von {{ impact_review.reviewed_by }} am {{ impact_review.reviewed_at|date:"d.m.Y H:i" }}.{% endif %}</p>
   <dl>
     <dt>Intervention</dt><dd>{{ impact_review.selection|default:"Keine Lösungsentscheidung referenziert" }}{% if impact_review.selection.outcome_review_required %} · Entscheidung neu bewerten{% endif %}</dd>
-    <dt>Non-KI-Prozesswirkung</dt><dd>{% if impact_review.use_case_id %}Siehe referenzierte KI-Prozessmetrik unten{% else %}{{ impact_review.get_process_result_display }} · {{ impact_review.process_measurement|default:"Messstand und Nachweis noch offen" }}{% endif %}</dd>
-    <dt>Geschäftsergebnis – Wirkungsaussage</dt><dd>{{ initiative.get_effect_status_display|default:"Noch nicht nachgewiesen" }} · {{ initiative.effect_reason|default:"Begründung noch offen" }}</dd>
+    <dt>Non-KI-Prozesswirkung</dt><dd>{% if impact_review.use_case_id %}Siehe referenzierte KI-Prozessmetrik unten{% else %}{% if impact_review.review_required %}Ungeprüfter Prozessbefund (Entwurf): {% endif %}{{ impact_review.get_process_result_display }} · {{ impact_review.process_measurement|default:"Messstand und Nachweis noch offen" }}{% endif %}</dd>
+    <dt>Geschäftsergebnis – Wirkungsaussage</dt><dd>{{ initiative.effect_statement_label }} · {{ initiative.effect_reason|default:"Begründung noch offen" }}</dd>
     <dt>Eigenständige Geschäftsergebnismessung</dt><dd>{{ impact_review.business_measurement|default:"Noch nicht gemessen / offen" }}</dd>
     <dt>Nachweis</dt><dd>{{ impact_review.business_evidence|default:"Noch offen" }}</dd>
     <dt>Abgrenzung zur Prozessmetrik</dt><dd>{{ impact_review.measurement_difference|default:"Noch offen / keine KI-Prozessmetrik referenziert" }}</dd>
-    <dt>Attribution / Wirkannahme</dt><dd>{{ impact_review.get_attribution_display }} · {{ impact_review.attribution_reason|default:"Beitrag zum Ergebnis noch nicht nachgewiesen" }}</dd>
+    <dt>Attribution / Wirkannahme</dt><dd>{% if impact_review.review_required %}Ungeprüfte Attribution (Entwurf): {% endif %}{{ impact_review.get_attribution_display }} · {{ impact_review.attribution_reason|default:"Beitrag zum Ergebnis noch nicht nachgewiesen" }}</dd>
   </dl>
   {% else %}<p role="status">Wirkungsprüfung offen. Eine bevorzugte Lösung oder fachlich angenommene Hypothese ist noch kein Wirksamkeitsnachweis.</p>{% endif %}
   <h3>KI-Prozessmetriken · aktuelle Originaldaten</h3>

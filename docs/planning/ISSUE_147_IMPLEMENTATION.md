@@ -45,6 +45,13 @@ fehlgeschlagene Prüfung behält Eingaben. Fehlende Nachweise blockieren keinen 
 Vorhandene Abschluss-/Abbruchregeln werden wiederverwendet, nicht verschärft.
 Nach fehlgeschlagenen Änderungen liest die Zusammenfassung den gespeicherten
 Stand neu; ungespeicherte Eingaben erhalten nie den Prüfzeitpunkt eines alten Reviews.
+Gespeicherte Wirkungsaussagen bleiben vollständig editierbar. Ohne aktuellen
+Prüfabschluss erscheinen sie ausdrücklich als „Ungeprüfte Wirkungsaussage (Entwurf)“;
+dies gilt auch nach späteren Entwurfsänderungen eines vormals geprüften Reviews.
+Prozessbefund und Attribution kennzeichnen ungeprüfte Entwürfe ebenso. Historische
+Vorhabensaussagen sind dokumentierte Aussagen, kein eigenständiger Prüfnachweis.
+Der konservative Review-Hinweis bei reinen Use-Case-Metadatenänderungen bleibt gemäß
+Review als nicht blockierende Beobachtung außerhalb dieser Korrektur.
 
 Migration 0017 legt ausschließlich Review-/Audit-Tabellen an. Keine Backfills,
 keine Kohortenänderung und keine Änderung an Governance-, Review-, Pilot-, Go-live-
