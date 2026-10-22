@@ -74,7 +74,6 @@ def test_recorded_capability_is_not_business_success_or_approval(owner, initiati
     assert result.learning_value and result.evidence_reference
     initiative.refresh_from_db()
     assert initiative.effect_status == "" and initiative.confirmed_by is None
-    assert initiative.initiative_review_summary if False else True
     assert not UseCase.objects.exists()
 
 
@@ -226,5 +225,5 @@ def test_human_review_view_and_retest_link(client, owner, initiative):
     assert record.is_reviewed
     html = client.get(record.get_absolute_url()).content.decode()
     assert "Nachtest mit neuen Holdout-Fällen" in html
-    assert "kein Geschäftsnutzen" not in html or "Learning Value" in html
+    assert "Learning Value" in html
     assert client.post(record.get_absolute_url(), data).status_code == 403
