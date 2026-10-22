@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from ki_radar.accounts.permissions import is_business_owner, is_coordinator
 
-from .initiative_models import ImprovementInitiative
+from .initiative_models import ImprovementInitiative, InitiativeImpactReview
 
 # #146 must explicitly introduce and enforce the new contract at both decision boundaries.
 LEGACY_OUTCOME_CONTRACT = 0
@@ -82,6 +82,19 @@ def save_initiative(
     unknown = set(data) - set(EDITABLE_FIELDS)
     if unknown:
         raise ValidationError("Serververwaltete Vorhabensfelder dürfen nicht geändert werden.")
+    current_review = None
+    if (
+        initiative is not None
+        and source == "human"
+        and preparation_key is not None
+        and preparation_data is not None
+        and all(getattr(initiative, key) == value for key, value in data.items())
+    ):
+        # The initiative lock also serializes impact-review writes. Only carry
+        # already-current evidence across a strictly preparation-only save.
+        review = InitiativeImpactReview.objects.filter(initiative=initiative).first()
+        if review is not None and not review.review_required:
+            current_review = review
     material_change = False
     formal_correction = False
     if initiative is None:
@@ -130,6 +143,12 @@ def save_initiative(
     initiative.updated_by = actor
     initiative._history_user = actor
     initiative.save()
+    if current_review is not None:
+        current_review.initiative = initiative
+        current_review.initiative_revision = initiative.revision
+        current_review._history_user = actor
+        current_review._change_reason = "Unverbindlicher Pfadentwurf; Wirkungsevidenz unverändert"
+        current_review.save(update_fields=["initiative_revision", "updated_at"])
     return initiative
 
 

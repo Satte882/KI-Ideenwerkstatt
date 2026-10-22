@@ -5,11 +5,12 @@ from types import SimpleNamespace
 
 import pytest
 from django.urls import reverse
-from test_issue_146_outcome_contract import bind_process
+from test_issue_146_outcome_contract import bind_process, select
 from test_issue_146_outcome_contract import direct as direct_case
 from test_issue_146_outcome_contract import process as process_fixture
 
 from ki_radar.architecture.stage_focus import get_stage_focus_decision
+from ki_radar.use_cases.impact_reviews import save_impact_review
 from ki_radar.use_cases.initiative_models import ImprovementInitiative
 from ki_radar.use_cases.initiatives import save_initiative
 from ki_radar.use_cases.models import UseCase
@@ -304,3 +305,87 @@ def test_stale_draft_cannot_overwrite_another_edit(client, owner, process):
     initiative.refresh_from_db()
     assert initiative.title == "Neuer Stand"
     assert initiative.preparation_drafts == {}
+
+
+def test_path_draft_preserves_current_impact_review_and_concurrency(client, owner, process):
+    initiative = bind_process(owner, process)
+    decision = select(owner, process)
+    initiative.refresh_from_db()
+    review = save_impact_review(
+        initiative=initiative,
+        actor=owner,
+        expected_revision=initiative.revision,
+        data={
+            "selection": decision,
+            "process_result": "achieved",
+            "process_measurement": "Synthetischer Nachweis: 5 statt 10 Rueckfragen",
+            "effect_status": "unclear",
+            "effect_reason": "Geschaeftswirkung noch nicht gemessen",
+        },
+        finalize=True,
+    )
+    assert not review.review_required
+    evidence = (review.reviewed_at, review.reviewed_by_id, review.process_measurement)
+    review_history = review.history.count()
+    initiative.refresh_from_db()
+    revision = initiative.revision
+    outcome_revision = initiative.outcome_revision
+    history = initiative.history.count()
+    path_id = process.discovery_path_decisions.first().pk
+    focus_id = get_stage_focus_decision(process.stage.value_stream, initiative=initiative).pk
+    snapshot = decision.outcome_snapshot.copy()
+    client.force_login(owner)
+    url = preparation_url(process)
+    data = form_data(client.get(url))
+    response = client.post(
+        url,
+        {**data, "action": "save_draft", "origin_basis": "Unverbindliche neue Herkunft"},
+    )
+    assert response.status_code == 302
+    initiative.refresh_from_db()
+    review.refresh_from_db()
+    assert initiative.revision == revision + 1
+    assert initiative.outcome_revision == outcome_revision
+    assert initiative.history.count() == history + 1
+    assert initiative.history.first().history_user_id == owner.pk
+    assert not review.review_required
+    assert (review.reviewed_at, review.reviewed_by_id, review.process_measurement) == evidence
+    assert review.history.count() == review_history + 1
+    assert review.history.first().history_user_id == owner.pk
+    assert review.history.last().initiative_revision == revision
+    assert process.discovery_path_decisions.first().pk == path_id
+    assert (
+        get_stage_focus_decision(process.stage.value_stream, initiative=initiative).pk == focus_id
+    )
+    decision.refresh_from_db()
+    assert decision.outcome_snapshot == snapshot
+    stale = client.post(url, {**data, "action": "save_draft", "origin_basis": "Veralteter Stand"})
+    assert stale.status_code == 200
+    assert "inzwischen geändert" in stale.content.decode()
+    initiative.refresh_from_db()
+    assert initiative.revision == revision + 1
+    # A real outcome edit in the same command must still invalidate the review;
+    # a subsequent path-only save must never revive that stale evidence.
+    data = form_data(client.get(url))
+    changed = client.post(
+        url,
+        {**data, "action": "save_draft", "business_outcome": "Anderes Geschaeftsergebnis"},
+    )
+    assert changed.status_code == 302
+    initiative.refresh_from_db()
+    review.refresh_from_db()
+    assert initiative.outcome_revision == outcome_revision + 1
+    assert review.review_required
+    assert review.initiative_revision == revision + 1
+    data = form_data(client.get(url))
+    assert (
+        client.post(
+            url,
+            {**data, "action": "save_draft", "origin_basis": "Weiterer unverbindlicher Entwurf"},
+        ).status_code
+        == 302
+    )
+    review.refresh_from_db()
+    assert review.review_required
+    assert review.initiative_revision == revision + 1
+    assert review.history.count() == review_history + 1
