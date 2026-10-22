@@ -130,9 +130,7 @@ def capability_experiment_edit(request, initiative_id, pk=None):
             "correction_error": correction_error,
             "correction_note_value": request.POST.get("correction_note", ""),
             "corrections": (
-                experiment.corrections.select_related("created_by").all()
-                if experiment
-                else []
+                experiment.corrections.select_related("created_by").all() if experiment else []
             ),
         },
     )
