@@ -59,7 +59,8 @@ def test_draft_remains_free_without_outcome_or_samples(owner, initiative):
     initiative.refresh_from_db()
     assert (initiative.revision, initiative.outcome_revision) == original
     changed = save(
-        owner, initiative,
+        owner,
+        initiative,
         {"ai_vision": "Ambitionierte AI-first-Idee", "first_viable_step": "Kleiner Test"},
         experiment=experiment,
     )
@@ -114,12 +115,14 @@ def test_incomplete_evidence_may_be_saved_as_draft(owner, initiative, missing):
 def test_overlap_and_duplicate_case_refs_are_not_proven_holdouts(owner, initiative):
     with pytest.raises(ValidationError, match="verschieden"):
         save(
-            owner, initiative,
+            owner,
+            initiative,
             evidence(holdout_case_ids="train-1\nheld-3"), finalize=True,
         )
     with pytest.raises(ValidationError, match="doppelt"):
         save(
-            owner, initiative,
+            owner,
+            initiative,
             evidence(test_case_ids="train-1\ntrain-1"), finalize=True,
         )
     assert not CapabilityExperiment.objects.exists()
@@ -131,7 +134,8 @@ def test_real_data_governance_reference_is_separate_from_capability(owner, initi
         save(owner, initiative, data, finalize=True)
     assert not save(owner, initiative, data).is_reviewed
     reviewed = save(
-        owner, initiative,
+        owner,
+        initiative,
         evidence(data_kind="real", governance_reference="DSB-Prüfung R-12"),
         finalize=True,
     )
@@ -144,12 +148,14 @@ def test_retest_needs_new_unconsumed_holdouts(owner, initiative):
     initial = save(owner, initiative, evidence(), finalize=True)
     with pytest.raises(ValidationError, match="neue"):
         save(
-            owner, initiative,
+            owner,
+            initiative,
             evidence(retest_of=initial, holdout_case_ids="held-1\nheld-3"),
             finalize=True,
         )
     later = save(
-        owner, initiative,
+        owner,
+        initiative,
         evidence(
             title="Nachtest nach Änderung",
             retest_of=initial,
