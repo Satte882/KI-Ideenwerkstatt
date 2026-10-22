@@ -79,7 +79,9 @@ def test_recorded_capability_is_not_business_success_or_approval(owner, initiati
 
 def test_no_automatic_ki_victory_for_negative_experiment(owner, initiative):
     finding = save(
-        owner, initiative, evidence(finding="not_supported", learning_value="Non-KI-Regeln genügen"),
+        owner,
+        initiative,
+        evidence(finding="not_supported", learning_value="Non-KI-Regeln genügen"),
         finalize=True,
     )
     assert finding.get_finding_display() == "Capability nicht bestätigt"
@@ -181,7 +183,9 @@ def test_reviewed_record_is_append_only_but_new_drafts_allowed(owner, initiative
     assert not save(owner, initiative, {"title": "Ein neuer Entwurf"}).is_reviewed
 
 
-def test_permissions_are_not_extended_by_owner_label(client, owner, other_owner, reader, initiative):
+def test_permissions_are_not_extended_by_owner_label(
+    client, owner, other_owner, reader, initiative
+):
     draft = save(owner, initiative, {"title": "Offen"})
     with pytest.raises(PermissionDenied):
         save(other_owner, initiative, {"title": "Fremd"})
