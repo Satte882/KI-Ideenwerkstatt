@@ -104,9 +104,11 @@ class ImprovementInitiative(TimeStampedModel):
                 errors["effect_reason"] = "Bitte die Wirkungsaussage begründen."
             if self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}:
                 previous = (
-                    type(self).objects.filter(pk=self.pk).first() if not self._state.adding else None
+                    type(self).objects.filter(pk=self.pk).first()
+                    if not self._state.adding
+                    else None
                 )
-                # Legacy completed records are left untouched until a deliberate status/claim change.
+                # Existing completed records remain unless their status/claim changes.
                 changing_claim = (
                     previous is None
                     or previous.status != self.Status.COMPLETED
