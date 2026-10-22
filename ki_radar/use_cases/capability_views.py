@@ -6,7 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .capability_experiments import CAPABILITY_FIELDS, save_capability_experiment
+from .capability_experiments import (
+    CAPABILITY_FIELDS,
+    add_capability_correction,
+    save_capability_experiment,
+)
 from .capability_models import CapabilityExperiment
 from .initiative_models import ImprovementInitiative
 from .initiatives import can_edit_initiative
@@ -53,8 +57,21 @@ def capability_experiment_edit(request, initiative_id, pk=None):
     can_edit = can_edit_initiative(request.user, initiative)
     if (request.method == "POST" or experiment is None) and not can_edit:
         raise PermissionDenied
+    correction_error = None
     if request.method == "POST" and experiment and experiment.is_reviewed:
-        raise PermissionDenied
+        if request.POST.get("action") != "correct":
+            raise PermissionDenied
+        try:
+            add_capability_correction(
+                experiment=experiment,
+                actor=request.user,
+                note=request.POST.get("correction_note"),
+            )
+        except ValidationError as exc:
+            correction_error = " ".join(exc.messages)
+        else:
+            messages.success(request, "Berichtigung angehängt; Originalnachweis unverändert.")
+            return redirect(experiment.get_absolute_url())
 
     initial = {}
     if experiment is None and request.method == "GET" and request.GET.get("retest_of"):
@@ -66,7 +83,11 @@ def capability_experiment_edit(request, initiative_id, pk=None):
         )
         initial["retest_of"] = previous.pk
 
-    data = request.POST.copy() if request.method == "POST" else None
+    data = (
+        request.POST.copy()
+        if request.method == "POST" and not (experiment and experiment.is_reviewed)
+        else None
+    )
     if data is not None and request.POST.get("action") != "review":
         # A title-only draft does not need explicit evidence or a data classification.
         data.setdefault("finding", CapabilityExperiment.Finding.OPEN)
@@ -106,5 +127,12 @@ def capability_experiment_edit(request, initiative_id, pk=None):
             "form": form,
             "can_edit": can_edit,
             "read_only": bool(experiment and experiment.is_reviewed),
+            "correction_error": correction_error,
+            "correction_note_value": request.POST.get("correction_note", ""),
+            "corrections": (
+                experiment.corrections.select_related("created_by").all()
+                if experiment
+                else []
+            ),
         },
     )
