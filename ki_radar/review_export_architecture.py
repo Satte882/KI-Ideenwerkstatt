@@ -256,6 +256,23 @@ def build_process_review_context(process_analysis: ProcessAnalysis, actor) -> Re
         ],
     )
 
+    if process_analysis.initiative_id:
+        initiative = process_analysis.initiative
+        decision = get_stage_focus_decision(value_stream, initiative=initiative)
+        context.upstream_context.extend(
+            [
+                f"Vorhaben: {initiative.pk} · Revision {initiative.revision}",
+                (
+                    f"Vorhabensfokus: {decision.pk} · Revision {decision.revision}"
+                    if decision
+                    else "Vorhabensfokus: noch offen (kein globaler Fallback)"
+                ),
+            ]
+        )
+        context.traceability.append(
+            "Vorhaben und Vorhabensfokus sind getrennt vom globalen Value-Stream-Screening."
+        )
+
     diagnosis_fields = {"diagnostic_observations", "confirmed_causes"}
     for field_name in form.fields:
         requirement = "required" if field_name in PROCESS_REQUIRED_FIELDS else "optional"

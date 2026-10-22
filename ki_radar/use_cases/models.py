@@ -84,6 +84,15 @@ class UseCase(TimeStampedModel):
         ACHIEVED = "achieved", "Ziel erreicht"
         NOT_ACHIEVED = "not_achieved", "Ziel nicht erreicht"
 
+    initiative = models.ForeignKey(
+        "use_cases.ImprovementInitiative",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="use_cases",
+        editable=False,
+    )
+    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     short_id = models.CharField(max_length=20, unique=True, blank=True)
     demo_key = models.SlugField(

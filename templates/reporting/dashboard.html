@@ -35,7 +35,7 @@
     <dd><strong>{{ blocked_total }}</strong><span>Pflichtangaben oder Freigaben fehlen</span></dd>
   </div>
   <div class="cr-stat">
-    <dt>Aktive Vorhaben</dt>
+    <dt>Aktive Use Cases</dt>
     <dd><strong>{{ active_total }}</strong><span>Prüfung, Pilot und Betrieb</span></dd>
   </div>
   <div class="cr-stat">
@@ -109,5 +109,21 @@
       </div>
     </div>
   </div>
+</section>
+<section class="cr-section" aria-labelledby="initiative-title">
+  <header class="cr-section-heading">
+    <div><h2 id="initiative-title">Verbesserungsvorhaben · Reviews</h2>
+      <p>{{ initiative_reviews.overdue }} überfällig · {{ initiative_reviews.due_within_30_days }} in 30 Tagen · {{ initiative_reviews.missing_review_date }} ohne Termin. Offene Termine verhindern keine Bearbeitung.</p>
+    </div>
+    {% if can_create_initiative %}<a class="btn btn-outline-secondary" href="{% url 'use_cases:initiative_create' %}">Vorhaben erfassen</a>{% endif %}
+  </header>
+  <div class="table-responsive"><table class="table dashboard-table">
+    <thead><tr><th scope="col">Vorhaben</th><th scope="col">Status</th><th scope="col">Outcome Owner</th><th scope="col">Nächster Review</th></tr></thead>
+    <tbody>{% for initiative in initiatives %}<tr>
+      <td><a href="{{ initiative.get_absolute_url }}">{{ initiative.title }}</a></td>
+      <td>{{ initiative.get_status_display }}</td><td>{{ initiative.outcome_owner|default:"Noch offen" }}</td>
+      <td>{% if initiative.next_review_date %}<time datetime="{{ initiative.next_review_date|date:'Y-m-d' }}">{{ initiative.next_review_date|date:"d.m.Y" }}</time>{% else %}Termin noch offen{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="4">Keine offenen Verbesserungsvorhaben.</td></tr>{% endfor %}</tbody>
+  </table></div>
 </section>
 {% endblock %}

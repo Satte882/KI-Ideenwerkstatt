@@ -1,31 +1,34 @@
 {% load architecture_focus %}
 {% with stream=process_analysis.stage.value_stream %}
+{% process_stage_focus_decision process_analysis as phase_decision %}
 {% if not stream.focus.is_selected %}
 <p class="process-focus-status" data-testid="process-focus-blocker"><strong>Prozessdetailanalyse nicht freigegeben:</strong> Erst nach vollständigem Screening und positiver Fokusentscheidung ist die Vertiefung freigegeben.</p>
 {% endif %}
-{% if stream.stage_focus_decision %}
-{% stage_focus_item stream.stage_focus_decision process_analysis.stage as focus_item %}
+{% if phase_decision %}
+{% stage_focus_item phase_decision process_analysis.stage as focus_item %}
 <div class="process-focus-context" data-testid="process-focus-rationale">
   {% if stream.focus.is_selected %}
-  <p class="mb-1"><strong>Fokusbegründung:</strong> {{ stream.stage_focus_decision.rationale|default:process_analysis.stage.name }}</p>
+  <p class="mb-1"><strong>{% if process_analysis.initiative_id %}Vorhabensfokus (Revision {{ phase_decision.revision }}):{% else %}Fokusbegründung:{% endif %}</strong> {{ phase_decision.rationale|default:process_analysis.stage.name }}</p>
   {% endif %}
   <details class="architecture-disclosure" data-testid="process-stage-focus-source">
     <summary>{% if stream.focus.is_selected %}Fokusentscheidung und Herkunft{% else %}Frühere Phasenauswahl und Herkunft{% endif %}</summary>
     <div class="pt-3">
       {% if not stream.focus.is_selected %}<p><strong>Frühere Phasenauswahl:</strong> {{ process_analysis.stage.name }}. Diese gespeicherte Auswahl ersetzt keine aktuelle Fokusfreigabe.</p>{% endif %}
-      <p><strong>Begründung der Phasenentscheidung:</strong> {{ stream.stage_focus_decision.rationale|default:process_analysis.stage.name }}</p>
+      <p><strong>Begründung der Phasenentscheidung:</strong> {{ phase_decision.rationale|default:process_analysis.stage.name }}</p>
       <dl class="process-context-facts">
-        <div><dt>Fokusphase</dt><dd>{{ process_analysis.stage.sequence }}. {{ process_analysis.stage.name }}</dd></div>
-        <div><dt>Entscheidungsweg</dt><dd>{% if stream.stage_focus_decision.is_short_path %}Bewusster Kurzpfad{% else %}Vollständiger Phasenvergleich{% endif %}</dd></div>
+        <div><dt>Fokusphase</dt><dd>{{ phase_decision.selected_stage.sequence }}. {{ phase_decision.selected_stage.name }}</dd></div>
+        <div><dt>Entscheidungsweg</dt><dd>{% if phase_decision.is_short_path %}Bewusster Kurzpfad{% else %}Vollständiger Phasenvergleich{% endif %}</dd></div>
         <div><dt>Impact</dt><dd>{{ focus_item.impact|screening_label }}</dd></div>
         <div><dt>Problemintensität</dt><dd>{{ focus_item.pain_intensity|screening_label }}</dd></div>
         <div><dt>Datenlage</dt><dd>{{ focus_item.data_accessibility|screening_label }}</dd></div>
         <div><dt>Veränderungsaufwand</dt><dd>{{ focus_item.change_effort|screening_label }}</dd></div>
       </dl>
-      {% if stream.stage_focus_decision.is_short_path %}<p><strong>Kurzpfad:</strong> {{ stream.stage_focus_decision.short_path_reason }}</p>{% endif %}
-      <a class="btn btn-sm btn-outline-secondary" href="{{ stream.get_absolute_url }}#fokusphase">Phasenentscheidung öffnen</a>
+      {% if phase_decision.is_short_path %}<p><strong>Kurzpfad:</strong> {{ phase_decision.short_path_reason }}</p>{% endif %}
+      {% if process_analysis.initiative_id %}<a class="btn btn-sm btn-outline-secondary" href="{{ process_analysis.initiative.get_absolute_url }}">Vorhaben öffnen</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{{ stream.get_absolute_url }}#fokusphase">Phasenentscheidung öffnen</a>{% endif %}
     </div>
   </details>
 </div>
+{% elif process_analysis.initiative_id %}
+<p class="process-focus-status">Vorhabensfokus noch offen. Die globale Phasenauswahl wird nicht übernommen; der Entwurf kann weiterbearbeitet werden.</p>
 {% endif %}
 {% endwith %}

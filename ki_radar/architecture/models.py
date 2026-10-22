@@ -127,6 +127,15 @@ class ProcessAnalysis(TimeStampedModel):
         VALIDATED = "validated", "Ist-Prozess validiert"
         TARGET_DEFINED = "target_defined", "Zielbild beschrieben"
 
+    initiative = models.ForeignKey(
+        "use_cases.ImprovementInitiative",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="process_analyses",
+        editable=False,
+    )
+    outcome_contract_version = models.PositiveSmallIntegerField(default=0, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     stage = models.ForeignKey(
         ValueStreamStage,
