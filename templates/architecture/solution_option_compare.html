@@ -21,6 +21,23 @@
 </div>{% if can_select %}<a href="{% url 'use_cases:prepare_outcome' kind='process' pk=process_analysis.pk %}">Outcome-Bezug vorbereiten / bestätigen</a>{% endif %}
 </section>
 {% endif %}
+{% if capability_findings %}
+<section class="cr-inline-note mb-4" aria-label="Geprüfte KI-Capability-Befunde">
+  <div>
+    <strong>Frühe KI-Fähigkeitstests – nur Entscheidungsinformation</strong>
+    <p>Geprüfte Experimente des Vorhabens; auch ein nicht bestätigter KI-Test bleibt sichtbar.
+       Diese Befunde erzeugen weder eine KI-Präferenz noch eine Freigabe oder einen Geschäftsnutzen-Nachweis.</p>
+    <ul>
+      {% for finding in capability_findings %}
+      <li><a href="{{ finding.get_absolute_url }}">{{ finding.title }}</a>:
+        {{ finding.get_finding_display }} · {{ finding.reviewed_at|date:"d.m.Y" }}
+        {% if finding.corrections.exists %} · Mit Berichtigungsvermerk{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
 {% if latest_investigation_materialization %}
 <div class="cr-inline-note mb-4" data-testid="investigation-materialization-origin">
   <div>

@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import (
     ap2_views,
+    capability_views,
     decision_views,
     idea_views,
     impact_review_views,
@@ -22,6 +23,16 @@ urlpatterns = [
     ),
     path("", views.use_case_list, name="list"),
     path("outcome/<str:kind>/<uuid:pk>/", outcome_views.prepare_outcome, name="prepare_outcome"),
+    path(
+        "initiatives/<uuid:initiative_id>/capability/new/",
+        capability_views.capability_experiment_edit,
+        name="capability_experiment_create",
+    ),
+    path(
+        "initiatives/<uuid:initiative_id>/capability/<int:pk>/",
+        capability_views.capability_experiment_edit,
+        name="capability_experiment_edit",
+    ),
     path("initiatives/new/", initiative_views.initiative_edit, name="initiative_create"),
     path("initiatives/<uuid:pk>/", initiative_views.initiative_edit, name="initiative_edit"),
     path("ideas/", idea_views.idea_list, name="idea_list"),

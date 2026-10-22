@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Capability-Test – {{ initiative.title }}{% endblock %}
+{% block body_class %}page-form-workspace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">{% endblock %}
+{% block content %}
+<header class="cr-page-header">
+  <div>
+    <h1>{% if experiment %}{{ experiment.title }}{% else %}Frühen KI-Fähigkeitstest dokumentieren{% endif %}</h1>
+    <p><a href="{{ initiative.get_absolute_url }}">{{ initiative.title }}</a> · AI-first-Zielhypothese prüfen, ohne KI als Lösung vorwegzunehmen.</p>
+    <p>Ein Capability-Test ist kein Geschäftsnutzen-, Datenschutz-, Pilot- oder Betriebsnachweis. Non-KI bleibt eine gleichwertige Option.</p>
+  </div>
+</header>
+{% if read_only or not can_edit %}
+  {% if experiment %}
+  <p role="status">{% if experiment.is_reviewed %}Fachlich dokumentierter Teststand von {{ experiment.reviewed_by }} am {{ experiment.reviewed_at|date:"d.m.Y H:i" }}.{% else %}Ungeprüfter Entwurf.{% endif %}</p>
+  <dl>
+    <dt>Ambitioniertes AI-first-Zielbild</dt><dd>{{ experiment.ai_vision|default:"Offen" }}</dd>
+    <dt>Erste realistisch betreibbare Stufe</dt><dd>{{ experiment.first_viable_step|default:"Offen" }}</dd>
+    <dt>Capability-Hypothese</dt><dd>{{ experiment.capability_hypothesis|default:"Offen" }}</dd>
+    <dt>Konfiguration / Änderung</dt><dd>{{ experiment.tested_configuration|default:"Offen" }}</dd>
+    <dt>Testfälle (nur Referenzen)</dt><dd class="text-preline">{{ experiment.test_case_ids|default:"Offen" }}</dd>
+    <dt>Neue Holdout-Fälle (nur Referenzen)</dt><dd class="text-preline">{{ experiment.holdout_case_ids|default:"Offen" }}</dd>
+    <dt>Fehlerarten</dt><dd class="text-preline">{{ experiment.failure_modes|default:"Nicht dokumentiert" }}</dd>
+    <dt>Annahmen</dt><dd class="text-preline">{{ experiment.assumptions|default:"Offen" }}</dd>
+    <dt>Aufwand</dt><dd>{{ experiment.effort|default:"Offen" }}</dd>
+    <dt>Capability-Ergebnis</dt><dd>{{ experiment.get_finding_display }}</dd>
+    <dt>Quellnachweis</dt><dd>{{ experiment.evidence_reference|default:"Offen" }}</dd>
+    <dt>Learning Value – nicht Business Value</dt><dd>{{ experiment.learning_value|default:"Offen" }}</dd>
+    <dt>Materialart</dt><dd>{{ experiment.get_data_kind_display }}</dd>
+    <dt>Governance-Referenz</dt><dd>{{ experiment.governance_reference|default:"Nicht dokumentiert" }}</dd>
+  </dl>
+  {% endif %}
+{% else %}
+<div class="app-card">
+  <form method="post">
+    {% csrf_token %}
+    <div class="card-body">
+      {{ form.non_field_errors }}
+      <p>Alle Felder außer dem Titel sind während der Exploration optional. Unvollständiges jederzeit als Entwurf sichern; die dokumentierte Prüfung verlangt konkrete Fälle, unverbrauchte Holdouts und Nachweise.</p>
+      {% for field in form %}
+        {% if field.is_hidden %}{{ field }}{% else %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="form-text">{{ field.help_text }}</p>{% endif %}
+          {% if field.errors %}<div class="text-danger" role="alert">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+      <p>Nur Fall-IDs/Quellenreferenzen, keine echten Personendaten eingeben. Realdaten dürfen erst unter bestehenden Datenschutz-/Security-Regeln verarbeitet werden; die Dokumentation hier erteilt keine Freigabe. Holdout-Unverbrauchtheit wird fachlich erklärt, nicht technisch behauptet.</p>
+      <p>Learning Value dokumentiert neue Erkenntnisse – er zählt weder als ROI noch als validierte Geschäftswirkung.</p>
+    </div>
+    <div class="card-footer d-flex flex-wrap gap-2">
+      <button class="btn btn-primary" type="submit" name="action" value="draft">Als Entwurf sichern</button>
+      <button class="btn btn-outline-secondary" type="submit" name="action" value="review">Capability-Test fachlich dokumentieren</button>
+      <a class="btn btn-outline-secondary" href="{{ initiative.get_absolute_url }}">Zum Vorhaben</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% if experiment and experiment.is_reviewed %}
+<section class="mt-4" aria-labelledby="capability-correction-title">
+  <h2 id="capability-correction-title">Berichtigungen zum geprüften Nachweis</h2>
+  <p>Das historische Original bleibt unverändert. Eine dokumentierte Berichtigung erklärt den falschen und den richtigen Stand, ersetzt aber weder Governance-Freigabe noch einen neuen Capability-Test.</p>
+  {% for correction in corrections %}
+  <div class="cr-inline-note mb-2">
+    <p class="text-preline">{{ correction.note }}</p>
+    <small>Erfasst am {{ correction.created_at|date:"d.m.Y H:i" }} durch {{ correction.created_by|default:"Unbekannt" }}</small>
+  </div>
+  {% empty %}
+  <p>Noch keine Berichtigung.</p>
+  {% endfor %}
+  {% if can_edit %}
+  <form method="post" class="app-card">
+    {% csrf_token %}
+    <div class="card-body">
+      <label class="form-label" for="id_correction_note">Korrekturvermerk mit altem, richtigem Wert und Begründung</label>
+      <textarea id="id_correction_note" name="correction_note" class="form-control" rows="3" required>{{ correction_note_value }}</textarea>
+      {% if correction_error %}<p class="text-danger" role="alert">{{ correction_error }}</p>{% endif %}
+    </div>
+    <div class="card-footer">
+      <button type="submit" name="action" value="correct" class="btn btn-outline-secondary">Berichtigung dauerhaft anhängen</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% if experiment and experiment.is_reviewed and can_edit %}
+  <p><a class="btn btn-outline-secondary" href="{% url 'use_cases:capability_experiment_create' initiative.pk %}?retest_of={{ experiment.pk }}">Nachtest mit neuen Holdout-Fällen dokumentieren</a></p>
+{% endif %}
+{% endblock %}

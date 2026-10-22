@@ -33,6 +33,32 @@
 {% if initiative %}
 {% if can_edit %}<p><a class="btn btn-outline-secondary" href="{% url 'use_cases:initiative_impact' initiative.pk %}">Wirkungsprüfung bearbeiten</a></p>{% endif %}
 {% include "use_cases/includes/initiative_impact.html" %}
+<section class="cr-section" aria-labelledby="capability-exploration-title">
+  <header class="cr-section-heading">
+    <div>
+      <h2 id="capability-exploration-title">AI-first-Erkundung und Learning Value</h2>
+      <p>Ambitioniertes Zielbild, erste betreibbare Stufe und frühe Capability-Tests bleiben Hypothesen und Lernnachweise – keine automatische Lösungswahl, Freigabe oder Geschäftswirkung.</p>
+    </div>
+    {% if can_edit %}<a class="btn btn-outline-secondary" href="{% url 'use_cases:capability_experiment_create' initiative.pk %}">Capability-Test erfassen</a>{% endif %}
+  </header>
+  <div class="table-responsive">
+    <table class="table">
+      <thead><tr><th scope="col">Test / Hypothese</th><th scope="col">Prüfstatus</th><th scope="col">Capability-Befund</th><th scope="col">Learning Value</th></tr></thead>
+      <tbody>
+        {% for probe in initiative.capability_experiments.all %}
+        <tr>
+          <td><a href="{{ probe.get_absolute_url }}">{{ probe.title }}</a>{% if probe.retest_of_id %}<span class="text-muted"> · Nachtest</span>{% endif %}</td>
+          <td>{% if probe.is_reviewed %}Dokumentiert · {{ probe.reviewed_at|date:"d.m.Y" }}{% else %}Entwurf – ungeprüft{% endif %}</td>
+          <td>{% if probe.is_reviewed %}{{ probe.get_finding_display }}{% else %}Noch nicht fachlich geprüft{% endif %}</td>
+          <td>{% if probe.is_reviewed %}{{ probe.learning_value|default:"Keine Erkenntnis dokumentiert" }}{% else %}Offen{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Noch keine Capability-Tests. Auch ohne KI-Experiment kann eine Non-KI-Option bevorzugt werden.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
 <details class="architecture-disclosure mt-4"><summary>Gespeicherte Vorhabensstände und Bearbeiter</summary>
   <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Revision</th><th scope="col">Zeitpunkt</th><th scope="col">Bearbeiter</th><th scope="col">Status</th><th scope="col">Geschäftsergebnis / Wirkannahme</th><th scope="col">Dokumentierte Wirkungsaussage / Abbruch (kein Prüfnachweis)</th></tr></thead>
     <tbody>{% for entry in history %}<tr><td>{{ entry.revision }}<br>{{ entry.history_change_reason|default:"" }}</td><td><time datetime="{{ entry.history_date|date:'c' }}">{{ entry.history_date|date:'d.m.Y H:i' }}</time></td><td>{{ entry.updated_by|default:"Unbekannt" }}</td><td>{{ entry.get_status_display }}</td><td>{{ entry.business_outcome|default:"Noch offen" }}<br>{{ entry.impact_hypothesis|default:"Noch offen" }}</td><td>{{ entry.get_effect_status_display }} {{ entry.effect_reason }} {{ entry.cancellation_reason }}</td></tr>{% endfor %}</tbody>
