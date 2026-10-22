@@ -47,8 +47,7 @@ class CapabilityExperiment(TimeStampedModel):
         blank=True,
         verbose_name="Unverbrauchte Fall-Referenzen (eine ID pro Zeile)",
         help_text=(
-            "Unbekannte Fälle separat führen; keine bereits getesteten "
-            "Fälle wiederverwenden."
+            "Unbekannte Fälle separat führen; keine bereits getesteten Fälle wiederverwenden."
         ),
     )
     holdout_unseen_confirmed = models.BooleanField(
@@ -56,9 +55,7 @@ class CapabilityExperiment(TimeStampedModel):
         verbose_name="Die Holdout-Fälle waren vor dem Test nicht zur Anpassung verwendet",
     )
     failure_modes = models.TextField(blank=True, verbose_name="Fehlerbilder und Grenzen")
-    assumptions = models.TextField(
-        blank=True, verbose_name="Daten-, System- und Betriebsannahmen"
-    )
+    assumptions = models.TextField(blank=True, verbose_name="Daten-, System- und Betriebsannahmen")
     effort = models.TextField(blank=True, verbose_name="Aufwand / Time-to-Value")
     finding = models.CharField(
         max_length=20,
@@ -92,12 +89,19 @@ class CapabilityExperiment(TimeStampedModel):
         verbose_name="Vorheriger Capability-Test",
     )
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-        related_name="created_capability_experiments", editable=False,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_capability_experiments",
+        editable=False,
     )
     reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="reviewed_capability_experiments", editable=False,
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_capability_experiments",
+        editable=False,
     )
     reviewed_at = models.DateTimeField(null=True, blank=True, editable=False)
     revision = models.PositiveIntegerField(default=1, editable=False)
