@@ -20,6 +20,22 @@ from .models import UseCase
 from .outcome_contract import _process, confirm_initiative, set_discovery_path
 from .permissions import can_edit_use_case
 
+PREPARATION_FIELDS = (
+    "path",
+    "origin_basis",
+    "change_reason",
+    "strategic_potential",
+    "validation_step",
+    "focus_reason",
+    "confirmation_reason",
+    "correction_reason",
+    "adopt_contract",
+)
+
+
+def _preparation_key(artifact):
+    return f"{artifact._meta.label_lower}:{artifact.pk}"
+
 
 class OutcomePreparationForm(InitiativeForm):
     class Meta(InitiativeForm.Meta):
@@ -91,6 +107,10 @@ def _prepare(*, artifact, form, actor, confirm):
         data={key: form.cleaned_data[key] for key in form.Meta.fields},
         expected_revision=form.cleaned_data.get("expected_revision") if existing else None,
         correction_reason=form.cleaned_data["correction_reason"],
+        preparation_key=_preparation_key(artifact),
+        preparation_data=(
+            {key: form.cleaned_data[key] for key in PREPARATION_FIELDS} if not confirm else None
+        ),
     )
     if not confirm:
         return initiative
@@ -162,7 +182,8 @@ def prepare_outcome(request, kind, pk):
             initiative = None
         if initiative is None and request.method != "POST":
             raise Http404
-    if request.method == "POST" and request.POST.get("action") == "load" and initiative:
+    action = request.POST.get("action") if request.method == "POST" else None
+    if action == "confirm_load" and initiative:
         return redirect(f"{request.path}?initiative={initiative.pk}")
     process = _process(artifact)
     path = process.discovery_path_decisions.first() if process else None
@@ -179,10 +200,18 @@ def prepare_outcome(request, kind, pk):
                 )
             }
         )
+    draft = initiative.preparation_drafts.get(_preparation_key(artifact)) if initiative else None
+    if draft is not None:
+        initial.update({key: value for key, value in draft.items() if key in PREPARATION_FIELDS})
     data = request.POST.copy() if request.method == "POST" else None
     if data is not None and request.POST.get("action") == "save_draft":
         data["status"] = "draft"
     form = OutcomePreparationForm(data, instance=initiative, initial=initial)
+    if action in {"load", "cancel_load"}:
+        # Loading is a separate command: keep even invalid/incomplete input
+        # until the user explicitly chooses to replace it.
+        form = OutcomePreparationForm(instance=initiative, initial=request.POST.dict())
+        form.initial.update(request.POST.dict())
     if artifact.outcome_contract_version:
         form.fields["adopt_contract"].widget = forms.HiddenInput()
     if process is None:
@@ -202,7 +231,7 @@ def prepare_outcome(request, kind, pk):
         if is_coordinator(request.user)
         else artifact.get_absolute_url()
     )
-    if request.method == "POST" and form.is_valid():
+    if action in {"save_draft", "confirm"} and form.is_valid():
         try:
             saved = _prepare(
                 artifact=artifact,
@@ -211,7 +240,7 @@ def prepare_outcome(request, kind, pk):
                 confirm=request.POST.get("action") == "confirm",
             )
         except ValidationError as exc:
-            form.add_error(None, exc)
+            form.add_error(None, ValidationError(exc.messages))
         else:
             if request.POST.get("action") == "confirm":
                 return redirect(return_url)
@@ -224,5 +253,8 @@ def prepare_outcome(request, kind, pk):
             "artifact": artifact,
             "return_url": return_url,
             "is_process": process is not None,
+            "load_pending": action == "load" and initiative is not None,
+            "load_target": initiative,
+            "has_preparation_draft": draft is not None,
         },
     )

@@ -56,14 +56,19 @@
       <a class="sidebar-link {% if nav_is_analysis %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}"{% if nav_is_analysis %} aria-current="location"{% endif %}>
         <span class="nav-icon">⇢</span> Analyse
       </a>
-      {% if nav_is_discovery %}
+      {% if nav_outcome_label and nav_is_analysis %}
+      <div class="sidebar-local-depth" aria-label="Lokaler Vorhabensbereich"><span class="sidebar-local-step sidebar-local-active" aria-current="page"><span aria-hidden="true">●</span><span>{{ nav_outcome_label }}</span></span></div>
+      {% elif nav_is_discovery %}
       <div class="sidebar-local-depth" aria-label="Lokale Discovery"><span class="sidebar-local-step sidebar-local-active" aria-current="page"><span aria-hidden="true">●</span><span>Business Discovery</span></span></div>
       {% elif nav_is_analysis %}
       {% analysis_sidebar %}
       {% endif %}
-      <a class="sidebar-link {% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}" href="{% url 'use_cases:list' %}">
+      <a class="sidebar-link {% if not nav_is_analysis %}{% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}{% endif %}" href="{% url 'use_cases:list' %}"{% if nav_outcome_label and not nav_is_analysis %} aria-current="location"{% endif %}>
         <span class="nav-icon">◫</span> Use Cases
       </a>
+      {% if nav_outcome_label and not nav_is_analysis %}
+      <div class="sidebar-local-depth" aria-label="Lokaler Use-Case-Bereich"><span class="sidebar-local-step sidebar-local-active" aria-current="page"><span aria-hidden="true">●</span><span>{{ nav_outcome_label }}</span></span></div>
+      {% endif %}
       {% if journey %}
       {% if request.resolver_match.namespace == 'use_cases' or request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}
       <div class="sidebar-local-depth" aria-label="Lokale Initiative">

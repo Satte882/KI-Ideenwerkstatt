@@ -9,6 +9,15 @@
 <p>Hypothese ist zulässig. Zahlenbaseline, Zielwert, Review-Termin und ein Systemkonto des Outcome Owners sind nicht erforderlich.</p></div></header>
 <div class="app-card"><form method="post" novalidate>{% csrf_token %}
 <div class="card-body">{{ form.non_field_errors }}
+{% if has_preparation_draft %}<p class="alert alert-info" role="status">Gesicherter Vorbereitungsentwurf wieder aufgenommen. Pfad und Fokus werden erst durch die ausdrückliche fachliche Annahme verbindlich.</p>{% endif %}
+{% if load_pending %}
+<div class="alert alert-warning" role="alert" tabindex="-1">
+<strong>Eingaben durch „{{ load_target }}“ ersetzen?</strong>
+<p>Beim Laden werden die aktuell angezeigten Eingaben durch den gespeicherten Stand ersetzt. Ihre Eingaben stehen unten weiterhin zur Verfügung.</p>
+<button class="btn btn-outline-danger" type="submit" name="action" value="confirm_load">Eingaben ersetzen und Vorhaben laden</button>
+<button class="btn btn-outline-secondary" type="submit" name="action" value="cancel_load">Eingaben behalten</button>
+</div>
+{% endif %}
 {% for field in form %}{% if field.is_hidden %}{{ field }}{% else %}<div class="mb-3">
 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
 {{ field }}{{ field.errors }}

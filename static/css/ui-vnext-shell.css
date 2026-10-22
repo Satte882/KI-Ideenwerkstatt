@@ -131,6 +131,12 @@
   color: var(--muted);
 }
 
+.ui-vnext .sidebar-local-step > span:last-child {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .ui-vnext .sidebar-local-step:hover {
   color: var(--ink);
   background: color-mix(in srgb, var(--silver) 6%, transparent);
@@ -326,6 +332,32 @@
 
   .ui-vnext .app-sidebar {
     padding-inline: 12px;
+  }
+}
+
+/* Keep the existing labelled navigation usable on small desktop screens.
+   The horizontal mobile navigation below 720px remains independent. */
+@media (min-width: 721px) and (max-width: 1100px) {
+  .ui-vnext .app-shell {
+    grid-template-columns: 268px minmax(0, 1fr);
+  }
+
+  .ui-vnext .app-sidebar {
+    padding-inline: 17px;
+    overflow-y: auto;
+  }
+
+  .ui-vnext .sidebar-link {
+    justify-content: flex-start;
+  }
+
+  .ui-vnext .nav-caption,
+  .ui-vnext .sidebar-local-depth {
+    display: block;
+  }
+
+  .ui-vnext .analysis-step-actions {
+    display: none;
   }
 }
 

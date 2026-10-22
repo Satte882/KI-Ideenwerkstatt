@@ -1,0 +1,1308 @@
+{
+  "issue": 155,
+  "pull_request": 157,
+  "tested_product_commit": "0e0823fe5367cfcf8d986d1029ce3f9be966f04a",
+  "comment_url": "https://github.com/Satte882/KI-Ideenwerkstatt/pull/157#issuecomment-6347652458",
+  "browser": "headed Chromium",
+  "provider_mode": "deterministic boundary doubles; keys empty; external sockets blocked",
+  "screenshots": [
+    {
+      "file": "F1-cancel-preserves-input-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/6a9473e0-4e8f-4b49-bdcd-f8096ef45837",
+      "title": "F1 cancel preserves input 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F1"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3053,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:57:55.235174+00:00",
+      "sha256": "10f4406bfd77b90060db7012804b7a41a4f5c7c6b3045e5d39f1c581ce5e7ce3"
+    },
+    {
+      "file": "F1-replace-choice-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/d8d1c6cd-dbd3-4369-80d2-300da43f220b",
+      "title": "F1 replace choice 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F1"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3233,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:57:54.579313+00:00",
+      "sha256": "d9a7c83e14d5001b9e5eda3e1b66985177dc2ee74fdac8766b7f8e9d245bb51f"
+    },
+    {
+      "file": "F2-after-draft-save-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/9d25638c-f99f-458a-b25c-16819c6c89e6",
+      "title": "F2 after draft save 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F2"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3053,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:58:20.383616+00:00",
+      "sha256": "10f4406bfd77b90060db7012804b7a41a4f5c7c6b3045e5d39f1c581ce5e7ce3"
+    },
+    {
+      "file": "F2-after-login-resume-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/643c1ac2-6f59-4011-bd17-96a0bfb13b11",
+      "title": "F2 after login resume 1024",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F2"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3121,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:26:00.068284+00:00",
+      "sha256": "0990b8491c89824defebce9c8e48e38005b31eb476ab7d493485c5e350f6d97b"
+    },
+    {
+      "file": "F2-before-draft-save-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/5ca349f2-22a6-4693-b791-5fee35739b8d",
+      "title": "F2 before draft save 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F2"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3053,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:58:19.665239+00:00",
+      "sha256": "10f4406bfd77b90060db7012804b7a41a4f5c7c6b3045e5d39f1c581ce5e7ce3"
+    },
+    {
+      "file": "F2-invalid-confirm-preserves-input-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/e0c464e5-8f2a-435b-bea9-adb5a3b6aa0f",
+      "title": "F2 invalid confirm preserves input 1024",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F2"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3149,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:48:35.126001+00:00",
+      "sha256": "e3aa6a2ae804b01d005bbdfe97a907a9cd54121bdb09e3682a4bf600d0397e76"
+    },
+    {
+      "file": "F3-blocker-before-selection-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/fdffdc0c-9117-4655-bfd2-7bd907c60cda",
+      "title": "F3 blocker before selection 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/47032cd4-2747-4d08-827c-69a6052159a8/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F3"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2586,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:23:24.242196+00:00",
+      "sha256": "fe0bd80308c19d5ada181bb29a6d7329b4e276aac8f17054ab7bb44c2898b47a"
+    },
+    {
+      "file": "F3-ready-after-confirmation-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/10768b7a-7658-4f45-b111-e8a3216ee4e0",
+      "title": "F3 ready after confirmation 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F3"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2784,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:36:26.262151+00:00",
+      "sha256": "791a4f07a0f3ceab909fd65f09c9fad728866076e9c0e0d2cc34a764b259b6e6"
+    },
+    {
+      "file": "F4-capability-draft-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/2ab55df4-b4e6-4840-bb7e-3c3d1b050e40",
+      "title": "F4 capability draft 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3077,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:39:10.124914+00:00",
+      "sha256": "ab3cf643cc5f25bfbce5d43fe310f0d54a145c1834ae31361404f72e840e28ba"
+    },
+    {
+      "file": "F4-direct-outcome-context-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/1bc8d2a9-e5fb-4beb-a59b-e9c1a2bef6da",
+      "title": "F4 direct outcome context 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/usecase/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "coordinator",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2017,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:44:12.211851+00:00",
+      "sha256": "340221d5e7128d7cefd047f20f9245cbc26a1a9b93a8603374c54dea5bc42243"
+    },
+    {
+      "file": "F4-F6-back-forward-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/3a7d41fb-67c2-44d1-af01-c6f5b5d54f0c",
+      "title": "F4 F6 back forward 1024",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1024,
+      "height": 1000,
+      "full_page": false,
+      "captured_at_utc": "2026-10-22T17:49:07.958914+00:00",
+      "sha256": "08035926cd51bbf6640b9c7a2423be717dbf72dd7c3130ef22a760c56c825408"
+    },
+    {
+      "file": "F4-F6-outcome-navigation-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/a32b52c1-0438-456c-813d-441699b2cd56",
+      "title": "F4 F6 outcome navigation 1024",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/47032cd4-2747-4d08-827c-69a6052159a8/?initiative=72938ff5-286f-48e1-a06c-31850c169cd4",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1024,
+      "height": 1000,
+      "full_page": false,
+      "captured_at_utc": "2026-10-22T17:26:00.195974+00:00",
+      "sha256": "80f731d083b46a1edadef9a799c6dcf2e64b3b9fb2a20ba2b295876c12b8502d"
+    },
+    {
+      "file": "F4-impact-navigation-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/3de27c91-8f8a-45e1-a3f0-5ca54be3e316",
+      "title": "F4 impact navigation 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/impact/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2548,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:39:29.489719+00:00",
+      "sha256": "5eb0041e82ccbacf0cc99a15d80186400b3bce4b27e659b99981b1eb3d64341b"
+    },
+    {
+      "file": "F4-initiative-navigation-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/70434e03-5a87-4e86-b256-88c1cc93c79a",
+      "title": "F4 initiative navigation 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F4"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3102,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:38:51.101332+00:00",
+      "sha256": "f1e1f458a3d5d7325115ef10859fed97b56b4a064c231761dc3654e9bf874495"
+    },
+    {
+      "file": "F5-explicit-cost-notice-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/21058c15-fa78-426c-b5d1-32aac96f9a3c",
+      "title": "F5 explicit cost notice 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F5"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1440,
+      "height": 1000,
+      "full_page": false,
+      "captured_at_utc": "2026-10-22T17:38:11.348445+00:00",
+      "sha256": "7b530ef92e37be734c6871aa6e219c67d6b17bef82c5b4c468e084e92a0ca1b2"
+    },
+    {
+      "file": "F5-explicit-mock-feedback-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/360f50fa-7d04-4458-b9a8-2dd20d5c9b35",
+      "title": "F5 explicit mock feedback 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F5"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3548,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:38:26.582401+00:00",
+      "sha256": "a0c943733d51b34e2b1089803204faf441cd854c0a558fd1dfb49da635992cc6"
+    },
+    {
+      "file": "F5-selection-no-generation-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/e93cffeb-2fee-438a-a0be-a68ca8d71faf",
+      "title": "F5 selection no generation 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F5"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3326,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:38:11.157676+00:00",
+      "sha256": "a8d174f9f34c63d32118215fb065aed9f308b9e80ea08bc111689eec3cc664bb"
+    },
+    {
+      "file": "F6-dense-navigation-1024-viewport.png",
+      "github_url": "https://github.com/user-attachments/assets/683e0f1d-bbf2-4b2d-8a53-e7256b771d4e",
+      "title": "F6 dense navigation 1024 viewport",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "Gezielte Regression",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1024,
+      "height": 1000,
+      "full_page": false,
+      "captured_at_utc": "2026-10-22T17:55:58.890206+00:00",
+      "sha256": "bc3649d8273cd85fff7e725cd03f57d0b5a4398f2bb48bab2c6a8f44bfdd0d2f"
+    },
+    {
+      "file": "journey-bottom-idea-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/aa3be4c8-b17e-4179-a416-b3effb2401be",
+      "title": "journey bottom idea 1440",
+      "url": "http://127.0.0.1:8776/use-cases/ideas/ae566818-80e7-4345-99fc-f7c9b0a758a4/",
+      "role": "owner",
+      "journey": "bottom",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 1563,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:26:33.099598+00:00",
+      "sha256": "2f129d9a5d78f35ca6292b479d628e5cef704a1ff24e57d940f847dc27263ea3"
+    },
+    {
+      "file": "journey-bottom-outcome-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/e035e6b2-3bd4-4c19-a55d-f1c5dbd571da",
+      "title": "journey bottom outcome 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "owner",
+      "journey": "bottom",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2979,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:35:35.376915+00:00",
+      "sha256": "71b876c62f4b18f808603eb6dd2081e6a6b14eec26859b1fc132198231142bc9"
+    },
+    {
+      "file": "journey-direct-after-outcome-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/afe829f0-6e61-4cd6-8487-e316429a1cfe",
+      "title": "journey direct after outcome 1440",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/decision/new/",
+      "role": "coordinator",
+      "journey": "direct",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2531,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:44:15.117898+00:00",
+      "sha256": "95b6c4b739eb1a286d80efb013072b0ec816fef61f3c635b96f15514d85afd66"
+    },
+    {
+      "file": "journey-direct-before-outcome-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/df2fffd8-e05c-43cc-a94e-6d441cf1a1c6",
+      "title": "journey direct before outcome 1440",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/decision/new/",
+      "role": "coordinator",
+      "journey": "direct",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2654,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:43:50.336747+00:00",
+      "sha256": "bd44148c46b6003e6711e36129996d958e190d46bbffb317f6dbe5c78ae5a009"
+    },
+    {
+      "file": "journey-nonki-impact-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/2c040344-e5ae-41a7-9a3b-6313625533ca",
+      "title": "journey nonki impact 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "owner",
+      "journey": "nonki",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3683,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:43:05.941410+00:00",
+      "sha256": "e0e256777f595e06e41517a3ee70e627860105863b18395e75d26717529d137f"
+    },
+    {
+      "file": "journey-top-idea-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/01be168b-63c5-4722-ae22-228882de5512",
+      "title": "journey top idea 1440",
+      "url": "http://127.0.0.1:8776/use-cases/ideas/4ed7cfa9-55ad-4269-9dc3-075b6bf67341/",
+      "role": "owner",
+      "journey": "top",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 1563,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:40:17.285936+00:00",
+      "sha256": "be09ec6432e39d5297d01d5b796a9138fc3a1d80377708fd03858cbb0787fe8f"
+    },
+    {
+      "file": "journey-top-nonki-end-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/3aa74d36-6653-4ac2-8f1b-c422d63f933b",
+      "title": "journey top nonki end 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/#selection-result",
+      "role": "owner",
+      "journey": "top",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3221,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:42:21.056346+00:00",
+      "sha256": "7a106317b9fe22f7edb13ebf3a2a8aabd1dd95b8ccb0749e1923818c5bb5e7e5"
+    },
+    {
+      "file": "journey-top-strategic-outcome-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/9d1dc122-86af-4d14-aa79-872bbb4e77fa",
+      "title": "journey top strategic outcome 1440",
+      "url": "http://127.0.0.1:8776/use-cases/outcome/process/7bde2598-a9f7-4598-b674-5cbb2f850a3a/?initiative=848b3d01-544f-4c1d-a0a3-0146fa8fb855",
+      "role": "owner",
+      "journey": "top",
+      "findings": [],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2979,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:42:05.129169+00:00",
+      "sha256": "12b11818d0213ae996e852d03d452ca34c6d5bb6622dd077b5ced106722094f9"
+    },
+    {
+      "file": "role-coordinator-bottomCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/a0b57205-eb5d-4741-a62f-0e4e528c5935",
+      "title": "role coordinator bottomCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "coordinator",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3932,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:36.006159+00:00",
+      "sha256": "2c8849247582c988ef9742bb8e7510e795902ae1a42a7c8b2e1edafa6282ec3b"
+    },
+    {
+      "file": "role-coordinator-bottomCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/582a2f84-7d64-4532-8a65-88294c398c80",
+      "title": "role coordinator bottomCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "coordinator",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3252,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:33.530779+00:00",
+      "sha256": "44a73870f0e66b1203ad0d0242bba9dd12d78451738dc037a40faafe9a94bcce"
+    },
+    {
+      "file": "role-coordinator-bottomProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/3cab5741-1dfb-46a3-97f8-cc1dd15a0439",
+      "title": "role coordinator bottomProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "coordinator",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3353,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:32.772418+00:00",
+      "sha256": "848e16a96901621cd569f46f25e68626d8fbeb845b27ce510b85e74016c1228b"
+    },
+    {
+      "file": "role-coordinator-bottomProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/df2e6bfd-5438-41cb-aa29-4e297da3864b",
+      "title": "role coordinator bottomProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "coordinator",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3036,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:30.358885+00:00",
+      "sha256": "891d44fa258cf4ba0b266fb75e13a7751e528862e9ec7096fe874541f1598531"
+    },
+    {
+      "file": "role-coordinator-capability-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/ea7cfe3e-cad6-4d98-83d1-e564472d9ec9",
+      "title": "role coordinator capability 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "coordinator",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3141,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:46.285693+00:00",
+      "sha256": "ec38bc832e0fd88d4700a65b07a92949ea7641ecd31e4f337972b6190665c918"
+    },
+    {
+      "file": "role-coordinator-capability-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/6349380c-bc7c-43b9-88fe-5be1de5ca2e0",
+      "title": "role coordinator capability 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "coordinator",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3003,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:45.884349+00:00",
+      "sha256": "a3e2691a2869c96c573b47a89aa830733d1ca02dc226823dab3804b35a0a2cf1"
+    },
+    {
+      "file": "role-coordinator-direct-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/b925f2b5-8e8e-4b15-91e8-73b105d69c6e",
+      "title": "role coordinator direct 1024",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "coordinator",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2741,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:48.165920+00:00",
+      "sha256": "4eb32ec1e918f9168b41e3ff6923fa27ff481a5aa59132466658af7de00cb5ed"
+    },
+    {
+      "file": "role-coordinator-direct-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/b29b66d5-f5ff-4ca6-a111-c0ff95975bb9",
+      "title": "role coordinator direct 1440",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "coordinator",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2468,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:47.111861+00:00",
+      "sha256": "5e0207f62762d6bac0501963741a267e57ab44ba3c01ced211d030585beac1fe"
+    },
+    {
+      "file": "role-coordinator-impact-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/773eb23b-71cd-425d-b1be-a20e1ec7375a",
+      "title": "role coordinator impact 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/impact/",
+      "role": "coordinator",
+      "journey": "impact",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3425,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:45.071136+00:00",
+      "sha256": "52901747d1f9301490dfd169f84b58f2a694f1fb8742d85660e3c804d1306ac8"
+    },
+    {
+      "file": "role-coordinator-impact-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/0758727a-dc3d-4638-9a69-d3e2069dddba",
+      "title": "role coordinator impact 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/impact/",
+      "role": "coordinator",
+      "journey": "impact",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3175,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:44.415373+00:00",
+      "sha256": "b521b48c3ac0b7c55092ca11df46466fc53b22a2e731ed863f2ea2eff55a95d9"
+    },
+    {
+      "file": "role-coordinator-initiative-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/6c46224a-f122-4264-ba61-3160eb98026a",
+      "title": "role coordinator initiative 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "coordinator",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 4022,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:43.655415+00:00",
+      "sha256": "b14c146903d5e664a6bb340ee0417bbc054f5efe122d4fe0cfcfdfa2aa7eea38"
+    },
+    {
+      "file": "role-coordinator-initiative-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/f38d23e5-3736-48f5-bfc7-f682ce753f87",
+      "title": "role coordinator initiative 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "coordinator",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3745,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:41.510826+00:00",
+      "sha256": "d155cb4a778e10651b1294fce28dca1a17220e6f4d0b5f58d7c5b5fd8a06b33e"
+    },
+    {
+      "file": "role-coordinator-topCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/354177e0-78f3-492a-ad7f-dfff784a688e",
+      "title": "role coordinator topCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "coordinator",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3806,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:40.735214+00:00",
+      "sha256": "0319e264e4a90b0ec868655b1278915cbd51b07aceb7b19db208f2db9f66befb"
+    },
+    {
+      "file": "role-coordinator-topCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/f61d8cde-70ed-4e01-b74a-9277c7e76334",
+      "title": "role coordinator topCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "coordinator",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3147,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:38.965021+00:00",
+      "sha256": "c0ab2e58d1059a6038ff31b3f656f8ce6543db3202ddd793e99d38fb147b0bb6"
+    },
+    {
+      "file": "role-coordinator-topProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/a0086329-0713-49c9-8dad-e80af5ba8785",
+      "title": "role coordinator topProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "coordinator",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3086,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:38.344704+00:00",
+      "sha256": "4464ba05453369be6c789d8f24196f53001ef2e6ece6c4db6cf2619a77ad7f22"
+    },
+    {
+      "file": "role-coordinator-topProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/fed2e60b-94cd-4ee7-b87a-0921bb29fe79",
+      "title": "role coordinator topProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "coordinator",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2841,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:36.722446+00:00",
+      "sha256": "1ad780cca6af6e91451781074b86394ab745cd18978de84e017f285522a80be9"
+    },
+    {
+      "file": "role-owner-bottomCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/57a2ff56-b046-47a9-85e8-83abb85ee334",
+      "title": "role owner bottomCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3932,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:01.976257+00:00",
+      "sha256": "455c746894588ec8ac91d668d0b65e14f7a7062a4e8d56080420b30d9b1c8485"
+    },
+    {
+      "file": "role-owner-bottomCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/0bdffd8b-b000-481b-ac5c-3f9658f549ed",
+      "title": "role owner bottomCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "owner",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3252,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:59.798167+00:00",
+      "sha256": "20914f4dea4095c1437db9dba3c718b4ca1af4b986f9902222ea58715b14d346"
+    },
+    {
+      "file": "role-owner-bottomProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/6e24d252-b038-4441-804d-3ea94fd07e70",
+      "title": "role owner bottomProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "owner",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3337,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:59.191611+00:00",
+      "sha256": "8f8fca1366a0224ed9fade3a34d1a9781a9ab620d01483c8f670e18726584f24"
+    },
+    {
+      "file": "role-owner-bottomProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/8d90ef5f-0b72-4e71-833d-52d99b946e5f",
+      "title": "role owner bottomProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "owner",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3036,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:57.169422+00:00",
+      "sha256": "581c3ea2bce5bbd67c2ff6a52538892aac4a45384858b805ad30992db4347213"
+    },
+    {
+      "file": "role-owner-capability-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/c57ce050-fdc5-43d1-bc96-5c13f8ef868b",
+      "title": "role owner capability 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "owner",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3141,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:17.757822+00:00",
+      "sha256": "817f244b79085177abc48dd81aeb0a22a6eabba932919bd871b91482b21373ef"
+    },
+    {
+      "file": "role-owner-capability-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/f7fcf572-19dd-4dca-bcda-78c0955e6f9d",
+      "title": "role owner capability 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "owner",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3003,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:17.141982+00:00",
+      "sha256": "13a26bad733f18962a98034a558152c43e3cb480120c72d17f6885905ef9e0b1"
+    },
+    {
+      "file": "role-owner-direct-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/f75540de-65ab-40f6-9dda-9f90f47b1492",
+      "title": "role owner direct 1024",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "owner",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2662,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:19.637286+00:00",
+      "sha256": "3d184a050f5574dfa581db3580ba3a59ad0e5ce8064259379e7f29470ead6c06"
+    },
+    {
+      "file": "role-owner-direct-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/98a059e0-8876-4eb8-928d-ac47c17b0fba",
+      "title": "role owner direct 1440",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "owner",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2418,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:19.143004+00:00",
+      "sha256": "270bd9de5e4655ae6c9dc99ea49339148ef028820590ce0070d9a001caba0713"
+    },
+    {
+      "file": "role-owner-impact-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/e27dfd58-a1b8-46b2-acce-5e64a03b5f21",
+      "title": "role owner impact 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/impact/",
+      "role": "owner",
+      "journey": "impact",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3425,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:16.093426+00:00",
+      "sha256": "c48dc410bf3182bcb92b9f76b0f9c55e6bb28c946f12880d40ca7fc7b4b3c3c1"
+    },
+    {
+      "file": "role-owner-impact-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/3f5c4d8c-2cc8-49ce-853b-cf5e8c990719",
+      "title": "role owner impact 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/impact/",
+      "role": "owner",
+      "journey": "impact",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3175,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:15.456709+00:00",
+      "sha256": "e356b2500c4d86e33f8a877777224f94e1bddbbefa66dd4916000eba3e0adcce"
+    },
+    {
+      "file": "role-owner-initiative-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/7949951b-d962-49f4-b6ea-0302704eeca4",
+      "title": "role owner initiative 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "owner",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 4022,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:14.250600+00:00",
+      "sha256": "c223024d606f1645cdb8f89cc38d9fe1149f55ea8bfdd727b6877379cd7f647a"
+    },
+    {
+      "file": "role-owner-initiative-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/cf5c66ae-4119-424f-bffb-283c78a39e5e",
+      "title": "role owner initiative 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "owner",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3745,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:10.982487+00:00",
+      "sha256": "7ed24439f6ddd41386ee5930fa6922711e2887ac59c839b2996ee7733a434ea5"
+    },
+    {
+      "file": "role-owner-topCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/2824fdcb-168e-4c83-8ac4-432c1fe78992",
+      "title": "role owner topCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "owner",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3806,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:09.913304+00:00",
+      "sha256": "daa68b38ffd5f283af6ca17b963602761f5385d315e63c5499d661ce29adddc5"
+    },
+    {
+      "file": "role-owner-topCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/7669a1f9-7b98-49cf-90fe-ab427bfaf328",
+      "title": "role owner topCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "owner",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 3147,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:06.632199+00:00",
+      "sha256": "bdebc716ca60a69fc78b91180ac09d278be72cb1515549bb72530667cd6d0ef3"
+    },
+    {
+      "file": "role-owner-topProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/bef6c3cc-7f65-4e6c-b2a3-3887e05efde6",
+      "title": "role owner topProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "owner",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3086,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:05.673459+00:00",
+      "sha256": "70edf09a3ca59c5099949341474ab32033efa6c916ac1d6259c4812c373b0799"
+    },
+    {
+      "file": "role-owner-topProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/dd4a3588-6133-46bb-9978-2f23a0b2a4e4",
+      "title": "role owner topProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "owner",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2841,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:47:02.900415+00:00",
+      "sha256": "0311096dafc31474b9c39d1990df6812aaa8eace006b9e3d2e3f4cc322bd81aa"
+    },
+    {
+      "file": "role-reader-bottomCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/d48c0d18-1871-4a9c-aec8-52c77647876a",
+      "title": "role reader bottomCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "reader",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2712,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:50.631219+00:00",
+      "sha256": "2cdbe8ff863b98c16d66a845b098c5725f7327bb667c97fa2f8d8258bfe4c92b"
+    },
+    {
+      "file": "role-reader-bottomCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/c38397de-ceda-4354-8764-aec5e8ec8e1d",
+      "title": "role reader bottomCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/options/compare/",
+      "role": "reader",
+      "journey": "bottomCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2181,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:50.350154+00:00",
+      "sha256": "fa200a7d648e4eaad647b7311e754d5187666bf49351e05e87bbaa04c4c70af8"
+    },
+    {
+      "file": "role-reader-bottomProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/cf589583-c6de-44df-916c-eea630719c20",
+      "title": "role reader bottomProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "reader",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 3157,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:49.760537+00:00",
+      "sha256": "59e54d8c193361fe6ade5fd0421ccfe8f1817ad113b7b1a0476b7ca5e7d7371f"
+    },
+    {
+      "file": "role-reader-bottomProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/3d26e3e3-3918-4f89-9ad7-cf9e761cf349",
+      "title": "role reader bottomProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/b3571266-e09d-4562-b289-7569910b01fc/",
+      "role": "reader",
+      "journey": "bottomProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2881,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:49.410927+00:00",
+      "sha256": "40258ec3c0ecdf57981f3d0391890fb45d22a1b9a776990afaeedf3f0e19cee9"
+    },
+    {
+      "file": "role-reader-capability-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/e1bd1c06-c247-4748-bf6e-9fcaf535a069",
+      "title": "role reader capability 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "reader",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 1189,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:54.479088+00:00",
+      "sha256": "0ea8da161530fed2d1794f19d761f771d69ec6871a394cd37dd7ac9a0daacc59"
+    },
+    {
+      "file": "role-reader-capability-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/2d55649d-8257-408a-979c-f6f001d26c3b",
+      "title": "role reader capability 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/capability/2/",
+      "role": "reader",
+      "journey": "capability",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 1147,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:54.206212+00:00",
+      "sha256": "aaa0c0789823b21442e63b3bf6be0cbc9dd887f33887cb912b304603e5f6eaae"
+    },
+    {
+      "file": "role-reader-direct-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/b3093c19-c600-4fdc-9cc2-d8b1cb3f8125",
+      "title": "role reader direct 1024",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "reader",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2620,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:55.696213+00:00",
+      "sha256": "41fe2b79adf02b661e25ad5e3fc3db5e2465183289aad1c75254ab5552656fc3"
+    },
+    {
+      "file": "role-reader-direct-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/dcb66ac4-5018-48ed-8d8d-33632e59de0b",
+      "title": "role reader direct 1440",
+      "url": "http://127.0.0.1:8776/use-cases/51f84972-28b9-41dd-b833-94a0ba0af455/",
+      "role": "reader",
+      "journey": "direct",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2376,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:55.277498+00:00",
+      "sha256": "e317829373478ca430cd4c83219436f69d2711387a46d7c77a8f7872e5323eb3"
+    },
+    {
+      "file": "role-reader-initiative-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/42c74c66-7a27-4022-a3b1-ad91f5b04419",
+      "title": "role reader initiative 1024",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "reader",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2237,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:53.657684+00:00",
+      "sha256": "83321def53d5b8354bb150cd880864f4e58b12a3dc6481e72374c1d6625b8649"
+    },
+    {
+      "file": "role-reader-initiative-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/6b85e9c2-deb8-4a32-86a0-12397cfce874",
+      "title": "role reader initiative 1440",
+      "url": "http://127.0.0.1:8776/use-cases/initiatives/848b3d01-544f-4c1d-a0a3-0146fa8fb855/",
+      "role": "reader",
+      "journey": "initiative",
+      "findings": [
+        "F4",
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 1943,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:52.802379+00:00",
+      "sha256": "737647cc2334dea7016467f3a328da1cd8c9e40f1d3ed95779df8e7e8989baac"
+    },
+    {
+      "file": "role-reader-topCompare-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/1e9ae903-187a-4322-9eec-1658fbc106d9",
+      "title": "role reader topCompare 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "reader",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2736,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:52.271886+00:00",
+      "sha256": "31702cfe16e8e27e90d75212a47d171ebeae892a2255dd50bd12baddc3e425f8"
+    },
+    {
+      "file": "role-reader-topCompare-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/d8057140-0d2f-4266-b2c1-24d928813e15",
+      "title": "role reader topCompare 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/options/compare/",
+      "role": "reader",
+      "journey": "topCompare",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2205,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:52.036921+00:00",
+      "sha256": "869b7cf64eaba424e0e33c9e01014f81998aba34e513c1b2cbe21a851aec0889"
+    },
+    {
+      "file": "role-reader-topProcess-1024.png",
+      "github_url": "https://github.com/user-attachments/assets/ca99cc9c-a178-4376-a6b0-8ad9623ec5fc",
+      "title": "role reader topProcess 1024",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "reader",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1024,
+      "viewport_height": 1000,
+      "width": 1009,
+      "height": 2912,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:51.539379+00:00",
+      "sha256": "685de988d93d4f608141a52bf1c3e97481ff8efb36476e478932746cf6b418b5"
+    },
+    {
+      "file": "role-reader-topProcess-1440.png",
+      "github_url": "https://github.com/user-attachments/assets/5370c46e-f256-43ec-9b95-9854549bfb90",
+      "title": "role reader topProcess 1440",
+      "url": "http://127.0.0.1:8776/architecture/processes/7bde2598-a9f7-4598-b674-5cbb2f850a3a/",
+      "role": "reader",
+      "journey": "topProcess",
+      "findings": [
+        "F6"
+      ],
+      "viewport_width": 1440,
+      "viewport_height": 1000,
+      "width": 1425,
+      "height": 2703,
+      "full_page": true,
+      "captured_at_utc": "2026-10-22T17:46:51.246107+00:00",
+      "sha256": "c6f06e82fe539193a5d24a30c75a606b0ec9c2d01ddf655caa08ed5c4b824f0a"
+    }
+  ]
+}
