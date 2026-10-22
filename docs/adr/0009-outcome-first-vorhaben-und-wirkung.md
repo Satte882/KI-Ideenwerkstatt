@@ -1,10 +1,10 @@
 # ADR 0009: Outcome-first – vorhabensbezogene Identität und Wirkungsbezug
 
-**Status: Vorgeschlagen (NICHT angenommen)**  
+**Status: Angenommen (fachlich)**  
 **Datum:** 22.10.2026  
 **Issue:** #144 · **Folge-Issues:** #145, #146, #147; #148 separat  
 **Basis:** `main` / `f8cabbc418b4777d7bfd075e6c0dc1a3322aaa41`  
-**Geltung:** Architekturvorschlag; **keine** Freigabe zur Implementierung oder zum Merge.
+**Geltung:** Fachlicher Architekturentscheid nach ausdrücklicher Nutzerannahme am 22.10.2026. **Keine Aussage über bereits implementierte Funktionen.** Der lokale vollständige Aufruferscan bleibt als technische Vorbedingung **vor der ersten Produktänderung in #145** offen; CI wird wegen `paths-ignore: docs/**/*.md` bei diesem reinen Dokumentations-PR nicht ausgelöst.
 
 ## 1. Problem und Entscheidungsziel
 
@@ -69,13 +69,13 @@ Alle Varianten werden an denselben Anforderungen gemessen: **(a)** direkter Use 
 - **(f/g/h)** Kurzfristig wenig Schema-Neuaufbau, langfristig hohe Kopplung in ProcessValidation, SolutionOptions, Prozessversionen, Discovery- und Direktpfaden.
 - **Tragfähig wenn:** Das Produkt bewusst nur Einzelprozess-Vorhaben kennt. Das widerspricht dem geforderten frühzeitigen Outcome-first- und Mehrprozesspfad.
 
-### Entscheidungsvorschlag (noch NICHT angenommen)
+### Angenommene Architekturentscheidung
 
-**Variante B bevorzugen.** Sie erfüllt die Identitäts- und KI-/Non-KI-Anforderungen mit der saubersten fachlichen Trennung. Der zusätzliche Modell-/Zuordnungsaufwand ist real; der vermeintlich einfachere Ausbau von `IdeaCandidate` verlangt jedoch umfassende Änderungen der bestehenden Promotion-/OneToOne-Semantik. `ProcessAnalysis` ist für Outcome-first zu spät und zu eng.
+**Variante B angenommen.** Sie erfüllt die Identitäts- und KI-/Non-KI-Anforderungen mit der saubersten fachlichen Trennung. Der zusätzliche Modell-/Zuordnungsaufwand ist real; der vermeintlich einfachere Ausbau von `IdeaCandidate` verlangt jedoch umfassende Änderungen der bestehenden Promotion-/OneToOne-Semantik. `ProcessAnalysis` ist für Outcome-first zu spät und zu eng.
 
-Keine Variante vermeidet die gesonderte **Fokus- und Entscheidungsumstellung**. Diese ist ein eigenes Implementierungsinkrement. Die Entscheidung über Variante B ist **ausdrücklich durch den Nutzer zu treffen**, nicht durch dieses Dokument automatisch wirksam.
+Keine Variante vermeidet die gesonderte **Fokus- und Entscheidungsumstellung**. Diese ist ein eigenes Implementierungsinkrement. Die Variante ist **fachlich vom Nutzer angenommen**; die Umsetzung erfolgt separat und iterativ nach den im ADR beschriebenen Soft-/Hard-Gates.
 
-## 4. Vorgeschlagene Kardinalitäten und Grenzen (falls B angenommen wird)
+## 4. Kardinalitäten und Grenzen der angenommenen Variante B
 
 - `ImprovementInitiative` (Vorhaben): identitätsstabil, 0..n verknüpfte **IdeaCandidates**, 0..n **ProcessAnalyses**, 0..n realisierte Lösungen/Reviews. Ein vorhabenloser Eingang oder direkter Use Case bleibt möglich.
 - Jede **IdeaCandidate** ist in der ersten Ausbaustufe höchstens einem Vorhaben zugeordnet; unverknüpfte Inbox-Einträge behalten sämtliche bisherigen Statusregeln. Verschiedene Ideen dürfen in **einem** Vorhaben gebündelt werden. Keine automatische Promotion oder fiktive Idee.
@@ -91,7 +91,7 @@ Keine Variante vermeidet die gesonderte **Fokus- und Entscheidungsumstellung**. 
 
 ### 4a. Minimale Vorhabenssteuerung, nicht bei Aufnahme erzwingen
 
-**Vorgeschlagene fachliche Zustände:** `Entwurf` → `Aktiv` → `Abgeschlossen`; `Abgebrochen` als eigener begründeter Endzustand. Dies ist **kein** weiterer KI-Delivery-/Governance-Lifecycle.
+**Angenommene fachliche Mindestzustände:** `Entwurf` → `Aktiv` → `Abgeschlossen`; `Abgebrochen` als eigener begründeter Endzustand. Dies ist **kein** weiterer KI-Delivery-/Governance-Lifecycle.
 
 - **Entwurf:** Aufnahme, Speicherung und Untersuchung **ohne** Owner, Datum, endgültige Ziele oder Evidenz erlaubt. KI-Vorschläge bleiben Entwürfe.
 - **Aktiv:** Bearbeitung/Erkundung bleibt bei offenem Owner/Review-Termin möglich und zeigt konkrete Hinweise. Spätestens bei einem **verbindlichen fachlichen Review oder einer bindenden Auswahl/Freigabe** ist eine identifizierbare berechtigte Person für diese Entscheidung erforderlich – nicht zwingend ein eingeloggter Outcome Owner. „Aktiv“ allein bewirkt keine Freigabe.
@@ -216,12 +216,21 @@ Synthetischer Fall B aus #133 ist Regression, **kein realer RSD-Nutzenbeleg**. N
 - **Gemeinsame Wirkung:** Referenzierung bestehender `UseCase.metric_*` vs. eigenständige Geschäftsergebnismetrik; Aggregation und Doppelerfassung verhindern (#147).
 - **Review-Fälligkeit:** vorhandenen täglichen `scan_due_reviews` und Dashboard um vorhabenbezogene offene Fälle **erweitern**, keine neue Notification-Engine und kein Pflichtdatum beim Intake.
 
-## 11. Noch ausdrücklich vom Nutzer zu entscheidende Punkte
+## 11. Fachlich angenommene Entscheidungen und verbleibende technische Vorbedingungen
 
-1. **Variante B** als führendes Vorhaben-Objekt gegenüber A/C annehmen oder ablehnen?
-2. **Vorgeschlagene Kardinalitäten** (ein Prozess in höchstens einem Vorhaben; mehrere Prozesse pro Vorhaben; viele Vorhaben pro Value Stream) sowie globales Value-Stream-Screening plus vorhabenbezogene, append-only Stage-Fokus-Entscheidungen annehmen?
-3. **Nicht-Login-fähiger Outcome Owner** als fachlich benannte Rolle/Person mit optionalem User-Link, aber ohne geerbte Systemrechte annehmen?
-4. **Minimalen gemeinsamen einmaligen Outcome-Review** statt eines universellen neuen Lifecycle oder einer Messreihe annehmen?
-5. **Gestuften, ausdrücklich nicht blockierenden Aufnahme-/Explorationsvertrag** und für neue verbindliche Lösungswahlen **einschließlich Non-KI/ungebundener Prozessanalyse** sowie neue positive Use-Case-Freigaben kohortenbezogenes Gate mit transparentem Bestandsschutz, Herkunfts-abhängigen Diagnosepfaden und minimalen Vorhabenstatus-/Reviewregeln annehmen? **Einziger Outcome-Träger**, der erst im bindenden Schritt schlank zugeordnet wird, statt Zwangsanlage beim Intake.
+**Fachliche Annahme durch den Nutzer am 22.10.2026**, nach drei Feedback-Schleifen und ausdrücklicher Entscheidung für einen **schlanken, nicht blockierenden Aufnahme- und Discovery-Arbeitsfluss**. Angenommen sind:
 
-**Governance dieses ADR:** Status „Vorgeschlagen“. Erst die **ausdrückliche Entscheidung des Nutzers** erlaubt Änderung auf „Angenommen“. Vorher dürfen #145–#147 **nicht** implementiert werden; #148 bleibt separat priorisiert. Ein grüner CI-Check oder der Merge eines reinen Dokumentations-PR ersetzt die fachliche Zustimmung nicht.
+1. **Ein fachlich führender Outcome-Träger:** `ImprovementInitiative` (Variante B) – **kein** zweites Direkt-Use-Case-Mini-Outcome-Modell. Eintrag und Discovery bleiben ohne Initiative möglich; bei **neuer bindender Lösungswahl inklusive Non-KI** oder neuer positiver direkter Use-Case-Freigabe wird derselbe Träger bei Bedarf minimal und nach menschlicher Bestätigung gebunden.
+2. **Kardinalitäten und Fokus:** Mehrere Vorhaben pro langlebigem Value Stream, mehrere eigene Prozesse pro Vorhaben, jede neue Prozessanalyse höchstens einem Vorhaben; globales Value-Stream-Screening bleibt, neue vorhabensbezogene Fokusentscheidungen sind historisch nachvollziehbar und überschreiben einander nicht.
+3. **Owner und Berechtigungen:** Fachlicher Outcome Owner darf ohne eigenes Systemkonto benannt sein; seine Nennung erteilt keine Freigaberechte, wirkliche entscheidende Person und Vertretung bleiben auditiert.
+4. **Wirksamkeitsnachweis:** Kleine gemeinsame KI-/Non-KI-Wirkungsverfolgung, bestehende `UseCase.metric_*` nur referenzieren, Prozessziel und Geschäftsergebnis getrennt; keine zweite Delivery-Engine und keine vorgezogene historische Messdatenplattform.
+5. **Bedien- und Entscheidungsvertrag:** Ideen/Probleme, Prozessanalyse, Hypothesen, Optionen, direkte Use Cases jederzeit ohne neue Outcome-Pflichtfelder speichern und weiterbearbeiten; **nur bewusst bindende** Entscheidung trifft auf Gate. Problem- und strategischer Pfad haben verschiedene, offen sichtbare Evidenzanforderungen; **kein** zusätzlicher Pflicht-Review-Termin oder zweite Freigabe-Rolle. Alt-Kohorten bleiben geschützt.
+6. **Minimale Steuerung:** `Entwurf/Aktiv/Abgeschlossen/Abgebrochen`; Abschlüsse mit Wirkungsaussage auch „ungeklärt mit Grund“, Abbruch mit Grund; fehlender Review-Termin ist Hinweis und **kein** Speicherhindernis.
+
+**Technische Qualitätsgrenze bleibt offen, nicht als abgeschlossen ausgeben:**
+- Ein vollständiger `rg`-Aufruferscan auf einem echten Checkout war über die hier angebundene GitHub-Schnittstelle/Container ohne GitHub-DNS nicht möglich. Das Inventar ist eine **geprüfte Mindestmenge, keine Vollständigkeitsbehauptung**. **#145 beginnt verpflichtend mit diesem Scan und einem dokumentierten Caller-Impact-Abgleich, bevor Modelle, Migrationen oder Services geändert werden**. Nicht gefundene dynamische/indirekte Aufrufer müssen erfasst werden. Entsteht dadurch ein materiell anderer fachlicher Trade-off, den ADR **vor Implementierung** erneut zur Entscheidung stellen.
+- Die bestehende GitHub-Action `.github/workflows/ci.yml` ignoriert reine Dokumentations-Pfade (`docs/**/*.md`). Für den Dokumentations-PR ist deshalb **kein CI-Lauf ausgelöst**; es gibt keinen grünen Testnachweis. Bei #145 sind Migrationen/Regressionen/CI obligatorisch, inklusive Soft-Guidance- und Non-AI-Bypass-Negativtests.
+- **#145 darf die neue Entscheidungskohorte nicht vor dem Gate aus #146 produktiv aktivieren.** Sonst entstünde während der Zwischenmigration der aktuell erkannte Non-KI-Bypass. Schema/Verknüpfungen dürfen vorbereitet werden; bindender Neupfad erst mit #146 und belegten Negativtests.
+- Issue #148 bleibt ausdrücklich ein separater Priorisierungsentscheid.
+
+**Merge dieses reinen Dokumentations-PR ist mit der fachlichen Nutzerannahme möglich.** Das ist **keine** vorzeitige Freigabe produktiver #145–#147-Änderungen, die ohne technische Abnahme unzulässig sind.
