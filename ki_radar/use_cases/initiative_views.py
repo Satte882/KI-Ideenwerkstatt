@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .impact_reviews import impact_review_context
 from .initiative_models import ImprovementInitiative
 from .initiatives import EDITABLE_FIELDS, can_edit_initiative, save_initiative
 
@@ -60,6 +61,9 @@ def initiative_edit(request, pk=None):
         else:
             messages.success(request, "Vorhaben gespeichert.")
             return redirect(saved)
+    if request.method == "POST" and initiative is not None:
+        # Keep bound form input, but show only persisted statements in the summary.
+        initiative.refresh_from_db()
     return render(
         request,
         "use_cases/initiative_form.html",
@@ -68,5 +72,6 @@ def initiative_edit(request, pk=None):
             "initiative": initiative,
             "can_edit": can_edit,
             "history": initiative.history.all() if initiative else [],
+            **(impact_review_context(initiative) if initiative else {}),
         },
     )

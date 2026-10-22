@@ -444,7 +444,9 @@ def dashboard(request):
         "initiative_reviews": initiative_review_summary(today=today),
         "initiatives": ImprovementInitiative.objects.filter(
             status__in=[ImprovementInitiative.Status.DRAFT, ImprovementInitiative.Status.ACTIVE]
-        ).order_by("next_review_date", "title"),
+        )
+        .select_related("impact_review")
+        .order_by("next_review_date", "title"),
         "can_create_initiative": can_edit_initiative(request.user),
     }
     return render(request, "reporting/dashboard.html", context)

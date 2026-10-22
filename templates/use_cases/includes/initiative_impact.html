@@ -1,0 +1,35 @@
+{% load metric_tags %}
+<section class="cr-section" aria-labelledby="impact-title">
+  <h2 id="impact-title">Wirkungsprüfung · KI und Non-KI</h2>
+  <p>Prozesswirkung belegt keinen Geschäftserfolg. Externe Umsetzung ist möglich; Messwerte werden weder summiert noch als ROI umgedeutet.</p>
+  {% if impact_review %}
+  <p role="status">{% if impact_review.review_required %}Wirkungsprüfung offen / Neubewertung nötig.{% else %}Aktueller Stand geprüft von {{ impact_review.reviewed_by }} am {{ impact_review.reviewed_at|date:"d.m.Y H:i" }}.{% endif %}</p>
+  <dl>
+    <dt>Intervention</dt><dd>{{ impact_review.selection|default:"Keine Lösungsentscheidung referenziert" }}{% if impact_review.selection.outcome_review_required %} · Entscheidung neu bewerten{% endif %}</dd>
+    <dt>Non-KI-Prozesswirkung</dt><dd>{% if impact_review.use_case_id %}Siehe referenzierte KI-Prozessmetrik unten{% else %}{% if impact_review.review_required %}Ungeprüfter Prozessbefund (Entwurf): {% endif %}{{ impact_review.get_process_result_display }} · {{ impact_review.process_measurement|default:"Messstand und Nachweis noch offen" }}{% endif %}</dd>
+    <dt>Geschäftsergebnis – Wirkungsaussage</dt><dd>{{ initiative.effect_statement_label }} · {{ initiative.effect_reason|default:"Begründung noch offen" }}</dd>
+    <dt>Eigenständige Geschäftsergebnismessung</dt><dd>{{ impact_review.business_measurement|default:"Noch nicht gemessen / offen" }}</dd>
+    <dt>Nachweis</dt><dd>{{ impact_review.business_evidence|default:"Noch offen" }}</dd>
+    <dt>Abgrenzung zur Prozessmetrik</dt><dd>{{ impact_review.measurement_difference|default:"Noch offen / keine KI-Prozessmetrik referenziert" }}</dd>
+    <dt>Attribution / Wirkannahme</dt><dd>{% if impact_review.review_required %}Ungeprüfte Attribution (Entwurf): {% endif %}{{ impact_review.get_attribution_display }} · {{ impact_review.attribution_reason|default:"Beitrag zum Ergebnis noch nicht nachgewiesen" }}</dd>
+  </dl>
+  {% else %}<p role="status">Wirkungsprüfung offen. Eine bevorzugte Lösung oder fachlich angenommene Hypothese ist noch kein Wirksamkeitsnachweis.</p>{% endif %}
+  <h3>KI-Prozessmetriken · aktuelle Originaldaten</h3>
+  <p>Jeder Use Case bleibt einzeln führend für Messung, Reviews und Governance. Keine automatische Addition. Änderungen an Messwerten erfordern erneute fachliche Betrachtung.</p>
+  {% for uc in impact_use_cases %}{% metric_set uc as metric %}
+  <dl>
+    <dt><a href="{{ uc.get_absolute_url }}">{{ uc.short_id }} · {{ uc.title }}</a>{% if impact_review.use_case_id == uc.pk %} · im Wirkungsreview referenziert{% endif %}</dt>
+    <dd>{{ uc.metric_name|default:"Messdefinition offen" }} · {{ uc.metric_result_label }}<br>
+      Baseline: {{ metric.baseline.display }} · Ziel: {{ metric.target.display }} · Ist: {{ metric.actual.display }}<br>
+      Methode: {{ uc.metric_measurement_method|default:"Offen" }} · Zeitraum: {{ uc.metric_measurement_period|default:"Offen" }} · Population: {{ uc.metric_measurement_population|default:"Offen" }}<br>
+      Messdatum: {{ uc.metric_measured_at|date:"d.m.Y"|default:"Offen" }} · {% if uc.metric_evidence_url %}<a href="{{ uc.metric_evidence_url }}">Messnachweis</a>{% else %}Nachweis offen{% endif %}
+    </dd>
+  </dl>
+  {% empty %}<p>Keine KI-Prozessmetrik verknüpft. Non-KI benötigt keinen künstlichen KI-Use-Case.</p>{% endfor %}
+  <h3>Dokumentierte Lösungsentscheidungen</h3>
+  <ul>{% for decision in impact_selections %}<li><a href="{{ decision.process_analysis.get_absolute_url }}">{{ decision }}</a> · {{ decision.decided_at|date:"d.m.Y" }} · {% if decision.outcome_review_required %}Neubewertung nötig{% elif not decision.outcome_snapshot %}historisch nicht gebunden{% else %}Outcome-Bezug vorhanden{% endif %}</li>{% empty %}<li>Noch keine bindende Lösungsentscheidung.</li>{% endfor %}</ul>
+  {% if impact_review %}<details class="architecture-disclosure"><summary>Gespeicherte Wirkungsprüfungen und Herkunft</summary>
+    <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Bearbeiter / Zeitpunkt</th><th scope="col">Geprüfter Stand</th><th scope="col">Prozess / Geschäftsergebnis</th><th scope="col">Attribution</th></tr></thead>
+    <tbody>{% for entry in impact_review.history.all %}<tr><td>{{ entry.history_user|default:"Unbekannt" }} · {{ entry.history_date|date:"d.m.Y H:i" }}</td><td>{% if entry.reviewed_at %}Vorhabensrevision {{ entry.initiative_revision }} · Outcome {{ entry.outcome_revision }} · Prüfer {{ entry.reviewed_by|default:"Unbekannt" }}{% else %}Entwurf{% endif %}<br>Entscheidung {{ entry.selection_id|default:"Offen" }} · Use Case {{ entry.use_case_id|default:"Keiner" }} · Original-Messstand {{ entry.metric_history_id|default:"Offen" }}</td><td>{{ entry.process_measurement|default:"KI-Referenz / unbekannt" }}<br>{{ entry.business_measurement|default:"Geschäftsergebnis offen" }} · {{ entry.business_evidence }}</td><td>{{ entry.get_attribution_display }} · {{ entry.attribution_reason }}</td></tr>{% endfor %}</tbody></table></div>
+  </details>{% endif %}
+</section>

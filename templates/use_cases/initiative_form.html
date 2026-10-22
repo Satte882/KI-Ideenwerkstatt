@@ -19,7 +19,7 @@
     <div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
       {{ field }}{% if field.errors %}<div class="text-danger" role="alert">{{ field.errors }}</div>{% endif %}
     </div>{% endif %}{% endfor %}
-    <p>Abschluss verlangt eine begründete Wirkungsaussage, auch „noch ungeklärt“. Ein Abbruch benötigt eine Abbruchbegründung. Aktiv bedeutet keine Freigabe.</p>
+    <p>Abschluss verlangt eine begründete Wirkungsaussage, auch „noch ungeklärt“. Eine gespeicherte Wirkungsaussage bleibt bis zur aktuellen Wirkungsprüfung ungeprüft; „Bestätigt“ im Entwurf ist kein Geschäftserfolgsnachweis. Ein Abbruch benötigt eine Abbruchbegründung. Aktiv bedeutet keine Freigabe.</p>
   </div>
   <div class="card-footer d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Vorhaben speichern</button><button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary">Als Entwurf sichern</button><a class="btn btn-outline-secondary" href="{% url 'reporting:dashboard' %}">Arbeitsvorrat</a></div>
 </form></div>
@@ -30,8 +30,11 @@
 <dt>Wirkannahme</dt><dd>{{ initiative.impact_hypothesis|default:"Noch offen" }}</dd>
 <dt>Outcome Owner</dt><dd>{{ initiative.outcome_owner|default:"Noch offen" }}</dd></dl>
 {% endif %}
-{% if initiative %}<details class="architecture-disclosure mt-4"><summary>Gespeicherte Vorhabensstände und Bearbeiter</summary>
-  <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Revision</th><th scope="col">Zeitpunkt</th><th scope="col">Bearbeiter</th><th scope="col">Status</th><th scope="col">Geschäftsergebnis / Wirkannahme</th><th scope="col">Wirkungsaussage / Abbruch</th></tr></thead>
+{% if initiative %}
+{% if can_edit %}<p><a class="btn btn-outline-secondary" href="{% url 'use_cases:initiative_impact' initiative.pk %}">Wirkungsprüfung bearbeiten</a></p>{% endif %}
+{% include "use_cases/includes/initiative_impact.html" %}
+<details class="architecture-disclosure mt-4"><summary>Gespeicherte Vorhabensstände und Bearbeiter</summary>
+  <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Revision</th><th scope="col">Zeitpunkt</th><th scope="col">Bearbeiter</th><th scope="col">Status</th><th scope="col">Geschäftsergebnis / Wirkannahme</th><th scope="col">Dokumentierte Wirkungsaussage / Abbruch (kein Prüfnachweis)</th></tr></thead>
     <tbody>{% for entry in history %}<tr><td>{{ entry.revision }}<br>{{ entry.history_change_reason|default:"" }}</td><td><time datetime="{{ entry.history_date|date:'c' }}">{{ entry.history_date|date:'d.m.Y H:i' }}</time></td><td>{{ entry.updated_by|default:"Unbekannt" }}</td><td>{{ entry.get_status_display }}</td><td>{{ entry.business_outcome|default:"Noch offen" }}<br>{{ entry.impact_hypothesis|default:"Noch offen" }}</td><td>{{ entry.get_effect_status_display }} {{ entry.effect_reason }} {{ entry.cancellation_reason }}</td></tr>{% endfor %}</tbody>
   </table></div>
 </details>{% endif %}

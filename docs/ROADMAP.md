@@ -177,6 +177,13 @@ Der aktuelle Messstand reicht für Golden Path, Pilotbewertung und Go-live. Ein 
 
 Zentraler Nachweis für das Go-live-/Scale-Gate: #333.
 
+Vorhaben führen zusätzlich einen gemeinsamen aktuellen Wirkungsreview für KI und
+Non-KI (#147, ADR 0009). Er trennt Prozesswirkung, Geschäftsergebnismessung und
+Attribution; unbekannte Geschäftswirkung bleibt offen. KI-Prozessmetriken werden aus
+den bestehenden Use Cases referenziert, nicht erneut erfasst oder summiert. Entwürfe,
+Bestandsfälle und bestehende Governance-/Pilot-/Go-live-Gates bleiben erhalten.
+Versionierte Messreihen bleiben unter Later / Priorität 3 geparkt.
+
 ## 8. Business & Decision Control Room
 
 Die Oberfläche wurde auf die fachliche Arbeit und die jeweils nächste Entscheidung ausgerichtet:
