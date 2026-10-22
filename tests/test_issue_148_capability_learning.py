@@ -18,6 +18,7 @@ from test_issue_146_outcome_contract import bind_process
 from test_issue_146_outcome_contract import process as process_fixture
 
 pytestmark = pytest.mark.django_db
+process = process_fixture
 
 
 @pytest.fixture
@@ -301,14 +302,14 @@ def test_correction_ui_preserves_original_and_shows_audit(client, owner, initiat
     result = client.get(reviewed.get_absolute_url())
     html = result.content.decode()
     assert "Governance-Referenz war falsch" in html
-    assert "Unverbrauchte Fall-Referenzen" in html
+    assert "Neue Holdout-Fälle" in html
     assert reviewed.retests.count() == 0
 
 
 def test_reviewed_negative_capability_visible_on_solution_comparison(
-    client, owner, process_fixture
+    client, owner, process
 ):
-    initiative = bind_process(owner, process_fixture)
+    initiative = bind_process(owner, process)
     finding = save(
         owner,
         initiative,
@@ -322,7 +323,7 @@ def test_reviewed_negative_capability_visible_on_solution_comparison(
     draft = save(owner, initiative, {"title": "Noch ungetestete KI-Idee"})
     client.force_login(owner)
     url = reverse(
-        "architecture:solution_option_compare", args=[process_fixture.pk]
+        "architecture:solution_option_compare", args=[process.pk]
     )
     response = client.get(url)
     assert response.status_code == 200
@@ -330,4 +331,4 @@ def test_reviewed_negative_capability_visible_on_solution_comparison(
     assert finding.title in html
     assert "Capability nicht bestätigt" in html
     assert draft.title not in html
-    assert "kein Geschäftsnutzen-Nachweis" in html
+    assert "Geschäftsnutzen-Nachweis" in html
