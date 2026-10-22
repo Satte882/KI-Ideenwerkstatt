@@ -6,6 +6,44 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 
+class InitiativeQuerySet(models.QuerySet):
+    def _protect_proof_fields(self, fields):
+        from .initiatives import OUTCOME_FIELDS
+
+        if set(fields) & {
+            *OUTCOME_FIELDS,
+            "status",
+            "effect_status",
+            "effect_reason",
+            "revision",
+            "outcome_revision",
+        }:
+            raise ValidationError(
+                "Vorhabensabschlüsse und Wirkungsaussagen benötigen Einzelspeicherung."
+            )
+
+    def update(self, **kwargs):
+        self._protect_proof_fields(kwargs)
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, batch_size=None):
+        self._protect_proof_fields(fields)
+        return super().bulk_update(objs, fields, batch_size=batch_size)
+
+    def bulk_create(self, objs, **kwargs):
+        objs = list(objs)
+        if kwargs.get("update_conflicts") or any(
+            obj.status == "completed" and obj.effect_status in {"confirmed", "refuted"}
+            for obj in objs
+        ):
+            raise ValidationError("Belegte Vorhabensabschlüsse benötigen einen Wirkungsreview.")
+        return super().bulk_create(objs, **kwargs)
+
+
+class InitiativeManager(models.Manager.from_queryset(InitiativeQuerySet)):
+    pass
+
+
 class OutcomeQuerySet(models.QuerySet):
     def bulk_update(self, objs, fields, batch_size=None):
         if set(fields) & {"outcome_contract_version", "decision_status"}:

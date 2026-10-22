@@ -299,9 +299,7 @@ def test_completion_and_cancellation_are_honest_and_separate(owner, effect):
         with pytest.raises(ValidationError):
             save_initiative(actor=owner, initiative=initiative, data=requested_completion)
         requested_completion["effect_status"] = "unclear"
-    completed = save_initiative(
-        actor=owner, initiative=initiative, data=requested_completion
-    )
+    completed = save_initiative(actor=owner, initiative=initiative, data=requested_completion)
     assert completed.status == "completed"
     other = draft(owner, "Abbruch")
     with pytest.raises(ValidationError):

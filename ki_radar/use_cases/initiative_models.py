@@ -10,8 +10,12 @@ from simple_history.models import HistoricalRecords
 
 from ki_radar.core.models import TimeStampedModel
 
+from .outcome_guards import InitiativeManager
+
 
 class ImprovementInitiative(TimeStampedModel):
+    objects = InitiativeManager()
+
     class Status(models.TextChoices):
         DRAFT = "draft", "Entwurf"
         ACTIVE = "active", "Aktiv"
@@ -103,16 +107,20 @@ class ImprovementInitiative(TimeStampedModel):
             if not self.effect_reason.strip():
                 errors["effect_reason"] = "Bitte die Wirkungsaussage begründen."
             if self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}:
+                from .initiatives import OUTCOME_FIELDS
+
                 previous = (
                     type(self).objects.filter(pk=self.pk).first()
                     if not self._state.adding
                     else None
                 )
-                # Existing completed records remain unless their status/claim changes.
+                claim_changed = previous is None or any(
+                    getattr(previous, field) != getattr(self, field)
+                    for field in (*OUTCOME_FIELDS, "effect_status", "effect_reason")
+                )
+                # Grandfather unchanged historical completions, not new claims.
                 changing_claim = (
-                    previous is None
-                    or previous.status != self.Status.COMPLETED
-                    or previous.effect_status != self.effect_status
+                    previous is None or previous.status != self.Status.COMPLETED or claim_changed
                 )
                 if changing_claim:
                     review = (
@@ -125,8 +133,12 @@ class ImprovementInitiative(TimeStampedModel):
                     if (
                         review is None
                         or review.review_required
-                        or previous.effect_reason != self.effect_reason
+                        or claim_changed
                         or previous.outcome_revision != self.outcome_revision
+                        or not review.reviewed_by_id
+                        or not (review.selection_id or review.use_case_id)
+                        or not review.business_measurement.strip()
+                        or not review.business_evidence.strip()
                     ):
                         errors["status"] = (
                             "Bestätigter oder widerlegter Geschäftserfolg darf nur mit "
@@ -139,7 +151,9 @@ class ImprovementInitiative(TimeStampedModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         previous = (
-            type(self).objects.filter(pk=self.pk).first() if not self._state.adding else None
+            type(self).objects.select_for_update().filter(pk=self.pk).first()
+            if not self._state.adding
+            else None
         )
         transition_to_proven_completion = (
             self.status == self.Status.COMPLETED
@@ -337,6 +351,5 @@ class InitiativeImpactReview(TimeStampedModel):
             "metric_evidence_url",
         )
         return any(
-            getattr(original, field) != getattr(self.use_case, field)
-            for field in metric_fields
+            getattr(original, field) != getattr(self.use_case, field) for field in metric_fields
         )
