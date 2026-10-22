@@ -79,6 +79,10 @@ def impact_review_edit(request, pk):
                 request, "Aktueller Wirkungsstand gespeichert; keine Pilot-/Betriebsfreigabe."
             )
             return redirect(initiative)
+    if request.method == "POST":
+        # ModelForm mutates its instance even on failure. The saved summary must
+        # never present those unsaved inputs under a previous review's timestamp.
+        context = impact_review_context(initiative)
     return render(
         request,
         "use_cases/impact_review_form.html",

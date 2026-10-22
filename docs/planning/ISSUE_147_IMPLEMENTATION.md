@@ -43,6 +43,8 @@ Lösungsvergleich und Wirkung-&-Betrieb-Workspace verlinken denselben Vorhabenst
 Bearbeitungsformular hat getrennte Befehle zum Entwurfsspeichern und Prüfabschluss;
 fehlgeschlagene Prüfung behält Eingaben. Fehlende Nachweise blockieren keinen Intake.
 Vorhandene Abschluss-/Abbruchregeln werden wiederverwendet, nicht verschärft.
+Nach fehlgeschlagenen Änderungen liest die Zusammenfassung den gespeicherten
+Stand neu; ungespeicherte Eingaben erhalten nie den Prüfzeitpunkt eines alten Reviews.
 
 Migration 0017 legt ausschließlich Review-/Audit-Tabellen an. Keine Backfills,
 keine Kohortenänderung und keine Änderung an Governance-, Review-, Pilot-, Go-live-
@@ -55,6 +57,9 @@ bestehenden #145/#146-, Intake-, Review-, Outcome-Workspace- und Messregressione
 Vollständiger CI-Nachweis steht im PR. Der lokale Caller-Abgleich umfasst Vorhaben,
 Messfelder, Lösungsentscheidungen, Outcome Workspace, Scan/Dashboard und Exporte;
 keine Änderung an bestehenden Export-/Governance-Contracts notwendig.
+Desktop-Prüfung bei 1440 × 1000: Originalmetrik und offene Geschäftswirkung getrennt
+sichtbar, Prüfablehnung mit erhaltenen Eingaben und anschließender Entwurfsspeicherung.
+Mobil/Tablet sind gemäß Nutzerauftrag kein Abnahmescope.
 
 #148 benötigt für die unveränderte Trennung von Learning Value und Business Value
 keine neue technische Abhängigkeit. Es bleibt separat zu priorisieren; kein neuer

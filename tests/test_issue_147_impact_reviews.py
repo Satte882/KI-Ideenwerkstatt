@@ -211,3 +211,36 @@ def test_failed_review_retains_input_and_empty_draft_saves(client, owner, initia
     response = client.post(url, data)
     assert response.status_code == 302
     assert InitiativeImpactReview.objects.get().business_measurement == data["business_measurement"]
+
+
+def test_failed_edit_does_not_display_unsaved_evidence_as_reviewed(client, owner, initiative, case):
+    review = save(
+        owner,
+        initiative,
+        {
+            "use_case": case,
+            "effect_status": "unclear",
+            "effect_reason": "Noch offen",
+        },
+        finalize=True,
+    )
+    initiative.refresh_from_db()
+    client.force_login(owner)
+    response = client.post(
+        reverse("use_cases:initiative_impact", args=[initiative.pk]),
+        {
+            "action": "review",
+            "expected_revision": initiative.revision,
+            "use_case": case.pk,
+            "process_result": "unknown",
+            "attribution": "unclear",
+            "business_measurement": "Ungeprüfte Änderung",
+            "effect_status": "confirmed",
+            "effect_reason": "Versuch ohne Nachweis",
+        },
+    )
+    assert response.status_code == 200
+    assert response.context["form"]["business_measurement"].value() == "Ungeprüfte Änderung"
+    assert response.context["impact_review"].business_measurement == ""
+    assert response.context["impact_review"].reviewed_at == review.reviewed_at
+    assert response.context["initiative"].effect_status == "unclear"
