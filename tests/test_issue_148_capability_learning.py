@@ -4,10 +4,18 @@ import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.urls import reverse
 
-from ki_radar.use_cases.capability_experiments import save_capability_experiment
-from ki_radar.use_cases.capability_models import CapabilityExperiment
+from ki_radar.use_cases.capability_experiments import (
+    add_capability_correction,
+    save_capability_experiment,
+)
+from ki_radar.use_cases.capability_models import (
+    CapabilityExperiment,
+    CapabilityExperimentCorrection,
+)
 from ki_radar.use_cases.initiatives import save_initiative
 from ki_radar.use_cases.models import UseCase
+from test_issue_146_outcome_contract import bind_process
+from test_issue_146_outcome_contract import process as process_fixture
 
 pytestmark = pytest.mark.django_db
 
@@ -239,3 +247,87 @@ def test_human_review_view_and_retest_link(client, owner, initiative):
     assert "Nachtest mit neuen Holdout-Fällen" in html
     assert "Learning Value" in html
     assert client.post(record.get_absolute_url(), data).status_code == 403
+
+
+def test_reviewed_correction_is_append_only_without_fictitious_retest(owner, initiative):
+    reviewed = save(owner, initiative, evidence(data_kind="synthetic"), finalize=True)
+    comment = add_capability_correction(
+        experiment=reviewed,
+        actor=owner,
+        note="Bisher als synthetisch bezeichnet; tatsächliche Kategorie real. "
+        "Governance-Referenz muss separat nachgereicht und geprüft werden.",
+    )
+    assert comment.created_by == owner
+    assert comment.experiment == reviewed
+    reviewed.refresh_from_db()
+    assert reviewed.data_kind == "synthetic"
+    assert reviewed.retests.count() == 0
+    with pytest.raises(ValidationError, match="unveränderlich"):
+        comment.note = "Alte Aussage ohne Hinweis überschrieben"
+        comment.save()
+    with pytest.raises(ValidationError):
+        CapabilityExperimentCorrection.objects.filter(pk=comment.pk).update(
+            note="Manipuliert"
+        )
+
+
+def test_correction_requires_existing_review_and_authorized_actor(
+    owner, other_owner, initiative
+):
+    draft = save(owner, initiative, {"title": "Offen"})
+    with pytest.raises(ValidationError, match="Entwürfe"):
+        add_capability_correction(experiment=draft, actor=owner, note="Falsch")
+    reviewed = save(owner, initiative, evidence(), finalize=True)
+    with pytest.raises(PermissionDenied):
+        add_capability_correction(
+            experiment=reviewed, actor=other_owner, note="Unbefugter Nachtrag"
+        )
+    with pytest.raises(ValidationError, match="begründen"):
+        add_capability_correction(experiment=reviewed, actor=owner, note=" ")
+    assert not CapabilityExperimentCorrection.objects.exists()
+
+
+def test_correction_ui_preserves_original_and_shows_audit(client, owner, initiative):
+    reviewed = save(owner, initiative, evidence(), finalize=True)
+    client.force_login(owner)
+    response = client.post(
+        reviewed.get_absolute_url(),
+        {
+            "action": "correct",
+            "correction_note": "Governance-Referenz war falsch: alte Nummer A, richtig B.",
+        },
+    )
+    assert response.status_code == 302
+    result = client.get(reviewed.get_absolute_url())
+    html = result.content.decode()
+    assert "Governance-Referenz war falsch" in html
+    assert "Unverbrauchte Fall-Referenzen" in html
+    assert reviewed.retests.count() == 0
+
+
+def test_reviewed_negative_capability_visible_on_solution_comparison(
+    client, owner, process_fixture
+):
+    initiative = bind_process(owner, process_fixture)
+    finding = save(
+        owner,
+        initiative,
+        evidence(
+            title="KI-Extraktion verworfen",
+            finding="not_supported",
+            learning_value="Regelbasierte Prüfung ist günstiger und nachvollziehbarer.",
+        ),
+        finalize=True,
+    )
+    draft = save(owner, initiative, {"title": "Noch ungetestete KI-Idee"})
+    client.force_login(owner)
+    url = reverse(
+        "architecture:solution_option_compare", args=[process_fixture.pk]
+    )
+    response = client.get(url)
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert finding.title in html
+    assert "Capability nicht bestätigt" in html
+    assert draft.title not in html
+    assert "kein Geschäftsnutzen-Nachweis" in html
