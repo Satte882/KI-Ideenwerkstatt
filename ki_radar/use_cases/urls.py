@@ -4,6 +4,7 @@ from . import (
     ap2_views,
     decision_views,
     idea_views,
+    impact_review_views,
     initiative_views,
     intake_views,
     lean_decision_views,
@@ -14,6 +15,11 @@ from . import (
 
 app_name = "use_cases"
 urlpatterns = [
+    path(
+        "initiatives/<uuid:pk>/impact/",
+        impact_review_views.impact_review_edit,
+        name="initiative_impact",
+    ),
     path("", views.use_case_list, name="list"),
     path("outcome/<str:kind>/<uuid:pk>/", outcome_views.prepare_outcome, name="prepare_outcome"),
     path("initiatives/new/", initiative_views.initiative_edit, name="initiative_create"),

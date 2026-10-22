@@ -21,6 +21,7 @@
 </div>
 
 <section class="outcome-workbench">
+  {% if selected_use_case.initiative_id %}<p><a href="{{ selected_use_case.initiative.get_absolute_url }}">Geschäftsergebnis und gemeinsame Wirkungsprüfung öffnen</a> · Ein erreichtes Prozessziel bestätigt keinen Geschäftserfolg.</p>{% endif %}
   <div class="app-card outcome-control-card outcome-control-card--primary">
     <div class="card-body">
       <div class="outcome-control-heading">

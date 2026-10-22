@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .impact_reviews import impact_review_context
 from .initiative_models import ImprovementInitiative
 from .initiatives import EDITABLE_FIELDS, can_edit_initiative, save_initiative
 
@@ -68,5 +69,6 @@ def initiative_edit(request, pk=None):
             "initiative": initiative,
             "can_edit": can_edit,
             "history": initiative.history.all() if initiative else [],
+            **(impact_review_context(initiative) if initiative else {}),
         },
     )

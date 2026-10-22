@@ -30,7 +30,10 @@
 <dt>Wirkannahme</dt><dd>{{ initiative.impact_hypothesis|default:"Noch offen" }}</dd>
 <dt>Outcome Owner</dt><dd>{{ initiative.outcome_owner|default:"Noch offen" }}</dd></dl>
 {% endif %}
-{% if initiative %}<details class="architecture-disclosure mt-4"><summary>Gespeicherte Vorhabensstände und Bearbeiter</summary>
+{% if initiative %}
+{% if can_edit %}<p><a class="btn btn-outline-secondary" href="{% url 'use_cases:initiative_impact' initiative.pk %}">Wirkungsprüfung bearbeiten</a></p>{% endif %}
+{% include "use_cases/includes/initiative_impact.html" %}
+<details class="architecture-disclosure mt-4"><summary>Gespeicherte Vorhabensstände und Bearbeiter</summary>
   <div class="table-responsive"><table class="table"><thead><tr><th scope="col">Revision</th><th scope="col">Zeitpunkt</th><th scope="col">Bearbeiter</th><th scope="col">Status</th><th scope="col">Geschäftsergebnis / Wirkannahme</th><th scope="col">Wirkungsaussage / Abbruch</th></tr></thead>
     <tbody>{% for entry in history %}<tr><td>{{ entry.revision }}<br>{{ entry.history_change_reason|default:"" }}</td><td><time datetime="{{ entry.history_date|date:'c' }}">{{ entry.history_date|date:'d.m.Y H:i' }}</time></td><td>{{ entry.updated_by|default:"Unbekannt" }}</td><td>{{ entry.get_status_display }}</td><td>{{ entry.business_outcome|default:"Noch offen" }}<br>{{ entry.impact_hypothesis|default:"Noch offen" }}</td><td>{{ entry.get_effect_status_display }} {{ entry.effect_reason }} {{ entry.cancellation_reason }}</td></tr>{% endfor %}</tbody>
   </table></div>
