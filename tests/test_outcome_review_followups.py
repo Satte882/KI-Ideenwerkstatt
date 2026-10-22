@@ -4,11 +4,11 @@ from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
+from test_issue_147_impact_reviews import case as case_fixture
+from test_issue_147_impact_reviews import initiative as initiative_fixture
 
 from ki_radar.use_cases.impact_reviews import save_impact_review
 from ki_radar.use_cases.initiatives import save_initiative
-from test_issue_147_impact_reviews import case as case_fixture
-from test_issue_147_impact_reviews import initiative as initiative_fixture
 
 pytestmark = pytest.mark.django_db
 initiative = initiative_fixture
