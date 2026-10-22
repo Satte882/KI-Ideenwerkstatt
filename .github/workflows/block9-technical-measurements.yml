@@ -32,7 +32,7 @@ jobs:
 
     env:
       BLOCK9_OUTPUT_DIR: ${{ runner.temp }}/block9-${{ github.run_id }}
-    DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SETTINGS_MODULE: config.settings.test
       DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
       POSTGRES_DB: ki_radar_test
       POSTGRES_USER: ki_radar
