@@ -1,7 +1,8 @@
 """Regression for #147 follow-up: current business proof and metric-only staleness."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from django.core.exceptions import ValidationError
 
