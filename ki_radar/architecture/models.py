@@ -652,6 +652,8 @@ class SolutionSelectionDecision(TimeStampedModel):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValidationError("Eine dokumentierte Lösungsentscheidung ist unveränderlich.")
         if self.process_analysis.outcome_contract_version:
+            if not getattr(self, "_outcome_authorized", False):
+                raise ValidationError("Lösungswahl nur über den zentralen Entscheidungsservice.")
             from ki_radar.use_cases.outcome_contract import validate_decision_snapshot
 
             from .permissions import can_edit_value_stream

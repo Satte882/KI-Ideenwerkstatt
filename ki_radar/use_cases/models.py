@@ -589,6 +589,8 @@ class ApprovalDecision(TimeStampedModel):
         ):
             from ki_radar.accounts.permissions import is_coordinator
 
+            if not getattr(self, "_outcome_authorized", False):
+                raise ValidationError("Freigabe nur über den zentralen Entscheidungsservice.")
             if (
                 not self.decided_by_id
                 or not self.decided_by.is_active

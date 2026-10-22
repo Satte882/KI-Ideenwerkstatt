@@ -553,3 +553,46 @@ def test_activation_migration_preserves_existing_rows_and_marks_only_new_rows(ow
     assert not approval_check(use_case=case, target_status="deferred", actor=owner).blockers
     assert UseCase._meta.get_field("outcome_contract_version").default == 1
     assert ProcessAnalysis._meta.get_field("outcome_contract_version").default == 1
+
+
+def test_orm_selection_cannot_bind_even_with_current_outcome_snapshot(process, owner):
+    from ki_radar.architecture.solution_selection import (
+        build_comparison_snapshot,
+        build_diagnosis_snapshot,
+        ordered_solution_options,
+    )
+    from ki_radar.use_cases.outcome_contract import build_outcome_snapshot
+
+    bind_process(owner, process)
+    options = ordered_solution_options(process)
+    with pytest.raises(ValidationError, match="Entscheidungsservice"):
+        SolutionSelectionDecision.objects.create(
+            process_analysis=process,
+            selected_option=options[0],
+            decided_by=owner,
+            rationale="Auch mit aktuellem Snapshot kein direkter Schreibpfad",
+            outcome_snapshot=build_outcome_snapshot(process),
+            comparison_snapshot=build_comparison_snapshot(options),
+            diagnosis_snapshot=build_diagnosis_snapshot(process),
+            process_version=process.version,
+        )
+
+
+def test_orm_approval_cannot_bypass_governance_with_valid_outcome(
+    owner, coordinator, technical_admin, business_unit
+):
+    from ki_radar.use_cases.outcome_contract import build_outcome_snapshot
+
+    case = direct(owner, coordinator, business_unit)
+    initiative = confirmed(owner)
+    bind_initiative(initiative=initiative, artifact=case, actor=technical_admin)
+    case.refresh_from_db()
+    with pytest.raises(ValidationError, match="Entscheidungsservice"):
+        ApprovalDecision.objects.create(
+            use_case=case,
+            decided_by=technical_admin,
+            decision_status="approved",
+            rationale="Ein Outcome-Snapshot ersetzt keine Governance-Prüfung",
+            finalized_at=timezone.now(),
+            outcome_snapshot=build_outcome_snapshot(case),
+        )

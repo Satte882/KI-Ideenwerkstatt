@@ -836,6 +836,7 @@ def can_review_conditional_decision(*, decision: ApprovalDecision, actor) -> boo
 
 def _save_approval_decision(**kwargs) -> ApprovalDecision:
     decision = ApprovalDecision(**kwargs)
+    decision._outcome_authorized = True
     decision.full_clean()
     decision.save()
     return decision
@@ -932,6 +933,7 @@ def confirm_conditional_decision(*, decision: ApprovalDecision, actor) -> Approv
         raise ValidationError("Freigabe blockiert: " + ", ".join(check.blockers))
 
     decision.second_approved_by = actor
+    decision._outcome_authorized = True
     decision.finalized_at = timezone.now()
     decision.full_clean()
     decision.save(update_fields=["second_approved_by", "finalized_at", "updated_at"])

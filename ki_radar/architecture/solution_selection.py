@@ -267,7 +267,7 @@ def select_preferred_solution(
             + ". Lösungsoptionen können weiterhin exploriert und verglichen werden."
         )
 
-    decision = SolutionSelectionDecision.objects.create(
+    decision = SolutionSelectionDecision(
         process_analysis=process_analysis,
         selected_option=selected,
         rationale=reason,
@@ -277,6 +277,8 @@ def select_preferred_solution(
         decided_by=actor,
         outcome_snapshot=outcome_snapshot,
     )
+    decision._outcome_authorized = True
+    decision.save()
     active_ids = [option.pk for option in options]
     process_analysis.solution_options.filter(pk__in=active_ids).exclude(pk=selected.pk).update(
         recommendation=SolutionOption.Recommendation.REJECTED
