@@ -16,9 +16,11 @@
 
 ### Screenshot-Paket
 
-**60 PNGs**, eine aufklappbare Offline-Galerie `index.html`, `screenshots.json` mit URL/Rolle/Bildmaßen/SHA-256, `roles-final.json`, `layouts.json`, `incident.json` und `persisted-state.json` stehen in der Codex-Ausgabe **`issue155-phase-a-evidence.zip`** bereit. ZIP entpacken, `issue155/index.html` öffnen. Die Galerie verlinkt jedes Originalbild.
+[Durchsuchbarer Screenshot-Index nach Befund, Journey, Rolle und Breite](ISSUE_155_SCREENSHOT_INDEX.md).
 
-- ZIP-SHA-256: `ebea7b79d4b14ce39c7a1017dfff18615deb8f27c76b9faa77a4ddf6a1c8edff`.
+**60 PNGs**, eine aufklappbare Offline-Galerie `index.html`, `screenshots.json` mit URL/Rolle/Bildmaßen/SHA-256, `SCREENSHOT_INDEX.md`, `roles-final.json`, `layouts.json`, `incident.json` und `persisted-state.json` stehen in der Codex-Ausgabe **`issue155-phase-a-evidence.zip`** bereit. ZIP entpacken, `issue155/index.html` öffnen. Die Galerie verlinkt jedes Originalbild.
+
+- ZIP-SHA-256: `12f4a5b7b10dd4770f0969fe24aad898a9289e45d19db36d095ebc3b4b4cc89b`.
 - Keine Bilder, Datenbanken, Browserprofile oder Testskripte wurden in das Git-Repository aufgenommen.
 - **Remote-Anhang noch nicht verfügbar:** Der Upload über das vorhandene GitHub-Issue-Anhangsfeld scheiterte an der fehlenden Edge-Erweiterungsberechtigung „Allow access to file URLs“. Diese Berechtigung wurde nicht verändert. Die Bilder sind direkt als lokale Codex-Ausgabe/Galerie zugänglich; ein GitHub-Anhang bzw. CI-Artefakt wird hier ausdrücklich **nicht** behauptet. Die Sichtung kann mit dem lokal bereitgestellten Paket erfolgen.
 - Bildnummern unten sind Dateipräfixe im ZIP; vollständige Zuordnung in `screenshots.json`. Lokale Test-URLs verwenden `http://127.0.0.1:8775` und erfordern die isolierte Testinstanz; die Screenshots sind unabhängig davon lesbar.
