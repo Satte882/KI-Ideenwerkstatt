@@ -56,7 +56,15 @@ def _formal_text(value):
 
 @transaction.atomic
 def save_initiative(
-    *, actor, data, initiative=None, expected_revision=None, source="human", correction_reason=""
+    *,
+    actor,
+    data,
+    initiative=None,
+    expected_revision=None,
+    source="human",
+    correction_reason="",
+    preparation_key=None,
+    preparation_data=None,
 ):
     from .outcome_contract import MATERIAL_FIELDS
 
@@ -111,6 +119,14 @@ def save_initiative(
         initiative.hypothesis_origin = source
     for key, value in data.items():
         setattr(initiative, key, value)
+    if preparation_key is not None:
+        # This context is never consumed by outcome gates or decision snapshots.
+        drafts = dict(initiative.preparation_drafts)
+        if preparation_data is None:
+            drafts.pop(preparation_key, None)
+        else:
+            drafts[preparation_key] = dict(preparation_data)
+        initiative.preparation_drafts = drafts
     initiative.updated_by = actor
     initiative._history_user = actor
     initiative.save()

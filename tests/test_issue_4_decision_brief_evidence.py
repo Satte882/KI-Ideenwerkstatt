@@ -1304,6 +1304,12 @@ def test_ap2_ready_brief_to_human_ai_selection_and_metric_pilot_draft(
     use_case = UseCase.objects.get()
     assert use_case.architecture_origin.process_analysis == process
     assert use_case.architecture_origin.solution_option == ai_option
+    assert use_case.metric_name == ""
+    assert use_case.ap2_planning_provenance == {}
+    # Selection has no paid side effects; planning requires the explicit action.
+    response = client.post(url, {"continue_ai_handoff": "1"})
+    assert response.status_code == 302
+    use_case.refresh_from_db()
     assert use_case.metric_name == metric_values["metric_name"]
     assert use_case.pilot_scope == metric_values["pilot_scope"]
     assert use_case.metric_baseline is None

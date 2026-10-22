@@ -173,12 +173,12 @@
               <a href="{% url 'use_cases:ap2_decision_surface' selected_use_case.pk %}">Entscheidungsgrundlage ansehen</a>.
             {% endif %}
           </div>
-          <div class="small mt-3"><strong>Nächster Schritt:</strong> AI-Entscheidungsgrundlage vervollständigen und im Use Case fortfahren.</div>
+          <div class="small mt-3"><strong>Optionale KI-Planung:</strong> Erst der folgende Auftrag startet kostenpflichtige Modellaufrufe für Metrik-/Pilotplanung, Architektureingaben und Entscheidungs-/Governance-Entwürfe. Die Entwürfe erteilen keine Freigabe. Die Lösungswahl selbst startet keine KI-Generierung.</div>
           <button class="btn btn-primary mt-2" type="submit"
                   name="continue_ai_handoff" value="1" formnovalidate
-                  data-busy-label="AI-Entscheidungsgrundlage wird vorbereitet …"
+                  data-busy-label="KI-Planungsentwürfe werden erstellt …"
                   data-busy-status="Metrik-, Architektur- und Governance-Entwürfe werden vorbereitet. Das kann einige Sekunden dauern.">
-            Mit AI-Entscheidungsgrundlage fortfahren
+            KI-Planungsentwürfe kostenpflichtig erstellen
           </button>
         {% else %}
           <div class="small mt-2">
@@ -210,6 +210,13 @@
       <div class="alert alert-warning mb-0">
         <strong>Auswahl noch gesperrt.</strong>
         <p class="mt-2">Die folgenden Voraussetzungen sind noch offen. KI-Entwürfe werden absichtlich zunächst als „Noch nicht bewertet“ übernommen.</p>
+        {% if outcome_blockers %}
+          <div class="mb-3" data-testid="selection-outcome-blocker">
+            <strong>Outcome-Bezug noch offen</strong>
+            <ul>{% for blocker in outcome_blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'use_cases:prepare_outcome' kind='process' pk=process_analysis.pk %}">Geschäftsergebnis, Pfad und Vorhabensfokus vorbereiten / bestätigen</a>
+          </div>
+        {% endif %}
 
         {% if focus_blockers %}
           <div class="mb-3" data-testid="selection-focus-blocker">
@@ -248,7 +255,8 @@
           </div>
         {% endif %}
       </div>
-    {% else %}
+    {% endif %}
+    {% if not selection_blocked or form.is_bound %}
       {% if diagnosis_confirmation_required %}
         <div class="alert alert-info" data-testid="combined-diagnosis-selection">
           <strong>Kernbefund fachlich bestätigen</strong>

@@ -17,6 +17,7 @@ from ki_radar.use_cases.ap2_metric_pilot import (
     AP2MetricPilotError,
     generate_and_apply_ap2_metric_pilot,
 )
+from ki_radar.use_cases.outcome_contract import outcome_blockers
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 from .ap2_architecture import AP2ArchitectureError, generate_ap2_architecture_inputs
@@ -56,7 +57,7 @@ def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
         f"{verb}; die Lösungsentscheidung bleibt die Herkunft.",
     )
     use_case = use_case_result.use_case
-    if not use_case.ap2_planning_provenance:
+    if complete_ap2 and not use_case.ap2_planning_provenance:
         try:
             planning = generate_and_apply_ap2_metric_pilot(
                 use_case=use_case,
@@ -75,10 +76,16 @@ def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
             generate_ap2_architecture_inputs(use_case=use_case, actor=request.user)
         except (AP2ArchitectureError, PermissionDenied, ValidationError) as exc:
             messages.warning(request, f"Architecture-Advisor-Eingaben sind noch offen: {exc}")
+        else:
+            messages.success(request, "KI-Architektureingaben sind vorbereitet; fachlich prüfen.")
         try:
             generate_ap2_decision_governance(use_case=use_case, actor=request.user)
         except (AP2DecisionGovernanceError, PermissionDenied, ValidationError) as exc:
             messages.warning(request, f"Entscheidungs-/Governance-Entwurf ist noch offen: {exc}")
+        else:
+            messages.success(
+                request, "KI-Entscheidungs-/Governance-Entwürfe sind vorbereitet; keine Freigabe."
+            )
 
 
 @login_required
@@ -99,6 +106,7 @@ def solution_option_compare(request, pk):
     blockers = comparison_blockers(options)
     diagnosis_blockers = diagnosis_readiness_blockers(process_analysis)
     focus_blockers = focus_readiness_blockers(process_analysis)
+    outcome_missing = outcome_blockers(process_analysis)
     incomplete_options = [option for option in options if not option.comparison_complete]
     can_select = can_edit_value_stream(
         request.user,
@@ -217,9 +225,11 @@ def solution_option_compare(request, pk):
             "blockers": blockers,
             "diagnosis_blockers": diagnosis_blockers,
             "focus_blockers": focus_blockers,
+            "outcome_blockers": outcome_missing,
             "selection_blocked": bool(
                 blockers
                 or focus_blockers
+                or outcome_missing
                 or (diagnosis_blockers and not diagnosis_confirmation_required)
             ),
             "diagnosis_confirmation_required": diagnosis_confirmation_required,

@@ -291,8 +291,14 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     use_case = UseCase.objects.get()
     assert use_case.ap2_planning_provenance == {}
     assert process.solution_selection_decisions.count() == 1
-    assert "Mit AI-Entscheidungsgrundlage fortfahren" in client.get(url).content.decode()
+    assert "KI-Planungsentwürfe kostenpflichtig erstellen" in client.get(url).content.decode()
+    assert attempts == 0  # Binding selection must never invoke a provider.
 
+    retry = client.post(url, {"continue_ai_handoff": "1"})
+    assert retry.status_code == 302
+    use_case.refresh_from_db()
+    assert use_case.ap2_planning_provenance == {}
+    assert attempts == 1
     retry = client.post(url, {"continue_ai_handoff": "1"})
     assert retry.status_code == 302
     use_case.refresh_from_db()
@@ -300,7 +306,7 @@ def test_failed_metric_draft_can_resume_without_second_solution_decision(
     assert process.solution_selection_decisions.count() == 1
     assert UseCase.objects.count() == 1
     assert attempts == 2
-    assert "Mit AI-Entscheidungsgrundlage fortfahren" in client.get(url).content.decode()
+    assert "KI-Planungsentwürfe kostenpflichtig erstellen" in client.get(url).content.decode()
 
 
 @pytest.mark.django_db
@@ -489,7 +495,7 @@ def test_missing_confirmed_cause_is_reviewed_in_same_solution_selection_submit(
     assert organizational.recommendation == SolutionOption.Recommendation.REJECTED
     assert assistant.recommendation == SolutionOption.Recommendation.PREFERRED
     selected_content = client.get(url).content.decode()
-    assert "Mit AI-Entscheidungsgrundlage fortfahren" in selected_content
+    assert "KI-Planungsentwürfe kostenpflichtig erstellen" in selected_content
     assert "Bestehende Auswahl ändern" in selected_content
     assert "Geänderte Auswahl verbindlich speichern" in selected_content
 
