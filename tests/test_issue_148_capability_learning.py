@@ -174,7 +174,7 @@ def test_retest_needs_new_unconsumed_holdouts(owner, initiative):
 def test_retest_must_refer_same_initiative(owner, initiative):
     other = save_initiative(actor=owner, data={"title": "Anderes Vorhaben"})
     previous = save(owner, other, evidence(), finalize=True)
-    with pytest.raises(ValidationError, match="anderen Vorhaben"):
+    with pytest.raises(ValidationError, match="desselben Vorhabens"):
         save(owner, initiative, evidence(retest_of=previous), finalize=True)
 
 
