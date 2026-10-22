@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from .capability_models import CapabilityExperiment
+from .capability_models import CapabilityExperiment, CapabilityExperimentCorrection
 from .initiative_models import ImprovementInitiative
 from .initiatives import can_edit_initiative
 
@@ -124,3 +124,23 @@ def save_capability_experiment(
         experiment.reviewed_at = timezone.now()
     experiment.save()
     return experiment
+
+
+@transaction.atomic
+def add_capability_correction(*, experiment, actor, note):
+    """Append a factual correction without editing the reviewed record or faking a retest."""
+    experiment = CapabilityExperiment.objects.select_for_update().select_related(
+        "initiative"
+    ).get(pk=experiment.pk)
+    if not can_edit_initiative(actor, experiment.initiative):
+        raise PermissionDenied
+    if not experiment.is_reviewed:
+        raise ValidationError("Entwürfe können direkt bearbeitet werden.")
+    note = (note or "").strip()
+    if not note:
+        raise ValidationError("Bitte den falschen und den korrigierten Stand begründen.")
+    return CapabilityExperimentCorrection.objects.create(
+        experiment=experiment,
+        note=note,
+        created_by=actor,
+    )
