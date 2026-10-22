@@ -4,7 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 from simple_history.models import HistoricalRecords
 
@@ -102,12 +102,57 @@ class ImprovementInitiative(TimeStampedModel):
                 errors["effect_status"] = "Bitte eine ehrliche Wirkungsaussage dokumentieren."
             if not self.effect_reason.strip():
                 errors["effect_reason"] = "Bitte die Wirkungsaussage begründen."
+            if self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}:
+                previous = (
+                    type(self).objects.filter(pk=self.pk).first() if not self._state.adding else None
+                )
+                # Legacy completed records are left untouched until a deliberate status/claim change.
+                changing_claim = (
+                    previous is None
+                    or previous.status != self.Status.COMPLETED
+                    or previous.effect_status != self.effect_status
+                )
+                if changing_claim:
+                    review = (
+                        InitiativeImpactReview.objects.select_related("initiative")
+                        .filter(initiative_id=self.pk)
+                        .first()
+                        if previous
+                        else None
+                    )
+                    if (
+                        review is None
+                        or review.review_required
+                        or previous.effect_reason != self.effect_reason
+                        or previous.outcome_revision != self.outcome_revision
+                    ):
+                        errors["status"] = (
+                            "Bestätigter oder widerlegter Geschäftserfolg darf nur mit "
+                            "aktuellem abgeschlossenen Wirkungsreview als abgeschlossen gelten. "
+                            "Ein ungeklärter Abschluss bleibt möglich."
+                        )
             if errors:
                 raise ValidationError(errors)
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        previous = (
+            type(self).objects.filter(pk=self.pk).first() if not self._state.adding else None
+        )
+        transition_to_proven_completion = (
+            self.status == self.Status.COMPLETED
+            and self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}
+            and (previous is None or previous.status != self.Status.COMPLETED)
+        )
         self.full_clean()
         super().save(*args, **kwargs)
+        if transition_to_proven_completion:
+            # The proof was current before the status-only transition. Keep the
+            # same reviewed evidence current for its new initiative revision.
+            review = InitiativeImpactReview.objects.get(initiative_id=self.pk)
+            review.initiative_revision = self.revision
+            review._history_user = self.updated_by
+            review.save(update_fields=["initiative_revision", "updated_at"])
 
     @property
     def review_hint(self):
@@ -259,17 +304,37 @@ class InitiativeImpactReview(TimeStampedModel):
 
     @property
     def review_required(self):
-        return (
+        if (
             not self.reviewed_at
             or self.initiative_revision != self.initiative.revision
             or self.outcome_revision != self.initiative.outcome_revision
             or bool(self.selection_id and self.selection.outcome_review_required)
-            or bool(
-                self.use_case_id
-                and (
-                    self.use_case.is_archived
-                    or self.metric_history_id
-                    != self.use_case.history.values_list("history_id", flat=True).first()
-                )
-            )
+        ):
+            return True
+        if not self.use_case_id:
+            return False
+        if self.use_case.is_archived or self.metric_history_id is None:
+            return True
+        original = self.use_case.history.filter(history_id=self.metric_history_id).first()
+        if original is None:
+            return True
+        # Compare the reviewed metric snapshot, not the entire UseCase revision:
+        # owner, dates or status changes must not invalidate unchanged measurements.
+        metric_fields = (
+            "metric_name",
+            "metric_type",
+            "metric_direction",
+            "metric_unit",
+            "metric_baseline",
+            "metric_target",
+            "metric_actual",
+            "metric_measurement_method",
+            "metric_measurement_period",
+            "metric_measurement_population",
+            "metric_measured_at",
+            "metric_evidence_url",
+        )
+        return any(
+            getattr(original, field) != getattr(self.use_case, field)
+            for field in metric_fields
         )
