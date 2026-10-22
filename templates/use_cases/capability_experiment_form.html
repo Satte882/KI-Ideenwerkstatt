@@ -59,6 +59,33 @@
   </form>
 </div>
 {% endif %}
+{% if experiment and experiment.is_reviewed %}
+<section class="mt-4" aria-labelledby="capability-correction-title">
+  <h2 id="capability-correction-title">Berichtigungen zum geprüften Nachweis</h2>
+  <p>Das historische Original bleibt unverändert. Eine dokumentierte Berichtigung erklärt den falschen und den richtigen Stand, ersetzt aber weder Governance-Freigabe noch einen neuen Capability-Test.</p>
+  {% for correction in corrections %}
+  <div class="cr-inline-note mb-2">
+    <p class="text-preline">{{ correction.note }}</p>
+    <small>Erfasst am {{ correction.created_at|date:"d.m.Y H:i" }} durch {{ correction.created_by|default:"Unbekannt" }}</small>
+  </div>
+  {% empty %}
+  <p>Noch keine Berichtigung.</p>
+  {% endfor %}
+  {% if can_edit %}
+  <form method="post" class="app-card">
+    {% csrf_token %}
+    <div class="card-body">
+      <label class="form-label" for="id_correction_note">Korrekturvermerk mit altem, richtigem Wert und Begründung</label>
+      <textarea id="id_correction_note" name="correction_note" class="form-control" rows="3" required>{{ correction_note_value }}</textarea>
+      {% if correction_error %}<p class="text-danger" role="alert">{{ correction_error }}</p>{% endif %}
+    </div>
+    <div class="card-footer">
+      <button type="submit" name="action" value="correct" class="btn btn-outline-secondary">Berichtigung dauerhaft anhängen</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
 {% if experiment and experiment.is_reviewed and can_edit %}
   <p><a class="btn btn-outline-secondary" href="{% url 'use_cases:capability_experiment_create' initiative.pk %}?retest_of={{ experiment.pk }}">Nachtest mit neuen Holdout-Fällen dokumentieren</a></p>
 {% endif %}
