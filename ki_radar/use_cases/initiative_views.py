@@ -61,6 +61,9 @@ def initiative_edit(request, pk=None):
         else:
             messages.success(request, "Vorhaben gespeichert.")
             return redirect(saved)
+    if request.method == "POST" and initiative is not None:
+        # Keep bound form input, but show only persisted statements in the summary.
+        initiative.refresh_from_db()
     return render(
         request,
         "use_cases/initiative_form.html",

@@ -321,8 +321,38 @@ def test_business_statement_only_qualified_as_reviewed_for_current_review(owner,
     initiative = save_initiative(
         actor=owner,
         initiative=initiative,
-        data={
-            "effect_reason": "Nachträglich geänderte Aussage",
-        },
+        data={"effect_reason": "Nachträglich geänderte Aussage"},
     )
     assert initiative.effect_statement_label.startswith("Ungeprüfte")
+
+
+def test_invalid_initiative_edit_cannot_label_unsaved_claim_as_reviewed(
+    client, owner, initiative, case
+):
+    save(
+        owner,
+        initiative,
+        {
+            "use_case": case,
+            "effect_status": "unclear",
+            "effect_reason": "Noch offen",
+        },
+        finalize=True,
+    )
+    initiative.refresh_from_db()
+    client.force_login(owner)
+    response = client.post(
+        initiative.get_absolute_url(),
+        {
+            "title": initiative.title,
+            "status": "completed",
+            "evidence_level": "hypothesis",
+            "effect_status": "confirmed",
+            "effect_reason": "",
+            "expected_revision": initiative.revision,
+        },
+    )
+    assert response.status_code == 200
+    assert response.context["form"]["effect_status"].value() == "confirmed"
+    assert response.context["initiative"].effect_status == "unclear"
+    assert "<dd>Geprüfte Wirkungsaussage: Bestätigt" not in response.content.decode()
