@@ -87,7 +87,7 @@ def capability_experiment_edit(request, initiative_id, pk=None):
         else:
             messages.success(
                 request,
-                "Capability-Nachweis dokumentiert – keine KI-/Betriebsfreigabe "
+                "Capability-Nachweis dokumentiert - keine KI-/Betriebsfreigabe "
                 "und kein nachgewiesener Geschäftsnutzen.",
             )
             return redirect(experiment.get_absolute_url())
