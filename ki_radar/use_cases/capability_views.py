@@ -21,6 +21,7 @@ class CapabilityExperimentForm(forms.ModelForm):
 
     def __init__(self, *args, initiative, **kwargs):
         super().__init__(*args, **kwargs)
+        self.instance.initiative = initiative
         self.fields["retest_of"].queryset = initiative.capability_experiments.filter(
             reviewed_at__isnull=False
         )
