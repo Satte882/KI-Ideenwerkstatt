@@ -140,3 +140,46 @@ class CapabilityExperiment(TimeStampedModel):
     @property
     def is_reviewed(self):
         return self.reviewed_at is not None
+
+
+
+class CapabilityExperimentCorrection(TimeStampedModel):
+    """Append-only clerical correction; the reviewed experiment stays untouched."""
+
+    experiment = models.ForeignKey(
+        CapabilityExperiment,
+        on_delete=models.PROTECT,
+        related_name="corrections",
+    )
+    note = models.TextField(
+        verbose_name="Berichtigung (alter und korrigierter Stand samt Grund)",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="capability_experiment_corrections",
+        editable=False,
+    )
+    objects = ImmutableDecisionManager()
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+
+    def clean(self):
+        super().clean()
+        if not self.note.strip():
+            raise ValidationError({"note": "Bitte die konkrete Korrektur dokumentieren."})
+        if self.experiment_id and not self.experiment.is_reviewed:
+            raise ValidationError(
+                "Ungeprüfte Entwürfe können direkt bearbeitet werden."
+            )
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValidationError("Ein gespeicherter Korrekturvermerk ist unveränderlich.")
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Korrekturvermerke sind append-only.")
