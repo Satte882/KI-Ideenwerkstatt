@@ -289,14 +289,18 @@ def test_completion_and_cancellation_are_honest_and_separate(owner, effect):
     initiative = draft(owner)
     with pytest.raises(ValidationError):
         save_initiative(actor=owner, initiative=initiative, data={"status": "completed"})
+    requested_completion = {
+        "status": "completed",
+        "effect_status": effect,
+        "effect_reason": "Noch keine Messung möglich",
+    }
+    if effect != "unclear":
+        # #147: proof-free positive/refuted claims cannot be completed.
+        with pytest.raises(ValidationError):
+            save_initiative(actor=owner, initiative=initiative, data=requested_completion)
+        requested_completion["effect_status"] = "unclear"
     completed = save_initiative(
-        actor=owner,
-        initiative=initiative,
-        data={
-            "status": "completed",
-            "effect_status": effect,
-            "effect_reason": "Noch keine Messung möglich",
-        },
+        actor=owner, initiative=initiative, data=requested_completion
     )
     assert completed.status == "completed"
     other = draft(owner, "Abbruch")
