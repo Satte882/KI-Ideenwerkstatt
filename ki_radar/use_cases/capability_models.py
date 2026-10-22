@@ -142,7 +142,6 @@ class CapabilityExperiment(TimeStampedModel):
         return self.reviewed_at is not None
 
 
-
 class CapabilityExperimentCorrection(TimeStampedModel):
     """Append-only clerical correction; the reviewed experiment stays untouched."""
 
