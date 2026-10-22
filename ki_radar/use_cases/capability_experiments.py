@@ -129,9 +129,11 @@ def save_capability_experiment(
 @transaction.atomic
 def add_capability_correction(*, experiment, actor, note):
     """Append a factual correction without editing the reviewed record or faking a retest."""
-    experiment = CapabilityExperiment.objects.select_for_update().select_related(
-        "initiative"
-    ).get(pk=experiment.pk)
+    experiment = (
+        CapabilityExperiment.objects.select_for_update()
+        .select_related("initiative")
+        .get(pk=experiment.pk)
+    )
     if not can_edit_initiative(actor, experiment.initiative):
         raise PermissionDenied
     if not experiment.is_reviewed:
