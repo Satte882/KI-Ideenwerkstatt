@@ -31,10 +31,10 @@ Auch direkte ORM-Relationen, Django-Template-Attribute und historische Datenmigr
 |---|---|---|
 | Ideen-Inbox und Promotion | `use_cases/idea_models.py` (`IdeaCandidate.state`, `promoted_use_case`/`discovery_process_analysis` jeweils `OneToOne`, `quick_score`); `idea_discovery.py`; `idea_views.py`; `idea_forms.py`; `intake_views.py` | Idee ist nicht automatisch Vorhaben; direkte Use Cases und Non-KI können nicht in vorhandenen Promotionsstatus hineingezwungen werden. |
 | Autonome Discovery | `accelerator/architect_contract.py` (`value_stream.outcome`, `strategic_objective`, `process_analysis.outcome`); `architect_service.py`; `architect_views.py`; `architecture/discovery_materialization.py` (`save_stage_focus_decision`) | Value-Stream-Ergebnis ist nicht vorhabensbezogenes Geschäftsergebnis; Prompt-, Schema- und Reparaturversionen dürfen nicht unbemerkt umgedeutet werden. |
-| Option und bindende Wahl | `architecture/models.py::SolutionOption`, `::SolutionSelectionDecision`; `architecture/solution_selection.py::{focus_readiness_blockers,comparison_blockers,diagnosis_readiness_blockers,build_comparison_snapshot,build_diagnosis_snapshot,select_preferred_solution}`; `architecture/solution_views.py`; `templates/architecture/solution_option_compare.html` | Bestehende Optionen enthalten `expected_value` und Engpass-Fit, aber keine gemeinsame Outcome-Revision. Prozessversion ist nicht Outcome-Version. |
+| Option und bindende Wahl | `architecture/models.py::SolutionOption`, `::SolutionSelectionDecision`; `architecture/solution_selection.py::{focus_readiness_blockers,comparison_blockers,diagnosis_readiness_blockers,confirm_diagnosis_and_select_solution,build_comparison_snapshot,build_diagnosis_snapshot,select_preferred_solution}`; `architecture/solution_views.py`; `templates/architecture/solution_option_compare.html` | Bestehende Optionen enthalten `expected_value` und Engpass-Fit, aber keine gemeinsame Outcome-Revision. `diagnosis_readiness_blockers` und der kombinierte Bestätigungsservice verlangen derzeit bestätigte Ursache **für alle** Fälle: strategischen Pfad explizit differenzieren, jedoch nur für bindende Entscheidung. Prozessversion ist nicht Outcome-Version. |
 | Herkunft und Konsistenz | `architecture/models.py::UseCaseOrigin`; `architecture/provenance.py`; `architecture/views.py`; `use_cases/origin_consistency.py`; `use_cases/services.py`; `use_cases/classification.py` (`post_save`) | `UseCaseOrigin` und eingefrorene Vergleichssnapshots nicht rückwirkend verändern oder neu erraten. |
 | Lösungsgenerator | `accelerator/solution_generation_sources.py`; `solution_generation_contract.py`; `solution_generation_entry.py`; `solution_generation_service.py`; Critic-/Repair-Module | Texte generieren Optionen; sie dürfen kein angenommenes Geschäftsergebnis oder eine menschliche Auswahl erfinden. |
-| Direkt-Intake | `use_cases/intake.py`; `intake_views.py`; `lean_intake.py`; `use_cases/forms.py`; `use_cases/views.py` | Neue Outcome-Bindung für neue Initiative möglich, aber Bestand darf nicht blockiert werden. |
+| Direkt-Intake | `use_cases/intake.py`; `intake_views.py`; `lean_intake.py`; `use_cases/forms.py`; `use_cases/views.py`; `use_cases/services.py::approval_check`; `reviews/services.py` (Lifecycle-Review – noch im lokalen Vollscan zu konkretisieren) | **Aufnahme, Entwurf, Bearbeitung und frühe Bewertung bleiben ohne neue Pflichtfelder möglich.** Für neue **positive Freigaben** braucht der direkte Pfad einen Outcome-Kontext; bereits gebundene Lösung referenzieren statt erneut erfragen. Alt-Use-Cases bei späterem Pilot→Betrieb nicht rückwirkend blockieren. |
 | Rollenspezifisches Geschäftsergebnis | `architecture/models.py::WorkDesignAssessment.business_outcome`; `architecture/forms.py`; `architecture/views.py`; `architecture/work_design.py` | TASKSHIFT ist optional, darf nicht zur Source of Truth für alle Initiativen werden. |
 
 ## C. `metric_*` und `UseCase` – verifizierte Nutzer und Risk Surface
@@ -45,7 +45,7 @@ Auch direkte ORM-Relationen, Django-Template-Attribute und historische Datenmigr
 - `templates/reporting/outcome_workspace.html`, `reporting/views.py`, `use_cases/outcome_workspace.py`, `use_cases/status_dimensions.py`.
 
 **Pflichtfelder, Entscheidungen und Governance**
-- `use_cases/blockers.py`, `use_cases/services.py` (PILOT-/GO_LIVE-/APPROVAL-Metriklisten), `use_cases/transition_policy.py`, `use_cases/scale_readiness.py`, `reviews/forms.py`, `reviews/lean_forms.py`.
+- `use_cases/blockers.py`, `use_cases/services.py` (`approval_check`, `create_use_case_from_selected_solution`, PILOT-/GO_LIVE-/APPROVAL-Metriklisten), `use_cases/transition_policy.py` (`validate_transition_shape`, `validate_pilot_start`, `validate_go_live`, `validate_review_command`), `use_cases/scale_readiness.py`, `reviews/forms.py`, `reviews/lean_forms.py`, `reviews/services.py` (`create_review`, vor Implementierung vollständig prüfen).
 - `use_cases/ap2_metric_pilot.py`, `use_cases/ap2_decision_governance.py`, `architecture/ap2_architecture.py`.
 - `ki_radar/reviews/views.py`, `use_cases/lean_outcome.py`, `use_cases/outcome_workspace.py`.
 
@@ -55,12 +55,27 @@ Auch direkte ORM-Relationen, Django-Template-Attribute und historische Datenmigr
 - `review_export_use_cases.py`, `review_export_core.py`, `review_export_architecture.py`, `reporting/views.py`; `delivery/exports.py` bei CSV-/Artefaktkontext explizit überprüfen.
 - `core/demo_data.py`, `demo_decision_data.py`, `golden_path_demo.py`, `scenario_blueprint_apply.py`, `scenario_blueprint_diff.py`, `scenario_blueprint_validation.py`.
 
-**Risiko:** `metric_*` aus `UseCase` auf eine gemeinsame abstrakte Entität zu verschieben hätte hohen Blast Radius. Voraussichtlich risikoärmer: bestehende KI-Metriken belassen und zusätzlich eine schlanke, vorhabensbezogene Wirkungskontrolle nach ADR durchführen. Keine neue Messreihe ohne gesonderte Priorisierung.
+**Risiko:** `metric_*` aus `UseCase` auf eine gemeinsame abstrakte Entität zu verschieben hätte hohen Blast Radius. Voraussichtlich risikoärmer: bestehende KI-Metriken belassen und für den Vorhabensreview **per Referenz auf dieselbe existierende Metrik samt Quelle/Evidenzstand verweisen**. Ein geschäftliches Outcome kann eine **andere** Metrik benötigen, die nicht mit der Prozesskennzahl verwechselt werden darf. Keine zweite editierbare Kopie, kein automatisches Zusammenzählen mehrerer Use Cases und keine neue Messreihe ohne gesonderte Priorisierung.
+
+## C1. Verifizierte Fälligkeit, Dashboard und Eintritts-/Freigabegrenzen
+
+| Stelle | Aktueller Befund | Auswirkung für #145–#147 |
+|---|---|---|
+| `reviews/management/commands/scan_due_reviews.py::Command.handle` | Nur `UseCase.objects.filter(is_archived=False).exclude(status=ENDED)`; zählt `next_review_date` überfällig / in 30 Tagen / fehlend und speichert `SystemJobRun`. | Initiative-Fälligkeiten ergänzen, ohne neue Mail-/Job-Engine; Entwürfe ohne Termin beim Speichern zulassen. |
+| `reporting/views.py::dashboard` | `active_qs`, `decision_queue`, `decision_priority`, `overdue_total` und `due_soon_total` basieren auf `UseCase`. | Vorhaben mit offenen Reviews als **eigene Kategorie** präsentieren; nicht stillschweigend als KI-Use-Case zählen. |
+| `docs/adr/0004-no-email-reminders.md` | Akzeptierter ADR: Dashboard, Monatsreview, überwachter Scan; E-Mail zurückgestellt. | Bestehende Regel ausdrücklich erhalten. |
+| `use_cases/services.py::approval_check` | Prüft positive Use-Case-Entscheidungen auf Assessment, Pflichtdaten, Rollentrennung und Governance. | Neuer Outcome-Vertrag nur für neue **positive** Entscheidungskohorten, niemals für bloße Speicherung oder negative/zurückgestellte Entscheidungen; doppelte Prüfung bei gebundenen Fällen vermeiden. |
+| `use_cases/transition_policy.py` | `validate_pilot_start` und `validate_go_live` prüfen bestehende Übergangsvoraussetzungen; `validate_review_command` orchestriert. | Alt-Use-Case bei späterem Pilot→Betrieb **kein neuer Outcome-Blocker**; geltende Alt-Gates bleiben. |
+| `architecture/solution_selection.py::{diagnosis_readiness_blockers,confirm_diagnosis_and_select_solution}` | Bestätigte Ursache wird aktuell in der verbindlichen Diagnose-/Lösungswahl verlangt. | Problemgetriebene Qualitätsschranke erhalten; strategischer/top-down-Pfad benötigt andere dokumentierte Nachweise statt fingierter Ursache. |
+| `use_cases/models.py::UseCase` und `idea_models.py::IdeaCandidate` | `UseCase.next_review_date` bereits vorhanden, `IdeaCandidate` mit offen/nicht weiterverfolgt/übernommen. | Vorhabensstatus `Entwurf/Aktiv/Abgeschlossen/Abgebrochen` **keine** versteckte Erweiterung des Use-Case-Lifecycles und kein Pflichtdatum im Intake. |
+
+**Aufgaben für den ADR-Implementierungsreview:** Zeitpunkt/Kohortenmarkierung neuer Fälle (Anlage oder ausdrückliche Übernahme), Quelle und Version der bindenden Outcome-Referenz, konkreter positiver Freigabeservice auch über Admin/Lean-/API-Wege, Rechte des tatsächlichen Bestätigers sowie Audit des Pfadwechsels sind im lokalen Vollscan vollständig nachzuweisen.
+
 
 ## D. Test- und UI-Flächen (vor Implementierung auf Vollständigkeit prüfen)
 
 - Fokus/Discovery: `tests/test_stage_focus_and_process_findings.py`, `tests/test_value_stream_scope.py`, `tests/test_value_stream_capture_views.py`, `tests/test_solution_selection_ux.py`, `tests/test_issue_364_process_value_stream_hardening.py`, `tests/test_idea_autonomous_discovery.py`, `tests/test_issue_422_idea_inbox.py`.
-- Outcome/Metrik: `tests/test_issue_340_optional_intake_metrics.py`, `tests/test_issue_100_ap2_metric_pilot.py`, `tests/test_outcome_journey_consistency.py`, `tests/test_outcome_workspace_actions.py`, `tests/test_metric_presentation.py`, `tests/test_delivery_to_pilot.py`.
+- Outcome/Metrik: `tests/test_issue_340_optional_intake_metrics.py`, `tests/test_issue_100_ap2_metric_pilot.py`, `tests/test_outcome_journey_consistency.py`, `tests/test_outcome_workspace_actions.py`, `tests/test_metric_presentation.py`, `tests/test_delivery_to_pilot.py`, `tests/test_negative_decision_without_assessment.py`, `tests/test_review_scan.py`, `tests/test_reporting_dashboard.py`, `tests/test_dashboard_control_room_ui.py`. Neue Negativtests sollen **fehlende Intake-Angaben ohne Save-Blocker** und **direkte neue positive Use-Case-Freigabe ohne Outcome als verbotene Aktion** getrennt prüfen.
 - Demo/Export: `tests/test_demo_architecture_data.py`, `tests/test_demo_data.py`, `tests/test_real_demo_blueprint.py`, weitere `review_export`-, Blueprint- und Delivery-Tests.
 - UI: `templates/architecture/{value_stream_detail,value_stream_form,stage_focus_form,solution_option_compare}.html`, `templates/accelerator/{autonomous_discovery_review,solution_generation_preview}.html`, `templates/use_cases/ideas/*.html`, `templates/reporting/outcome_workspace.html`, `templates/use_cases/assessment_form.html`, `templates/reviews/*.html`.
 
@@ -80,12 +95,12 @@ Auch `getattr`, `select_related`, `prefetch_related`, `values`, Feldnamenlisten,
 
 **Vorläufige risikoarme Folgerung (nicht als implementierte Tatsache verstehen):**
 1. Globale VS-Eignung vom vorhabensspezifischen Stage-Fokus trennen.
-2. Direkte/alte Use Cases ohne Outcome-Inititiative erhalten.
-3. Use-Case-Metriken nicht aus der bestehenden Lifecycle-Policy herauslösen.
-4. Prüfkriterien und negative Service-/DB-/View-Tests aus #145–#147 erst nach angenommenem ADR finalisieren.
+2. Direkte neue Use Cases **weiter ohne Initiative erfassbar halten**; bei positiver neuer Freigabe braucht es einen bestätigten Outcome-Kontext. Alt-Kohorten einschließlich später Pilot→Betrieb behalten Bestandsschutz.
+3. Use-Case-Metriken nicht aus der bestehenden Lifecycle-Policy herauslösen; bei einem Vorhaben-Review auf dieselbe vorhandene Messung **referenzieren**, nicht nochmals editierbar erfassen.
+4. Entwurfsaufnahme, Untersuchung und Speichern nie wegen neuer Outcome-Felder, Owner-/Review-Termin oder Ursachenbestätigung sperren; Pflicht nur für bewusst ausgelöste bindende Wahl/positive Freigabe. Prüfkriterien und negative Service-/DB-/View-Tests aus #145–#147 erst nach angenommenem ADR finalisieren.
 
 ## F. Akzeptanzgrenze
 
 Dieses Dokument ist die **in GitHub gelesene, belegte Ausgangsinventur**. Noch offen: Ergebnis des lokalen Vollscans einschließlich Trefferzahlen, Testaufrufer- und Templatekomplettheit und Review eventueller unbekannter Dynamik. Diese Lücke darf vor fachlicher ADR-Annahme weder als „vollständig inventarisiert“ noch als „alles getestet“ gekennzeichnet werden.
 
-**Keine Tests liefen in diesem reinen Dokumentationsauftrag.** CI nach Anlage des Draft-PR separat beobachten. Der vorgeschlagene ADR bleibt bis zur ausdrücklichen Nutzerannahme nur ein Vorschlag.
+**Keine lokalen Django-/DB-Tests liefen in diesem reinen Dokumentationsauftrag.** Das Projekt liegt nicht als ausführbarer Checkout vor; direkter Clone aus der Containerumgebung scheiterte an fehlender DNS-Auflösung für GitHub. **CI und vollständiger `rg`-Vollscan sind weiterhin ausdrücklich offen** und vor ADR-Abnahme zu verifizieren; niemals als „grün“/„vollständig“ ausgeben, ohne reale Nachweise. Der vorgeschlagene ADR bleibt bis zur ausdrücklichen Nutzerannahme nur ein Vorschlag.
