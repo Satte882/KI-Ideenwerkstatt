@@ -267,14 +267,10 @@ def test_reviewed_correction_is_append_only_without_fictitious_retest(owner, ini
         comment.note = "Alte Aussage ohne Hinweis überschrieben"
         comment.save()
     with pytest.raises(ValidationError):
-        CapabilityExperimentCorrection.objects.filter(pk=comment.pk).update(
-            note="Manipuliert"
-        )
+        CapabilityExperimentCorrection.objects.filter(pk=comment.pk).update(note="Manipuliert")
 
 
-def test_correction_requires_existing_review_and_authorized_actor(
-    owner, other_owner, initiative
-):
+def test_correction_requires_existing_review_and_authorized_actor(owner, other_owner, initiative):
     draft = save(owner, initiative, {"title": "Offen"})
     with pytest.raises(ValidationError, match="Entwürfe"):
         add_capability_correction(experiment=draft, actor=owner, note="Falsch")
@@ -306,9 +302,7 @@ def test_correction_ui_preserves_original_and_shows_audit(client, owner, initiat
     assert reviewed.retests.count() == 0
 
 
-def test_reviewed_negative_capability_visible_on_solution_comparison(
-    client, owner, process
-):
+def test_reviewed_negative_capability_visible_on_solution_comparison(client, owner, process):
     initiative = bind_process(owner, process)
     finding = save(
         owner,
@@ -322,9 +316,7 @@ def test_reviewed_negative_capability_visible_on_solution_comparison(
     )
     draft = save(owner, initiative, {"title": "Noch ungetestete KI-Idee"})
     client.force_login(owner)
-    url = reverse(
-        "architecture:solution_option_compare", args=[process.pk]
-    )
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
     response = client.get(url)
     assert response.status_code == 200
     html = response.content.decode()
