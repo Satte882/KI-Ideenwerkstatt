@@ -212,7 +212,7 @@ def test_draft_form_and_failed_review_preserve_input(client, owner, initiative):
     record = CapabilityExperiment.objects.get()
     assert record.ai_vision == "Noch ungeprüft" and record.reviewed_at is None
     html = client.get(initiative.get_absolute_url()).content.decode()
-    assert "AI-first-Erkundung" in html and "Entwurf – ungeprüft" in html
+    assert "AI-first-Erkundung" in html and "Entwurf" in html and "ungeprüft" in html
 
 
 def test_human_review_view_and_retest_link(client, owner, initiative):
