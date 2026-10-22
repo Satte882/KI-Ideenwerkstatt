@@ -153,4 +153,3 @@ Vorhandene, nicht ausgebaute Assistenzpfade: Idee → autonome Discovery (`archi
 - Auftraggeber klassifiziert **F1–F6 und V1–V3** jeweils als **direkt beheben / separat vorschlagen / nicht ändern**. Insbesondere F2/F5 dürfen bei Bedarf an ausgeschlossene Schichten nur eskaliert werden.
 - Für den menschlichen Kaltdurchlauf: ohne Entwicklerhilfe einen Entwurf wiederfinden, Outcome-Kontext korrigieren, eine Alternative begründet wählen und anschließend Prozess- und Geschäftswirkung erklären lassen. Unklarheiten und längeres Zögern als Beobachtung notieren. Noch nicht durchgeführt.
 - **STOPP nach Phase A. Keine automatische Fortsetzung zu Phase B, kein Fix und kein Merge.**
-
