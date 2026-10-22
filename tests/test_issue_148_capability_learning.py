@@ -3,6 +3,8 @@
 import pytest
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.urls import reverse
+from test_issue_146_outcome_contract import bind_process
+from test_issue_146_outcome_contract import process as process_fixture
 
 from ki_radar.use_cases.capability_experiments import (
     add_capability_correction,
@@ -14,8 +16,6 @@ from ki_radar.use_cases.capability_models import (
 )
 from ki_radar.use_cases.initiatives import save_initiative
 from ki_radar.use_cases.models import UseCase
-from test_issue_146_outcome_contract import bind_process
-from test_issue_146_outcome_contract import process as process_fixture
 
 pytestmark = pytest.mark.django_db
 process = process_fixture
