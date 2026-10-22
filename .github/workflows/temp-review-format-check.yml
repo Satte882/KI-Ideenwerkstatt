@@ -1,0 +1,15 @@
+name: "Temporary formatting diff PR 154"
+on:
+  push:
+    branches: ["fix/outcome-first-review-evidence"]
+jobs:
+  formatter-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --dev
+      - run: uv run ruff format --diff ki_radar/use_cases/initiative_models.py tests/test_issue_145_initiatives.py tests/test_outcome_review_followups.py
