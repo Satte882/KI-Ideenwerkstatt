@@ -117,13 +117,15 @@ def test_overlap_and_duplicate_case_refs_are_not_proven_holdouts(owner, initiati
         save(
             owner,
             initiative,
-            evidence(holdout_case_ids="train-1\nheld-3"), finalize=True,
+            evidence(holdout_case_ids="train-1\nheld-3"),
+            finalize=True,
         )
     with pytest.raises(ValidationError, match="doppelt"):
         save(
             owner,
             initiative,
-            evidence(test_case_ids="train-1\ntrain-1"), finalize=True,
+            evidence(test_case_ids="train-1\ntrain-1"),
+            finalize=True,
         )
     assert not CapabilityExperiment.objects.exists()
 
