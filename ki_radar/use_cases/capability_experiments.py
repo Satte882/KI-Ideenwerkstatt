@@ -83,7 +83,9 @@ def _check_evidence(experiment):
     previous = experiment.retest_of
     while previous:
         if previous.initiative_id != experiment.initiative_id or not previous.is_reviewed:
-            raise ValidationError("Ein Nachtest braucht einen geprüften früheren Test desselben Vorhabens.")
+            raise ValidationError(
+                "Ein Nachtest braucht einen geprüften früheren Test desselben Vorhabens."
+            )
         consumed = _case_ids(previous.test_case_ids) | _case_ids(previous.holdout_case_ids)
         if holdout & consumed:
             raise ValidationError(
