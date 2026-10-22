@@ -170,9 +170,7 @@ class CapabilityExperimentCorrection(TimeStampedModel):
         if not self.note.strip():
             raise ValidationError({"note": "Bitte die konkrete Korrektur dokumentieren."})
         if self.experiment_id and not self.experiment.is_reviewed:
-            raise ValidationError(
-                "Ungeprüfte Entwürfe können direkt bearbeitet werden."
-            )
+            raise ValidationError("Ungeprüfte Entwürfe können direkt bearbeitet werden.")
 
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
