@@ -46,7 +46,10 @@ class CapabilityExperiment(TimeStampedModel):
     holdout_case_ids = models.TextField(
         blank=True,
         verbose_name="Unverbrauchte Fall-Referenzen (eine ID pro Zeile)",
-        help_text="Unbekannte Fälle separat führen; keine bereits getesteten Fälle wiederverwenden.",
+        help_text=(
+            "Unbekannte Fälle separat führen; keine bereits getesteten "
+            "Fälle wiederverwenden."
+        ),
     )
     holdout_unseen_confirmed = models.BooleanField(
         default=False,
@@ -109,11 +112,15 @@ class CapabilityExperiment(TimeStampedModel):
             if self.retest_of_id == self.pk:
                 raise ValidationError({"retest_of": "Ein Test kann nicht sich selbst wiederholen."})
             if self.retest_of.initiative_id != self.initiative_id:
-                raise ValidationError({"retest_of": "Der frühere Test gehört zu einem anderen Vorhaben."})
+                raise ValidationError(
+                    {"retest_of": "Der frühere Test gehört zu einem anderen Vorhaben."}
+                )
 
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk, reviewed_at__isnull=False).exists():
-            raise ValidationError("Ein geprüfter Capability-Nachweis ist unveränderlich; neuen Test anlegen.")
+            raise ValidationError(
+                "Ein geprüfter Capability-Nachweis ist unveränderlich; neuen Test anlegen."
+            )
         self.full_clean()
         return super().save(*args, **kwargs)
 
