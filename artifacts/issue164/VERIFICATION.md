@@ -25,6 +25,7 @@ Unveränderte Use-Case-Kataloge bleiben bei 1.0. Ein neuer Generatorlauf auf ein
 - Der aus unverändertem main (`2cbba9b1f368947c3333b6ecacaeae662cb4a2b3`) abgeleitete Golden-Nachweis `tests/fixtures/accelerator/issue164_legacy.json` friert Katalog, Antwort-Hash, Quellpayload und Quality-Hash ein.
 - Ruff, Format, Django-Systemprüfung und Migrationsprüfung bestanden. Migration 0025 verändert nur die Feldvalidierung im Django-Zustand; PostgreSQL-SQL ist ein No-op. Alte Form-/Übernahmeverträge behalten ihre Pflichtangaben.
 - 33 Vorschauprüfungen bestanden: `frozen-preview-postgres.txt`. Auch nach späterer Quellenänderung oder neuer Pfadrevision bleibt die Vorschau anhand ihrer eingefrorenen Fakten lesbar; erneute Übernahme bleibt gesperrt.
+- 60 abschließende Versions-, Vorschau-, SIPOC-, Zuordnungs- und Prozessprüfungen bestanden: `final-targeted-postgres.txt`.
 - Die vollständige Suite umfasst nach den zusätzlichen Lesbarkeitsprüfungen 2481 Tests. Der abschließende Status wird im PR und dessen CI-Checks ausgewiesen.
 
 ## Echte Desktop-Browserprüfung
