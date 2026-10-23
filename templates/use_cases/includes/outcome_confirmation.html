@@ -1,0 +1,12 @@
+<div class="small mt-2 mb-3" data-testid="outcome-confirmation">
+  <strong>Gespeicherter fachlicher Annahmestand</strong>
+  {% if initiative.confirmed_revision == initiative.outcome_revision and initiative.confirmed_by_id and initiative.confirmed_at %}
+    <p class="mb-1" role="status">Wirkannahme dieser Revision fachlich angenommen.</p>
+    <p class="mb-1">{{ initiative.title }} · Outcome-Revision {{ initiative.confirmed_revision }} · durch {{ initiative.confirmed_by }} · <time datetime="{{ initiative.confirmed_at|date:'c' }}">{{ initiative.confirmed_at|date:'d.m.Y H:i' }}</time></p>
+  {% else %}
+    <p class="mb-1" role="status">Entwurf / fachlich noch nicht angenommen.</p>
+    {% if initiative %}<p class="mb-1">{{ initiative.title }} · Outcome-Revision {{ initiative.outcome_revision }} · aktuelle fachliche Annahme offen.</p>{% endif %}
+  {% endif %}
+  {% if initiative %}<p class="mb-1">Vorhabensstatus: {{ initiative.get_status_display }} · Vorhabensstand {{ initiative.revision }} · Outcome Owner: {{ initiative.outcome_owner|default:"Noch offen" }}</p>{% endif %}
+  <p class="mb-0">Fachlich angenommen ist kein Geschäftserfolgsnachweis.{% if editing %} Ungesicherte Eingaben sind im gespeicherten Annahmestand nicht enthalten.{% endif %}</p>
+</div>

@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import F
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -188,6 +189,7 @@ def prepare_outcome(request, kind, pk):
     process = _process(artifact)
     path = process.discovery_path_decisions.first() if process else None
     initial = {"selected_initiative": initiative.pk if initiative else None}
+    focus = None
     if process and initiative:
         focus = get_phase_focus_decision(process.stage, initiative=initiative)
         if focus:
@@ -249,11 +251,37 @@ def prepare_outcome(request, kind, pk):
             if request.POST.get("action") == "confirm":
                 return redirect(return_url)
             return redirect(f"{request.path}?initiative={saved.pk}")
+    # ModelForm validation changes its instance in memory. Summaries must describe
+    # the persisted revision, while the bound form keeps all submitted input.
+    if form.is_bound:
+        _ = form.errors
+    if initiative is not None and request.method == "POST":
+        initiative.refresh_from_db()
+    previously_confirmed = bool(
+        initiative
+        and initiative.history.filter(
+            confirmed_revision=F("outcome_revision"),
+            confirmed_by__isnull=False,
+            confirmed_at__isnull=False,
+        ).exists()
+    )
+    for name, relevant in (
+        ("change_reason", path is not None),
+        ("correction_reason", previously_confirmed),
+    ):
+        # Preserve unusual POST/draft values and expose every field error even
+        # when its usual context is absent. HiddenInput retains empty context.
+        if relevant or form[name].value() or form[name].errors:
+            form.fields[name].widget = forms.Textarea(attrs={"class": "form-control", "rows": 3})
+        else:
+            form.fields[name].widget = forms.HiddenInput()
     return render(
         request,
         "use_cases/outcome_prepare.html",
         {
             "form": form,
+            "initiative": initiative,
+            "phase_focus": focus,
             "artifact": artifact,
             "return_url": return_url,
             "is_process": process is not None,
