@@ -1,0 +1,221 @@
+{
+  "browser": "Headed Chromium, Playwright CLI",
+  "viewports": [
+    "1440 x 1000",
+    "1024 x 1000"
+  ],
+  "rows": [
+    {
+      "name": "legacy_process",
+      "status": 200,
+      "title": "Fokusprozess",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "WELCHER PROZESS SOLL VERTIEFT WERDEN UND WIE VERLÄUFT ER HEUTE? *",
+        "WELCHE ROLLEN, SYSTEME, DATENOBJEKTE, REGELN UND ÜBERGABEN PRÄGEN DEN PROZESS? *",
+        "WELCHE URSACHEN, AUSNAHMEN UND KENNZAHLEN ERKLÄREN DAS PROBLEM? *"
+      ],
+      "errors": [],
+      "screenshot": "legacy_process-1440.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-Nb6974zAN1POcePwKBPsyhirac5vQfjPHQ9VvdQ5EMc='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "legacy_preview",
+      "status": 200,
+      "title": "KI-Lösungsentwürfe prüfen",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen"
+      ],
+      "errors": [],
+      "screenshot": "legacy_preview-1440.png",
+      "consoleErrors": []
+    },
+    {
+      "name": "current_stages",
+      "status": 200,
+      "title": "Phasen des Value Streams",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "WELCHE PHASEN DURCHLÄUFT DER VALUE STREAM IN WELCHER REIHENFOLGE? *",
+        "WELCHE ROLLEN, SYSTEME SOWIE DATEN ODER DOKUMENTE WERDEN JE PHASE GENUTZT? *",
+        "WELCHE BEOBACHTUNGEN, POTENZIALE UND KENNZAHLEN GIBT ES JE PHASE?"
+      ],
+      "errors": [],
+      "screenshot": "current_stages-1440.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-TUZF8uGj/p19ceMK/oTe0+mi1BXUGSHpetYbXedjzjY='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_process",
+      "status": 200,
+      "title": "Fokusprozess",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "WELCHER PROZESS SOLL VERTIEFT WERDEN UND WIE VERLÄUFT ER HEUTE? *",
+        "WELCHE ROLLEN, SYSTEME, DATENOBJEKTE, REGELN UND ÜBERGABEN PRÄGEN DEN PROZESS? *",
+        "WELCHE BEFUNDE ODER STRATEGISCHEN POTENZIALE SIND FÜR DEN PROZESS BELEGT?"
+      ],
+      "errors": [],
+      "screenshot": "current_process-1440.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-Nb6974zAN1POcePwKBPsyhirac5vQfjPHQ9VvdQ5EMc='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_solutions",
+      "status": 200,
+      "title": "Lösungsalternativen",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "WELCHE ORGANISATORISCHEN, REGELBASIERTEN, TECHNISCHEN ODER KI-GESTÜTZTEN OPTIONEN SIND DENKBAR? *",
+        "WELCHE ANNAHMEN, LÜCKEN ODER WIDERSPRÜCHE MÜSSEN SPÄTER GEKLÄRT WERDEN?"
+      ],
+      "errors": [],
+      "screenshot": "current_solutions-1440.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-IOWYPccv4+GIAWz50PQ4hgBzwty+G8ckj9XrN5jdx6g='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_preview",
+      "status": 200,
+      "title": "KI-Lösungsentwürfe prüfen",
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1425,
+      "labels": [
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen"
+      ],
+      "errors": [],
+      "screenshot": "current_preview-1440.png",
+      "consoleErrors": []
+    },
+    {
+      "name": "legacy_process",
+      "status": 200,
+      "title": "Fokusprozess",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "WELCHER PROZESS SOLL VERTIEFT WERDEN UND WIE VERLÄUFT ER HEUTE? *",
+        "WELCHE ROLLEN, SYSTEME, DATENOBJEKTE, REGELN UND ÜBERGABEN PRÄGEN DEN PROZESS? *",
+        "WELCHE URSACHEN, AUSNAHMEN UND KENNZAHLEN ERKLÄREN DAS PROBLEM? *"
+      ],
+      "errors": [],
+      "screenshot": "legacy_process-1024.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-Nb6974zAN1POcePwKBPsyhirac5vQfjPHQ9VvdQ5EMc='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "legacy_preview",
+      "status": 200,
+      "title": "KI-Lösungsentwürfe prüfen",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen"
+      ],
+      "errors": [],
+      "screenshot": "legacy_preview-1024.png",
+      "consoleErrors": []
+    },
+    {
+      "name": "current_stages",
+      "status": 200,
+      "title": "Phasen des Value Streams",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "WELCHE PHASEN DURCHLÄUFT DER VALUE STREAM IN WELCHER REIHENFOLGE? *",
+        "WELCHE ROLLEN, SYSTEME SOWIE DATEN ODER DOKUMENTE WERDEN JE PHASE GENUTZT? *",
+        "WELCHE BEOBACHTUNGEN, POTENZIALE UND KENNZAHLEN GIBT ES JE PHASE?"
+      ],
+      "errors": [],
+      "screenshot": "current_stages-1024.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-TUZF8uGj/p19ceMK/oTe0+mi1BXUGSHpetYbXedjzjY='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_process",
+      "status": 200,
+      "title": "Fokusprozess",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "WELCHER PROZESS SOLL VERTIEFT WERDEN UND WIE VERLÄUFT ER HEUTE? *",
+        "WELCHE ROLLEN, SYSTEME, DATENOBJEKTE, REGELN UND ÜBERGABEN PRÄGEN DEN PROZESS? *",
+        "WELCHE BEFUNDE ODER STRATEGISCHEN POTENZIALE SIND FÜR DEN PROZESS BELEGT?"
+      ],
+      "errors": [],
+      "screenshot": "current_process-1024.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-Nb6974zAN1POcePwKBPsyhirac5vQfjPHQ9VvdQ5EMc='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_solutions",
+      "status": 200,
+      "title": "Lösungsalternativen",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "WELCHE ORGANISATORISCHEN, REGELBASIERTEN, TECHNISCHEN ODER KI-GESTÜTZTEN OPTIONEN SIND DENKBAR? *",
+        "WELCHE ANNAHMEN, LÜCKEN ODER WIDERSPRÜCHE MÜSSEN SPÄTER GEKLÄRT WERDEN?"
+      ],
+      "errors": [],
+      "screenshot": "current_solutions-1024.png",
+      "consoleErrors": [
+        "Applying inline style violates the following Content Security Policy directive 'style-src 'self' https://cdn.jsdelivr.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-IOWYPccv4+GIAWz50PQ4hgBzwty+G8ckj9XrN5jdx6g='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+      ]
+    },
+    {
+      "name": "current_preview",
+      "status": 200,
+      "title": "KI-Lösungsentwürfe prüfen",
+      "width": 1024,
+      "height": 1000,
+      "scrollWidth": 1009,
+      "labels": [
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen",
+        "Diesen KI-Vorschlag übernehmen"
+      ],
+      "errors": [],
+      "screenshot": "current_preview-1024.png",
+      "consoleErrors": []
+    }
+  ],
+  "interaction": {
+    "new_empty_diagnosis_saved_and_reopened": true,
+    "errors": []
+  },
+  "visual_review": "Neue Phasen-/Prozess-/Lösungsfragen sowie V1-Fragen und beide Preview-Kohorten visuell geprüft. Keine horizontale Überbreite oder abgeschnittenen Aktionen.",
+  "known_console_notice": "Der vorhandene CSP-Hinweis am Inline-Stil des Fortschrittsbalkens tritt in V1 und V2 auf. Keine neue Ausnahme oder CSP-Lockerung."
+}

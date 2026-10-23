@@ -45,6 +45,8 @@ def make_candidate(*, owner, business_unit, uncertainty):
         actor=owner,
         capture_type=CaptureSession.CaptureType.VALUE_STREAM,
     )
+    session.catalog_version = CATALOG_VERSION_V1
+    session.save(update_fields=["catalog_version"])
     bind_capture_target(actor=owner, session_id=session.pk, target_id=target.pk)
     session.status = CaptureSession.Status.COMPLETED
     session.completed_at = timezone.now()

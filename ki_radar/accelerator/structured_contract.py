@@ -166,6 +166,22 @@ PROCESS_ANALYSIS_FIELD_SPECS = tuple(
     for field_name, required in _PROCESS_FIELDS
 )
 
+
+def process_field_specs(interpretation_version="1"):
+    from dataclasses import replace
+
+    if interpretation_version == "1":
+        return PROCESS_ANALYSIS_FIELD_SPECS
+    if interpretation_version == "2":
+        return tuple(
+            replace(spec, required_for_object=False)
+            if spec.model_field in {"bottlenecks", "baseline_metrics"}
+            else spec
+            for spec in PROCESS_ANALYSIS_FIELD_SPECS
+        )
+    raise ValueError("Unbekannter Prozess-Interpretationsvertrag.")
+
+
 STRUCTURED_FIELD_SPECS = {
     spec.target_path: spec
     for spec in (*METRIC_FIELD_SPECS, *STAGE_FIELD_SPECS, *PROCESS_ANALYSIS_FIELD_SPECS)

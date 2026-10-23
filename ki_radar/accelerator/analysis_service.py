@@ -21,9 +21,9 @@ from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable, re
 
 from .catalogs import CaptureCatalog, get_capture_catalog, validate_answer_document
 from .extraction_contract import (
-    EXTRACTION_PROMPT_VERSION,
     EXTRACTION_SCHEMA_VERSION,
     build_extraction_json_schema,
+    extraction_prompt_version,
 )
 from .models import AcceleratorLLMQuota, CaptureAnalysis, CaptureSession
 from .retention_policy import (
@@ -134,7 +134,7 @@ def _extraction_input(
         "catalog_version": session.catalog_version,
         "answer_schema_version": session.schema_version,
         "extraction_schema_version": EXTRACTION_SCHEMA_VERSION,
-        "prompt_version": EXTRACTION_PROMPT_VERSION,
+        "prompt_version": extraction_prompt_version(catalog),
         "questions": questions,
     }
 
@@ -284,12 +284,21 @@ def prepare_capture_analysis(*, actor, session_id) -> PreparedCaptureAnalysis:
         ) from exc
 
     input_document = _extraction_input(session=session, catalog=catalog, answers=answers)
+    system_prompt = EXTRACTION_SYSTEM_PROMPT
+    if catalog.version == "2.0":
+        system_prompt += (
+            " Strategische Ziele und Potenziale sind keine beobachteten Engpässe, Ursachen "
+            "oder gemessenen Baselines. Übertrage sie nicht in bottlenecks oder baseline_metrics. "
+            "Halte fehlende Diagnosen und Messwerte offen, ohne Fülltexte. Nicht zuordenbare "
+            "Potenziale und Validierungsfragen bleiben in open_questions. Eine verbindliche "
+            "Discovery-Pfadentscheidung trifft später ein Mensch am Prozess; leite keinen Pfad ab."
+        )
     user_content = json.dumps(input_document, ensure_ascii=False, separators=(",", ":"))
     messages = [
-        {"role": "system", "content": EXTRACTION_SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_content},
     ]
-    input_chars = len(EXTRACTION_SYSTEM_PROMPT) + len(user_content)
+    input_chars = len(system_prompt) + len(user_content)
     if input_chars > policy.max_input_chars:
         raise CaptureAnalysisError(
             "Die für die Analyse vorgesehenen Antworten überschreiten das Größenlimit.",
@@ -311,7 +320,7 @@ def prepare_capture_analysis(*, actor, session_id) -> PreparedCaptureAnalysis:
             capture_type=session.capture_type,
             catalog_version=session.catalog_version,
             answer_schema_version=session.schema_version,
-            prompt_version=EXTRACTION_PROMPT_VERSION,
+            prompt_version=extraction_prompt_version(catalog),
             extraction_schema_version=EXTRACTION_SCHEMA_VERSION,
             input_chars=input_chars,
         )

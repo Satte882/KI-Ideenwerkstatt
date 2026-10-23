@@ -1,4 +1,5 @@
-SOURCE_SCHEMA_VERSION = "block7_sources_v1"
+LEGACY_SOURCE_SCHEMA_VERSION = "block7_sources_v1"
+SOURCE_SCHEMA_VERSION = "block7_sources_v2"
 VALIDATION_CURRENT = "current_validated"
 VALIDATION_MISSING = "not_validated"
 VALIDATION_STALE = "validation_stale"
@@ -43,6 +44,33 @@ ALLOWED_SOURCE_IDS = tuple(
     + ["stage.name", "value_stream.constraints"]
     + [f"initiative.{name}" for name in INITIATIVE_SOURCE_FIELDS]
 )
+LEGACY_ALLOWED_SOURCE_IDS = ALLOWED_SOURCE_IDS
+DISCOVERY_SOURCE_FIELDS = (
+    "id",
+    "revision",
+    "path",
+    "origin_basis",
+    "strategic_potential",
+    "validation_step",
+)
+ALLOWED_SOURCE_IDS += tuple(f"discovery_path.{name}" for name in DISCOVERY_SOURCE_FIELDS)
+
+
+def source_version_for_run(run) -> str:
+    versions = (run.generation_schema_version, run.prompt_version)
+    if versions in {("1.0", "1.2"), ("1.0", "1.3")}:
+        return LEGACY_SOURCE_SCHEMA_VERSION
+    if versions == ("2.0", "2.0"):
+        return SOURCE_SCHEMA_VERSION
+    raise ValueError("Nicht unterstützte Generator-Vertragsversionen.")
+
+
+def allowed_source_ids(version: str) -> tuple[str, ...]:
+    if version == LEGACY_SOURCE_SCHEMA_VERSION:
+        return LEGACY_ALLOWED_SOURCE_IDS
+    if version == SOURCE_SCHEMA_VERSION:
+        return ALLOWED_SOURCE_IDS
+    raise ValueError("Nicht unterstützte Quellenvertragsversion.")
 
 
 class SolutionGenerationReadinessError(RuntimeError):
@@ -75,6 +103,7 @@ class SolutionGenerationSourceContext:
         "process_analysis_id",
         "process_version",
         "source_hash",
+        "source_schema_version",
         "validation_state",
     )
 
@@ -87,6 +116,7 @@ class SolutionGenerationSourceContext:
         source_hash: str,
         missing_required: tuple[str, ...],
         facts: tuple[SourceFact, ...],
+        source_schema_version: str = LEGACY_SOURCE_SCHEMA_VERSION,
     ) -> None:
         self.process_analysis_id = process_analysis_id
         self.process_version = process_version
@@ -94,6 +124,16 @@ class SolutionGenerationSourceContext:
         self.source_hash = source_hash
         self.missing_required = missing_required
         self.facts = facts
+        allowed_source_ids(source_schema_version)
+        self.source_schema_version = source_schema_version
+
+    @property
+    def generation_versions(self) -> tuple[str, str]:
+        return (
+            ("1.0", "1.3")
+            if self.source_schema_version == LEGACY_SOURCE_SCHEMA_VERSION
+            else ("2.0", "2.0")
+        )
 
     @property
     def is_ready(self) -> bool:
@@ -101,7 +141,7 @@ class SolutionGenerationSourceContext:
 
     def provider_payload(self) -> dict[str, object]:
         return {
-            "source_schema_version": SOURCE_SCHEMA_VERSION,
+            "source_schema_version": self.source_schema_version,
             "process_version": self.process_version,
             "validation_state": self.validation_state,
             "facts": [fact.as_dict() for fact in self.facts],
@@ -157,7 +197,12 @@ def _source_facts(process_analysis) -> tuple[SourceFact, ...]:
     return tuple(facts)
 
 
-def _source_hash(*, process_analysis, facts: tuple[SourceFact, ...]) -> str:
+def _source_hash(
+    *,
+    process_analysis,
+    facts: tuple[SourceFact, ...],
+    source_schema_version=LEGACY_SOURCE_SCHEMA_VERSION,
+) -> str:
     import hashlib
     import json
 
@@ -166,6 +211,8 @@ def _source_hash(*, process_analysis, facts: tuple[SourceFact, ...]) -> str:
         "process_version": process_analysis.version,
         "facts": [fact.as_dict() for fact in facts],
     }
+    if source_schema_version != LEGACY_SOURCE_SCHEMA_VERSION:
+        document["source_schema_version"] = source_schema_version
     serialized = json.dumps(
         document,
         ensure_ascii=False,
@@ -175,19 +222,50 @@ def _source_hash(*, process_analysis, facts: tuple[SourceFact, ...]) -> str:
     return hashlib.sha256(serialized).hexdigest()
 
 
-def build_solution_generation_source_context(process_analysis) -> SolutionGenerationSourceContext:
+def build_solution_generation_source_context(
+    process_analysis, *, source_schema_version=SOURCE_SCHEMA_VERSION
+) -> SolutionGenerationSourceContext:
+    allowed_source_ids(source_schema_version)
+    required = REQUIRED_PROCESS_FIELDS
+    facts = _source_facts(process_analysis)
+    path_missing = ()
+    if source_schema_version == SOURCE_SCHEMA_VERSION:
+        decision = process_analysis.discovery_path_decisions.order_by("-revision").first()
+        if decision is not None:
+            facts += tuple(
+                SourceFact(
+                    source_id=f"discovery_path.{name}",
+                    field=name,
+                    value=_clean_text(getattr(decision, name)),
+                )
+                for name in DISCOVERY_SOURCE_FIELDS
+                if _clean_text(getattr(decision, name))
+            )
+        if decision is not None and decision.path == "strategic":
+            required = tuple(
+                name for name in required if name not in {"bottlenecks", "baseline_metrics"}
+            )
+            path_missing = tuple(
+                f"discovery_path.{name}"
+                for name in ("origin_basis", "strategic_potential", "validation_step")
+                if not _clean_text(getattr(decision, name))
+            )
     missing_required = tuple(
         field_name
-        for field_name in REQUIRED_PROCESS_FIELDS
+        for field_name in required
         if not _clean_text(getattr(process_analysis, field_name))
     )
-    facts = _source_facts(process_analysis)
     return SolutionGenerationSourceContext(
         process_analysis_id=str(process_analysis.pk),
         process_version=process_analysis.version,
         validation_state=_validation_state(process_analysis),
-        source_hash=_source_hash(process_analysis=process_analysis, facts=facts),
-        missing_required=missing_required,
+        source_hash=_source_hash(
+            process_analysis=process_analysis,
+            facts=facts,
+            source_schema_version=source_schema_version,
+        ),
+        source_schema_version=source_schema_version,
+        missing_required=missing_required + path_missing,
         facts=facts,
     )
 

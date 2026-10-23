@@ -56,10 +56,13 @@ def make_use_case(*, business_unit, owner, title="Angebotsvergleich"):
 
 
 def make_analysis(*, session, actor, field_name, suggested_value, target_type=None):
+    session.catalog_version = CATALOG_VERSION_V1
     session.status = CaptureSession.Status.COMPLETED
     session.completed_at = timezone.now()
     session.expires_at = timezone.now() + timedelta(days=90)
-    session.save(update_fields=["status", "completed_at", "expires_at", "updated_at"])
+    session.save(
+        update_fields=["catalog_version", "status", "completed_at", "expires_at", "updated_at"]
+    )
     analysis = CaptureAnalysis.objects.create(
         session=session,
         requested_by=actor,
@@ -67,7 +70,7 @@ def make_analysis(*, session, actor, field_name, suggested_value, target_type=No
         source_revision=session.revision,
         source_hash="a" * 64,
         capture_type=session.capture_type,
-        catalog_version=CATALOG_VERSION_V1,
+        catalog_version=session.catalog_version,
         answer_schema_version=ANSWER_SCHEMA_VERSION,
         prompt_version=EXTRACTION_PROMPT_VERSION,
         extraction_schema_version=EXTRACTION_SCHEMA_VERSION,

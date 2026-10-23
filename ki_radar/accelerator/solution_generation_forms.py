@@ -39,9 +39,18 @@ SOURCE_LABELS = {
     "process.target_state_principles": "Zielbild-Prinzipien",
     "stage.name": "Value-Stream-Phase",
     "value_stream.constraints": "Value-Stream-Leitplanken",
+    "discovery_path.id": "Menschliche Pfadentscheidung",
+    "discovery_path.revision": "Revision der Pfadentscheidung",
+    "discovery_path.path": "Discovery-Pfad",
+    "discovery_path.origin_basis": "Fachliche Grundlage des Pfads",
+    "discovery_path.strategic_potential": "Begründetes strategisches Potenzial",
+    "discovery_path.validation_step": "Nächster Validierungsschritt",
 }
 
 READINESS_FIELD_LABELS = {
+    "discovery_path.origin_basis": "Fachliche Grundlage des Pfads",
+    "discovery_path.strategic_potential": "Begründetes strategisches Potenzial",
+    "discovery_path.validation_step": "Nächster Validierungsschritt",
     "name": "Prozessname",
     "scope_start": "Scope-Start",
     "scope_end": "Scope-Ende",

@@ -83,6 +83,15 @@ def test_final_real_answers_reproduce_complete_automatic_correction(
 
     for service in (solution_generation_service, solution_critic_service, solution_repair_service):
         monkeypatch.setattr(service, "request_openrouter", replay)
+    # Replay the frozen v1 cohort; a saved response is never a fresh v2 answer.
+    legacy_context = build_solution_generation_source_context(
+        process, source_schema_version="block7_sources_v1"
+    )
+    monkeypatch.setattr(
+        solution_generation_service, "require_solution_generation_ready", lambda _: legacy_context
+    )
+    monkeypatch.setattr(solution_generation_service, "GENERATION_SCHEMA_VERSION", "1.0")
+    monkeypatch.setattr(solution_generation_service, "GENERATION_PROMPT_VERSION", "1.3")
     run = solution_generation_service.generate_solution_preview(
         actor=owner, process_analysis_id=process.pk
     )
@@ -102,9 +111,7 @@ def test_final_real_answers_reproduce_complete_automatic_correction(
     assert not answers
     assert len(observed) == (2 if case == "B" else 4)
     run.refresh_from_db()
-    effective = build_validated_effective_solution_payload(
-        run.preview_payload, build_solution_generation_source_context(process)
-    )
+    effective = build_validated_effective_solution_payload(run.preview_payload, legacy_context)
     expected = copy.deepcopy(record["solution_preview"]["options"])
     for patch in record["solution_preview"].get("machine_repair", {}).get("patches", []):
         expected[patch["option"]][patch["field"]] = patch["statement"]

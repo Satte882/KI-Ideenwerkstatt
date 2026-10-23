@@ -95,7 +95,7 @@ def normalize_solution_generation_machine_repair(
             code="invalid_preview_repair",
         )
     if (
-        prompt_version not in {"1.0", "1.1", "1.2", "1.3", REPAIR_PROMPT_VERSION}
+        prompt_version not in {"1.0", "1.1", "1.2", "1.3", "1.4", REPAIR_PROMPT_VERSION}
         or schema_version != REPAIR_SCHEMA_VERSION
     ):
         raise SolutionGenerationEffectivePayloadError(

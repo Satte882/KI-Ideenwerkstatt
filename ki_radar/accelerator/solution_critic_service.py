@@ -26,10 +26,10 @@ from .solution_generation_service import (
     _reserve_solution_generation_quotas,
 )
 from .solution_generation_sources import (
-    ALLOWED_SOURCE_IDS,
-    SOURCE_SCHEMA_VERSION,
     SolutionGenerationSourceContext,
     SourceFact,
+    allowed_source_ids,
+    source_version_for_run,
 )
 from .solution_quality_runs import (
     mark_solution_quality_step_failed,
@@ -37,7 +37,7 @@ from .solution_quality_runs import (
     reserve_solution_quality_step,
 )
 from .solution_quality_snapshot import build_solution_quality_snapshot
-from .solution_quality_versions import CRITIC_PROMPT_VERSION, CRITIC_SCHEMA_VERSION
+from .solution_quality_versions import CRITIC_SCHEMA_VERSION, quality_versions
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,8 @@ def _source_context_from_generation_run(
             "Die persistierte Preview enthält keinen gültigen Quellenkontext.",
             code="critic_source_context_invalid",
         )
-    if payload.get("source_schema_version") != SOURCE_SCHEMA_VERSION:
+    source_version = source_version_for_run(generation_run)
+    if payload.get("source_schema_version") != source_version:
         raise InitialSolutionCriticError(
             "Die persistierte Preview verwendet eine unbekannte Quellenkontext-Version.",
             code="critic_source_context_invalid",
@@ -90,7 +91,7 @@ def _source_context_from_generation_run(
         source_id = str(item.get("source_id") or "").strip()
         field = str(item.get("field") or "").strip()
         value = str(item.get("value") or "").strip()
-        if source_id not in ALLOWED_SOURCE_IDS or not field or not value:
+        if source_id not in allowed_source_ids(source_version) or not field or not value:
             raise InitialSolutionCriticError(
                 "Die persistierte Preview enthält einen ungültigen Quelleneintrag.",
                 code="critic_source_context_invalid",
@@ -110,6 +111,7 @@ def _source_context_from_generation_run(
         source_hash=generation_run.source_hash,
         missing_required=(),
         facts=tuple(facts),
+        source_schema_version=source_version,
     )
 
 
@@ -272,7 +274,7 @@ def _run_solution_critic(
         actor=generation_run.requested_by,
         step_type=step_type,
         input_hash=snapshot.snapshot_hash,
-        prompt_version=CRITIC_PROMPT_VERSION,
+        prompt_version=quality_versions(source_context)[1],
         output_schema_version=CRITIC_SCHEMA_VERSION,
         input_chars=input_chars,
     )
@@ -299,7 +301,8 @@ def _run_solution_critic(
         return _failed_quality_step(run_id=quality_run.pk, error_code=exc.code)
 
     response_schema = build_solution_critic_json_schema(
-        allowed_source_ids=(fact.source_id for fact in source_context.facts)
+        prompt_version=quality_versions(source_context)[1],
+        allowed_source_ids=(fact.source_id for fact in source_context.facts),
     )
     try:
         result = request_openrouter(
@@ -356,15 +359,16 @@ def _run_solution_critic(
     # Execution metadata belongs to the server. Some providers echo the schema
     # version here despite receiving the current prompt; do not discard their
     # substantive findings because of an incorrect prompt-version echo.
-    if payload.get("prompt_version") != CRITIC_PROMPT_VERSION:
+    executed_prompt = quality_versions(source_context)[1]
+    if payload.get("prompt_version") != executed_prompt:
         logger.warning(
             "solution_critic prompt_version_echo quality_run_id=%s echoed=%r executed=%s",
             quality_run.pk,
             payload.get("prompt_version"),
-            CRITIC_PROMPT_VERSION,
+            executed_prompt,
         )
     if isinstance(payload.get("prompt_version"), str) and payload["prompt_version"].strip():
-        payload["prompt_version"] = CRITIC_PROMPT_VERSION
+        payload["prompt_version"] = executed_prompt
     try:
         validated = validate_solution_critic_payload(payload, source_context)
         additional = unconfirmed_solution_fit_findings(

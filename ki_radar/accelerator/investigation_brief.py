@@ -410,6 +410,7 @@ def materialize_decision_brief(
     )
     try:
         adoption = adopt_investigation_drafts(
+            contract_version=run.execution_snapshot.get("adoption_contract_version", "1.0"),
             actor=actor,
             process_analysis_id=run.process_analysis_id,
             expected_process_version=run.process_version,

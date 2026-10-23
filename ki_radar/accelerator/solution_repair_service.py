@@ -22,14 +22,17 @@ from .solution_generation_service import (
     SolutionGenerationQuotaExceeded,
     _reserve_solution_generation_quotas,
 )
-from .solution_generation_sources import build_solution_generation_source_context
+from .solution_generation_sources import (
+    build_solution_generation_source_context,
+    source_version_for_run,
+)
 from .solution_quality_runs import (
     SolutionQualityRunError,
     mark_solution_quality_step_failed,
     mark_solution_quality_step_success,
 )
 from .solution_quality_snapshot import build_solution_quality_snapshot
-from .solution_quality_versions import REPAIR_PROMPT_VERSION
+from .solution_quality_versions import quality_versions
 from .solution_repair_contract import (
     SolutionRepairContractError,
     SolutionRepairPlan,
@@ -149,7 +152,10 @@ def _load_repair_input(*, solution_generation_run_id, reserved_plan: SolutionRep
             stale_reason="quality_snapshot_changed",
         )
 
-    source_context = build_solution_generation_source_context(generation_run.process_analysis)
+    source_context = build_solution_generation_source_context(
+        generation_run.process_analysis,
+        source_schema_version=source_version_for_run(generation_run),
+    )
     effective_payload = build_validated_effective_solution_payload(
         generation_run.preview_payload,
         source_context,
@@ -207,7 +213,10 @@ def _activate_repair(
             stale_reason="quality_snapshot_changed",
         )
 
-    source_context = build_solution_generation_source_context(generation_run.process_analysis)
+    source_context = build_solution_generation_source_context(
+        generation_run.process_analysis,
+        source_schema_version=source_version_for_run(generation_run),
+    )
     effective_payload = build_validated_effective_solution_payload(
         generation_run.preview_payload,
         source_context,
@@ -311,6 +320,7 @@ def run_targeted_solution_repair(
         return _failed_repair_step(run_id=quality_run.pk, error_code=exc.code)
 
     response_schema = build_solution_repair_json_schema(
+        prompt_version=quality_versions(source_context)[2],
         allowed_source_ids=(fact.source_id for fact in source_context.facts),
         target_count=len(current_plan.targets),
     )
@@ -364,15 +374,16 @@ def run_targeted_solution_repair(
             result=result,
         )
 
-    if payload.get("prompt_version") != REPAIR_PROMPT_VERSION:
+    executed_prompt = quality_versions(source_context)[2]
+    if payload.get("prompt_version") != executed_prompt:
         logger.warning(
             "solution_repair prompt_version_echo quality_run_id=%s echoed=%r executed=%s",
             quality_run.pk,
             payload.get("prompt_version"),
-            REPAIR_PROMPT_VERSION,
+            executed_prompt,
         )
     if isinstance(payload.get("prompt_version"), str) and payload["prompt_version"].strip():
-        payload["prompt_version"] = REPAIR_PROMPT_VERSION
+        payload["prompt_version"] = executed_prompt
     try:
         validated = validate_solution_repair_payload(
             payload,

@@ -20,6 +20,7 @@ from ki_radar.accelerator.solution_generation_contract import (
     SOLUTION_GENERATION_SYSTEM_PROMPT,
 )
 from ki_radar.accelerator.solution_generation_sources import (
+    SOURCE_SCHEMA_VERSION,
     SolutionGenerationSourceContext,
     SourceFact,
 )
@@ -32,6 +33,7 @@ from ki_radar.accelerator.solution_quality_versions import (
 
 def source_context() -> SolutionGenerationSourceContext:
     return SolutionGenerationSourceContext(
+        source_schema_version=SOURCE_SCHEMA_VERSION,
         process_analysis_id="00000000-0000-0000-0000-000000000212",
         process_version=4,
         validation_state="current_validated",
@@ -400,7 +402,9 @@ def test_critic_messages_include_frozen_preview_and_source_context() -> None:
     messages = build_solution_critic_messages(snapshot, source_context())
     user_document = json.loads(messages[1]["content"])
 
-    assert messages[0] == {"role": "system", "content": SOLUTION_CRITIC_SYSTEM_PROMPT}
+    assert messages[0]["role"] == "system"
+    assert messages[0]["content"].startswith(SOLUTION_CRITIC_SYSTEM_PROMPT)
+    assert "Potenzial ist keine Ursache" in messages[0]["content"]
     assert user_document["lanes"] == list(OPTION_LANES)
     assert user_document["fields"] == list(GENERATED_OPTION_FIELDS)
     assert user_document["columns"] == [

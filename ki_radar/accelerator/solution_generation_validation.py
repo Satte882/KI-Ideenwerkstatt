@@ -6,8 +6,6 @@ from typing import Any
 
 from .solution_generation_contract import (
     GENERATED_OPTION_FIELDS,
-    GENERATION_PROMPT_VERSION,
-    GENERATION_SCHEMA_VERSION,
     OPTION_LANES,
     UNCERTAINTY_LEVELS,
 )
@@ -244,10 +242,11 @@ def validate_solution_generation_payload(
         "$.prompt_version",
         errors,
     )
-    if schema_version and schema_version != GENERATION_SCHEMA_VERSION:
+    expected_schema, expected_prompt = source_context.generation_versions
+    if schema_version and schema_version != expected_schema:
         errors.append("$.schema_version: Nicht unterstützte Schema-Version.")
-    supported_prompts = {GENERATION_PROMPT_VERSION}
-    if allow_historical:
+    supported_prompts = {expected_prompt}
+    if allow_historical and expected_schema == "1.0":
         supported_prompts.add("1.2")  # unchanged schema; historical previews remain readable
     if prompt_version and prompt_version not in supported_prompts:
         errors.append("$.prompt_version: Nicht unterstützte Prompt-Version.")

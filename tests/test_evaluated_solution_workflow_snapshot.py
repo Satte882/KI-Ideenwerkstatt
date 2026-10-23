@@ -29,6 +29,7 @@ from ki_radar.accelerator.solution_quality_versions import (
 
 def source_context(*, source_hash: str = "a" * 64) -> SolutionGenerationSourceContext:
     return SolutionGenerationSourceContext(
+        source_schema_version=SOURCE_SCHEMA_VERSION,
         process_analysis_id="00000000-0000-0000-0000-000000000212",
         process_version=7,
         validation_state="current_validated",
@@ -195,7 +196,7 @@ def test_quality_snapshot_becomes_stale_when_critic_contract_version_changes(mon
     )
 
     monkeypatch.setattr(
-        "ki_radar.accelerator.solution_quality_snapshot.CRITIC_PROMPT_VERSION",
+        "ki_radar.accelerator.solution_quality_versions.CRITIC_PROMPT_VERSION",
         before.document["critic_prompt_version"] + "-changed",
     )
     after = build_solution_quality_snapshot(

@@ -25,13 +25,13 @@ from .analysis_service import (
     reserve_accelerator_quotas,
 )
 from .architect_contract import (
-    DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
     DiscoveryContractError,
     build_discovery_json_schema,
     build_discovery_verifier_schema,
     discovery_methodical_findings,
     discovery_modality_findings,
+    discovery_versions,
     enforce_discovery_methodology,
     enforce_discovery_readiness,
     validate_discovery_payload,
@@ -636,7 +636,24 @@ def execute_autonomous_business_discovery(
         raise DiscoveryAnalysisError(str(exc), code="invalid_configuration") from exc
 
     document, allowed_refs, evidence_text = _source_document(session=session, snapshot=snapshot)
-    producer_messages = _prompt_payload(DISCOVERY_SYSTEM_PROMPT, document)
+    schema_version, prompt_version = discovery_versions(session.catalog_version)
+    strategic_rules = (
+        "\nErfassung ist noch keine verbindliche Pfadentscheidung. Ein strategisches Ziel "
+        "oder Potenzial ist kein beobachteter Engpass und keine Ursache. Ohne berichteten "
+        "Engpass lasse bottlenecks leer; ohne Messbeleg baseline_metrics leer. Unbekanntes "
+        "in unknowns und konkreten Validierungsfragen führen, keine Fülltexte erfinden. "
+        "Fehlende Diagnose allein verhindert keinen frühen Entwurf."
+        if schema_version != DISCOVERY_SCHEMA_VERSION
+        else ""
+    )
+    producer_prompt = (
+        DISCOVERY_SYSTEM_PROMPT.replace(DISCOVERY_SCHEMA_VERSION, schema_version) + strategic_rules
+    )
+    verifier_prompt = VERIFIER_SYSTEM_PROMPT + strategic_rules
+    repair_prompt = (
+        REPAIR_SYSTEM_PROMPT.replace(DISCOVERY_SCHEMA_VERSION, schema_version) + strategic_rules
+    )
+    producer_messages = _prompt_payload(producer_prompt, document)
     chars = _input_chars(producer_messages)
     if chars > policy.discovery_max_input_chars:
         raise DiscoveryAnalysisError(
@@ -655,8 +672,8 @@ def execute_autonomous_business_discovery(
             capture_type=session.capture_type,
             catalog_version=session.catalog_version,
             answer_schema_version=session.schema_version,
-            prompt_version=DISCOVERY_PROMPT_VERSION,
-            extraction_schema_version=DISCOVERY_SCHEMA_VERSION,
+            prompt_version=prompt_version,
+            extraction_schema_version=schema_version,
             input_chars=chars,
         )
     except IntegrityError as exc:
@@ -674,7 +691,7 @@ def execute_autonomous_business_discovery(
             policy=policy,
             messages=producer_messages,
             schema_name="autonomous_business_discovery_v1",
-            schema=build_discovery_json_schema(),
+            schema=build_discovery_json_schema(schema_version),
         )
         results.append(producer)
         last_result = producer
@@ -686,7 +703,10 @@ def execute_autonomous_business_discovery(
             contract_errors = []
             try:
                 draft = validate_discovery_payload(
-                    producer_payload, allowed_refs=allowed_refs, evidence_text=evidence_text
+                    producer_payload,
+                    allowed_refs=allowed_refs,
+                    evidence_text=evidence_text,
+                    schema_version=schema_version,
                 )
             except DiscoveryContractError as exc:
                 draft = producer_payload
@@ -697,9 +717,7 @@ def execute_autonomous_business_discovery(
                 or discovery_modality_findings(draft, evidence_text)
             )
             if semantic_review:
-                messages = _prompt_payload(
-                    VERIFIER_SYSTEM_PROMPT, {"input": document, "draft": draft}
-                )
+                messages = _prompt_payload(verifier_prompt, {"input": document, "draft": draft})
                 if _input_chars(messages) > policy.discovery_max_input_chars:
                     raise DiscoveryAnalysisError(
                         "Der Discovery-Draft überschreitet zusammen mit den Quellen "
@@ -780,7 +798,7 @@ def execute_autonomous_business_discovery(
                 repair_document["allowed_field_paths"] = targets
             if contract_errors:
                 repair_document["contract_errors"] = contract_errors
-            messages = _prompt_payload(REPAIR_SYSTEM_PROMPT, repair_document)
+            messages = _prompt_payload(repair_prompt, repair_document)
             if _input_chars(messages) > policy.discovery_max_input_chars:
                 raise DiscoveryAnalysisError(
                     "Der gezielte Discovery-Repair überschreitet das Eingabelimit.",
@@ -792,7 +810,7 @@ def execute_autonomous_business_discovery(
                 policy=policy,
                 messages=messages,
                 schema_name="autonomous_business_discovery_repair_v1",
-                schema=build_discovery_json_schema(),
+                schema=build_discovery_json_schema(schema_version),
             )
             results.append(result)
             last_result = result

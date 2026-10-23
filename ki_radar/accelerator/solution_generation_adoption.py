@@ -21,7 +21,10 @@ from .solution_generation_effective import (
     SolutionGenerationEffectivePayloadError,
     build_validated_effective_solution_payload,
 )
-from .solution_generation_sources import build_solution_generation_source_context
+from .solution_generation_sources import (
+    build_solution_generation_source_context,
+    source_version_for_run,
+)
 
 LANE_OPTION_TYPES = {
     "organizational": SolutionOption.OptionType.ORGANIZATIONAL,
@@ -199,7 +202,9 @@ def adopt_solution_generation_bundle(
             code="preview_expired",
         )
 
-    source_context = build_solution_generation_source_context(process_analysis)
+    source_context = build_solution_generation_source_context(
+        process_analysis, source_schema_version=source_version_for_run(run)
+    )
     if (
         source_context.source_hash != run.source_hash
         or source_context.process_version != run.process_version

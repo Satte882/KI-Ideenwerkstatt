@@ -53,6 +53,8 @@ def _completed_session(*, actor: User, target, capture_type: str) -> CaptureSess
         capture_type=capture_type,
         working_title=f"[Real-DEMO] {target}",
     )
+    session.catalog_version = CATALOG_VERSION_V1
+    session.save(update_fields=["catalog_version"])
     bind_capture_target(actor=actor, session_id=session.pk, target_id=target.pk)
     session.status = CaptureSession.Status.COMPLETED
     session.completed_at = timezone.now()

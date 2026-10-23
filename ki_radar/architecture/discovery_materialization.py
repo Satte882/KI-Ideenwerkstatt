@@ -228,12 +228,13 @@ def materialize_discovery_and_start_investigation(
             code="missing_discovery_payload",
         )
     from ki_radar.accelerator.architect_contract import (
-        DISCOVERY_PROMPT_VERSION,
+        DISCOVERY_SCHEMA_VERSION,
         blocking_discovery_questions,
         discovery_methodical_findings,
+        supported_discovery_analysis,
     )
 
-    if analysis.prompt_version != DISCOVERY_PROMPT_VERSION:
+    if not supported_discovery_analysis(analysis):
         raise DiscoveryMaterializationError(
             "Der gespeicherte Entwurf bleibt lesbar. Vor der verbindlichen Übernahme "
             "ist eine aktuelle fachliche Prüfung erforderlich.",
@@ -381,13 +382,21 @@ def materialize_discovery_and_start_investigation(
         data_objects=_reported_or_unknown(process_draft.get("data_objects")),
         business_rules=_optional_text(process_draft.get("business_rules")),
         handoffs=_optional_text(process_draft.get("handoffs")),
-        bottlenecks=_required_text(process_draft.get("bottlenecks"), field="Bottlenecks"),
+        bottlenecks=(
+            _required_text(process_draft.get("bottlenecks"), field="Bottlenecks")
+            if analysis.extraction_schema_version == DISCOVERY_SCHEMA_VERSION
+            else _optional_text(process_draft.get("bottlenecks"))
+        ),
         diagnostic_observations=_optional_text(process_draft.get("observations")),
         cause_hypotheses=_optional_text(process_draft.get("cause_hypotheses")),
         confirmed_causes="",
         constraints=_optional_text(process_draft.get("constraints")),
         exceptions=_optional_text(process_draft.get("exceptions")),
-        baseline_metrics=_reported_or_unknown(process_draft.get("baseline_metrics")),
+        baseline_metrics=(
+            _reported_or_unknown(process_draft.get("baseline_metrics"))
+            if analysis.extraction_schema_version == DISCOVERY_SCHEMA_VERSION
+            else _optional_text(process_draft.get("baseline_metrics"))
+        ),
         target_state_principles="",
         analyzed_by=actor,
     )

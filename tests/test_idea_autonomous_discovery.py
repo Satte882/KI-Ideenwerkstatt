@@ -21,6 +21,7 @@ from test_issue_98_autonomous_business_discovery import (
 from test_issue_422_idea_inbox import set_intake_session
 
 from ki_radar.accelerator import architect_service, architect_views
+from ki_radar.accelerator.architect_contract import DISCOVERY_SCHEMA_VERSION_V2
 from ki_radar.accelerator.investigation_models import InvestigationSourceSnapshot
 from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 from ki_radar.accelerator.retention import (
@@ -401,6 +402,7 @@ def test_complete_idea_discovery_uses_existing_review_and_investigation(
     client, idea, owner, tmp_path, monkeypatch, uploads
 ):
     draft = _draft()
+    draft["schema_version"] = DISCOVERY_SCHEMA_VERSION_V2
     if not uploads:
         for item in [
             draft["value_stream"],
@@ -522,7 +524,9 @@ def test_discovery_lifecycle_keeps_idea_open_and_only_terminal_drafts_release_in
                     "Provider fehlgeschlagen", code="test_failure"
                 )
             if kwargs["schema_name"] == "autonomous_business_discovery_v1":
-                return _result(_draft())
+                draft = _draft()
+                draft["schema_version"] = DISCOVERY_SCHEMA_VERSION_V2
+                return _result(draft)
             return _result(_verifier("waiting_human", human_question="Wo beginnt der Prozess?"))
 
         monkeypatch.setattr(architect_service, "_provider_call", provider)

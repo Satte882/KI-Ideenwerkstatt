@@ -36,7 +36,10 @@ from .solution_generation_preview import (
     update_solution_generation_preview_edits,
 )
 from .solution_generation_service import SolutionGenerationError, generate_solution_preview
-from .solution_generation_sources import build_solution_generation_source_context
+from .solution_generation_sources import (
+    build_solution_generation_source_context,
+    source_version_for_run,
+)
 from .solution_repair_contract import SolutionRepairContractError
 from .solution_repair_service import run_targeted_solution_repair
 
@@ -243,7 +246,13 @@ def _preview_source_facts(preview_payload: dict) -> list[dict[str, str]]:
         {
             "source_id": fact["source_id"],
             "label": SOURCE_LABELS.get(fact["source_id"], fact["source_id"]),
-            "value": fact["value"],
+            "value": (
+                {"strategic": "Strategisches Potenzial", "problem": "Problemgetrieben"}.get(
+                    fact["value"], fact["value"]
+                )
+                if fact["source_id"] == "discovery_path.path"
+                else fact["value"]
+            ),
         }
         for fact in facts
     ]
@@ -349,7 +358,9 @@ def solution_generation_preview(request, run_id):
     quality_state = build_solution_quality_preview_state(run, preview_state=state)
     editable = can_edit and state.editable
 
-    current_source_context = build_solution_generation_source_context(process_analysis)
+    current_source_context = build_solution_generation_source_context(
+        process_analysis, source_schema_version=source_version_for_run(run)
+    )
     effective_payload = build_validated_effective_solution_payload(
         run.preview_payload,
         current_source_context,

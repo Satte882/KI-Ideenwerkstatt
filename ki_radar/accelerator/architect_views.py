@@ -19,10 +19,11 @@ from ki_radar.use_cases.idea_discovery import active_idea_discovery, assert_idea
 from ki_radar.use_cases.idea_models import IdeaCandidate
 
 from .architect_contract import (
-    DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
+    DISCOVERY_SCHEMA_VERSION_V2,
     blocking_discovery_questions,
     discovery_methodical_findings,
+    supported_discovery_analysis,
 )
 from .architect_forms import (
     AutonomousDiscoveryStartForm,
@@ -57,7 +58,9 @@ from .services import (
 
 def _latest_analysis(session: CaptureSession) -> CaptureAnalysis | None:
     return (
-        session.analyses.filter(extraction_schema_version=DISCOVERY_SCHEMA_VERSION)
+        session.analyses.filter(
+            extraction_schema_version__in=(DISCOVERY_SCHEMA_VERSION, DISCOVERY_SCHEMA_VERSION_V2)
+        )
         .order_by("-created_at")
         .first()
     )
@@ -482,7 +485,7 @@ def autonomous_discovery_review(request, session_id):
             "business_unit_context": business_unit_context,
             "business_unit_error": business_unit_error,
             "legacy_business_unit": "business_unit" not in session.answers,
-            "review_outdated": bool(latest and latest.prompt_version != DISCOVERY_PROMPT_VERSION),
+            "review_outdated": bool(latest and not supported_discovery_analysis(latest)),
             "can_confirm": bool(
                 latest
                 and latest.status == CaptureAnalysis.Status.SUCCESS
@@ -490,7 +493,7 @@ def autonomous_discovery_review(request, session_id):
                 and not business_unit_error
                 and not presentation.get("blocking_questions")
                 and not presentation.get("methodical_findings")
-                and latest.prompt_version == DISCOVERY_PROMPT_VERSION
+                and supported_discovery_analysis(latest)
             ),
             "waiting_human": bool(
                 latest

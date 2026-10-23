@@ -17,6 +17,7 @@ from .models import CaptureFieldSuggestion
 from .structured_contract import (
     PROCESS_ANALYSIS_FIELD_SPECS,
     StructuredCandidateKind,
+    process_field_specs,
     structured_field_spec,
     validate_local_key,
 )
@@ -117,7 +118,9 @@ def _suggestion_source_metadata(suggestion) -> tuple[str, str]:
     return str(analysis_id), str(extraction_version).strip()
 
 
-def _validate_process_values(*, local_key: str, values: dict[str, Any]) -> dict[str, str]:
+def _validate_process_values(
+    *, local_key: str, values: dict[str, Any], interpretation_version="1"
+) -> dict[str, str]:
     unknown_fields = set(values) - PROCESS_FIELDS
     if unknown_fields:
         raise StructuredProcessError(
@@ -135,7 +138,9 @@ def _validate_process_values(*, local_key: str, values: dict[str, Any]) -> dict[
         normalized[field_name] = value.strip()
 
     missing_fields = [
-        field_name for field_name in REQUIRED_PROCESS_FIELDS if not normalized[field_name]
+        spec.model_field
+        for spec in process_field_specs(interpretation_version)
+        if spec.required_for_object and not normalized[spec.model_field]
     ]
     if missing_fields:
         raise StructuredProcessError(
@@ -257,7 +262,9 @@ def _confirmed_process_values(item: StructuredAdoptionItem) -> dict[str, str]:
         values = item.decision_snapshot.get("edited_fields")
     if not isinstance(values, dict):
         raise StructuredProcessError("Dem bestätigten Prozessanalyseitem fehlt ein Feldobjekt.")
-    return _validate_process_values(local_key=local_key, values=values)
+    return _validate_process_values(
+        local_key=local_key, values=values, interpretation_version=item.batch.interpretation_version
+    )
 
 
 def _stage_reference_from_item(item: StructuredAdoptionItem) -> StageReference:
@@ -391,6 +398,7 @@ def adopt_process_item(
         reference=reference,
     )
     form = ProcessAnalysisForm(
+        allow_unknown_diagnosis=locked_item.batch.interpretation_version == "2",
         data={**values, "status": ProcessAnalysis.Status.DRAFT},
         instance=ProcessAnalysis(
             stage=stage,

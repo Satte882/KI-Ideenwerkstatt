@@ -8,7 +8,10 @@ from django.utils import timezone
 
 from .models import SolutionGenerationRun, SolutionQualityRun
 from .solution_generation_contract import GENERATED_OPTION_FIELDS, OPTION_LANES
-from .solution_generation_sources import build_solution_generation_source_context
+from .solution_generation_sources import (
+    build_solution_generation_source_context,
+    source_version_for_run,
+)
 from .solution_repair_contract import SolutionRepairContractError, build_solution_repair_plan
 
 
@@ -44,7 +47,9 @@ class SolutionQualityPreviewState:
 def build_solution_generation_preview_state(
     run: SolutionGenerationRun,
 ) -> SolutionGenerationPreviewState:
-    current_context = build_solution_generation_source_context(run.process_analysis)
+    current_context = build_solution_generation_source_context(
+        run.process_analysis, source_schema_version=source_version_for_run(run)
+    )
     stale = (
         current_context.source_hash != run.source_hash
         or current_context.process_version != run.process_version

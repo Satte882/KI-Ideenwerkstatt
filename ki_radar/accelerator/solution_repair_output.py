@@ -13,7 +13,11 @@ from .solution_generation_validation import (
     SolutionGenerationContractError,
     validate_solution_generation_payload,
 )
-from .solution_quality_versions import REPAIR_PROMPT_VERSION, REPAIR_SCHEMA_VERSION
+from .solution_quality_versions import (
+    REPAIR_PROMPT_VERSION,
+    REPAIR_SCHEMA_VERSION,
+    quality_versions,
+)
 from .solution_repair_contract import SolutionRepairPlan, SolutionRepairTarget
 
 ROOT_FIELDS = frozenset(("schema_version", "prompt_version", "patches"))
@@ -82,6 +86,7 @@ def build_solution_repair_json_schema(
     *,
     allowed_source_ids,
     target_count: int,
+    prompt_version=REPAIR_PROMPT_VERSION,
 ) -> dict[str, object]:
     source_ids = tuple(sorted(set(allowed_source_ids)))
     if target_count < 1:
@@ -93,7 +98,7 @@ def build_solution_repair_json_schema(
         "required": ["schema_version", "prompt_version", "patches"],
         "properties": {
             "schema_version": {"type": "string", "const": REPAIR_SCHEMA_VERSION},
-            "prompt_version": {"type": "string", "const": REPAIR_PROMPT_VERSION},
+            "prompt_version": {"type": "string", "const": prompt_version},
             "patches": {
                 "type": "array",
                 "minItems": target_count,
@@ -170,7 +175,7 @@ def validate_solution_repair_payload(
     prompt_version = _nonempty_text(root.get("prompt_version"), "$.prompt_version", errors)
     if schema_version and schema_version != REPAIR_SCHEMA_VERSION:
         errors.append("$.schema_version: Nicht unterstützte Repair-Schema-Version.")
-    if prompt_version and prompt_version != REPAIR_PROMPT_VERSION:
+    if prompt_version and prompt_version != quality_versions(source_context)[2]:
         errors.append("$.prompt_version: Nicht unterstützte Repair-Prompt-Version.")
 
     raw_patches = _as_list(root.get("patches"), "$.patches", errors)

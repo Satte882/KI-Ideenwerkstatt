@@ -7,7 +7,12 @@ from django.views.decorators.debug import sensitive_variables
 from .solution_generation_contract import GENERATED_OPTION_FIELDS, OPTION_LANES
 from .solution_generation_sources import SolutionGenerationSourceContext
 from .solution_quality_snapshot import SolutionQualitySnapshot
-from .solution_quality_versions import CRITIC_PROMPT_VERSION, CRITIC_SCHEMA_VERSION
+from .solution_quality_versions import (
+    CRITIC_PROMPT_VERSION,
+    CRITIC_SCHEMA_VERSION,
+    STRATEGIC_QUALITY_RULE,
+    quality_versions,
+)
 
 SOLUTION_CRITIC_SYSTEM_PROMPT = (
     "Du bist der adversariale Quality Critic für drei deterministisch validierte "
@@ -137,6 +142,11 @@ def _critic_input(
                     "scope_start",
                     "scope_end",
                     "bottlenecks",
+                    "path",
+                    "origin_basis",
+                    "strategic_potential",
+                    "validation_step",
+                    "revision",
                 }
             },
         },
@@ -151,7 +161,13 @@ def build_solution_critic_messages(
     input_document = _critic_input(snapshot, source_context)
     user_content = json.dumps(input_document, ensure_ascii=False, separators=(",", ":"))
     messages = [
-        {"role": "system", "content": SOLUTION_CRITIC_SYSTEM_PROMPT},
+        {
+            "role": "system",
+            "content": SOLUTION_CRITIC_SYSTEM_PROMPT.replace(
+                repr(CRITIC_PROMPT_VERSION), repr(quality_versions(source_context)[1])
+            )
+            + (STRATEGIC_QUALITY_RULE if quality_versions(source_context)[0] == "1.2" else ""),
+        },
         {"role": "user", "content": user_content},
     ]
     return messages
