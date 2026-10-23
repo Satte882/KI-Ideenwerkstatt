@@ -58,9 +58,9 @@ def outcome_blockers(artifact):
         missing.extend(_origin_blockers(artifact, process))
         if process.initiative_id != initiative.pk:
             missing.append("Vorhaben und Herkunftsprozess müssen übereinstimmen")
-        from ki_radar.architecture.stage_focus import get_stage_focus_decision
+        from ki_radar.architecture.stage_focus import get_phase_focus_decision
 
-        focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+        focus = get_phase_focus_decision(process.stage, initiative=initiative)
         if focus is None or focus.selected_stage_id != process.stage_id:
             missing.append("Aktuellen Vorhabensfokus für diese Prozessphase bestätigen")
         path = process.discovery_path_decisions.first()
@@ -136,9 +136,9 @@ def build_outcome_snapshot(artifact, *, lock=False):
     }
     process = _process(artifact)
     if process is not None:
-        from ki_radar.architecture.stage_focus import get_stage_focus_decision
+        from ki_radar.architecture.stage_focus import get_phase_focus_decision
 
-        focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+        focus = get_phase_focus_decision(process.stage, initiative=initiative)
         path = process.discovery_path_decisions.first()
         result["focus"] = {
             "id": focus.pk,

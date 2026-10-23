@@ -11,7 +11,7 @@ from django.urls import reverse
 from ki_radar.accounts.permissions import is_coordinator
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream
-from ki_radar.architecture.stage_focus import get_stage_focus_decision, save_stage_focus_decision
+from ki_radar.architecture.stage_focus import get_phase_focus_decision, save_stage_focus_decision
 
 from .initiative_models import ImprovementInitiative
 from .initiative_views import InitiativeForm
@@ -130,7 +130,7 @@ def _prepare(*, artifact, form, actor, confirm):
         )
         bind_initiative(initiative=initiative, artifact=process, actor=actor)
         reason = form.cleaned_data["focus_reason"].strip()
-        focus = get_stage_focus_decision(process.stage.value_stream, initiative=initiative)
+        focus = get_phase_focus_decision(process.stage, initiative=initiative)
         if (
             focus is None
             or focus.selected_stage_id != process.stage_id
@@ -141,10 +141,10 @@ def _prepare(*, artifact, form, actor, confirm):
                 value_stream=process.stage.value_stream,
                 selected_stage=process.stage,
                 actor=actor,
-                criteria_snapshot={},
+                criteria_snapshot=focus.criteria_snapshot if focus else {},
                 rationale=reason,
-                is_short_path=True,
-                short_path_reason=reason,
+                is_short_path=focus.is_short_path if focus else True,
+                short_path_reason=focus.short_path_reason if focus else reason,
             )
     if artifact._meta.model_name != "processanalysis":
         bind_initiative(initiative=initiative, artifact=artifact, actor=actor)
@@ -188,6 +188,10 @@ def prepare_outcome(request, kind, pk):
     process = _process(artifact)
     path = process.discovery_path_decisions.first() if process else None
     initial = {"selected_initiative": initiative.pk if initiative else None}
+    if process and initiative:
+        focus = get_phase_focus_decision(process.stage, initiative=initiative)
+        if focus:
+            initial["focus_reason"] = focus.rationale
     if path:
         initial.update(
             {
