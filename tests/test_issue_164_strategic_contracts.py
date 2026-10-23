@@ -12,6 +12,7 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.test import override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from ki_radar.accelerator.analysis_service import canonical_answer_hash
@@ -596,3 +597,49 @@ def test_cross_cohort_generation_versions_fail_closed(owner, business_unit):
     for context, wrong in [(current, legacy), (legacy, current)]:
         with pytest.raises(SolutionGenerationContractError):
             validate_solution_generation_payload(_payload(wrong), context, allow_historical=True)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("version", [LEGACY_SOURCE_SCHEMA_VERSION, SOURCE_SCHEMA_VERSION])
+def test_stale_preview_reads_frozen_facts_after_source_change(
+    client, owner, business_unit, version
+):
+    process = make_process(owner, business_unit)
+    if version == SOURCE_SCHEMA_VERSION:
+        _potential(process, owner)
+    context = build_solution_generation_source_context(process, source_schema_version=version)
+    payload = {**_payload(context), "source_context": context.provider_payload(), "edits": {}}
+    statement = payload["options"]["assistant"]["bottleneck_coverage"]
+    if version == SOURCE_SCHEMA_VERSION:
+        statement["text"] = "Bedingter Bezug auf die dokumentierte Revision 1"
+        statement["source_ids"] = ["discovery_path.revision"]
+    else:
+        statement["text"] = "Dokumentierter Ausgangswert: 11 Minuten; Wirkung offen"
+        statement["source_ids"] = ["process.baseline_metrics"]
+    validate_solution_generation_payload(
+        {key: payload[key] for key in ("schema_version", "prompt_version", "options")}, context
+    )
+    run = SolutionGenerationRun.objects.create(
+        process_analysis=process,
+        process_version=process.version,
+        source_hash=context.source_hash,
+        requested_by=owner,
+        status="success",
+        generation_schema_version=context.generation_versions[0],
+        prompt_version=context.generation_versions[1],
+        preview_payload=payload,
+        finished_at=timezone.now(),
+        expires_at=timezone.now() + timedelta(days=1),
+    )
+    if version == SOURCE_SCHEMA_VERSION:
+        _potential(process, owner, validation_step="Mit Fachbereich neu prüfen")
+    else:
+        process.baseline_metrics = ""
+        process.save(update_fields=["baseline_metrics"])
+    assert build_solution_generation_preview_state(run).stale
+    client.force_login(owner)
+    response = client.get(reverse("accelerator:solution_generation_preview", args=[run.pk]))
+    assert response.status_code == 200
+    assert statement["text"] in response.content.decode()
+    run.refresh_from_db()
+    assert run.preview_payload == payload

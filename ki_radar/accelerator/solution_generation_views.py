@@ -14,6 +14,7 @@ from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream
 
 from .models import SolutionGenerationRun, SolutionQualityRun
+from .solution_critic_service import _source_context_from_generation_run
 from .solution_generation_adoption import (
     SolutionGenerationAdoptionError,
     adopt_solution_generation_bundle,
@@ -363,7 +364,7 @@ def solution_generation_preview(request, run_id):
     )
     effective_payload = build_validated_effective_solution_payload(
         run.preview_payload,
-        current_source_context,
+        _source_context_from_generation_run(run),
     )
     effective_preview_payload = deepcopy(run.preview_payload)
     effective_preview_payload["options"] = effective_payload["options"]

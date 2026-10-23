@@ -147,7 +147,7 @@ class ValueStreamForm(StyledModelForm):
         business_units = selectable_business_units(current_id=current_unit_id)
         owners = eligible_value_stream_owners()
 
-        if not self.instance._state.adding:
+        if self.instance.pk:
             if self.instance.business_unit_id and not is_active_productive_business_unit(
                 self.instance.business_unit
             ):
@@ -295,7 +295,7 @@ class ValueStreamStageForm(StyledModelForm):
 class ProcessAnalysisForm(StyledModelForm):
     def __init__(self, *args, allow_unknown_diagnosis=False, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.pk:
+        if not self.instance._state.adding:
             decision = self.instance.discovery_path_decisions.first()
             allow_unknown_diagnosis = allow_unknown_diagnosis or bool(
                 decision and decision.path == "strategic"

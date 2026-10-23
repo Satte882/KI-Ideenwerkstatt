@@ -7,12 +7,10 @@ from pathlib import Path
 from ki_radar.accelerator.solution_critic_contract import CRITIC_CRITERIA
 from ki_radar.accelerator.solution_generation_contract import (
     GENERATED_OPTION_FIELDS,
-    GENERATION_SCHEMA_VERSION,
     OPTION_LANES,
 )
 from ki_radar.accelerator.solution_quality_versions import (
     CRITIC_SCHEMA_VERSION,
-    QUALITY_CONTRACT_VERSION,
     REPAIR_SCHEMA_VERSION,
 )
 from ki_radar.architecture.architecture_advisor import (
@@ -82,9 +80,9 @@ def test_architecture_real_demo_fixture_checksum_and_contract_versions():
     assert payload["data_classification"] == "synthetic_anonymized"
     assert payload["contract_versions"] == {
         "architecture_advisor_ruleset": RULESET_VERSION,
-        "generation_schema": GENERATION_SCHEMA_VERSION,
+        "generation_schema": "1.0",  # immutable v1 fixture, not the active generation cohort
         "generation_prompt": "1.2",  # frozen fixture, not the active prompt revision
-        "quality_contract": QUALITY_CONTRACT_VERSION,
+        "quality_contract": "1.1",
         "critic_schema": CRITIC_SCHEMA_VERSION,
         "critic_prompt": "1.2",
         "repair_schema": REPAIR_SCHEMA_VERSION,

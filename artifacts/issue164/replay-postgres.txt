@@ -1,0 +1,32 @@
+..................................................................       [100%]
+=============================== warnings summary ===============================
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+  /review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+  /issue164-final/ki_radar/reviews/forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+  /issue164-final/ki_radar/reviews/forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+tests/test_idea_autonomous_discovery.py::test_invalid_correction_stays_visible_and_preserves_input
+  /issue164-final/ki_radar/delivery/forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+tests/test_idea_autonomous_discovery.py: 22 warnings
+tests/test_issue133_methodology.py: 2 warnings
+  /review/.venv/lib/python3.13/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /issue164-final/staticfiles/
+    mw_instance = middleware(adapted_handler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+66 passed, 35 warnings in 64.49s (0:01:04)

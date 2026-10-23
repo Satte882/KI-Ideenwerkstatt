@@ -19,12 +19,13 @@ Unveränderte Use-Case-Kataloge bleiben bei 1.0. Ein neuer Generatorlauf auf ein
 ## Automatisierte Nachweise
 
 - PostgreSQL 17.5, Python 3.13, Django 5.2.17; ausschließlich Test-Doubles für Provideraufrufe.
-- 75 gezielte Vertrags-, Adoptions-, Sicherheits- und Regressionsprüfungen bestanden: `targeted-postgres.log`.
-- 71 Prüfungen für neue strategische Abläufe, eingefrorene Antworten, Extraktion und Candidate-Snapshots bestanden: `extraction-postgres.log`.
-- 66 Discovery-/Methodik-/Realantwort-Replays bestanden: `replay-postgres.log`. Die historischen Realantworten werden unverändert unter ihrem v1-Vertrag abgespielt; keine neuen Modellaufrufe.
+- 75 gezielte Vertrags-, Adoptions-, Sicherheits- und Regressionsprüfungen bestanden: `targeted-postgres.txt`.
+- 71 Prüfungen für neue strategische Abläufe, eingefrorene Antworten, Extraktion und Candidate-Snapshots bestanden: `extraction-postgres.txt`.
+- 66 Discovery-/Methodik-/Realantwort-Replays bestanden: `replay-postgres.txt`. Die historischen Realantworten werden unverändert unter ihrem v1-Vertrag abgespielt; keine neuen Modellaufrufe.
 - Der aus unverändertem main (`2cbba9b1f368947c3333b6ecacaeae662cb4a2b3`) abgeleitete Golden-Nachweis `tests/fixtures/accelerator/issue164_legacy.json` friert Katalog, Antwort-Hash, Quellpayload und Quality-Hash ein.
 - Ruff, Format, Django-Systemprüfung und Migrationsprüfung bestanden. Migration 0025 verändert nur die Feldvalidierung im Django-Zustand; PostgreSQL-SQL ist ein No-op. Alte Form-/Übernahmeverträge behalten ihre Pflichtangaben.
-- Die vollständige Suite umfasst 2479 Tests. Der abschließende Status wird im PR und dessen CI-Checks ausgewiesen.
+- 33 Vorschauprüfungen bestanden: `frozen-preview-postgres.txt`. Auch nach späterer Quellenänderung oder neuer Pfadrevision bleibt die Vorschau anhand ihrer eingefrorenen Fakten lesbar; erneute Übernahme bleibt gesperrt.
+- Die vollständige Suite umfasst nach den zusätzlichen Lesbarkeitsprüfungen 2481 Tests. Der abschließende Status wird im PR und dessen CI-Checks ausgewiesen.
 
 ## Echte Desktop-Browserprüfung
 
