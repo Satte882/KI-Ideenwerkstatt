@@ -11,7 +11,7 @@ SELECTION_WORKFLOW = (
     ("discovery", "Discovery", ("value_stream",)),
     ("focus", "Fokus & Priorisierung", ("focus",)),
     ("use_cases", "Use Cases", ("process", "solution", "use_case")),
-    ("assessment", "Bewertung", ("assessment",)),
+    ("assessment", "Bewertung", ("review_start", "assessment")),
     ("governance", "Governance", ("governance",)),
     ("approval", "Freigabe", ("approval",)),
     ("delivery", "Delivery", ("delivery",)),
@@ -38,7 +38,7 @@ CONTEXT_STEP_PREFERENCE = {
     "discovery": ("value_stream",),
     "focus": ("focus",),
     "use_cases": ("use_case", "solution", "process"),
-    "assessment": ("assessment",),
+    "assessment": ("review_start", "assessment"),
     "governance": ("governance",),
     "approval": ("approval",),
     "delivery": ("delivery",),
@@ -246,6 +246,8 @@ def _contextual_step(raw_steps, workflow_key):
 
 
 def _local_label(workflow_key, default_label, raw_steps, contextual_step):
+    if workflow_key == "assessment" and any(step.key == "review_start" for step in raw_steps):
+        return "Prüfung & Bewertung"
     if workflow_key != "use_cases":
         return default_label
     if contextual_step is not None:
@@ -285,7 +287,11 @@ def workflow_steps(journey, request):
         result.append(
             {
                 "key": key,
-                "label": label,
+                "label": (
+                    _local_label(key, label, raw_steps, contextual_step)
+                    if key == "assessment"
+                    else label
+                ),
                 "state": state,
                 "url": links[key],
                 "local_url": local_url,
@@ -301,7 +307,7 @@ def workflow_steps(journey, request):
 def local_step_group(step_key):
     if step_key in {"value_stream", "focus", "process", "solution"}:
         return "analysis"
-    if step_key in {"use_case", "assessment", "approval", "delivery"}:
+    if step_key in {"use_case", "review_start", "assessment", "approval", "delivery"}:
         return "initiative"
     if step_key in OUTCOME_STEP_KEYS:
         return "outcome"

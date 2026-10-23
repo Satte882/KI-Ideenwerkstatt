@@ -33,13 +33,13 @@ def test_intake_names_real_effect_role_and_queue():
     template = Path("templates/use_cases/intake_wizard.html").read_text(encoding="utf-8")
     intake_config = Path("ki_radar/use_cases/intake.py").read_text(encoding="utf-8")
 
-    assert "Use Case anlegen und zur Bewertung bereitstellen" in template
+    assert "Use Case anlegen und zur Prüfung übergeben" in template
     assert "Use Case anlegen und zur Bewertung übergeben" not in template
     assert 'data-testid="intake-handover-preview"' in template
     assert "Nächste Bearbeitung" in template
     assert "KI-Koordination" in template
     assert "Arbeitsvorrat → Meine Aufgaben" in template
-    assert "zur Bewertung bereitgestellt wird" in intake_config
+    assert "an die KI-Koordination zur Prüfung übergeben wird" in intake_config
 
 
 @pytest.mark.django_db

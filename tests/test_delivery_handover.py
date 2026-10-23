@@ -451,7 +451,7 @@ def test_use_case_detail_renders_delivery_package_creation_as_post_form(
     coordinator,
     business_unit,
 ):
-    use_case = make_use_case(owner, business_unit)
+    use_case = make_use_case(owner, business_unit, status=UseCase.Status.REVIEW)
     approve_use_case(use_case, coordinator)
     create_url = reverse("delivery:package_create", kwargs={"use_case_id": use_case.pk})
     client.force_login(coordinator)

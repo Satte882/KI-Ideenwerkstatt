@@ -53,7 +53,7 @@ def _set_open_privacy_review(use_case, coordinator):
 
 
 @pytest.mark.django_db
-def test_complete_intake_without_assessment_is_only_assessment_ready(coordinator, use_case):
+def test_complete_intake_without_assessment_needs_review_start(coordinator, use_case):
     _remove_decision_chain(use_case)
     use_case.status = UseCase.Status.IDEA
     use_case.decision_status = UseCase.DecisionStatus.READY
@@ -63,9 +63,9 @@ def test_complete_intake_without_assessment_is_only_assessment_ready(coordinator
     journey = build_use_case_journey(use_case, coordinator)
     dimensions = build_use_case_status_dimensions(use_case, journey)
 
-    assert check.title == "Bewertung anlegen"
-    assert check.state_label == "Bewertungsbereit"
-    assert dimensions.assessment.label == "Bewertungsbereit"
+    assert check.title == "Prüfung starten"
+    assert check.state_label == "Prüfungsstart ausstehend"
+    assert dimensions.assessment.label == "Prüfungsstart ausstehend"
     assert dimensions.approval.label == "Bewertung erforderlich"
     assert dimensions.lifecycle.label == "Idee"
 
@@ -74,7 +74,7 @@ def test_complete_intake_without_assessment_is_only_assessment_ready(coordinator
 def test_assessment_with_open_governance_keeps_approval_actionable(coordinator, use_case):
     use_case.delivery_packages.all().delete()
     use_case.approval_decisions.all().delete()
-    use_case.status = UseCase.Status.IDEA
+    use_case.status = UseCase.Status.REVIEW
     use_case.save(update_fields=["status", "updated_at"])
     _set_open_privacy_review(use_case, coordinator)
 

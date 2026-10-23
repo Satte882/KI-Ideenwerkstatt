@@ -112,7 +112,7 @@ def test_direct_intake_with_missing_data_source_is_actionable(seeded_demo):
     assert steps["value_stream"].state == "optional"
     assert steps["focus"].state == "optional"
     assert journey.next_action is not None
-    assert journey.next_action.key == "assessment"
+    assert journey.next_action.key == "review_start"
     assert journey.next_action.state == "current"
     assert steps["use_case"].state == "complete"
 

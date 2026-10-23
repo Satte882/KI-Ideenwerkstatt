@@ -114,6 +114,16 @@ def current_work_check(use_case: UseCase) -> WorkCheck:
             warnings=[],
         )
 
+    if use_case.status == UseCase.Status.IDEA:
+        blockers = intake_blockers(use_case)
+        return WorkCheck(
+            title="Prüfung vorbereiten" if blockers else "Prüfung starten",
+            state="blocked" if blockers else "review",
+            state_label="Prüfungsstart blockiert" if blockers else "Prüfungsstart ausstehend",
+            blockers=blockers,
+            warnings=[],
+        )
+
     assessment = use_case.decision_assessments.first()
     if assessment is None:
         blockers = intake_blockers(use_case)
@@ -208,6 +218,17 @@ def _assessment_dimension(use_case: UseCase) -> StatusDimension:
             label="Bewertung blockiert",
             state="blocked",
             explanation=f"Vor der Bewertung fehlt: {blockers[0]}.",
+        )
+    if use_case.status == UseCase.Status.IDEA:
+        return StatusDimension(
+            key="assessment",
+            title="Assessment",
+            label="Prüfungsstart ausstehend",
+            state="review",
+            explanation=(
+                "Der Intake ist abgeschlossen. Erst die KI-Koordination startet die Prüfung; "
+                "danach kann eine strukturierte Bewertung angelegt werden."
+            ),
         )
     return StatusDimension(
         key="assessment",
@@ -332,10 +353,8 @@ def _next_lifecycle_decision(use_case: UseCase) -> str:
     if use_case.status == UseCase.Status.IDEA:
         work_check = current_work_check(use_case)
         if work_check.blockers:
-            return f"Vor der Bewertung fehlt: {work_check.blockers[0]}."
-        if use_case.decision_assessments.exists():
-            return "Nächste Aktion: verbindliche Freigabeentscheidung vorbereiten."
-        return "Nächste Aktion: strukturierte Bewertung anlegen."
+            return f"Vor dem Prüfungsstart fehlt: {work_check.blockers[0]}."
+        return "Nächste Aktion: KI-Koordination startet die Prüfung über eine Review-Entscheidung."
 
     if use_case.status == UseCase.Status.REVIEW:
         work_check = current_work_check(use_case)

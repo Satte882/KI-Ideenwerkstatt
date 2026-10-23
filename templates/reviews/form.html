@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static metric_tags %}
-{% block title %}{% if pilot_start_only %}Pilot starten{% else %}Entscheidung{% endif %} – KI-Radar{% endblock %}
+{% block title %}{% if use_case.status == 'idea' %}Prüfung starten{% elif pilot_start_only %}Pilot starten{% else %}Entscheidung{% endif %} – KI-Radar{% endblock %}
 {% block body_class %}page-form-workspace page-review-form{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
 {% metric_set use_case as metric %}
 <div class="page-header">
-  <div><div class="eyebrow mb-2">{{ use_case.short_id }} · {{ use_case.get_status_display }}</div><h1 class="page-title">{% if pilot_start_only %}Pilot starten{% elif form.scale_readiness_result %}Scale Readiness &amp; Entscheidung{% else %}Entscheidung dokumentieren{% endif %}</h1><p class="page-subtitle">{{ use_case.title }}</p></div>
+  <div><div class="eyebrow mb-2">{{ use_case.short_id }} · {{ use_case.get_status_display }}</div><h1 class="page-title">{% if use_case.status == 'idea' %}Prüfung starten{% elif pilot_start_only %}Pilot starten{% elif form.scale_readiness_result %}Scale Readiness &amp; Entscheidung{% else %}Entscheidung dokumentieren{% endif %}</h1><p class="page-subtitle">{{ use_case.title }}</p></div>
   <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Zurück zum Use Case</a>
 </div>
 <div class="row g-4">
@@ -14,9 +14,9 @@
     <div class="app-card decision-panel mb-4">
       <div class="card-header d-flex justify-content-between"><strong>{{ decision_check.title }}</strong><span class="badge state-{{ decision_check.state }}">{{ decision_check.state_label }}</span></div>
       <div class="card-body">
-        {% if decision_check.blockers %}<div class="section-title">Bestehende Go-live-Blocker</div><ul class="decision-list">{% for blocker in decision_check.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>{% endif %}
+        {% if decision_check.blockers %}<div class="section-title">{% if use_case.status == 'idea' %}Offene Intake-Voraussetzungen{% else %}Bestehende Go-live-Blocker{% endif %}</div><ul class="decision-list">{% for blocker in decision_check.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>{% endif %}
         {% if decision_check.warnings %}<div class="section-title mt-3">Hinweise</div><ul class="decision-list">{% for warning in decision_check.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>{% endif %}
-        {% if not decision_check.blockers and not decision_check.warnings %}<p class="text-muted mb-0">Die bestehende Go-live-Grundlage ist vollständig.</p>{% endif %}
+        {% if not decision_check.blockers and not decision_check.warnings %}<p class="text-muted mb-0">{% if use_case.status == 'idea' %}Der Intake ist abgeschlossen. Mit der Review-Entscheidung beginnt die Prüfung. Bewertung und Freigabe folgen als eigene Schritte.{% else %}Die bestehende Go-live-Grundlage ist vollständig.{% endif %}</p>{% endif %}
       </div>
     </div>
 

@@ -96,6 +96,7 @@ def approve_use_case(use_case, coordinator):
 
 
 def make_package(owner, coordinator, business_unit, **use_case_overrides):
+    use_case_overrides.setdefault("status", UseCase.Status.REVIEW)
     use_case = make_use_case(owner, business_unit, **use_case_overrides)
     approve_use_case(use_case, coordinator)
     return use_case, create_delivery_package(use_case=use_case, actor=coordinator)

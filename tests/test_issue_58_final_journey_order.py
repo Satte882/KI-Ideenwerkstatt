@@ -42,7 +42,7 @@ def assessed_use_case(coordinator):
     use_case.approval_decisions.all().delete()
     use_case.governance_reviews.all().delete()
     use_case.governance_assessments.all().delete()
-    use_case.status = UseCase.Status.IDEA
+    use_case.status = UseCase.Status.REVIEW
     use_case.decision_status = UseCase.DecisionStatus.READY
     use_case.privacy_review_required = False
     use_case.privacy_review_completed = False

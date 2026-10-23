@@ -125,6 +125,31 @@ def _use_case_steps(use_case: UseCase, user) -> tuple[list[JourneyStep], str]:
     latest_approval = use_case.approval_decisions.first()
     final_positive_approval = latest_final_approval(use_case)
 
+    review_start_pending = use_case.status == UseCase.Status.IDEA and not final_negative
+    if review_start_pending:
+        steps.append(
+            JourneyStep(
+                key="review_start",
+                label="Prüfung",
+                state="upcoming" if blockers else "current",
+                url=(
+                    reverse("reviews:create", kwargs={"use_case_id": use_case.pk})
+                    if can_decide and not blockers
+                    else None
+                ),
+                action_label="Prüfung starten" if can_decide and not blockers else "",
+                reason=(
+                    "Vor dem Prüfungsstart müssen die Intake-Angaben ergänzt werden."
+                    if blockers
+                    else "Aufnahme abgeschlossen. Die KI-Koordination muss die Prüfung "
+                    "über eine dokumentierte Review-Entscheidung starten."
+                    if can_decide
+                    else "Aufnahme abgeschlossen und an die KI-Koordination zur Prüfung "
+                    "übergeben. Der Prüfungsstart steht aus."
+                ),
+            )
+        )
+
     if final_negative and latest_assessment is None:
         steps.append(
             JourneyStep(
@@ -134,13 +159,13 @@ def _use_case_steps(use_case: UseCase, user) -> tuple[list[JourneyStep], str]:
                 reason="Das Vorhaben wurde beendet; eine weitere Bewertung ist nicht erforderlich.",
             )
         )
-    elif blockers:
+    elif blockers or review_start_pending:
         steps.append(
             JourneyStep(
                 key="assessment",
                 label="Bewertung",
                 state="upcoming",
-                reason="Die Bewertung beginnt nach einem vollständigen Intake.",
+                reason="Die Bewertung beginnt nach vollständigem Intake und dokumentiertem Prüfungsstart.",
             )
         )
     elif latest_assessment is None:

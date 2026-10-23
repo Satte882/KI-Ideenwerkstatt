@@ -2,7 +2,7 @@
   <div class="cr-decision-state__main uc-decision-state__main">
     <div class="cr-decision-state__kicker uc-decision-state__kicker">Entscheidungsstand</div>
     <div class="cr-decision-state__headline uc-decision-state__headline">
-      <h2 id="decision-state-title">{{ use_case.get_decision_status_display }}</h2>
+      <h2 id="decision-state-title">{% if use_case.status == 'idea' and use_case.decision_status == 'ready' %}Prüfungsstart ausstehend{% else %}{{ use_case.get_decision_status_display }}{% endif %}</h2>
     </div>
   </div>
   <dl class="cr-decision-state__facts uc-decision-state__facts">
