@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static architecture_focus %}
 {% block title %}Lösungsoptionen vergleichen – KI-Radar{% endblock %}
 {% block body_class %}page-detail-workspace page-solution-compare{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}?v=issue-331-solution-comparison">{% endblock %}
@@ -104,13 +104,13 @@
         <tr><th scope="row">Beleglage<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">KI-Komponente</th>{% for option in options %}<td>{% if option.starts_ai_use_case %}Ja – KI-Use-Case-Pfad möglich{% else %}Nein – kein KI-Use-Case erforderlich{% endif %}</td>{% endfor %}</tr>
-        <tr><th scope="row">Bottleneck-Abdeckung und Diagnosebezug<span class="d-block small text-muted mt-1">Problem / bestätigte Ursache</span></th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{% comparison_coverage_label %}</th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|default:"–" }}</td>{% endfor %}</tr>
         <tr><th scope="row">Machbarkeit</th>{% for option in options %}<td>{{ option.get_feasibility_display }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Datenanforderungen</th>{% for option in options %}<td class="text-preline">{{ option.data_requirements|default:"–" }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Anwendungsauswirkung</th>{% for option in options %}<td class="text-preline">{{ option.application_impact|default:"–" }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Integrationsaufwand</th>{% for option in options %}<td>{{ option.get_integration_effort_display }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Integrationen</th>{% for option in options %}<td class="text-preline">{{ option.integration_impact|default:"–" }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Technologieleitplanken</th>{% for option in options %}<td class="text-preline">{{ option.technology_constraints|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Datenanforderungen</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'data_requirements' %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Anwendungsauswirkung</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'application_impact' %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Integrationsaufwand</th>{% for option in options %}<td>{% comparison_technical_value option 'integration_effort' %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Integrationen</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'integration_impact' %}</td>{% endfor %}</tr>
+        <tr><th scope="row">Technologieleitplanken</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'technology_constraints' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Risiken</th>{% for option in options %}<td class="text-preline">{{ option.risks|default:"–" }}</td>{% endfor %}</tr>
         <tr><th scope="row">Passung zu Zielbild und Leitplanken</th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|default:"–" }}</td>{% endfor %}</tr>
         <tr><th scope="row">Architecture Mode</th>{% for option in options %}<td>{% if option.architecture_assessment %}{{ option.architecture_assessment.get_architecture_mode_display }}{% else %}<span class="text-muted">Nicht eingeschätzt</span>{% endif %}</td>{% endfor %}</tr>
@@ -231,6 +231,19 @@
             <strong>Mindestens zwei aktive Optionen erforderlich</strong>
             <p class="mb-2">Aktuell {{ options|length }} aktive Option(en). Nicht weiterverfolgte Optionen bleiben gespeichert, zählen aber nicht für die Auswahl.</p>
             {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>{% endif %}
+          </div>
+        {% endif %}
+
+        {% if missing_outcome_effect_options %}
+          <div class="mt-3" data-testid="selection-option-outcome-blocker">
+            <strong>Wirkung auf das gemeinsame Geschäftsergebnis fehlt</strong>
+            <ul>
+              {% for option in missing_outcome_effect_options %}
+                <li>{{ option.name }}: Wirkung auf das Geschäftsergebnis noch offen.
+                  <a href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Wirkung für {{ option.name }} ergänzen</a>
+                </li>
+              {% endfor %}
+            </ul>
           </div>
         {% endif %}
 

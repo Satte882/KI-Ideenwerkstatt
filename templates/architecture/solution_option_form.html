@@ -18,7 +18,7 @@
   <div>
     <strong>{% if option.comparison_complete %}Bewertung vollständig{% else %}Noch offene Bewertungsangaben{% endif %}</strong>
     {% if not option.comparison_complete %}<span>{{ option.missing_comparison_fields|join:", " }}</span>{% endif %}
-    <p class="mb-0 mt-2">Füllen Sie die Vergleichskriterien aus und setzen Sie den Bewertungsstatus auf „Bewertet“. Nicht zutreffende Anforderungen begründet als solche dokumentieren; bei Time-to-Value ist „Unbekannt“ zulässig. Ein Zwischenstand kann gespeichert werden. Danach gelangen Sie zurück zum Vergleich.</p>
+    <p class="mb-0 mt-2">Füllen Sie die Vergleichskriterien aus und setzen Sie den Bewertungsstatus auf „Bewertet“. Bei organisatorischen Änderungen und Lösungen ohne Technik dürfen technische Angaben leer bleiben; tatsächliche Auswirkungen weiterhin dokumentieren. Bei Time-to-Value ist „Unbekannt“ zulässig. Ein Zwischenstand kann gespeichert werden. Danach gelangen Sie zurück zum Vergleich.</p>
   </div>
 </div>
 {% endif %}

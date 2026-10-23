@@ -228,7 +228,7 @@ def build_process_review_context(process_analysis: ProcessAnalysis, actor) -> Re
     focus = get_value_stream_focus(value_stream)
     form = ProcessAnalysisForm(instance=process_analysis)
     options = ordered_solution_options(process_analysis)
-    comparison_gaps = comparison_blockers(options)
+    comparison_gaps = comparison_blockers(options, process_analysis=process_analysis)
     diagnosis_current = not comparison_gaps
 
     context = ReviewContext(

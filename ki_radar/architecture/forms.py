@@ -13,6 +13,12 @@ from ki_radar.accounts.permissions import (
 )
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
+from .comparison_policy import (
+    COVERAGE_LABEL,
+    TECHNICAL_FIELDS,
+    assessment_field_error,
+    missing_assessment_fields,
+)
 from .focus import ValueStreamFocus, get_value_stream_focus
 from .models import (
     ProcessAnalysis,
@@ -536,6 +542,11 @@ class SolutionOptionForm(StyledModelForm):
             self.process_analysis = self.instance.process_analysis
         else:
             self.process_analysis = None
+        for name in TECHNICAL_FIELDS:
+            self.fields[name].help_text = (
+                "Bei organisatorischen Änderungen und Lösungen ohne Technik optional. "
+                "Tatsächliche technische Auswirkungen weiterhin dokumentieren."
+            )
         self.fields[
             "evaluation_status"
         ].help_text = (
@@ -554,20 +565,11 @@ class SolutionOptionForm(StyledModelForm):
         cleaned = super().clean()
         if cleaned.get("evaluation_status") != SolutionOption.EvaluationStatus.ASSESSED:
             return cleaned
-        required = {
-            "bottleneck_coverage": "Abdeckung von Bottleneck und Ursache",
-            "data_requirements": "Datenanforderungen",
-            "application_impact": "Auswirkung auf Anwendungen",
-            "integration_impact": "Integrationen",
-            "risks": "Risiken und Nachteile",
-            "architecture_fit": "Begründung und Architecture Fit",
-        }
-        for field_name, label in required.items():
-            if not str(cleaned.get(field_name, "")).strip():
-                self.add_error(
-                    field_name,
-                    f"{label} ist für den Status 'Bewertet' erforderlich.",
-                )
+        for field_name in missing_assessment_fields(cleaned.get("option_type"), cleaned):
+            self.add_error(
+                field_name,
+                assessment_field_error(SolutionOption, field_name),
+            )
         return cleaned
 
     class Meta:
@@ -594,6 +596,7 @@ class SolutionOptionForm(StyledModelForm):
         ]
         labels = {
             "option_type": "Lösungstyp",
+            "bottleneck_coverage": COVERAGE_LABEL,
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 5}),
