@@ -8,7 +8,11 @@ from typing import Any
 
 from .solution_generation_contract import GENERATED_OPTION_FIELDS, OPTION_LANES
 from .solution_generation_sources import ALLOWED_SOURCE_IDS, SolutionGenerationSourceContext
-from .solution_quality_versions import CRITIC_PROMPT_VERSION, CRITIC_SCHEMA_VERSION
+from .solution_quality_versions import (
+    CRITIC_PROMPT_VERSION,
+    CRITIC_SCHEMA_VERSION,
+    quality_versions,
+)
 
 CRITIC_CRITERIA = (
     "distinctiveness",
@@ -354,6 +358,7 @@ def validate_solution_critic_payload(
     payload: Any,
     source_context: SolutionGenerationSourceContext,
 ) -> dict[str, Any]:
+    expected_prompt_version = quality_versions(source_context)[1]
     errors: list[str] = []
     root = _as_dict(payload, "root", errors)
     _exact_fields(
@@ -370,9 +375,9 @@ def validate_solution_critic_payload(
             f"root.schema_version: Erwartet {CRITIC_SCHEMA_VERSION}, erhalten {schema_version}."
         )
     prompt_version = _nonempty_text(root.get("prompt_version"), "root.prompt_version", errors)
-    if prompt_version and prompt_version != CRITIC_PROMPT_VERSION:
+    if prompt_version and prompt_version != expected_prompt_version:
         errors.append(
-            f"root.prompt_version: Erwartet {CRITIC_PROMPT_VERSION}, erhalten {prompt_version}."
+            f"root.prompt_version: Erwartet {expected_prompt_version}, erhalten {prompt_version}."
         )
 
     actual_source_ids = frozenset(fact.source_id for fact in source_context.facts)
@@ -400,7 +405,7 @@ def validate_solution_critic_payload(
 
     return {
         "schema_version": CRITIC_SCHEMA_VERSION,
-        "prompt_version": CRITIC_PROMPT_VERSION,
+        "prompt_version": expected_prompt_version,
         "findings": normalized_findings,
     }
 
@@ -418,7 +423,7 @@ def _target_schema() -> dict[str, object]:
 
 
 def build_solution_critic_json_schema(
-    *, allowed_source_ids: Iterable[str] = ALLOWED_SOURCE_IDS
+    *, allowed_source_ids: Iterable[str] = ALLOWED_SOURCE_IDS, prompt_version=CRITIC_PROMPT_VERSION
 ) -> dict[str, object]:
     source_ids = sorted(set(allowed_source_ids))
     finding_properties: dict[str, object] = {
@@ -446,7 +451,7 @@ def build_solution_critic_json_schema(
         "required": ["schema_version", "prompt_version", "findings"],
         "properties": {
             "schema_version": {"type": "string", "const": CRITIC_SCHEMA_VERSION},
-            "prompt_version": {"type": "string", "const": CRITIC_PROMPT_VERSION},
+            "prompt_version": {"type": "string", "const": prompt_version},
             "findings": {
                 "type": "array",
                 "items": {

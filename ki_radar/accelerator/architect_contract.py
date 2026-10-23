@@ -11,6 +11,25 @@ DISCOVERY_PROMPT_VERSION = "ap1-methodology-v13"
 DISCOVERY_VERIFIER_SCHEMA_VERSION = "ap1-discovery-verifier-v1"
 DISCOVERY_VERIFIER_PROMPT_VERSION = "ap1-ver-method-v13"
 MAX_DISCOVERY_STAGES = 12
+DISCOVERY_SCHEMA_VERSION_V2 = "ap1-discovery-v2"
+DISCOVERY_PROMPT_VERSION_V2 = "ap1-methodology-v14"
+
+
+def discovery_versions(catalog_version):
+    if catalog_version == "1.0":
+        return DISCOVERY_SCHEMA_VERSION, DISCOVERY_PROMPT_VERSION
+    if catalog_version == "2.0":
+        return DISCOVERY_SCHEMA_VERSION_V2, DISCOVERY_PROMPT_VERSION_V2
+    raise ValueError("Nicht unterstützter Discovery-Katalog.")
+
+
+def supported_discovery_analysis(analysis):
+    try:
+        versions = discovery_versions(analysis.catalog_version)
+    except ValueError:
+        return False
+    return (analysis.extraction_schema_version, analysis.prompt_version) == versions
+
 
 _STAGE_FIELDS = frozenset(
     {
@@ -258,7 +277,7 @@ def _object_schema(properties: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_discovery_json_schema() -> dict[str, Any]:
+def build_discovery_json_schema(schema_version=DISCOVERY_SCHEMA_VERSION) -> dict[str, Any]:
     value_stream = _object_schema(
         {
             "name": _text_schema(min_length=1),
@@ -351,7 +370,9 @@ def build_discovery_json_schema() -> dict[str, Any]:
             "data_objects": _text_schema(),
             "business_rules": _text_schema(),
             "handoffs": _text_schema(),
-            "bottlenecks": _text_schema(min_length=1),
+            "bottlenecks": _text_schema(
+                min_length=1 if schema_version == DISCOVERY_SCHEMA_VERSION else 0
+            ),
             "observations": _text_schema(),
             "cause_hypotheses": _text_schema(),
             "constraints": _text_schema(),
@@ -395,7 +416,7 @@ def build_discovery_json_schema() -> dict[str, Any]:
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         **_object_schema(
             {
-                "schema_version": {"type": "string", "enum": [DISCOVERY_SCHEMA_VERSION]},
+                "schema_version": {"type": "string", "enum": [schema_version]},
                 "value_stream": value_stream,
                 "stages": {
                     "type": "array",
@@ -511,10 +532,14 @@ def validate_discovery_payload(
     *,
     allowed_refs: set[str],
     evidence_text: str,
+    schema_version: str = DISCOVERY_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     errors: list[str] = []
     root = _exact_fields(payload, _ROOT_FIELDS, "root", errors)
-    if root.get("schema_version") != DISCOVERY_SCHEMA_VERSION:
+    if (
+        schema_version not in {DISCOVERY_SCHEMA_VERSION, DISCOVERY_SCHEMA_VERSION_V2}
+        or root.get("schema_version") != schema_version
+    ):
         errors.append("schema_version: Falsche Discovery-Schema-Version.")
 
     value_stream = _exact_fields(
@@ -544,10 +569,15 @@ def validate_discovery_payload(
         ("process_analysis.trigger", process.get("trigger")),
         ("process_analysis.outcome", process.get("outcome")),
         ("process_analysis.current_flow", process.get("current_flow")),
-        ("process_analysis.bottlenecks", process.get("bottlenecks")),
     ):
         if not isinstance(value, str) or not value.strip():
             errors.append(f"{path}: Nichtleerer Text erforderlich.")
+
+    bottlenecks = process.get("bottlenecks")
+    if not isinstance(bottlenecks, str) or (
+        schema_version == DISCOVERY_SCHEMA_VERSION and not bottlenecks.strip()
+    ):
+        errors.append("process_analysis.bottlenecks: Nichtleerer Text erforderlich.")
 
     _validate_refs(
         value_stream.get("evidence_refs"),

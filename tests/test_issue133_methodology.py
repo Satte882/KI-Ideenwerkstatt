@@ -254,8 +254,11 @@ def test_historical_solution_preview_is_readable_but_not_a_fresh_provider_contra
         validate_solution_generation_payload,
     )
 
-    source = build_solution_generation_source_context(make_process(owner, business_unit))
+    source = build_solution_generation_source_context(
+        make_process(owner, business_unit), source_schema_version="block7_sources_v1"
+    )
     historical = valid_generation_payload()
+    historical["schema_version"] = "1.0"
     historical["prompt_version"] = "1.2"
     assert build_validated_effective_solution_payload(historical, source)["prompt_version"] == "1.2"
     with pytest.raises(SolutionGenerationContractError, match="Prompt-Version"):

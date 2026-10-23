@@ -337,7 +337,7 @@ def test_repair_contract_version_drift_is_bound_to_snapshot(owner, business_unit
     critic = _make_initial_critic(run)
 
     monkeypatch.setattr(
-        "ki_radar.accelerator.solution_quality_snapshot.REPAIR_PROMPT_VERSION",
+        "ki_radar.accelerator.solution_quality_versions.REPAIR_PROMPT_VERSION",
         "9.9",
     )
     with pytest.raises(SolutionRepairContractError) as exc_info:

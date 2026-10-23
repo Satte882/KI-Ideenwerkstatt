@@ -1,0 +1,40 @@
+........................................................................ [ 96%]
+...                                                                      [100%]
+=============================== warnings summary ===============================
+../review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+  /review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+  /issue164/ki_radar/reviews/forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+  /issue164/ki_radar/reviews/forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+tests/test_block5_adoption_service.py::test_edited_use_case_adoption_preserves_history_status_and_classification
+  /issue164/ki_radar/delivery/forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+tests/test_block5_adoption_review.py::test_review_ui_follows_uncertainty_policy[low-True-True-False]
+tests/test_block5_adoption_review.py::test_review_ui_follows_uncertainty_policy[medium-False-True-False]
+tests/test_block5_adoption_review.py::test_review_ui_follows_uncertainty_policy[high-False-False-True]
+tests/test_block5_adoption_review.py::test_review_ui_resolves_prefixed_extraction_target_path
+tests/test_block5_adoption_review.py::test_medium_direct_request_is_rejected_server_side
+tests/test_block5_adoption_review.py::test_edited_adoption_route_uses_regular_field_update
+tests/test_block5_adoption_review.py::test_conflict_ui_shows_three_values_and_allows_discard
+tests/test_block5_adoption_review.py::test_feature_flag_hides_controls_and_blocks_direct_request
+tests/test_block7_completion.py::test_block7_real_demo_preview_and_comparison_preserve_review_contract
+  /review/.venv/lib/python3.13/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /issue164/staticfiles/
+    mw_instance = middleware(adapted_handler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+75 passed, 20 warnings in 44.08s

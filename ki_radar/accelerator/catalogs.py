@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -461,12 +461,64 @@ USE_CASE_CATALOG_V1 = CaptureCatalog(
 )
 
 
+CATALOG_VERSION_V2 = "2.0"
+
+
+def _strategic_capture_catalog() -> CaptureCatalog:
+    changes = {
+        "vs_stage_pain_metrics": {
+            "label": "Welche Beobachtungen, Potenziale und Kennzahlen gibt es je Phase?",
+            "help_text": (
+                "Bei einem Problem: konkrete Engpässe und vorhandene Messwerte mit Einheit. "
+                "Bei einem strategischen Ziel: begründetes Potenzial und nächster "
+                "Validierungsschritt. Unbekannte Ursachen und Baselines dürfen offenbleiben."
+            ),
+            "required": False,
+        },
+        "process_findings_target": {
+            "label": "Welche Befunde oder strategischen Potenziale sind für den Prozess belegt?",
+            "help_text": (
+                "Problemgetrieben: beobachtete Engpässe, Ausnahmen, belegte Ursachen und "
+                "vorhandene Baselines. Strategisch: Potenzial, Grundlage und Validierungsschritt. "
+                "Vermutungen als Hypothese kennzeichnen; fehlende Diagnosen oder Messwerte "
+                "nicht durch Fülltexte ersetzen. Der verbindliche Discovery-Pfad wird später "
+                "am Prozess menschlich festgelegt."
+            ),
+            "required": False,
+        },
+        "solution_candidates": {
+            "help_text": (
+                "Beschreiben Sie lösungsoffene Alternativen und ihre bedingte Abdeckung von "
+                "beobachteten Engpässen oder begründetem Potenzial. Annahmen und offene Evidenz "
+                "sichtbar lassen; keine Ursache, Messung oder Entscheidung erfinden."
+            ),
+        },
+    }
+    return replace(
+        VALUE_STREAM_CATALOG_V1,
+        version=CATALOG_VERSION_V2,
+        sections=tuple(
+            replace(
+                section,
+                questions=tuple(
+                    replace(question, **changes.get(question.key, {}))
+                    for question in section.questions
+                ),
+            )
+            for section in VALUE_STREAM_CATALOG_V1.sections
+        ),
+    )
+
+
+VALUE_STREAM_CATALOG_V2 = _strategic_capture_catalog()
+
 CATALOGS: dict[tuple[CaptureType, str], CaptureCatalog] = {
     ("value_stream", CATALOG_VERSION_V1): VALUE_STREAM_CATALOG_V1,
     ("use_case", CATALOG_VERSION_V1): USE_CASE_CATALOG_V1,
+    ("value_stream", CATALOG_VERSION_V2): VALUE_STREAM_CATALOG_V2,
 }
 CURRENT_CATALOG_VERSIONS: dict[CaptureType, str] = {
-    "value_stream": CATALOG_VERSION_V1,
+    "value_stream": CATALOG_VERSION_V2,
     "use_case": CATALOG_VERSION_V1,
 }
 

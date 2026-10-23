@@ -211,7 +211,8 @@ def test_contradictory_sources_and_prompt_injection_remain_untrusted(owner, busi
 
     assert facts["process.business_rules"] == process.business_rules
     assert facts["process.bottlenecks"] == process.bottlenecks
-    assert messages[0]["content"] == SOLUTION_GENERATION_SYSTEM_PROMPT
+    assert messages[0]["content"].startswith(SOLUTION_GENERATION_SYSTEM_PROMPT)
+    assert "Potenzial ist keine Ursache" in messages[0]["content"]
     assert injection not in messages[0]["content"]
     user_document = json.loads(messages[1]["content"])
     user_values = [fact["value"] for fact in user_document["untrusted_source_data"]["facts"]]

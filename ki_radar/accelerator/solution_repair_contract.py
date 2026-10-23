@@ -20,17 +20,19 @@ from .solution_generation_effective import (
     SolutionGenerationEffectivePayloadError,
     normalize_solution_generation_edits,
 )
-from .solution_generation_sources import build_solution_generation_source_context
+from .solution_generation_sources import (
+    build_solution_generation_source_context,
+    source_version_for_run,
+)
 from .solution_quality_runs import (
     SolutionQualityRunError,
     reserve_solution_quality_step,
 )
 from .solution_quality_snapshot import build_solution_quality_snapshot
 from .solution_quality_versions import (
-    CRITIC_PROMPT_VERSION,
     CRITIC_SCHEMA_VERSION,
-    REPAIR_PROMPT_VERSION,
     REPAIR_SCHEMA_VERSION,
+    quality_versions,
 )
 
 
@@ -231,20 +233,24 @@ def build_solution_repair_plan(
             code="initial_critic_unavailable",
         )
 
-    if generation_run.prompt_version != GENERATION_PROMPT_VERSION:
+    if generation_run.prompt_version not in {"1.3", GENERATION_PROMPT_VERSION}:
         _fail(
             "Der Generator-Prompt-Vertrag hat sich seit der Preview geändert.",
             code="repair_stale",
             stale_reason="generation_prompt_version_changed",
         )
-    if generation_run.generation_schema_version != GENERATION_SCHEMA_VERSION:
+    if generation_run.generation_schema_version not in {"1.0", GENERATION_SCHEMA_VERSION}:
         _fail(
             "Das Generator-Schema hat sich seit der Preview geändert.",
             code="repair_stale",
             stale_reason="generation_schema_version_changed",
         )
 
-    if initial_critic_run.prompt_version != CRITIC_PROMPT_VERSION:
+    source_context = build_solution_generation_source_context(
+        generation_run.process_analysis,
+        source_schema_version=source_version_for_run(generation_run),
+    )
+    if initial_critic_run.prompt_version != quality_versions(source_context)[1]:
         _fail(
             "Der Critic-Prompt-Vertrag hat sich seit der Prüfung geändert.",
             code="repair_stale",
@@ -258,7 +264,8 @@ def build_solution_repair_plan(
         )
 
     current_source_context = build_solution_generation_source_context(
-        generation_run.process_analysis
+        generation_run.process_analysis,
+        source_schema_version=source_version_for_run(generation_run),
     )
     if (
         current_source_context.process_version != generation_run.process_version
@@ -354,7 +361,12 @@ def reserve_solution_repair_attempt(
             actor=actor,
             step_type=SolutionQualityRun.StepType.REPAIR,
             input_hash=plan.snapshot_hash,
-            prompt_version=REPAIR_PROMPT_VERSION,
+            prompt_version=quality_versions(
+                build_solution_generation_source_context(
+                    generation_run.process_analysis,
+                    source_schema_version=source_version_for_run(generation_run),
+                )
+            )[2],
             output_schema_version=REPAIR_SCHEMA_VERSION,
             provider=provider,
             input_chars=input_chars,

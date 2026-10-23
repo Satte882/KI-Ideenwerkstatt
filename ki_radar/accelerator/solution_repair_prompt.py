@@ -8,7 +8,11 @@ from django.views.decorators.debug import sensitive_variables
 from .models import SolutionQualityRun
 from .solution_generation_contract import EXPECTED_VALUE_RULE, QUANTITATIVE_GROUNDING_RULE
 from .solution_generation_sources import SolutionGenerationSourceContext
-from .solution_quality_versions import REPAIR_PROMPT_VERSION, REPAIR_SCHEMA_VERSION
+from .solution_quality_versions import (
+    REPAIR_SCHEMA_VERSION,
+    STRATEGIC_QUALITY_RULE,
+    quality_versions,
+)
 from .solution_repair_contract import SolutionRepairPlan
 
 SOLUTION_REPAIR_SYSTEM_PROMPT = (
@@ -102,7 +106,7 @@ def _repair_input(
     return {
         "task": "targeted_solution_repair",
         "repair_schema_version": REPAIR_SCHEMA_VERSION,
-        "repair_prompt_version": REPAIR_PROMPT_VERSION,
+        "repair_prompt_version": quality_versions(source_context)[2],
         "bound_input_hash": plan.snapshot_hash,
         "repairable_findings": _repairable_findings(initial_critic_run, plan),
         "allowed_targets": targets,
@@ -135,6 +139,10 @@ def build_solution_repair_messages(
     )
     user_content = json.dumps(input_document, ensure_ascii=False, separators=(",", ":"))
     return [
-        {"role": "system", "content": SOLUTION_REPAIR_SYSTEM_PROMPT},
+        {
+            "role": "system",
+            "content": SOLUTION_REPAIR_SYSTEM_PROMPT
+            + (STRATEGIC_QUALITY_RULE if quality_versions(source_context)[0] == "1.2" else ""),
+        },
         {"role": "user", "content": user_content},
     ]

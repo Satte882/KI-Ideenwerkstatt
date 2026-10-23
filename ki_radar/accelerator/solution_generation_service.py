@@ -398,7 +398,7 @@ def mark_solution_generation_success(
 def request_solution_generation_provider(
     prepared: PreparedSolutionGeneration,
 ) -> SolutionGenerationProviderPayload:
-    response_schema = build_solution_generation_json_schema()
+    response_schema = build_solution_generation_json_schema(prepared.source_context)
     try:
         result = request_openrouter(
             messages=prepared.messages,

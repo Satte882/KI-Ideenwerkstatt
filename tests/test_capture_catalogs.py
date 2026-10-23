@@ -14,10 +14,10 @@ from ki_radar.accelerator.catalogs import (
 
 
 def test_catalogs_are_versioned_and_contract_compatible():
-    assert set(CATALOGS) == {("value_stream", "1.0"), ("use_case", "1.0")}
+    assert set(CATALOGS) == {("value_stream", "1.0"), ("value_stream", "2.0"), ("use_case", "1.0")}
 
     for catalog in CATALOGS.values():
-        assert catalog.version == "1.0"
+        assert catalog.version in {"1.0", "2.0"}
         assert catalog.schema_version == ANSWER_SCHEMA_VERSION
         assert catalog.sections
         assert catalog.questions
@@ -68,7 +68,8 @@ def test_catalogs_do_not_capture_workflow_or_system_states():
 
 def test_explicit_supported_version_is_frozen_and_unknown_version_is_rejected():
     catalog = get_capture_catalog("value_stream", "1.0")
-    assert catalog is get_capture_catalog("value_stream")
+    assert catalog is get_capture_catalog("value_stream", "1.0")
+    assert catalog is not get_capture_catalog("value_stream")
 
     with pytest.raises(UnsupportedCaptureCatalog, match="nicht mehr unterstützt"):
         get_capture_catalog("value_stream", "0.9")

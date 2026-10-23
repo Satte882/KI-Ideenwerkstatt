@@ -12,8 +12,8 @@ from ki_radar.architecture.models import ValueStream
 from ki_radar.use_cases.models import UseCase
 
 from .candidate_state import supersede_open_candidates
-from .catalogs import ANSWER_SCHEMA_VERSION, CATALOG_VERSION_V1
-from .extraction_contract import EXTRACTION_PROMPT_VERSION, EXTRACTION_SCHEMA_VERSION
+from .catalogs import ANSWER_SCHEMA_VERSION, get_capture_catalog, is_capture_catalog_supported
+from .extraction_contract import EXTRACTION_SCHEMA_VERSION, extraction_prompt_version
 from .field_registry import UnsupportedAdoptionField, assert_adoptable_field
 from .models import (
     CaptureAnalysis,
@@ -189,10 +189,14 @@ def candidate_validity(candidate: FieldAdoptionCandidate, *, now=None) -> Candid
     if _target_is_inactive(target):
         return CandidateValidity.TARGET_INACTIVE
 
+    if not is_capture_catalog_supported(session.capture_type, session.catalog_version):
+        return CandidateValidity.STALE
     expected_versions = (
-        CATALOG_VERSION_V1,
+        session.catalog_version,
         ANSWER_SCHEMA_VERSION,
-        EXTRACTION_PROMPT_VERSION,
+        extraction_prompt_version(
+            get_capture_catalog(session.capture_type, session.catalog_version)
+        ),
         EXTRACTION_SCHEMA_VERSION,
     )
     candidate_versions = (

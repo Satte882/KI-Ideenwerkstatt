@@ -10,7 +10,10 @@ from django.urls import reverse
 
 from ki_radar.accelerator import block7_demo
 from ki_radar.accelerator.models import SolutionGenerationRun
-from ki_radar.accelerator.solution_generation_contract import GENERATION_PROMPT_VERSION
+from ki_radar.accelerator.solution_generation_contract import (
+    GENERATION_PROMPT_VERSION,
+    GENERATION_SCHEMA_VERSION,
+)
 from ki_radar.accounts.models import User
 from ki_radar.architecture.models import (
     ProcessAnalysis,
@@ -30,6 +33,7 @@ def _expected_report(*, current_prompt=False) -> dict:
         # Preserve the frozen baseline; the current deterministic demo uses the
         # active generator prompt while its domain/gate behavior remains identical.
         report["generation"]["prompt_version"] = GENERATION_PROMPT_VERSION
+        report["generation"]["schema_version"] = GENERATION_SCHEMA_VERSION
     return report
 
 

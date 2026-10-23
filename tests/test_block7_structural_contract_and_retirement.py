@@ -11,6 +11,7 @@ from ki_radar.accelerator.solution_generation_contract import (
     STRUCTURAL_OUTPUT_RULE,
     build_solution_generation_messages,
 )
+from ki_radar.accelerator.solution_generation_sources import SOURCE_SCHEMA_VERSION
 from ki_radar.accelerator.solution_generation_validation import (
     SolutionGenerationContractError,
     validate_solution_generation_payload,
@@ -38,6 +39,8 @@ class SourceFact:
 
 class SourceContext:
     facts = (SourceFact(),)
+    generation_versions = (GENERATION_SCHEMA_VERSION, GENERATION_PROMPT_VERSION)
+    source_schema_version = SOURCE_SCHEMA_VERSION
 
     @staticmethod
     def provider_payload():

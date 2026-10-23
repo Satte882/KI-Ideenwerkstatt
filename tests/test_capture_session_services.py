@@ -40,7 +40,7 @@ def test_create_uses_current_version_and_existing_permissions(owner):
     )
 
     assert value_stream.working_title == "Beschaffung"
-    assert value_stream.catalog_version == "1.0"
+    assert value_stream.catalog_version == "2.0"
     assert value_stream.schema_version == "1.0"
     assert value_stream.required_question_count > 0
     assert use_case.required_question_count > 0
@@ -227,6 +227,7 @@ def test_discard_is_irreversible_and_does_not_require_supported_catalog(owner):
 
 @pytest.mark.django_db
 def test_supported_stored_catalog_is_used_after_current_version_changes(owner, monkeypatch):
+    monkeypatch.setitem(CURRENT_CATALOG_VERSIONS, "value_stream", "1.0")
     session = create_capture_session(
         actor=owner,
         capture_type=CaptureSession.CaptureType.VALUE_STREAM,

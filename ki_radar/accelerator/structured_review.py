@@ -24,11 +24,11 @@ from .structured_adoption_orchestrator import (
     commit_structured_batch,
 )
 from .structured_contract import (
-    PROCESS_ANALYSIS_FIELD_SPECS,
     STAGE_FIELD_SPECS,
     STRUCTURED_FIELD_SPECS,
     StructuredCandidateKind,
     StructuredFieldSpec,
+    process_field_specs,
     validate_local_key,
 )
 from .structured_metric_adoption import build_metric_field_snapshot
@@ -275,7 +275,7 @@ def _grouped_items(
     expected_specs = (
         STAGE_FIELD_SPECS
         if candidate_kind == StructuredCandidateKind.VALUE_STREAM_STAGE
-        else PROCESS_ANALYSIS_FIELD_SPECS
+        else process_field_specs(batch.interpretation_version)
     )
     items: list[StructuredAdoptionItem] = []
     for local_key, group in sorted(grouped.items()):
@@ -289,6 +289,12 @@ def _grouped_items(
         for suggestion in group:
             spec = STRUCTURED_FIELD_SPECS[suggestion.target_field]
             proposed_fields[spec.model_field] = suggestion.suggested_value
+            if (
+                batch.interpretation_version == "2"
+                and spec.model_field in {"bottlenecks", "baseline_metrics"}
+                and suggestion.suggested_value == ""
+            ):
+                continue
             meta = _normalize_suggestion(suggestion, spec)
             field_meta[spec.model_field] = meta
             if meta["status"] == NormalizationStatus.VALID:
@@ -447,7 +453,7 @@ def get_or_create_review_batch(*, analysis_id: UUID, actor) -> StructuredAdoptio
         target_object_type=analysis.capture_type,
         target_object_id=target.id,
         source_revision=analysis.source_revision,
-        interpretation_version="1",
+        interpretation_version="2" if analysis.catalog_version == "2.0" else "1",
         idempotency_key=placeholder,
         selected_graph_hash="0" * 64,
         decision_snapshot={"review_version": "1"},
@@ -537,7 +543,7 @@ def _normalize_edited_fields(
     specs = (
         STAGE_FIELD_SPECS
         if item.candidate_kind == StructuredAdoptionItem.CandidateKind.VALUE_STREAM_STAGE
-        else PROCESS_ANALYSIS_FIELD_SPECS
+        else process_field_specs(item.batch.interpretation_version)
     )
     normalized_fields: dict[str, Any] = {}
     errors: list[str] = []
@@ -613,8 +619,9 @@ def _set_process_reference(
     item.proposed_snapshot = proposed
 
 
-def _validate_process_fields(*, fields: dict[str, Any]) -> None:
+def _validate_process_fields(*, fields: dict[str, Any], interpretation_version="1") -> None:
     form = ProcessAnalysisForm(
+        allow_unknown_diagnosis=interpretation_version == "2",
         data={**fields, "status": ProcessAnalysis.Status.DRAFT},
         instance=ProcessAnalysis(status=ProcessAnalysis.Status.DRAFT),
     )
@@ -707,7 +714,9 @@ def decide_review_item(
                     target=target,
                     reference_value=stage_reference,
                 )
-                _validate_process_fields(fields=fields)
+                _validate_process_fields(
+                    fields=fields, interpretation_version=batch.interpretation_version
+                )
             item.decision_snapshot = {} if direct else {"edited_fields": fields}
 
         item.status = StructuredAdoptionItem.Status.CONFIRMED
@@ -821,7 +830,7 @@ def _field_rows(item: StructuredAdoptionItem) -> list[dict[str, str]]:
     specs = (
         STAGE_FIELD_SPECS
         if item.candidate_kind == StructuredAdoptionItem.CandidateKind.VALUE_STREAM_STAGE
-        else PROCESS_ANALYSIS_FIELD_SPECS
+        else process_field_specs(item.batch.interpretation_version)
     )
     return [
         {

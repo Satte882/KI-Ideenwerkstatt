@@ -2,10 +2,14 @@ from copy import deepcopy
 
 from django.views.decorators.debug import sensitive_variables
 
-from .solution_generation_sources import ALLOWED_SOURCE_IDS, SolutionGenerationSourceContext
+from .solution_generation_sources import (
+    SOURCE_SCHEMA_VERSION,
+    SolutionGenerationSourceContext,
+    allowed_source_ids,
+)
 
-GENERATION_SCHEMA_VERSION = "1.0"
-GENERATION_PROMPT_VERSION = "1.3"
+GENERATION_SCHEMA_VERSION = "2.0"
+GENERATION_PROMPT_VERSION = "2.0"
 
 OPTION_LANES = (
     "organizational",
@@ -88,7 +92,7 @@ SOLUTION_GENERATION_SYSTEM_PROMPT = (
 )
 
 
-def _statement_schema() -> dict[str, object]:
+def _statement_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, object]:
     required = [
         "text",
         "source_ids",
@@ -107,7 +111,7 @@ def _statement_schema() -> dict[str, object]:
             "description": "Belegende Source-IDs; falls keine vorhanden sind, [].",
             "items": {
                 "type": "string",
-                "enum": sorted(ALLOWED_SOURCE_IDS),
+                "enum": sorted(allowed_source_ids(source_schema_version)),
             },
         },
         "assumptions": {
@@ -164,18 +168,28 @@ def _statement_schema() -> dict[str, object]:
     }
 
 
-def _option_schema() -> dict[str, object]:
+def _option_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, object]:
     return {
         "type": "object",
         "description": "Eine vollständige Lösungsoption mit exakt zehn Statement-Feldern.",
         "additionalProperties": False,
         "required": list(GENERATED_OPTION_FIELDS),
-        "properties": {field_name: _statement_schema() for field_name in GENERATED_OPTION_FIELDS},
+        "properties": {
+            field_name: _statement_schema(source_schema_version)
+            for field_name in GENERATED_OPTION_FIELDS
+        },
     }
 
 
-def build_solution_generation_json_schema() -> dict[str, object]:
-    option_schema = _option_schema()
+def build_solution_generation_json_schema(source_context=None) -> dict[str, object]:
+    schema_version, prompt_version = (
+        source_context.generation_versions
+        if source_context
+        else (GENERATION_SCHEMA_VERSION, GENERATION_PROMPT_VERSION)
+    )
+    option_schema = _option_schema(
+        source_context.source_schema_version if source_context else SOURCE_SCHEMA_VERSION
+    )
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -184,11 +198,11 @@ def build_solution_generation_json_schema() -> dict[str, object]:
         "properties": {
             "schema_version": {
                 "type": "string",
-                "const": GENERATION_SCHEMA_VERSION,
+                "const": schema_version,
             },
             "prompt_version": {
                 "type": "string",
-                "const": GENERATION_PROMPT_VERSION,
+                "const": prompt_version,
             },
             "options": {
                 "type": "object",
@@ -204,8 +218,8 @@ def build_solution_generation_json_schema() -> dict[str, object]:
 def _generation_input(source_context: SolutionGenerationSourceContext) -> dict[str, object]:
     return {
         "task": "solution_option_drafts",
-        "generation_schema_version": GENERATION_SCHEMA_VERSION,
-        "prompt_version": GENERATION_PROMPT_VERSION,
+        "generation_schema_version": source_context.generation_versions[0],
+        "prompt_version": source_context.generation_versions[1],
         "option_lanes": list(OPTION_LANES),
         "generated_fields": list(GENERATED_OPTION_FIELDS),
         "statement_shape": {
@@ -233,7 +247,19 @@ def build_solution_generation_messages(
     input_document = _generation_input(source_context)
     user_content = json.dumps(input_document, ensure_ascii=False, separators=(",", ":"))
     messages = [
-        {"role": "system", "content": SOLUTION_GENERATION_SYSTEM_PROMPT},
+        {
+            "role": "system",
+            "content": SOLUTION_GENERATION_SYSTEM_PROMPT
+            + (
+                "\nDer menschlich dokumentierte Discovery-Pfad ist maßgeblich. "
+                "Strategisches Potenzial ist keine Ursache und kein beobachteter Engpass. "
+                "Beschreibe bottleneck_coverage im strategischen Pfad als bedingte Abdeckung "
+                "dieses Potenzials und seines Validierungsschritts. "
+                "Fehlende Ursachen und Baselines bleiben unbekannt; erfinde keine Diagnose."
+                if source_context.source_schema_version == SOURCE_SCHEMA_VERSION
+                else ""
+            ),
+        },
         {"role": "user", "content": user_content},
     ]
     return messages

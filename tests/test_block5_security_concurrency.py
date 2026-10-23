@@ -81,6 +81,8 @@ def make_candidate(
         else CaptureSession.CaptureType.USE_CASE
     )
     session = create_capture_session(actor=owner, capture_type=capture_type)
+    session.catalog_version = CATALOG_VERSION_V1
+    session.save(update_fields=["catalog_version"])
     bind_capture_target(actor=owner, session_id=session.pk, target_id=target.pk)
     session.status = CaptureSession.Status.COMPLETED
     session.completed_at = timezone.now()

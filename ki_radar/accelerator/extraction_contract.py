@@ -10,6 +10,11 @@ EXTRACTION_SCHEMA_VERSION = "1.0"
 EXTRACTION_PROMPT_VERSION = "1.0"
 MAX_EXTRACTION_SUGGESTIONS = 100
 
+
+def extraction_prompt_version(catalog: CaptureCatalog) -> str:
+    return "2.0" if catalog.version == "2.0" else EXTRACTION_PROMPT_VERSION
+
+
 ALLOWED_FIELD_TYPES = frozenset(
     {
         "text",
@@ -221,7 +226,7 @@ def build_extraction_json_schema(catalog: CaptureCatalog) -> dict[str, Any]:
             },
             "prompt_version": {
                 "type": "string",
-                "const": EXTRACTION_PROMPT_VERSION,
+                "const": extraction_prompt_version(catalog),
             },
             "suggestions": {
                 "type": "array",
@@ -330,8 +335,9 @@ def parse_extraction_document(
     *,
     catalog: CaptureCatalog,
     expected_schema_version: str = EXTRACTION_SCHEMA_VERSION,
-    expected_prompt_version: str = EXTRACTION_PROMPT_VERSION,
+    expected_prompt_version: str | None = None,
 ) -> ExtractionDocument:
+    expected_prompt_version = expected_prompt_version or extraction_prompt_version(catalog)
     errors: list[str] = []
     root = _as_dict(payload, "root", errors)
     _exact_fields(root, _ROOT_FIELDS, "root", errors)

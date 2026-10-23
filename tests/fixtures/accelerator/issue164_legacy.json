@@ -1,0 +1,467 @@
+{
+  "catalog_hash": "1c1d0cdfc1a1c36e8197837da6520bedfd4a33063677da9b1aff31d294160801",
+  "answers": {
+    "vs_stage_pain_metrics": "Berichtete Wartezeit",
+    "process_findings_target": "Ursache noch unbekannt"
+  },
+  "answer_hash": "99deb0cf8b9b5873e1c7a7fba71e531fa669c95fecd549dc162ba8b0bbcb3da6",
+  "context": {
+    "process_analysis_id": "00000000-0000-0000-0000-000000000212",
+    "process_version": 7,
+    "validation_state": "not_validated",
+    "source_hash": "91d39c17956151c218aff0cf3bd87aa9fa8204260335da39308564585056b6c0",
+    "missing_required": []
+  },
+  "facts": [
+    {
+      "source_id": "process.current_flow",
+      "field": "current_flow",
+      "value": "Angebote werden manuell geprüft."
+    }
+  ],
+  "source_payload": {
+    "source_schema_version": "block7_sources_v1",
+    "process_version": 7,
+    "validation_state": "not_validated",
+    "facts": [
+      {
+        "source_id": "process.current_flow",
+        "field": "current_flow",
+        "value": "Angebote werden manuell geprüft."
+      }
+    ]
+  },
+  "preview": {
+    "schema_version": "1.0",
+    "prompt_version": "1.3",
+    "options": {
+      "organizational": {
+        "name": {
+          "text": "organizational name: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "description": {
+          "text": "organizational description: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "expected_value": {
+          "text": "organizational expected_value: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "organizational bottleneck_coverage: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "data_requirements": {
+          "text": "organizational data_requirements: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "application_impact": {
+          "text": "organizational application_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "integration_impact": {
+          "text": "organizational integration_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "technology_constraints": {
+          "text": "organizational technology_constraints: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "risks": {
+          "text": "organizational risks: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "architecture_fit": {
+          "text": "organizational architecture_fit: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        }
+      },
+      "rule_automation": {
+        "name": {
+          "text": "rule_automation name: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "description": {
+          "text": "rule_automation description: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "expected_value": {
+          "text": "rule_automation expected_value: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "rule_automation bottleneck_coverage: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "data_requirements": {
+          "text": "rule_automation data_requirements: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "application_impact": {
+          "text": "rule_automation application_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "integration_impact": {
+          "text": "rule_automation integration_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "technology_constraints": {
+          "text": "rule_automation technology_constraints: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "risks": {
+          "text": "rule_automation risks: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "architecture_fit": {
+          "text": "rule_automation architecture_fit: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        }
+      },
+      "assistant": {
+        "name": {
+          "text": "assistant name: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "description": {
+          "text": "assistant description: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "expected_value": {
+          "text": "assistant expected_value: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "bottleneck_coverage": {
+          "text": "assistant bottleneck_coverage: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "data_requirements": {
+          "text": "assistant data_requirements: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "application_impact": {
+          "text": "assistant application_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "integration_impact": {
+          "text": "assistant integration_impact: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "technology_constraints": {
+          "text": "assistant technology_constraints: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "risks": {
+          "text": "assistant risks: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        },
+        "architecture_fit": {
+          "text": "assistant architecture_fit: bedingter Entwurf",
+          "source_ids": [
+            "process.current_flow"
+          ],
+          "assumptions": [],
+          "open_evidence": [
+            "Wirkung offen"
+          ],
+          "uncertainty": {
+            "level": "high",
+            "reason": "Noch kein Nachweis"
+          }
+        }
+      }
+    }
+  },
+  "quality_hash": "3f469210dd18d3b88ac4fc78927f10f3b6047e69cf27db384318c8942def99e3"
+}

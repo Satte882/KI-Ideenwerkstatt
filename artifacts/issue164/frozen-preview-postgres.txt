@@ -1,0 +1,33 @@
+.................................                                        [100%]
+=============================== warnings summary ===============================
+../review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148
+../review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+  /review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+  /issue164-preview/ki_radar/reviews/forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+  /issue164-preview/ki_radar/reviews/forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+tests/test_issue_164_strategic_contracts.py::test_stale_preview_reads_frozen_facts_after_source_change[block7_sources_v1]
+  /issue164-preview/ki_radar/delivery/forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+tests/test_issue_164_strategic_contracts.py: 2 warnings
+tests/test_block7_solution_generation_ui.py: 8 warnings
+tests/test_evaluated_solution_workflow_preview_ui.py: 7 warnings
+  /review/.venv/lib/python3.13/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /issue164-preview/staticfiles/
+    mw_instance = middleware(adapted_handler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 28 warnings in 99.58s (0:01:39)

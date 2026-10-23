@@ -15,13 +15,13 @@ from django.utils import timezone
 
 from ki_radar.accelerator import architect_service, architect_views
 from ki_radar.accelerator.architect_contract import (
-    DISCOVERY_PROMPT_VERSION,
     DISCOVERY_SCHEMA_VERSION,
     DISCOVERY_VERIFIER_SCHEMA_VERSION,
     MAX_DISCOVERY_STAGES,
     DiscoveryContractError,
     build_discovery_json_schema,
     build_discovery_verifier_schema,
+    discovery_versions,
     validate_discovery_payload,
 )
 from ki_radar.accelerator.architect_service import (
@@ -432,6 +432,9 @@ def _session_and_snapshot(*, owner, tmp_path, contradictory=False):
             "Der Einkauf bereitet mit dem Fachbereich die Lieferantenentscheidung vor."
         ),
     )
+    # Frozen v1 cohort: these regression payloads must continue to execute unchanged.
+    session.catalog_version = "1.0"
+    session.save(update_fields=["catalog_version"])
     with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path / "managed"):
         folder = create_managed_discovery_source_folder(
             actor=owner,
@@ -451,6 +454,8 @@ def _session_and_snapshot(*, owner, tmp_path, contradictory=False):
 
 def _approved_analysis(*, session, snapshot, draft=None):
     draft = copy.deepcopy(draft or _draft())
+    schema_version, prompt_version = discovery_versions(session.catalog_version)
+    draft["schema_version"] = schema_version
     now = timezone.now()
     return CaptureAnalysis.objects.create(
         session=session,
@@ -462,8 +467,8 @@ def _approved_analysis(*, session, snapshot, draft=None):
         catalog_version=session.catalog_version,
         answer_schema_version=session.schema_version,
         model_name="test/model",
-        prompt_version=DISCOVERY_PROMPT_VERSION,
-        extraction_schema_version=DISCOVERY_SCHEMA_VERSION,
+        prompt_version=prompt_version,
+        extraction_schema_version=schema_version,
         finished_at=now,
         result_payload={
             "draft": draft,

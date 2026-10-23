@@ -7,8 +7,11 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from .comparison_policy import missing_assessment_fields
 from .models import ProcessAnalysis, SolutionOption
 from .permissions import can_edit_value_stream
+
+ADOPTION_CONTRACT_VERSION = "2.0"
 
 _PROCESS_FIELD_LABELS = {
     "diagnostic_observations": "Beobachtung / Problem",
@@ -84,7 +87,9 @@ def _option_fields(proposal: Mapping[str, Any]) -> dict[str, Any]:
     return {key: proposal[key] for key in _ALLOWED_SOLUTION_FIELDS if key in proposal}
 
 
-def _comparison_assessment_ready(fields: Mapping[str, Any]) -> bool:
+def _comparison_assessment_ready(fields: Mapping[str, Any], contract_version="1.0") -> bool:
+    if contract_version == ADOPTION_CONTRACT_VERSION:
+        return not missing_assessment_fields(fields.get("option_type"), fields)
     required_text = (
         "description",
         "expected_value",
@@ -329,7 +334,12 @@ def adopt_investigation_drafts(
     base_options: Mapping[str, Mapping[str, Any]],
     process_fields: Mapping[str, str],
     solution_proposals: Sequence[Mapping[str, Any]],
+    contract_version: str = "1.0",
 ) -> InvestigationDraftAdoptionResult:
+    if contract_version not in {"1.0", ADOPTION_CONTRACT_VERSION}:
+        raise InvestigationDraftAdoptionError(
+            "Unbekannter Übernahmevertrag.", code="unsupported_adoption_contract"
+        )
     _validate_contract(
         process_fields=process_fields,
         solution_proposals=solution_proposals,
@@ -397,7 +407,7 @@ def adopt_investigation_drafts(
             }
             option.evaluation_status = (
                 SolutionOption.EvaluationStatus.ASSESSED
-                if _comparison_assessment_ready(resultant_fields)
+                if _comparison_assessment_ready(resultant_fields, contract_version)
                 else SolutionOption.EvaluationStatus.DRAFT
             )
             try:
@@ -417,7 +427,7 @@ def adopt_investigation_drafts(
             recommendation=SolutionOption.Recommendation.CANDIDATE,
             evaluation_status=(
                 SolutionOption.EvaluationStatus.ASSESSED
-                if _comparison_assessment_ready(fields)
+                if _comparison_assessment_ready(fields, contract_version)
                 else SolutionOption.EvaluationStatus.DRAFT
             ),
             **fields,

@@ -554,6 +554,7 @@ def base_execution_snapshot(
     return {
         "runtime": runtime_version_snapshot(),
         "loop_version": LOOP_VERSION,
+        "adoption_contract_version": "2.0",
         "policy_version": POLICY_VERSION,
         "budget_version": BUDGET_VERSION,
         "budget_limits": dict(budget),
