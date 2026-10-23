@@ -223,12 +223,13 @@ def save_stage_focus_decision(
         if not can_edit_initiative(actor, initiative):
             raise ValidationError("Für die Vorhabensentscheidung fehlt die Berechtigung.")
         previous = get_stage_focus_decision(value_stream, initiative=initiative)
-        if previous and all(
-            getattr(previous, key) == value
+        phase_previous = get_phase_focus_decision(selected_stage, initiative=initiative)
+        if phase_previous and all(
+            getattr(phase_previous, key) == value
             for key, value in defaults.items()
             if key != "selected_by"
         ):
-            return previous
+            return phase_previous
         return InitiativeStageFocusDecision.objects.create(
             initiative=initiative,
             value_stream=value_stream,
@@ -243,6 +244,7 @@ def save_stage_focus_decision(
 
 
 def get_stage_focus_decision(value_stream, *, initiative=None):
+    """Current stream priority (or legacy projection), not per-phase validity."""
     if initiative is not None:
         return InitiativeStageFocusDecision.objects.filter(
             initiative=initiative,
@@ -254,7 +256,19 @@ def get_stage_focus_decision(value_stream, *, initiative=None):
         return None
 
 
+def get_phase_focus_decision(stage, *, initiative):
+    """Latest legitimation of this phase; global priority/legacy API stays unchanged."""
+    if initiative is not None:
+        return InitiativeStageFocusDecision.objects.filter(
+            initiative=initiative,
+            value_stream_id=stage.value_stream_id,
+            selected_stage=stage,
+        ).first()
+    return get_stage_focus_decision(stage.value_stream)
+
+
 def stage_is_selected(stage, *, initiative=None) -> bool:
+    """Whether the phase is the current priority, not whether it was legitimized."""
     decision = get_stage_focus_decision(stage.value_stream, initiative=initiative)
     return bool(decision and decision.selected_stage_id == stage.pk)
 

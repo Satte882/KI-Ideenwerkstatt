@@ -17,6 +17,7 @@ from ki_radar.architecture.solution_selection import (
 from ki_radar.architecture.stage_focus import (
     CRITERIA_KEYS,
     EVIDENCE_BASIS_KEY,
+    get_phase_focus_decision,
     get_stage_focus_decision,
 )
 from ki_radar.architecture.stage_focus_forms import CRITERIA_LABELS
@@ -258,7 +259,7 @@ def build_process_review_context(process_analysis: ProcessAnalysis, actor) -> Re
 
     if process_analysis.initiative_id:
         initiative = process_analysis.initiative
-        decision = get_stage_focus_decision(value_stream, initiative=initiative)
+        decision = get_phase_focus_decision(process_analysis.stage, initiative=initiative)
         context.upstream_context.extend(
             [
                 f"Vorhaben: {initiative.pk} · Revision {initiative.revision}",

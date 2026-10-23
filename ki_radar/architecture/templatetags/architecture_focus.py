@@ -7,7 +7,7 @@ from ki_radar.core.taxonomy import ScreeningLevel
 
 from ..models import EvidenceBasis, TimeToValue
 from ..process_findings import build_process_findings, humanize_process_text
-from ..stage_focus import get_stage_focus_decision
+from ..stage_focus import get_phase_focus_decision, get_stage_focus_decision
 
 register = template.Library()
 SCREENING_LABELS = dict(ScreeningLevel.choices)
@@ -17,8 +17,8 @@ EVIDENCE_BASIS_LABELS = dict(EvidenceBasis.choices)
 
 @register.simple_tag
 def process_stage_focus_decision(process_analysis):
-    return get_stage_focus_decision(
-        process_analysis.stage.value_stream,
+    return get_phase_focus_decision(
+        process_analysis.stage,
         initiative=process_analysis.initiative,
     )
 

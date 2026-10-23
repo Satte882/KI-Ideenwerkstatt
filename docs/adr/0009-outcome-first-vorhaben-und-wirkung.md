@@ -89,6 +89,8 @@ Keine Variante vermeidet die gesonderte **Fokus- und Entscheidungsumstellung**. 
 
 **Kurzpfade/Signale:** `stage_focus.persist_focus_from_existing_process` und `persist_focus_from_existing_origin` dürfen für neue vorhabensgebundene Artefakte **keine globale Freigabe erzeugen oder implizit zuordnen**. Legacy-Fälle behalten ihren bisherigen bewusst dokumentierten Kurzpfad. `save_stage_focus_decision(update_or_create)` darf nach der Umstellung nicht über eine globale Key-Kombination vorhabensspezifische Entscheidungen überschreiben.
 
+**Klärung zu #158 (23.10.2026):** Die jüngste Fokuswahl je (Vorhaben, Value Stream) bezeichnet die aktuelle Prioritätsanzeige. Für die Gültigkeit einer Prozessentscheidung gilt dagegen die jüngste Fokusrevision ihrer eigenen (Vorhaben, Value Stream, Phase)-Kombination. Bereits legitimierte andere Phasen bleiben gültig; eine neue Revision derselben Phase löst dort erneuten Prüfbedarf aus. Die append-only Revisionszählung bleibt je (Vorhaben, Value Stream) übergreifend; historische Snapshots und globale Legacy-Entscheidungen bleiben unverändert.
+
 ### 4a. Minimale Vorhabenssteuerung, nicht bei Aufnahme erzwingen
 
 **Angenommene fachliche Mindestzustände:** `Entwurf` → `Aktiv` → `Abgeschlossen`; `Abgebrochen` als eigener begründeter Endzustand. Dies ist **kein** weiterer KI-Delivery-/Governance-Lifecycle.

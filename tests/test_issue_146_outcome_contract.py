@@ -30,7 +30,13 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def process(owner, business_unit):
+    return outcome_process(owner, business_unit)
+
+
+def outcome_process(owner, business_unit, *, stage=None):
     process = make_process(owner, business_unit)
+    if stage is not None:
+        process.stage = stage
     process.outcome_contract_version = 1
     process.save()
     for name, kind in (("Organisieren", "organizational"), ("KI-Assistent", "assistant")):
@@ -62,8 +68,8 @@ def confirmed(owner):
     )
 
 
-def bind_process(owner, process, *, path="problem"):
-    initiative = confirmed(owner)
+def bind_process(owner, process, *, path="problem", initiative=None):
+    initiative = initiative or confirmed(owner)
     bind_initiative(initiative=initiative, artifact=process, actor=owner)
     process.refresh_from_db()
     set_discovery_path(
