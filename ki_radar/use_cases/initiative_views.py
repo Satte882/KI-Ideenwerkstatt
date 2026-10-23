@@ -10,7 +10,9 @@ from .initiatives import EDITABLE_FIELDS, can_edit_initiative, save_initiative
 
 
 class InitiativeForm(forms.ModelForm):
-    expected_revision = forms.IntegerField(widget=forms.HiddenInput, required=False)
+    expected_revision = forms.IntegerField(
+        widget=forms.HiddenInput, required=False, label="Geprüfter Vorhabensstand"
+    )
 
     class Meta:
         model = ImprovementInitiative
