@@ -31,6 +31,7 @@ from .solution_selection import (
     confirm_diagnosis_and_select_solution,
     diagnosis_readiness_blockers,
     focus_readiness_blockers,
+    missing_outcome_effect_options,
     ordered_solution_options,
     select_preferred_solution,
 )
@@ -103,7 +104,7 @@ def solution_option_compare(request, pk):
         pk=pk,
     )
     options = ordered_solution_options(process_analysis)
-    blockers = comparison_blockers(options)
+    blockers = comparison_blockers(options, process_analysis=process_analysis)
     diagnosis_blockers = diagnosis_readiness_blockers(process_analysis)
     focus_blockers = focus_readiness_blockers(process_analysis)
     outcome_missing = outcome_blockers(process_analysis)
@@ -235,6 +236,9 @@ def solution_option_compare(request, pk):
             "diagnosis_confirmation_required": diagnosis_confirmation_required,
             "confirmed_cause_candidate": confirmed_cause_candidate,
             "incomplete_options": incomplete_options,
+            "missing_outcome_effect_options": missing_outcome_effect_options(
+                options, process_analysis=process_analysis
+            ),
             "needs_more_options": len(options) < 2,
             "form": form,
             "can_select": can_select,

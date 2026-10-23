@@ -5,6 +5,7 @@ from ki_radar.accelerator.solution_generation_entry import (
 )
 from ki_radar.core.taxonomy import ScreeningLevel
 
+from ..comparison_policy import COVERAGE_LABEL, technical_field_not_applicable
 from ..models import EvidenceBasis, TimeToValue
 from ..process_findings import build_process_findings, humanize_process_text
 from ..stage_focus import get_phase_focus_decision, get_stage_focus_decision
@@ -67,3 +68,17 @@ def process_findings_summary(process_analysis):
 @register.simple_tag
 def solution_generation_entry(process_analysis):
     return build_solution_generation_entry_context(process_analysis)
+
+
+@register.simple_tag
+def comparison_coverage_label():
+    return COVERAGE_LABEL
+
+
+@register.simple_tag
+def comparison_technical_value(option, field):
+    value = getattr(option, field)
+    if technical_field_not_applicable(option.option_type, field, value):
+        return "Nicht relevant"
+    display = getattr(option, f"get_{field}_display", None)
+    return display() if display else value or "\u2013"

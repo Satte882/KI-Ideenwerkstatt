@@ -648,7 +648,7 @@ def test_comparison_page_selects_and_shows_history(client, comparison_process, o
     assert response.status_code == 200
     assert "Vergleichsmatrix" in content
     assert content.index(organizational.name) < content.index(assistant.name)
-    assert "Bottleneck-Abdeckung" in content
+    assert "Abdeckung von Engpass/Ursache oder begründetem Potenzial" in content
     assert "Integrationsaufwand" in content
     assert "Technologieleitplanken" in content
     assert "Time-to-Value" in content

@@ -38,7 +38,13 @@ def ordered_solution_options(process_analysis: ProcessAnalysis) -> list[Solution
     )
 
 
-def comparison_blockers(options: list[SolutionOption]) -> list[str]:
+def missing_outcome_effect_options(options, *, process_analysis):
+    if not process_analysis.outcome_contract_version:
+        return []
+    return [option for option in options if not option.outcome_effect.strip()]
+
+
+def comparison_blockers(options: list[SolutionOption], *, process_analysis=None) -> list[str]:
     blockers: list[str] = []
     if len(options) < 2:
         blockers.append(
@@ -49,6 +55,11 @@ def comparison_blockers(options: list[SolutionOption]) -> list[str]:
     if incomplete:
         blockers.append(
             "Folgende Optionen sind noch nicht vollständig bewertet: " + ", ".join(incomplete)
+        )
+    if process_analysis is not None:
+        blockers.extend(
+            f"Wirkung auf das gemeinsame Geschäftsergebnis fehlt: {option.name}"
+            for option in missing_outcome_effect_options(options, process_analysis=process_analysis)
         )
     return blockers
 
@@ -239,18 +250,9 @@ def select_preferred_solution(
             "Fokusentscheidung gewählt werden."
         )
     options = ordered_solution_options(process_analysis)
-    blockers = comparison_blockers(options)
+    blockers = comparison_blockers(options, process_analysis=process_analysis)
     if blockers:
         raise ValidationError(" | ".join(blockers))
-    if outcome_snapshot:
-        incomplete_effects = [
-            option.name for option in options if not option.outcome_effect.strip()
-        ]
-        if incomplete_effects:
-            raise ValidationError(
-                "Wirkung auf das gemeinsame Geschäftsergebnis fehlt: "
-                + ", ".join(incomplete_effects)
-            )
     selected = next((option for option in options if option.pk == selected_option.pk), None)
     if selected is None:
         raise ValidationError("Die gewählte Option gehört nicht zu den aktiven Lösungsoptionen.")

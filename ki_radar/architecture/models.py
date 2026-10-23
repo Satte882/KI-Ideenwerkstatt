@@ -13,6 +13,12 @@ from ki_radar.core.models import TimeStampedModel
 from ki_radar.use_cases.outcome_guards import OptionManager, OutcomeManager
 
 from .audit import ImmutableDecisionManager
+from .comparison_policy import (
+    assessment_field_error,
+    comparison_field_label,
+    missing_assessment_fields,
+    required_assessment_fields,
+)
 
 
 class EvidenceBasis(models.TextChoices):
@@ -536,20 +542,9 @@ class SolutionOption(TimeStampedModel):
         super().clean()
         if self.evaluation_status != self.EvaluationStatus.ASSESSED:
             return
-        errors = {}
-        if self.feasibility == self.Effort.NOT_ASSESSED:
-            errors["feasibility"] = "Machbarkeit muss für den Status 'Bewertet' bewertet sein."
-        if self.integration_effort == self.Effort.NOT_ASSESSED:
-            errors["integration_effort"] = (
-                "Integrationsaufwand muss für den Status 'Bewertet' bewertet sein."
-            )
-        if self.time_to_value == TimeToValue.NOT_ASSESSED:
-            errors["time_to_value"] = (
-                "Time-to-Value muss für den Status 'Bewertet' eingeordnet werden; "
-                "'Unbekannt' ist zulässig, wenn keine belastbare Zeitangabe vorliegt."
-            )
-        if errors:
-            raise ValidationError(errors)
+        missing = self.missing_assessment_field_names
+        if missing:
+            raise ValidationError({field: assessment_field_error(self, field) for field in missing})
 
     def save(self, *args, **kwargs):
         if (
@@ -583,28 +578,20 @@ class SolutionOption(TimeStampedModel):
         return self.process_analysis.get_absolute_url()
 
     @property
+    def missing_assessment_field_names(self):
+        return missing_assessment_fields(
+            self.option_type,
+            {field: getattr(self, field) for field in required_assessment_fields(self.option_type)},
+        )
+
+    @property
     def missing_comparison_fields(self) -> list[str]:
         missing = []
         if self.evaluation_status != self.EvaluationStatus.ASSESSED:
             missing.append("Bewertungsstatus: Bewertet")
-        for field in (
-            "description",
-            "expected_value",
-            "bottleneck_coverage",
-            "data_requirements",
-            "application_impact",
-            "integration_impact",
-            "risks",
-            "architecture_fit",
-        ):
-            if not str(getattr(self, field)).strip():
-                missing.append(str(self._meta.get_field(field).verbose_name))
-        for field in ("feasibility", "integration_effort"):
-            if getattr(self, field) == self.Effort.NOT_ASSESSED:
-                missing.append(str(self._meta.get_field(field).verbose_name))
-        if self.time_to_value == TimeToValue.NOT_ASSESSED:
-            missing.append(str(self._meta.get_field("time_to_value").verbose_name))
-        return missing
+        return missing + [
+            comparison_field_label(self, field) for field in self.missing_assessment_field_names
+        ]
 
     @property
     def comparison_complete(self) -> bool:
