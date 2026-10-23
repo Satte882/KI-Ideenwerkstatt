@@ -72,14 +72,14 @@
       {% if journey %}
       {% if request.resolver_match.namespace == 'use_cases' or request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}
       <div class="sidebar-local-depth" aria-label="Lokale Initiative">
-        {% for step in journey.steps %}{% if step.key == 'use_case' or step.key == 'assessment' or step.key == 'governance' or step.key == 'approval' or step.key == 'delivery' %}
+        {% for step in journey.steps %}{% if step.key == 'use_case' or step.key == 'review_start' or step.key == 'assessment' or step.key == 'governance' or step.key == 'approval' or step.key == 'delivery' %}
         {% if step.url and step.action_method != 'post' %}<a href="{{ step.url }}" class="sidebar-local-step sidebar-local-{{ step.state }}">{% else %}<span class="sidebar-local-step sidebar-local-{{ step.state }}">{% endif %}
           <span aria-hidden="true">{% if step.state == 'complete' %}✓{% elif step.state == 'current' %}●{% elif step.state == 'blocked' %}!{% elif step.state == 'optional' %}–{% else %}○{% endif %}</span>
           <span>{{ step.label }}</span>
         {% if step.url and step.action_method != 'post' %}</a>{% else %}</span>{% endif %}
         {% endif %}{% endfor %}
         {% if use_case %}
-        <a href="{% url 'reporting:outcome_workspace' %}?stage=decision&amp;use_case={{ use_case.pk }}" class="sidebar-local-step sidebar-local-upcoming{% if request.resolver_match.namespace == 'reviews' %} sidebar-local-active{% endif %}"{% if request.resolver_match.namespace == 'reviews' %} aria-current="step"{% endif %}>
+        <a href="{% url 'reporting:outcome_workspace' %}?stage=decision&amp;use_case={{ use_case.pk }}" class="sidebar-local-step sidebar-local-upcoming{% if request.resolver_match.namespace == 'reviews' and use_case.status != 'idea' %} sidebar-local-active{% endif %}"{% if request.resolver_match.namespace == 'reviews' and use_case.status != 'idea' %} aria-current="step"{% endif %}>
           <span aria-hidden="true">◎</span>
           <span class="sidebar-local-step-copy">Wirkung &amp; Betrieb <small>Pilot → Wirkung → Scale Readiness → Betrieb</small></span>
         </a>

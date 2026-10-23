@@ -258,7 +258,8 @@ def use_case_intake(request, step: int = 1):
                     request.session.pop(IDEA_CANDIDATE_SESSION_KEY, None)
                     messages.success(
                         request,
-                        f"Use Case {candidate.short_id} ist bereit zur Bewertung.",
+                        f"Aufnahme von Use Case {candidate.short_id} abgeschlossen und an die "
+                        "KI-Koordination zur Prüfung übergeben. Der Prüfungsstart steht aus.",
                     )
                     return redirect(candidate)
         return render(

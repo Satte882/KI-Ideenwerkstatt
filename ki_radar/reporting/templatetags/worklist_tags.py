@@ -21,7 +21,7 @@ def _action_priority(use_case, action, user) -> int:
         return 5
     if action.key == "use_case":
         return 3
-    if action.key == "assessment":
+    if action.key in {"review_start", "assessment"}:
         return 2
     if action.key == "approval":
         return 4

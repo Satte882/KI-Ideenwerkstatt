@@ -20,12 +20,12 @@
       {% elif action.key == 'outcome_decision' %}
       <p class="small text-muted mt-2 mb-0">Der Ergebnis-Arbeitsraum führt zur bestehenden Review-Entscheidung. Statusänderungen erfolgen weiterhin ausschließlich über das Review.</p>
       {% endif %}
-      {% if action.key == 'assessment' %}
-      <div class="border rounded p-3 mt-3" data-testid="assessment-handover-status">
+      {% if action.key == 'assessment' or action.key == 'review_start' %}
+      <div class="border rounded p-3 mt-3" data-testid="{% if action.key == 'review_start' %}review-handover-status{% else %}assessment-handover-status{% endif %}">
         <div class="row g-3">
           <div class="col-md-4">
             <div class="section-title">Übergabestatus</div>
-            <strong>Zur Bewertung bereitgestellt</strong>
+            <strong>{% if action.key == 'review_start' %}Prüfungsstart ausstehend{% else %}Zur Bewertung bereitgestellt{% endif %}</strong>
           </div>
           <div class="col-md-4">
             <div class="section-title">Nächste Bearbeitung</div>
@@ -38,7 +38,9 @@
         </div>
         <div class="small text-muted mt-3">
           Es wird keine einzelne Person zugewiesen. Berechtigte KI-Koordinatoren sehen den Use Case
-          als ausführbare Bewertungsaufgabe in ihrem Arbeitsvorrat.
+          {% if action.key == 'review_start' %}mit „Prüfung starten“ in ihrem Arbeitsvorrat.
+          Die Bewertung folgt nach der dokumentierten Review-Entscheidung.
+          {% else %}als ausführbare Bewertungsaufgabe in ihrem Arbeitsvorrat.{% endif %}
         </div>
       </div>
       {% endif %}

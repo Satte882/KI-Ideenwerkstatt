@@ -16,6 +16,7 @@ from ki_radar.use_cases.outcome_workspace import (
 from ki_radar.use_cases.permissions import can_end_use_case, can_start_pilot
 from ki_radar.use_cases.scale_readiness import evaluate_scale_readiness
 from ki_radar.use_cases.services import current_decision_check
+from ki_radar.use_cases.workflow import build_use_case_journey
 
 from .lean_forms import ReviewForm
 from .models import Review
@@ -91,7 +92,11 @@ def review_create(request, use_case_id):
             "use_case": use_case,
             "decision_check": current_decision_check(use_case),
             "pilot_start_only": pilot_start_only,
-            "journey": build_outcome_workspace_journey(use_case, request.user),
+            "journey": (
+                build_use_case_journey(use_case, request.user)
+                if use_case.status == UseCase.Status.IDEA
+                else build_outcome_workspace_journey(use_case, request.user)
+            ),
         },
     )
 

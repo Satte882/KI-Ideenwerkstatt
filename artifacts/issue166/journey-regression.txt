@@ -1,0 +1,34 @@
+..............................................................           [100%]
+=============================== warnings summary ===============================
+ki_radar/delivery/forms.py:114
+  /issue166/ki_radar/delivery/forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+../review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148
+../review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+  /review/.venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+  /issue166/ki_radar/reviews/forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+tests/test_issue_166_review_start.py::test_real_postgres_journey[False-direct]
+  /issue166/ki_radar/reviews/forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+tests/test_issue_166_review_start.py: 9 warnings
+tests/test_guided_workflow_ux.py: 4 warnings
+tests/test_delivery_handover.py: 6 warnings
+tests/test_outcome_journey_consistency.py: 1 warning
+  /review/.venv/lib/python3.13/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /issue166/staticfiles/
+    mw_instance = middleware(adapted_handler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+62 passed, 31 warnings in 105.02s (0:01:45)
