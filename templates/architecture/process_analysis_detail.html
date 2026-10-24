@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="{% static 'css/process-analysis-detail.css' %}?v=process-structure-3">
 {% endblock %}
 {% block content %}
-{% if process_analysis.source_snapshot.strategic_exploration %}<p class="alert alert-warning" role="status">Vorläufiger strategischer Untersuchungsrahmen, menschlich bestätigt. Ist-Ablauf und Screening noch offen; keine vollständig bewertete oder bindend freigegebene Auswahl.</p>{% endif %}
+{% if process_analysis.source_snapshot.strategic_exploration %}<p class="alert alert-warning" role="status">Vorläufiger strategischer Untersuchungsrahmen bei Übernahme. Die Scopeübernahme bestätigt weder Ist-Ablauf noch vollständiges Screening und erteilt keine bindende Freigabe.</p>{% endif %}
 {% if process_analysis.initiative %}<p><a href="{{ process_analysis.initiative.get_absolute_url }}">Zum ursprünglichen Vorhaben</a></p>{% endif %}
 {% include "includes/lifecycle_rail.html" with lifecycle_variant="header" lifecycle_columns="7" lifecycle_kicker="Arbeitsmodell" lifecycle_title="Systematische Discovery" lifecycle_context="Prozessanalyse · Auswahl und Freigabe" %}
 
