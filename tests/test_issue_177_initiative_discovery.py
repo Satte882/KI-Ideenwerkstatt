@@ -149,6 +149,58 @@ def test_completed_legacy_discovery_is_not_retroactively_bound(owner, tmp_path):
     assert ProcessAnalysis.objects.get(pk=again.process_analysis_id).initiative_id is None
 
 
+@pytest.mark.parametrize("bind_idea", [False, True])
+def test_completed_discovery_preserves_regular_later_process_binding(owner, tmp_path, bind_idea):
+    idea = IdeaCandidate.objects.create(
+        title="Zunächst ungebunden", description="Altbestand", submitted_by=owner
+    )
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    first = materialize(owner, session, analysis)
+    process = ProcessAnalysis.objects.get(pk=first.process_analysis_id)
+    item = initiative(owner)
+    process = bind_initiative(initiative=item, artifact=process, actor=owner)
+    if bind_idea:
+        bind_initiative(initiative=item, artifact=idea, actor=owner)
+    item.refresh_from_db()
+    revision = item.revision
+    history_count = item.history.count()
+    session.refresh_from_db()
+    answers = session.answers
+    for _ in range(2):
+        again = materialize(owner, session, analysis)
+        assert again.reused and again.process_analysis_id == first.process_analysis_id
+    process.refresh_from_db()
+    idea.refresh_from_db()
+    item.refresh_from_db()
+    session.refresh_from_db()
+    assert process.initiative_id == item.pk
+    assert idea.initiative_id == (item.pk if bind_idea else None)
+    assert item.revision == revision and item.history.count() == history_count
+    assert session.answers == answers
+    assert ProcessAnalysis.objects.count() == ValueStream.objects.count() == 1
+
+
+def test_completed_discovery_rejects_different_regular_later_bindings(owner, tmp_path):
+    idea = IdeaCandidate.objects.create(
+        title="Zunächst ungebunden", description="Altbestand", submitted_by=owner
+    )
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    result = materialize(owner, session, analysis)
+    process = ProcessAnalysis.objects.get(pk=result.process_analysis_id)
+    process_initiative = initiative(owner)
+    idea_initiative = initiative(owner)
+    bind_initiative(initiative=process_initiative, artifact=process, actor=owner)
+    bind_initiative(initiative=idea_initiative, artifact=idea, actor=owner)
+    with pytest.raises(DiscoveryMaterializationError) as error:
+        materialize(owner, session, analysis)
+    assert error.value.code == "initiative_binding_conflict"
+    process.refresh_from_db()
+    idea.refresh_from_db()
+    assert process.initiative_id == process_initiative.pk
+    assert idea.initiative_id == idea_initiative.pk
+    assert ProcessAnalysis.objects.count() == ValueStream.objects.count() == 1
+
+
 def test_malformed_legacy_origin_stays_readable_but_cannot_materialize(client, owner, tmp_path):
     idea = IdeaCandidate.objects.create(
         title="Altbestand", description="Historisch", submitted_by=owner

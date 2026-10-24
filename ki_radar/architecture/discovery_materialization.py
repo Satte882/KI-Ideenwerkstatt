@@ -167,7 +167,13 @@ def materialize_discovery_and_start_investigation(
             process = ProcessAnalysis.objects.get(pk=existing.process_analysis_id)
             if idea is not None and (
                 idea.discovery_process_analysis_id != process.pk
-                or (process.initiative_id and process.initiative_id != idea.initiative_id)
+                # Either artifact may be bound later through the regular outcome path.
+                # Only two explicit, different initiative assignments conflict.
+                or (
+                    process.initiative_id
+                    and idea.initiative_id
+                    and process.initiative_id != idea.initiative_id
+                )
             ):
                 raise DiscoveryMaterializationError(
                     "Die gespeicherte Zuordnung widerspricht der Ursprungsidee.",
