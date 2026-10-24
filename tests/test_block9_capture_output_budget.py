@@ -45,6 +45,7 @@ def test_capture_provider_forwards_dedicated_output_budget(monkeypatch):
     captured = {}
     catalog = get_capture_catalog("use_case", "1.0")
     prepared = SimpleNamespace(
+        analysis=SimpleNamespace(prompt_version="1.1"),
         catalog=catalog,
         messages=[{"role": "user", "content": "benchmark"}],
         policy=SimpleNamespace(
@@ -73,3 +74,9 @@ def test_capture_provider_forwards_dedicated_output_budget(monkeypatch):
     assert captured["timeout_seconds"] == 60
     assert captured["temperature"] is None
     assert captured["response_format"]["type"] == "json_schema"
+    assert (
+        captured["response_format"]["json_schema"]["schema"]["properties"]["prompt_version"][
+            "const"
+        ]
+        == "1.1"
+    )

@@ -8,8 +8,9 @@ from django.utils import timezone
 
 from ki_radar.accelerator import analysis_service, extraction_validation
 from ki_radar.accelerator.analysis_service import CaptureAnalysisError
-from ki_radar.accelerator.candidate_snapshot import CandidateSnapshotError
+from ki_radar.accelerator.candidate_snapshot import CandidateSnapshotError, candidate_validity
 from ki_radar.accelerator.catalogs import get_capture_catalog
+from ki_radar.accelerator.extraction_contract import current_extraction_prompt_version
 from ki_radar.accelerator.extraction_validation import execute_capture_analysis
 from ki_radar.accelerator.models import (
     CaptureAnalysis,
@@ -73,6 +74,9 @@ def _bound_completed_session(*, owner, business_unit) -> CaptureSession:
 
 def _provider_result() -> OpenRouterResult:
     payload = _use_case_case()["provider_payload"]
+    payload["prompt_version"] = current_extraction_prompt_version(
+        get_capture_catalog("use_case", "1.0")
+    )
     content = json.dumps(payload, ensure_ascii=False)
     return OpenRouterResult(
         content=content,
@@ -114,6 +118,7 @@ def test_successful_bound_analysis_materializes_normal_review_candidates(
     title_candidate = candidates.get(target_field="title")
     assert title_candidate.suggestion.target_field == "use_case.title"
     assert title_candidate.proposed_value == "KI-Assistenz Angebotsvergleich"
+    assert candidate_validity(title_candidate) == "valid"
     assert not candidates.filter(target_field="metric.name").exists()
 
 
