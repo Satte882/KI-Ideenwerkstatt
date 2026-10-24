@@ -13,7 +13,11 @@ from ki_radar.use_cases.models import UseCase
 
 from .candidate_state import supersede_open_candidates
 from .catalogs import ANSWER_SCHEMA_VERSION, get_capture_catalog, is_capture_catalog_supported
-from .extraction_contract import EXTRACTION_SCHEMA_VERSION, extraction_prompt_version
+from .extraction_contract import (
+    EXTRACTION_SCHEMA_VERSION,
+    current_extraction_prompt_version,
+    extraction_prompt_version,
+)
 from .field_registry import UnsupportedAdoptionField, assert_adoptable_field
 from .models import (
     CaptureAnalysis,
@@ -191,12 +195,15 @@ def candidate_validity(candidate: FieldAdoptionCandidate, *, now=None) -> Candid
 
     if not is_capture_catalog_supported(session.capture_type, session.catalog_version):
         return CandidateValidity.STALE
+    catalog = get_capture_catalog(session.capture_type, session.catalog_version)
+    supported_prompts = {
+        extraction_prompt_version(catalog),
+        current_extraction_prompt_version(catalog),
+    }
     expected_versions = (
         session.catalog_version,
         ANSWER_SCHEMA_VERSION,
-        extraction_prompt_version(
-            get_capture_catalog(session.capture_type, session.catalog_version)
-        ),
+        analysis.prompt_version,
         EXTRACTION_SCHEMA_VERSION,
     )
     candidate_versions = (
@@ -219,6 +226,7 @@ def candidate_validity(candidate: FieldAdoptionCandidate, *, now=None) -> Candid
         or session.revision != candidate.source_revision
         or analysis.source_revision != candidate.source_revision
         or analysis.source_hash != candidate.source_hash
+        or analysis.prompt_version not in supported_prompts
         or candidate_versions != expected_versions
         or analysis_versions != candidate_versions
         or session.catalog_version != candidate.catalog_version
