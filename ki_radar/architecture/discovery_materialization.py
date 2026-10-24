@@ -18,6 +18,7 @@ from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 from ki_radar.accelerator.retention_policy import completed_capture_expiry
 from ki_radar.use_cases.idea_discovery import assert_idea_discovery_start, idea_origin_id
 from ki_radar.use_cases.idea_models import IdeaCandidate
+from ki_radar.use_cases.initiatives import bind_initiative
 
 from .focus import ValueStreamFocus
 from .models import ProcessAnalysis, ValueStream, ValueStreamStage
@@ -161,6 +162,17 @@ def materialize_discovery_and_start_investigation(
     if session.status == CaptureSession.Status.COMPLETED:
         existing = _existing_result(session, analysis_id)
         if existing is not None:
+            origin_id = idea_origin_id(session.answers or {})
+            idea = IdeaCandidate.objects.filter(pk=origin_id).first() if origin_id else None
+            process = ProcessAnalysis.objects.get(pk=existing.process_analysis_id)
+            if idea is not None and (
+                idea.discovery_process_analysis_id != process.pk
+                or (process.initiative_id and process.initiative_id != idea.initiative_id)
+            ):
+                raise DiscoveryMaterializationError(
+                    "Die gespeicherte Zuordnung widerspricht der Ursprungsidee.",
+                    code="initiative_binding_conflict",
+                )
             return existing
         raise DiscoveryMaterializationError(
             "Diese Discovery wurde bereits mit einem anderen Stand abgeschlossen.",
@@ -404,6 +416,15 @@ def materialize_discovery_and_start_investigation(
     process.full_clean()
     process.save()
     if idea is not None:
+        if idea.initiative_id is not None:
+            try:
+                process = bind_initiative(initiative=idea.initiative, artifact=process, actor=actor)
+            except (PermissionDenied, ValidationError) as exc:
+                raise DiscoveryMaterializationError(
+                    "Die Vorhabenszuordnung ist nicht zulässig. "
+                    "Bitte durch die verantwortliche Person prüfen lassen.",
+                    code="initiative_binding_conflict",
+                ) from exc
         idea.discovery_process_analysis = process
         idea.save(update_fields=["discovery_process_analysis", "updated_at"])
 

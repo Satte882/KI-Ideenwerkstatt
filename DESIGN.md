@@ -4,7 +4,7 @@ Dieses Dokument ist die verbindliche UI-Zwangsjacke für neue oder geänderte Ob
 Es beschreibt Produktqualität, nicht eine austauschbare Landingpage-Ästhetik.
 
 **Arbeits- und Abnahmeumfang ist ausschließlich die Desktop-UI.** Geprüft wird bei
-1440×1000 und 1024×1000 px. Tablet- und Handy-/Mobile-UI sind weder Teil der
+1440×1000 px. Tablet- und Handy-/Mobile-UI sind weder Teil der
 UI-Arbeiten noch der Abnahme. Bestehende responsive Regeln werden dafür nicht ausgebaut.
 
 ## Zielbild
@@ -155,7 +155,7 @@ UI-Arbeiten noch der Abnahme. Bestehende responsive Regeln werden dafür nicht a
 - Funktionieren Filter, Zeilenklick, Tastatur und echter Link?
 - Bleiben Effekte stabil und verdecken keine Information?
 - Ist der Seitenrahmen in sich konsistent?
-- Funktioniert die Ansicht auf Desktop bei 1440×1000 und 1024×1000 px?
+- Funktioniert die Ansicht auf Desktop bei 1440×1000 px?
 - Sind bestehende fachliche Funktionen vollständig erhalten?
 
 ## Arbeitsregel für UI-Änderungen

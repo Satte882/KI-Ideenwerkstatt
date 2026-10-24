@@ -3,8 +3,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .impact_reviews import impact_review_context
+from .initiative_discovery import initiative_discovery_context, initiative_discovery_idea
 from .initiative_models import ImprovementInitiative
 from .initiatives import EDITABLE_FIELDS, can_edit_initiative, save_initiative
 
@@ -47,6 +50,9 @@ def initiative_edit(request, pk=None):
     if (request.method == "POST" or initiative is None) and not can_edit:
         raise PermissionDenied
     data = request.POST.copy() if request.method == "POST" else None
+    if data is not None and initiative is None:
+        data.setdefault("status", ImprovementInitiative.Status.DRAFT)
+        data.setdefault("evidence_level", ImprovementInitiative.Evidence.HYPOTHESIS)
     if data is not None and data.get("action") == "save_draft":
         data["status"] = ImprovementInitiative.Status.DRAFT
     form = InitiativeForm(data, instance=initiative)
@@ -74,6 +80,27 @@ def initiative_edit(request, pk=None):
             "initiative": initiative,
             "can_edit": can_edit,
             "history": initiative.history.all() if initiative else [],
+            **(initiative_discovery_context(initiative, request.user) if initiative else {}),
+            "primary_fields": [form["title"], form["business_outcome"]],
+            "optional_fields": [
+                field
+                for field in form
+                if not field.is_hidden and field.name not in {"title", "business_outcome"}
+            ],
             **(impact_review_context(initiative) if initiative else {}),
         },
+    )
+
+
+@login_required
+@require_POST
+def initiative_discovery_start(request, pk):
+    initiative = get_object_or_404(ImprovementInitiative, pk=pk)
+    try:
+        idea = initiative_discovery_idea(initiative=initiative, actor=request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect(initiative)
+    return redirect(
+        reverse("accelerator:autonomous_discovery_start") + f"?idea_candidate={idea.pk}"
     )

@@ -15,7 +15,11 @@ from ki_radar.architecture.discovery_materialization import (
     materialize_discovery_and_start_investigation,
 )
 from ki_radar.architecture.permissions import can_manage_architecture
-from ki_radar.use_cases.idea_discovery import active_idea_discovery, assert_idea_discovery_start
+from ki_radar.use_cases.idea_discovery import (
+    active_idea_discovery,
+    assert_idea_discovery_start,
+    idea_origin_id,
+)
 from ki_radar.use_cases.idea_models import IdeaCandidate
 
 from .architect_contract import (
@@ -268,6 +272,17 @@ def autonomous_discovery_start(request):
             initial={
                 "problem_statement": idea.description if idea is not None else "",
                 "business_unit": default_unit.pk if default_unit else None,
+                **(
+                    {
+                        "business_context": (
+                            idea.source_note
+                            + "\nGeschäftsziel des Vorhabens (Eingabe): "
+                            + idea.initiative.business_outcome
+                        )
+                    }
+                    if idea is not None and idea.initiative_id
+                    else {}
+                ),
             }
         )
 
@@ -477,6 +492,9 @@ def autonomous_discovery_review(request, session_id):
         "accelerator/autonomous_discovery_review.html",
         {
             "session": session,
+            "origin_idea": IdeaCandidate.objects.filter(pk=idea_origin_id(session.answers or {}))
+            .select_related("initiative")
+            .first(),
             "analysis": latest,
             "presentation": presentation,
             "correction_form": correction_form,
