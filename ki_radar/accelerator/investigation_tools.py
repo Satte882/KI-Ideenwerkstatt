@@ -944,6 +944,11 @@ def create_discovery_source_snapshot(
             decision_question=problem,
             run_limits={},
             process_context={
+                **(
+                    {"human_scope": dict(locked_session.answers["human_scope"])}
+                    if locked_session.catalog_version == "3.0"
+                    else {}
+                ),
                 "capture_session_id": str(locked_session.pk),
                 "capture_revision": locked_session.revision,
                 "problem_statement": problem,

@@ -58,6 +58,18 @@
       </div>
     </section>
 
+    {% if scope_fields %}
+    <details class="architecture-disclosure"{% if strategic_start %} open{% endif %}>
+      <summary>Strategisches Ziel: vorläufigen Untersuchungsrahmen angeben (optional)</summary>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="strategic" value="1" id="strategic-scope"{% if strategic_start %} checked{% endif %}>
+        <label class="form-check-label" for="strategic-scope">Dies ist eine strategische Untersuchung mit meinem vorläufigen Untersuchungsrahmen.</label>
+      </div>
+      <p>Sie bestimmen den Untersuchungsrahmen. Das ist keine Aussage über einen belegten Ist-Prozess und keine Freigabe. Unbekannte Daten bleiben offen. Ohne begründeten Bereich und Validierungsschritt bleibt die Scopeübernahme gesperrt.</p>
+      {% for field in scope_fields %}<div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div role="alert">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
+    </details>
+    {% endif %}
+
     <section class="form-section mb-0" aria-labelledby="sources-title">
       <div class="section-title mb-3" id="sources-title">2. Vorhandene Quellen</div>
       <div data-file-staging>
