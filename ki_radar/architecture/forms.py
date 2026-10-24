@@ -557,14 +557,29 @@ class SolutionOptionForm(StyledModelForm):
                 "Bei organisatorischen Änderungen und Lösungen ohne Technik optional. "
                 "Tatsächliche technische Auswirkungen weiterhin dokumentieren."
             )
-        self.fields[
-            "evaluation_status"
-        ].help_text = (
-            "Als bewertet markieren, sobald die Vergleichskriterien transparent dokumentiert sind."
+        self.fields["evaluation_status"].help_text = (
+            "'Bewertet' bedeutet: Vergleichskriterien erfasst, formal vergleichbar. "
+            "Es bestätigt weder Evidenz noch Machbarkeit, Nutzen oder Freigabe."
         )
+        self.fields["evaluation_status"].label = "Erfassungsstand der Vergleichskriterien"
+        self.fields["evaluation_status"].choices = [
+            ("draft", "Entwurf \u2013 Erfassung nicht abgeschlossen"),
+            ("assessed", "Kriterien erfasst (Bewertet)"),
+        ]
         self.fields["evidence_basis"].help_text = (
             "Kennzeichnet die Belastbarkeit der Aussagen zu Nutzen und Lösungsfit. "
-            "Hypothesen sind zulässig, müssen aber als solche sichtbar bleiben."
+            "Hypothese: unbestätigt. Indiz: qualitativ belegt. Gemessen: Nachweis mit "
+            "begrenztem Geltungsbereich. Quellen und Grenzen in der Begründung dokumentieren."
+        )
+        self.fields["feasibility"].help_text = (
+            "Gespeicherte qualitative Einschätzung, kein Nachweis. Auch 'Mittel' kann eine "
+            "unbelegte Hypothese sein. Begründung, Quellen und offene Fragen unten dokumentieren; "
+            "Werte nur nach bewusster fachlicher Prüfung korrigieren."
+        )
+        self.fields["architecture_fit"].help_text = (
+            "Begründung und Quellen für Machbarkeit und Lösungsfit sowie Grenzen und fehlende "
+            "Daten festhalten. 'unknown' bedeutet unbekannt / noch zu klären; vorhandene "
+            "Angaben bleiben im Formular unverändert editierbar."
         )
         self.fields["time_to_value"].help_text = (
             "Qualitativer Trade-off. 'Unbekannt' verwenden, wenn keine belastbare "

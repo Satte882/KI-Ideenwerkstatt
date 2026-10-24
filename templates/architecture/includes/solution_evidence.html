@@ -1,0 +1,10 @@
+<div class="small mt-2" data-testid="solution-evidence">
+  <strong>Evidenz: {{ option.get_evidence_basis_display }}</strong>
+  {% if option.evidence_basis == 'hypothesis' %}
+    <div class="text-warning">Nicht belegt: Machbarkeit und Nutzen sind Annahmen.</div>
+  {% elif option.evidence_basis == 'indicative' %}
+    <div class="text-muted">Qualitative Indizien; kein vollständiger Wirkungsnachweis.</div>
+  {% else %}
+    <div class="text-muted">Messbezug laut gespeicherter Evidenzbasis; Umfang und Grenzen in der Begründung prüfen.</div>
+  {% endif %}
+</div>

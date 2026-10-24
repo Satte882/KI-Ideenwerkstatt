@@ -2,7 +2,7 @@
 {% load static architecture_focus %}
 {% block title %}Lösungsoptionen vergleichen – KI-Radar{% endblock %}
 {% block body_class %}page-detail-workspace page-solution-compare{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}?v=issue-331-solution-comparison">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}?v=issue-173-evidence">{% endblock %}
 {% block content %}
 <div class="page-header">
   <div>
@@ -56,7 +56,7 @@
 
 <div class="app-card mb-4">
   <div class="card-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
-    <div><strong>Vergleichsmatrix</strong><div class="small text-muted mt-1">Alle aktiven Optionen werden anhand derselben Kriterien gegenübergestellt. Time-to-Value ist ein sichtbarer Trade-off, kein automatischer Sieger-Score. Nicht weiterverfolgte Optionen bleiben auditierbar.</div></div>
+    <div><strong>Vergleichsmatrix</strong><div class="small text-muted mt-1">Alle aktiven Optionen werden anhand derselben Kriterien gegenübergestellt. Time-to-Value ist ein sichtbarer Trade-off, kein automatischer Sieger-Score. Nicht weiterverfolgte Optionen bleiben auditierbar.</div><p class="small mt-2 mb-0" data-testid="comparison-maturity-context"><strong>Erfassungsstand, Evidenz und Auswahl sind getrennt.</strong> „Bewertet“ heißt: Kriterien erfasst / formal vergleichbar. Es ist kein Nachweis für Machbarkeit oder Geschäftsnutzen und keine Freigabe. Qualitative Werte wie „Mittel“ sind mit der jeweiligen Beleglage zu lesen. Die bindende Lösungswahl erfolgt separat.</p></div>
     {% if can_select %}
       <div class="d-flex gap-2 flex-wrap">
         {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>{% endif %}
@@ -96,23 +96,23 @@
   {% endif %}
   <div class="card-body table-responsive">
     <table class="table align-middle comparison-matrix comparison-options-{{ options|length }}">
-      <thead><tr><th scope="col">Kriterium</th>{% for option in options %}<th scope="col"><span class="badge badge-soft">{{ option.get_option_type_display }}</span><div class="mt-2">{{ option.name }}</div><div class="small text-muted">{{ option.get_evaluation_status_display }}</div></th>{% endfor %}</tr></thead>
+      <thead><tr><th scope="col">Kriterium</th>{% for option in options %}<th scope="col"><span class="badge badge-soft">{{ option.get_option_type_display }}</span><div class="mt-2">{{ option.name }}</div><div class="small text-muted">{% comparison_assessment_label option %}</div>{% include "architecture/includes/solution_evidence.html" with option=option only %}</th>{% endfor %}</tr></thead>
       <tbody>
-        <tr><th scope="row">Lösungsbeschreibung</th>{% for option in options %}<td class="text-preline">{{ option.description }}</td>{% endfor %}</tr>
-        {% if process_analysis.outcome_contract_version %}<tr><th scope="row">Wirkung auf dasselbe Geschäftsergebnis</th>{% for option in options %}<td class="text-preline">{{ option.outcome_effect|default:"Noch offen – vor bindender Wahl fachlich bewerten" }}</td>{% endfor %}</tr>{% endif %}
-        <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Lösungsbeschreibung</th>{% for option in options %}<td class="text-preline">{{ option.description|comparison_text }}</td>{% endfor %}</tr>
+        {% if process_analysis.outcome_contract_version %}<tr><th scope="row">Wirkung auf dasselbe Geschäftsergebnis</th>{% for option in options %}<td class="text-preline">{{ option.outcome_effect|default:"Noch offen – vor bindender Wahl fachlich bewerten"|comparison_text }}</td>{% endfor %}</tr>{% endif %}
+        <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">Beleglage<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">KI-Komponente</th>{% for option in options %}<td>{% if option.starts_ai_use_case %}Ja – KI-Use-Case-Pfad möglich{% else %}Nein – kein KI-Use-Case erforderlich{% endif %}</td>{% endfor %}</tr>
-        <tr><th scope="row">{% comparison_coverage_label %}</th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|default:"–" }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Machbarkeit</th>{% for option in options %}<td>{{ option.get_feasibility_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">{% comparison_coverage_label %}</th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|comparison_text }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Machbarkeit<span class="d-block small text-muted mt-1">Qualitative Einschätzung; Begründung und Beleglage beachten</span></th>{% for option in options %}<td>{{ option.get_feasibility_display }}{% if option.evidence_basis == 'hypothesis' %}<span class="d-block small text-warning">Nicht belegt – Hypothese</span>{% endif %}</td>{% endfor %}</tr>
         <tr><th scope="row">Datenanforderungen</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'data_requirements' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Anwendungsauswirkung</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'application_impact' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Integrationsaufwand</th>{% for option in options %}<td>{% comparison_technical_value option 'integration_effort' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Integrationen</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'integration_impact' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Technologieleitplanken</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'technology_constraints' %}</td>{% endfor %}</tr>
-        <tr><th scope="row">Risiken</th>{% for option in options %}<td class="text-preline">{{ option.risks|default:"–" }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Passung zu Zielbild und Leitplanken</th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|default:"–" }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Risiken</th>{% for option in options %}<td class="text-preline">{{ option.risks|comparison_text }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Begründung / Quellen zum Lösungsfit</th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">Architecture Mode</th>{% for option in options %}<td>{% if option.architecture_assessment %}{{ option.architecture_assessment.get_architecture_mode_display }}{% else %}<span class="text-muted">Nicht eingeschätzt</span>{% endif %}</td>{% endfor %}</tr>
         <tr><th scope="row">Entscheidungsstatus</th>{% for option in options %}<td>{{ option.get_recommendation_display }}</td>{% endfor %}</tr>
         {% if can_select %}
@@ -155,7 +155,7 @@
   {{ form.process_version }}
   <div class="card-header">
     <strong>{% if latest_selection %}Bestehende Auswahl ändern{% else %}Bevorzugte Option auswählen{% endif %}</strong>
-    <div class="small text-muted mt-1">{% if latest_selection %}Die aktuelle Entscheidung bleibt bestehen, solange Sie hier keine geänderte Auswahl verbindlich speichern.{% else %}Nach vollständiger Bewertung wird die gewählte Option als bevorzugt und die übrigen als verworfen markiert. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.{% endif %}</div>
+    <div class="small text-muted mt-1">{% if latest_selection %}Die aktuelle Entscheidung bleibt bestehen, solange Sie hier keine geänderte Auswahl verbindlich speichern.{% else %}Erst diese ausdrückliche Auswahl markiert die gewählte Option als bevorzugt und die übrigen als verworfen. Vergleichsstand, Person, Zeitpunkt und Begründung werden unveränderlich gespeichert.{% endif %} Eine Lösungswahl ist kein Wirkungsnachweis und ersetzt keine nachgelagerte Freigabe.</div>
   </div>
   <div class="card-body">
     {% if latest_selection %}
@@ -209,7 +209,7 @@
     {% if selection_blocked %}
       <div class="alert alert-warning mb-0">
         <strong>Auswahl noch gesperrt.</strong>
-        <p class="mt-2">Die folgenden Voraussetzungen sind noch offen. KI-Entwürfe werden absichtlich zunächst als „Noch nicht bewertet“ übernommen.</p>
+        <p class="mt-2">Die folgenden Voraussetzungen für die bindende Wahl sind noch offen. Übernommene Entwürfe können bereits vollständig erfasste Kriterien enthalten; ihre Evidenz kann dennoch eine unbestätigte Hypothese sein.</p>
         {% if outcome_blockers %}
           <div class="mb-3" data-testid="selection-outcome-blocker">
             <strong>Outcome-Bezug noch offen</strong>

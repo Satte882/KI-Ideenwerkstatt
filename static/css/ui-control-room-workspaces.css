@@ -177,7 +177,8 @@
 @media (min-width: 992px) {
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
-    .comparison-options-3
+    .comparison-options-3,
+    .comparison-options-4
   ) {
     width: 100%;
     table-layout: fixed;
@@ -185,28 +186,32 @@
 
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
-    .comparison-options-3
+    .comparison-options-3,
+    .comparison-options-4
   ) th:first-child {
     width: 20%;
   }
 
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
-    .comparison-options-3
+    .comparison-options-3,
+    .comparison-options-4
   ) :is(th, td) {
     overflow-wrap: anywhere;
   }
 
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
-    .comparison-options-3
+    .comparison-options-3,
+    .comparison-options-4
   ) th {
     white-space: normal;
   }
 
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
-    .comparison-options-3
+    .comparison-options-3,
+    .comparison-options-4
   ) .badge {
     max-width: 100%;
     white-space: normal;
@@ -926,3 +931,11 @@
   }
 }
 
+
+/* Keep evidence readable beside the criterion status in the comparison header. */
+.ui-control-room.page-solution-compare .comparison-matrix thead .small {
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
