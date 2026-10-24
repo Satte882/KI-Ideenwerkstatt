@@ -12,8 +12,9 @@ from django.utils import timezone
 from ki_radar.accelerator import analysis_service
 from ki_radar.accelerator.catalogs import get_capture_catalog
 from ki_radar.accelerator.extraction_contract import (
-    EXTRACTION_PROMPT_VERSION,
     EXTRACTION_SCHEMA_VERSION,
+    current_extraction_prompt_version,
+    parse_extraction_document,
 )
 from ki_radar.accelerator.extraction_validation import execute_capture_analysis
 from ki_radar.accelerator.models import (
@@ -106,10 +107,14 @@ def test_real_demo_capture_analysis_golden_path(owner, monkeypatch, case_name):
     dataset = _dataset()
     case = _case(case_name)
     session = _completed_session(owner, case)
+    payload = dict(case["provider_payload"])
+    payload["prompt_version"] = current_extraction_prompt_version(
+        get_capture_catalog(case["capture_type"], "1.0")
+    )
     monkeypatch.setattr(
         analysis_service,
         "request_openrouter",
-        lambda **kwargs: _provider_result(case["provider_payload"]),
+        lambda **kwargs: _provider_result(payload),
     )
 
     analysis = execute_capture_analysis(actor=owner, session_id=session.pk)
@@ -120,7 +125,7 @@ def test_real_demo_capture_analysis_golden_path(owner, monkeypatch, case_name):
     assert analysis.source_hash == analysis_service.canonical_answer_hash(case["answers"])
     assert analysis.catalog_version == session.catalog_version
     assert analysis.answer_schema_version == session.schema_version
-    assert analysis.prompt_version == EXTRACTION_PROMPT_VERSION
+    assert analysis.prompt_version == payload["prompt_version"]
     assert analysis.extraction_schema_version == EXTRACTION_SCHEMA_VERSION
     assert analysis.model_name == dataset["model"]
     assert len(suggestions) == len(case["provider_payload"]["suggestions"])
@@ -141,6 +146,15 @@ def test_real_demo_capture_analysis_golden_path(owner, monkeypatch, case_name):
             for suggestion in suggestions
         ).casefold()
         assert all(term.casefold() in extracted_text for term in CORE_VALUE_STREAM_TERMS)
+
+
+def test_saved_use_case_prompt_1_0_fixture_remains_readable():
+    case = _case("use_case")
+    document = parse_extraction_document(
+        case["provider_payload"], catalog=get_capture_catalog("use_case", "1.0")
+    )
+    assert document.prompt_version == "1.0"
+    assert len(document.suggestions) == len(case["provider_payload"]["suggestions"])
 
 
 @pytest.mark.django_db

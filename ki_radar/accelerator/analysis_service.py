@@ -23,7 +23,8 @@ from .catalogs import CaptureCatalog, get_capture_catalog, validate_answer_docum
 from .extraction_contract import (
     EXTRACTION_SCHEMA_VERSION,
     build_extraction_json_schema,
-    extraction_prompt_version,
+    current_extraction_prompt_version,
+    extraction_target_constraints,
 )
 from .models import AcceleratorLLMQuota, CaptureAnalysis, CaptureSession
 from .retention_policy import (
@@ -129,14 +130,26 @@ def _extraction_input(
                 "allowed_targets": list(question.target_paths),
             }
         )
-    return {
+    document = {
         "capture_type": session.capture_type,
         "catalog_version": session.catalog_version,
         "answer_schema_version": session.schema_version,
         "extraction_schema_version": EXTRACTION_SCHEMA_VERSION,
-        "prompt_version": extraction_prompt_version(catalog),
+        "prompt_version": current_extraction_prompt_version(catalog),
         "questions": questions,
     }
+    if document["prompt_version"] == "1.1":
+        document["target_contracts"] = extraction_target_constraints(catalog)
+        document["extraction_rules"] = (
+            "Extrahiere die konkret belegten Angaben, nicht nur den Titel. "
+            "Verwende für Enumfelder ausschließlich die angegebenen internen Codes. "
+            "Unbekannte Werte nicht als Platzhalter vorschlagen: Zielfeld weglassen "
+            "und den Klärungsbedarf in open_questions nennen. Baseline, Zielwerte, "
+            "Kosten und Bewertungen niemals erfinden. Für use_case-Ziele ist "
+            "target_group_key immer null. Jeder Vorschlag braucht seinen wörtlichen "
+            "Quellausschnitt aus der passenden Frage."
+        )
+    return document
 
 
 def _quota_subject(
@@ -320,7 +333,7 @@ def prepare_capture_analysis(*, actor, session_id) -> PreparedCaptureAnalysis:
             capture_type=session.capture_type,
             catalog_version=session.catalog_version,
             answer_schema_version=session.schema_version,
-            prompt_version=extraction_prompt_version(catalog),
+            prompt_version=current_extraction_prompt_version(catalog),
             extraction_schema_version=EXTRACTION_SCHEMA_VERSION,
             input_chars=input_chars,
         )
@@ -381,7 +394,9 @@ def mark_capture_analysis_failed(
 
 @sensitive_variables("prepared", "result", "payload", "response_schema")
 def request_capture_provider(prepared: PreparedCaptureAnalysis) -> CaptureProviderPayload:
-    response_schema = build_extraction_json_schema(prepared.catalog)
+    response_schema = build_extraction_json_schema(
+        prepared.catalog, prompt_version=prepared.analysis.prompt_version
+    )
     try:
         result = request_openrouter(
             messages=prepared.messages,

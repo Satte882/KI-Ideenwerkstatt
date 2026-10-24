@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -13,6 +14,12 @@ MAX_EXTRACTION_SUGGESTIONS = 100
 
 def extraction_prompt_version(catalog: CaptureCatalog) -> str:
     return "2.0" if catalog.version == "2.0" else EXTRACTION_PROMPT_VERSION
+
+
+def current_extraction_prompt_version(catalog: CaptureCatalog) -> str:
+    if catalog.capture_type == "use_case":
+        return "1.1"
+    return extraction_prompt_version(catalog)
 
 
 ALLOWED_FIELD_TYPES = frozenset(
@@ -30,6 +37,41 @@ ALLOWED_FIELD_TYPES = frozenset(
 )
 ALLOWED_UNCERTAINTY_LEVELS = frozenset({"low", "medium", "high"})
 GROUP_KEY_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+EXTRACTION_ENUM_PATHS = {
+    "value_stream.focus.business_domain": "business_domain",
+    "solution_options[].option_type": "solution_option.option_type",
+    "solution_options[].feasibility": "solution_option.feasibility",
+    "solution_options[].integration_effort": "solution_option.integration_effort",
+    "use_case.priority": "use_case.priority",
+    "use_case.solution_type": "use_case.solution_type",
+    "use_case.hosting_type": "use_case.hosting_type",
+    "use_case.metric.type": "use_case.metric.type",
+    "use_case.metric.direction": "use_case.metric.direction",
+    "use_case.business_value": "level",
+    "use_case.technical_feasibility": "level",
+    "use_case.data_readiness": "level",
+    "use_case.risk_complexity": "level",
+    "use_case.classification.business_domain": "business_domain",
+}
+_DECIMAL_PATHS = {
+    "use_case.metric.baseline",
+    "use_case.metric.target",
+    "use_case.one_time_cost",
+    "use_case.recurring_cost",
+}
+_INTEGER_PATHS = {"value_stream.stages[].sequence"}
+
+
+def extraction_field_type(path: str) -> str:
+    if path in EXTRACTION_ENUM_PATHS:
+        return "enum"
+    if path in _DECIMAL_PATHS:
+        return "decimal"
+    if path in _INTEGER_PATHS:
+        return "integer"
+    return "text"
+
 
 _ROOT_FIELDS = frozenset(
     {
@@ -116,10 +158,30 @@ def target_object_type_for_path(path: str) -> str:
     raise ValueError(f"Unbekannter Accelerator-Zielpfad: {path}")
 
 
-def build_extraction_json_schema(catalog: CaptureCatalog) -> dict[str, Any]:
-    """Build the provider schema from the frozen server-side contract."""
+def extraction_target_constraints(catalog: CaptureCatalog) -> dict[str, dict[str, Any]]:
+    from ki_radar.core.scenario_blueprint_validation import load_blueprint_contract
+
+    enums = load_blueprint_contract()["allowed_enums"]
+    return {
+        path: {
+            "field_type": extraction_field_type(path),
+            **(
+                {"allowed_values": enums[EXTRACTION_ENUM_PATHS[path]]}
+                if path in EXTRACTION_ENUM_PATHS
+                else {}
+            ),
+        }
+        for path in sorted(allowed_extraction_target_paths(catalog))
+    }
+
+
+def build_extraction_json_schema(
+    catalog: CaptureCatalog, *, prompt_version: str | None = None
+) -> dict[str, Any]:
+    """Build the provider schema without changing stored prompt/replay contracts."""
 
     target_paths = sorted(allowed_extraction_target_paths(catalog))
+    target_constraints = extraction_target_constraints(catalog)
     question_keys = sorted(catalog.question_map)
     target_object_types = sorted({target_object_type_for_path(path) for path in target_paths})
     finding_schema = {
@@ -190,7 +252,16 @@ def build_extraction_json_schema(catalog: CaptureCatalog) -> dict[str, Any]:
                         "items": {"type": "string", "minLength": 1},
                     },
                 ],
-                "description": "Typisierter Vorschlagswert; Dezimalwerte bleiben Strings.",
+                "description": (
+                    "Nur belegte konkrete Werte vorschlagen. Unbekannte Angaben nicht als "
+                    "'unbekannt', 'offen' oder andere Fülltexte in Zielfelder schreiben, "
+                    "sondern als open_questions führen. Keine Baseline, Zielwerte, Kosten "
+                    "oder Bewertungen ergänzen, wenn diese nicht belegt sind. "
+                    "Enumwerte ausschließlich als aufgeführte interne Codes ausgeben, "
+                    "keine übersetzten Bezeichnungen. Dezimalwerte bleiben Strings. "
+                    "Verbindliche Zielfeldtypen und zulässige Codes:\n"
+                    + json.dumps(target_constraints, ensure_ascii=False, separators=(",", ":"))
+                ),
             },
             "source_question": {
                 "type": "string",
@@ -208,8 +279,19 @@ def build_extraction_json_schema(catalog: CaptureCatalog) -> dict[str, Any]:
             "uncertainty_reason": {"type": "string", "minLength": 1},
         },
     }
+    if not any("[]" in path for path in target_paths):
+        # Match the existing parser contract for captures with only singleton targets.
+        suggestion_schema["properties"]["target_group_key"] = {
+            "type": "null",
+            "description": "Ohne wiederholbare Ziele muss der Gruppenschlüssel null sein.",
+        }
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "description": (
+            "Vorhandene konkrete Angaben vollständig extrahieren; nicht jedes Zielfeld "
+            "befüllen. Fehlende Fakten bleiben offene Fragen. Leere Vorschläge sind nur "
+            "sinnvoll, wenn keine konkreten Angaben belegt sind."
+        ),
         "type": "object",
         "additionalProperties": False,
         "required": [
@@ -226,7 +308,7 @@ def build_extraction_json_schema(catalog: CaptureCatalog) -> dict[str, Any]:
             },
             "prompt_version": {
                 "type": "string",
-                "const": extraction_prompt_version(catalog),
+                "const": prompt_version or extraction_prompt_version(catalog),
             },
             "suggestions": {
                 "type": "array",
