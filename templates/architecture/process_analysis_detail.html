@@ -219,9 +219,10 @@
       <section id="solution-option-{{ option.pk }}" class="solution-option-card solution-option-{{ option.recommendation }}{% if highlighted_solution_option == option %} is-newly-added{% endif %}">
         <div class="d-flex justify-content-between align-items-start gap-2">
           <div><span class="badge badge-soft">{{ option.get_option_type_display }}</span><h3 class="h5 mt-2 mb-1">{{ option.name }}</h3></div>
-          <div class="text-end"><span class="badge {% if option.recommendation == 'preferred' %}state-ready{% elif option.recommendation == 'rejected' %}state-blocked{% else %}state-review{% endif %}">{{ option.get_recommendation_display }}</span><div class="mt-1"><span class="badge badge-soft">{{ option.get_evaluation_status_display }}</span></div></div>
+          <div class="text-end"><span class="badge {% if option.recommendation == 'preferred' %}state-ready{% elif option.recommendation == 'rejected' %}state-blocked{% else %}state-review{% endif %}">{{ option.get_recommendation_display }}</span><div class="small text-muted mt-1">{% comparison_assessment_label option %}</div></div>
         </div>
-        <p class="text-muted">{{ option.description }}</p>
+        <p class="text-muted">{{ option.description|comparison_text }}</p>
+        {% include "architecture/includes/solution_evidence.html" with option=option only %}
         {% if highlighted_solution_option == option %}
         <div class="cr-inline-note mb-3" data-testid="newly-added-solution-option">
           <strong>Neue Lösungsoption für eine TASKSHIFT-Aufgabe.</strong>
@@ -234,8 +235,8 @@
         </div>
         {% endif %}
         <dl class="stage-facts">
-          <dt>Beitrag</dt><dd>{{ option.expected_value }}</dd>
-          <dt>Machbarkeit</dt><dd>{{ option.get_feasibility_display }}</dd>
+          <dt>Beitrag</dt><dd>{{ option.expected_value|comparison_text }}</dd>
+          <dt>Machbarkeit (Einschätzung)</dt><dd>{{ option.get_feasibility_display }}{% if option.evidence_basis == 'hypothesis' %} · Nicht belegt – Hypothese{% endif %}</dd>
         </dl>
         <details class="architecture-disclosure"><summary>Daten, Integrationen, Risiken und Begründung</summary>
         <dl class="stage-facts">

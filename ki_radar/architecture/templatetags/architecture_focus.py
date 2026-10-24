@@ -1,3 +1,5 @@
+import re
+
 from django import template
 
 from ki_radar.accelerator.solution_generation_entry import (
@@ -81,4 +83,24 @@ def comparison_technical_value(option, field):
     if technical_field_not_applicable(option.option_type, field, value):
         return "Nicht relevant"
     display = getattr(option, f"get_{field}_display", None)
-    return display() if display else value or "\u2013"
+    return display() if display else comparison_text(value)
+
+
+@register.filter
+def comparison_text(value):
+    """Human-readable projection only; stored evidence and snapshots stay untouched."""
+    return (
+        re.sub(r"\bunknown\b", "Unbekannt / noch zu klären", str(value or ""), flags=re.I)
+        or "Noch offen"
+    )
+
+
+@register.simple_tag
+def comparison_assessment_label(option):
+    if option.evaluation_status == "assessed":
+        return (
+            "Kriterien erfasst (Bewertet)"
+            if option.comparison_complete
+            else "Kriterien unvollständig (Status: Bewertet)"
+        )
+    return "Entwurf \u2013 Erfassung nicht abgeschlossen"

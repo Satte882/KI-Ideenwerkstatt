@@ -174,7 +174,7 @@ def test_incomplete_options_make_preferred_selection_gate_actionable(
     content = client.get(url).content.decode()
 
     assert "Auswahl noch gesperrt" in content
-    assert "KI-Entwürfe werden absichtlich" in content
+    assert "Übernommene Entwürfe können bereits vollständig erfasste Kriterien enthalten" in content
     assert "Noch nicht bewertet" in content
     assert content.count("Option vollständig bewerten") == 2
     assert reverse("architecture:solution_option_update", args=[first.pk]) in content
@@ -654,7 +654,7 @@ def test_assessment_link_opens_fields_and_saves_back_to_comparison(client, owner
     assert edit_url in client.get(compare_url).content.decode()
     response = client.get(edit_url)
     assert response.status_code == 200
-    assert "Noch offene Bewertungsangaben" in response.content.decode()
+    assert "Entwurf \u2013 Erfassung nicht abgeschlossen" in response.content.decode()
     assert 'name="feasibility"' in response.content.decode()
     assessed = make_option(
         process, owner, name="Vollständig", option_type="organizational", assessed=True

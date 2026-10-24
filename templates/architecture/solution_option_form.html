@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static architecture_advisor_tags %}
+{% load static architecture_advisor_tags architecture_focus %}
 {% block title %}{{ title }} – KI-Radar{% endblock %}
 {% block body_class %}page-form-workspace page-solution-option-form{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
@@ -16,9 +16,9 @@
 {% if return_to_comparison %}
 <div class="cr-inline-note mb-4">
   <div>
-    <strong>{% if option.comparison_complete %}Bewertung vollständig{% else %}Noch offene Bewertungsangaben{% endif %}</strong>
+    <strong>{% comparison_assessment_label option %}</strong>
     {% if not option.comparison_complete %}<span>{{ option.missing_comparison_fields|join:", " }}</span>{% endif %}
-    <p class="mb-0 mt-2">Füllen Sie die Vergleichskriterien aus und setzen Sie den Bewertungsstatus auf „Bewertet“. Bei organisatorischen Änderungen und Lösungen ohne Technik dürfen technische Angaben leer bleiben; tatsächliche Auswirkungen weiterhin dokumentieren. Bei Time-to-Value ist „Unbekannt“ zulässig. Ein Zwischenstand kann gespeichert werden. Danach gelangen Sie zurück zum Vergleich.</p>
+    <p class="mb-0 mt-2">Füllen Sie die Vergleichskriterien aus und wählen Sie „Kriterien erfasst (Bewertet)“. Die Evidenzbasis bleibt eine getrennte Angabe. Bei organisatorischen Änderungen und Lösungen ohne Technik dürfen technische Angaben leer bleiben; tatsächliche Auswirkungen weiterhin dokumentieren. Bei Time-to-Value ist „Unbekannt“ zulässig. Ein Zwischenstand kann gespeichert werden. Danach gelangen Sie zurück zum Vergleich.</p>
   </div>
 </div>
 {% endif %}
@@ -50,7 +50,9 @@
   {% csrf_token %}
   <div class="card-header">
     <strong>Lösungsoption bewerten</strong>
-    <div class="small text-muted mt-1">{% if work_design_source %}Beschreibe hier eine echte Lösungsalternative für die ausgewählte Aufgabe. Die vollständige Bewertung kann direkt hier oder später im Lösungsraum erfolgen.{% else %}Hier wird die Option bewertet. Die bevorzugte Lösung wird anschließend ausschließlich in der Vergleichsansicht ausgewählt. Methodik: Opportunities &amp; Solutions (ADM Phase E).{% endif %}</div>
+    <div class="small text-muted mt-1">{% if work_design_source %}Beschreibe hier eine echte Lösungsalternative für die ausgewählte Aufgabe. Die vollständige Bewertung kann direkt hier oder später im Lösungsraum erfolgen.{% else %}Hier werden die Vergleichskriterien erfasst. Die bevorzugte Lösung wird anschließend ausschließlich in der Vergleichsansicht ausgewählt. Methodik: Opportunities &amp; Solutions (ADM Phase E).{% endif %}</div>
+    <p class="small mt-2 mb-0">„Bewertet“ bestätigt die Erfassung der Kriterien, weder Machbarkeit noch Nutzen oder Freigabe. Qualitative Werte wie „Mittel“ können unbestätigte Annahmen sein. Begründung und Quellen prüfen; fehlende Daten bleiben offen.</p>
+    {% if option %}{% include "architecture/includes/solution_evidence.html" with option=option only %}{% endif %}
   </div>
   <div class="card-body">
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
@@ -80,7 +82,7 @@
     <details class="architecture-disclosure work-design-solution-details mt-4" {% if return_to_comparison or form.errors %}open{% elif option and option.evaluation_status == 'assessed' %}open{% endif %}>
       <summary>Vertiefte Lösungsbewertung <span class="text-muted">(optional beim Handoff)</span></summary>
       <div class="pt-3">
-        <p class="small text-muted mb-3">Diese Angaben werden für einen belastbaren Vergleich benötigt. Der Entwurf kann zunächst gespeichert und später vervollständigt werden.</p>
+        <p class="small text-muted mb-3">Diese Angaben strukturieren den Vergleich; die Evidenzbasis beschreibt gesondert seine Belastbarkeit. Der Entwurf kann zunächst gespeichert und später vervollständigt werden.</p>
         <div class="row g-3">
           {% for field in form %}
             {% if field.name != 'name' and field.name != 'option_type' and field.name != 'description' and field.name != 'expected_value' %}
