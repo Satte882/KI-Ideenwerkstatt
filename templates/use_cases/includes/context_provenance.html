@@ -1,3 +1,4 @@
+{% load context_tags %}
 {% if records %}
 <details class="source-disclosure mb-3">
 <summary>Herkunft übernommener Entwürfe</summary>
@@ -5,7 +6,7 @@
 <p><a href="{{ record.source_url }}">Quelle {{ record.source_id }}</a> · {{ record.at }} · Bearbeiter-ID {{ record.actor_id }}{% if record.source_revision %} · Quellrevision {{ record.source_revision }}{% endif %}</p>
 <p class="small text-muted text-break">Quellhash: {{ record.source_hash }}. Die Übernahme bestätigt keine Geschäftswirkung.</p>
 {% for source in record.source_chain %}{% if source.url %}<p><a href="{{ source.url }}">Übernommene Investigation {{ source.id }}</a></p>{% endif %}{% endfor %}
-<dl>{% for item in record.fields %}<dt>{{ item.label }}</dt><dd><strong>Vorschlag:</strong> {{ item.proposed }}<br><strong>Bei Übernahme gespeichert:</strong> {{ item.saved }}</dd>{% endfor %}</dl>
+<dl>{% for item in record.fields %}<dt>{{ item|context_field_label }}</dt><dd><strong>Vorschlag:</strong> {{ item.proposed }}<br><strong>Bei Übernahme gespeichert:</strong> {{ item.saved }}</dd>{% endfor %}</dl>
 {% endfor %}
 </details>
 {% endif %}

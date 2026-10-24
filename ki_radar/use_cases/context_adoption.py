@@ -17,6 +17,15 @@ from ki_radar.accelerator.structured_metric_adoption import METRIC_TARGET_TO_FIE
 from .outcome_contract import _process
 
 CAPTURE_SOURCE_KEY = "_capture_source"
+OUTCOME_LABELS = {
+    "title": "Vorhaben",
+    "contribution": "Abgegrenzter Vorhabensbeitrag",
+    "origin_basis": "Dokumentierte Herkunft / Ausgangslage",
+    "evidence_note": "Evidenz / Quelle",
+    "impact_hypothesis": "Wirkannahme",
+    "target_group": "Betroffene Empfängergruppe",
+    "evaluation_criteria": "Prüfkriterien",
+}
 _SALT = "outcome-context-v1"
 _TEXT_FIELDS = (
     "title",
@@ -109,6 +118,8 @@ def capture_context(*, actor, analysis_id, lock=False):
         "prompt_version": analysis.prompt_version,
         "model": analysis.model_name,
         "catalog_version": analysis.catalog_version,
+        "answer_schema_version": analysis.answer_schema_version,
+        "extraction_schema_version": analysis.extraction_schema_version,
         "items": items,
     }
     context["content_hash"] = canonical_answer_hash(context)
@@ -223,7 +234,12 @@ def outcome_context(artifact):
             }
         )
     items = [
-        {"field": key, "value": value, "source_field": source_fields[key]}
+        {
+            "field": key,
+            "label": OUTCOME_LABELS[key],
+            "value": value,
+            "source_field": source_fields[key],
+        }
         for key, value in values.items()
         if value
     ]
@@ -310,6 +326,17 @@ def provenance_record(context, *, actor, fields, final_values):
         "source_url": context["url"],
         "source_hash": context["hash"],
         "source_revision": context.get("revision"),
+        "source_contract": {
+            key: context[key]
+            for key in (
+                "prompt_version",
+                "catalog_version",
+                "answer_schema_version",
+                "extraction_schema_version",
+                "model",
+            )
+            if key in context
+        },
         "content_hash": context.get("content_hash", context["hash"]),
         "source_chain": [
             {key: value for key, value in source.items() if key != "source_snapshot"}
@@ -327,6 +354,8 @@ def provenance_record(context, *, actor, fields, final_values):
                 if final_values.get(item["field"]) is not None
                 else "",
                 "excerpt_hash": canonical_answer_hash({"excerpt": item.get("excerpt", "")}),
+                "source_question": item.get("source_question", ""),
+                "suggestion_id": item.get("suggestion_id", ""),
             }
             for item in context["items"]
             if item["field"] in fields

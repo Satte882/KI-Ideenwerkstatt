@@ -142,6 +142,7 @@ def test_intake_save_records_edits_and_repeated_source_does_not_duplicate(
     assert case.human_oversight == "Jede Antwort fachlich prüfen"
     record = case.context_provenance[0]
     assert record["source_hash"] == source.source_hash
+    assert record["source_contract"]["prompt_version"] == "1.1"
     title = next(field for field in record["fields"] if field["field"] == "title")
     assert title["proposed"] == "KI-Wissensentwurf" and title["saved"] == "Fachlich bearbeitet"
     assert "Entwürfe aus Handbüchern" not in str(record)

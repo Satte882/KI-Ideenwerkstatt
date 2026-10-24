@@ -313,7 +313,15 @@ def use_case_intake(request, step: int = 1):
                                     "Die Analysequelle wurde geändert. Bitte erneut prüfen."
                                 )
                             if source.target_use_case_id:
-                                return redirect(source.target_use_case)
+                                if any(
+                                    record.get("source_id") == checked_context["id"]
+                                    for record in source.target_use_case.context_provenance
+                                ):
+                                    return redirect(source.target_use_case)
+                                raise ValidationError(
+                                    "Diese Quelle wurde bereits anderweitig übernommen. "
+                                    "Ihre Eingaben bleiben erhalten."
+                                )
                             candidate.context_provenance = [
                                 provenance_record(
                                     checked_context,

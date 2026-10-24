@@ -269,7 +269,7 @@ def prepare_outcome(request, kind, pk):
             except ValidationError as exc:
                 context_error = exc
         if context_error is None:
-            token = context_ticket(actor=request.user, context=context, fields=used)
+            token = context_ticket(actor=request.user, context=context, fields=used) if used else ""
         form = OutcomePreparationForm(instance=initiative, initial=current)
         if context_error:
             form = OutcomePreparationForm(current, instance=initiative)
