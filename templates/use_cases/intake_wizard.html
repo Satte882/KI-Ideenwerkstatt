@@ -13,6 +13,15 @@
   </div>
 </div>
 
+{% if context_source_error %}<p class="alert alert-warning" role="alert">{{ context_source_error }} Ihre Eingaben bleiben erhalten.</p>{% endif %}
+{% if context_source %}
+<section class="mb-3" aria-labelledby="capture-source-title">
+<h2 class="h5" id="capture-source-title">Vorhandene KI-Erkenntnisse</h2>
+<p><a href="{{ context_source.url }}">{{ context_source.label }}</a> · Quellrevision {{ context_source.revision }}. {% if context_imported %}In leere Felder übernommen. Prüfen und bearbeiten Sie die Vorschläge in den bestehenden Schritten.{% else %}Die Vorschläge sind noch nicht in den Intake übernommen.{% endif %} Keine Bewertung oder Freigabe.</p>
+<details class="source-disclosure"><summary>Feldvorschläge mit Quellbelegen ansehen</summary><dl>{% for item in context_source.items %}<dt>{{ item.label }} · Unsicherheit {{ item.uncertainty }}</dt><dd>{{ item.value }}<blockquote>{{ item.excerpt }}</blockquote></dd>{% endfor %}</dl></details>
+</section>
+{% endif %}
+
 <nav class="wizard-stepper mb-3" aria-label="Schritte der Use-Case-Aufnahme">
   {% for item in step_states %}
     {% if item.is_reachable and not item.is_current %}<a class="wizard-step wizard-step-{{ item.state }}" href="{% url 'use_cases:intake_step' item.number %}">{% else %}<div class="wizard-step wizard-step-{{ item.state }}{% if item.is_current %} wizard-step-current{% endif %}"{% if item.is_current %} aria-current="step"{% endif %}>{% endif %}
@@ -40,7 +49,9 @@
   {% if form %}
   <form method="post">
     {% csrf_token %}
+    {% if context_source %}<input type="hidden" name="analysis_id" value="{{ context_source.id }}">{% endif %}
     <div class="card-body">
+      {% if context_source and not context_source_error %}<button class="btn btn-outline-secondary mb-3" name="action" value="import_analysis" type="submit" formnovalidate>KI-Vorschläge in leere Felder übernehmen</button>{% endif %}
       {% if form.errors %}<div class="alert alert-danger" role="alert"><strong>Bitte prüfen Sie die markierten Angaben.</strong> Dieser Schritt enthält {{ form.errors|length }} offene {% if form.errors|length == 1 %}Angabe{% else %}Angaben{% endif %}.</div>{% endif %}
       {{ form.non_field_errors }}
       {% if step_config.example %}

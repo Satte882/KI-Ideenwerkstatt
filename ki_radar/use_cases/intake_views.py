@@ -10,10 +10,12 @@ from django.db.models import Model
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
+from ki_radar.accelerator.models import CaptureAnalysis
 from ki_radar.accounts.business_units import active_productive_business_unit
 from ki_radar.accounts.permissions import is_business_owner
 from ki_radar.core.taxonomy import BusinessDomain
 
+from .context_adoption import CAPTURE_SOURCE_KEY, capture_context, fill_empty, provenance_record
 from .lean_intake import WIZARD_STEPS
 from .models import UseCase
 from .permissions import can_create_use_case
@@ -50,7 +52,11 @@ def _optional_decimal(value) -> Decimal | None:
 
 
 def _completion_field_names(form_class) -> tuple[str, ...]:
-    return tuple(name for name in form_class.base_fields if name != "process_analysis")
+    return tuple(
+        name
+        for name in form_class.base_fields
+        if name not in {"process_analysis", "human_oversight", "benefit_category"}
+    )
 
 
 def _form_initial(step: int, stored: dict) -> dict:
@@ -149,6 +155,8 @@ def _build_use_case(*, stored: dict, user, business_owner, business_unit) -> Use
         intended_users=stored.get("intended_users", ""),
         intended_purpose=stored.get("intended_purpose", ""),
         expected_benefit=stored.get("expected_benefit", ""),
+        benefit_category=stored.get("benefit_category", ""),
+        human_oversight=stored.get("human_oversight", ""),
         metric_name=stored.get("metric_name", ""),
         metric_type=stored.get("metric_type", ""),
         metric_direction=stored.get("metric_direction", ""),
@@ -198,6 +206,57 @@ def use_case_intake(request, step: int = 1):
         return redirect("use_cases:create")
 
     stored = request.session.get(SESSION_KEY, {})
+    context_source = None
+    source_error = ""
+    imported = stored.get(CAPTURE_SOURCE_KEY)
+    analysis_id = (
+        request.POST.get("analysis_id") or request.GET.get("analysis") or (imported or {}).get("id")
+    )
+    if analysis_id:
+        try:
+            source_session, context_source = capture_context(
+                actor=request.user, analysis_id=analysis_id
+            )
+            if source_session.target_use_case_id:
+                target = source_session.target_use_case
+                if any(
+                    record.get("source_id") == str(analysis_id)
+                    for record in target.context_provenance
+                ):
+                    return redirect(target)
+                raise ValidationError(
+                    "Diese Quelle ist bereits an einen anderen Use Case gebunden."
+                )
+            if imported and (
+                imported["id"] != context_source["id"]
+                or imported["hash"] != context_source["hash"]
+                or imported["content_hash"] != context_source["content_hash"]
+            ):
+                raise ValidationError(
+                    "Die Quelle wurde inzwischen geändert oder ein anderer Intake ist aktiv."
+                )
+            if request.method == "POST" and request.POST.get("action") == "import_analysis":
+                if request.session.get(IDEA_CANDIDATE_SESSION_KEY) or stored.get("source_stage_id"):
+                    raise ValidationError(
+                        "Eine andere Herkunft ist bereits aktiv. "
+                        "Der bestehende Intake bleibt erhalten."
+                    )
+                stored, used = fill_empty(stored, context_source)
+                request.session[SESSION_KEY] = stored
+                imported = {
+                    "id": context_source["id"],
+                    "hash": context_source["hash"],
+                    "content_hash": context_source["content_hash"],
+                    "fields": sorted(set(used) | set((imported or {}).get("fields", []))),
+                }
+                stored[CAPTURE_SOURCE_KEY] = imported
+                request.session[SESSION_KEY] = stored
+        except (CaptureAnalysis.DoesNotExist, ValueError, ValidationError) as exc:
+            source_error = (
+                " ".join(exc.messages)
+                if isinstance(exc, ValidationError)
+                else "Die Analysequelle ist nicht verfügbar."
+            )
     step_config = WIZARD_STEPS[step]
     form_class = step_config["form"]
     progress_class = f"wizard-progress-{step}"
@@ -241,10 +300,36 @@ def use_case_intake(request, step: int = 1):
             else:
                 try:
                     with transaction.atomic():
+                        source = None
+                        if imported:
+                            source, checked_context = capture_context(
+                                actor=request.user, analysis_id=imported["id"], lock=True
+                            )
+                            if (
+                                checked_context["hash"] != imported["hash"]
+                                or checked_context["content_hash"] != imported["content_hash"]
+                            ):
+                                raise ValidationError(
+                                    "Die Analysequelle wurde geändert. Bitte erneut prüfen."
+                                )
+                            if source.target_use_case_id:
+                                return redirect(source.target_use_case)
+                            candidate.context_provenance = [
+                                provenance_record(
+                                    checked_context,
+                                    actor=request.user,
+                                    fields=imported["fields"],
+                                    final_values=stored,
+                                )
+                            ]
                         idea = _lock_idea_candidate_for_promotion(request)
                         candidate._history_user = request.user
                         candidate.save()
                         persist_optional_origin(candidate=candidate, stored=stored)
+                        if source is not None:
+                            # Initial materialization only; existing bindings are never replaced.
+                            source.target_use_case = candidate
+                            source.save(update_fields=["target_use_case", "updated_at"])
                         if idea is not None:
                             from .idea_models import IdeaCandidate
 
@@ -275,6 +360,9 @@ def use_case_intake(request, step: int = 1):
                 "candidate": candidate,
                 "blockers": blockers,
                 "has_intake_draft": bool(stored),
+                "context_source": context_source,
+                "context_source_error": source_error,
+                "context_imported": bool(imported),
             },
         )
 
@@ -289,7 +377,7 @@ def use_case_intake(request, step: int = 1):
             "source_process_analysis_id": stored.get("source_process_analysis_id"),
         }
 
-    if request.method == "POST":
+    if request.method == "POST" and request.POST.get("action") != "import_analysis":
         form = form_class(request.POST, **form_kwargs)
         if form.is_valid():
             stored.update(_serialize_cleaned_data(form.cleaned_data))
@@ -298,7 +386,13 @@ def use_case_intake(request, step: int = 1):
             return redirect("use_cases:intake_step", step=step + 1)
         error_step = step
     else:
-        form = form_class(initial=_form_initial(step, stored), **form_kwargs)
+        initial = _form_initial(step, stored)
+        if request.method == "POST":
+            # Keep current unsaved input when the explicit context action is used.
+            initial.update(
+                {key: request.POST[key] for key in form_class.base_fields if request.POST.get(key)}
+            )
+        form = form_class(initial=initial, **form_kwargs)
 
     return render(
         request,
@@ -316,6 +410,9 @@ def use_case_intake(request, step: int = 1):
             ),
             "previous_step": step - 1 if step > 1 else None,
             "has_intake_draft": bool(stored),
+            "context_source": context_source,
+            "context_source_error": source_error,
+            "context_imported": bool(imported),
         },
     )
 

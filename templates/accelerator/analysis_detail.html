@@ -99,6 +99,10 @@
 </section>
 {% endif %}
 
+{% if analysis.status == 'success' and session.capture_type == 'use_case' and not session.target_object %}
+<p class="mt-4"><a class="btn btn-outline-secondary" href="{% url 'use_cases:create' %}?analysis={{ analysis.pk }}">Im Use-Case-Formular prüfen</a></p>
+{% endif %}
+
 <div class="d-flex justify-content-between gap-2 flex-wrap mt-4">
   <a class="btn btn-outline-secondary" href="{% url 'accelerator:capture_review' session.pk %}">Zur Erfassung</a>
   {% if session.status == 'completed' %}

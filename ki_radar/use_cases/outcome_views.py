@@ -9,11 +9,20 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from ki_radar.accelerator.analysis_service import canonical_answer_hash
 from ki_radar.accounts.permissions import is_coordinator
 from ki_radar.architecture.models import ProcessAnalysis
 from ki_radar.architecture.permissions import can_edit_value_stream
 from ki_radar.architecture.stage_focus import get_phase_focus_decision, save_stage_focus_decision
 
+from .context_adoption import (
+    checked_ticket,
+    context_ticket,
+    fill_empty,
+    lock_outcome_source,
+    outcome_context,
+    provenance_record,
+)
 from .initiative_models import ImprovementInitiative
 from .initiative_views import InitiativeForm
 from .initiatives import bind_initiative, save_initiative
@@ -98,8 +107,27 @@ class OutcomePreparationForm(InitiativeForm):
 
 
 @transaction.atomic
-def _prepare(*, artifact, form, actor, confirm):
+def _prepare(*, artifact, form, actor, confirm, context=None, context_fields=(), operation_id=""):
     existing = form.cleaned_data["selected_initiative"]
+    if context:
+        context = lock_outcome_source(actor=actor, artifact=artifact, expected_hash=context["hash"])
+        if existing is None:
+            previous_drafts = ImprovementInitiative.objects.filter(
+                created_by=actor, preparation_drafts__has_key=_preparation_key(artifact)
+            )
+            for prior in previous_drafts:
+                if any(
+                    record.get("operation_id") == operation_id
+                    for record in prior.context_provenance
+                ):
+                    if all(
+                        getattr(prior, key) == form.cleaned_data[key] for key in form.Meta.fields
+                    ):
+                        return prior
+                    raise ValidationError(
+                        "Dieser Übernahmeentwurf wurde bereits gespeichert. Bitte den "
+                        "gespeicherten Stand laden; Ihre Eingaben bleiben erhalten."
+                    )
     if artifact.initiative_id and existing and artifact.initiative_id != existing.pk:
         raise ValidationError("Das Objekt ist bereits einem anderen Vorhaben zugeordnet.")
     initiative = save_initiative(
@@ -111,6 +139,17 @@ def _prepare(*, artifact, form, actor, confirm):
         preparation_key=_preparation_key(artifact),
         preparation_data=(
             {key: form.cleaned_data[key] for key in PREPARATION_FIELDS} if not confirm else None
+        ),
+        source="ai" if context else "human",
+        context_adoption=(
+            {
+                **provenance_record(
+                    context, actor=actor, fields=context_fields, final_values=form.cleaned_data
+                ),
+                "operation_id": operation_id,
+            }
+            if context
+            else None
         ),
     )
     if not confirm:
@@ -213,6 +252,28 @@ def prepare_outcome(request, kind, pk):
     if data is not None and request.POST.get("action") == "save_draft":
         data["status"] = "draft"
     form = OutcomePreparationForm(data, instance=initiative, initial=initial)
+    context = outcome_context(artifact)
+    for item in context["items"]:
+        item["label"] = form.fields[item["field"]].label
+    token = request.POST.get("context_ticket", "")
+    if action == "load_context":
+        # Re-display the same form; no domain write and no replacement of input.
+        current = {name: form[name].value() for name in form.fields}
+        current, used = fill_empty(current, context)
+        context_error = None
+        if token:
+            try:
+                used = sorted(
+                    set(used) | set(checked_ticket(token, actor=request.user, context=context))
+                )
+            except ValidationError as exc:
+                context_error = exc
+        if context_error is None:
+            token = context_ticket(actor=request.user, context=context, fields=used)
+        form = OutcomePreparationForm(instance=initiative, initial=current)
+        if context_error:
+            form = OutcomePreparationForm(current, instance=initiative)
+            form.add_error(None, context_error)
     if action in {"load", "cancel_load"}:
         # Loading is a separate command: keep even invalid/incomplete input
         # until the user explicitly chooses to replace it.
@@ -239,11 +300,17 @@ def prepare_outcome(request, kind, pk):
     )
     if action in {"save_draft", "confirm"} and form.is_valid():
         try:
+            source_fields = (
+                checked_ticket(token, actor=request.user, context=context) if token else ()
+            )
             saved = _prepare(
                 artifact=artifact,
                 form=form,
                 actor=request.user,
                 confirm=request.POST.get("action") == "confirm",
+                context=context if token else None,
+                context_fields=source_fields,
+                operation_id=canonical_answer_hash({"ticket": token}) if token else "",
             )
         except ValidationError as exc:
             form.add_error(None, ValidationError(exc.messages))
@@ -288,5 +355,7 @@ def prepare_outcome(request, kind, pk):
             "load_pending": action == "load" and initiative is not None,
             "load_target": initiative,
             "has_preparation_draft": draft is not None,
+            "context_source": context,
+            "context_ticket": token,
         },
     )

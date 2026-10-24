@@ -65,6 +65,7 @@ def save_initiative(
     correction_reason="",
     preparation_key=None,
     preparation_data=None,
+    context_adoption=None,
 ):
     from .outcome_contract import MATERIAL_FIELDS
 
@@ -141,6 +142,8 @@ def save_initiative(
             drafts[preparation_key] = dict(preparation_data)
         initiative.preparation_drafts = drafts
     initiative.updated_by = actor
+    if context_adoption is not None:
+        initiative.context_provenance = [*initiative.context_provenance, context_adoption]
     initiative._history_user = actor
     initiative.save()
     if current_review is not None:

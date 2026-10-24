@@ -224,11 +224,11 @@ Beobachtete Produktlücken werden erst danach als eigenständige Issues beschrie
 
 # Next – priorisierte nächste Probleme
 
-Es gibt derzeit **keinen vorab festgelegten nächsten großen Produktumbau**.
-
-Der nächste konkrete Produktauftrag soll aus der manuellen E2E-Validierung oder aus realen
-betrieblichen Anforderungen entstehen. Dadurch bleibt die Weiterentwicklung problemgetrieben
-und vermeidet Architektur oder Features auf Vorrat.
+Aus der Realmodell-Bestandsaufnahme #167 ist **#171: vorhandene Erkenntnisse in den bestehenden
+Formularen wiederverwenden** ausdrücklich priorisiert. Die Übernahme erfolgt bewusst,
+quellengebunden und editierbar in der Outcome-Vorbereitung und im direkten Use-Case-Intake.
+Unbekannte Angaben bleiben offen; ein zusätzlicher KI-Task oder neuer Einstieg ist dafür
+nicht vorgesehen. Fachliche Annahme, Lösungswahl und Freigaben bleiben getrennte Aktionen.
 
 # Later – strategische Optionen
 
