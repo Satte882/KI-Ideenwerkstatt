@@ -4,11 +4,12 @@
 {% block body_class %}page-form-workspace page-autonomous-discovery{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
+{% if idea.initiative %}<p><a href="{{ idea.initiative.get_absolute_url }}">Zum ursprünglichen Vorhaben</a></p>{% endif %}
 <div class="page-header">
   <div>
     <div class="eyebrow mb-2">Discovery · Autonomer Business Architect</div>
     <h1 class="page-title">Business Discovery starten</h1>
-    <p class="page-subtitle">Beschreiben Sie das Geschäftsproblem in wenigen Sätzen und geben Sie die bereits vorhandenen Quellen frei. Das System erarbeitet Value Stream, Fokusphase und Process Scope als prüfbaren Entwurf.</p>
+    <p class="page-subtitle">Beschreiben Sie Geschäftsziel oder Problem in wenigen Sätzen und geben Sie die bereits vorhandenen Quellen frei. Das System erarbeitet Value Stream, Fokusphase und Process Scope als prüfbaren Entwurf.</p>
   </div>
   {% if idea %}<a class="btn btn-outline-secondary" href="{{ idea.get_absolute_url }}">Zur Ursprungsidee</a>{% else %}<a class="btn btn-outline-secondary" href="{% url 'architecture:value_stream_list' %}">Zur Analyseübersicht</a>{% endif %}
 </div>

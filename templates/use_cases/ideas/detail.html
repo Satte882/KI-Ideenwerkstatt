@@ -4,6 +4,7 @@
 {% block body_class %}page-detail-workspace page-idea-detail{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}">{% endblock %}
 {% block content %}
+{% if idea.initiative %}<p><a href="{{ idea.initiative.get_absolute_url }}">Zum ursprünglichen Vorhaben</a></p>{% endif %}
 <div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
   <div>
     <div class="eyebrow mb-2">Inbox · noch kein Use Case</div>
@@ -32,7 +33,7 @@
 <section id="idea" class="app-card mb-4" tabindex="-1">
   <div class="card-body">
     <div class="section-title">Eintrag</div>
-    <h2 class="h5">Problem / Beobachtung</h2>
+    <h2 class="h5">Ziel / Problem / Beobachtung</h2>
     <p class="mb-4">{{ idea.description|linebreaksbr }}</p>
     <div class="row g-3">
       <div class="col-md-6"><div class="text-muted small">Organisationseinheit</div><strong>{% if idea.business_unit %}{{ idea.business_unit.name }}{% else %}Noch offen{% endif %}</strong></div>

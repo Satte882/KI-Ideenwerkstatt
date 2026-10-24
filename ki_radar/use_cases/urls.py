@@ -33,6 +33,11 @@ urlpatterns = [
         capability_views.capability_experiment_edit,
         name="capability_experiment_edit",
     ),
+    path(
+        "initiatives/<uuid:pk>/discovery/",
+        initiative_views.initiative_discovery_start,
+        name="initiative_discovery_start",
+    ),
     path("initiatives/new/", initiative_views.initiative_edit, name="initiative_create"),
     path("initiatives/<uuid:pk>/", initiative_views.initiative_edit, name="initiative_edit"),
     path("ideas/", idea_views.idea_list, name="idea_list"),

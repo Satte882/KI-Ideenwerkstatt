@@ -11,16 +11,46 @@
     {% if initiative.review_hint %}<p role="status">{{ initiative.review_hint }}</p>{% endif %}
   </div>
 </header>
+{% if initiative %}
+<section class="cr-section mb-4" aria-label="Untersuchung des Vorhabens">
+  {% for path in discovery_paths %}
+    <p><a href="{{ path.idea.get_absolute_url }}">Ursprungsidee: {{ path.idea.title }}</a></p>
+    {% if path.idea.discovery_process_analysis %}
+      <a class="btn btn-primary" href="{{ path.idea.discovery_process_analysis.get_absolute_url }}">Prozessanalyse öffnen</a>
+    {% elif path.session %}
+      {% if path.can_resume %}<a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_review' path.session.pk %}">Untersuchung fortsetzen</a>
+      {% else %}<p role="status">Untersuchung in Bearbeitung durch {{ path.session.owner }}. Über die Ursprungsidee mit der verantwortlichen Person fortsetzen.</p>{% endif %}
+    {% elif can_start_initiative_discovery and path.idea.state == 'open' %}
+      <a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_start' %}?idea_candidate={{ path.idea.pk }}">Untersuchung starten</a>
+      <p>Eine abgelaufene Untersuchung wird nicht überschrieben. Ein neuer Versuch verwendet dieselbe Idee.</p>
+    {% else %}<p role="status">Über die Ursprungsidee den gespeicherten Stand und die verantwortliche Person ansehen.</p>{% endif %}
+  {% empty %}
+    {% if initiative_processes %}{% for process in initiative_processes %}<p><a class="btn btn-primary" href="{{ process.get_absolute_url }}">Prozessanalyse öffnen: {{ process.name }}</a></p>{% endfor %}
+    {% elif can_start_initiative_discovery %}<form method="post" action="{% url 'use_cases:initiative_discovery_start' initiative.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Untersuchung starten</button></form>
+    {% else %}<p role="status">Noch keine Untersuchung. Die verantwortliche Person oder KI-Koordination kann sie starten.</p>{% endif %}
+  {% endfor %}
+  {% for process in initiative.process_analyses.all %}<p><a href="{{ process.get_absolute_url }}">Prozessanalyse: {{ process.name }}</a></p>{% endfor %}
+</section>
+{% endif %}
 {% if can_edit %}
 <div class="app-card"><form method="post">
   {% csrf_token %}
   <div class="card-body">
     {{ form.non_field_errors }}
+    {% if initiative %}
     {% for field in form %}{% if field.is_hidden %}{{ field }}{% else %}
     <div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
       {{ field }}{% if field.errors %}<div class="text-danger" role="alert">{{ field.errors }}</div>{% endif %}
       {% if field.name == 'business_outcome' %}{% include "use_cases/includes/outcome_confirmation.html" with initiative=initiative editing=True only %}{% endif %}
     </div>{% endif %}{% endfor %}
+    {% else %}
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {% for field in primary_fields %}{% include "use_cases/includes/initiative_field.html" %}{% endfor %}
+    <details class="architecture-disclosure"{% if form.errors %} open{% endif %}>
+      <summary>Weitere Angaben und Status (optional)</summary>
+      {% for field in optional_fields %}{% include "use_cases/includes/initiative_field.html" %}{% endfor %}
+    </details>
+    {% endif %}
     <p>Abschluss verlangt eine begründete Wirkungsaussage, auch „noch ungeklärt“. Eine gespeicherte Wirkungsaussage bleibt bis zur aktuellen Wirkungsprüfung ungeprüft; „Bestätigt“ im Entwurf ist kein Geschäftserfolgsnachweis. Ein Abbruch benötigt eine Abbruchbegründung. Aktiv bedeutet keine Freigabe.</p>
   </div>
   <div class="card-footer d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Vorhaben speichern</button><button type="submit" name="action" value="save_draft" class="btn btn-outline-secondary">Als Entwurf sichern</button><a class="btn btn-outline-secondary" href="{% url 'reporting:dashboard' %}">Arbeitsvorrat</a></div>
