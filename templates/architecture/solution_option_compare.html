@@ -113,7 +113,7 @@
         <tr><th scope="row">Integrationen</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'integration_impact' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Technologieleitplanken</th>{% for option in options %}<td class="text-preline">{% comparison_technical_value option 'technology_constraints' %}</td>{% endfor %}</tr>
         <tr><th scope="row">Risiken</th>{% for option in options %}<td class="text-preline">{{ option.risks|comparison_text }}</td>{% endfor %}</tr>
-        <tr><th scope="row">Begründung / Quellen zum Lösungsfit</th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|comparison_text }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Passung zu Zielbild und Leitplanken<span class="d-block small text-muted mt-1">Begründung / Quellen zum Lösungsfit</span></th>{% for option in options %}<td class="text-preline">{{ option.architecture_fit|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">Architecture Mode</th>{% for option in options %}<td>{% if option.architecture_assessment %}{{ option.architecture_assessment.get_architecture_mode_display }}{% else %}<span class="text-muted">Nicht eingeschätzt</span>{% endif %}</td>{% endfor %}</tr>
         <tr><th scope="row">Entscheidungsstatus</th>{% for option in options %}<td>{{ option.get_recommendation_display }}</td>{% endfor %}</tr>
         {% if can_select %}
