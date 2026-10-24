@@ -487,12 +487,19 @@ def autonomous_discovery_review(request, session_id):
     except ValidationError as exc:
         business_unit_error = " ".join(exc.messages)
 
+    try:
+        origin_id = idea_origin_id(session.answers or {})
+    except ValidationError:
+        # Historical malformed provenance must not break the read-only review.
+        # The materialization command still rejects invalid origins explicitly.
+        origin_id = None
+
     return render(
         request,
         "accelerator/autonomous_discovery_review.html",
         {
             "session": session,
-            "origin_idea": IdeaCandidate.objects.filter(pk=idea_origin_id(session.answers or {}))
+            "origin_idea": IdeaCandidate.objects.filter(pk=origin_id)
             .select_related("initiative")
             .first(),
             "analysis": latest,

@@ -149,6 +149,23 @@ def test_completed_legacy_discovery_is_not_retroactively_bound(owner, tmp_path):
     assert ProcessAnalysis.objects.get(pk=again.process_analysis_id).initiative_id is None
 
 
+def test_malformed_legacy_origin_stays_readable_but_cannot_materialize(client, owner, tmp_path):
+    idea = IdeaCandidate.objects.create(
+        title="Altbestand", description="Historisch", submitted_by=owner
+    )
+    session, analysis = idea_draft(idea=idea, owner=owner, tmp_path=tmp_path)
+    session.answers["origin"] = []
+    session.save(update_fields=["answers"])
+    client.force_login(owner)
+    response = client.get(reverse("accelerator:autonomous_discovery_review", args=[session.pk]))
+    assert response.status_code == 200
+    assert response.context["origin_idea"] is None
+    with pytest.raises(DiscoveryMaterializationError) as error:
+        materialize(owner, session, analysis)
+    assert error.value.code == "idea_origin_conflict"
+    assert not ProcessAnalysis.objects.exists()
+
+
 def test_completed_discovery_rejects_conflicting_process_assignment(owner, tmp_path):
     item = initiative(owner)
     idea = initiative_discovery_idea(initiative=item, actor=owner)
