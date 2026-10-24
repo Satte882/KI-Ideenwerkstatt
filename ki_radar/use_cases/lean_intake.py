@@ -20,7 +20,12 @@ class _LeanOptionalMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in self.optional_fields:
-            self.fields[field_name].required = False
+            field = self.fields[field_name]
+            field.required = False
+            if isinstance(field, forms.ChoiceField) and not any(
+                key == "" for key, _ in field.choices
+            ):
+                field.choices = [("", "Noch offen"), *field.choices]
 
 
 class ProblemStepForm(_LeanOptionalMixin, LegacyProblemStepForm):

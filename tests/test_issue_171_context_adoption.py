@@ -271,3 +271,30 @@ def test_changed_outcome_source_rejects_save_and_keeps_user_edits(client, owner,
     assert "inzwischen geändert" in response.content.decode()
     assert response.context["form"]["title"].value() == "Nicht verlieren"
     assert not ImprovementInitiative.objects.exists()
+
+
+def test_unknown_optional_choices_do_not_become_first_enum_values(client, owner, business_unit):
+    client.force_login(owner)
+    assert (
+        client.post(
+            reverse("use_cases:create"),
+            {
+                "title": "Minimaler Entwurf",
+                "business_unit": business_unit.pk,
+                "business_owner": owner.pk,
+            },
+        ).status_code
+        == 302
+    )
+    for step in range(2, 6):
+        page = client.get(reverse("use_cases:intake_step", args=[step]))
+        form = page.context["form"]
+        payload = {name: "" for name in form.fields}
+        assert (
+            client.post(reverse("use_cases:intake_step", args=[step]), payload).status_code == 302
+        )
+    assert client.post(reverse("use_cases:intake_step", args=[6])).status_code == 302
+    case = UseCase.objects.get()
+    assert (
+        case.hosting_type == case.solution_type == case.metric_type == case.metric_direction == ""
+    )

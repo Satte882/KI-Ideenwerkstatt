@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="{% static 'css/ui-control-room-use-case.css' %}">
 {% endblock %}
 {% block content %}
-{% include "use_cases/includes/context_provenance.html" with records=use_case.context_provenance only %}
 {% with latest_assessment=use_case.decision_assessments.first %}
 {% metric_set use_case as metric %}
 {% metric_value use_case.one_time_cost 'currency' '€' as one_time_cost %}
@@ -31,6 +30,7 @@
   </div>
   {% endif %}
 </header>
+{% include "use_cases/includes/context_provenance.html" with records=use_case.context_provenance only %}
 {% if architecture_origin and architecture_origin.solution_option and architecture_origin.solution_option.starts_ai_use_case %}
 <p><a class="btn btn-outline-secondary" href="{% url 'use_cases:ap2_decision_surface' use_case.pk %}">Konsolidierte Entscheidungsgrundlage öffnen</a></p>
 {% endif %}
