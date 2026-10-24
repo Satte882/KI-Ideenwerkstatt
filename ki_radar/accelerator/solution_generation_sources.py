@@ -1,5 +1,6 @@
 LEGACY_SOURCE_SCHEMA_VERSION = "block7_sources_v1"
 SOURCE_SCHEMA_VERSION = "block7_sources_v2"
+CURRENT_GENERATION_VERSIONS = ("2.1", "2.1")
 VALIDATION_CURRENT = "current_validated"
 VALIDATION_MISSING = "not_validated"
 VALIDATION_STALE = "validation_stale"
@@ -60,7 +61,7 @@ def source_version_for_run(run) -> str:
     versions = (run.generation_schema_version, run.prompt_version)
     if versions in {("1.0", "1.2"), ("1.0", "1.3")}:
         return LEGACY_SOURCE_SCHEMA_VERSION
-    if versions == ("2.0", "2.0"):
+    if versions in {("2.0", "2.0"), CURRENT_GENERATION_VERSIONS}:
         return SOURCE_SCHEMA_VERSION
     raise ValueError("Nicht unterstützte Generator-Vertragsversionen.")
 
@@ -132,7 +133,7 @@ class SolutionGenerationSourceContext:
         return (
             ("1.0", "1.3")
             if self.source_schema_version == LEGACY_SOURCE_SCHEMA_VERSION
-            else ("2.0", "2.0")
+            else CURRENT_GENERATION_VERSIONS
         )
 
     @property

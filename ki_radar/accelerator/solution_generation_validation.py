@@ -7,6 +7,7 @@ from typing import Any
 from .solution_generation_contract import (
     GENERATED_OPTION_FIELDS,
     OPTION_LANES,
+    OPTION_NAME_MAX_LENGTH,
     UNCERTAINTY_LEVELS,
 )
 from .solution_generation_sources import SolutionGenerationSourceContext
@@ -243,13 +244,20 @@ def validate_solution_generation_payload(
         errors,
     )
     expected_schema, expected_prompt = source_context.generation_versions
-    if schema_version and schema_version != expected_schema:
-        errors.append("$.schema_version: Nicht unterstützte Schema-Version.")
-    supported_prompts = {expected_prompt}
+    supported_versions = {(expected_schema, expected_prompt)}
     if allow_historical and expected_schema == "1.0":
-        supported_prompts.add("1.2")  # unchanged schema; historical previews remain readable
-    if prompt_version and prompt_version not in supported_prompts:
-        errors.append("$.prompt_version: Nicht unterstützte Prompt-Version.")
+        supported_versions.add(("1.0", "1.2"))
+    if allow_historical and expected_schema == "2.1":
+        supported_versions.add(("2.0", "2.0"))
+    if (
+        schema_version
+        and prompt_version
+        and (schema_version, prompt_version) not in supported_versions
+    ):
+        if schema_version not in {version[0] for version in supported_versions}:
+            errors.append("$.schema_version: Nicht unterstützte Schema-Version.")
+        else:
+            errors.append("$.prompt_version: Nicht unterstützte Prompt-Version.")
 
     options = _as_dict(root.get("options"), "$.options", errors)
     _exact_fields(options, frozenset(OPTION_LANES), "$.options", errors)
@@ -273,6 +281,14 @@ def validate_solution_generation_payload(
                 path=f"{option_path}.{field_name}",
                 available_sources=available_sources,
                 errors=errors,
+            )
+        if (
+            schema_version == "2.1"
+            and len(normalized_option["name"]["text"]) > OPTION_NAME_MAX_LENGTH
+        ):
+            errors.append(
+                f"{option_path}.name.text: Optionstitel darf höchstens "
+                f"{OPTION_NAME_MAX_LENGTH} Zeichen enthalten."
             )
         normalized_options[lane] = normalized_option
 

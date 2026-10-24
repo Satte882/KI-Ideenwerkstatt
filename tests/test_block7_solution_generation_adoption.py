@@ -246,7 +246,8 @@ def test_tampered_preview_edit_is_rejected_before_domain_write(owner, business_u
 
 
 @pytest.mark.django_db
-def test_regular_form_failure_rolls_back_entire_bundle(owner, business_unit):
+@pytest.mark.parametrize("historical", [False, True])
+def test_regular_form_failure_rolls_back_entire_bundle(owner, business_unit, historical):
     process = make_process(owner, business_unit)
     run = make_run(owner, process)
     payload = dict(run.preview_payload)
@@ -254,13 +255,24 @@ def test_regular_form_failure_rolls_back_entire_bundle(owner, business_unit):
     payload["options"]["assistant"] = dict(payload["options"]["assistant"])
     payload["options"]["assistant"]["name"] = dict(payload["options"]["assistant"]["name"])
     payload["options"]["assistant"]["name"]["text"] = "x" * 201
+    if historical:
+        payload.update(schema_version="2.0", prompt_version="2.0")
+        run.generation_schema_version = "2.0"
+        run.prompt_version = "2.0"
     run.preview_payload = payload
-    run.save(update_fields=["preview_payload", "updated_at"])
+    run.save(
+        update_fields=[
+            "preview_payload",
+            "generation_schema_version",
+            "prompt_version",
+            "updated_at",
+        ]
+    )
 
     with pytest.raises(SolutionGenerationAdoptionError) as exc_info:
         adopt_solution_generation_bundle(actor=owner, run_id=run.pk)
 
-    assert exc_info.value.code == "option_form_invalid"
+    assert exc_info.value.code == ("option_form_invalid" if historical else "invalid_preview")
     assert not SolutionOption.objects.filter(process_analysis=process).exists()
     run.refresh_from_db()
     assert "adoption" not in run.preview_payload

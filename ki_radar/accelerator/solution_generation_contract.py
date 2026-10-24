@@ -2,14 +2,17 @@ from copy import deepcopy
 
 from django.views.decorators.debug import sensitive_variables
 
+from ki_radar.architecture.models import SolutionOption
+
 from .solution_generation_sources import (
+    CURRENT_GENERATION_VERSIONS,
     SOURCE_SCHEMA_VERSION,
     SolutionGenerationSourceContext,
     allowed_source_ids,
 )
 
-GENERATION_SCHEMA_VERSION = "2.0"
-GENERATION_PROMPT_VERSION = "2.0"
+GENERATION_SCHEMA_VERSION, GENERATION_PROMPT_VERSION = CURRENT_GENERATION_VERSIONS
+OPTION_NAME_MAX_LENGTH = SolutionOption._meta.get_field("name").max_length
 
 OPTION_LANES = (
     "organizational",
@@ -92,7 +95,17 @@ SOLUTION_GENERATION_SYSTEM_PROMPT = (
 )
 
 
-def _statement_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, object]:
+TITLE_RULE = (
+    f"name.text ist ausschließlich ein kurzer, unterscheidbarer Optionstitel mit höchstens "
+    f"{OPTION_NAME_MAX_LENGTH} Zeichen. Schreibe Diagnose, Beobachtung und Ursachenhypothesen "
+    "in die fachlichen Inhaltsfelder, nicht als wiederholte Absätze in den Titel. "
+    "Quellen, Annahmen und Unsicherheit bleiben auch beim Titel im Statement erhalten."
+)
+
+
+def _statement_schema(
+    source_schema_version=SOURCE_SCHEMA_VERSION, *, max_text_length=None
+) -> dict[str, object]:
     required = [
         "text",
         "source_ids",
@@ -139,6 +152,9 @@ def _statement_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, 
         },
     }
 
+    if max_text_length is not None:
+        properties["text"]["maxLength"] = max_text_length
+
     provenance_branches: list[dict[str, object]] = []
     for field_name in ("source_ids", "assumptions", "open_evidence"):
         branch_properties = deepcopy(properties)
@@ -168,14 +184,21 @@ def _statement_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, 
     }
 
 
-def _option_schema(source_schema_version=SOURCE_SCHEMA_VERSION) -> dict[str, object]:
+def _option_schema(
+    source_schema_version=SOURCE_SCHEMA_VERSION, *, bounded_titles=True
+) -> dict[str, object]:
     return {
         "type": "object",
         "description": "Eine vollständige Lösungsoption mit exakt zehn Statement-Feldern.",
         "additionalProperties": False,
         "required": list(GENERATED_OPTION_FIELDS),
         "properties": {
-            field_name: _statement_schema(source_schema_version)
+            field_name: _statement_schema(
+                source_schema_version,
+                max_text_length=OPTION_NAME_MAX_LENGTH
+                if bounded_titles and field_name == "name"
+                else None,
+            )
             for field_name in GENERATED_OPTION_FIELDS
         },
     }
@@ -188,7 +211,8 @@ def build_solution_generation_json_schema(source_context=None) -> dict[str, obje
         else (GENERATION_SCHEMA_VERSION, GENERATION_PROMPT_VERSION)
     )
     option_schema = _option_schema(
-        source_context.source_schema_version if source_context else SOURCE_SCHEMA_VERSION
+        source_context.source_schema_version if source_context else SOURCE_SCHEMA_VERSION,
+        bounded_titles=(schema_version, prompt_version) == CURRENT_GENERATION_VERSIONS,
     )
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -251,7 +275,8 @@ def build_solution_generation_messages(
             "role": "system",
             "content": SOLUTION_GENERATION_SYSTEM_PROMPT
             + (
-                "\nDer menschlich dokumentierte Discovery-Pfad ist maßgeblich. "
+                f"\nFür den Optionstitel gilt die spezielle Regel: {TITLE_RULE}\n"
+                "Der menschlich dokumentierte Discovery-Pfad ist maßgeblich. "
                 "Strategisches Potenzial ist keine Ursache und kein beobachteter Engpass. "
                 "Beschreibe bottleneck_coverage im strategischen Pfad als bedingte Abdeckung "
                 "dieses Potenzials und seines Validierungsschritts. "
