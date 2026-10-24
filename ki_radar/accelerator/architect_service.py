@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import re
+import time
 from copy import deepcopy
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -18,6 +19,7 @@ from ki_radar.core.llm_policy import LLMConfigurationError, get_accelerator_llm_
 from ki_radar.core.openrouter import OpenRouterResult, OpenRouterUnavailable, request_openrouter
 from ki_radar.use_cases.idea_discovery import idea_origin_id
 
+from . import strategic_discovery as strategic
 from .analysis_service import (
     CaptureAnalysisQuotaExceeded,
     log_capture_analysis,
@@ -316,7 +318,19 @@ def _source_document(*, session: CaptureSession, snapshot) -> tuple[dict[str, An
                 "content": source.content,
             }
         )
+    human_scope = (
+        strategic.frozen_human_scope(session, snapshot)
+        if getattr(session, "catalog_version", None) == strategic.CATALOG
+        else None
+    )
+    if human_scope is not None:
+        evidence_parts.append(json.dumps(human_scope, ensure_ascii=False))
     document = {
+        **(
+            {"human_scope": human_scope, "input_schema": strategic.INPUT_SCHEMA}
+            if human_scope is not None
+            else {}
+        ),
         "input_ref": "U0",
         "capture_session_id": str(session.pk),
         "capture_revision": session.revision,
@@ -361,6 +375,8 @@ def _provider_call(
 ) -> OpenRouterResult:
     # A timed-out provider response has no usable draft. Investigation already
     # allows one transport retry; keep the same bounded rule for Discovery.
+    if getattr(session, "catalog_version", None) == strategic.CATALOG:
+        session._discovery_calls = getattr(session, "_discovery_calls", [])
     for attempt in range(2):
         try:
             reserve_accelerator_quotas(
@@ -369,7 +385,9 @@ def _provider_call(
                 policy=policy,
                 include_context=False,
             )
-            return request_openrouter(
+            started = time.monotonic()
+            started_at = timezone.now().isoformat()
+            result = request_openrouter(
                 messages=messages,
                 max_tokens=policy.capture_max_output_tokens,
                 timeout_seconds=policy.timeout_seconds,
@@ -386,7 +404,40 @@ def _provider_call(
                 },
                 provider={"require_parameters": True, "sort": "throughput"},
             )
+            if getattr(session, "catalog_version", None) == strategic.CATALOG:
+                record = {
+                    "role": schema_name,
+                    "attempt": attempt + 1,
+                    "started_at": started_at,
+                    "duration_ms": round((time.monotonic() - started) * 1000),
+                    "model": result.model,
+                    "provider": "openrouter",
+                    "usage": result.usage,
+                    "status": "success",
+                }
+                session._discovery_calls.append(record)
+                logger.info(
+                    "strategic_discovery_call session=%s %s", session.pk, json.dumps(record)
+                )
+            return result
         except OpenRouterUnavailable as exc:
+            if getattr(session, "catalog_version", None) == strategic.CATALOG:
+                record = {
+                    "role": schema_name,
+                    "attempt": attempt + 1,
+                    "started_at": started_at,
+                    "duration_ms": round((time.monotonic() - started) * 1000),
+                    "provider": "openrouter",
+                    "status": "failed",
+                    "error_code": exc.code,
+                    "usage": None,
+                    "model": settings.ACCELERATOR_DISCOVERY_MODEL
+                    or getattr(settings, "OPENROUTER_MODEL", ""),
+                }
+                session._discovery_calls.append(record)
+                logger.info(
+                    "strategic_discovery_call session=%s %s", session.pk, json.dumps(record)
+                )
             if exc.code == "timeout" and attempt == 0:
                 logger.warning("discovery_provider_retry schema=%s code=timeout", schema_name)
                 continue
@@ -635,7 +686,12 @@ def execute_autonomous_business_discovery(
     except LLMConfigurationError as exc:
         raise DiscoveryAnalysisError(str(exc), code="invalid_configuration") from exc
 
-    document, allowed_refs, evidence_text = _source_document(session=session, snapshot=snapshot)
+    try:
+        if session.catalog_version == strategic.CATALOG:
+            strategic.assert_enabled()
+        document, allowed_refs, evidence_text = _source_document(session=session, snapshot=snapshot)
+    except ValidationError as exc:
+        raise DiscoveryAnalysisError(str(exc), code="strategic_scope_conflict") from exc
     schema_version, prompt_version = discovery_versions(session.catalog_version)
     strategic_rules = (
         "\nErfassung ist noch keine verbindliche Pfadentscheidung. Ein strategisches Ziel "
@@ -653,6 +709,15 @@ def execute_autonomous_business_discovery(
     repair_prompt = (
         REPAIR_SYSTEM_PROMPT.replace(DISCOVERY_SCHEMA_VERSION, schema_version) + strategic_rules
     )
+    is_strategic = schema_version == strategic.SCHEMA
+    verifier_schema = strategic.VERIFIER_SCHEMA if is_strategic else "ap1-discovery-verifier-v1"
+    if is_strategic:
+        producer_prompt = producer_prompt + strategic.RULES
+        repair_prompt = repair_prompt + strategic.RULES
+        verifier_prompt = (
+            verifier_prompt.replace("ap1-discovery-verifier-v1", verifier_schema) + strategic.RULES
+        )
+        session._discovery_calls = []
     producer_messages = _prompt_payload(producer_prompt, document)
     chars = _input_chars(producer_messages)
     if chars > policy.discovery_max_input_chars:
@@ -690,7 +755,9 @@ def execute_autonomous_business_discovery(
             session=session,
             policy=policy,
             messages=producer_messages,
-            schema_name="autonomous_business_discovery_v1",
+            schema_name="autonomous_business_discovery_v3"
+            if is_strategic
+            else "autonomous_business_discovery_v1",
             schema=build_discovery_json_schema(schema_version),
         )
         results.append(producer)
@@ -712,12 +779,25 @@ def execute_autonomous_business_discovery(
                 draft = producer_payload
                 contract_errors = list(exc.errors)
 
+            if is_strategic:
+                contract_errors.extend(strategic.scope_findings(draft, document["human_scope"]))
             semantic_review = not contract_errors or bool(
                 discovery_methodical_findings(draft)
                 or discovery_modality_findings(draft, evidence_text)
             )
             if semantic_review:
-                messages = _prompt_payload(verifier_prompt, {"input": document, "draft": draft})
+                messages = _prompt_payload(
+                    verifier_prompt,
+                    {
+                        "input": document,
+                        "draft": draft,
+                        **(
+                            {"evidence_assertions": _evidence_assertions(draft)}
+                            if is_strategic
+                            else {}
+                        ),
+                    },
+                )
                 if _input_chars(messages) > policy.discovery_max_input_chars:
                     raise DiscoveryAnalysisError(
                         "Der Discovery-Draft überschreitet zusammen mit den Quellen "
@@ -729,20 +809,23 @@ def execute_autonomous_business_discovery(
                     session=session,
                     policy=policy,
                     messages=messages,
-                    schema_name="autonomous_business_discovery_verifier_v1",
-                    schema=build_discovery_verifier_schema(),
+                    schema_name="autonomous_business_discovery_verifier_v2"
+                    if is_strategic
+                    else "autonomous_business_discovery_verifier_v1",
+                    schema=build_discovery_verifier_schema(verifier_schema),
                 )
                 results.append(result)
                 last_result = result
                 verifier = enforce_discovery_methodology(
                     draft,
                     validate_verifier_payload(
-                        _decode_json(result, code="invalid_verifier_response")
+                        _decode_json(result, code="invalid_verifier_response"),
+                        schema_version=verifier_schema,
                     ),
                 )
             else:
                 verifier = {
-                    "schema_version": "ap1-discovery-verifier-v1",
+                    "schema_version": verifier_schema,
                     "status": "repair",
                     "checks": {},
                     "critical_findings": [],
@@ -809,7 +892,9 @@ def execute_autonomous_business_discovery(
                 session=session,
                 policy=policy,
                 messages=messages,
-                schema_name="autonomous_business_discovery_repair_v1",
+                schema_name="autonomous_business_discovery_repair_v3"
+                if is_strategic
+                else "autonomous_business_discovery_repair_v1",
                 schema=build_discovery_json_schema(schema_version),
             )
             results.append(result)
@@ -858,3 +943,19 @@ def execute_autonomous_business_discovery(
             result=last_result,
         )
         raise
+
+    finally:
+        if is_strategic:
+            stored = CaptureAnalysis.objects.get(pk=analysis.pk)
+            stored.result_payload = {
+                **stored.result_payload,
+                "provider_calls": session._discovery_calls,
+                "contract_versions": {
+                    "discovery": strategic.SCHEMA,
+                    "prompt": strategic.PROMPT,
+                    "verifier": strategic.VERIFIER_SCHEMA,
+                    "verifier_prompt": strategic.VERIFIER_PROMPT,
+                    "input": strategic.INPUT_SCHEMA,
+                },
+            }
+            stored.save(update_fields=["result_payload", "updated_at"])

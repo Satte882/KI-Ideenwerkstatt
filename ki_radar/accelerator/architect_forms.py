@@ -51,6 +51,38 @@ class AutonomousDiscoveryStartForm(forms.Form):
         self.fields["business_unit"].queryset = active_productive_business_units()
 
 
+class StrategicDiscoveryStartForm(AutonomousDiscoveryStartForm):
+    scope_start = forms.CharField(
+        label="Vorläufiger Untersuchungsbeginn", max_length=2000, required=False
+    )
+    scope_end = forms.CharField(
+        label="Vorläufiges Untersuchungsende", max_length=2000, required=False
+    )
+    scope_out = forms.CharField(
+        label="Was bleibt außerhalb des Untersuchungsbereichs?", max_length=2000, required=False
+    )
+    reason = forms.CharField(
+        label="Warum wählen Sie diesen vorläufigen Bereich?", max_length=2000, required=False
+    )
+    validation_step = forms.CharField(
+        label="Konkreter nächster Validierungsschritt", max_length=2000, required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("scope_start", "scope_end", "scope_out", "reason", "validation_step"):
+            self.fields[name].widget = forms.Textarea(attrs={"class": "form-control", "rows": 2})
+
+
+class StrategicScopeCorrectionForm(StrategicDiscoveryStartForm):
+    revision = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("business_unit", "problem_statement", "business_context"):
+            self.fields.pop(name)
+
+
 class DiscoveryCorrectionForm(forms.Form):
     revision = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
     correction = forms.CharField(

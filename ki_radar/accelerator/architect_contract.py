@@ -6,6 +6,8 @@ from typing import Any
 from ki_radar.architecture.models import EvidenceBasis, TimeToValue
 from ki_radar.core.taxonomy import BusinessDomain, ScreeningLevel
 
+from . import strategic_discovery as strategic
+
 DISCOVERY_SCHEMA_VERSION = "ap1-discovery-v1"
 DISCOVERY_PROMPT_VERSION = "ap1-methodology-v13"
 DISCOVERY_VERIFIER_SCHEMA_VERSION = "ap1-discovery-verifier-v1"
@@ -20,6 +22,8 @@ def discovery_versions(catalog_version):
         return DISCOVERY_SCHEMA_VERSION, DISCOVERY_PROMPT_VERSION
     if catalog_version == "2.0":
         return DISCOVERY_SCHEMA_VERSION_V2, DISCOVERY_PROMPT_VERSION_V2
+    if catalog_version == strategic.CATALOG:
+        return strategic.SCHEMA, strategic.PROMPT
     raise ValueError("Nicht unterstützter Discovery-Katalog.")
 
 
@@ -145,6 +149,10 @@ def enforce_discovery_readiness(draft: dict, verifier: dict) -> dict:
     without inventing an answer. Apply the decision boundary after that repair.
     """
     questions = blocking_discovery_questions(draft)
+    if draft.get("schema_version") == strategic.SCHEMA:
+        question = strategic.missing_scope_question(draft.get("scope_basis"))
+        if question:
+            questions = (question, *questions)
     if not questions or verifier.get("status") != "approved":
         return verifier
     return {
@@ -278,6 +286,28 @@ def _object_schema(properties: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_discovery_json_schema(schema_version=DISCOVERY_SCHEMA_VERSION) -> dict[str, Any]:
+    if schema_version == strategic.SCHEMA:
+        schema = build_discovery_json_schema(DISCOVERY_SCHEMA_VERSION_V2)
+        props = schema["properties"]
+        props["schema_version"]["enum"] = [strategic.SCHEMA]
+        props["scope_basis"] = _object_schema(
+            {key: _text_schema() for key in strategic.SCOPE_FIELDS}
+        )
+        schema["required"].append("scope_basis")
+        clarification = props["clarifications"]["items"]
+        clarification["properties"]["kind"] = {
+            "type": "string",
+            "enum": ["scope_decision", "evidence_collection"],
+        }
+        clarification["required"].append("kind")
+        for obj, fields in [
+            (props["stages"]["items"], strategic.STAGE_RATINGS),
+            (props["focus"], strategic.FOCUS_RATINGS),
+        ]:
+            for field in fields:
+                obj["properties"][field] = {"type": "string", "enum": [""]}
+        props["stages"]["items"]["properties"]["time_to_value"]["enum"] = ["unknown"]
+        return schema
     value_stream = _object_schema(
         {
             "name": _text_schema(min_length=1),
@@ -435,7 +465,9 @@ def build_discovery_json_schema(schema_version=DISCOVERY_SCHEMA_VERSION) -> dict
     }
 
 
-def build_discovery_verifier_schema() -> dict[str, Any]:
+def build_discovery_verifier_schema(
+    schema_version=DISCOVERY_VERIFIER_SCHEMA_VERSION,
+) -> dict[str, Any]:
     finding = _object_schema(
         {
             "code": _text_schema(min_length=1),
@@ -459,7 +491,7 @@ def build_discovery_verifier_schema() -> dict[str, Any]:
             {
                 "schema_version": {
                     "type": "string",
-                    "enum": [DISCOVERY_VERIFIER_SCHEMA_VERSION],
+                    "enum": [schema_version],
                 },
                 "status": {
                     "type": "string",
@@ -535,9 +567,13 @@ def validate_discovery_payload(
     schema_version: str = DISCOVERY_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     errors: list[str] = []
-    root = _exact_fields(payload, _ROOT_FIELDS, "root", errors)
+    is_strategic = schema_version == strategic.SCHEMA
+    root = _exact_fields(
+        payload, _ROOT_FIELDS | ({"scope_basis"} if is_strategic else set()), "root", errors
+    )
     if (
-        schema_version not in {DISCOVERY_SCHEMA_VERSION, DISCOVERY_SCHEMA_VERSION_V2}
+        schema_version
+        not in {DISCOVERY_SCHEMA_VERSION, DISCOVERY_SCHEMA_VERSION_V2, strategic.SCHEMA}
         or root.get("schema_version") != schema_version
     ):
         errors.append("schema_version: Falsche Discovery-Schema-Version.")
@@ -570,7 +606,13 @@ def validate_discovery_payload(
         ("process_analysis.outcome", process.get("outcome")),
         ("process_analysis.current_flow", process.get("current_flow")),
     ):
-        if not isinstance(value, str) or not value.strip():
+        if not isinstance(value, str) or (
+            not value.strip()
+            and not (
+                is_strategic
+                and path in {"process_analysis.scope_start", "process_analysis.scope_end"}
+            )
+        ):
             errors.append(f"{path}: Nichtleerer Text erforderlich.")
 
     bottlenecks = process.get("bottlenecks")
@@ -611,7 +653,7 @@ def validate_discovery_payload(
         stage_keys.append(key)
         if stage.get("sequence") != index + 1:
             errors.append(f"stages[{index}].sequence: Phasen müssen lückenlos ab 1 sortiert sein.")
-        allowed_stage_levels = set(ScreeningLevel.values)
+        allowed_stage_levels = {""} if is_strategic else set(ScreeningLevel.values)
         for criterion in (
             "impact",
             "pain_intensity",
@@ -628,6 +670,8 @@ def validate_discovery_payload(
             TimeToValue.LONG,
         }:
             errors.append(f"stages[{index}].time_to_value: Ungültige Einordnung.")
+        if is_strategic and stage.get("time_to_value") != TimeToValue.UNKNOWN:
+            errors.append(f"stages[{index}].time_to_value: Explorative Schätzung unzulässig.")
         if stage.get("evidence_basis") not in set(EvidenceBasis.values):
             errors.append(f"stages[{index}].evidence_basis: Ungültige Evidenzbasis.")
         _validate_refs(
@@ -643,7 +687,7 @@ def validate_discovery_payload(
         errors.append("focus.recommended_stage_key: Fokus verweist auf keine erzeugte Phase.")
 
     domains = {choice for choice, _label in BusinessDomain.choices}
-    levels = {choice for choice, _label in ScreeningLevel.choices}
+    levels = {""} if is_strategic else {choice for choice, _label in ScreeningLevel.choices}
     if focus.get("business_domain") not in domains:
         errors.append("focus.business_domain: Ungültige Fachdomäne.")
     for field in (
@@ -683,6 +727,29 @@ def validate_discovery_payload(
         if not isinstance(root.get(list_name), list):
             errors.append(f"{list_name}: Liste erwartet.")
 
+    if is_strategic:
+        _exact_fields(
+            root.get("scope_basis"), frozenset(strategic.SCOPE_FIELDS), "scope_basis", errors
+        )
+        for item in root.get("clarifications") or []:
+            if isinstance(item, dict):
+                _exact_fields(
+                    item,
+                    frozenset({"question", "impact", "kind", "blocking"}),
+                    "clarification",
+                    errors,
+                )
+                if not isinstance(item.get("blocking"), bool):
+                    errors.append("clarification.blocking: Boolean erforderlich.")
+            if not isinstance(item, dict) or item.get("kind") not in {
+                "scope_decision",
+                "evidence_collection",
+            }:
+                errors.append("clarifications.kind: Typisierte Scope-/Evidenzfrage erforderlich.")
+            elif item["kind"] == "evidence_collection" and item.get("blocking") is not False:
+                errors.append(
+                    "clarifications: Evidenzerhebung darf keine Scopeentscheidung ersetzen."
+                )
     _validate_numbers(root, evidence_text, errors)
     errors.extend(discovery_modality_findings(root, evidence_text))
     if errors:
@@ -690,7 +757,9 @@ def validate_discovery_payload(
     return root
 
 
-def validate_verifier_payload(payload: Any) -> dict[str, Any]:
+def validate_verifier_payload(
+    payload: Any, schema_version=DISCOVERY_VERIFIER_SCHEMA_VERSION
+) -> dict[str, Any]:
     expected = frozenset(
         {
             "schema_version",
@@ -703,7 +772,7 @@ def validate_verifier_payload(payload: Any) -> dict[str, Any]:
     )
     errors: list[str] = []
     root = _exact_fields(payload, expected, "verifier", errors)
-    if root.get("schema_version") != DISCOVERY_VERIFIER_SCHEMA_VERSION:
+    if root.get("schema_version") != schema_version:
         errors.append("verifier.schema_version: Falsche Schema-Version.")
     if root.get("status") not in {"approved", "repair", "waiting_human"}:
         errors.append("verifier.status: Ungültiger Status.")

@@ -58,6 +58,7 @@ def openrouter_api_url() -> str:
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-insecure-key")
 DEBUG = env_bool("DJANGO_DEBUG", False)
+ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED = env_bool("ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED", True)
 ALLOWED_HOSTS = [
     x.strip() for x in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if x.strip()
 ]

@@ -108,6 +108,7 @@ def create_autonomous_capture_session(
     business_context: str = "",
     idea_candidate_id=None,
     business_unit_id=None,
+    strategic_scope=None,
 ) -> CaptureSession:
     _assert_capture_permission(actor, CaptureSession.CaptureType.VALUE_STREAM)
 
@@ -155,7 +156,12 @@ def create_autonomous_capture_session(
             }
         )
 
-    catalog = get_capture_catalog(CaptureSession.CaptureType.VALUE_STREAM)
+    from . import strategic_discovery as strategic
+
+    catalog = get_capture_catalog(
+        CaptureSession.CaptureType.VALUE_STREAM,
+        strategic.CATALOG if strategic_scope is not None else None,
+    )
     title = problem.splitlines()[0].strip()[:120] or "Autonome Business Discovery"
     answers = {
         "business_unit": {"id": business_unit.pk, "name": business_unit.name},
@@ -163,6 +169,9 @@ def create_autonomous_capture_session(
         "business_context": context,
         "corrections": [],
     }
+    if strategic_scope is not None:
+        strategic.assert_enabled()
+        answers["human_scope"] = strategic.human_scope_record(actor=actor, values=strategic_scope)
     if idea is not None:
         answers["origin"] = build_idea_origin(idea)
         title = idea.title
@@ -177,6 +186,29 @@ def create_autonomous_capture_session(
         answers=answers,
         expires_at=_draft_expiry(),
     )
+
+
+@transaction.atomic
+def replace_strategic_scope(*, actor, session_id, expected_revision, values):
+    from . import strategic_discovery as strategic
+
+    strategic.assert_enabled()
+
+    session = _locked_owned_session(actor=actor, session_id=session_id)
+    if (
+        session.catalog_version != strategic.CATALOG
+        or session.mode != CaptureSession.Mode.AUTONOMOUS
+    ):
+        raise PermissionDenied
+    _assert_editable(session)
+    _assert_revision(session, expected_revision)
+    session.answers = {
+        **session.answers,
+        "human_scope": strategic.human_scope_record(actor=actor, values=values),
+    }
+    session.revision += 1
+    session.save(update_fields=["answers", "revision", "updated_at"])
+    return session
 
 
 def get_owned_autonomous_capture_session(*, actor, session_id) -> CaptureSession:

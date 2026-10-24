@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from ki_radar.accelerator import strategic_discovery as strategic
 from ki_radar.accelerator.discovery_context import freeze_legacy_discovery_business_unit
 from ki_radar.accelerator.investigation_execution import request_execution
 from ki_radar.accelerator.investigation_runtime import (
@@ -259,6 +260,39 @@ def materialize_discovery_and_start_investigation(
             code="analysis_review_outdated",
         )
 
+    is_strategic = session.catalog_version == strategic.CATALOG
+    human_scope = None
+    if is_strategic:
+        from ki_radar.accelerator.architect_contract import (
+            DiscoveryContractError,
+            validate_discovery_payload,
+            validate_verifier_payload,
+        )
+
+        try:
+            strategic.assert_enabled()
+            source = session.discovery_source_snapshots.get(
+                pk=result_payload.get("discovery_snapshot_id")
+            )
+            human_scope = strategic.frozen_human_scope(session, source)
+            errors = strategic.scope_findings(draft, human_scope)
+            question = strategic.missing_scope_question(human_scope)
+            if question:
+                errors.append(question)
+            if verifier.get("schema_version") != strategic.VERIFIER_SCHEMA:
+                errors.append("Der strategische Verifier-Vertrag fehlt.")
+            if errors:
+                raise ValidationError(errors)
+            validate_verifier_payload(verifier, schema_version=strategic.VERIFIER_SCHEMA)
+            # Recheck persisted v3 payloads; never infer human intent from an LLM flag.
+            from ki_radar.accelerator.architect_service import _source_document
+
+            _document, refs, evidence = _source_document(session=session, snapshot=source)
+            validate_discovery_payload(
+                draft, allowed_refs=refs, evidence_text=evidence, schema_version=strategic.SCHEMA
+            )
+        except (ObjectDoesNotExist, ValidationError, DiscoveryContractError, ValueError) as exc:
+            raise DiscoveryMaterializationError(str(exc), code="strategic_scope_conflict") from exc
     questions = blocking_discovery_questions(draft)
     if questions:
         raise DiscoveryMaterializationError(
@@ -349,27 +383,49 @@ def materialize_discovery_and_start_investigation(
             field="Fachdomäne",
         ),
         capability=_required_text(focus_draft.get("capability"), field="Business Capability"),
-        strategic_impact=_required_text(
-            focus_draft.get("strategic_impact"),
-            field="Strategischer Impact",
+        strategic_impact=(
+            ""
+            if is_strategic
+            else _required_text(
+                focus_draft.get("strategic_impact"),
+                field="Strategischer Impact",
+            )
         ),
-        economic_potential=_required_text(
-            focus_draft.get("economic_potential"),
-            field="Wirtschaftliches Potenzial",
+        economic_potential=(
+            ""
+            if is_strategic
+            else _required_text(
+                focus_draft.get("economic_potential"),
+                field="Wirtschaftliches Potenzial",
+            )
         ),
-        pain_intensity=_required_text(
-            focus_draft.get("pain_intensity"),
-            field="Pain Intensity",
+        pain_intensity=(
+            ""
+            if is_strategic
+            else _required_text(
+                focus_draft.get("pain_intensity"),
+                field="Pain Intensity",
+            )
         ),
-        data_accessibility=_required_text(
-            focus_draft.get("data_accessibility"),
-            field="Datenzugänglichkeit",
+        data_accessibility=(
+            ""
+            if is_strategic
+            else _required_text(
+                focus_draft.get("data_accessibility"),
+                field="Datenzugänglichkeit",
+            )
         ),
-        change_effort=_required_text(
-            focus_draft.get("change_effort"),
-            field="Veränderungsaufwand",
+        change_effort=(
+            ""
+            if is_strategic
+            else _required_text(
+                focus_draft.get("change_effort"),
+                field="Veränderungsaufwand",
+            )
         ),
-        status=ValueStreamFocus.Status.SELECTED,
+        status=ValueStreamFocus.Status.CANDIDATE
+        if is_strategic
+        else ValueStreamFocus.Status.SELECTED,
         rationale=_required_text(focus_draft.get("rationale"), field="Fokusbegründung"),
         updated_by=actor,
     )
@@ -382,8 +438,8 @@ def materialize_discovery_and_start_investigation(
         criteria_snapshot=_criteria_snapshot(stages, stage_drafts),
         rationale=focus.rationale,
         actor=actor,
-        is_short_path=False,
-        short_path_reason="",
+        is_short_path=is_strategic,
+        short_path_reason=human_scope["reason"] if is_strategic else "",
     )
 
     process = ProcessAnalysis(
@@ -419,13 +475,21 @@ def materialize_discovery_and_start_investigation(
         analyzed_by=actor,
     )
     process.source_snapshot = build_process_source_snapshot(selected_stage)
+    if is_strategic:
+        process.source_snapshot["strategic_exploration"] = {
+            "human_scope": human_scope,
+            "schema": strategic.SCHEMA,
+            "analysis_id": str(analysis.pk),
+            "scope_confirmed_by": actor.pk,
+            "scope_confirmed_at": timezone.now().isoformat(),
+        }
     process.full_clean()
     process.save()
     if idea is not None:
         if idea.initiative_id is not None:
             try:
                 process = bind_initiative(initiative=idea.initiative, artifact=process, actor=actor)
-            except (PermissionDenied, ValidationError) as exc:
+            except (ObjectDoesNotExist, PermissionDenied, ValidationError) as exc:
                 raise DiscoveryMaterializationError(
                     "Die Vorhabenszuordnung ist nicht zulässig. "
                     "Bitte durch die verantwortliche Person prüfen lassen.",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -22,6 +23,7 @@ from ki_radar.use_cases.idea_discovery import (
 )
 from ki_radar.use_cases.idea_models import IdeaCandidate
 
+from . import strategic_discovery as strategic
 from .architect_contract import (
     DISCOVERY_SCHEMA_VERSION,
     DISCOVERY_SCHEMA_VERSION_V2,
@@ -33,6 +35,8 @@ from .architect_forms import (
     AutonomousDiscoveryStartForm,
     DiscoveryConfirmForm,
     DiscoveryCorrectionForm,
+    StrategicDiscoveryStartForm,
+    StrategicScopeCorrectionForm,
 )
 from .architect_service import DiscoveryAnalysisError, execute_autonomous_business_discovery
 from .discovery_context import (
@@ -57,13 +61,18 @@ from .services import (
     add_autonomous_discovery_correction,
     create_autonomous_capture_session,
     get_owned_autonomous_capture_session,
+    replace_strategic_scope,
 )
 
 
 def _latest_analysis(session: CaptureSession) -> CaptureAnalysis | None:
     return (
         session.analyses.filter(
-            extraction_schema_version__in=(DISCOVERY_SCHEMA_VERSION, DISCOVERY_SCHEMA_VERSION_V2)
+            extraction_schema_version__in=(
+                DISCOVERY_SCHEMA_VERSION,
+                DISCOVERY_SCHEMA_VERSION_V2,
+                strategic.SCHEMA,
+            )
         )
         .order_by("-created_at")
         .first()
@@ -169,6 +178,11 @@ def _prepare_discovery_start(*, actor, data, uploads, idea):
         business_context=data["business_context"],
         idea_candidate_id=idea.pk if idea is not None else None,
         business_unit_id=data["business_unit"].pk,
+        strategic_scope=(
+            {key: data.get(key, "") for key in strategic.SCOPE_FIELDS}
+            if "scope_start" in data
+            else None
+        ),
     )
     if idea is not None:
         uploads = [idea_origin_upload(session), *uploads]
@@ -216,8 +230,10 @@ def autonomous_discovery_start(request):
             )
             return redirect(idea)
 
+    strategic_start = (request.GET.get("strategic") or request.POST.get("strategic")) == "1"
+    form_class = StrategicDiscoveryStartForm if strategic_start else AutonomousDiscoveryStartForm
     if request.method == "POST":
-        form = AutonomousDiscoveryStartForm(request.POST)
+        form = form_class(request.POST)
         uploads = request.FILES.getlist("sources")
         if not uploads and idea is None:
             form.add_error(None, "Bitte mindestens eine .md-, .txt- oder .csv-Quelle auswählen.")
@@ -268,7 +284,7 @@ def autonomous_discovery_start(request):
                 )
     else:
         default_unit = default_discovery_business_unit(actor=request.user, idea=idea)
-        form = AutonomousDiscoveryStartForm(
+        form = form_class(
             initial={
                 "problem_statement": idea.description if idea is not None else "",
                 "business_unit": default_unit.pk if default_unit else None,
@@ -292,6 +308,11 @@ def autonomous_discovery_start(request):
         {
             "form": form,
             "idea": idea,
+            "strategic_start": strategic_start,
+            "strategic_available": settings.ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED,
+            "scope_fields": [form[key] for key in strategic.SCOPE_FIELDS]
+            if strategic_start
+            else [],
             "has_active_business_units": form.fields["business_unit"].queryset.exists(),
         },
     )
@@ -310,9 +331,45 @@ def autonomous_discovery_review(request, session_id):
     latest = _latest_analysis(session)
     snapshot = _latest_snapshot(session)
     correction_form = None
+    scope_form = None
 
     if request.method == "POST":
         action = str(request.POST.get("action") or "").strip()
+        if action == "scope" and session.catalog_version == strategic.CATALOG:
+            scope_form = StrategicScopeCorrectionForm(request.POST)
+            if snapshot is None:
+                scope_form.add_error(None, "Zuerst einen autorisierten Quellenstand bereitstellen.")
+            elif scope_form.is_valid():
+                try:
+                    session = replace_strategic_scope(
+                        actor=request.user,
+                        session_id=session.pk,
+                        expected_revision=scope_form.cleaned_data["revision"],
+                        values={
+                            key: scope_form.cleaned_data[key] for key in strategic.SCOPE_FIELDS
+                        },
+                    )
+                    snapshot_result = create_discovery_source_snapshot(
+                        actor=request.user,
+                        request=DiscoverySnapshotRequest(
+                            capture_session_id=session.pk, folder_id=snapshot.folder_id
+                        ),
+                    )
+                    snapshot = session.discovery_source_snapshots.get(
+                        pk=snapshot_result.snapshot_id
+                    )
+                except (
+                    CaptureRevisionConflict,
+                    CaptureStateError,
+                    ValidationError,
+                    InvestigationToolError,
+                ) as exc:
+                    scope_form.add_error(None, str(exc))
+                else:
+                    _run_analysis(request, session=session, snapshot=snapshot)
+                    return redirect(
+                        "accelerator:autonomous_discovery_review", session_id=session.pk
+                    )
         if action == "retry":
             if session.status != CaptureSession.Status.DRAFT:
                 messages.error(
@@ -499,6 +556,14 @@ def autonomous_discovery_review(request, session_id):
         "accelerator/autonomous_discovery_review.html",
         {
             "session": session,
+            "scope_form": (
+                scope_form
+                or StrategicScopeCorrectionForm(
+                    initial={**session.answers.get("human_scope", {}), "revision": session.revision}
+                )
+            )
+            if session.catalog_version == strategic.CATALOG
+            else None,
             "origin_idea": IdeaCandidate.objects.filter(pk=origin_id)
             .select_related("initiative")
             .first(),
@@ -512,7 +577,11 @@ def autonomous_discovery_review(request, session_id):
             "legacy_business_unit": "business_unit" not in session.answers,
             "review_outdated": bool(latest and not supported_discovery_analysis(latest)),
             "can_confirm": bool(
-                latest
+                (
+                    session.catalog_version != strategic.CATALOG
+                    or settings.ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED
+                )
+                and latest
                 and latest.status == CaptureAnalysis.Status.SUCCESS
                 and session.status == CaptureSession.Status.DRAFT
                 and not business_unit_error
