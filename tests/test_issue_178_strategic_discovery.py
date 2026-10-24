@@ -383,3 +383,33 @@ def test_rollback_keeps_saved_review_readable_without_model_execution(
             architect_service.execute_autonomous_business_discovery(
                 actor=owner, session_id=context[0].pk, snapshot_id=context[1].pk
             )
+
+
+@pytest.mark.parametrize("explicit_strategy,expected_catalog", [(False, "2.0"), (True, "3.0")])
+def test_same_start_form_routes_only_explicit_human_strategy(
+    owner, client, tmp_path, monkeypatch, explicit_strategy, expected_catalog
+):
+    from ki_radar.accelerator import architect_views
+
+    monkeypatch.setattr(architect_views, "_run_analysis", lambda *args, **kwargs: None)
+    client.force_login(owner)
+    url = reverse("accelerator:autonomous_discovery_start")
+    page = client.get(url)
+    assert page.status_code == 200
+    assert b'name="strategic"' in page.content
+    assert b'href="?strategic=1' not in page.content
+    data = {
+        "problem_statement": "Strategisches Ziel. Ist-Daten unbekannt.",
+        "business_unit": owner.business_unit_id,
+        **SCOPE,
+        "sources": SimpleUploadedFile("input.md", b"Synthetic goal; observed data unknown."),
+    }
+    if explicit_strategy:
+        data["strategic"] = "1"
+    with override_settings(INVESTIGATION_SOURCE_UPLOAD_ROOT=tmp_path):
+        # A stale GET parameter must not silently select v3 on an unchecked POST.
+        response = client.post(url + "?strategic=1", data)
+    assert response.status_code == 302
+    session = CaptureSession.objects.get(owner=owner)
+    assert session.catalog_version == expected_catalog
+    assert ("human_scope" in session.answers) == explicit_strategy

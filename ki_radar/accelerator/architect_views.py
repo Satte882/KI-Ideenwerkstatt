@@ -230,7 +230,8 @@ def autonomous_discovery_start(request):
             )
             return redirect(idea)
 
-    strategic_start = (request.GET.get("strategic") or request.POST.get("strategic")) == "1"
+    start_data = request.POST if request.method == "POST" else request.GET
+    strategic_start = start_data.get("strategic") == "1"
     form_class = StrategicDiscoveryStartForm if strategic_start else AutonomousDiscoveryStartForm
     if request.method == "POST":
         form = form_class(request.POST)
@@ -302,6 +303,7 @@ def autonomous_discovery_start(request):
             }
         )
 
+    scope_form = form if strategic_start else StrategicDiscoveryStartForm()
     return render(
         request,
         "accelerator/autonomous_discovery_start.html",
@@ -309,9 +311,8 @@ def autonomous_discovery_start(request):
             "form": form,
             "idea": idea,
             "strategic_start": strategic_start,
-            "strategic_available": settings.ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED,
-            "scope_fields": [form[key] for key in strategic.SCOPE_FIELDS]
-            if strategic_start
+            "scope_fields": [scope_form[key] for key in strategic.SCOPE_FIELDS]
+            if strategic_start or settings.ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED
             else [],
             "has_active_business_units": form.fields["business_unit"].queryset.exists(),
         },
