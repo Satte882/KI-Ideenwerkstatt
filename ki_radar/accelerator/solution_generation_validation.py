@@ -254,7 +254,10 @@ def validate_solution_generation_payload(
         and prompt_version
         and (schema_version, prompt_version) not in supported_versions
     ):
-        errors.append("$.schema_version/$.prompt_version: Nicht unterstützte Vertragsversionen.")
+        if schema_version not in {version[0] for version in supported_versions}:
+            errors.append("$.schema_version: Nicht unterstützte Schema-Version.")
+        else:
+            errors.append("$.prompt_version: Nicht unterstützte Prompt-Version.")
 
     options = _as_dict(root.get("options"), "$.options", errors)
     _exact_fields(options, frozenset(OPTION_LANES), "$.options", errors)
