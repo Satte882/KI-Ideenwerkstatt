@@ -38,10 +38,10 @@ def _completed_session(owner, capture_type=CaptureSession.CaptureType.VALUE_STRE
     )
 
 
-def _payload(suggestions):
+def _payload(suggestions, *, prompt_version="1.0"):
     return {
         "schema_version": "1.0",
-        "prompt_version": "1.0",
+        "prompt_version": prompt_version,
         "suggestions": suggestions,
         "open_questions": [],
         "contradictions": [],
@@ -173,7 +173,8 @@ def test_german_decimal_and_unit_are_normalized(owner):
                     source_question="uc_metric",
                     source_excerpt="1.234,50 Minuten",
                 )
-            ]
+            ],
+            prompt_version=prepared.analysis.prompt_version,
         ),
         prepared=prepared,
     )
@@ -203,7 +204,8 @@ def test_enum_is_checked_against_blueprint_contract(owner):
                         source_question="uc_solution_context",
                         source_excerpt="Priorität ist dringend",
                     )
-                ]
+                ],
+                prompt_version=prepared.analysis.prompt_version,
             ),
             prepared=prepared,
         )

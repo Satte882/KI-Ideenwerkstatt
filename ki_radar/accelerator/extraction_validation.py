@@ -25,9 +25,11 @@ from .analysis_service import (
 )
 from .candidate_snapshot import CandidateSnapshotError, create_adoption_candidates
 from .extraction_contract import (
+    EXTRACTION_ENUM_PATHS,
     ExtractionContractError,
     ExtractionDocument,
     ExtractionSuggestion,
+    extraction_field_type,
     parse_extraction_document,
 )
 from .models import CaptureAnalysis, CaptureFieldSuggestion
@@ -72,29 +74,6 @@ _ALLOWED_UNITS = {
     "anzahl": "count",
     "count": "count",
 }
-_ENUM_PATHS = {
-    "value_stream.focus.business_domain": "business_domain",
-    "solution_options[].option_type": "solution_option.option_type",
-    "solution_options[].feasibility": "solution_option.feasibility",
-    "solution_options[].integration_effort": "solution_option.integration_effort",
-    "use_case.priority": "use_case.priority",
-    "use_case.solution_type": "use_case.solution_type",
-    "use_case.hosting_type": "use_case.hosting_type",
-    "use_case.metric.type": "use_case.metric.type",
-    "use_case.metric.direction": "use_case.metric.direction",
-    "use_case.business_value": "level",
-    "use_case.technical_feasibility": "level",
-    "use_case.data_readiness": "level",
-    "use_case.risk_complexity": "level",
-    "use_case.classification.business_domain": "business_domain",
-}
-_DECIMAL_PATHS = {
-    "use_case.metric.baseline",
-    "use_case.metric.target",
-    "use_case.one_time_cost",
-    "use_case.recurring_cost",
-}
-_INTEGER_PATHS = {"value_stream.stages[].sequence"}
 _TEXT_LIST_NORMALIZATION_TARGETS = frozenset(
     {
         "use_case.benefit_category",
@@ -114,16 +93,6 @@ class ExtractionValidationError(ValueError):
 
 def _normalized_text(value: object) -> str:
     return _WHITESPACE.sub(" ", str(value or "").strip()).casefold()
-
-
-def _expected_field_type(path: str) -> str:
-    if path in _ENUM_PATHS:
-        return "enum"
-    if path in _DECIMAL_PATHS:
-        return "decimal"
-    if path in _INTEGER_PATHS:
-        return "integer"
-    return "text"
 
 
 def _normalize_decimal(raw: object, path: str, errors: list[str]) -> dict[str, str] | None:
@@ -206,7 +175,7 @@ def _normalize_value(
     path: str,
     errors: list[str],
 ) -> Any:
-    expected = _expected_field_type(suggestion.target_field)
+    expected = extraction_field_type(suggestion.target_field)
     if suggestion.field_type != expected:
         recoverable_text_underclassification = suggestion.field_type == "text" and expected in {
             "enum",
@@ -245,7 +214,7 @@ def _normalize_value(
     if expected == "decimal":
         return _normalize_decimal(value, f"{path}.suggested_value", errors)
     if expected == "enum":
-        allowed = contract["allowed_enums"][_ENUM_PATHS[suggestion.target_field]]
+        allowed = contract["allowed_enums"][EXTRACTION_ENUM_PATHS[suggestion.target_field]]
         return _normalize_enum(
             value,
             allowed=allowed,
@@ -279,7 +248,13 @@ def validate_extraction_document(
     prepared: PreparedCaptureAnalysis,
 ) -> tuple[ExtractionDocument, tuple[dict[str, Any], ...]]:
     try:
-        document = parse_extraction_document(payload, catalog=prepared.catalog)
+        document = parse_extraction_document(
+            payload,
+            catalog=prepared.catalog,
+            expected_prompt_version=getattr(
+                getattr(prepared, "analysis", None), "prompt_version", None
+            ),
+        )
     except ExtractionContractError as exc:
         raise ExtractionValidationError(exc.errors) from exc
 
@@ -326,7 +301,7 @@ def validate_extraction_document(
                 "target_object_type": suggestion.target_object_type,
                 "target_field": suggestion.target_field,
                 "target_group_key": suggestion.target_group_key or "",
-                "field_type": _expected_field_type(suggestion.target_field),
+                "field_type": extraction_field_type(suggestion.target_field),
                 "suggested_value": normalized_value,
                 "source_question": suggestion.source_question,
                 "source_excerpt": suggestion.source_excerpt,

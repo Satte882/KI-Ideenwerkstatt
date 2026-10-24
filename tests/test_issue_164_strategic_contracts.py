@@ -151,7 +151,9 @@ def _payload(context):
 
 def test_v1_catalog_and_hashes_are_frozen():
     fixture = json.loads(
-        (Path(__file__).parent / "fixtures/accelerator/issue164_legacy.json").read_text()
+        (Path(__file__).parent / "fixtures/accelerator/issue164_legacy.json").read_text(
+            encoding="utf-8"
+        )
     )
     catalog = get_capture_catalog("value_stream", "1.0")
     serialized = json.dumps(

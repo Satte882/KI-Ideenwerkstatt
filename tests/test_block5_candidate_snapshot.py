@@ -159,6 +159,26 @@ def test_candidate_creation_is_idempotent_per_suggestion(owner, business_unit):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "prompt_version, expected", [("1.0", "valid"), ("1.1", "valid"), ("9.9", "stale")]
+)
+def test_use_case_candidates_support_saved_and_current_prompts(
+    owner, business_unit, prompt_version, expected
+):
+    target = make_use_case(business_unit=business_unit, owner=owner)
+    session = create_capture_session(actor=owner, capture_type=CaptureSession.CaptureType.USE_CASE)
+    bind_capture_target(actor=owner, session_id=session.pk, target_id=target.pk)
+    analysis, _ = make_analysis(
+        session=session, actor=owner, field_name="title", suggested_value="Entwurf"
+    )
+    analysis.prompt_version = prompt_version
+    analysis.save(update_fields=["prompt_version"])
+    candidate = create_adoption_candidates(analysis_id=analysis.pk)[0]
+
+    assert candidate_validity(candidate) == expected
+
+
+@pytest.mark.django_db
 def test_candidate_creation_requires_successful_bound_matching_analysis(owner, business_unit):
     session = create_capture_session(
         actor=owner,

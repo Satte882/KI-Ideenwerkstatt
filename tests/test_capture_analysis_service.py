@@ -58,6 +58,27 @@ def test_prepare_uses_frozen_catalog_and_minimized_input(owner, monkeypatch):
 
 @pytest.mark.django_db
 @override_settings(**LIMITS)
+def test_new_use_case_run_versions_type_guidance_without_changing_saved_catalog(owner):
+    session = _completed_session(owner, CaptureSession.CaptureType.USE_CASE)
+    prepared = analysis_service.prepare_capture_analysis(actor=owner, session_id=session.pk)
+    payload = json.loads(prepared.messages[1]["content"])
+
+    assert prepared.analysis.prompt_version == payload["prompt_version"] == "1.1"
+    assert prepared.catalog.version == prepared.analysis.catalog_version == "1.0"
+    assert payload["target_contracts"]["use_case.metric.type"]["allowed_values"] == [
+        "number",
+        "percent",
+        "duration",
+        "currency",
+        "count",
+        "rating",
+    ]
+    assert payload["target_contracts"]["use_case.metric.baseline"] == {"field_type": "decimal"}
+    assert "open_questions" in payload["extraction_rules"]
+
+
+@pytest.mark.django_db
+@override_settings(**LIMITS)
 def test_prepare_rejects_non_completed_session_without_consuming_quota(owner):
     session = _completed_session(owner)
     session.status = CaptureSession.Status.DRAFT
