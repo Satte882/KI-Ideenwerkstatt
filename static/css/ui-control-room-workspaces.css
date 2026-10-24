@@ -175,6 +175,10 @@
 }
 
 @media (min-width: 992px) {
+  .ui-control-room.page-solution-compare .comparison-options-4 {
+    min-width: 900px;
+  }
+
   .ui-control-room.page-solution-compare .comparison-matrix:is(
     .comparison-options-2,
     .comparison-options-3,
