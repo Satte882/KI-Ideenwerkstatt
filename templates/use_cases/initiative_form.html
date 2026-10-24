@@ -4,6 +4,7 @@
 {% block body_class %}page-form-workspace{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}">{% endblock %}
 {% block content %}
+{% include "use_cases/includes/context_provenance.html" with records=initiative.context_provenance only %}
 <header class="cr-page-header">
   <div><h1>{% if initiative %}{{ initiative.title }}{% else %}Vorhaben erfassen{% endif %}</h1>
     <p>Geschäftsergebnis, Beitrag und Wirkannahme gemeinsam führen. Offene Angaben bleiben offen; der Entwurf ist ohne Owner, Metrik, Ursache oder Review-Termin speicherbar.</p>

@@ -52,6 +52,7 @@ class ImprovementInitiative(TimeStampedModel):
     )
     revision = models.PositiveIntegerField(default=1, editable=False)
     preparation_drafts = models.JSONField(default=dict, blank=True, editable=False)
+    context_provenance = models.JSONField(default=list, blank=True, editable=False)
     outcome_revision = models.PositiveIntegerField(default=1, editable=False)
     target_group = models.TextField(blank=True, verbose_name="Betroffene Empfängergruppe")
     hypothesis_origin = models.CharField(max_length=10, default="human", editable=False)

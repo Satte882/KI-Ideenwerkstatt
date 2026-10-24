@@ -268,6 +268,7 @@ class UseCase(TimeStampedModel):
     is_archived = models.BooleanField(default=False)
 
     history = HistoricalRecords(inherit=True)
+    context_provenance = models.JSONField(default=list, blank=True, editable=False)
 
     class Meta:
         ordering = ["-updated_at"]

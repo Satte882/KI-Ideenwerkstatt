@@ -90,6 +90,9 @@ Der Accelerator reduziert manuelle Erstbefüllung, ohne Entscheidungsrechte an e
 
 - geführte, wiederaufnehmbare Erfassung;
 - strukturierte LLM-Extraktionsvorschläge mit Quelle, Unsicherheit und Validierung;
+- bewusste, quellengebundene und editierbare Übernahme vorhandener Erkenntnisse in
+  den bestehenden direkten Use-Case-Intake und die Outcome-Vorbereitung; Unknowns,
+  Herkunft und getrennte fachliche Annahme bleiben erhalten;
 - konfliktgeschützte feldweise Übernahme;
 - strukturierte Entwurfsobjekte für Metriken, Phasen und Prozessanalyse;
 - generative, lösungsoffene Lösungsentwürfe;
@@ -102,7 +105,7 @@ Der Accelerator reduziert manuelle Erstbefüllung, ohne Entscheidungsrechte an e
 
 Der Accelerator und die neuen task-spezifischen KI-Funktionen erzeugen Entwürfe und Hinweise, **keine Freigaben, Governance-Entscheidungen, bindenden Lösungspräferenzen, automatischen Domainänderungen oder Lifecycle-Entscheidungen**.
 
-Zentrale Nachweise: #116–#125, #328 sowie #349–#351; ergänzend die Completion-Dokumente unter `docs/accelerator/`.
+Zentrale Nachweise: #116–#125, #328, #349–#351 sowie #171; ergänzend die Completion-Dokumente unter `docs/accelerator/`.
 
 ## 4. Architecture Advisor und Solution Quality Control
 
@@ -224,11 +227,10 @@ Beobachtete Produktlücken werden erst danach als eigenständige Issues beschrie
 
 # Next – priorisierte nächste Probleme
 
-Es gibt derzeit **keinen vorab festgelegten nächsten großen Produktumbau**.
-
-Der nächste konkrete Produktauftrag soll aus der manuellen E2E-Validierung oder aus realen
-betrieblichen Anforderungen entstehen. Dadurch bleibt die Weiterentwicklung problemgetrieben
-und vermeidet Architektur oder Features auf Vorrat.
+Die aus #167 priorisierte Kontextübernahme ist mit #171 im bestehenden Aufnahme- und
+Outcome-Pfad umgesetzt. Weitere Produktänderungen werden aus der getrennten menschlichen
+Abnahme #161 oder aus neuen belegten Problemen abgeleitet. Ein zusätzlicher Outcome-KI-Task
+oder fünfter Einstieg ist weiterhin nicht begründet.
 
 # Later – strategische Optionen
 

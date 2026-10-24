@@ -1,6 +1,8 @@
 # ruff: noqa: I001
 from decimal import Decimal
 
+from django import forms
+
 from .intake import (
     AffectedPeopleStepForm as LegacyAffectedPeopleStepForm,
     BenefitStepForm as LegacyBenefitStepForm,
@@ -18,7 +20,12 @@ class _LeanOptionalMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in self.optional_fields:
-            self.fields[field_name].required = False
+            field = self.fields[field_name]
+            field.required = False
+            if isinstance(field, forms.ChoiceField) and not any(
+                key == "" for key, _ in field.choices
+            ):
+                field.choices = [("", "Noch offen"), *field.choices]
 
 
 class ProblemStepForm(_LeanOptionalMixin, LegacyProblemStepForm):
@@ -51,9 +58,15 @@ class ProcessStepForm(_LeanOptionalMixin, LegacyProcessStepForm):
 
 class AffectedPeopleStepForm(_LeanOptionalMixin, LegacyAffectedPeopleStepForm):
     optional_fields = ("intended_users", "intended_purpose")
+    human_oversight = forms.CharField(
+        required=False, label="Menschliche Aufsicht", widget=forms.Textarea(attrs={"rows": 3})
+    )
 
 
 class BenefitStepForm(_LeanOptionalMixin, LegacyBenefitStepForm):
+    benefit_category = forms.CharField(
+        required=False, label="Nutzenkategorie", widget=forms.Textarea(attrs={"rows": 2})
+    )
     optional_fields = (
         "expected_benefit",
         "metric_name",

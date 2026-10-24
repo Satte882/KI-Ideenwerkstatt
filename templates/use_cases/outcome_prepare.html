@@ -9,6 +9,17 @@
 <p>Hypothese ist zulässig. Zahlenbaseline, Zielwert, Review-Termin und ein Systemkonto des Outcome Owners sind nicht erforderlich.</p></div></header>
 <div class="app-card"><form method="post" novalidate>{% csrf_token %}
 <div class="card-body">
+{% if context_source.items %}
+<section aria-labelledby="context-transfer-title" class="mb-4">
+<h2 class="h5" id="context-transfer-title">Vorhandene Erkenntnisse verwenden</h2>
+<p>Quelle: <a href="{{ context_source.url }}">{{ context_source.label }}</a>. Nur leere Felder werden ergänzt. Alle Angaben bleiben editierbare Hypothesen; Geschäftsergebnis, Verantwortung und fachliche Annahme bleiben offen.</p>
+<button class="btn btn-outline-secondary" type="submit" name="action" value="load_context">Kontext in leere Felder übernehmen</button>
+{% if context_ticket %}<p class="mt-2" role="status">Kontext geladen. Prüfen und bearbeiten Sie die Angaben vor dem Speichern.</p>{% endif %}
+<details class="source-disclosure mt-2"><summary>Quellfelder und Vorschläge anzeigen</summary><dl>{% for item in context_source.items %}<dt>{{ item.label }}</dt><dd class="text-preline">{{ item.value }}</dd>{% endfor %}</dl></details>
+</section>
+{% endif %}
+<input type="hidden" name="context_ticket" value="{{ context_ticket }}">
+{% include "use_cases/includes/context_provenance.html" with records=initiative.context_provenance only %}
 {% if form.errors %}
 <div class="alert alert-danger" role="alert" tabindex="-1">
   <strong>Bitte die Eingaben prüfen.</strong>

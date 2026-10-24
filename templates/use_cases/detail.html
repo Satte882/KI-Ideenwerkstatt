@@ -30,6 +30,7 @@
   </div>
   {% endif %}
 </header>
+{% include "use_cases/includes/context_provenance.html" with records=use_case.context_provenance only %}
 {% if architecture_origin and architecture_origin.solution_option and architecture_origin.solution_option.starts_ai_use_case %}
 <p><a class="btn btn-outline-secondary" href="{% url 'use_cases:ap2_decision_surface' use_case.pk %}">Konsolidierte Entscheidungsgrundlage öffnen</a></p>
 {% endif %}
