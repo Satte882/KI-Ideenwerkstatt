@@ -90,6 +90,9 @@ Der Accelerator reduziert manuelle Erstbefüllung, ohne Entscheidungsrechte an e
 
 - geführte, wiederaufnehmbare Erfassung;
 - strukturierte LLM-Extraktionsvorschläge mit Quelle, Unsicherheit und Validierung;
+- bewusste, quellengebundene und editierbare Übernahme vorhandener Erkenntnisse in
+  den bestehenden direkten Use-Case-Intake und die Outcome-Vorbereitung; Unknowns,
+  Herkunft und getrennte fachliche Annahme bleiben erhalten;
 - konfliktgeschützte feldweise Übernahme;
 - strukturierte Entwurfsobjekte für Metriken, Phasen und Prozessanalyse;
 - generative, lösungsoffene Lösungsentwürfe;
@@ -102,7 +105,7 @@ Der Accelerator reduziert manuelle Erstbefüllung, ohne Entscheidungsrechte an e
 
 Der Accelerator und die neuen task-spezifischen KI-Funktionen erzeugen Entwürfe und Hinweise, **keine Freigaben, Governance-Entscheidungen, bindenden Lösungspräferenzen, automatischen Domainänderungen oder Lifecycle-Entscheidungen**.
 
-Zentrale Nachweise: #116–#125, #328 sowie #349–#351; ergänzend die Completion-Dokumente unter `docs/accelerator/`.
+Zentrale Nachweise: #116–#125, #328, #349–#351 sowie #171; ergänzend die Completion-Dokumente unter `docs/accelerator/`.
 
 ## 4. Architecture Advisor und Solution Quality Control
 
@@ -224,11 +227,10 @@ Beobachtete Produktlücken werden erst danach als eigenständige Issues beschrie
 
 # Next – priorisierte nächste Probleme
 
-Aus der Realmodell-Bestandsaufnahme #167 ist **#171: vorhandene Erkenntnisse in den bestehenden
-Formularen wiederverwenden** ausdrücklich priorisiert. Die Übernahme erfolgt bewusst,
-quellengebunden und editierbar in der Outcome-Vorbereitung und im direkten Use-Case-Intake.
-Unbekannte Angaben bleiben offen; ein zusätzlicher KI-Task oder neuer Einstieg ist dafür
-nicht vorgesehen. Fachliche Annahme, Lösungswahl und Freigaben bleiben getrennte Aktionen.
+Die aus #167 priorisierte Kontextübernahme ist mit #171 im bestehenden Aufnahme- und
+Outcome-Pfad umgesetzt. Weitere Produktänderungen werden aus der getrennten menschlichen
+Abnahme #161 oder aus neuen belegten Problemen abgeleitet. Ein zusätzlicher Outcome-KI-Task
+oder fünfter Einstieg ist weiterhin nicht begründet.
 
 # Later – strategische Optionen
 
