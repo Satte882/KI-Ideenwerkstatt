@@ -302,7 +302,7 @@ def test_guided_capture_through_human_adoption_and_source_readiness(owner, busin
             return_value=provider_result(payload),
         ):
             run = generate_solution_preview(actor=owner, process_analysis_id=process.pk)
-        assert (run.generation_schema_version, run.prompt_version) == ("2.0", "2.0")
+        assert (run.generation_schema_version, run.prompt_version) == context.generation_versions
         adopt_solution_generation_bundle(actor=owner, run_id=run.pk)
         assert process.solution_options.count() == 3
         assert set(process.solution_options.values_list("evaluation_status", flat=True)) == {

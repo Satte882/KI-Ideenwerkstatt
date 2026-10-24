@@ -226,7 +226,9 @@ def validate_solution_repair_payload(
         candidate["options"][target.option][target.field] = deepcopy(raw_by_target[target])
 
     try:
-        validated_candidate = validate_solution_generation_payload(candidate, source_context)
+        validated_candidate = validate_solution_generation_payload(
+            candidate, source_context, allow_historical=True
+        )
     except SolutionGenerationContractError as exc:
         raise SolutionRepairPayloadError(exc.errors) from exc
 

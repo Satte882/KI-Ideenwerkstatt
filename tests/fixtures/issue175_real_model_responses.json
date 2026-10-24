@@ -1,0 +1,1434 @@
+{
+  "classification": "synthetic; recorded real provider responses on 2026-10-24; no real business evidence",
+  "issue": "https://github.com/Satte882/KI-Ideenwerkstatt/issues/175#issuecomment-6385402318",
+  "cases": {
+    "A": {
+      "original_run_id": "6b62320e-9dc8-4693-8395-057b29cfeb9e",
+      "source_hash": "5172dc2d1b9e09a0c5b7d1af7a3d2e4c2b6bfb90041bfec9f5de086ffafa06e9",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "preview_payload": {
+        "edits": {},
+        "options": {
+          "assistant": {
+            "name": {
+              "text": "Beobachtung: Der Prozess heisst Serviceanfrage vorbereiten. Ursachenhypothese: Ein Assistenzsystem koennte die Suche nach Anlagenangaben unterstuetzen. Bestaetigte Ursache: keine reale; KI-Zusatznutzen ist nicht belegt.",
+              "source_ids": [
+                "process.name",
+                "process.bottlenecks",
+                "process.confirmed_causes"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "KI-Zusatznutzen nicht belegt."
+              ]
+            },
+            "risks": {
+              "text": "Beobachtung: Kein Versand und keine Vertragszusage ohne menschliche Freigabe. Ursachenhypothese: Assistenzvorschlaege koennen falsch sein. Bestaetigte Ursache: keine reale; Datenqualitaet und Machbarkeit ungeprueft.",
+              "source_ids": [
+                "process.business_rules",
+                "value_stream.constraints",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Vorschlagsqualitaet nicht belegt."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Servicekoordination sucht Anlagenangaben und klaert fehlende Angaben mit Vertrieb. Ursachenhypothese: Ein Assistenzsystem koennte Vorschlaege liefern. Bestaetigte Ursache: keine reale; ein einfacher Klaerweg kann ausreichen.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "process.bottlenecks"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Vergleich zum einfachen Klaerweg fehlt."
+              ]
+            },
+            "expected_value": {
+              "text": "Beobachtung: Die Initiative nennt wirtschaftlich tragfaehige Servicevertraege, Wirkung unbekannt. Ursachenhypothese: Assistenz koennte passende Angebote erleichtern. Bestaetigte Ursache: keine; Nutzenkennzahl und KI-Zusatznutzen fehlen.",
+              "source_ids": [
+                "initiative.business_outcome",
+                "initiative.impact_hypothesis",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Nutzenkennzahl fehlt."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind vorhanden, konkrete Schnittstellen unbekannt. Ursachenhypothese: Assistenz koennte in bestehende Systeme eingebettet werden. Bestaetigte Ursache: keine reale; Architekturfit bleibt bedingt.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "discovery_path.path"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Architekturwirkung nicht belegt."
+              ]
+            },
+            "data_requirements": {
+              "text": "Beobachtung: Benoetigt werden Serviceanfrage, Anlagenliste und Vertragsmuster. Ursachenhypothese: Assistenz braucht zugaengliche, strukturierte Angaben. Bestaetigte Ursache: keine reale; Datenqualitaet ungeprueft.",
+              "source_ids": [
+                "process.data_objects",
+                "process.constraints",
+                "process.diagnostic_observations"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Datenqualitaet ungeprueft."
+              ]
+            },
+            "application_impact": {
+              "text": "Beobachtung: Die Abwicklung umfasst Lesen, Suchen, Klaeren und Entwurfvorbereitung. Ursachenhypothese: Assistenz koennte Such- und Klaerschritte unterstuetzen. Bestaetigte Ursache: keine reale; keine Anwendungsbewertung.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "process.bottlenecks"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Anwendungswirkung nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind beteiligt, Schnittstellen unbekannt. Ursachenhypothese: Assistenz koennte auf vorhandenen Systemen aufsetzen. Bestaetigte Ursache: keine reale; keine Aufwandsbewertung.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.business_rules"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Schnittstellen unbekannt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Beobachtung: Der Discovery-Pfad ist problem; synthetischer Testbefund nennt wiederholte Suche nach Anlagenangaben. Ursachenhypothese: Assistenz koennte die Suche unterstuetzen. Bestaetigte Ursache: keine reale; ein strategisches Potenzial ist nicht belegt.",
+              "source_ids": [
+                "process.bottlenecks",
+                "process.confirmed_causes",
+                "discovery_path.path"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Realer Engpass nicht belegt."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Beobachtung: Standardfunktionen und Schnittstellen unbekannt; Datenqualitaet ungeprueft. Ursachenhypothese: KI-Assistenz koennte Zusatznutzen bieten. Bestaetigte Ursache: keine reale; einfacher Klaerweg ist nicht ausgeschlossen.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.business_rules"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "KI-Zusatznutzen nicht belegt."
+              ]
+            }
+          },
+          "organizational": {
+            "name": {
+              "text": "Beobachtung: Der Prozess heisst Serviceanfrage vorbereiten. Ursachenhypothese: Eine organisatorische Klaerung der Datenverantwortung koennte die Vorbereitung strukturieren. Bestaetigte Ursache: keine reale, nur synthetisch definierter Testkontext ohne Fachanwenderabnahme.",
+              "source_ids": [
+                "process.name",
+                "process.confirmed_causes",
+                "discovery_path.origin_basis"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Reale Ursache und Fachanwenderabnahme fehlen."
+              ]
+            },
+            "risks": {
+              "text": "Beobachtung: Wirtschaftlichkeit, Datenqualitaet und technische Machbarkeit sind ungeprueft. Ursachenhypothese: Unklare Zustaendigkeit koennte Risiken verstaerken. Bestaetigte Ursache: keine reale; Fachanwenderabnahme fehlt.",
+              "source_ids": [
+                "process.constraints",
+                "discovery_path.origin_basis"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Fachanwenderabnahme fehlt."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Servicekoordination liest die Anfrage, sucht Anlagenangaben in CRM und Dokumentenablage und klaert fehlende Angaben mit Vertrieb. Ursachenhypothese: Unklare Zustaendigkeit oder verteilte Angaben koennten die Vorbereitung verzoegern. Bestaetigte Ursache: keine reale; der Testbefund ist synthetisch.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "process.diagnostic_observations"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Zustaendigkeiten und Datenverteilung sind nicht real belegt."
+              ]
+            },
+            "expected_value": {
+              "text": "Beobachtung: Die Initiative nennt wirtschaftlich tragfaehige Servicevertraege, die Wirkung ist unbekannt. Ursachenhypothese: Bessere Vorbereitung koennte passende Angebote erleichtern. Bestaetigte Ursache: keine; es fehlt eine belegte Nutzenkennzahl.",
+              "source_ids": [
+                "initiative.business_outcome",
+                "initiative.impact_hypothesis",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Nutzenkennzahl fehlt."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Beobachtung: Der Prozess nutzt CRM und Dokumentenablage; der Discovery-Pfad ist problem. Ursachenhypothese: Organisatorische Klaerung koennte ohne neue Systemrolle auskommen. Bestaetigte Ursache: keine reale; Architekturfit bleibt bedingt.",
+              "source_ids": [
+                "process.systems",
+                "discovery_path.path",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Architekturwirkung nicht belegt."
+              ]
+            },
+            "data_requirements": {
+              "text": "Beobachtung: Benoetigt werden Serviceanfrage, Anlagenliste und Vertragsmuster. Ursachenhypothese: Verteile Datenhaltung koennte fehlende Angaben verursachen. Bestaetigte Ursache: keine reale; Datenqualitaet ist ungeprueft.",
+              "source_ids": [
+                "process.data_objects",
+                "process.diagnostic_observations",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Datenqualitaet ungeprueft."
+              ]
+            },
+            "application_impact": {
+              "text": "Beobachtung: Die Fachabwicklung umfasst Lesen, Suchen, Klaeren und Entwurfvorbereitung. Ursachenhypothese: Organisatorische Klaerung koennte Uebergaben vereinfachen. Bestaetigte Ursache: keine reale; die Ablaufsicht ist synthetisch.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "process.scope_end"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Reale Ablaufwirkung nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind beteiligt, konkrete Schnittstellen sind unbekannt. Ursachenhypothese: Klarere Zustaendigkeit koennte Uebergaben zwischen Rollen reduzieren. Bestaetigte Ursache: keine reale; keine Integrationsaufwandsbewertung.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.roles"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Schnittstellen unbekannt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Beobachtung: Der Discovery-Pfad ist problem; synthetischer Testbefund nennt wiederholte Suche nach Anlagenangaben. Ursachenhypothese: Verteilte Anlagenangaben erfordern wiederholte Suche. Bestaetigte Ursache: keine reale; ein strategisches Potenzial ist nicht belegt.",
+              "source_ids": [
+                "process.bottlenecks",
+                "process.confirmed_causes",
+                "discovery_path.path"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Realer Engpass nicht belegt."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind vorhanden, Standardfunktionen und Schnittstellen unbekannt. Ursachenhypothese: Vorhandene Systeme koennten die Klaerung unterstuetzen. Bestaetigte Ursache: keine reale; technische Machbarkeit ungeprueft.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Standardfunktionen unbekannt."
+              ]
+            }
+          },
+          "rule_automation": {
+            "name": {
+              "text": "Beobachtung: Der Prozess heisst Serviceanfrage vorbereiten. Ursachenhypothese: Eine regelbasierte Suche oder Checkliste koennte wiederholte Suche reduzieren. Bestaetigte Ursache: keine reale, nur synthetischer Testkontext.",
+              "source_ids": [
+                "process.name",
+                "process.bottlenecks",
+                "process.confirmed_causes"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Reale Ursache fehlt."
+              ]
+            },
+            "risks": {
+              "text": "Beobachtung: Kein Versand und keine Vertragszusage ohne menschliche Freigabe. Ursachenhypothese: Falsche Regeln koennten Entwuerfe verfaelschen. Bestaetigte Ursache: keine reale; Datenqualitaet und Machbarkeit ungeprueft.",
+              "source_ids": [
+                "process.business_rules",
+                "value_stream.constraints",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Regelqualitaet nicht belegt."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Anlagenangaben liegen in CRM und Dokumentenablage; konkrete Standardfunktionen sind unbekannt. Ursachenhypothese: Vorhandene Standardsoftware koennte die benoetigte Such- oder Regelunterstuetzung bereits bieten. Bestaetigte Ursache: keine reale; eigene Automation ist nicht vorgegeben.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.bottlenecks"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Standardfunktionsumfang unbekannt."
+              ]
+            },
+            "expected_value": {
+              "text": "Beobachtung: Die Initiative nennt wirtschaftlich tragfaehige Servicevertraege, Wirkung unbekannt. Ursachenhypothese: Regelbasierte Unterstuetzung koennte passende Angebote erleichtern. Bestaetigte Ursache: keine; Nutzenkennzahl fehlt.",
+              "source_ids": [
+                "initiative.business_outcome",
+                "initiative.impact_hypothesis",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Nutzenkennzahl fehlt."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind vorhanden, konkrete Schnittstellen unbekannt. Ursachenhypothese: Vorhandene Standardsoftware koennte Regelunterstuetzung bieten. Bestaetigte Ursache: keine reale; Architekturfit bleibt bedingt.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "discovery_path.path"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Architekturwirkung nicht belegt."
+              ]
+            },
+            "data_requirements": {
+              "text": "Beobachtung: Benoetigt werden Serviceanfrage, Anlagenliste und Vertragsmuster. Ursachenhypothese: Regelbasierte Suche braucht strukturierte Anlagenangaben. Bestaetigte Ursache: keine reale; Datenqualitaet ungeprueft.",
+              "source_ids": [
+                "process.data_objects",
+                "process.constraints",
+                "process.diagnostic_observations"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Datenqualitaet ungeprueft."
+              ]
+            },
+            "application_impact": {
+              "text": "Beobachtung: Die Abwicklung umfasst Lesen, Suchen, Klaeren und Entwurfvorbereitung. Ursachenhypothese: Regeln koennten den Suchschritt unterstuetzen. Bestaetigte Ursache: keine reale; keine Anwendungsbewertung.",
+              "source_ids": [
+                "process.current_flow",
+                "process.bottlenecks",
+                "process.roles"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Anwendungswirkung nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Beobachtung: CRM und Dokumentenablage sind beteiligt, Schnittstellen unbekannt. Ursachenhypothese: Regelbasierte Funktion koennte in vorhandener Standardsoftware liegen. Bestaetigte Ursache: keine reale; keine Aufwandsbewertung.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.business_rules"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Schnittstellen unbekannt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Beobachtung: Der Discovery-Pfad ist problem; synthetischer Testbefund nennt wiederholte Suche nach Anlagenangaben. Ursachenhypothese: Eine Standardsoftware-Regel koennte die Suche abdecken. Bestaetigte Ursache: keine reale; Abdeckung bleibt bedingt.",
+              "source_ids": [
+                "process.bottlenecks",
+                "process.confirmed_causes",
+                "discovery_path.path"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Realer Engpass nicht belegt."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Beobachtung: Standardfunktionen und Schnittstellen unbekannt; Datenqualitaet ungeprueft. Ursachenhypothese: Vorhandene Standardsoftware koennte die Funktion bereits bieten. Bestaetigte Ursache: keine reale; eigene Automation ist keine Vorgabe.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints",
+                "process.business_rules"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Synthetische, nicht validierte Quellenlage."
+              },
+              "open_evidence": [
+                "Standardfunktionsumfang unbekannt."
+              ]
+            }
+          }
+        },
+        "prompt_version": "2.0",
+        "schema_version": "2.0",
+        "source_context": {
+          "facts": [
+            {
+              "field": "name",
+              "value": "[SYNTHETISCH #175 A] Serviceanfrage vorbereiten",
+              "source_id": "process.name"
+            },
+            {
+              "field": "scope_start",
+              "value": "Serviceanfrage liegt vor",
+              "source_id": "process.scope_start"
+            },
+            {
+              "field": "scope_end",
+              "value": "Angebotsentwurf ist zur fachlichen Pruefung vorbereitet",
+              "source_id": "process.scope_end"
+            },
+            {
+              "field": "trigger",
+              "value": "Kunde fragt Service an",
+              "source_id": "process.trigger"
+            },
+            {
+              "field": "outcome",
+              "value": "Pruefbarer Angebotsentwurf",
+              "source_id": "process.outcome"
+            },
+            {
+              "field": "current_flow",
+              "value": "Servicekoordination liest Anfrage, sucht Anlagenangaben im CRM und in der Dokumentenablage, klaert fehlende Angaben mit Vertrieb und bereitet den Entwurf vor.",
+              "source_id": "process.current_flow"
+            },
+            {
+              "field": "roles",
+              "value": "Servicekoordination und Vertrieb; Vertrieb prueft den Entwurf.",
+              "source_id": "process.roles"
+            },
+            {
+              "field": "systems",
+              "value": "CRM und Dokumentenablage; konkrete Schnittstellen und Standardfunktionen unbekannt.",
+              "source_id": "process.systems"
+            },
+            {
+              "field": "data_objects",
+              "value": "Synthetische Serviceanfrage, Anlagenliste und Vertragsmuster",
+              "source_id": "process.data_objects"
+            },
+            {
+              "field": "bottlenecks",
+              "value": "Synthetischer Testbefund A: Wiederholte Suche nach Anlagenangaben verzoegert die Vorbereitung.",
+              "source_id": "process.bottlenecks"
+            },
+            {
+              "field": "baseline_metrics",
+              "value": "SYNTHETISCHER TESTBELEG A, keine Unternehmensmessung: 12 konstruierte Anfragen, je 18 Minuten Suchzeit. Nur Ausgangswert; kein Verbesserungsziel oder Wirkungsnachweis.",
+              "source_id": "process.baseline_metrics"
+            },
+            {
+              "field": "business_rules",
+              "value": "Kein Versand und keine Vertragszusage ohne menschliche Freigabe.",
+              "source_id": "process.business_rules"
+            },
+            {
+              "field": "diagnostic_observations",
+              "value": "Nur fiktive Fallakte A: benoetigte Anlagenangaben sind auf CRM und Ablage verteilt.",
+              "source_id": "process.diagnostic_observations"
+            },
+            {
+              "field": "confirmed_causes",
+              "value": "Im synthetischen Testkontext A definiert: verteilte Anlagenangaben erfordern wiederholte Suche. Kein realer Ursachenbeleg.",
+              "source_id": "process.confirmed_causes"
+            },
+            {
+              "field": "constraints",
+              "value": "Wirtschaftlichkeit, Datenqualitaet und technische Machbarkeit sind ungeprueft.",
+              "source_id": "process.constraints"
+            },
+            {
+              "field": "name",
+              "value": "Serviceanfrage vorbereiten",
+              "source_id": "stage.name"
+            },
+            {
+              "field": "constraints",
+              "value": "Ausschliesslich synthetische Daten. Fachliche Freigabe bleibt beim Menschen. Keine automatische Kundenkommunikation.",
+              "source_id": "value_stream.constraints"
+            },
+            {
+              "field": "business_outcome",
+              "value": "Wirtschaftlich tragfaehige Servicevertraege gewinnen; Wirkung unbekannt.",
+              "source_id": "initiative.business_outcome"
+            },
+            {
+              "field": "contribution",
+              "value": "Qualifizierte Serviceanfragen nachvollziehbar vorbereiten.",
+              "source_id": "initiative.contribution"
+            },
+            {
+              "field": "impact_hypothesis",
+              "value": "Bessere Vorbereitung koennte passende Angebote erleichtern; unbestaetigte Hypothese.",
+              "source_id": "initiative.impact_hypothesis"
+            },
+            {
+              "field": "evaluation_criteria",
+              "value": "Qualitaet der Vorbereitung und wirtschaftlichen Beitrag getrennt pruefen.",
+              "source_id": "initiative.evaluation_criteria"
+            },
+            {
+              "field": "evidence_level",
+              "value": "hypothesis",
+              "source_id": "initiative.evidence_level"
+            },
+            {
+              "field": "outcome_revision",
+              "value": "1",
+              "source_id": "initiative.outcome_revision"
+            },
+            {
+              "field": "id",
+              "value": "1",
+              "source_id": "discovery_path.id"
+            },
+            {
+              "field": "revision",
+              "value": "1",
+              "source_id": "discovery_path.revision"
+            },
+            {
+              "field": "path",
+              "value": "problem",
+              "source_id": "discovery_path.path"
+            },
+            {
+              "field": "origin_basis",
+              "value": "Simulation durch Testrolle Business Owner fuer #175 A; synthetische Fallakte, keine Fachanwenderabnahme.",
+              "source_id": "discovery_path.origin_basis"
+            }
+          ],
+          "process_version": 1,
+          "validation_state": "not_validated",
+          "source_schema_version": "block7_sources_v2"
+        }
+      },
+      "quality_runs": [
+        {
+          "id": "7bae3e03-0f3d-4e75-b854-40dc25c41548",
+          "step_type": "initial_critic",
+          "status": "success",
+          "model_name": "google/gemini-3.6-flash",
+          "prompt_version": "2.1",
+          "output_schema_version": "1.0",
+          "input_hash": "41287a073bb054568165f6baa5608ab024f3d6cbb99955d7225614d1beb41a00",
+          "result_payload": {
+            "findings": [],
+            "prompt_version": "2.1",
+            "schema_version": "1.0"
+          }
+        }
+      ]
+    },
+    "B": {
+      "original_run_id": "d4460242-dce4-4fee-8a5f-503272bafce2",
+      "source_hash": "fd18ba28b291fe023d608edbad4ade4ce61eeee9165d5b71dc46602fe34c2a4a",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "preview_payload": {
+        "edits": {},
+        "options": {
+          "assistant": {
+            "name": {
+              "text": "Assistenzsystem: KI-gestützte Unterstützung der Anfragevorbereitung.",
+              "source_ids": [
+                "process.name",
+                "discovery_path.strategic_potential"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Nutzen und Ursache sind nicht belegt."
+              },
+              "open_evidence": [
+                "Belegter Zusatznutzen gegenüber einem einfachen Klärweg fehlt."
+              ]
+            },
+            "risks": {
+              "text": "Risiko: KI-Unterstützung auf nur vermuteter Ursache ohne belegten Zusatznutzen sowie Abhängigkeit von Beispieldaten. Menschliche Freigabe und ausschließlich synthetische Daten bleiben verbindlich.",
+              "source_ids": [
+                "initiative.evidence_level",
+                "process.business_rules",
+                "value_stream.constraints"
+              ],
+              "assumptions": [
+                "Abhängigkeit von Beispieldaten wird angenommen, ist nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Evidenzstand ist Hypothese und Ursache unbestätigt."
+              },
+              "open_evidence": [
+                "Zusatznutzen von KI ist nicht belegt."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Die Vorbereitung erfolgt manuell durch Servicekoordination mit Klärung fehlender Angaben bei Vertrieb. Ursachenhypothese: Such- und Klärungsaufwand erschwert die Vorbereitung; nicht bestätigt. Ein KI-Assistenzsystem hat gegenüber einem einfachen Klärweg oder einer vorhandenen Standardfunktion keinen belegten Zusatznutzen.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "process.systems",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [
+                "Die Ursachenhypothese Such- und Klärungsaufwand ist nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Nur die Beobachtung ist belegt, Ursache und Zusatznutzen nicht."
+              },
+              "open_evidence": [
+                "Es fehlt Evidenz für einen Zusatznutzen von KI."
+              ]
+            },
+            "expected_value": {
+              "text": "Erwarteter Nutzen rein qualitativ und bedingt: mögliche Unterstützung bei Suche und Formulierung des Entwurfs. Qualität der Vorbereitung und wirtschaftlicher Beitrag sind laut Initiative getrennt zu prüfen. Ohne belegte Ursache bleibt der Nutzen offen.",
+              "source_ids": [
+                "initiative.contribution",
+                "initiative.impact_hypothesis",
+                "initiative.evaluation_criteria"
+              ],
+              "assumptions": [
+                "Der Nutzen wird nur als unbestätigte Hypothese angenommen."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Nutzenaussage stützt sich nur auf eine unbestaetigte Wirkhypothese."
+              },
+              "open_evidence": [
+                "Keine belegte Nutzen- oder Zielkennzahl in den Quellen."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Die Option wäre eine Assistenzschicht vor der menschlichen Prüfung; CRM und Dokumentenablage bleiben die Systeme. Ihre Passung ist bedingt, weil Standardfunktionen unbekannt sind und ein Zusatznutzen nicht belegt ist.",
+              "source_ids": [
+                "process.systems",
+                "process.business_rules",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Passung hängt von unbekannten Standardfunktionen und unbelegtem Nutzen ab."
+              },
+              "open_evidence": [
+                "Standardfunktionen unbekannt; Zusatznutzen unbelegt."
+              ]
+            },
+            "data_requirements": {
+              "text": "Die Option nutzt die synthetische Serviceanfrage, die Anlagenliste und Vertragsmuster. Für einen Assistenzbetrieb wären zusätzliche Beispieldaten und Freigaberegeln offen; sie sind nicht belegt.",
+              "source_ids": [
+                "process.data_objects",
+                "process.business_rules",
+                "value_stream.constraints"
+              ],
+              "assumptions": [
+                "Zusätzlicher Bedarf an Beispieldaten wird angenommen, ist nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Datenobjekte sind benannt, der Zusatzbedarf nur angenommen."
+              },
+              "open_evidence": [
+                "Datenqualität und Eignung von Beispieldaten sind ungeprüft."
+              ]
+            },
+            "application_impact": {
+              "text": "Beobachtung: Wirkung auf die Rolle Servicekoordination als Vorschlagsunterstützung. Die fachliche Prüfung durch Vertrieb und die menschliche Freigabe bleiben unverändert; keine automatische Kundenkommunikation.",
+              "source_ids": [
+                "process.roles",
+                "process.business_rules",
+                "value_stream.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Beobachtung ist belegt, die Wirkung auf die Vorbereitung aber nicht."
+              },
+              "open_evidence": [
+                "Qualitätseffekt der Assistenz ist nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Die Option müsste an CRM und Dokumentenablage angebunden werden; konkrete Schnittstellen und Standardfunktionen sind unbekannt. Ob ein einfacher Klärweg die Aufgabe bereits löst, ist offen.",
+              "source_ids": [
+                "process.systems"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Systemlandschaft und Alternative sind nicht belegt."
+              },
+              "open_evidence": [
+                "Schnittstellen unbekannt; Nutzen gegenüber einem einfachen Klärweg unbelegt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Im strategischen Pfad ist kein Engpass beobachtet; die Option deckt bedingt das strategische Potenzial und den Validierungsschritt ab. Eine KI-Unterstützung heilt eine nur vermutete Ursache nicht nachweislich.",
+              "source_ids": [
+                "discovery_path.path",
+                "discovery_path.strategic_potential",
+                "discovery_path.validation_step"
+              ],
+              "assumptions": [
+                "Bedingte Abdeckung wird angenommen, weil kein beobachteter Engpass dokumentiert ist."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Strategisches Potenzial ist keine bestätigte Ursache und keine Baseline."
+              },
+              "open_evidence": [
+                "Baseline ist nicht vorhanden."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Technische Machbarkeit, Datenqualität und Wirtschaftlichkeit sind ungeprüft. Die Quellen nennen nur CRM und Dokumentenablage ohne bekannte Standardfunktionen.",
+              "source_ids": [
+                "process.constraints",
+                "process.systems"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Keine geprüfte technische oder wirtschaftliche Grundlage vorhanden."
+              },
+              "open_evidence": [
+                "Technische Machbarkeit ist ungeprüft."
+              ]
+            }
+          },
+          "organizational": {
+            "name": {
+              "text": "Organisatorische Klärung: Zuständigkeit und Übergabe zwischen Servicekoordination und Vertrieb für die Anfragevorbereitung.",
+              "source_ids": [
+                "process.name",
+                "process.roles",
+                "discovery_path.path"
+              ],
+              "assumptions": [
+                "Es wird angenommen, dass die Klärung fehlender Angaben ohne feste Übergaberegel erfolgt; dies ist nicht bestätigt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Der strategische Pfad hat keinen belegten Engpass und keine bestätigte Ursache."
+              },
+              "open_evidence": [
+                "Beobachtete Übergaben und Zuständigkeiten im Ablauf sind nicht dokumentiert."
+              ]
+            },
+            "risks": {
+              "text": "Risiko: die organisatorische Klärung heilt eine nur vermutete Ursache nicht nachweislich. Weiter gelten ausschließlich synthetische Daten, keine automatische Kundenkommunikation und menschliche Freigabe.",
+              "source_ids": [
+                "process.business_rules",
+                "value_stream.constraints",
+                "initiative.evidence_level"
+              ],
+              "assumptions": [
+                "Es wird angenommen, dass die Ursache unklar bleibt, bis sie belegt ist."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Ursache ist unbelegt und der Evidenzstand ist niedrig."
+              },
+              "open_evidence": [
+                "Der Evidenzstand der Initiative ist lediglich Hypothese."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Servicekoordination liest die Anfrage, sucht Anlagenangaben im CRM und in der Dokumentenablage und klärt fehlende Angaben mit Vertrieb. Ursachenhypothese: unklare Zuständigkeiten und Übergaben zwischen Servicekoordination und Vertrieb; nicht bestätigt. Der Validierungsschritt sieht vor, an synthetischen Anfragen mit Servicekoordination zu prüfen, ob die Vorbereitung brauchbar ist.",
+              "source_ids": [
+                "process.current_flow",
+                "process.roles",
+                "discovery_path.validation_step",
+                "discovery_path.origin_basis"
+              ],
+              "assumptions": [
+                "Unklare Übergaben werden als mögliche Ursache angenommen, sind aber nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Beobachtung ist belegt, die Ursachenhypothese nicht bestätigt."
+              },
+              "open_evidence": [
+                "Eine bestätigte Ursache für die heutige Vorbereitung fehlt."
+              ]
+            },
+            "expected_value": {
+              "text": "Erwarteter Nutzen rein qualitativ: klarere Zuständigkeit und nachvollziehbarere Klärung fehlender Angaben bis zu einem prüfbaren Angebotsentwurf. Wirtschaftlich tragfähige Serviceverträge sind das Ziel der Initiative, die Wirkung ist unbekannt und gesondert zu prüfen.",
+              "source_ids": [
+                "initiative.contribution",
+                "initiative.business_outcome",
+                "initiative.evaluation_criteria",
+                "process.outcome"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Nutzenaussage ist qualitativ und ohne Kennzahl belegt."
+              },
+              "open_evidence": [
+                "Keine belegte Nutzen- oder Zielkennzahl in den Quellen."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Die Option ordnet Zuständigkeiten im bestehenden Ablauf mit Servicekoordination und Vertrieb ein. Eine Systemarchitektur wird nicht vorausgesetzt, weil die Standardfunktionen unbekannt sind.",
+              "source_ids": [
+                "process.roles",
+                "process.systems"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Passung zum Ablauf ist ableitbar, die Systemseite bleibt offen."
+              },
+              "open_evidence": []
+            },
+            "data_requirements": {
+              "text": "Die Option nutzt die vorhandenen Datenobjekte synthetische Serviceanfrage, Anlagenliste und Vertragsmuster sowie die Klärung fehlender Angaben durch die Rollen. Zusätzliche Datenquellen werden nicht belegt benötigt.",
+              "source_ids": [
+                "process.data_objects",
+                "process.current_flow",
+                "process.roles"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "low",
+                "reason": "Datenobjekte und Rollen sind in den Quellen benannt."
+              },
+              "open_evidence": []
+            },
+            "application_impact": {
+              "text": "Die Änderung wirkt auf die Rollen Servicekoordination und Vertrieb und auf die fachliche Prüfung des Entwurfs. Versand und Vertragszusage bleiben ohne menschliche Freigabe ausgeschlossen.",
+              "source_ids": [
+                "process.roles",
+                "process.business_rules",
+                "value_stream.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Rolleneffekt ist belegt, Qualitätswirkung nicht."
+              },
+              "open_evidence": [
+                "Wirkung auf die Vorbereitungsqualität ist nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Organisatorische Klärung verändert vor allem Zuständigkeiten und Übergaben; der Systembezug bleibt CRM und Dokumentenablage. Schnittstellen und Standardfunktionen sind unbekannt.",
+              "source_ids": [
+                "process.systems",
+                "process.roles"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Systemseite ist nicht beschrieben, Rollenseite ist belegt."
+              },
+              "open_evidence": [
+                "Konkrete Schnittstellen und Standardfunktionen sind unbekannt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Im strategischen Pfad ist kein Engpass beobachtet; die Option deckt bedingt das strategische Potenzial ab, zusätzliche geeignete Serviceangebote durch bessere Anfragevorbereitung zu erkunden. Sie berührt den Validierungsschritt an synthetischen Anfragen, ohne Ursache oder Baseline zu belegen.",
+              "source_ids": [
+                "discovery_path.path",
+                "discovery_path.strategic_potential",
+                "discovery_path.validation_step"
+              ],
+              "assumptions": [
+                "Bedingte Abdeckung wird angenommen, weil kein beobachteter Engpass dokumentiert ist."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Strategisches Potenzial ist keine bestätigte Ursache und keine Baseline."
+              },
+              "open_evidence": [
+                "Baseline ist nicht vorhanden."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Technische Restriktionen sind nicht belegt; die Quellen nennen lediglich CRM und Dokumentenablage mit unbekannten Schnittstellen. Wirtschaftlichkeit, Datenqualität und technische Machbarkeit sind ungeprüft.",
+              "source_ids": [
+                "process.systems",
+                "process.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Technische Angaben fehlen, die Offenheit ist jedoch belegt."
+              },
+              "open_evidence": [
+                "Technische Machbarkeit ist ungeprüft."
+              ]
+            }
+          },
+          "rule_automation": {
+            "name": {
+              "text": "Regelbasierte Automation mit vorrangiger Prüfung der vorhandenen Standardsoftware für Anlagenabgleich und Vollständigkeitsprüfung.",
+              "source_ids": [
+                "process.name",
+                "process.systems",
+                "process.business_rules"
+              ],
+              "assumptions": [
+                "Es wird angenommen, dass Vollständigkeitsregeln formulierbar wären; ein Regelwerk ist nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Regelwerk fehlt, Standardfunktionsumfang ist unbekannt."
+              },
+              "open_evidence": [
+                "Standardfunktionen des CRM sind unbekannt."
+              ]
+            },
+            "risks": {
+              "text": "Risiko: Automation auf nur vermuteter Ursache, Regelpflege und Fehlklassifikationen. Ausschließlich synthetische Daten und menschliche Freigabe bleiben verbindlich; Wirtschaftlichkeit und Datenqualität sind ungeprüft.",
+              "source_ids": [
+                "process.business_rules",
+                "value_stream.constraints",
+                "initiative.evidence_level",
+                "process.constraints"
+              ],
+              "assumptions": [
+                "Regelpflegeaufwand wird angenommen, ist nicht belegt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Ursache, Regelgrundlage und Wirtschaftlichkeit sind unbelegt."
+              },
+              "open_evidence": [
+                "Der Evidenzstand der Initiative ist lediglich Hypothese."
+              ]
+            },
+            "description": {
+              "text": "Beobachtung: Anlagenangaben werden im CRM und in der Dokumentenablage gesucht und fehlende Angaben mit Vertrieb geklärt. Ursachenhypothese: manuelle Suche und Medienbrüche verursachen Nacharbeit; nicht bestätigt. Vorrangig zu prüfen ist, ob die vorhandene Standardsoftware diese Funktion bereits bietet; eigene Automation ist keine Vorgabe.",
+              "source_ids": [
+                "process.current_flow",
+                "process.systems",
+                "discovery_path.origin_basis"
+              ],
+              "assumptions": [
+                "Medienbrüche als Ursache sind angenommen, nicht bestätigt."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Beobachtung ist belegt, Ursache und Standardfunktionsumfang nicht."
+              },
+              "open_evidence": [
+                "Es liegt keine bestätigte Ursache vor."
+              ]
+            },
+            "expected_value": {
+              "text": "Erwarteter Nutzen rein qualitativ: gleichbleibende Prüfung der Vollständigkeit und nachvollziehbare Vorbereitung des Angebotsentwurfs. Qualität der Vorbereitung und wirtschaftlicher Beitrag sind getrennt zu prüfen. Eine belegte Kennzahl liegt nicht vor.",
+              "source_ids": [
+                "initiative.contribution",
+                "process.outcome",
+                "initiative.evaluation_criteria"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Nutzenaussage bleibt qualitativ und ohne Kennzahl."
+              },
+              "open_evidence": [
+                "Keine belegte Nutzen- oder Zielkennzahl in den Quellen."
+              ]
+            },
+            "architecture_fit": {
+              "text": "Die Option ordnet sich an CRM und Dokumentenablage ein und lässt die Freigabe beim Menschen. Eine eigene Automationsarchitektur ist nicht vorgegeben, solange die Standardfunktionen unbekannt sind.",
+              "source_ids": [
+                "process.systems",
+                "process.business_rules"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Einordnung ist ableitbar, Architekturentscheidung bleibt offen."
+              },
+              "open_evidence": [
+                "Standardfunktionen sind unbekannt."
+              ]
+            },
+            "data_requirements": {
+              "text": "Benötigt werden die vorhandenen Datenobjekte synthetische Serviceanfrage, Anlagenliste und Vertragsmuster. Ein belastbares Regelwerk und vollständige Anlagenangaben sind nicht belegt.",
+              "source_ids": [
+                "process.data_objects",
+                "process.business_rules"
+              ],
+              "assumptions": [
+                "Es wird angenommen, dass Regeln aus vorhandenen Fachvorgaben ableitbar wären."
+              ],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Datenobjekte sind benannt, die Regelgrundlage nicht."
+              },
+              "open_evidence": [
+                "Vollständigkeit und Qualität der Datengrundlage sind ungeprüft."
+              ]
+            },
+            "application_impact": {
+              "text": "Wirkung auf die Vorbereitung des Angebotsentwurfs und auf die Rolle Servicekoordination; Vertrieb prüft weiterhin. Kein Versand und keine Vertragszusage ohne menschliche Freigabe.",
+              "source_ids": [
+                "process.roles",
+                "process.outcome",
+                "process.business_rules",
+                "value_stream.constraints"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Rolleneffekt ist belegt, der Qualitätseffekt nicht."
+              },
+              "open_evidence": [
+                "Qualitätseffekt der Regelprüfung ist nicht belegt."
+              ]
+            },
+            "integration_impact": {
+              "text": "Die Option berührt CRM und Dokumentenablage; konkrete Schnittstellen und Standardfunktionen sind unbekannt. Ob eine Integration entfällt, weil Standardfunktionen genügen, ist offen.",
+              "source_ids": [
+                "process.systems"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Systemgrenzen und vorhandene Funktionen sind nicht belegt."
+              },
+              "open_evidence": [
+                "Schnittstellen und Standardfunktionen sind unbekannt."
+              ]
+            },
+            "bottleneck_coverage": {
+              "text": "Im strategischen Pfad ist kein Engpass beobachtet; die Option deckt bedingt das strategische Potenzial und seinen Validierungsschritt ab. Ein regelbasierter Eingriff heilt eine nur vermutete Ursache nicht nachweislich.",
+              "source_ids": [
+                "discovery_path.path",
+                "discovery_path.strategic_potential",
+                "discovery_path.validation_step"
+              ],
+              "assumptions": [
+                "Bedingte Abdeckung wird angenommen, weil kein beobachteter Engpass dokumentiert ist."
+              ],
+              "uncertainty": {
+                "level": "high",
+                "reason": "Strategisches Potenzial ist keine bestätigte Ursache, Baseline fehlt."
+              },
+              "open_evidence": [
+                "Baseline ist nicht vorhanden."
+              ]
+            },
+            "technology_constraints": {
+              "text": "Wirtschaftlichkeit, Datenqualität und technische Machbarkeit sind ungeprüft. Die Quellen nennen nur CRM und Dokumentenablage ohne bekannte Schnittstellen.",
+              "source_ids": [
+                "process.constraints",
+                "process.systems"
+              ],
+              "assumptions": [],
+              "uncertainty": {
+                "level": "medium",
+                "reason": "Technische Angaben fehlen, die Offenheit ist belegt."
+              },
+              "open_evidence": [
+                "Technische Machbarkeit ist ungeprüft."
+              ]
+            }
+          }
+        },
+        "machine_repair": {
+          "patches": [
+            {
+              "field": "integration_impact",
+              "option": "assistant",
+              "statement": {
+                "text": "Ob eine Integration an CRM und Dokumentenablage erforderlich wäre, ist offen; nur falls Standardfunktionen nicht ausreichen, müssten Schnittstellen geschaffen werden, welche derzeit unbekannt sind. Ob ein einfacher Klärweg die Aufgabe bereits löst, ist unklar.",
+                "source_ids": [
+                  "process.systems"
+                ],
+                "assumptions": [
+                  "Eine technische Integration an CRM und Dokumentenablage könnte erforderlich sein, falls Standardfunktionen unzureichend sind."
+                ],
+                "uncertainty": {
+                  "level": "high",
+                  "reason": "Die Notwendigkeit einer Systemintegration sowie konkrete Schnittstellen und Standardfunktionen sind ungeklärt."
+                },
+                "open_evidence": [
+                  "Konkrete Schnittstellen und Standardfunktionen sind unbekannt; Nutzen im Vergleich zu einfachen Klärwegen ist unbewiesen."
+                ]
+              }
+            }
+          ],
+          "input_hash": "ca04d8a0d4047288128200ff70bcdcce733698d6a914fce271cc54201dbb7af7",
+          "prompt_version": "1.5",
+          "quality_run_id": "c8c93b80-d6b0-4c21-b50f-a67ac7dabb2e",
+          "schema_version": "1.0"
+        },
+        "prompt_version": "2.0",
+        "schema_version": "2.0",
+        "source_context": {
+          "facts": [
+            {
+              "field": "name",
+              "value": "[SYNTHETISCH #175 B] Serviceanfrage vorbereiten",
+              "source_id": "process.name"
+            },
+            {
+              "field": "scope_start",
+              "value": "Serviceanfrage liegt vor",
+              "source_id": "process.scope_start"
+            },
+            {
+              "field": "scope_end",
+              "value": "Angebotsentwurf ist zur fachlichen Pruefung vorbereitet",
+              "source_id": "process.scope_end"
+            },
+            {
+              "field": "trigger",
+              "value": "Kunde fragt Service an",
+              "source_id": "process.trigger"
+            },
+            {
+              "field": "outcome",
+              "value": "Pruefbarer Angebotsentwurf",
+              "source_id": "process.outcome"
+            },
+            {
+              "field": "current_flow",
+              "value": "Servicekoordination liest Anfrage, sucht Anlagenangaben im CRM und in der Dokumentenablage, klaert fehlende Angaben mit Vertrieb und bereitet den Entwurf vor.",
+              "source_id": "process.current_flow"
+            },
+            {
+              "field": "roles",
+              "value": "Servicekoordination und Vertrieb; Vertrieb prueft den Entwurf.",
+              "source_id": "process.roles"
+            },
+            {
+              "field": "systems",
+              "value": "CRM und Dokumentenablage; konkrete Schnittstellen und Standardfunktionen unbekannt.",
+              "source_id": "process.systems"
+            },
+            {
+              "field": "data_objects",
+              "value": "Synthetische Serviceanfrage, Anlagenliste und Vertragsmuster",
+              "source_id": "process.data_objects"
+            },
+            {
+              "field": "business_rules",
+              "value": "Kein Versand und keine Vertragszusage ohne menschliche Freigabe.",
+              "source_id": "process.business_rules"
+            },
+            {
+              "field": "constraints",
+              "value": "Wirtschaftlichkeit, Datenqualitaet und technische Machbarkeit sind ungeprueft.",
+              "source_id": "process.constraints"
+            },
+            {
+              "field": "name",
+              "value": "Serviceanfrage vorbereiten",
+              "source_id": "stage.name"
+            },
+            {
+              "field": "constraints",
+              "value": "Ausschliesslich synthetische Daten. Fachliche Freigabe bleibt beim Menschen. Keine automatische Kundenkommunikation.",
+              "source_id": "value_stream.constraints"
+            },
+            {
+              "field": "business_outcome",
+              "value": "Wirtschaftlich tragfaehige Servicevertraege gewinnen; Wirkung unbekannt.",
+              "source_id": "initiative.business_outcome"
+            },
+            {
+              "field": "contribution",
+              "value": "Qualifizierte Serviceanfragen nachvollziehbar vorbereiten.",
+              "source_id": "initiative.contribution"
+            },
+            {
+              "field": "impact_hypothesis",
+              "value": "Bessere Vorbereitung koennte passende Angebote erleichtern; unbestaetigte Hypothese.",
+              "source_id": "initiative.impact_hypothesis"
+            },
+            {
+              "field": "evaluation_criteria",
+              "value": "Qualitaet der Vorbereitung und wirtschaftlichen Beitrag getrennt pruefen.",
+              "source_id": "initiative.evaluation_criteria"
+            },
+            {
+              "field": "evidence_level",
+              "value": "hypothesis",
+              "source_id": "initiative.evidence_level"
+            },
+            {
+              "field": "outcome_revision",
+              "value": "1",
+              "source_id": "initiative.outcome_revision"
+            },
+            {
+              "field": "id",
+              "value": "2",
+              "source_id": "discovery_path.id"
+            },
+            {
+              "field": "revision",
+              "value": "1",
+              "source_id": "discovery_path.revision"
+            },
+            {
+              "field": "path",
+              "value": "strategic",
+              "source_id": "discovery_path.path"
+            },
+            {
+              "field": "origin_basis",
+              "value": "Simulation durch Testrolle Business Owner fuer #175 B; synthetische Fallakte, keine Fachanwenderabnahme.",
+              "source_id": "discovery_path.origin_basis"
+            },
+            {
+              "field": "strategic_potential",
+              "value": "Strategischer Testauftrag: zusaetzliche geeignete Serviceangebote durch bessere Anfragevorbereitung erkunden; kein beobachteter Engpass, Ursache und Baseline unbekannt.",
+              "source_id": "discovery_path.strategic_potential"
+            },
+            {
+              "field": "validation_step",
+              "value": "An synthetischen Anfragen mit Servicekoordination pruefen, ob die Vorbereitung brauchbar ist; danach gesondert Geschaeftswirkung untersuchen.",
+              "source_id": "discovery_path.validation_step"
+            }
+          ],
+          "process_version": 1,
+          "validation_state": "not_validated",
+          "source_schema_version": "block7_sources_v2"
+        }
+      },
+      "quality_runs": [
+        {
+          "id": "eb2a130d-b7e5-4c84-810c-f841be2c7161",
+          "step_type": "final_critic",
+          "status": "success",
+          "model_name": "google/gemini-3.6-flash",
+          "prompt_version": "2.1",
+          "output_schema_version": "1.0",
+          "input_hash": "09607d650cd7cc654996fd5f9cb0b4143b4f83e67f9fd929a59369fbf5c7f49c",
+          "result_payload": {
+            "findings": [
+              {
+                "field": "application_impact",
+                "option": "assistant",
+                "finding": "In 'application_impact' der Option 'assistant' wird die vermutete Wirkung als Vorschlagsunterstützung fälschlicherweise als 'Beobachtung' bezeichnet. Tatsächlich ist nur der derzeitige manuelle Ablauf dokumentiert, während eine Wirkung als Assistenzsystem eine ungeprüfte Hypothese bleibt.",
+                "criterion": "evidence_discipline",
+                "finding_id": "finding_3d4b6aa44aae4fd47382b243",
+                "repairable": true,
+                "source_ids": [
+                  "process.current_flow",
+                  "process.roles"
+                ],
+                "related_targets": []
+              }
+            ],
+            "prompt_version": "2.1",
+            "schema_version": "1.0"
+          }
+        },
+        {
+          "id": "c8c93b80-d6b0-4c21-b50f-a67ac7dabb2e",
+          "step_type": "repair",
+          "status": "success",
+          "model_name": "google/gemini-3.6-flash",
+          "prompt_version": "1.5",
+          "output_schema_version": "1.0",
+          "input_hash": "ca04d8a0d4047288128200ff70bcdcce733698d6a914fce271cc54201dbb7af7",
+          "result_payload": {
+            "input_hash": "ca04d8a0d4047288128200ff70bcdcce733698d6a914fce271cc54201dbb7af7",
+            "finding_ids": [
+              "finding_e8a5f5840d07fb0631d308b9"
+            ],
+            "repair_payload": {
+              "patches": [
+                {
+                  "field": "integration_impact",
+                  "option": "assistant",
+                  "statement": {
+                    "text": "Ob eine Integration an CRM und Dokumentenablage erforderlich wäre, ist offen; nur falls Standardfunktionen nicht ausreichen, müssten Schnittstellen geschaffen werden, welche derzeit unbekannt sind. Ob ein einfacher Klärweg die Aufgabe bereits löst, ist unklar.",
+                    "source_ids": [
+                      "process.systems"
+                    ],
+                    "assumptions": [
+                      "Eine technische Integration an CRM und Dokumentenablage könnte erforderlich sein, falls Standardfunktionen unzureichend sind."
+                    ],
+                    "uncertainty": {
+                      "level": "high",
+                      "reason": "Die Notwendigkeit einer Systemintegration sowie konkrete Schnittstellen und Standardfunktionen sind ungeklärt."
+                    },
+                    "open_evidence": [
+                      "Konkrete Schnittstellen und Standardfunktionen sind unbekannt; Nutzen im Vergleich zu einfachen Klärwegen ist unbewiesen."
+                    ]
+                  }
+                }
+              ],
+              "prompt_version": "1.5",
+              "schema_version": "1.0"
+            },
+            "output_snapshot_hash": "09607d650cd7cc654996fd5f9cb0b4143b4f83e67f9fd929a59369fbf5c7f49c"
+          }
+        },
+        {
+          "id": "3e4b5f7f-e90b-41ec-beec-30999884d83b",
+          "step_type": "initial_critic",
+          "status": "success",
+          "model_name": "google/gemini-3.6-flash",
+          "prompt_version": "2.1",
+          "output_schema_version": "1.0",
+          "input_hash": "ca04d8a0d4047288128200ff70bcdcce733698d6a914fce271cc54201dbb7af7",
+          "result_payload": {
+            "findings": [
+              {
+                "field": "integration_impact",
+                "option": "assistant",
+                "finding": "Die Behauptung, das Assistenzsystem müsste an CRM und Dokumentenablage angebunden werden, stellt eine unbegründete Integrationsnotwendigkeit dar, da Schnittstellen und Standardfunktionen unbekannt sind. Die Notwendigkeit ist bedingt zu formulieren ('Ob eine Integration nötig wäre, ist offen; nur falls...').",
+                "criterion": "evidence_discipline",
+                "finding_id": "finding_e8a5f5840d07fb0631d308b9",
+                "repairable": true,
+                "source_ids": [
+                  "process.systems"
+                ],
+                "related_targets": []
+              }
+            ],
+            "prompt_version": "2.1",
+            "schema_version": "1.0"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -233,13 +233,13 @@ def build_solution_repair_plan(
             code="initial_critic_unavailable",
         )
 
-    if generation_run.prompt_version not in {"1.3", GENERATION_PROMPT_VERSION}:
+    if generation_run.prompt_version not in {"1.3", "2.0", GENERATION_PROMPT_VERSION}:
         _fail(
             "Der Generator-Prompt-Vertrag hat sich seit der Preview geändert.",
             code="repair_stale",
             stale_reason="generation_prompt_version_changed",
         )
-    if generation_run.generation_schema_version not in {"1.0", GENERATION_SCHEMA_VERSION}:
+    if generation_run.generation_schema_version not in {"1.0", "2.0", GENERATION_SCHEMA_VERSION}:
         _fail(
             "Das Generator-Schema hat sich seit der Preview geändert.",
             code="repair_stale",
