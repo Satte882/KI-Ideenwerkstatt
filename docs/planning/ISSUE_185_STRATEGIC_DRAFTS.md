@@ -42,11 +42,12 @@ Automatisiert geprüft auf PostgreSQL 17.5:
    erneutes Öffnen; keine vorherige Pfad-/Outcome-Bestätigung.
 3. GET/POST einer organisatorischen Optionshypothese, erneutes Öffnen, Bearbeiten und
    Speichern als Entwurf. Keine Bewertung oder Wirksamkeit behauptet.
-4. Vergleichsmatrix erreichbar. Ein bindender POST bleibt abgewiesen und erhält Auswahl
-   und Begründung im Formular. Ein direkter Serviceaufruf bleibt ebenfalls abgewiesen.
-5. In einer gesonderten Gegenprobe werden erst anschließend bestehende menschliche
-   Outcome-/Strategiepfad-/Phasenbestätigungen ergänzt: Auch dann blockiert weiterhin
-   das unveränderte globale Screening-Gate vor einer Lösungswahl.
+4. Erst nach dieser Entwurfsarbeit werden bestehende menschliche Outcome-/Strategiepfad-/
+   Phasenbestätigungen ergänzt. Die Vergleichsmatrix ist erreichbar. Ein bindender POST
+   bleibt abgewiesen und erhält Auswahl und Begründung im Formular. Ein direkter
+   Serviceaufruf bleibt ebenfalls abgewiesen.
+5. Das unveränderte globale Screening-Gate blockiert also weiterhin vor einer Lösungswahl;
+   zusätzlich prüft eine eigenständige Gegenprobe denselben negativen Bindungsvertrag.
 
 Ergebnis: Unverbindliche Weiterarbeit ist technisch erlaubt und automatisiert belegt.
 Ein fachlich begründeter Non-KI-Sieg, externe Umsetzung, Wirkungsreview und

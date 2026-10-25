@@ -85,6 +85,7 @@ def test_immediate_materialization_edit_save_resume_and_option_drafts(owner, cli
         "architecture:solution_option_compare", args=[process.pk]
     )
     assert not SolutionSelectionDecision.objects.exists()
+    assert_binding_stays_blocked(owner, client, process)
 
 
 def test_immediate_form_contract_without_path_confirmation(exploration):
@@ -145,7 +146,10 @@ def test_invalid_provenance_cannot_relax_guards(
 
 
 def test_binding_stays_blocked_and_preserves_inputs(owner, client, exploration):
-    process = exploration
+    assert_binding_stays_blocked(owner, client, exploration)
+
+
+def assert_binding_stays_blocked(owner, client, process):
     # Only after the immediate form path was tested above: isolate the still-binding focus gate.
     bind_process(owner, process, path="strategic")
     option = make_option(
