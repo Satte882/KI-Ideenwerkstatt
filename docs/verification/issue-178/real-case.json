@@ -1,0 +1,225 @@
+{
+  "scope": "One authorized synthetic desktop UI case; no manual retry",
+  "tested_commit": "7ce02d832db2be1baf8eb734a973fb53fae2a245",
+  "initiative_id": "661bcf31-024e-4020-b40f-deeaeeb0c045",
+  "idea_id": "e57a5aea-24a1-456e-85fd-ee7d8efda4ef",
+  "capture_session_id": "95aff57f-45ee-4550-846f-3123d9f04b80",
+  "catalog_version": "3.0",
+  "answer_schema": "1.1",
+  "frozen_human_scope": {
+    "reason": "Für diesen synthetischen Test legen wir die Anfrageklärung als vorläufigen Lernbereich fest; keine Fokusüberlegenheit nachgewiesen.",
+    "actor_id": 3,
+    "scope_end": "Vorbereitung einer begründeten Entscheidung über das Verlängerungsangebot",
+    "scope_out": "Vertragsabschluss, Preisfestlegung und Leistungserbringung",
+    "recorded_at": "2026-10-24T20:44:26.564652+00:00",
+    "scope_start": "Eingang einer Serviceanfrage zu einer Vertragsverlängerung",
+    "input_schema": "ap1-discovery-input-v1",
+    "validation_step": "Mit fachlich Verantwortlichen einen Ist-Ablauf erheben und prüfen, ob Anfrage-, Angebots- und Abschlussdaten verfügbar sind. Bis dahin bleiben Verlauf, Rollen, Systeme, Baseline und Ursachen unbekannt.",
+    "explicit_strategic": true
+  },
+  "problem_statement": "Mehr wirtschaftlich tragfähige Vertragsverlängerungen aus bestehenden Serviceanfragen erzielen. Dies ist ein synthetischer Test. Ist-Ablauf, zuständige Rollen, Systeme, Ursachen, Mengen, Baseline und Margen sind unbekannt. Keine Wirkung ist nachgewiesen.",
+  "snapshot_id": "3e586c2e-60f7-44d7-a84b-18c6ee17c8b2",
+  "snapshot_revision": 1,
+  "manifest_hash": "88ec3c1b9ddd351e29ab6e233c145fddbfa720dc189d3dd4e648644f5e872550",
+  "contract_versions": {
+    "input": "ap1-discovery-input-v1",
+    "prompt": "ap1-methodology-v15",
+    "verifier": "ap1-discovery-verifier-v2",
+    "discovery": "ap1-discovery-v3",
+    "verifier_prompt": "ap1-ver-method-v14"
+  },
+  "analysis": {
+    "id": "4666f7a4-e7d4-4c82-991c-ccbd8f37737f",
+    "status": "success",
+    "source_revision": 0,
+    "source_hash": "2290dd21f4ae87d8a37c44c1809c6f341e9b31201e9ca668be50d48f4f6483ee",
+    "provider": "openrouter",
+    "model_name": "google/gemini-3.6-flash",
+    "started_at": "2026-10-24 20:44:26.725497+00:00",
+    "finished_at": "2026-10-24 20:45:29.435205+00:00",
+    "duration_ms": 62710,
+    "prompt_tokens": 16964,
+    "completion_tokens": 10181,
+    "total_tokens": 27145,
+    "cost": "0.050902",
+    "error_code": ""
+  },
+  "provider_calls": [
+    {
+      "role": "autonomous_business_discovery_v3",
+      "model": "google/gemini-3.6-flash",
+      "usage": {
+        "cost": 0.01490775,
+        "total_tokens": 5881,
+        "prompt_tokens": 2382,
+        "reasoning_tokens": 2425,
+        "completion_tokens": 3499
+      },
+      "status": "success",
+      "attempt": 1,
+      "provider": "openrouter",
+      "started_at": "2026-10-24T20:44:26.760227+00:00",
+      "duration_ms": 17952
+    },
+    {
+      "role": "autonomous_business_discovery_verifier_v2",
+      "model": "google/gemini-3.6-flash",
+      "usage": {
+        "cost": 0.0139395,
+        "total_tokens": 7962,
+        "prompt_tokens": 5306,
+        "reasoning_tokens": 2465,
+        "completion_tokens": 2656
+      },
+      "status": "success",
+      "attempt": 1,
+      "provider": "openrouter",
+      "started_at": "2026-10-24T20:44:44.732182+00:00",
+      "duration_ms": 26775
+    },
+    {
+      "role": "autonomous_business_discovery_repair_v3",
+      "model": "google/gemini-3.6-flash",
+      "usage": {
+        "cost": 0.00826875,
+        "total_tokens": 5773,
+        "prompt_tokens": 4460,
+        "reasoning_tokens": 250,
+        "completion_tokens": 1313
+      },
+      "status": "success",
+      "attempt": 1,
+      "provider": "openrouter",
+      "started_at": "2026-10-24T20:45:11.572666+00:00",
+      "duration_ms": 6444
+    },
+    {
+      "role": "autonomous_business_discovery_verifier_v2",
+      "model": "google/gemini-3.6-flash",
+      "usage": {
+        "cost": 0.01378575,
+        "total_tokens": 7529,
+        "prompt_tokens": 4816,
+        "reasoning_tokens": 2632,
+        "completion_tokens": 2713
+      },
+      "status": "success",
+      "attempt": 1,
+      "provider": "openrouter",
+      "started_at": "2026-10-24T20:45:18.040369+00:00",
+      "duration_ms": 11368
+    }
+  ],
+  "review_history": [
+    {
+      "repair_count": 0,
+      "contract_errors": [],
+      "verifier": {
+        "checks": {
+          "focus_fit": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "source_grounding": false,
+          "unknowns_visible": true,
+          "hypothesis_separation": true,
+          "contradictions_preserved": true
+        },
+        "status": "repair",
+        "human_question": "",
+        "schema_version": "ap1-discovery-verifier-v2",
+        "critical_findings": [
+          {
+            "code": "GROUNDING_INVENTED_ROLES",
+            "message": "Das Feld 'value_stream.stakeholders' nennt 'Kundenbetreuung, Vertrieb, Fachbereich', obwohl in U0 ausdrücklich festgehalten ist, dass zuständige Rollen bisher unbekannt sind."
+          }
+        ],
+        "repair_instructions": "Entferne die unbelegten Stakeholder-Erwähnungen aus 'value_stream.stakeholders' und lasse das Feld leer (\"\"), um der Quelle U0 zu entsprechen, wonach Rollen und Beteiligte derzeit unbekannt sind."
+      }
+    },
+    {
+      "repair_count": 1,
+      "contract_errors": [],
+      "verifier": {
+        "checks": {
+          "focus_fit": true,
+          "scope_quality": true,
+          "stage_sequence": true,
+          "source_grounding": true,
+          "unknowns_visible": true,
+          "hypothesis_separation": true,
+          "contradictions_preserved": true
+        },
+        "status": "approved",
+        "human_question": "",
+        "schema_version": "ap1-discovery-verifier-v2",
+        "critical_findings": [],
+        "repair_instructions": ""
+      }
+    }
+  ],
+  "final_unknowns": [
+    {
+      "impact": "Verhindert die Identifikation von konkreten Prozessschritten und Engpässen.",
+      "statement": "Ist-Prozessverlauf, beteiligte Rollen und genutzte IT-Systeme."
+    },
+    {
+      "impact": "Verhindert eine genaue quantitative Bewertung des Potenzials.",
+      "statement": "Baseline-Kennzahlen, Fallzahlen und wirtschaftliche Margen."
+    }
+  ],
+  "final_clarifications": [
+    {
+      "kind": "evidence_collection",
+      "impact": "Erforderlich zur Erhebung von Rollen, Systemen und Prozessschritten.",
+      "blocking": false,
+      "question": "Wie verläuft der Ist-Prozess vom Anfrageeingang bis zur Entscheidungsvorbereitung im Detail?"
+    },
+    {
+      "kind": "evidence_collection",
+      "impact": "Erforderlich zur Ermittlung einer verlässlichen Baseline.",
+      "blocking": false,
+      "question": "Welche Fallzahlen, Daten und Kennzahlen stehen für diesen Bereich zur Verfügung?"
+    }
+  ],
+  "materialization_endpoint": "/accelerator/value-stream/autonomous/95aff57f-45ee-4550-846f-3123d9f04b80/review/",
+  "materialization_action": "POST action=confirm",
+  "process_id": "2ba3fe9f-3dd4-4e8c-aa3b-566624969bc3",
+  "continuity_checks": {
+    "same_initiative": true,
+    "focus_status": "candidate",
+    "ratings": {
+      "strategic_impact": "",
+      "economic_potential": "",
+      "pain_intensity": "",
+      "data_accessibility": "",
+      "change_effort": ""
+    },
+    "current_flow": "Ist-Ablauf unbekannt",
+    "baseline_metrics": "",
+    "bottlenecks": "",
+    "confirmed_causes": "",
+    "screening_blockers": [
+      "Der Value Stream muss vollständig gescreent und für die Prozessanalyse ausgewählt sein."
+    ],
+    "short_path": true,
+    "short_path_reason": "Für diesen synthetischen Test legen wir die Anfrageklärung als vorläufigen Lernbereich fest; keine Fokusüberlegenheit nachgewiesen.",
+    "selected_by": 3
+  },
+  "investigation_runs": [
+    {
+      "id": "7e976aa5-9de7-4683-9b35-be4a183c570b",
+      "status": "aborted",
+      "execution_requested_at": "2026-10-24 20:46:11.204400+00:00",
+      "usage": {
+        "tool_calls": 0,
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "verifier_calls": 0,
+        "verifier_reads": 0,
+        "provider_attempts": 0
+      },
+      "source_snapshot_id": "e3c3efa0-1fce-4f4a-813f-a83b603cf8ea"
+    }
+  ]
+}

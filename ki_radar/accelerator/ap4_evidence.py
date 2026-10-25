@@ -98,8 +98,11 @@ class FrozenValidation:
     accepted_source_hashes: Mapping[str, frozenset[str]]
 
 
-def current_contract_versions() -> dict[str, str]:
-    return {
+def current_contract_versions(catalog_version="1.0") -> dict[str, str]:
+    from . import strategic_discovery as strategic
+    from .architect_contract import discovery_versions
+
+    versions = {
         "discovery_prompt": DISCOVERY_PROMPT_VERSION,
         "discovery_schema": DISCOVERY_SCHEMA_VERSION,
         "discovery_verifier_prompt": DISCOVERY_VERIFIER_PROMPT_VERSION,
@@ -120,6 +123,15 @@ def current_contract_versions() -> dict[str, str]:
         "ap3_delivery_prompt": ap3_autonomous.PROMPT_VERSION,
         "ap3_delivery_schema": ap3_autonomous.SCHEMA_VERSION,
     }
+
+    if catalog_version != "1.0":
+        versions["discovery_schema"], versions["discovery_prompt"] = discovery_versions(
+            catalog_version
+        )
+    if catalog_version == strategic.CATALOG:
+        versions["discovery_verifier_schema"] = strategic.VERIFIER_SCHEMA
+        versions["discovery_verifier_prompt"] = strategic.VERIFIER_PROMPT
+    return versions
 
 
 def _require_text(name: str, value: object) -> str:

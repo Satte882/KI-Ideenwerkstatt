@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import shutil
 import uuid
 from pathlib import Path
@@ -42,6 +43,12 @@ def idea_origin_upload(session: CaptureSession) -> SimpleUploadedFile:
         f"Problem / Beobachtung / Ziel: {session.answers['problem_statement']}\n"
         f"Geschäftskontext: {session.answers.get('business_context', '')}\n"
         f"Quelle / ursprünglicher Einreicher: {origin['source_note']}\n"
+        + (
+            "Menschlicher strategischer Untersuchungsrahmen (kein Ist-Beleg): "
+            + json.dumps(session.answers["human_scope"], ensure_ascii=False)
+            if session.catalog_version == "3.0"
+            else ""
+        )
     ).encode()
     origin["origin_source_filename"] = filename
     origin["origin_source_sha256"] = hashlib.sha256(content).hexdigest()

@@ -14,11 +14,18 @@ from ki_radar.accelerator.catalogs import (
 
 
 def test_catalogs_are_versioned_and_contract_compatible():
-    assert set(CATALOGS) == {("value_stream", "1.0"), ("value_stream", "2.0"), ("use_case", "1.0")}
+    assert set(CATALOGS) == {
+        ("value_stream", "1.0"),
+        ("value_stream", "2.0"),
+        ("value_stream", "3.0"),
+        ("use_case", "1.0"),
+    }
 
     for catalog in CATALOGS.values():
-        assert catalog.version in {"1.0", "2.0"}
-        assert catalog.schema_version == ANSWER_SCHEMA_VERSION
+        assert catalog.version in {"1.0", "2.0", "3.0"}
+        assert catalog.schema_version == (
+            "1.1" if catalog.version == "3.0" else ANSWER_SCHEMA_VERSION
+        )
         assert catalog.sections
         assert catalog.questions
         assert catalog_contract_errors(catalog) == ()

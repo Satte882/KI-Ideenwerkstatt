@@ -29,6 +29,22 @@
   {% endif %}
 </div>
 
+{% if session.catalog_version == '3.0' %}
+<section class="cr-section mb-4" aria-label="Menschlicher Untersuchungsrahmen">
+  <h2 class="h5">Strategischer Untersuchungsentwurf – noch kein vollständiges Screening</h2>
+  <p>Ihre Bereichsentscheidung: {{ session.answers.human_scope.scope_start|default:"Beginn offen" }} → {{ session.answers.human_scope.scope_end|default:"Ende offen" }}</p>
+  <p>Begründung: {{ session.answers.human_scope.reason|default:"Noch offen" }}<br>Validierung: {{ session.answers.human_scope.validation_step|default:"Noch offen" }}</p>
+  {% if session.status == 'draft' %}
+  <details class="architecture-disclosure"{% if scope_form.errors %} open{% endif %}><summary>Ihre Bereichsentscheidung ändern und neu prüfen</summary>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="scope">{{ scope_form.non_field_errors }}
+      {% for field in scope_form %}{% if field.is_hidden %}{{ field }}{% else %}<div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endif %}{% endfor %}
+      <button class="btn btn-outline-secondary" type="submit">Geänderten Untersuchungsrahmen prüfen</button>
+    </form>
+  </details>
+  {% endif %}
+  <p>Von Ihnen vor dem Modelllauf erfasst am {{ session.answers.human_scope.recorded_at }}. Offene Screeningwerte bleiben leer. Eine Übernahme bestätigt nur den vorläufigen Untersuchungsrahmen, keine Diagnose oder Freigabe.</p>
+</section>
+{% endif %}
 {% if session.status == 'draft' and business_unit_error %}<div class="alert alert-warning" role="alert">{{ business_unit_error }}</div>{% endif %}
 {% if session.status == 'draft' and legacy_business_unit %}<p class="small text-muted">Bestehender Lauf: Als Untersuchungseinheit gilt die bisherige persönliche Zuordnung. Sie wird beim nächsten Analysestart oder bei der Übernahme für diesen Lauf festgeschrieben.</p>{% endif %}
 

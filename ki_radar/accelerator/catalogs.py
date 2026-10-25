@@ -516,6 +516,7 @@ CATALOGS: dict[tuple[CaptureType, str], CaptureCatalog] = {
     ("value_stream", CATALOG_VERSION_V1): VALUE_STREAM_CATALOG_V1,
     ("use_case", CATALOG_VERSION_V1): USE_CASE_CATALOG_V1,
     ("value_stream", CATALOG_VERSION_V2): VALUE_STREAM_CATALOG_V2,
+    ("value_stream", "3.0"): replace(VALUE_STREAM_CATALOG_V2, version="3.0", schema_version="1.1"),
 }
 CURRENT_CATALOG_VERSIONS: dict[CaptureType, str] = {
     "value_stream": CATALOG_VERSION_V2,
