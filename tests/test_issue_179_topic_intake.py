@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from html.parser import HTMLParser
 from unittest.mock import patch
 
 import pytest
@@ -33,6 +34,75 @@ from ki_radar.use_cases.topic_contract import SCHEMA, validate_intake_context
 from ki_radar.use_cases.topics import save_topic, topic_token
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.mark.parametrize("role", ["owner", "reader", "coordinator"])
+def test_inbox_entry_hierarchy_and_old_direct_save(client, request, role):
+    actor = request.getfixturevalue(role)
+    client.force_login(actor)
+
+    class Links(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.links = []
+            self.current = None
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "a":
+                self.current = {**dict(attrs), "text": ""}
+
+        def handle_data(self, data):
+            if self.current is not None:
+                self.current["text"] += data
+
+        def handle_endtag(self, tag):
+            if tag == "a" and self.current is not None:
+                self.links.append(self.current)
+                self.current = None
+
+    page = client.get(reverse("use_cases:idea_list"))
+    assert page.status_code == 200 and page.context["can_create_idea"]
+    links = Links()
+    links.feed(page.content.decode())
+    primary = next(x for x in links.links if x["text"].strip() == "Neues Thema starten")
+    direct = next(x for x in links.links if x["text"].strip() == "Idee direkt erfassen")
+    assert primary["href"] == reverse("use_cases:topic_start")
+    assert "btn-primary" in primary["class"].split()
+    assert direct["href"] == reverse("use_cases:idea_create")
+    assert "btn-primary" not in direct.get("class", "").split()
+    assert len(client.get(primary["href"]).context["occasions"]) == 3
+    old_form = client.get(direct["href"])
+    assert old_form.status_code == 200
+    assert set(old_form.context["form"].fields) == {
+        "title",
+        "description",
+        "business_unit",
+        "source_note",
+    }
+    assert not IdeaCandidate.objects.exists()
+    saved = client.post(
+        direct["href"], {"title": "Direkt erfasst", "description": "Originale Beschreibung"}
+    )
+    assert saved.status_code == 302
+    idea = IdeaCandidate.objects.get()
+    assert saved.url == idea.get_absolute_url()
+    assert idea.submitted_by == actor and idea.intake_context == {}
+    assert not CaptureSession.objects.exists() and not ImprovementInitiative.objects.exists()
+
+
+def test_inbox_creation_actions_remain_hidden_without_existing_permission(reader):
+    from django.test import RequestFactory
+    from django.urls import resolve
+
+    from ki_radar.use_cases.idea_views import idea_list
+
+    reader.is_active = False
+    request = RequestFactory().get(reverse("use_cases:idea_list"))
+    request.user = reader
+    request.resolver_match = resolve(request.path)
+    page = idea_list(request)
+    html = page.content.decode()
+    assert "Neues Thema starten" not in html and "Idee direkt erfassen" not in html
 
 
 def create(owner, occasion="problem", **kwargs):

@@ -156,6 +156,28 @@ Provider**. Seine künstlichen Usage-/Kostenfelder sind keine tatsächlichen Kos
 
 ## Gelöste Probleme und Grenzen
 
+### Konsistente Einstiege in der Ideen-Inbox
+
+Auf Folgeauftrag verwendet auch „Ideen & Probleme“ jetzt **Neues Thema starten** als
+primären Button zum vorhandenen `topic_start`. **Idee direkt erfassen** bleibt darunter
+als sichtbarer, nachgeordneter Textlink zu `idea_create`. Beide stehen weiterhin unter
+dem bestehenden `can_create_idea`-Guard. Diese Korrektur ändert ausschließlich die
+Aktionen im Inbox-Template; Datenmodell, Formulare, Discovery und Governance bleiben
+unverändert.
+
+Die Regressionen prüfen Hierarchie/Ziele der tatsächlich gerenderten Links, drei
+berechtigte Rollen (Business Owner, Leser, Koordination), das Ausblenden ohne bestehende
+Erfassungsberechtigung und das Speichern über die unveränderte alte Maske. Dort entsteht
+eine normale Idee mit leerem `intake_context`, kein Vorhaben und keine Discovery-Session.
+PostgreSQL-Lauf mit Themen-, Inbox- und Dashboard-Regressionen: **52 bestanden,
+11 Warnungen, 26,06 s**. Der isolierte RequestFactory-Test wurde um die reguläre
+Routenauflösung ergänzt; es war kein Produktfehler.
+
+Sichtbarer Browser bei 1440×1000: primärer Inbox-Button öffnet die drei Anlasskarten;
+sekundärer Link öffnet `/use-cases/ideas/new/`; dort lässt sich ein synthetischer Eintrag
+speichern. Keine Konsolenfehler oder horizontaler Überlauf (Dokumentbreite 1440 px).
+[Screenshot der korrigierten Inbox](issue-179/10-inbox-entry.png).
+
 Im neuen Testaufbau wurden ein falscher Service-Parameter/Helpername und die Annahme
 einer Anmeldung über die bestehende Sitzungsdauer hinaus korrigiert; der Folgetagstest
 meldet sich entsprechend den geltenden Regeln erneut an. Sichtbar aufgefallene
