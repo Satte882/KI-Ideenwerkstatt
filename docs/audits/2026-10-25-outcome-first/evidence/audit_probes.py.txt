@@ -1,0 +1,281 @@
+"""Read-only audit probes; synthetic repository fixtures, isolated PostgreSQL only.
+
+These assert observed behavior, including deficiencies; a green probe is not
+acceptance of that behavior. No invented measurements are added to pass gates.
+"""
+import json
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+from conftest import business_unit, coordinator, owner, technical_admin
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils import timezone
+from test_issue_146_outcome_contract import (
+    bind_process, confirmed, direct, outcome_process, select,
+)
+from test_issue_178_strategic_discovery import analyze, make_context, materialize
+
+from ki_radar.architecture.models import ProcessAnalysis, SolutionSelectionDecision
+from ki_radar.architecture.solution_selection import select_preferred_solution
+from ki_radar.delivery.services import create_delivery_package, delivery_eligibility
+from ki_radar.delivery.lean_services import mark_package_ready, hand_over_package
+from ki_radar.governance.models import GovernanceAssessment
+from ki_radar.reviews.services import create_review
+from ki_radar.use_cases.impact_reviews import save_impact_review
+from ki_radar.use_cases.initiatives import bind_initiative, save_initiative
+from ki_radar.use_cases.models import DecisionAssessment, UseCase
+from ki_radar.use_cases.outcome_contract import set_discovery_path
+from ki_radar.use_cases.services import (
+    create_use_case_from_selected_solution, submit_approval_decision,
+)
+
+pytestmark = pytest.mark.django_db
+EVIDENCE = Path(__file__).with_name('probe-evidence.jsonl')
+
+def emit(name, **data):
+    with EVIDENCE.open('a', encoding='utf-8') as stream:
+        stream.write(json.dumps({'probe': name, **data}, ensure_ascii=False, default=str) + '\n')
+
+def approve(case, coordinator, technical_admin):
+    if case.status == 'idea':
+        create_review(use_case=case, actor=coordinator, data={
+            'review_date': timezone.localdate(), 'decision': 'start_review',
+            'new_status': 'review', 'rationale': 'Entwurf zur fachlichen Pruefung vorgelegt.',
+        })
+        case.refresh_from_db()
+    if not case.decision_assessments.exists():
+        DecisionAssessment.objects.create(
+            use_case=case, assessed_by=coordinator, version=1,
+            recommendation='approved', evidence_quality=1, evidence_recency=1,
+            evidence_coverage=1, independent_review=1, assumptions_resolved=1,
+        )
+        GovernanceAssessment.objects.create(
+            use_case=case, assessment_date=timezone.localdate(),
+            basis_version='Test', result='no_flags',
+        )
+    result = submit_approval_decision(
+        use_case=case, actor=technical_admin,
+        data={'decision_status': 'approved', 'rationale': 'Unabhaengig geprueft'},
+    )
+    case.refresh_from_db()
+    return result
+
+def pilot_via_actual_routes(client, case, coordinator):
+    # Use the actual lean routes. Do not fill missing metrics or readiness text.
+    case.technical_owner = coordinator
+    case.save(update_fields=['technical_owner', 'updated_at'])
+    package = create_delivery_package(use_case=case, actor=coordinator)
+    client.force_login(coordinator)
+    assert client.post(reverse('delivery:package_mark_ready', args=[package.pk])).status_code == 302
+    assert client.post(reverse('delivery:package_handover', args=[package.pk])).status_code == 302
+    package.refresh_from_db()
+    assert package.status == 'handed_over'
+    create_review(use_case=case, actor=coordinator, data={
+        'review_date': timezone.localdate(), 'pilot_start': timezone.localdate(),
+        'decision': 'start_pilot', 'new_status': 'pilot',
+        'rationale': 'Delivery ist uebergeben; Pilot bewusst gestartet.',
+    })
+    case.refresh_from_db()
+    assert case.status == 'pilot'
+    return package
+
+def finish_unknown(case, initiative, owner, coordinator):
+    initiative.refresh_from_db()
+    review = save_impact_review(
+        initiative=initiative, actor=owner, expected_revision=initiative.revision,
+        data={'use_case': case, 'effect_status': 'unclear',
+              'effect_reason': 'Geschaeftsergebnis nicht gemessen; Wirkung unbekannt.'},
+        finalize=True,
+    )
+    assert not review.review_required
+    with pytest.raises(ValidationError) as go_live_block:
+        create_review(use_case=case, actor=coordinator, data={
+            'review_date': timezone.localdate(), 'decision': 'go_live',
+            'new_status': 'operation', 'rationale': 'Skalierbarkeit pruefen; Messung fehlt.',
+        })
+    emit('unknown_measurement_scale_block', case=case.title,
+         blockers=go_live_block.value.messages)
+    create_review(use_case=case, actor=coordinator, data={
+        'review_date': timezone.localdate(), 'decision': 'end', 'new_status': 'ended',
+        'rationale': 'Pilot ohne nachgewiesene Geschaeftswirkung beendet.',
+    })
+    initiative.refresh_from_db()
+    initiative = save_initiative(actor=owner, initiative=initiative,
+        data={'status': 'completed'}, expected_revision=initiative.revision)
+    assert initiative.effect_status == 'unclear'
+    review.refresh_from_db()
+    return review
+
+def test_scenario_a_existing_fixture_to_pilot_and_unknown_closure(
+    owner, business_unit, coordinator, technical_admin, client,
+):
+    process = outcome_process(owner, business_unit)
+    initiative = bind_process(owner, process)
+    decision = select(owner, process, ai=True)
+    frozen = deepcopy(decision.outcome_snapshot)
+    case = create_use_case_from_selected_solution(decision=decision, actor=owner).use_case
+    approval = approve(case, coordinator, technical_admin)
+    package = pilot_via_actual_routes(client, case, coordinator)
+    review = finish_unknown(case, initiative, owner, coordinator)
+    decision.refresh_from_db()
+    assert decision.outcome_snapshot == frozen
+    assert approval.outcome_snapshot['source_selection_id'] == decision.pk
+    assert case.architecture_origin.process_analysis_id == process.pk
+    emit('A', selection=True, approval=True, delivery=True, pilot=True,
+         business_effect='unclear', closure='completed',
+         baseline_preserved_in_origin=bool(process.baseline_metrics),
+         metric_name=case.metric_name, review_current_after_initiative_closure=not review.review_required,
+         limitation='Existing options and rationale are synthetic and do not prove AI economic superiority.')
+
+def test_scenario_b_actual_unknown_strategy_cannot_bind_non_ai(
+    owner, business_unit, tmp_path, monkeypatch, client,
+):
+    context = make_context(owner, tmp_path)
+    analysis = analyze(owner, context, monkeypatch)
+    result = materialize(owner, context[0], analysis)
+    process = ProcessAnalysis.objects.get(pk=result.process_analysis_id)
+    assert not process.confirmed_causes and not process.baseline_metrics
+    initiative = bind_process(owner, process, path='strategic')
+    # This fixture has no options yet. Isolate the focus gate without adding ratings
+    # or option data; the service rejects before assessing a selected option.
+    with pytest.raises(ValidationError) as caught:
+        select_preferred_solution(process_analysis=process, selected_option=None,
+            rationale='Organisatorische Alternative untersuchen', actor=owner)
+    assert 'Fokusentscheidung' in str(caught.value)
+    assert not SolutionSelectionDecision.objects.filter(process_analysis=process).exists()
+    client.force_login(owner)
+    edit_response = client.get(reverse('architecture:process_analysis_update', args=[process.pk]))
+    option_response = client.get(reverse('architecture:solution_option_create', args=[process.pk]))
+    assert edit_response.status_code == option_response.status_code == 302
+    assert edit_response.url == option_response.url == process.stage.value_stream.get_absolute_url()
+    emit('B', discovery=True, baseline=process.baseline_metrics,
+         cause=process.confirmed_causes, focus=process.stage.value_stream.focus.status,
+         blocker=caught.value.messages, selection=False,
+         draft_process_edit=edit_response.status_code, draft_option_create=option_response.status_code,
+         downstream='Non-KI implementation, effect and scale/end not reached; no ratings invented.')
+
+def test_scenario_c_direct_approval_pilot_unknown_end(
+    owner, coordinator, technical_admin, business_unit, client,
+):
+    case = direct(owner, coordinator, business_unit)
+    with pytest.raises(ValidationError):
+        approve(case, coordinator, technical_admin)
+    initiative = confirmed(owner)
+    bind_initiative(initiative=initiative, artifact=case, actor=technical_admin)
+    case.refresh_from_db()
+    approval = approve(case, coordinator, technical_admin)
+    package = pilot_via_actual_routes(client, case, coordinator)
+    review = finish_unknown(case, initiative, owner, coordinator)
+    case.refresh_from_db()
+    emit('C', direct=True, approval_blocked_without_outcome=True,
+         approval_snapshot=bool(approval.outcome_snapshot), pilot=True,
+         business_effect='unclear', use_case_status=case.status,
+         metric_actual=case.metric_actual, attribution=review.attribution,
+         package_target_is_use_case_benefit=package.target_outcome == case.expected_benefit)
+
+def test_selected_risk_change_after_handoff_does_not_block_new_approval(
+    owner, coordinator, technical_admin, business_unit,
+):
+    process = outcome_process(owner, business_unit)
+    bind_process(owner, process)
+    decision = select(owner, process, ai=True)
+    case = create_use_case_from_selected_solution(decision=decision, actor=owner).use_case
+    option = decision.selected_option
+    option.risks = 'Audit mutation: critical new risk requires reassessment.'
+    option.save()
+    decision.refresh_from_db()
+    assert not decision.outcome_review_required
+    approval = approve(case, coordinator, technical_admin)
+    assert approval.outcome_snapshot['source_selection_id'] == decision.pk
+    # The earlier handoff checks more fields and now rejects this same decision.
+    with pytest.raises(ValidationError, match='Loesungsstand|Lösungsstand'):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+    emit('risk_drift', selection_stale=decision.outcome_review_required,
+         positive_approval_created=True, handoff_rejected=True)
+
+def test_changed_process_version_leaves_non_ai_effect_review_current(owner, business_unit):
+    process = outcome_process(owner, business_unit)
+    initiative = bind_process(owner, process)
+    decision = select(owner, process)
+    initiative.refresh_from_db()
+    review = save_impact_review(initiative=initiative, actor=owner,
+        expected_revision=initiative.revision, data={
+            'selection': decision, 'effect_status': 'unclear',
+            'effect_reason': 'Unbekannt; keine Messung vorhanden.',
+        }, finalize=True)
+    process.version += 1
+    process.confirmed_causes = ''
+    process.save()
+    decision.refresh_from_db()
+    review.refresh_from_db()
+    assert decision.process_version != process.version
+    assert not decision.outcome_review_required
+    assert not review.review_required
+    emit('process_drift', reviewed_process_version=decision.process_version,
+         actual_process_version=process.version, selection_stale=False, impact_stale=False)
+
+def test_delivery_remains_eligible_after_material_outcome_change(
+    owner, coordinator, technical_admin, business_unit, client,
+):
+    case = direct(owner, coordinator, business_unit)
+    initiative = confirmed(owner)
+    bind_initiative(initiative=initiative, artifact=case, actor=technical_admin)
+    case.refresh_from_db()
+    approval = approve(case, coordinator, technical_admin)
+    initiative = save_initiative(actor=owner, initiative=initiative,
+        data={'business_outcome': 'Audit mutation: materially different business outcome'})
+    approval.refresh_from_db()
+    assert approval.outcome_review_required
+    assert delivery_eligibility(case)[0]
+    package = pilot_via_actual_routes(client, case, coordinator)
+    manifest = package.section_reviews.first().source_manifest
+    emit('outcome_drift', approval_stale=True, delivery_allowed=True, pilot_allowed=True,
+         manifest_has_initiative='initiative' in manifest,
+         manifest_has_outcome_snapshot='outcome_snapshot' in manifest,
+         package_target=package.target_outcome)
+
+def test_multiple_processes_current_impact_review_replaces_intervention(owner, business_unit):
+    first = outcome_process(owner, business_unit)
+    initiative = bind_process(owner, first)
+    first_decision = select(owner, first)
+    second = outcome_process(owner, business_unit)
+    bind_process(owner, second, initiative=initiative)
+    second_decision = select(owner, second)
+    initiative.refresh_from_db()
+    one = save_impact_review(initiative=initiative, actor=owner,
+        expected_revision=initiative.revision,
+        data={'selection': first_decision, 'effect_status': 'unclear', 'effect_reason': 'Unbekannt'},
+        finalize=True)
+    initiative.refresh_from_db()
+    two = save_impact_review(initiative=initiative, actor=owner,
+        expected_revision=initiative.revision,
+        data={'selection': second_decision}, finalize=True)
+    assert one.pk == two.pk
+    assert not first_decision.outcome_review_required and not second_decision.outcome_review_required
+    assert two.history.filter(selection_id=first_decision.pk).exists()
+    emit('multi_process', processes=initiative.process_analyses.count(),
+         decisions=2, current_impact_reviews=1, historical_first_reference=True,
+         current_reference='second', automatic_aggregation=False)
+
+def test_hybrid_ai_selection_accepts_second_editable_process_measurement(owner, business_unit):
+    process = outcome_process(owner, business_unit)
+    initiative = bind_process(owner, process)
+    option = process.solution_options.get(option_type='assistant')
+    option.option_type = 'hybrid'
+    option.contains_ai_component = True
+    option.save()
+    decision = select_preferred_solution(process_analysis=process, selected_option=option,
+        rationale='Begruendeter Vergleich derselben Wirkung', actor=owner)
+    assert option.starts_ai_use_case
+    case = create_use_case_from_selected_solution(decision=decision, actor=owner).use_case
+    initiative.refresh_from_db()
+    review = save_impact_review(initiative=initiative, actor=owner,
+        expected_revision=initiative.revision,
+        data={'selection': decision, 'process_measurement': process.baseline_metrics,
+              'effect_status': 'unclear', 'effect_reason': 'Nicht gemessen.'}, finalize=True)
+    assert not review.use_case_id and review.process_measurement
+    assert not review.review_required
+    emit('hybrid_duplicate_metric', ai_component=True, use_case_exists=bool(case.pk),
+         separate_process_measurement_accepted=True, finalized=True)

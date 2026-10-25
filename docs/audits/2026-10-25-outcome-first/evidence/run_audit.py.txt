@@ -1,0 +1,28 @@
+import os
+import socket
+import sys
+from pathlib import Path
+
+ROOT = Path(r'C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt')
+WORK = Path(__file__).resolve().parent
+RUN = os.getenv('AUDIT_RUN', 'full')
+DB = 'outcome_audit' if RUN == 'full' else 'outcome_audit_' + RUN
+os.chdir(ROOT)
+sys.path[:0] = [str(ROOT), str(ROOT / 'tests'), str(WORK)]
+os.environ.update(DJANGO_SETTINGS_MODULE='config.settings.test', DATABASE_URL=f'postgresql://audit:audit_local_only@127.0.0.1:55439/{DB}', POSTGRES_HOST='127.0.0.1', POSTGRES_PORT='55439', POSTGRES_DB=DB, POSTGRES_USER='audit', POSTGRES_PASSWORD='audit_local_only', USE_SQLITE_FOR_TESTS='0', OPENROUTER_API_KEY='', OPENAI_API_KEY='', OPENROUTER_API_KEY_FILE='', DJANGO_SECRET_KEY='isolated-audit-only', PYTHONDONTWRITEBYTECODE='1')
+original_connect = socket.socket.connect
+def local_only(sock, address):
+    if isinstance(address, tuple) and address[0] not in ('127.0.0.1', 'localhost', '::1'):
+        raise RuntimeError(f'Audit forbids external network access: {address[0]}')
+    return original_connect(sock, address)
+socket.socket.connect = local_only
+
+import pytest
+
+class AuditPlugin:
+    def pytest_configure(self, config):
+        from django.conf import settings
+        settings.ANONYMIZATION_LEDGER_PATH = WORK / 'anonymization-ledger.jsonl'
+
+args = sys.argv[1:] or ['tests']
+raise SystemExit(pytest.main(['-q', '--no-cov', '-o', f'cache_dir={WORK / (RUN + "-cache")}', '--basetemp', str(WORK / (RUN + '-temp')), '--junitxml', str(WORK / (RUN + '-results.xml')), *args], plugins=[AuditPlugin()]))
