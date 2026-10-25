@@ -10,8 +10,8 @@
 - [Maschinenlesbare Beobachtungen der acht zusätzlichen Gegenproben](evidence/probe-evidence.jsonl).
 - [Zusätzliche Gegenproben als unveränderte Quelltextaufzeichnung](evidence/audit_probes.py.txt).
 - [Prüfstand und Umgebungsmetadaten](evidence/repository-state.json).
-- Bestandssuite: [Protokoll](evidence/full-suite.log), [XML-Ergebnisse](evidence/full-results.xml).
-- Audit-Gegenproben: [Protokoll](evidence/probes.log), [XML-Ergebnisse](evidence/probes-results.xml).
+- Bestandssuite: [Protokoll](evidence/full-suite.log.txt), [XML-Ergebnisse](evidence/full-results.xml).
+- Audit-Gegenproben: [Protokoll](evidence/probes.log.txt), [XML-Ergebnisse](evidence/probes-results.xml).
 - [Ursprüngliche lokale Windows-Reproduktionsanleitung](WINDOWS_REPRODUCTION.md) und [ursprünglicher Runner](evidence/run_audit.py.txt).
 
 Prüfstand: `main` / `abbfb302747510106a4eac0db807b50bc254deb2`, Merge von #182. Ergebnis: **2.592 Bestandstests bestanden, zwei Windows-Symlink-Tests übersprungen; acht zusätzliche Gegenproben bestanden.** Eine bestandene Defektgegenprobe bestätigt fehlerhaftes Verhalten und ist keine fachliche Produktabnahme.
