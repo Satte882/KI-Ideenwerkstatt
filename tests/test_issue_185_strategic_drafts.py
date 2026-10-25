@@ -80,6 +80,8 @@ def test_immediate_materialization_edit_save_resume_and_option_drafts(owner, cli
     assert client.get(update).context["form"].initial["description"] == values["description"]
     detail = client.get(process.get_absolute_url())
     assert create in detail.content.decode()
+    assert detail.context["journey"].next_action.action_label == "Optionsentwürfe vergleichen"
+    assert "Lösungsentscheidung offen." not in detail.content.decode()
     journey = build_process_analysis_journey(process, owner)
     assert journey.next_action.url == reverse(
         "architecture:solution_option_compare", args=[process.pk]
