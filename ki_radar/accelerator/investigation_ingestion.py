@@ -44,6 +44,14 @@ def idea_origin_upload(session: CaptureSession) -> SimpleUploadedFile:
         f"Geschäftskontext: {session.answers.get('business_context', '')}\n"
         f"Quelle / ursprünglicher Einreicher: {origin['source_note']}\n"
         + (
+            "Ursprüngliche Themenerfassung (Eingabehinweis, "
+            "keine Quelle, Ursache oder Pfadentscheidung): "
+            + json.dumps(origin["intake_context"], ensure_ascii=False)
+            + "\n"
+            if origin.get("intake_context")
+            else ""
+        )
+        + (
             "Menschlicher strategischer Untersuchungsrahmen (kein Ist-Beleg): "
             + json.dumps(session.answers["human_scope"], ensure_ascii=False)
             if session.catalog_version == "3.0"

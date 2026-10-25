@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from urllib.parse import urlparse
 from uuid import UUID
 
 from django.conf import settings
@@ -287,7 +288,15 @@ def autonomous_discovery_start(request):
         default_unit = default_discovery_business_unit(actor=request.user, idea=idea)
         form = form_class(
             initial={
-                "problem_statement": idea.description if idea is not None else "",
+                "problem_statement": (
+                    idea.initiative.business_outcome
+                    if idea is not None
+                    and idea.initiative_id
+                    and idea.intake_context.get("occasion") == "goal"
+                    else idea.description
+                    if idea is not None
+                    else ""
+                ),
                 "business_unit": default_unit.pk if default_unit else None,
                 **(
                     {
@@ -311,6 +320,10 @@ def autonomous_discovery_start(request):
             "form": form,
             "idea": idea,
             "strategic_start": strategic_start,
+            "discovery_model": settings.ACCELERATOR_DISCOVERY_MODEL or settings.OPENROUTER_MODEL,
+            "discovery_provider": "OpenRouter"
+            if urlparse(settings.OPENROUTER_API_URL).hostname == "openrouter.ai"
+            else urlparse(settings.OPENROUTER_API_URL).hostname,
             "scope_fields": [scope_form[key] for key in strategic.SCOPE_FIELDS]
             if strategic_start or settings.ACCELERATOR_STRATEGIC_DISCOVERY_ENABLED
             else [],

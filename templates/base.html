@@ -48,9 +48,10 @@
       {% endif %}
 
       <div class="nav-caption">Inbox</div>
-      <a class="sidebar-link {% if request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name|slice:':5' == 'idea_' %}active{% endif %}" href="{% url 'use_cases:idea_list' %}">
+      <a class="sidebar-link {% if nav_is_topic or request.resolver_match.namespace == 'use_cases' and request.resolver_match.url_name|slice:':5' == 'idea_' %}active{% endif %}" href="{% url 'use_cases:idea_list' %}">
         <span class="nav-icon">◇</span> Ideen &amp; Probleme
       </a>
+      {% if nav_is_topic %}<div class="sidebar-local-depth" aria-label="Themenerfassung"><span class="sidebar-local-step sidebar-local-active" aria-current="page"><span aria-hidden="true">●</span><span>Neues Thema</span></span></div>{% endif %}
 
       <div class="nav-caption">Vorhaben</div>
       <a class="sidebar-link {% if nav_is_analysis %}active{% endif %}" href="{% url 'architecture:value_stream_list' %}"{% if nav_is_analysis %} aria-current="location"{% endif %}>
@@ -63,7 +64,7 @@
       {% elif nav_is_analysis %}
       {% analysis_sidebar %}
       {% endif %}
-      <a class="sidebar-link {% if not nav_is_analysis %}{% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}{% endif %}" href="{% url 'use_cases:list' %}"{% if nav_outcome_label and not nav_is_analysis %} aria-current="location"{% endif %}>
+      <a class="sidebar-link {% if not nav_is_analysis and not nav_is_topic %}{% if request.resolver_match.namespace == 'use_cases' %}{% if request.resolver_match.url_name|slice:':5' != 'idea_' %}active{% endif %}{% elif request.resolver_match.namespace == 'governance' or request.resolver_match.namespace == 'reviews' and use_case %}active{% endif %}{% endif %}" href="{% url 'use_cases:list' %}"{% if nav_outcome_label and not nav_is_analysis %} aria-current="location"{% endif %}>
         <span class="nav-icon">◫</span> Use Cases
       </a>
       {% if nav_outcome_label and not nav_is_analysis %}

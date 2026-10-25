@@ -1,0 +1,17 @@
+<section class="app-card mb-4" aria-labelledby="topic-next-title">
+  <div class="card-body">
+    <h2 id="topic-next-title" class="h5">Wie möchtest du fortfahren?</h2>
+    {% if idea.discovery_process_analysis %}<a class="btn btn-primary" href="{{ idea.discovery_process_analysis.get_absolute_url }}">Prozessanalyse öffnen</a>
+    {% elif discovery %}{% if can_resume_discovery and can_discover %}<a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_review' session_id=discovery.pk %}">Untersuchung fortsetzen</a>{% else %}<p>Die Untersuchung wird vom ausführenden Business Owner bearbeitet.</p>{% endif %}
+    {% elif idea.state == 'open' %}{% if can_discover %}<a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_start' %}?idea_candidate={{ idea.pk }}">Untersuchung starten</a><p class="form-text">Du prüfst zunächst die Angaben und Quellen. Modell und Kostenhinweis werden vor dem tatsächlichen Analysestart angezeigt.</p>{% else %}<p>Ein Business Owner oder die KI-Koordination kann die Untersuchung starten. Das Thema ist gespeichert und über „Ideen &amp; Probleme“ wieder auffindbar.</p>{% endif %}
+    {% else %}<p>Der Eintrag ist abgeschlossen. Der gespeicherte Stand bleibt zugänglich.</p>{% endif %}
+    <p class="mt-3"><a href="{% url 'reporting:dashboard' %}">Später fortsetzen</a> · <a href="{% url 'use_cases:idea_list' %}">Alle gespeicherten Ideen &amp; Probleme</a></p>
+    {% if idea.initiative %}<p><strong>Geschäftsergebnis des Vorhabens:</strong> {{ idea.initiative.business_outcome }}</p>{% endif %}
+    <details class="architecture-disclosure">
+      <summary>Ursprüngliche Eingabe und betroffene Gruppen anzeigen</summary>
+      <p><strong>Anlass:</strong> {{ topic_context.occasion }}. Dies ist eine unverbindliche Eingabe, keine bestätigte Untersuchungsrichtung.</p>
+      <p>{{ topic_context.original_text|linebreaksbr }}</p>
+      <p><strong>Betroffene Gruppen:</strong> {{ topic_context.perspectives|join:", "|default:"Nicht angegeben" }}. Keine bestätigte Herkunft oder Evidenz.</p>
+    </details>
+  </div>
+</section>

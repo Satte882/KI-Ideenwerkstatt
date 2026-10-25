@@ -20,6 +20,7 @@ from .permissions import (
     can_promote_idea,
     can_triage_idea,
 )
+from .topic_contract import display_context
 
 
 @login_required
@@ -121,6 +122,7 @@ def idea_detail(request, pk):
         "use_cases/ideas/detail.html",
         {
             "idea": idea,
+            "topic_context": display_context(idea.intake_context),
             "triage_form": IdeaTriageForm(instance=idea),
             "dismiss_form": IdeaDismissForm(),
             "can_edit": can_edit_idea(request.user, idea),

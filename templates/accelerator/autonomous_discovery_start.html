@@ -85,6 +85,7 @@
     </section>
   </div>
   <div class="card-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
+    <p class="w-100 mb-2" role="note"><strong>Vor dem Analysestart:</strong> Anbieterzugang {{ discovery_provider|default:"nicht konfiguriert" }}, Modell {{ discovery_model|default:"nicht konfiguriert" }}. Erst „Analyse starten“ löst kostenpflichtige Modellaufrufe aus. Die Kosten hängen vom Umfang und möglichen Prüf- und Korrekturrunden ab und lassen sich vorher nicht zuverlässig beziffern.</p>
     <span class="small text-muted">Fehlende Information wird als Unknown oder Klärungsbedarf ausgewiesen, nicht erfunden.</span>
     <button class="btn btn-primary" type="submit">Analyse starten</button>
   </div>

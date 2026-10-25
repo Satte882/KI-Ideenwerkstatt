@@ -11,11 +11,14 @@ from . import (
     lean_decision_views,
     origin_consistency_views,
     outcome_views,
+    topic_views,
     views,
 )
 
 app_name = "use_cases"
 urlpatterns = [
+    path("topics/new/", topic_views.topic_start, name="topic_start"),
+    path("topics/new/<str:occasion>/", topic_views.topic_start, name="topic_capture"),
     path(
         "initiatives/<uuid:pk>/impact/",
         impact_review_views.impact_review_edit,

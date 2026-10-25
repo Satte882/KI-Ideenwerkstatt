@@ -18,6 +18,7 @@
   </div>
 </div>
 
+{% if topic_context %}{% include "use_cases/ideas/_topic_context.html" %}{% endif %}
 <nav class="cr-local-work-status mb-4" aria-label="Arbeitsbereiche dieses Eintrags" data-testid="local-work-status">
   <div class="cr-local-work-status__header">
     <div><span class="cr-local-work-status__kicker">Auf dieser Seite ·</span> <strong class="cr-local-work-status__title">Arbeitsbereiche</strong></div>
@@ -83,7 +84,7 @@
       <h2 class="h5">Nicht weiterverfolgt</h2>
       <p class="mb-0">{{ idea.decision_note }}</p>
     {% else %}
-      {% if idea.discovery_process_analysis %}
+      {% if not topic_context %}{% if idea.discovery_process_analysis %}
       <div class="mb-4">
         <h2 class="h5">Geschäftsproblem untersucht</h2>
         <a class="btn btn-primary" href="{{ idea.discovery_process_analysis.get_absolute_url }}">Analyse fortsetzen</a>
@@ -102,6 +103,7 @@
         <h2 class="h5">Geschäftsproblem untersuchen</h2>
         <a class="btn btn-primary" href="{% url 'accelerator:autonomous_discovery_start' %}?idea_candidate={{ idea.pk }}">Geschäftsproblem untersuchen</a>
       </div>
+      {% endif %}
       {% endif %}
       <div class="row g-4">
         <div class="col-lg-7">

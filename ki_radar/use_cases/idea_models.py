@@ -12,9 +12,34 @@ from ki_radar.accounts.models import BusinessUnit
 from ki_radar.core.models import TimeStampedModel
 
 from .models import UseCase
+from .topic_contract import validate_intake_context
+
+
+class IdeaQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        if "intake_context" in kwargs:
+            raise ValidationError("Die ursprüngliche Themenerfassung bleibt unverändert.")
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs, fields, **kwargs):
+        if "intake_context" in fields:
+            raise ValidationError("Die ursprüngliche Themenerfassung bleibt unverändert.")
+        return super().bulk_update(objs, fields, **kwargs)
+
+    def bulk_create(self, objs, **kwargs):
+        objs = list(objs)
+        if kwargs.get("update_conflicts") and "intake_context" in (
+            kwargs.get("update_fields") or []
+        ):
+            raise ValidationError("Themenerfassungen dürfen nicht überschrieben werden.")
+        for obj in objs:
+            validate_intake_context(obj.intake_context)
+        return super().bulk_create(objs, **kwargs)
 
 
 class IdeaCandidate(TimeStampedModel):
+    objects = IdeaQuerySet.as_manager()
+
     class State(models.TextChoices):
         OPEN = "open", "Offen"
         DISMISSED = "dismissed", "Nicht weiterverfolgt"
@@ -46,6 +71,7 @@ class IdeaCandidate(TimeStampedModel):
         related_name="idea_candidates",
     )
     source_note = models.TextField(blank=True)
+    intake_context = models.JSONField(default=dict, blank=True, editable=False)
     impact = models.PositiveSmallIntegerField(
         choices=Score.choices,
         null=True,
@@ -127,8 +153,22 @@ class IdeaCandidate(TimeStampedModel):
     def get_absolute_url(self):
         return reverse("use_cases:idea_detail", kwargs={"pk": self.pk})
 
+    def save(self, *args, **kwargs):
+        validate_intake_context(self.intake_context)
+        if not self._state.adding:
+            original = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("intake_context", flat=True)
+                .first()
+            )
+            if original is not None and original != self.intake_context:
+                raise ValidationError("Die ursprüngliche Themenerfassung bleibt unverändert.")
+        return super().save(*args, **kwargs)
+
     def clean(self):
         super().clean()
+        validate_intake_context(self.intake_context)
         if self.state == self.State.DISMISSED and not self.decision_note.strip():
             raise ValidationError(
                 {
