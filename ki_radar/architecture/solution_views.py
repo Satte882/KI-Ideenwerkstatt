@@ -35,6 +35,7 @@ from .solution_selection import (
     ordered_solution_options,
     select_preferred_solution,
 )
+from .strategic_exploration import has_strategic_exploration
 
 
 def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
@@ -112,6 +113,10 @@ def solution_option_compare(request, pk):
     can_select = can_edit_value_stream(
         request.user,
         process_analysis.stage.value_stream,
+    )
+    strategic_exploration = has_strategic_exploration(process_analysis)
+    strategic_path_pending = (
+        strategic_exploration and not process_analysis.discovery_path_decisions.exists()
     )
     generation_entry = build_solution_generation_entry_context(process_analysis)
     selection_history = process_analysis.solution_selection_decisions.all()
@@ -242,6 +247,9 @@ def solution_option_compare(request, pk):
             "needs_more_options": len(options) < 2,
             "form": form,
             "can_select": can_select,
+            "strategic_exploration": strategic_exploration,
+            "strategic_path_pending": strategic_path_pending,
+            "can_edit_drafts": can_select and (not focus_blockers or strategic_exploration),
             "selection_history": selection_history,
             "latest_selection": latest_selection,
             "selected_use_case": selected_use_case,

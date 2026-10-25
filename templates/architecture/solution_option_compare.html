@@ -59,7 +59,7 @@
     <div><strong>Vergleichsmatrix</strong><div class="small text-muted mt-1">Alle aktiven Optionen werden anhand derselben Kriterien gegenübergestellt. Time-to-Value ist ein sichtbarer Trade-off, kein automatischer Sieger-Score. Nicht weiterverfolgte Optionen bleiben auditierbar.</div><p class="small mt-2 mb-0" data-testid="comparison-maturity-context"><strong>Erfassungsstand, Evidenz und Auswahl sind getrennt.</strong> „Bewertet“ heißt: Kriterien erfasst / formal vergleichbar. Es ist kein Nachweis für Machbarkeit oder Geschäftsnutzen und keine Freigabe. Qualitative Werte wie „Mittel“ sind mit der jeweiligen Beleglage zu lesen. Die bindende Lösungswahl erfolgt separat.</p></div>
     {% if can_select %}
       <div class="d-flex gap-2 flex-wrap">
-        {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>{% endif %}
+        {% if can_edit_drafts %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Option ergänzen</a>{% endif %}
         {% if generation_ready %}
           <form method="post" action="{% url 'accelerator:solution_generation_start' process_analysis.pk %}" class="m-0">
             {% csrf_token %}
@@ -122,7 +122,7 @@
           {% for option in options %}
           <td>
             <div class="d-grid gap-2">
-              {% if focus_blockers %}
+              {% if not can_edit_drafts %}
                 <span class="small text-muted">Bewertung nach Fokusfreigabe möglich</span>
                 <a class="btn btn-sm btn-outline-secondary" href="#solution-selection">Voraussetzungen anzeigen</a>
               {% else %}
@@ -222,7 +222,7 @@
         {% if focus_blockers %}
           <div class="mb-3" data-testid="selection-focus-blocker">
             <strong>Fokusfreigabe fehlt</strong>
-            <p class="mb-2">{{ focus_blockers|join:" " }} Erst danach können Optionen ergänzt oder bewertet und die Diagnose bearbeitet werden.</p>
+            <p class="mb-2">{{ focus_blockers|join:" " }} {% if strategic_exploration %}Diese Voraussetzung gilt weiterhin für die bindende Auswahl. Prozess- und Optionsentwürfe können bereits bearbeitet werden. Unbekannte Screeningwerte dürfen nicht erfunden werden; der strategische Auswahlvertrag ist fachlich noch zu entscheiden.{% else %}Erst danach können Optionen ergänzt oder bewertet und die Diagnose bearbeitet werden.{% endif %}</p>
             <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:value_stream_update' process_analysis.stage.value_stream_id %}">Screening und Fokusfreigabe abschließen</a>
           </div>
         {% endif %}
@@ -231,7 +231,7 @@
           <div class="mb-3">
             <strong>Mindestens zwei aktive Optionen erforderlich</strong>
             <p class="mb-2">Aktuell {{ options|length }} aktive Option(en). Nicht weiterverfolgte Optionen bleiben gespeichert, zählen aber nicht für die Auswahl.</p>
-            {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>{% endif %}
+            {% if can_edit_drafts %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>{% endif %}
           </div>
         {% endif %}
 
@@ -255,17 +255,17 @@
               <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap border border-secondary-subtle rounded p-2">
                 <span>{{ option.name }}</span>
                 <span class="small">Fehlt: {{ option.missing_comparison_fields|join:", " }}</span>
-                {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Option vollständig bewerten</a>{% else %}<span class="small text-muted">Bewertung nach Fokusfreigabe möglich</span>{% endif %}
+                {% if can_edit_drafts %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Option vollständig bewerten</a>{% else %}<span class="small text-muted">Bewertung nach Fokusfreigabe möglich</span>{% endif %}
               </div>
             {% endfor %}
           </div>
         {% endif %}
         {% if diagnosis_blockers %}
           <div class="mt-3" data-testid="selection-diagnosis-blocker">
-            <strong>Diagnose noch unvollständig</strong>
-            <p class="mb-2">Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.</p>
-            <p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächlichen Befunde und Belege; eine vermutete Ursache bleibt eine Hypothese.</p>
-            {% if not focus_blockers %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">Diagnose ergänzen</a>{% endif %}
+            <strong>{% if strategic_path_pending %}Strategischer Entscheidungsbezug noch offen{% else %}Diagnose noch unvollständig{% endif %}</strong>
+            <p class="mb-2">{% if strategic_path_pending %}Vor einer bindenden strategischen Präferenz sind Outcome-Bezug, Strategiepfad, begründetes Potenzial und Validierungsschritt bewusst zu bestätigen. Der Entwurf bestätigt weder Ursache noch Pfad.{% else %}Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.{% endif %}</p>
+            {% if not strategic_path_pending %}<p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächlichen Befunde und Belege; eine vermutete Ursache bleibt eine Hypothese.</p>{% endif %}
+            {% if can_edit_drafts %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">{% if strategic_exploration %}Prozessentwurf bearbeiten{% else %}Diagnose ergänzen{% endif %}</a>{% endif %}
           </div>
         {% endif %}
       </div>

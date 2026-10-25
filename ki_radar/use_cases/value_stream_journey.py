@@ -4,7 +4,9 @@ from dataclasses import replace
 
 from django.urls import reverse
 
+from ki_radar.architecture.focus import get_value_stream_focus
 from ki_radar.architecture.models import ProcessAnalysis, SolutionOption, ValueStream
+from ki_radar.architecture.strategic_exploration import has_strategic_exploration
 
 from . import journey as legacy
 from . import workflow
@@ -108,6 +110,9 @@ def _guide_solution_choice(
     process_analysis: ProcessAnalysis,
     journey: JourneyState,
 ) -> JourneyState:
+    focus = get_value_stream_focus(process_analysis.stage.value_stream)
+    if (focus is None or not focus.is_selected) and has_strategic_exploration(process_analysis):
+        return journey
     options = list(process_analysis.solution_options.all())
     if any(option.recommendation == SolutionOption.Recommendation.PREFERRED for option in options):
         steps = [

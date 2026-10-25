@@ -42,6 +42,7 @@ from .permissions import (
 )
 from .process_decision_presentation import build_process_decision_surface
 from .provenance import build_process_source_snapshot, source_differences
+from .strategic_exploration import has_strategic_exploration
 from .work_design import (
     build_solution_source_snapshot,
     score_task,
@@ -412,6 +413,7 @@ def process_analysis_detail(request, pk):
         latest_materialization=latest_investigation_materialization,
         journey=journey,
     )
+    strategic_exploration = has_strategic_exploration(process_analysis)
 
     return render(
         request,
@@ -420,6 +422,9 @@ def process_analysis_detail(request, pk):
             "process_analysis": process_analysis,
             "journey": journey,
             "can_edit": _can_edit_process(request.user, process_analysis),
+            "strategic_exploration": strategic_exploration,
+            "can_edit_drafts": _can_edit_process(request.user, process_analysis)
+            and (_focus_is_selected(process_analysis.stage.value_stream) or strategic_exploration),
             "can_validate": _can_edit_process(request.user, process_analysis),
             "latest_validation": process_analysis.validations.first(),
             "source_differences": source_differences(
@@ -453,7 +458,10 @@ def process_analysis_update(request, pk):
     )
     if not _can_edit_process(request.user, process_analysis):
         raise PermissionDenied
-    if not _focus_is_selected(process_analysis.stage.value_stream):
+    if not (
+        _focus_is_selected(process_analysis.stage.value_stream)
+        or has_strategic_exploration(process_analysis)
+    ):
         messages.warning(request, FOCUS_REQUIRED_MESSAGE)
         return redirect(process_analysis.stage.value_stream)
     form = ProcessAnalysisForm(request.POST or None, instance=process_analysis)
@@ -768,7 +776,10 @@ def solution_option_create(request, process_analysis_id):
     )
     if not _can_edit_process(request.user, process_analysis):
         raise PermissionDenied
-    if not _focus_is_selected(process_analysis.stage.value_stream):
+    if not (
+        _focus_is_selected(process_analysis.stage.value_stream)
+        or has_strategic_exploration(process_analysis)
+    ):
         messages.warning(request, FOCUS_REQUIRED_MESSAGE)
         return redirect(process_analysis.stage.value_stream)
 
@@ -849,7 +860,10 @@ def solution_option_update(request, pk):
     )
     if not _can_edit_process(request.user, option.process_analysis):
         raise PermissionDenied
-    if not _focus_is_selected(option.process_analysis.stage.value_stream):
+    if not (
+        _focus_is_selected(option.process_analysis.stage.value_stream)
+        or has_strategic_exploration(option.process_analysis)
+    ):
         messages.warning(request, FOCUS_REQUIRED_MESSAGE)
         return redirect(option.process_analysis.stage.value_stream)
     form = SolutionOptionForm(

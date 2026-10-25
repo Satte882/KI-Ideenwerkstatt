@@ -1023,6 +1023,7 @@ def bind_discovery_snapshot_to_process(
     discovery_snapshot_id,
     process_analysis_id,
     decision_question: str,
+    strategic_exploration: dict | None = None,
 ) -> SnapshotResult:
     question = str(decision_question or "").strip()
     if not question:
@@ -1124,6 +1125,14 @@ def bind_discovery_snapshot_to_process(
             run_limits={},
             process_context={
                 **_process_context(locked_process),
+                **(
+                    {
+                        "strategic_exploration": strategic_exploration,
+                        "materialized_stage_id": str(locked_process.stage_id),
+                    }
+                    if strategic_exploration is not None
+                    else {}
+                ),
                 "discovery_snapshot_id": str(locked_discovery.pk),
                 "discovery_capture_session_id": str(locked_discovery.capture_session_id),
                 "discovery_manifest_hash": locked_discovery.manifest_hash,

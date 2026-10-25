@@ -2,7 +2,11 @@
 {% with stream=process_analysis.stage.value_stream %}
 {% process_stage_focus_decision process_analysis as phase_decision %}
 {% if not stream.focus.is_selected %}
+{% if strategic_exploration %}
+<p class="process-focus-status" data-testid="process-focus-blocker"><strong>Strategischer Entwurf:</strong> Prozess und Optionsentwürfe dürfen ohne erfundene Ist-Daten weiterbearbeitet werden. Die bindende Auswahl bleibt am globalen Screening blockiert; der strategische Auswahlvertrag ist fachlich noch zu entscheiden.</p>
+{% else %}
 <p class="process-focus-status" data-testid="process-focus-blocker"><strong>Prozessdetailanalyse nicht freigegeben:</strong> Erst nach vollständigem Screening und positiver Fokusentscheidung ist die Vertiefung freigegeben.</p>
+{% endif %}
 {% endif %}
 {% if phase_decision %}
 {% stage_focus_item phase_decision process_analysis.stage as focus_item %}

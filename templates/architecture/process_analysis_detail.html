@@ -169,7 +169,7 @@
   {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}{% solution_generation_entry process_analysis as generation_entry %}{% endif %}
   <div class="cr-section-heading">
     <div><h2>Lösungsoptionen vergleichen</h2><p>Alternativen anhand derselben Kriterien prüfen und die Auswahl begründen.</p></div>
-    {% if can_edit and process_analysis.stage.value_stream.focus.is_selected %}
+    {% if can_edit_drafts %}
       <div class="d-flex gap-2 flex-wrap">
         {% if process_analysis.solution_options.all %}
           <a class="btn btn-sm btn-primary" href="{% url 'architecture:solution_option_compare' process_analysis.pk %}">Vergleichsmatrix öffnen</a>
@@ -178,8 +178,10 @@
           <a class="btn btn-sm btn-primary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}?work_design_task={{ solution_design_task.pk }}">Lösungsoption für diese Aufgabe ergänzen</a>
         {% elif process_analysis.solution_options.all %}
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Weitere Option ergänzen</a>
+        {% elif strategic_exploration %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:solution_option_create' process_analysis.pk %}">Optionsentwurf anlegen</a>
         {% endif %}
-        {% if not solution_design_task %}
+        {% if process_analysis.stage.value_stream.focus.is_selected and not solution_design_task %}
           {% if generation_entry.generation_ready %}
             <form method="post" action="{% url 'accelerator:solution_generation_start' process_analysis.pk %}" class="m-0">
               {% csrf_token %}
