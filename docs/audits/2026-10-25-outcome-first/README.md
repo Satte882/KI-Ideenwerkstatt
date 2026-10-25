@@ -4,6 +4,14 @@
 
 **Aussage:** Outcome-first ist strukturell umgesetzt, aber noch nicht durchgängig fachlich nachgewiesen. Drei reproduzierte Defektgruppen sind von offenen fachlichen Entscheidungen getrennt. Der Audit beauftragt keine neue Featureentwicklung.
 
+Veröffentlichung: [Dokumentations-PR #184](https://github.com/Satte882/KI-Ideenwerkstatt/pull/184), ohne Produktcodekorrektur und ohne Merge im Veröffentlichungsauftrag.
+
+| Bestätigter Befund | Abgegrenztes Sub-Issue |
+|---|---|
+| D1: Zu frühe Sperre strategischer Entwurfsbearbeitung/Optionsanlage | [#185](https://github.com/Satte882/KI-Ideenwerkstatt/issues/185) |
+| D2: Inkonsistente Aktualität von Lösungsentscheidungen und Wirkungsreviews | [#186](https://github.com/Satte882/KI-Ideenwerkstatt/issues/186) |
+| D3: Fehlender Messreferenzschutz für KI-haltige hybride Lösungen | [#187](https://github.com/Satte882/KI-Ideenwerkstatt/issues/187) |
+
 ## Unterlagen
 
 - [Entscheidungsvorlage mit Codepfaden, Szenarien A/B/C, D1–D3, fachlichen Grenzen und maximal fünf Empfehlungen](AUDIT.md).
