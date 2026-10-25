@@ -1,4 +1,5 @@
 from datetime import timedelta
+from html.parser import HTMLParser
 
 import pytest
 from django.urls import reverse
@@ -7,6 +8,56 @@ from django.utils import timezone
 from ki_radar.core.taxonomy import BusinessDomain
 from ki_radar.use_cases.idea_models import IdeaCandidate
 from ki_radar.use_cases.models import DecisionAssessment, UseCase
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "editing,invalid_post", [(False, False), (False, True), (True, False), (True, True)]
+)
+def test_cancel_idea_form_never_opens_an_unsaved_uuid(client, owner, editing, invalid_post):
+    class CancelParser(HTMLParser):
+        href = None
+        cancel_href = None
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "a":
+                self.href = dict(attrs).get("href")
+
+        def handle_data(self, data):
+            if data.strip() == "Abbrechen":
+                self.cancel_href = self.href
+
+    client.force_login(owner)
+    idea = (
+        IdeaCandidate.objects.create(
+            title="Gespeichert", description="Ursprünglich", submitted_by=owner
+        )
+        if editing
+        else None
+    )
+    url = (
+        reverse("use_cases:idea_edit", args=[idea.pk])
+        if editing
+        else reverse("use_cases:idea_create")
+    )
+    count = IdeaCandidate.objects.count()
+    page = (
+        client.post(url, {"title": "", "description": "Nicht gespeichert"})
+        if invalid_post
+        else client.get(url)
+    )
+    assert page.status_code == 200
+    # UUID defaults exist even on an unsaved ModelForm instance.
+    assert page.context["form"].instance.pk is not None
+    parser = CancelParser()
+    parser.feed(page.content.decode())
+    expected = idea.get_absolute_url() if editing else reverse("use_cases:idea_list")
+    assert parser.cancel_href == expected
+    assert client.get(parser.cancel_href).status_code == 200
+    assert IdeaCandidate.objects.count() == count
+    if idea:
+        idea.refresh_from_db()
+        assert idea.description == "Ursprünglich"
 
 
 def complete_intake_data(business_unit, business_owner, **overrides):

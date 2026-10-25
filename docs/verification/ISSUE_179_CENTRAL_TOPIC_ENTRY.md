@@ -161,6 +161,15 @@ einer Anmeldung über die bestehende Sitzungsdauer hinaus korrigiert; der Folget
 meldet sich entsprechend den geltenden Regeln erneut an. Sichtbar aufgefallene
 Größen-/Navigations-/Feldzustandsprobleme wurden wie oben beschrieben behoben.
 
+Nach der ersten vollständigen CI meldete der Nutzer einen weiteren konkreten Fehler
+im erhaltenen alten Einstieg `/use-cases/ideas/new/`: „Abbrechen“ nutzte bereits die
+UUID der ungespeicherten ModelForm-Instanz und öffnete dadurch eine nicht existierende
+Detailseite (404). Der Link speicherte keinen Eintrag. Das Abbruchziel kommt jetzt
+aus dem View: Neuanlage → Inbox, Bearbeitung → gespeicherte Idee. Vier Regressionen
+prüfen beide Wege mit und ohne Validierungsfehler sowie unveränderte Daten. Der
+zugehörige PostgreSQL-Lauf mit Ideen-Inbox und neuer Themenerfassung bestand mit
+**40 Tests, 11 Warnungen, 24,42 s**. Vollständige CI für die Korrektur im PR verlinkt.
+
 Keine Änderungen an Discovery-Prompts, Verträgen, Readiness, fachlichen Auswahl- oder
 Outcome-/Governance-Gates. Der Rückweg muss den neuen Kontext lesbar erhalten; ein
 Rollback darf gespeicherte `intake_context`-Daten nicht durch Rücknahme der Spalte
