@@ -7,6 +7,8 @@ from django.urls import reverse
 
 from ki_radar.architecture.focus import ValueStreamFocus, get_value_stream_focus
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream
+from ki_radar.architecture.permissions import can_edit_value_stream
+from ki_radar.architecture.strategic_exploration import has_strategic_exploration
 from ki_radar.delivery.actions import primary_delivery_action
 from ki_radar.delivery.models import DeliveryPackage
 from ki_radar.delivery.permissions import can_transition_package
@@ -187,6 +189,11 @@ def build_value_stream_journey(value_stream: ValueStream, user) -> JourneyState:
     if focus is not None and focus.is_terminal:
         return _focus_terminal_journey(value_stream, focus)
 
+    if focus is None or not focus.is_selected:
+        for process in ProcessAnalysis.objects.filter(stage__value_stream=value_stream):
+            if has_strategic_exploration(process):
+                return build_process_analysis_journey(process, user)
+
     legacy_journey = LEGACY_BUILD_VALUE_STREAM(value_stream, user)
     focus_step = _focus_step(value_stream)
     if focus is None or not focus.is_selected:
@@ -216,6 +223,8 @@ def build_process_analysis_journey(process_analysis: ProcessAnalysis, user) -> J
     focus = get_value_stream_focus(value_stream)
     if focus is not None and focus.is_terminal:
         return _focus_terminal_journey(value_stream, focus)
+    if (focus is None or not focus.is_selected) and has_strategic_exploration(process_analysis):
+        return _strategic_draft_journey(process_analysis, user)
     legacy_journey = LEGACY_BUILD_PROCESS(process_analysis, user)
     focus_step = _focus_step(value_stream)
     if focus is None or not focus.is_selected:
@@ -236,6 +245,61 @@ def build_process_analysis_journey(process_analysis: ProcessAnalysis, user) -> J
                 )
         return _state(path_label="Systematische Discovery", steps=steps)
     return _insert_focus(legacy_journey, focus_step)
+
+
+def _strategic_draft_journey(process, user) -> JourneyState:
+    can_edit = can_edit_value_stream(user, process.stage.value_stream)
+    has_options = process.solution_options.filter(retirement__isnull=True).exists()
+    comparison_url = reverse("architecture:solution_option_compare", args=[process.pk])
+    return _state(
+        path_label="Strategische Exploration",
+        steps=[
+            JourneyStep(
+                key="value_stream",
+                label="Untersuchungsrahmen",
+                state="complete",
+                url=process.stage.value_stream.get_absolute_url(),
+                reason="Menschlicher strategischer Scope dokumentiert; keine Screeningbestätigung.",
+            ),
+            JourneyStep(
+                key="process",
+                label="Prozessentwurf",
+                state="complete" if has_options else "current",
+                url=reverse("architecture:process_analysis_update", args=[process.pk])
+                if can_edit
+                else None,
+                action_label="Prozessentwurf bearbeiten" if can_edit else "",
+                reason="Ist-Daten dürfen unbekannt bleiben. Der Entwurf erteilt keine Freigabe.",
+            ),
+            JourneyStep(
+                key="solution",
+                label="Optionsentwürfe",
+                state="current" if has_options else "upcoming",
+                url=(
+                    comparison_url
+                    if has_options
+                    else reverse("architecture:solution_option_create", args=[process.pk])
+                )
+                if can_edit
+                else None,
+                action_label=(
+                    "Optionsentwürfe vergleichen" if has_options else "Optionsentwurf anlegen"
+                )
+                if can_edit
+                else "",
+                reason="Unverbindlich weiterarbeiten; Evidenz, Aufwand und Wirkung bleiben offen.",
+            ),
+            JourneyStep(
+                key="focus",
+                label="Bindende Auswahl",
+                state="blocked",
+                url=comparison_url if can_edit else None,
+                action_label="Auswahlvoraussetzungen prüfen" if can_edit else "",
+                reason="Unbekanntes globales Screening blockiert weiterhin die bindende Auswahl. "
+                "Der strategische Auswahlvertrag benötigt eine fachliche Entscheidung.",
+            ),
+        ],
+    )
 
 
 def _normalize_concrete_links(journey: JourneyState, use_case) -> JourneyState:

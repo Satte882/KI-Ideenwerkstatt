@@ -513,6 +513,7 @@ def materialize_discovery_and_start_investigation(
         discovery_snapshot_id=discovery_snapshot_id,
         process_analysis_id=process.pk,
         decision_question=decision_question,
+        strategic_exploration=process.source_snapshot.get("strategic_exploration"),
     )
     handle = start_investigation(
         actor=actor,

@@ -296,9 +296,13 @@ class ProcessAnalysisForm(StyledModelForm):
     def __init__(self, *args, allow_unknown_diagnosis=False, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.instance._state.adding:
+            from .strategic_exploration import has_strategic_exploration
+
             decision = self.instance.discovery_path_decisions.first()
-            allow_unknown_diagnosis = allow_unknown_diagnosis or bool(
-                decision and decision.path == "strategic"
+            allow_unknown_diagnosis = (
+                allow_unknown_diagnosis
+                or bool(decision and decision.path == "strategic")
+                or has_strategic_exploration(self.instance)
             )
         for name in ("bottlenecks", "baseline_metrics"):
             self.fields[name].required = not allow_unknown_diagnosis
