@@ -82,6 +82,14 @@ def test_immediate_materialization_edit_save_resume_and_option_drafts(owner, cli
     assert create in detail.content.decode()
     assert detail.context["journey"].next_action.action_label == "Optionsentwürfe vergleichen"
     assert "Lösungsentscheidung offen." not in detail.content.decode()
+    comparison = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
+    assert comparison.context["selection_blocked"]
+    assert comparison.context["can_edit_drafts"]
+    assert (
+        reverse("architecture:solution_option_update", args=[option.pk])
+        in comparison.content.decode()
+    )
+    assert "Bewertung nach Fokusfreigabe möglich" not in comparison.content.decode()
     journey = build_process_analysis_journey(process, owner)
     assert journey.next_action.url == reverse(
         "architecture:solution_option_compare", args=[process.pk]

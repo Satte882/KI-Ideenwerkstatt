@@ -78,6 +78,10 @@ schließt weder Parent #183 noch die vollständige B-Integrationsabnahme aus #18
 - Erweiterte gezielte Suite mit strategischer Discovery, Outcome-Vertrag und
   Aufbewahrungsregressionen: 81 bestanden vor den vier zusätzlichen D1-Gegenproben;
   anschließend alle 17 D1-Tests bestanden.
+- Abschließende gezielte Prüfung einschließlich gerenderter Journey und Vergleichsmatrix
+  sowie bestehender Auswahl-UX und Guided Journey: 39 bestanden. Das strategische
+  Entwurfsrecht bleibt auch in den nachgelagerten UI-Projektionen sichtbar; das
+  bindende Gate wird dadurch nicht verändert.
 - Vollständige PostgreSQL-Suite und GitHub-CI: abschließende Ergebnisse werden im PR
   und im Chat berichtet. Keine abgeschlossene Prüfung aus laufenden Tests ableiten.
 - Externe Socket-Verbindungen der lokalen Testprozesse sind gesperrt; Provider-Antworten
