@@ -85,6 +85,8 @@ def test_immediate_materialization_edit_save_resume_and_option_drafts(owner, cli
     comparison = client.get(reverse("architecture:solution_option_compare", args=[process.pk]))
     assert comparison.context["selection_blocked"]
     assert comparison.context["can_edit_drafts"]
+    assert comparison.context["strategic_path_pending"]
+    assert "Es fehlen: Beobachtung/Problem, bestätigte Ursache" not in comparison.content.decode()
     assert (
         reverse("architecture:solution_option_update", args=[option.pk])
         in comparison.content.decode()

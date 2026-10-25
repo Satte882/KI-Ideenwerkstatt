@@ -262,9 +262,9 @@
         {% endif %}
         {% if diagnosis_blockers %}
           <div class="mt-3" data-testid="selection-diagnosis-blocker">
-            <strong>Diagnose noch unvollständig</strong>
-            <p class="mb-2">{% if strategic_exploration %}Vor einer bindenden strategischen Präferenz sind Outcome-Bezug, Strategiepfad, begründetes Potenzial und Validierungsschritt bewusst zu bestätigen. Der Entwurf bestätigt weder Ursache noch Pfad.{% else %}Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.{% endif %}</p>
-            <p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächlichen Befunde und Belege; eine vermutete Ursache bleibt eine Hypothese.</p>
+            <strong>{% if strategic_path_pending %}Strategischer Entscheidungsbezug noch offen{% else %}Diagnose noch unvollständig{% endif %}</strong>
+            <p class="mb-2">{% if strategic_path_pending %}Vor einer bindenden strategischen Präferenz sind Outcome-Bezug, Strategiepfad, begründetes Potenzial und Validierungsschritt bewusst zu bestätigen. Der Entwurf bestätigt weder Ursache noch Pfad.{% else %}Vor einer verbindlichen Präferenz braucht die Diagnose mindestens eine Beobachtung und eine bestätigte Ursache. Lösungsoptionen können weiterhin exploriert und verglichen werden.{% endif %}</p>
+            {% if not strategic_path_pending %}<p class="mb-2">Es fehlen: {{ diagnosis_blockers|join:", " }}. Dokumentieren Sie die tatsächlichen Befunde und Belege; eine vermutete Ursache bleibt eine Hypothese.</p>{% endif %}
             {% if can_edit_drafts %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:process_analysis_update' process_analysis.pk %}">{% if strategic_exploration %}Prozessentwurf bearbeiten{% else %}Diagnose ergänzen{% endif %}</a>{% endif %}
           </div>
         {% endif %}
