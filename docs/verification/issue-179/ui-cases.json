@@ -1,0 +1,112 @@
+{
+  "viewport": "1440x1000",
+  "database": "isolated SQLite UI fixture; PostgreSQL tested separately",
+  "provider": "deterministic fixture only",
+  "actual_model_calls": 0,
+  "fixture_role_calls": [
+    {
+      "role": "autonomous_business_discovery_v1",
+      "actual_provider_call": false
+    },
+    {
+      "role": "autonomous_business_discovery_verifier_v1",
+      "actual_provider_call": false
+    },
+    {
+      "role": "autonomous_business_discovery_v1",
+      "actual_provider_call": false
+    },
+    {
+      "role": "autonomous_business_discovery_verifier_v1",
+      "actual_provider_call": false
+    },
+    {
+      "role": "autonomous_business_discovery_v1",
+      "actual_provider_call": false
+    },
+    {
+      "role": "autonomous_business_discovery_verifier_v1",
+      "actual_provider_call": false
+    }
+  ],
+  "model_quality_evaluated": false,
+  "scenarios": [
+    {
+      "idea_id": "014fb3ee-d506-4ab1-8e1f-dc0a42d18d4f",
+      "title": "Synthetischer Test: Mitarbeitende vergleichen Lieferantenangebote manuell; Kunde",
+      "intake_context": {
+        "schema_version": "topic-intake-v1",
+        "occasion": "problem",
+        "perspectives": [
+          "staff",
+          "customers"
+        ],
+        "original_text": "Synthetischer Test: Mitarbeitende vergleichen Lieferantenangebote manuell; Kunden warten dadurch auf die vorbereitete Entscheidung."
+      },
+      "initiative_id": "",
+      "capture_id": "8afc092f-5a25-45fb-8bd7-1985811a3d3c",
+      "catalog": "2.0",
+      "analysis_id": "61fc5d8a-1eb8-4e03-a06e-57ad9e95fc74",
+      "status": "success",
+      "source_id": "f89b27d5-79ec-4d8e-ad1b-337ba8d13b38",
+      "manifest_hash": "7e3f287fcbd6851dbe809f2ba3148e6e5d1d42fa0582ae963e84fa7a7edf7f6c",
+      "process_id": "7585d5af-8585-4c96-a112-d9a4f94fc8c4",
+      "same_initiative": true,
+      "files_unchanged": true,
+      "run_status": "aborted",
+      "followup_model_calls": 0
+    },
+    {
+      "idea_id": "d199fac9-d04d-4c28-96a6-0fa1c5a769fc",
+      "title": "Mehr tragfähige Buchungen",
+      "intake_context": {
+        "schema_version": "topic-intake-v1",
+        "occasion": "goal",
+        "perspectives": [
+          "leadership",
+          "customers"
+        ],
+        "original_text": "Synthetischer Test: Wir möchten mehr wirtschaftlich tragfähige Buchungen aus Kundenanfragen erreichen. Ursachen, Ablauf und Messwerte sind noch unbekannt."
+      },
+      "initiative_id": "e4e715e1-c918-4f4d-95b2-bc0a941a1688",
+      "capture_id": "2fe2b6d3-63b0-48a9-9670-5368d50ef3f3",
+      "catalog": "2.0",
+      "analysis_id": "30fe49c1-04a2-4665-96b3-5cd6eedb327e",
+      "status": "success",
+      "source_id": "1c0f4e67-3382-4906-969b-5bfcaf3621b6",
+      "manifest_hash": "4aff117e41395cb9d5142c25b15d5faf20b26a854babf47c00701e4e70c67128",
+      "process_id": "78c8c081-d046-496d-8113-21f1efeb11ba",
+      "same_initiative": true,
+      "files_unchanged": true,
+      "run_status": "aborted",
+      "followup_model_calls": 0
+    },
+    {
+      "idea_id": "7a5770ef-cc99-4fcd-87fe-dd634d1d1639",
+      "title": "Potenziale in der Zusammenarbeit mit Partnern",
+      "intake_context": {
+        "schema_version": "topic-intake-v1",
+        "occasion": "explore",
+        "perspectives": [
+          "partners"
+        ],
+        "original_text": "Synthetischer Test: Ich möchte die Zusammenarbeit mit unseren Partnern im Einkauf vom Angebotsanfrage-Eingang bis zur Entscheidungsvorbereitung untersuchen, ohne eine Ursache vorwegzunehmen."
+      },
+      "initiative_id": "",
+      "capture_id": "e7438a7a-572b-4b6c-9fad-4bcd41fe96bb",
+      "catalog": "2.0",
+      "analysis_id": "bb80bd07-09ff-4dbc-a5ed-0ed023c4e906",
+      "status": "success",
+      "source_id": "4bb469bc-fbab-4408-8d16-c13dbb6526ae",
+      "manifest_hash": "a9a971e01f15115ebb2bdbc9ab3d53c72bc3b2b25ebb99f0505a1c4a482993b6",
+      "process_id": "3fd6afde-a0da-4554-9d97-2b50f84c88e9",
+      "same_initiative": true,
+      "files_unchanged": true,
+      "run_status": "aborted",
+      "followup_model_calls": 0
+    }
+  ],
+  "idea_count": 3,
+  "initiative_count": 1,
+  "path_decision_count": 0
+}

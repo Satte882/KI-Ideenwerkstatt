@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Neues Thema starten – KI-Ideenwerkstatt{% endblock %}
+{% block body_class %}page-form-workspace page-topic-intake{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/topic-intake.css' %}">{% endblock %}
+{% block content %}
+<header class="cr-page-header">
+  <div class="cr-page-header__copy"><h1 class="cr-page-header__title">Neues Thema starten</h1><p class="cr-page-header__summary">Was bringt dich heute hierher? Wähle den Anlass, der am besten passt.</p></div>
+  <a href="{% url 'reporting:dashboard' %}">Zum Arbeitsvorrat</a>
+</header>
+<nav class="topic-choices" aria-label="Anlass wählen">
+  {% for key, label, question, example in occasions %}
+  <a class="topic-choice" href="{% url 'use_cases:topic_capture' occasion=key %}">
+    <strong>{{ label }}</strong>
+    <span>{% if key == 'problem' %}Ein konkretes Problem, Hindernis oder unnötiger Aufwand.{% elif key == 'goal' %}Ein geschäftliches Ergebnis erreichen, auch wenn der Weg noch offen ist.{% else %}Einen Bereich erkunden, ohne schon ein Problem benennen zu müssen.{% endif %}</span>
+  </a>
+  {% endfor %}
+</nav>
+<p class="text-muted mt-4">Die Auswahl ist eine Orientierung für die Erfassung. Sie legt noch keine Ursache, Lösung oder Untersuchungsrichtung fest.</p>
+{% if can_direct_intake %}<p><a href="{% url 'use_cases:create' %}">Ich habe bereits eine KI-Idee</a><br><small>Der direkte Weg bleibt möglich. Beschreibe dort das zugrunde liegende Problem oder Ziel; die bestehenden Anforderungen an Geschäftsziel und Freigabe gelten weiterhin.</small></p>{% endif %}
+{% endblock %}

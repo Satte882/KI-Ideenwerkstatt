@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -20,6 +21,7 @@ from .permissions import (
     can_promote_idea,
     can_triage_idea,
 )
+from .topic_contract import display_context
 
 
 @login_required
@@ -98,6 +100,7 @@ def idea_create(request):
         {
             "form": form,
             "page_title": "Idee oder Problem erfassen",
+            "cancel_url": reverse("use_cases:idea_list"),
             "submit_label": "Eintrag speichern",
         },
     )
@@ -121,6 +124,7 @@ def idea_detail(request, pk):
         "use_cases/ideas/detail.html",
         {
             "idea": idea,
+            "topic_context": display_context(idea.intake_context),
             "triage_form": IdeaTriageForm(instance=idea),
             "dismiss_form": IdeaDismissForm(),
             "can_edit": can_edit_idea(request.user, idea),
@@ -153,6 +157,7 @@ def idea_edit(request, pk):
         {
             "form": form,
             "page_title": "Eintrag bearbeiten",
+            "cancel_url": idea.get_absolute_url(),
             "submit_label": "Änderungen speichern",
         },
     )

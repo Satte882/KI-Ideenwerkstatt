@@ -1,3 +1,4 @@
+from copy import deepcopy
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -25,6 +26,7 @@ def idea_origin_id(answers: dict) -> UUID | None:
 
 def build_idea_origin(idea: IdeaCandidate) -> dict:
     return {
+        **({"intake_context": deepcopy(idea.intake_context)} if idea.intake_context else {}),
         "type": "idea_candidate",
         "idea_candidate_id": str(idea.pk),
         "title": idea.title,

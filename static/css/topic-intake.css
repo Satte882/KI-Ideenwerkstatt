@@ -1,0 +1,34 @@
+.topic-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 920px;
+}
+.page-topic-intake .cr-page-header,
+.page-topic-intake .cr-work-form { max-width: 920px; }
+.topic-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ice);
+  border-radius: 11px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.topic-choice strong { font-size: 1.2rem; }
+.topic-choice span { color: var(--muted); }
+.topic-choice:hover { border-color: var(--ice); background: var(--surface-2); }
+.topic-choice:focus-visible { outline: 2px solid var(--ice); outline-offset: 4px; }
+.topic-perspectives > div { display: flex; flex-wrap: wrap; gap: 24px; }
+.topic-perspectives label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.topic-perspectives input { accent-color: var(--ice); width: 16px; height: 16px; }
+.page-topic-intake .form-control[aria-invalid="true"] { border-color: var(--danger); }

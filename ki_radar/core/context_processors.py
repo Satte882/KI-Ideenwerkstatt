@@ -11,6 +11,11 @@ def navigation_context(request):
 
     expire_due_capture_sessions(owner=request.user)
     match = request.resolver_match
+    nav_is_topic = bool(
+        match
+        and match.namespace == "use_cases"
+        and match.url_name in {"topic_start", "topic_capture"}
+    )
     nav_is_discovery = bool(
         match
         and match.namespace == "accelerator"
@@ -55,6 +60,7 @@ def navigation_context(request):
     )
     return {
         "nav_is_analysis": nav_is_analysis,
+        "nav_is_topic": nav_is_topic,
         "nav_outcome_label": nav_outcome_label,
         "nav_is_discovery": nav_is_discovery,
         "nav_is_coordinator": is_coordinator(request.user),

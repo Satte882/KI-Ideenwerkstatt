@@ -10,7 +10,12 @@
     <h1 class="page-title">Ideen &amp; Probleme</h1>
     <p class="page-subtitle mb-0">Frühe Ideen und Probleme erfassen, priorisieren und je nach Reife systematisch untersuchen oder direkt als Use Case weiterführen.</p>
   </div>
-  {% if can_create_idea %}<a class="btn btn-primary" href="{% url 'use_cases:idea_create' %}">Idee oder Problem erfassen</a>{% endif %}
+  {% if can_create_idea %}
+  <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+    <a class="btn btn-primary" href="{% url 'use_cases:topic_start' %}">Neues Thema starten</a>
+    <a href="{% url 'use_cases:idea_create' %}">Idee direkt erfassen</a>
+  </div>
+  {% endif %}
 </div>
 
 <div class="row g-3 mb-4" aria-label="Inbox-Status">

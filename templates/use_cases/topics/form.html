@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ occasion_label }} – KI-Ideenwerkstatt{% endblock %}
+{% block body_class %}page-form-workspace page-topic-intake{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/ui-control-room-primitives.css' %}"><link rel="stylesheet" href="{% static 'css/ui-control-room-workspaces.css' %}"><link rel="stylesheet" href="{% static 'css/topic-intake.css' %}">{% endblock %}
+{% block content %}
+<header class="cr-page-header">
+  <div class="cr-page-header__copy"><h1 class="cr-page-header__title">{{ occasion_label }}</h1><p class="cr-page-header__summary">Ein kurzer Satz genügt. Was du noch nicht weißt, darf offen bleiben.</p></div>
+  <a href="{% url 'use_cases:topic_start' %}">Anderen Anlass wählen</a>
+</header>
+{% if not can_submit %}<p role="status" class="alert alert-info">Ein Zielvorhaben kann ein Business Owner oder die KI-Koordination speichern. Bitte gemeinsam mit einer berechtigten Person fortfahren. Deine bestehenden Rechte bleiben unverändert.</p>{% endif %}
+{% if can_submit or form.is_bound %}
+<form method="post" class="app-card cr-work-form form-guidance-ignore" data-submit-guard data-busy-label="Thema wird gespeichert …" data-topic-intake>
+  {% csrf_token %}{{ form.token }}
+  <div class="card-body">
+    {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.token.errors %}<div class="alert alert-danger" role="alert">{{ form.token.errors }}</div>{% endif %}
+    <div class="mb-4"><label class="form-label" for="{{ form.text.id_for_label }}">{{ form.text.label }} *</label>{{ form.text }}{% if form.text.errors %}<div role="alert">{{ form.text.errors }}</div>{% endif %}</div>
+    <div class="mb-4"><label class="form-label" for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>{{ form.title }}<p class="form-text">Aus deinem Satz vorgeschlagen und frei editierbar. Ohne eigenen Titel verwenden wir dessen Anfang.</p>{% if form.title.errors %}<div role="alert">{{ form.title.errors }}</div>{% endif %}</div>
+    <fieldset class="mb-4"><legend class="h6">{{ form.perspectives.label }}</legend><div class="topic-perspectives">{{ form.perspectives }}</div>{% if form.perspectives.errors %}<div role="alert">{{ form.perspectives.errors }}</div>{% endif %}<p class="form-text">Betroffene Gruppen sind keine bestätigten Quellen oder Ursachen.</p></fieldset>
+    <p class="text-muted">Du speicherst zunächst einen Entwurf. Dabei wird kein KI-Modell aufgerufen und es entstehen keine Modellkosten.</p>
+  </div>
+  <div class="card-footer d-flex gap-3 align-items-center">
+    {% if can_submit %}<button class="btn btn-primary" type="submit">Entwurf speichern und fortfahren</button>{% endif %}
+    <a href="{% url 'reporting:dashboard' %}">Zum Arbeitsvorrat</a>
+  </div>
+</form>
+{% endif %}
+<script src="{% static 'js/topic-intake.js' %}" defer></script>
+{% endblock %}

@@ -21,10 +21,21 @@
   </div>
   <div class="dashboard-header__actions">
     <a class="btn btn-outline-secondary" href="{% url 'use_cases:list' %}">Alle Use Cases</a>
-    {% if nav_is_coordinator %}<a class="btn btn-primary" href="{% url 'reviews:monthly' %}">Monatsreview starten</a>{% endif %}
+    {% if nav_is_coordinator %}<a class="btn btn-outline-secondary" href="{% url 'reviews:monthly' %}">Monatsreview starten</a>{% endif %}
+    {% if can_start_topic %}<a class="btn btn-primary" href="{% url 'use_cases:topic_start' %}">Neues Thema starten</a>{% endif %}
   </div>
 </header>
 
+{% if can_start_topic %}
+<p class="small d-flex gap-3 flex-wrap text-muted">
+  Weitere Einstiege:
+  <a href="{% url 'use_cases:idea_create' %}">Idee erfassen</a>
+  {% if can_create_initiative %}<a href="{% url 'use_cases:initiative_create' %}">Vorhaben erfassen</a>
+  <a href="{% url 'accelerator:value_stream_start' %}">Geführt erfassen</a>
+  <a href="{% url 'accelerator:autonomous_discovery_start' %}">Autonom analysieren</a>{% endif %}
+  {% if can_direct_intake %}<a href="{% url 'use_cases:create' %}">Use Case anlegen</a>{% endif %}
+</p>
+{% endif %}
 <dl class="cr-stat-strip dashboard-stat-strip" aria-label="Status des Arbeitsvorrats">
   <div class="cr-stat dashboard-stat--danger">
     <dt>Überfällig</dt>

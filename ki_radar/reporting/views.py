@@ -19,7 +19,7 @@ from ki_radar.use_cases.initiative_models import ImprovementInitiative
 from ki_radar.use_cases.initiatives import can_edit_initiative, initiative_review_summary
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.outcome_workspace import build_outcome_workspace_journey
-from ki_radar.use_cases.permissions import can_edit_use_case
+from ki_radar.use_cases.permissions import can_create_idea, can_create_use_case, can_edit_use_case
 from ki_radar.use_cases.services import (
     current_decision_check,
     decision_due_date,
@@ -448,6 +448,8 @@ def dashboard(request):
         .select_related("impact_review")
         .order_by("next_review_date", "title"),
         "can_create_initiative": can_edit_initiative(request.user),
+        "can_start_topic": can_create_idea(request.user),
+        "can_direct_intake": can_create_use_case(request.user),
     }
     return render(request, "reporting/dashboard.html", context)
 
