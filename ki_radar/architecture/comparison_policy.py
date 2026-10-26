@@ -1,5 +1,15 @@
 """Shared assessment requirements for human solution comparison (not generation contracts)."""
 
+DIAGNOSIS_BASES = (
+    ("assumption", "Fachlich angenommene Ursache; empirischer Nachweis offen"),
+    ("evidence", "Ursache anhand benannter Evidenz beurteilt; Grenzen beachten"),
+)
+
+
+def requires_decision_quality(process):
+    return bool(process.outcome_contract_version and process.comparison_contract_version)
+
+
 COVERAGE_LABEL = "Abdeckung von Engpass/Ursache oder begründetem Potenzial"
 NON_TECHNICAL_TYPES = frozenset({"organizational", "no_tech"})
 TECHNICAL_TEXT_FIELDS = ("data_requirements", "application_impact", "integration_impact")

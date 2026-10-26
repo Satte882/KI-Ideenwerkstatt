@@ -65,6 +65,7 @@ def comparison_process(owner, business_unit):
         baseline_metrics="Fünf Tage",
     )
     return ProcessAnalysis.objects.create(
+        comparison_contract_version=0,  # Historical comparison contract.
         outcome_contract_version=0,  # Historical regression cohort.
         stage=stage,
         name="Angebotsvergleich",
