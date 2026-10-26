@@ -94,7 +94,16 @@ def comparison(owner, business_unit):
         rationale="Synthetische Hypothese zur Prüfung, keine reale Messung",
         expected_revision=initiative.revision,
     )
-    bind_process(owner, process, initiative=initiative)
+    bind_process(
+        owner,
+        process,
+        initiative=initiative,
+        path_context={
+            "origin_basis": "Synthetischer Serviceauftrag zur Klärung von Leistungsfragen",
+            "strategic_potential": "Zusätzliches Buchungsvolumen bei verlässlicher Betreuung",
+            "validation_step": "Quellenklärung, Buchungsvolumen und Servicequalität prüfen",
+        },
+    )
     for option in process.solution_options.all():
         option.description = (
             "Reiseorganisation bestätigt Änderungen verbindlich in einer gemeinsamen Quelle."

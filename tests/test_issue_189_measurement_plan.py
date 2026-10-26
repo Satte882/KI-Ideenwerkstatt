@@ -28,11 +28,11 @@ from ki_radar.architecture.discovery_materialization import (
 )
 from ki_radar.architecture.models import ProcessAnalysis, SolutionOption, ValueStreamStage
 from ki_radar.architecture.solution_selection import (
-    confirm_diagnosis_and_select_solution,
     select_preferred_solution,
 )
 from ki_radar.delivery.services import create_delivery_package
 from ki_radar.governance.models import GovernanceAssessment
+from ki_radar.reviews.lean_forms import ReviewForm
 from ki_radar.reviews.services import create_review
 from ki_radar.use_cases.impact_review_views import ImpactReviewForm
 from ki_radar.use_cases.impact_reviews import save_impact_review
@@ -41,7 +41,6 @@ from ki_radar.use_cases.initiatives import bind_initiative, save_initiative
 from ki_radar.use_cases.models import DecisionAssessment
 from ki_radar.use_cases.outcome_contract import confirm_initiative, snapshot_is_stale
 from ki_radar.use_cases.services import (
-    create_use_case_from_selected_solution,
     submit_approval_decision,
 )
 
@@ -54,15 +53,84 @@ PLAN = {
     "measurement_reference": "Absolutes Ziel: mindestens 18 von 100 termingerechten Abschlüssen",
 }
 
+PROCUREMENT_PATH = {
+    "origin_basis": "Synthetischer Einkaufsauftrag: Angebote vergleichen und Beschaffung freigeben",
+    "strategic_potential": "Termingerechte belastbare Beschaffungsentscheidungen",
+    "validation_step": "Vergleichszeit, Freigaberückfragen und fristgerechte Entscheidungen "
+    "getrennt prüfen",
+}
 
-def planned(owner, initiative=None):
+
+def procurement_plan(owner, *, multiple=False):
+    """Complete synthetic context; deliberately inherit no sales defaults."""
+    initiative = save_initiative(
+        actor=owner,
+        data={
+            "title": "Synthetische termingerechte Beschaffung für den Test-Einkaufsbereich",
+            "business_outcome": "Termingerechte belastbare Beschaffungsentscheidungen",
+            "contribution": "Angebotsvergleich und nachgelagerte Beschaffungsfreigabe"
+            if multiple
+            else "Angebotsvergleich im begrenzten Einkaufsbereich",
+            "impact_hypothesis": "Weniger manuelle Angebotsübertragung könnte Entscheidungen "
+            "vor Ablauf der Beschaffungsfrist ermöglichen; klare Freigabeverantwortung "
+            "könnte zusätzlich Rückfragen senken. Lieferfähigkeit bleibt ein weiterer Einfluss."
+            if multiple
+            else "Weniger manuelle Angebotsübertragung könnte Entscheidungen vor Ablauf der "
+            "Beschaffungsfrist ermöglichen; Freigabe und Lieferfähigkeit bleiben weitere "
+            "Einflüsse.",
+            "outcome_owner": "Einkaufsleitung für den synthetischen Test-Einkaufsbereich",
+            "evaluation_criteria": "Mindestens 18 von 100 Beschaffungsentscheidungen fristgerecht "
+            "und durch den Fachbereich als belastbar geprüft; keine Verbesserungsbehauptung",
+            "measurement_method": "Synthetisches Entscheidungsprotokoll: Fristdatum und fachliche "
+            "Prüfung je Entscheidung; getrennt vom Median der Angebotsvergleichszeit",
+            "measurement_period": "Vier Wochen nach Beginn der Intervention",
+            "measurement_population": "100 Beschaffungsentscheidungen im Test-Einkaufsbereich",
+            "measurement_reference": "Absolutes Ziel: mindestens 18 von 100 fristgerecht und "
+            "fachlich belastbar; keine bekannte Vorperiode",
+            "measurement_unknowns": "Keine Geschäftsbasislinie, Kosten- oder Kausalitätsmessung; "
+            "Lieferfähigkeit und Freigabe nicht isoliert",
+        },
+    )
+    return confirm_initiative(
+        initiative=initiative,
+        actor=owner,
+        rationale="Synthetischen Einkaufsbeitrag und absolute Prüfkriterien vorab bestätigen",
+        expected_revision=initiative.revision,
+    )
+
+
+def procurement_options(process):
+    """Remove sales defaults even when using the existing process fixture."""
+    for option in process.solution_options.all():
+        organizational = option.option_type == "organizational"
+        option.name = (
+            "Verbindliche Freigabeverantwortung" if organizational else "Freigabenachweise"
+        )
+        option.description = (
+            "Verantwortung und Vertretung im Fachbereich festlegen"
+            if organizational
+            else "Assistenz ordnet Freigabenachweise; Fachbereich entscheidet weiterhin"
+        )
+        option.expected_value = "Weniger Freigaberückfragen; Geschäftswirkung unbekannt"
+        option.outcome_effect = "Fristgerechte belastbare Beschaffungsentscheidungen unterstützen"
+        option.bottleneck_coverage = "Unklare Freigabeverantwortung adressieren"
+        option.data_requirements = "Angebotsvergleich und fachliche Freigabenachweise"
+        option.effort_assessment = (
+            "Einmalig Zuständigkeit und Vertretung klären; laufend Pflege; Schulung; Kosten offen"
+            if organizational
+            else "Einmalig Integration; laufend Betrieb und Prüfung; Prüfschulung; Kosten offen"
+        )
+        option.save()
+
+
+def planned(owner, initiative=None, *, plan=None):
     initiative = initiative or confirmed(owner)
     initiative.refresh_from_db()
     initiative = save_initiative(
         actor=owner,
         initiative=initiative,
         data={
-            **PLAN,
+            **(PLAN if plan is None else plan),
             "measurement_unknowns": "",
             "measurement_change_reason": "Messabsicht vor Auswahl präzisiert",
         },
@@ -260,7 +328,7 @@ def test_review_server_fields_and_metadata_and_view_input(owner, business_unit, 
     assert review.review_required
 
 
-def approve(case, coordinator, technical_admin):
+def approve(case, coordinator, technical_admin, client=None):
     case.refresh_from_db()
     if case.status == "idea":
         create_review(
@@ -293,6 +361,18 @@ def approve(case, coordinator, technical_admin):
             assessment_date=timezone.localdate(), basis_version="TEST-189", result="no_flags"
         ),
     )
+    if client is not None:
+        client.force_login(technical_admin)
+        response = client.post(
+            reverse("use_cases:approval_decision_create", args=[case.pk]),
+            {
+                "decision_status": "approved",
+                "rationale": "Unabhängige synthetische Fachprüfung",
+                "governance_confirmed": "on",
+            },
+        )
+        assert response.status_code == 302, response.context["form"].errors
+        return case.approval_decisions.get()
     return submit_approval_decision(
         use_case=case,
         actor=technical_admin,
@@ -300,7 +380,17 @@ def approve(case, coordinator, technical_admin):
     )
 
 
-def delivery_and_pilot(case, coordinator, client):
+def route_review(case, actor, client, data, *, expected=302):
+    client.force_login(actor)
+    response = client.post(
+        reverse("reviews:create", args=[case.pk]),
+        {**dict.fromkeys(ReviewForm.base_fields, ""), **data},
+    )
+    assert response.status_code == expected, response.context["form"].errors
+    return response
+
+
+def delivery_and_pilot(case, coordinator, client, *, route_pilot=False):
     case.refresh_from_db()
     case.technical_owner = coordinator
     case.metric_name = "Prozessdurchlaufzeit"
@@ -317,30 +407,31 @@ def delivery_and_pilot(case, coordinator, client):
     assert client.post(reverse("delivery:package_handover", args=[package.pk])).status_code == 302
     package.refresh_from_db()
     assert package.status == "handed_over"
-    create_review(
-        use_case=case,
-        actor=coordinator,
-        data={
-            "review_date": timezone.localdate(),
-            "pilot_start": timezone.localdate(),
-            "decision": "start_pilot",
-            "new_status": "pilot",
-            "rationale": "Begrenzten synthetischen Pilot starten",
-            "funding_status": "satisfied",
-            "funding_evidence": "TEST-189-Freigabe, keine realen Mittel",
-            "next_review_date": case.planned_pilot_end,
-        },
-    )
+    data = {
+        "review_date": timezone.localdate(),
+        "pilot_start": timezone.localdate(),
+        "decision": "start_pilot",
+        "new_status": "pilot",
+        "rationale": "Begrenzten synthetischen Pilot starten",
+        "funding_status": "satisfied",
+        "funding_evidence": "TEST-189-Freigabe, keine realen Mittel",
+        "next_review_date": case.planned_pilot_end,
+    }
+    if route_pilot:
+        route_review(case, coordinator, client, data)
+    else:
+        create_review(use_case=case, actor=coordinator, data=data)
     case.refresh_from_db()
     assert case.status == "pilot"
     return package
 
 
-def end(case, coordinator):
-    return create_review(
-        use_case=case,
-        actor=coordinator,
-        data={
+def end(case, coordinator, client):
+    route_review(
+        case,
+        coordinator,
+        client,
+        {
             "review_date": timezone.localdate(),
             "decision": "end",
             "new_status": "ended",
@@ -350,6 +441,9 @@ def end(case, coordinator):
             "final_assessment": "Kein realer Nutzen- oder Kausalitätsnachweis",
         },
     )
+    case.refresh_from_db()
+    assert case.status == "ended"
+    return case.reviews.get(decision="end")
 
 
 def test_c_direct_ai_missing_baseline_unclear_end(
@@ -359,28 +453,64 @@ def test_c_direct_ai_missing_baseline_unclear_end(
     business_unit,
     client,
 ):
-    initiative = planned(owner)
     case = direct(owner, coordinator, business_unit)
+    case.title = "Synthetische Assistenz für Angebotsrückfragen im Vertrieb"
+    case.problem_statement = "Vertrieb berichtet Rückfragen zu freigegebenen Angeboten"
+    case.expected_benefit = "Weniger Rückfragen könnten wirtschaftliche Buchungen unterstützen"
+    case.save()
+    client.force_login(technical_admin)
+    approval_url = reverse("use_cases:approval_decision_create", args=[case.pk])
+    data = {
+        "decision_status": "approved",
+        "rationale": "Unabhängige synthetische Fachprüfung",
+        "governance_confirmed": "on",
+    }
+    assert client.post(approval_url, data).status_code == 200
+    assert not case.approval_decisions.exists()
+    initiative = planned(owner)
+    initiative = save_initiative(
+        actor=owner,
+        initiative=initiative,
+        data={
+            "evaluation_criteria": "Mindestens 18 von 100 freigegebenen Angeboten gebucht",
+            "measurement_method": "Freigegebene Angebote mit Buchungsprotokoll abgleichen",
+            "measurement_population": "100 freigegebene Testangebote im Vertrieb",
+            "measurement_reference": "Absolutes Ziel: 18 von 100 Angeboten gebucht",
+            "measurement_unknowns": "Keine Vorperiode; Kosten und Kausalität unbekannt",
+            "measurement_change_reason": "Messabsicht passend zum direkten Vertriebsfall",
+        },
+    )
+    initiative = confirm_initiative(
+        initiative=initiative,
+        actor=owner,
+        rationale="Vertriebsbeitrag bewusst bestätigen",
+        expected_revision=initiative.revision,
+    )
     bind_initiative(initiative=initiative, artifact=case, actor=owner)
-    approval = approve(case, coordinator, technical_admin)
+    assert client.post(approval_url, data).status_code == 302
+    approval = case.approval_decisions.get()
     assert approval.outcome_snapshot["measurement_plan"]["use_case_history_id"]
     original = deepcopy(approval.outcome_snapshot)
-    package = delivery_and_pilot(case, coordinator, client)
+    package = delivery_and_pilot(case, coordinator, client, route_pilot=True)
     assert case.metric_baseline is None
     assert package.business_context_snapshot["original"]["id"] == str(approval.pk)
-    with pytest.raises(ValidationError):
-        create_review(
-            use_case=case,
-            actor=coordinator,
-            data={
-                "review_date": timezone.localdate(),
-                "decision": "go_live",
-                "new_status": "operation",
-                "rationale": "Keine erfundenen Messwerte",
-                "funding_status": "satisfied",
-                "funding_evidence": "TEST-189",
-            },
-        )
+    response = route_review(
+        case,
+        coordinator,
+        client,
+        {
+            "review_date": timezone.localdate(),
+            "decision": "go_live",
+            "new_status": "operation",
+            "rationale": "Keine erfundenen Messwerte",
+            "funding_status": "satisfied",
+            "funding_evidence": "TEST-189",
+        },
+        expected=200,
+    )
+    assert "Ist-Wert" in str(response.context["form"].errors)
+    case.refresh_from_db()
+    assert case.status == "pilot" and not case.reviews.filter(decision="go_live").exists()
     review = save(
         owner,
         initiative,
@@ -391,7 +521,7 @@ def test_c_direct_ai_missing_baseline_unclear_end(
         },
     )
     assert not review.review_required and review.attribution == "unclear"
-    closure = end(case, coordinator)
+    closure = end(case, coordinator, client)
     assert closure.scale_readiness_snapshot["business_context"]["effect_status"] == "unclear"
     approval.refresh_from_db()
     assert approval.outcome_snapshot == original
@@ -421,8 +551,10 @@ def test_b_actual_strategy_still_requires_complete_comparison(owner, tmp_path, m
         ).status_code
         == 302
     )
-    initiative = planned(owner)
-    bind_process(owner, process, path="strategic", initiative=initiative)
+    initiative = procurement_plan(owner)
+    bind_process(
+        owner, process, path="strategic", initiative=initiative, path_context=PROCUREMENT_PATH
+    )
     with pytest.raises(ValidationError, match=r"Optionen|bewertet|Aufwand"):
         select_preferred_solution(
             process_analysis=process,
@@ -466,30 +598,14 @@ def test_a_actual_discovery_to_ai_pilot_and_separate_business_review(
     )
     process.cause_hypotheses = "Formatunterschiede können Übertragungsaufwand verursachen"
     process.save()
-    initiative = planned(owner)
-    initiative = save_initiative(
-        actor=owner,
-        initiative=initiative,
-        data={
-            "business_outcome": "Termingerechte belastbare Beschaffungsentscheidungen",
-            "contribution": "Angebotsvergleich im begrenzten Einkaufsbereich",
-            "evaluation_criteria": "Mindestens 18/100 termingerechte Beschaffungsabschlüsse",
-            "measurement_change_reason": "Synthetischen Einkaufsauftrag vor Auswahl präzisieren",
-        },
-    )
-    initiative = confirm_initiative(
-        initiative=initiative,
-        actor=owner,
-        rationale="Prüfbaren begrenzten Einkaufsbeitrag bestätigen",
-        expected_revision=initiative.revision,
-    )
-    bind_process(owner, process, initiative=initiative)
+    initiative = procurement_plan(owner)
+    bind_process(owner, process, initiative=initiative, path_context=PROCUREMENT_PATH)
     for name, kind, description, effort in [
         (
             "Lieferantenformat vereinheitlichen",
             "organizational",
             "Lieferanten liefern einheitliche Vorlage; Einkauf prüft Adoption",
-            "Schulung und Lieferantenumstellung; Durchsetzung unbekannt",
+            "Einmalig Schulung und Lieferantenumstellung; laufend Pflege; Durchsetzung unbekannt",
         ),
         (
             "Assistierter Angebotsvergleich",
@@ -504,21 +620,32 @@ def test_a_actual_discovery_to_ai_pilot_and_separate_business_review(
         option.outcome_effect = "Weniger Übertragung könnte termingerechte Beschaffung unterstützen"
         option.effort_assessment = effort
         option.save()
-    decision = confirm_diagnosis_and_select_solution(
-        process_analysis=process,
-        selected_option=process.solution_options.get(option_type="assistant"),
-        actor=owner,
-        confirmed_causes=process.cause_hypotheses,
-        rationale="Test: Formate kurzfristig erschließen; Kostenunsicherheit akzeptiert",
-        difference_reason="Lieferantenverhalten ändern gegenüber Extraktion bestehender Dokumente",
-        uncertainty_reason="Lieferantenadoption ungesichert; Assistenzrisiken menschlich prüfen",
-        diagnosis_basis="assumption",
-        diagnosis_note="Fachliche Hypothese aus Interview, kein Kausalbeweis",
-        expected_process_version=process.version,
+    client.force_login(owner)
+    assert (
+        client.post(
+            reverse("architecture:solution_option_compare", args=[process.pk]),
+            {
+                "selected_option": process.solution_options.get(option_type="assistant").pk,
+                "process_version": process.version,
+                "confirmed_causes": process.cause_hypotheses,
+                "rationale": "Test: Formate kurzfristig erschließen; Kostenunsicherheit akzeptiert",
+                "difference_reason": "Lieferantenverhalten ändern gegenüber Extraktion "
+                "vorhandener Dokumente",
+                "uncertainty_reason": "Lieferantenadoption ungesichert; Assistenzrisiken "
+                "menschlich prüfen",
+                "diagnosis_basis": "assumption",
+                "diagnosis_note": "Fachliche Hypothese aus Interview, kein Kausalbeweis",
+            },
+        ).status_code
+        == 302
     )
-    case = create_use_case_from_selected_solution(decision=decision, actor=owner).use_case
-    approve(case, coordinator, technical_admin)
-    package = delivery_and_pilot(case, coordinator, client)
+    decision = process.solution_selection_decisions.get()
+    original = deepcopy(decision.outcome_snapshot)
+    case = initiative.use_cases.get()
+    assert case.business_owner_id != technical_admin.pk
+    approve(case, coordinator, technical_admin, client)
+    package = delivery_and_pilot(case, coordinator, client, route_pilot=True)
+    handed_over = deepcopy(package.business_context_snapshot)
     case.metric_actual = Decimal("2")
     case.metric_measurement_period = "Vier Wochen, synthetisches Testprotokoll"
     case.metric_measurement_population = "Testvorgänge Einkaufsbereich"
@@ -531,77 +658,142 @@ def test_a_actual_discovery_to_ai_pilot_and_separate_business_review(
         finding(
             selection=decision,
             use_case=case,
+            business_measurement="18 von 100 Beschaffungsentscheidungen in vier Wochen "
+            "fristgerecht und fachlich belastbar; synthetischer Test-Einkaufsbereich",
+            business_evidence="Synthetisches Entscheidungsprotokoll TEST-202-A",
+            criteria_assessment="Frist und Belastbarkeit bei 18/100 erfüllt; "
+            "keine Vorperiodenverbesserung nachgewiesen",
             measurement_difference="Beschaffungsabschlüsse statt Prozessdurchlaufzeit",
         ),
     )
     assert not review.review_required and case.metric_result == "achieved"
     assert review.attribution == "unclear"
     assert package.business_context_snapshot["original"]["kind"] == "selection"
-    closure = end(case, coordinator)
+    closure = end(case, coordinator, client)
     assert closure.scale_readiness_snapshot["business_context"]["effect_status"] == "confirmed"
+    client.force_login(coordinator)
+    exported = client.get(reverse("delivery:package_export_markdown", args=[package.pk]))
+    assert exported.status_code == 200
+    assert initiative.business_outcome in exported.content.decode()
+    assert initiative.impact_hypothesis in exported.content.decode()
+    decision.refresh_from_db()
+    package.refresh_from_db()
+    assert decision.outcome_snapshot == original
+    assert package.business_context_snapshot == handed_over
+    assert package.business_context_snapshot["effect_status"] != "confirmed"
 
 
-def test_multiple_process_contributions_keep_single_review_boundary(owner, business_unit):
-    initiative = planned(owner)
-    initiative = save_initiative(
-        actor=owner,
-        initiative=initiative,
-        data={
-            "business_outcome": "Termingerechte Beschaffungsabschlüsse",
-            "contribution": "Angebotsvergleich und nachgelagerte Beschaffungsfreigabe",
-            "evaluation_criteria": "18/100 termingerechte Abschlüsse im Testbereich",
-            "measurement_change_reason": "Synthetischen Einkaufsbeitrag vorab abgrenzen",
-        },
-    )
-    initiative = confirm_initiative(
-        initiative=initiative,
-        actor=owner,
-        rationale="Zwei eigene Beiträge zum selben Geschäftsergebnis",
-        expected_revision=initiative.revision,
-    )
+def test_multiple_process_contributions_keep_single_review_boundary(owner, business_unit, client):
+    initiative = procurement_plan(owner, multiple=True)
     first = outcome_process(owner, business_unit)
     second_stage = ValueStreamStage.objects.create(
         value_stream=first.stage.value_stream, sequence=2, name="Beschaffung freigeben"
     )
     second = outcome_process(owner, business_unit, stage=second_stage)
     second.name = "Beschaffungsfreigabe"
+    second.scope_start = second.trigger = "Angebotsvergleich liegt vor"
+    second.scope_end = second.outcome = "Fachlich verantwortete Beschaffungsfreigabe"
     second.current_flow = "Einkauf legt Vergleich vor; Fachbereich bestätigt Freigabe"
+    second.bottlenecks = "Unklare Freigabeverantwortung"
+    second.cause_hypotheses = "Unklare Zuständigkeit könnte Freigaberückfragen erzeugen"
+    second.baseline_metrics = ""
     second.diagnostic_observations = "Synthetisch berichtete unklare Freigabeverantwortung"
     second.confirmed_causes = "Fachliche Hypothese: unklare Zuständigkeit erzeugt Rückfragen"
     second.save()
-    for option in second.solution_options.all():
-        option.description = (
-            "Verantwortung und Vertretung im Fachbereich festlegen"
+    procurement_options(second)
+    for option in first.solution_options.all():
+        option.name = (
+            "Einheitliche Lieferantenvorlage"
             if option.option_type == "organizational"
-            else "Assistenz ordnet Freigabenachweise; Fachbereich entscheidet weiterhin"
+            else "Assistierter Angebotsvergleich"
         )
-        option.outcome_effect = "Weniger Freigaberückfragen könnten Abschlüsse ermöglichen"
+        option.description = (
+            "Lieferantenvorlage vereinbaren; Einkauf kontrolliert Vollständigkeit"
+            if option.option_type == "organizational"
+            else "Assistenz extrahiert verschiedene Angebotsformate; Einkauf prüft"
+        )
+        option.expected_value = "Weniger Übertragung; fristgerechte Beschaffung prüfen"
+        option.outcome_effect = "Weniger Übertragung könnte fristgerechte Beschaffung unterstützen"
+        option.effort_assessment = (
+            "Umstellung und Schulung; laufend Pflege und Prüfung; Kosten offen"
+        )
         option.save()
     decisions = []
+    client.force_login(owner)
     for process in [first, second]:
-        bind_process(owner, process, initiative=initiative)
-        decisions.append(select(owner, process))
+        process.comparison_contract_version = 1
+        process.save()
+        bind_process(owner, process, initiative=initiative, path_context=PROCUREMENT_PATH)
+        data = {
+            "selected_option": process.solution_options.get(option_type="organizational").pk,
+            "process_version": process.version,
+            "rationale": "Organisatorischen Hebel direkt an der verantworteten Quelle erproben; "
+            "Adoption und Schulung kosten Aufwand, Betrag unbekannt. Keine ROI-Behauptung.",
+            "difference_reason": "Quelle und Verantwortung ändern gegenüber Assistenz zur "
+            "Aufbereitung von Nachweisen; beide sollen fristgerechte Beschaffung unterstützen",
+            "uncertainty_reason": "Adoption, laufende Pflege und Kosten nicht gemessen; "
+            "KI würde zusätzlich Betrieb und menschliche Prüfung erfordern",
+            "diagnosis_basis": "assumption",
+            "diagnosis_note": "Synthetische fachliche Hypothese, kein empirischer Ursachenbeweis",
+        }
+        response = client.post(
+            reverse("architecture:solution_option_compare", args=[process.pk]), data
+        )
+        assert response.status_code == 302, response.context["form"].errors
+        decisions.append(process.solution_selection_decisions.get())
     assert all(not decision.outcome_review_required for decision in decisions)
-    review = save(
-        owner,
-        initiative,
+    frozen = [deepcopy(decision.outcome_snapshot) for decision in decisions]
+    client.force_login(owner)
+    initiative.refresh_from_db()
+    data = {name: "" for name in ImpactReviewForm.Meta.fields}
+    data.update(
         finding(
-            selection=decisions[0],
+            selection=decisions[0].pk,
+            process_result="unknown",
+            effect_status="unclear",
+            effect_reason="Gesamtwirkung von Vergleich und Freigabe nicht nachgewiesen",
+            business_measurement="",
+            business_evidence="",
+            criteria_assessment="Kein Gesamtnutzenbeweis; beide Beiträge nicht isoliert gemessen",
             contribution_boundary=(
                 "Vergleich und Freigabe teilen Ressourcen; Wechselwirkung nicht isoliert gemessen. "
                 "Nur Vergleich strukturiert referenziert; kein separater ROI der Freigabe."
             ),
         ),
+        expected_revision=initiative.revision,
+        action="review",
     )
+    response = client.post(reverse("use_cases:initiative_impact", args=[initiative.pk]), data)
+    assert response.status_code == 302, response.context["form"].errors
+    review = InitiativeImpactReview.objects.get(initiative=initiative)
     assert InitiativeImpactReview.objects.filter(initiative=initiative).count() == 1
     assert review.selection_id == decisions[0].pk
     assert decisions[1].process_analysis.initiative_id == initiative.pk
     assert not review.review_required
     assert "nicht isoliert" in review.contribution_boundary
+    assert review.initiative.effect_status == "unclear" and review.attribution == "unclear"
+    # P11: invalidating another contribution does not turn this single reference into aggregation.
+    second.confirmed_causes = "Andere fachliche Hypothese zur Freigabe"
+    second.save()
+    review.refresh_from_db()
+    assert decisions[1].outcome_review_required
+    assert not review.review_required
+    for decision, snapshot in zip(decisions, frozen, strict=True):
+        decision.refresh_from_db()
+        assert decision.outcome_snapshot == snapshot
 
 
 def test_rsd_like_service_case_records_plan_and_honest_unclear(owner, comparison):
-    initiative = planned(owner, comparison.initiative)
+    initiative = planned(
+        owner,
+        comparison.initiative,
+        plan={
+            "measurement_method": "Buchungsvolumen und Servicequalität im Test-Service prüfen",
+            "measurement_period": "Vier Wochen nach Einführung der Quellenregel",
+            "measurement_population": "Leistungs- und Transferfragen im Test-Service",
+            "measurement_reference": "Vorperiode; Werte und Vergleichbarkeit noch unbekannt",
+        },
+    )
     decision = choose(comparison, owner, **QUALITY)
     review = save(
         owner,
