@@ -109,17 +109,14 @@ class ImprovementInitiative(TimeStampedModel):
             if not self.effect_reason.strip():
                 errors["effect_reason"] = "Bitte die Wirkungsaussage begründen."
             if self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}:
-                from .initiatives import OUTCOME_FIELDS
+                from .initiatives import initiative_claim_matches
 
                 previous = (
                     type(self).objects.filter(pk=self.pk).first()
                     if not self._state.adding
                     else None
                 )
-                claim_changed = previous is None or any(
-                    getattr(previous, field) != getattr(self, field)
-                    for field in (*OUTCOME_FIELDS, "effect_status", "effect_reason")
-                )
+                claim_changed = previous is None or not initiative_claim_matches(previous, self)
                 # Grandfather unchanged historical completions, not new claims.
                 changing_claim = (
                     previous is None or previous.status != self.Status.COMPLETED or claim_changed
@@ -323,8 +320,8 @@ class InitiativeImpactReview(TimeStampedModel):
     @property
     def review_required(self):
         from .impact_reviews import REVIEW_FIELDS
-        from .initiatives import OUTCOME_FIELDS, _formal_text, _text
-        from .outcome_contract import MATERIAL_FIELDS, _origin_blockers
+        from .initiatives import initiative_claim_matches
+        from .outcome_contract import _origin_blockers
 
         if (
             not self.reviewed_at
@@ -339,14 +336,8 @@ class InitiativeImpactReview(TimeStampedModel):
             .order_by("history_date", "history_id")
             .first()
         )
-        if original_initiative is None or any(
-            (_formal_text if field in MATERIAL_FIELDS else _text)(
-                getattr(original_initiative, field)
-            )
-            != (_formal_text if field in MATERIAL_FIELDS else _text)(
-                getattr(self.initiative, field)
-            )
-            for field in (*OUTCOME_FIELDS, "effect_status", "effect_reason")
+        if original_initiative is None or not initiative_claim_matches(
+            original_initiative, self.initiative
         ):
             return True
         original_review = (

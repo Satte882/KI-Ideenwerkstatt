@@ -160,7 +160,10 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
     option = locked_decision.selected_option
     process = locked_decision.process_analysis
     if locked_decision.outcome_review_required:
-        raise ValidationError("Die Outcome-Grundlage ist geändert; bitte die Lösung neu bewerten.")
+        raise ValidationError(
+            "Die Outcome-Grundlage oder der Prozess-/Lösungsstand wurde geändert; "
+            "bitte im Optionenvergleich neu bewerten und auswählen."
+        )
     stage = process.stage
     value_stream = stage.value_stream
 

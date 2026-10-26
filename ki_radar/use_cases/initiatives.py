@@ -54,6 +54,17 @@ def _formal_text(value):
     return text[:-1].rstrip() if text.endswith(".") and not text.endswith("..") else text
 
 
+def initiative_claim_matches(previous, current):
+    """Compare the claim reviewed for both freshness and proven completion."""
+    from .outcome_contract import MATERIAL_FIELDS
+
+    return all(
+        (_formal_text if field in MATERIAL_FIELDS else _text)(getattr(previous, field))
+        == (_formal_text if field in MATERIAL_FIELDS else _text)(getattr(current, field))
+        for field in (*OUTCOME_FIELDS, "effect_status", "effect_reason")
+    )
+
+
 @transaction.atomic
 def save_initiative(
     *,
