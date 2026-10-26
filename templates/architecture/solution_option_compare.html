@@ -221,7 +221,7 @@
           <div class="mb-3" data-testid="selection-outcome-blocker">
             <strong>Outcome-Bezug noch offen</strong>
             <ul>{% for blocker in outcome_blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
-            <a class="btn btn-sm btn-outline-secondary" href="{% url 'use_cases:prepare_outcome' kind='process' pk=process_analysis.pk %}">Geschäftsergebnis, Pfad und Vorhabensfokus vorbereiten / bestätigen</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'use_cases:prepare_outcome' kind='process' pk=process_analysis.pk %}">Geschäftsergebnis, Messabsicht, Pfad und Vorhabensfokus vorbereiten / bestätigen</a>
           </div>
         {% endif %}
 
@@ -248,6 +248,19 @@
               {% for option in missing_outcome_effect_options %}
                 <li>{{ option.name }}: Wirkung auf das Geschäftsergebnis noch offen.
                   <a href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Wirkung für {{ option.name }} ergänzen</a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if missing_effort_options %}
+          <div class="mt-3" data-testid="selection-option-effort-blocker">
+            <strong>Aufwand, Kosten und Umstellung fehlen</strong>
+            <ul>
+              {% for option in missing_effort_options %}
+                <li>Aufwand, Kosten und Umstellung fehlen: {{ option.name }}.
+                  {% if can_edit_drafts %}<a href="{% url 'architecture:solution_option_update' option.pk %}?return_to=comparison">Aufwand für {{ option.name }} ergänzen</a>{% else %}<span>Bewertung nach Fokusfreigabe möglich.</span>{% endif %}
                 </li>
               {% endfor %}
             </ul>

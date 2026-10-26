@@ -29,7 +29,7 @@ def _process(artifact):
         return None
 
 
-def outcome_blockers(artifact):
+def outcome_blockers(artifact, *, require_measurement_plan=False):
     if not artifact.outcome_contract_version:
         return []
     initiative = artifact.initiative
@@ -55,6 +55,14 @@ def outcome_blockers(artifact):
         or not initiative.confirmed_at
     ):
         missing.append("Aktuelle Wirkannahme fachlich bestätigen")
+    if require_measurement_plan and not (
+        all(getattr(initiative, name).strip() for name in PLAN_FIELDS[:4])
+        or initiative.measurement_unknowns.strip()
+    ):
+        missing.append(
+            "Vor neuer Bindung Messabsicht dokumentieren oder offene Messangaben "
+            "mit Grund und Klärungspunkt benennen. Eine Ist-Baseline ist nicht erforderlich."
+        )
     process = _process(artifact)
     if process is not None:
         missing.extend(_origin_blockers(artifact, process))
@@ -118,18 +126,10 @@ def build_outcome_snapshot(artifact, *, lock=False, require_measurement_plan=Tru
         artifact.initiative = query.get(
             pk=artifact.initiative_id,
         )
-    blockers = outcome_blockers(artifact)
+    blockers = outcome_blockers(artifact, require_measurement_plan=require_measurement_plan)
     if blockers:
         raise ValidationError("Outcome-Bezug offen: " + ", ".join(blockers))
     initiative = artifact.initiative
-    if require_measurement_plan and not (
-        all(getattr(initiative, name).strip() for name in PLAN_FIELDS[:4])
-        or initiative.measurement_unknowns.strip()
-    ):
-        raise ValidationError(
-            "Vor neuer Bindung Messabsicht dokumentieren oder offene Messangaben "
-            "mit Grund und Klärungspunkt benennen. Eine Ist-Baseline ist nicht erforderlich."
-        )
     result = {
         "contract_version": OUTCOME_CONTRACT_VERSION,
         "initiative_id": str(initiative.pk),

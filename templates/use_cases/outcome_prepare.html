@@ -38,7 +38,9 @@
 {% endif %}
 {% for field in form %}{% if field.is_hidden %}{{ field }}{% else %}<div class="mb-3">
 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+{% if field.name == 'measurement_method' %}<p>Messabsicht: Methode, Zeitraum, Population und Referenz beschreiben. Alternativ fehlende Messangaben unten mit Grund und Klärungspunkt offen benennen. Unvollständige Entwürfe bleiben speicherbar.</p>{% endif %}
 {{ field }}{{ field.errors }}
+{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
 {% if field.name == 'business_outcome' %}{% include "use_cases/includes/outcome_confirmation.html" with initiative=initiative editing=True only %}{% endif %}
 {% if field.name == 'focus_reason' and phase_focus %}<div class="small mt-2" data-testid="phase-focus-rationale"><strong>Aktuell dokumentierte Fokusbegründung für {{ phase_focus.selected_stage.name }}</strong><p class="text-preline mb-1">{{ phase_focus.rationale }}</p><p class="mb-0">Fokusrevision {{ phase_focus.revision }} · Anzeige des gespeicherten Standes; noch keine neue Entscheidung.</p></div>{% endif %}
 {% if field.name == 'selected_initiative' %}<button class="btn btn-outline-secondary mt-2" type="submit" name="action" value="load">Vorhaben laden</button>{% endif %}

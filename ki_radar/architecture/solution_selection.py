@@ -137,6 +137,12 @@ def missing_outcome_effect_options(options, *, process_analysis):
     return [option for option in options if not option.outcome_effect.strip()]
 
 
+def missing_effort_options(options, *, process_analysis):
+    if not requires_decision_quality(process_analysis):
+        return []
+    return [option for option in options if not option.effort_assessment.strip()]
+
+
 def comparison_blockers(options: list[SolutionOption], *, process_analysis=None) -> list[str]:
     blockers: list[str] = []
     if len(options) < 2:
@@ -154,12 +160,10 @@ def comparison_blockers(options: list[SolutionOption], *, process_analysis=None)
             f"Wirkung auf das gemeinsame Geschäftsergebnis fehlt: {option.name}"
             for option in missing_outcome_effect_options(options, process_analysis=process_analysis)
         )
-        if requires_decision_quality(process_analysis):
-            blockers.extend(
-                f"Aufwand, Kosten und Umstellung fehlen: {option.name}"
-                for option in options
-                if not option.effort_assessment.strip()
-            )
+        blockers.extend(
+            f"Aufwand, Kosten und Umstellung fehlen: {option.name}"
+            for option in missing_effort_options(options, process_analysis=process_analysis)
+        )
     return blockers
 
 
