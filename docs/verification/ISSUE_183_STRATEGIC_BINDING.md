@@ -73,6 +73,9 @@ Entwürfe verlieren keine Formulareingaben. Die bestehende Journey führt nach a
 Non-KI-Wahl zum gemeinsamen Wirkungsreview, nach geänderter Grundlage zur Neuauswahl;
 sie behauptet keine fehlende Prozessdiagnose oder globale Screeningbestätigung.
 Externe organisatorische Umsetzung benötigt keinen künstlichen KI-Use-Case oder Non-KI-Pilot.
+Die Fortsetzungsanzeige verwendet die bestehenden Vorhaben-Reviewrechte; Lösungswahl
+vermittelt keine zusätzliche Reviewberechtigung. Ein begründeter Abbruch bleibt terminal
+und führt nicht zu einer unzulässigen Neuauswahl.
 
 ## B-Kette: technische Prüfung und Evidenzgrenze
 

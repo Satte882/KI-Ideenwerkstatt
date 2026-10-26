@@ -449,3 +449,35 @@ def test_real_scope_without_confirmed_phase_cannot_bind(owner, exploration, clie
     assert not strategic_binding_basis(exploration)
     with pytest.raises(ValidationError, match="Vorhabensfokus"):
         choose(owner, exploration, alternatives[0])
+
+
+def test_selection_does_not_grant_initiative_review_permission(
+    owner, coordinator, exploration, client
+):
+    initiative = bind(coordinator, exploration)
+    alternatives = options(owner, exploration, client)
+    choose(owner, exploration, alternatives[0])
+    journey = build_process_analysis_journey(exploration, owner)
+    assert journey.next_action.url == initiative.get_absolute_url()
+    client.force_login(owner)
+    assert (
+        client.get(reverse("use_cases:initiative_impact", args=[initiative.pk])).status_code == 403
+    )
+
+
+def test_cancelled_non_ai_initiative_has_honest_terminal_journey(owner, exploration, client):
+    initiative = bind(owner, exploration)
+    alternatives = options(owner, exploration, client)
+    choose(owner, exploration, alternatives[0])
+    save_initiative(
+        actor=owner,
+        initiative=initiative,
+        data={
+            "status": "cancelled",
+            "cancellation_reason": "Umsetzung nicht tragfähig; keinen Erfolg behaupten",
+        },
+    )
+    exploration.refresh_from_db()
+    journey = build_process_analysis_journey(exploration, owner)
+    assert journey.next_action is None
+    assert "kein Erfolgsnachweis" in journey.completion_message

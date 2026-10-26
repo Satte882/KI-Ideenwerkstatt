@@ -253,6 +253,23 @@ def build_process_analysis_journey(process_analysis: ProcessAnalysis, user) -> J
 def _strategic_draft_journey(process, user) -> JourneyState:
     decision = process.solution_selection_decisions.select_related("selected_option").first()
     if decision is not None:
+        from .initiatives import can_edit_initiative
+
+        if process.initiative.status == "cancelled":
+            return _state(
+                path_label="Strategische Non-KI-Umsetzung",
+                steps=[
+                    JourneyStep(
+                        key="impact",
+                        label="Vorhaben abgebrochen",
+                        state="complete",
+                        url=process.initiative.get_absolute_url(),
+                        reason=process.initiative.cancellation_reason,
+                    )
+                ],
+                completion_message="Vorhaben begründet abgebrochen; kein Erfolgsnachweis.",
+            )
+        can_review = can_edit_initiative(user, process.initiative)
         can_edit = can_edit_value_stream(user, process.stage.value_stream)
         comparison_url = reverse("architecture:solution_option_compare", args=[process.pk])
         stale = decision.outcome_review_required
@@ -296,10 +313,10 @@ def _strategic_draft_journey(process, user) -> JourneyState:
                     label="Gemeinsame Wirkungsprüfung",
                     state="complete" if completed else "current",
                     url=reverse("use_cases:initiative_impact", args=[process.initiative_id])
-                    if can_edit
+                    if can_review
                     else process.initiative.get_absolute_url(),
                     action_label="Externen Umsetzungs- und Wirkungsstand prüfen"
-                    if can_edit
+                    if can_review
                     else "",
                     reason="Prozesswirkung, Geschäftsergebnis und Attribution getrennt beurteilen.",
                 ),
