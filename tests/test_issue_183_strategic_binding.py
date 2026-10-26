@@ -38,12 +38,50 @@ QUALITY = {
 }
 
 
+def service_context(owner, tmp_path):
+    # Reuse the real source/Scope setup, but do not inherit procurement semantics.
+    context = make_context(owner, tmp_path)
+    draft = context[2]
+    draft["value_stream"].update(
+        name="Synthetische Kundenanfrage bis verantwortete Antwort",
+        description="Menschlicher Untersuchungsrahmen; Ist-Prozess noch unbekannt",
+        trigger="Eingang einer Kundenanfrage",
+        outcome="Verantwortete Antwort vorbereiten",
+        scope_in="Anfrage aufnehmen und Antwort fachlich vorbereiten",
+        scope_out="Verbindliche Buchung und operative Durchführung",
+        stakeholders="Noch unbekannt",
+    )
+    for stage in draft["stages"]:
+        stage.update(
+            name="Kundenanfrage klären" if stage["key"] == "compare" else "Kundenanfrage aufnehmen",
+            description="Möglicher Untersuchungsschritt; tatsächlicher Ablauf unbekannt",
+            roles="Unbekannt",
+            systems="Unbekannt",
+            documents="Unbekannt",
+            pain_points="",
+        )
+    draft["focus"].update(
+        business_domain="customer_service",
+        capability="Kundenanfragen klären",
+        tradeoffs=["Menschlicher Zuschnitt; keine globale Überlegenheit nachgewiesen"],
+        uncertainties=["Ist-Ablauf, Datenzugang, Kosten und Wirkung unbekannt"],
+    )
+    draft["process_analysis"].update(
+        name="Strategische Kundenanfragenklärung",
+        trigger="Kundenanfrage im gewählten Rahmen",
+        outcome="Verantwortete Antwort vorbereiten; Ablauf bleibt Hypothese",
+    )
+    return context
+
+
 @pytest.fixture
 def exploration(owner, tmp_path, monkeypatch, client):
-    context = make_context(owner, tmp_path)
+    context = service_context(owner, tmp_path)
     analysis = analyze(owner, context, monkeypatch)
     result = materialize(owner, context[0], analysis)
     process = ProcessAnalysis.objects.get(pk=result.process_analysis_id)
+    assert process.name == "Strategische Kundenanfragenklärung"
+    assert process.stage.name == "Kundenanfrage klären"
     assert not process.initiative_id and not process.discovery_path_decisions.exists()
     client.force_login(owner)
     url = reverse("architecture:process_analysis_update", args=[process.pk])
@@ -395,7 +433,7 @@ def test_legacy_strategic_materialization_does_not_gain_binding_exception(
     monkeypatch.setattr(
         ProcessAnalysis._meta.get_field("comparison_contract_version"), "default", 0
     )
-    context = make_context(owner, tmp_path)
+    context = service_context(owner, tmp_path)
     result = materialize(owner, context[0], analyze(owner, context, monkeypatch))
     process = ProcessAnalysis.objects.get(pk=result.process_analysis_id)
     assert not process.comparison_contract_version
