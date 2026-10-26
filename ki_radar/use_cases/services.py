@@ -34,7 +34,7 @@ class SelectedSolutionUseCaseResult:
     created: bool
 
 
-def persist_optional_origin(*, candidate: UseCase, stored: dict) -> None:
+def persist_optional_origin(*, candidate: UseCase, stored: dict, problem_source=None) -> None:
     source_stage_id = stored.get("source_stage_id")
     source_process_id = stored.get("source_process_analysis_id")
     selected_process_id = stored.get("process_analysis")
@@ -121,16 +121,19 @@ def persist_optional_origin(*, candidate: UseCase, stored: dict) -> None:
                 "Ursprungsprozess."
             )
 
+    source_snapshot = build_use_case_source_snapshot(
+        stage=stage,
+        process_analysis=process_analysis,
+        solution_option=solution_option,
+    )
+    if problem_source is not None:
+        source_snapshot["problem_statement"] = problem_source
     UseCaseOrigin.objects.create(
         use_case=candidate,
         stage=stage,
         process_analysis=process_analysis,
         solution_option=solution_option,
-        source_snapshot=build_use_case_source_snapshot(
-            stage=stage,
-            process_analysis=process_analysis,
-            solution_option=solution_option,
-        ),
+        source_snapshot=source_snapshot,
     )
 
 
@@ -141,6 +144,7 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
         SolutionSelectionDecision,
         UseCaseOrigin,
     )
+    from ki_radar.architecture.provenance import selected_solution_problem_source
 
     from .permissions import can_create_use_case
 
@@ -217,12 +221,13 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
         SolutionOption.OptionType.GENERATIVE_AI: UseCase.SolutionType.GENERATIVE,
         SolutionOption.OptionType.ASSISTANT: UseCase.SolutionType.ASSISTANT,
     }
+    problem_source = selected_solution_problem_source(locked_decision)
     use_case = UseCase(
         initiative=process.initiative,
         outcome_contract_version=process.outcome_contract_version,
         title=option.name,
         summary=option.description,
-        problem_statement=process.diagnostic_observations or process.bottlenecks,
+        problem_statement=problem_source["value"],
         business_unit=value_stream.business_unit,
         affected_process=process.name,
         target_users=process.roles,
@@ -254,11 +259,26 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
             "Der direkte Use-Case-Handoff ist unvollständig: " + ", ".join(blockers)
         )
 
-    use_case.full_clean()
+    try:
+        use_case.full_clean()
+    except ValidationError as exc:
+        if not hasattr(exc, "message_dict"):
+            raise
+        labels = {field.name: str(field.verbose_name) for field in UseCase._meta.fields}
+        labels.update(FIELD_LABELS)
+        labels["__all__"] = "Use-Case-Kontext"
+        raise ValidationError(
+            "Der Use-Case-Kontext ist noch unvollständig oder ungültig: "
+            + "; ".join(
+                f"{labels.get(name, 'Use-Case-Kontext')}: " + ", ".join(errors)
+                for name, errors in exc.message_dict.items()
+            )
+        ) from exc
     use_case._history_user = actor
     use_case.save()
     persist_optional_origin(
         candidate=use_case,
+        problem_source=problem_source,
         stored={
             "source_stage_id": str(stage.pk),
             "source_process_analysis_id": str(process.pk),

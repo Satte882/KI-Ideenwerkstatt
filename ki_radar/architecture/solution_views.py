@@ -46,10 +46,11 @@ def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
             actor=request.user,
         )
     except (PermissionDenied, ValidationError) as exc:
+        explanation = "; ".join(exc.messages) if isinstance(exc, ValidationError) else str(exc)
         messages.warning(
             request,
             "Die Lösungsentscheidung ist gespeichert; der direkte AI-Use-Case-"
-            f"Handoff benötigt noch Klärung: {exc}",
+            f"Handoff benötigt noch Klärung: {explanation}",
         )
         return
 
