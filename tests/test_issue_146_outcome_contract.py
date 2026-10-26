@@ -53,6 +53,7 @@ def confirmed(owner):
         actor=owner,
         data={
             "title": "Buchungsbeitrag",
+            "measurement_unknowns": "Messdesign unbekannt; vor Versuch mit Owner klären.",
             "business_outcome": "Mehr wirtschaftliche Buchungen",
             "contribution": "Weniger Rückfragen bei freigegebenen Angeboten",
             "impact_hypothesis": "Wenn die Rückfragen sinken, können mehr Angebote gebucht werden.",

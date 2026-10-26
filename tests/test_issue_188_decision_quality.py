@@ -85,6 +85,7 @@ def comparison(owner, business_unit):
                 "Buchungsvolumen und Servicequalität prüfen; Prozesszeit ist kein Nutzenbeweis."
             ),
             "outcome_owner": "Kundenserviceleitung",
+            "measurement_unknowns": "Messdesign offen; vor Umsetzung mit Serviceleitung klären.",
         },
     )
     initiative = confirm_initiative(

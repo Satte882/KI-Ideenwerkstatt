@@ -26,6 +26,9 @@ def reviewed(owner, initiative, case, effect="confirmed"):
         expected_revision=initiative.revision,
         data={
             "use_case": case,
+            "criteria_assessment": "Buchungsquote geprüft; Vorab-Stand ist nicht belegt",
+            "assessment_basis": "retrospective",
+            "criteria_deviation": "Nachträgliche Testbewertung, keine Vorab-Erfüllung",
             "business_measurement": "Buchungsquote 18/100; Quartal 3",
             "business_evidence": "CRM-Auswertung A",
             "measurement_difference": "Buchungsquote statt Bearbeitungszeit",

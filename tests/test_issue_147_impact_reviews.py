@@ -43,7 +43,12 @@ def save(owner, initiative, data=None, finalize=False):
         initiative=initiative,
         actor=owner,
         expected_revision=initiative.revision,
-        data=data or {},
+        data={
+            "criteria_assessment": "Geschäftsquote geprüft; Vorab-Messplan historisch nicht belegt",
+            "assessment_basis": "retrospective",
+            "criteria_deviation": "Nachträglicher Testbefund; keine Vorab-Vereinbarung",
+            **(data or {}),
+        },
         finalize=finalize,
     )
 

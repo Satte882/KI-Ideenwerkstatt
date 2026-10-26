@@ -14,7 +14,7 @@ from ki_radar.governance.services import (
 
 from .models import UseCase
 
-SCALE_READINESS_SCHEMA_VERSION = 2
+SCALE_READINESS_SCHEMA_VERSION = 3
 
 SCALE_EVIDENCE_FIELDS = (
     "scale_tailoring_level",
@@ -569,6 +569,8 @@ def build_scale_readiness_snapshot(
     evidence: Mapping | None,
     result: ScaleReadinessResult,
 ) -> dict:
+    from .measurement_plan import business_context
+
     data = scale_evidence_from_mapping(evidence)
     package = current_handed_over_package(use_case)
     governance_reviews = [
@@ -584,6 +586,7 @@ def build_scale_readiness_snapshot(
     ]
     return {
         "schema_version": SCALE_READINESS_SCHEMA_VERSION,
+        "business_context": business_context(use_case),
         "captured_at": timezone.now().isoformat(),
         "state": result.state,
         "tailoring_level": result.tailoring_level,

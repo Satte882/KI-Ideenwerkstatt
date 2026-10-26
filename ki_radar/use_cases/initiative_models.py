@@ -38,6 +38,26 @@ class ImprovementInitiative(TimeStampedModel):
     contribution = models.TextField(blank=True, verbose_name="Abgegrenzter Vorhabensbeitrag")
     impact_hypothesis = models.TextField(blank=True, verbose_name="Wirkannahme")
     evaluation_criteria = models.TextField(blank=True, verbose_name="Prüfkriterien")
+    measurement_method = models.TextField(blank=True, verbose_name="Business-Messmethode")
+    measurement_period = models.TextField(
+        blank=True, verbose_name="Geplanter Business-Messzeitraum"
+    )
+    measurement_population = models.TextField(blank=True, verbose_name="Business-Messpopulation")
+    measurement_reference = models.TextField(
+        blank=True,
+        verbose_name="Referenz / Vergleichsverfahren",
+        help_text="Absolutes Ziel oder geeigneter Vorher-/Vergleichsbezug; keine Pflicht-Baseline.",
+    )
+    measurement_unknowns = models.TextField(
+        blank=True,
+        verbose_name="Offene Messangaben und Klärungspunkt",
+        help_text="Fehlende Angaben begründen und geplanten Klärungspunkt benennen.",
+    )
+    measurement_change_reason = models.TextField(
+        blank=True,
+        verbose_name="Grund der Messplan-/Kriterienänderung",
+        help_text="Historie hält Person und Zeitpunkt fest. Nachträgliches bleibt nachträglich.",
+    )
     evidence_level = models.CharField(
         max_length=20,
         choices=Evidence.choices,
@@ -270,6 +290,31 @@ class InitiativeImpactReview(TimeStampedModel):
         blank=True,
         verbose_name="Begründung und Grenzen der Attribution",
     )
+    criteria_assessment = models.TextField(
+        blank=True,
+        verbose_name="Abgleich mit den historischen Prüfkriterien",
+        help_text="Je Kriterium erfüllt, verfehlt oder unklar; Messung und Evidenz zuordnen.",
+    )
+    assessment_basis = models.CharField(
+        max_length=20,
+        blank=True,
+        choices=[
+            ("original", "Ursprünglicher Entscheidungsmaßstab"),
+            ("retrospective", "Nachträgliche Bewertung / Vorab-Beleg fehlt"),
+        ],
+        verbose_name="Zeitliche Grundlage der Bewertung",
+    )
+    criteria_deviation = models.TextField(
+        blank=True,
+        verbose_name="Abweichungen, Zeitpunkt und Evidenzgrenzen",
+        help_text="Spätere Änderungen und Ergebniskenntnis einordnen; keine Rückdatierung.",
+    )
+    contribution_boundary = models.TextField(
+        blank=True,
+        verbose_name="Weitere Beiträge, Wechselwirkungen und Abdeckungsgrenze",
+        help_text="Ein strukturierter Auswahl-/Use-Case-Bezug; keine vollständige Aggregation.",
+    )
+    criteria_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     outcome_revision = models.PositiveIntegerField(null=True, blank=True, editable=False)
     initiative_revision = models.PositiveIntegerField(null=True, blank=True, editable=False)
     metric_history_id = models.PositiveIntegerField(null=True, blank=True, editable=False)
@@ -355,6 +400,12 @@ class InitiativeImpactReview(TimeStampedModel):
         super().save(*args, **kwargs)
 
     @property
+    def criteria_review_blocker(self):
+        from .measurement_plan import criteria_review_blocker
+
+        return criteria_review_blocker(self)
+
+    @property
     def review_required(self):
         from .impact_reviews import REVIEW_FIELDS
         from .initiatives import initiative_claim_matches
@@ -363,6 +414,11 @@ class InitiativeImpactReview(TimeStampedModel):
         if (
             not self.reviewed_at
             or self.measurement_review_blocker
+            or bool(
+                self.criteria_snapshot
+                and self.initiative.effect_status != "unclear"
+                and self.criteria_review_blocker
+            )
             or self.outcome_revision != self.initiative.outcome_revision
             or bool(self.selection_id and self.selection.outcome_review_required)
         ):
@@ -394,6 +450,7 @@ class InitiativeImpactReview(TimeStampedModel):
                 ),
                 "reviewed_by_id",
                 "metric_history_id",
+                "criteria_snapshot",
             )
         ):
             return True

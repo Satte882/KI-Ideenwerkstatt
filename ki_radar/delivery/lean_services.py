@@ -64,7 +64,18 @@ def hand_over_package(package: DeliveryPackage, actor) -> None:
             "Die Übergabe ist fachlich blockiert: "
             + " | ".join(finding.message for finding in blockers)
         )
+    from ki_radar.use_cases.measurement_plan import business_context
+
+    package.business_context_snapshot = business_context(package.use_case)
     package.status = DeliveryPackage.Status.HANDED_OVER
     package.handed_over_by = actor
     package.handed_over_at = timezone.now()
-    package.save(update_fields=["status", "handed_over_by", "handed_over_at", "updated_at"])
+    package.save(
+        update_fields=[
+            "status",
+            "handed_over_by",
+            "handed_over_at",
+            "business_context_snapshot",
+            "updated_at",
+        ]
+    )

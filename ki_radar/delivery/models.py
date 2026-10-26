@@ -54,6 +54,7 @@ class DeliveryPackage(TimeStampedModel):
     )
     version = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    business_context_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     readiness_schema_version = models.PositiveSmallIntegerField(default=1)
     generated_from_decision = models.ForeignKey(
         "use_cases.ApprovalDecision",

@@ -336,3 +336,10 @@ def test_migration_retains_old_measurements_and_audit_without_inferred_boundary(
     assert all(getattr(entry, field) == value for field, value in audit_values.items())
     assert review.process_measurement_kind == review.process_measurement_boundary == ""
     assert entry.process_measurement_kind == entry.process_measurement_boundary == ""
+
+    # #189 is additive too: no historical criteria agreement may be invented.
+    assert review.criteria_snapshot == entry.criteria_snapshot == {}
+    assert review.criteria_assessment == entry.criteria_assessment == ""
+    assert review.assessment_basis == entry.assessment_basis == ""
+    assert review.initiative.measurement_method == ""
+    assert review.initiative.measurement_unknowns == ""
