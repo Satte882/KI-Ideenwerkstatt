@@ -162,12 +162,12 @@ def test_binding_stays_blocked_and_preserves_inputs(owner, client, exploration):
 
 
 def assert_binding_stays_blocked(owner, client, process):
-    # Only after the immediate form path was tested above: isolate the still-binding focus gate.
+    # After draft access: the authorized strategic basis still requires a real comparison.
     bind_process(owner, process, path="strategic")
     option = make_option(
         process, owner, name="Non-KI-Hypothese", option_type="no_tech", assessed=False
     )
-    with pytest.raises(ValidationError, match="Fokusentscheidung"):
+    with pytest.raises(ValidationError, match=r"Optionen|bewertet|Aufwand"):
         select_preferred_solution(
             process_analysis=process,
             selected_option=option,
@@ -182,7 +182,7 @@ def assert_binding_stays_blocked(owner, client, process):
     }
     response = client.post(reverse("architecture:solution_option_compare", args=[process.pk]), data)
     assert response.status_code == 200
-    assert "Fokusentscheidung" in str(response.context["form"].errors)
+    assert "difference_reason" in response.context["form"].errors
     assert response.context["form"].data["rationale"] == data["rationale"]
     assert response.context["form"].data["selected_option"] == str(option.pk)
     assert not SolutionSelectionDecision.objects.exists()

@@ -189,8 +189,11 @@ Der ergänzte Vertrag aus #189 hält die Business-Messabsicht an bestehender Aus
 oder positiver Freigabe fest. Der Review unterscheidet ursprünglichen Maßstab,
 spätere Änderungen und Ex-post-Evidenz; fehlender Vorab-Beleg wird nicht rückdatiert.
 Bestehende Übergabe-/Skalierungsentscheidungen referenzieren den Wirkungskontext.
-Der strategische Bindungsvertrag, Mehrprozessaggregation und Menschentest #161
-bleiben eigenständige Grenzen. Versionierte Messreihen bleiben unter Later / Priorität 3 geparkt.
+Die begrenzte strategische Alternative aus #183 erlaubt neue bindende Auswahl auf
+belegtem menschlichem Rahmen, bestätigtem Outcome-/Phasen-/Pfadbezug und begründetem
+Vergleich mit ausdrücklich offenen Screeningfragen. Globale Ablehnung/Zurückstellung,
+Legacy und problemgetriebene Regeln bleiben geschützt. Mehrprozessaggregation,
+reale externe Wirkung und Menschentest #161 bleiben eigenständige Grenzen. Versionierte Messreihen bleiben unter Later / Priorität 3 geparkt.
 
 ## 8. Business & Decision Control Room
 

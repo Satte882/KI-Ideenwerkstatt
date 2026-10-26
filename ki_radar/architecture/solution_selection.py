@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from .comparison_policy import DIAGNOSIS_BASES, requires_decision_quality
-from .focus import get_value_stream_focus
+from .focus import ValueStreamFocus, get_value_stream_focus
 from .models import (
     ProcessAnalysis,
     ProcessValidation,
@@ -13,6 +13,7 @@ from .models import (
 )
 from .permissions import can_edit_value_stream, process_validator_role
 from .solution_retirement import active_solution_options
+from .strategic_exploration import strategic_binding_basis
 
 OPTION_TYPE_PRIORITY = {
     SolutionOption.OptionType.NO_TECH: 0,
@@ -228,7 +229,7 @@ def build_quality_snapshot(
 
 def focus_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
     focus = get_value_stream_focus(process_analysis.stage.value_stream)
-    if focus is None or not focus.is_selected:
+    if (focus is None or not focus.is_selected) and not strategic_binding_basis(process_analysis):
         return [
             "Der Value Stream muss vollständig gescreent und für die Prozessanalyse "
             "ausgewählt sein."
@@ -424,6 +425,10 @@ def select_preferred_solution(
         raise ValidationError("Für diese Lösungsentscheidung fehlt die Berechtigung.")
     from ki_radar.use_cases.outcome_contract import build_outcome_snapshot
 
+    stream = process_analysis.stage.value_stream
+    locked_focus = ValueStreamFocus.objects.select_for_update().filter(value_stream=stream).first()
+    if locked_focus is not None:
+        stream.focus = locked_focus
     outcome_snapshot = build_outcome_snapshot(process_analysis, lock=True)
     if focus_readiness_blockers(process_analysis):
         raise ValidationError(
@@ -459,6 +464,8 @@ def select_preferred_solution(
         diagnosis_note=diagnosis_note,
     )
     diagnosis = build_diagnosis_snapshot(process_analysis)
+    if outcome_snapshot.get("strategic_binding"):
+        quality["strategic_screening_acceptance"] = uncertainty_reason.strip()
     if confirmation:
         diagnosis["confirmation_basis"] = confirmation
     decision = SolutionSelectionDecision(

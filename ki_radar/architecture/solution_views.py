@@ -36,7 +36,7 @@ from .solution_selection import (
     ordered_solution_options,
     select_preferred_solution,
 )
-from .strategic_exploration import has_strategic_exploration
+from .strategic_exploration import has_strategic_exploration, strategic_binding_basis
 
 
 def _continue_selected_ai_solution(*, request, decision, complete_ap2=False):
@@ -145,6 +145,7 @@ def solution_option_compare(request, pk):
         require_diagnosis_confirmation=diagnosis_confirmation_required,
         # Preserve the existing focus refusal before asking for new binding-only inputs.
         quality_required=requires_decision_quality(process_analysis) and not focus_blockers,
+        accept_open_screening=bool(strategic_binding_basis(process_analysis)),
         strategic=bool(
             (path := process_analysis.discovery_path_decisions.first()) and path.path == "strategic"
         ),
@@ -266,6 +267,7 @@ def solution_option_compare(request, pk):
             "can_select": can_select,
             "strategic_exploration": strategic_exploration,
             "strategic_path_pending": strategic_path_pending,
+            "strategic_binding": strategic_binding_basis(process_analysis),
             "can_edit_drafts": can_select and (not focus_blockers or strategic_exploration),
             "selection_history": selection_history,
             "latest_selection": latest_selection,

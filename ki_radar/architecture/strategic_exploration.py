@@ -1,4 +1,6 @@
-"""Provenance-backed permission to continue drafts, never a binding selection gate."""
+"""Frozen strategic scope: draft permission and the explicit binding alternative."""
+
+from copy import deepcopy
 
 from django.core.exceptions import ValidationError
 
@@ -66,3 +68,50 @@ def has_strategic_exploration(process) -> bool:
         ValidationError,
     ):
         return False
+
+
+def strategic_binding_basis(process):
+    """Only the approved, provenance-backed new cohort may replace global screening.
+
+    Outcome/phase/path and decision quality keep their existing canonical validators.
+    This basis never sets global ratings or turns a hypothesis into measured evidence.
+    """
+    from ki_radar.use_cases.outcome_contract import outcome_blockers
+
+    from .comparison_policy import requires_decision_quality
+
+    if not requires_decision_quality(process) or not has_strategic_exploration(process):
+        return {}
+    focus = get_value_stream_focus(process.stage.value_stream)
+    path = process.discovery_path_decisions.first()
+    record = process.source_snapshot["strategic_exploration"]
+    if (
+        focus is None
+        or focus.status not in {focus.Status.CANDIDATE, focus.Status.NOT_SCREENED}
+        or path is None
+        or path.path != "strategic"
+        or not record.get("scope_confirmed_at")
+        or outcome_blockers(process)
+    ):
+        return {}
+    return {
+        "version": 1,
+        "basis": "human_confirmed_strategic_scope",
+        "scope": deepcopy(record),
+        "global_status": focus.status,
+        "open_screening_fields": list(focus.missing_screening_fields),
+        "screening_values": {
+            field: getattr(focus, field)
+            for field in (
+                "capability",
+                "strategic_impact",
+                "economic_potential",
+                "pain_intensity",
+                "data_accessibility",
+                "change_effort",
+                "rationale",
+            )
+        },
+        "path_id": path.pk,
+        "evidence_limit": "Strategische Annahme; kein vollständiges globales Screening",
+    }

@@ -8,7 +8,10 @@ from django.urls import reverse
 from ki_radar.architecture.focus import ValueStreamFocus, get_value_stream_focus
 from ki_radar.architecture.models import ProcessAnalysis, ValueStream
 from ki_radar.architecture.permissions import can_edit_value_stream
-from ki_radar.architecture.strategic_exploration import has_strategic_exploration
+from ki_radar.architecture.strategic_exploration import (
+    has_strategic_exploration,
+    strategic_binding_basis,
+)
 from ki_radar.delivery.actions import primary_delivery_action
 from ki_radar.delivery.models import DeliveryPackage
 from ki_radar.delivery.permissions import can_transition_package
@@ -248,6 +251,81 @@ def build_process_analysis_journey(process_analysis: ProcessAnalysis, user) -> J
 
 
 def _strategic_draft_journey(process, user) -> JourneyState:
+    decision = process.solution_selection_decisions.select_related("selected_option").first()
+    if decision is not None:
+        from .initiatives import can_edit_initiative
+
+        if process.initiative.status == "cancelled":
+            return _state(
+                path_label="Strategische Non-KI-Umsetzung",
+                steps=[
+                    JourneyStep(
+                        key="impact",
+                        label="Vorhaben abgebrochen",
+                        state="complete",
+                        url=process.initiative.get_absolute_url(),
+                        reason=process.initiative.cancellation_reason,
+                    )
+                ],
+                completion_message="Vorhaben begründet abgebrochen; kein Erfolgsnachweis.",
+            )
+        can_review = can_edit_initiative(user, process.initiative)
+        can_edit = can_edit_value_stream(user, process.stage.value_stream)
+        comparison_url = reverse("architecture:solution_option_compare", args=[process.pk])
+        stale = decision.outcome_review_required
+        if not stale and decision.selected_option.starts_ai_use_case:
+            origin = process.use_case_origins.select_related("use_case").first()
+            if origin:
+                return build_use_case_journey(origin.use_case, user)
+        if stale or decision.selected_option.starts_ai_use_case:
+            return _state(
+                path_label="Strategische Auswahl",
+                steps=[
+                    JourneyStep(
+                        key="solution",
+                        label="Lösungsentscheidung",
+                        state="blocked" if stale else "current",
+                        url=comparison_url if can_edit else None,
+                        action_label="Auswahl erneut prüfen" if stale else "KI-Handoff fortsetzen",
+                        reason="Entscheidungsgrundlage erneut prüfen."
+                        if stale
+                        else "KI-Use-Case ableiten.",
+                    )
+                ],
+            )
+        try:
+            review_current = not process.initiative.impact_review.review_required
+        except ObjectDoesNotExist:
+            review_current = False
+        completed = process.initiative.status in {"completed", "cancelled"} and review_current
+        return _state(
+            path_label="Strategische Non-KI-Umsetzung",
+            steps=[
+                JourneyStep(
+                    key="solution",
+                    label="Lösungsentscheidung",
+                    state="complete",
+                    url=comparison_url,
+                    reason="Non-KI bewusst ausgewählt; Umsetzung extern.",
+                ),
+                JourneyStep(
+                    key="impact",
+                    label="Gemeinsame Wirkungsprüfung",
+                    state="complete" if completed else "current",
+                    url=reverse("use_cases:initiative_impact", args=[process.initiative_id])
+                    if can_review
+                    else process.initiative.get_absolute_url(),
+                    action_label="Externen Umsetzungs- und Wirkungsstand prüfen"
+                    if can_review
+                    else "",
+                    reason="Prozesswirkung, Geschäftsergebnis und Attribution getrennt beurteilen.",
+                ),
+            ],
+            completion_message="Vorhaben mit dokumentiertem Wirkungsstand beendet."
+            if completed
+            else "",
+        )
+    binding = strategic_binding_basis(process)
     can_edit = can_edit_value_stream(user, process.stage.value_stream)
     has_options = process.solution_options.filter(retirement__isnull=True).exists()
     comparison_url = reverse("architecture:solution_option_compare", args=[process.pk])
@@ -292,11 +370,14 @@ def _strategic_draft_journey(process, user) -> JourneyState:
             JourneyStep(
                 key="focus",
                 label="Bindende Auswahl",
-                state="blocked",
+                state="upcoming" if binding else "blocked",
                 url=comparison_url if can_edit else None,
                 action_label="Auswahlvoraussetzungen prüfen" if can_edit else "",
-                reason="Unbekanntes globales Screening blockiert weiterhin die bindende Auswahl. "
-                "Der strategische Auswahlvertrag benötigt eine fachliche Entscheidung.",
+                reason=(
+                    "Bestätigten strategischen Rahmen, Vergleich und offene Screeningfragen prüfen."
+                    if binding
+                    else "Vor Auswahl Outcome-, Phasen- und Strategiepfadbezug bestätigen."
+                ),
             ),
         ],
     )
