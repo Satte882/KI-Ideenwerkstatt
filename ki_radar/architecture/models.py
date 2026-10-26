@@ -144,6 +144,7 @@ class ProcessAnalysis(TimeStampedModel):
         related_name="process_analyses",
         editable=False,
     )
+    comparison_contract_version = models.PositiveSmallIntegerField(default=1, editable=False)
     outcome_contract_version = models.PositiveSmallIntegerField(default=1, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     stage = models.ForeignKey(
@@ -465,6 +466,16 @@ class SolutionOption(TimeStampedModel):
         verbose_name="Evidenzbasis",
     )
     description = models.TextField(verbose_name="Lösungsbeschreibung")
+    effort_assessment = models.TextField(
+        blank=True,
+        verbose_name="Aufwand, Kosten und Umstellung",
+        help_text=(
+            "Einmaligen Einführungsaufwand, laufenden Aufwand und organisatorische Umstellung "
+            "(Schulung, Zuständigkeiten, Adoption) für jede Option benennen. Quellen, Annahmen "
+            "und Unsicherheiten angeben; unbekannt ist zulässig, leer bedeutet nicht kostenlos. "
+            "Keine erfundenen Beträge und kein Pflicht-ROI. Erst zur bindenden Auswahl nötig."
+        ),
+    )
     expected_value = models.TextField(verbose_name="Erwarteter Beitrag")
     outcome_effect = models.TextField(blank=True, verbose_name="Wirkung auf das Geschäftsergebnis")
     time_to_value = models.CharField(
@@ -619,6 +630,7 @@ class SolutionSelectionDecision(TimeStampedModel):
         related_name="selection_decisions",
     )
     rationale = models.TextField(verbose_name="Auswahlbegründung")
+    quality_snapshot = models.JSONField(default=dict, blank=True, editable=False)
     comparison_snapshot = models.JSONField(default=list, editable=False)
     process_version = models.PositiveIntegerField(null=True, blank=True, editable=False)
     diagnosis_snapshot = models.JSONField(default=dict, blank=True, editable=False)
@@ -638,6 +650,14 @@ class SolutionSelectionDecision(TimeStampedModel):
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValidationError("Eine dokumentierte Lösungsentscheidung ist unveränderlich.")
+        from .comparison_policy import requires_decision_quality
+
+        if requires_decision_quality(self.process_analysis) and not getattr(
+            self, "_comparison_authorized", False
+        ):
+            raise ValidationError(
+                "Vergleichsbegründung nur über den zentralen Entscheidungsservice."
+            )
         if self.process_analysis.outcome_contract_version:
             if not getattr(self, "_outcome_authorized", False):
                 raise ValidationError("Lösungswahl nur über den zentralen Entscheidungsservice.")
@@ -681,9 +701,26 @@ class SolutionSelectionDecision(TimeStampedModel):
         captured = next(
             (row for row in self.comparison_snapshot if row.get("id") == str(selected.pk)), {}
         )
-        return snapshot_is_stale(self.process_analysis, self.outcome_snapshot) or any(
-            captured.get(key) != getattr(selected, key)
-            for key in ("outcome_effect", "expected_value", "evidence_basis")
+        # #188 adds its material content to the existing check; #186 owns its unification.
+        effort_changed = False
+        if self.quality_snapshot:
+            current_effort = {
+                str(pk): effort
+                for pk, effort in self.process_analysis.solution_options.values_list(
+                    "pk", "effort_assessment"
+                )
+            }
+            effort_changed = any(
+                row.get("effort_assessment") != current_effort.get(row.get("id"))
+                for row in self.comparison_snapshot
+            )
+        return (
+            effort_changed
+            or snapshot_is_stale(self.process_analysis, self.outcome_snapshot)
+            or any(
+                captured.get(key) != getattr(selected, key)
+                for key in ("outcome_effect", "expected_value", "evidence_basis")
+            )
         )
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from .comparison_policy import DIAGNOSIS_BASES, requires_decision_quality
 from .focus import get_value_stream_focus
 from .models import (
     ProcessAnalysis,
@@ -61,7 +62,77 @@ def comparison_blockers(options: list[SolutionOption], *, process_analysis=None)
             f"Wirkung auf das gemeinsame Geschäftsergebnis fehlt: {option.name}"
             for option in missing_outcome_effect_options(options, process_analysis=process_analysis)
         )
+        if requires_decision_quality(process_analysis):
+            blockers.extend(
+                f"Aufwand, Kosten und Umstellung fehlen: {option.name}"
+                for option in options
+                if not option.effort_assessment.strip()
+            )
     return blockers
+
+
+def build_quality_snapshot(
+    process, options, *, difference_reason, uncertainty_reason, diagnosis_basis, diagnosis_note
+):
+    if not requires_decision_quality(process):
+        return {}, {}
+    if any(
+        not isinstance(value, str) or not value.strip()
+        for value in (difference_reason, uncertainty_reason)
+    ):
+        raise ValidationError(
+            "Unterschiedliche Handlungshebel und die Annahme verbleibender Unsicherheiten "
+            "müssen ausdrücklich begründet werden."
+        )
+    # Detect literal renamed copies only; no semantic/economic truth guarantee.
+    signatures = {
+        tuple(
+            " ".join(getattr(option, key).casefold().split())
+            for key in (
+                "description",
+                "expected_value",
+                "bottleneck_coverage",
+                "risks",
+                "architecture_fit",
+            )
+        )
+        for option in options
+    }
+    if len(signatures) < 2:
+        raise ValidationError(
+            "Nur umbenannte, textgleiche Optionen belegen keine unterschiedlichen "
+            "Handlungshebel. Den Lösungsraum fachlich erweitern; Entwürfe bleiben speicherbar."
+        )
+    path = process.discovery_path_decisions.first()
+    if path and path.path == "strategic":
+        diagnosis = {
+            "basis": "not_required",
+            "label": "Strategisch: keine Ursache erforderlich",
+            "note": path.strategic_potential,
+            "validation_step": path.validation_step,
+        }
+    else:
+        labels = dict(DIAGNOSIS_BASES)
+        if (
+            diagnosis_basis not in labels
+            or not isinstance(diagnosis_note, str)
+            or not diagnosis_note.strip()
+        ):
+            raise ValidationError(
+                "Grundlage der Ursachenbestätigung benennen: fachliche Annahme oder "
+                "konkrete Evidenz mit Quelle und Grenzen. Bestätigung allein ist kein Beweis."
+            )
+        diagnosis = {
+            "basis": diagnosis_basis,
+            "label": labels[diagnosis_basis],
+            "note": diagnosis_note.strip(),
+        }
+    return {
+        "version": 1,
+        "difference_reason": difference_reason.strip(),
+        "uncertainty_reason": uncertainty_reason.strip(),
+        "assessment": "human_reasoned_not_independently_verified",
+    }, diagnosis
 
 
 def focus_readiness_blockers(process_analysis: ProcessAnalysis) -> list[str]:
@@ -105,6 +176,7 @@ def build_comparison_snapshot(options: list[SolutionOption]) -> list[dict]:
             "evidence_basis": option.evidence_basis,
             "evidence_basis_label": option.get_evidence_basis_display(),
             "description": option.description,
+            "effort_assessment": option.effort_assessment,
             "expected_value": option.expected_value,
             "outcome_effect": option.outcome_effect,
             "time_to_value": option.time_to_value,
@@ -139,6 +211,7 @@ def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
                 "validated_at": validation.validated_at.isoformat(),
                 "validator_role": validation.validator_role,
                 "evidence_url": validation.evidence_url,
+                "note": validation.note,
             }
             if validation
             else None
@@ -155,6 +228,10 @@ def confirm_diagnosis_and_select_solution(
     rationale: str,
     expected_process_version: int,
     actor,
+    difference_reason="",
+    uncertainty_reason="",
+    diagnosis_basis="",
+    diagnosis_note="",
 ) -> SolutionSelectionDecision:
     process = (
         ProcessAnalysis.objects.select_for_update()
@@ -218,6 +295,10 @@ def confirm_diagnosis_and_select_solution(
         selected_option=selected_option,
         rationale=rationale,
         actor=actor,
+        difference_reason=difference_reason,
+        uncertainty_reason=uncertainty_reason,
+        diagnosis_basis=diagnosis_basis,
+        diagnosis_note=diagnosis_note,
     )
 
 
@@ -229,6 +310,10 @@ def select_preferred_solution(
     rationale: str,
     actor,
     expected_process_version: int | None = None,
+    difference_reason="",
+    uncertainty_reason="",
+    diagnosis_basis="",
+    diagnosis_note="",
 ) -> SolutionSelectionDecision:
     process_analysis = ProcessAnalysis.objects.select_for_update().get(pk=process_analysis.pk)
     if (
@@ -269,16 +354,29 @@ def select_preferred_solution(
             + ". Lösungsoptionen können weiterhin exploriert und verglichen werden."
         )
 
+    quality, confirmation = build_quality_snapshot(
+        process_analysis,
+        options,
+        difference_reason=difference_reason,
+        uncertainty_reason=uncertainty_reason,
+        diagnosis_basis=diagnosis_basis,
+        diagnosis_note=diagnosis_note,
+    )
+    diagnosis = build_diagnosis_snapshot(process_analysis)
+    if confirmation:
+        diagnosis["confirmation_basis"] = confirmation
     decision = SolutionSelectionDecision(
+        quality_snapshot=quality,
         process_analysis=process_analysis,
         selected_option=selected,
         rationale=reason,
         comparison_snapshot=build_comparison_snapshot(options),
         process_version=process_analysis.version,
-        diagnosis_snapshot=build_diagnosis_snapshot(process_analysis),
+        diagnosis_snapshot=diagnosis,
         decided_by=actor,
         outcome_snapshot=outcome_snapshot,
     )
+    decision._comparison_authorized = True
     decision._outcome_authorized = True
     decision.save()
     active_ids = [option.pk for option in options]

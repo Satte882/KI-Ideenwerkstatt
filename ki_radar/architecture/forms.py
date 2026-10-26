@@ -580,6 +580,10 @@ class SolutionOptionForm(StyledModelForm):
             "unbelegte Hypothese sein. Begründung, Quellen und offene Fragen unten dokumentieren; "
             "Werte nur nach bewusster fachlicher Prüfung korrigieren."
         )
+        self.fields["description"].help_text = (
+            "Welcher Handlungshebel verändert den Arbeitsablauf? Andere Namen, Anbieter oder "
+            "Modelle allein belegen keinen anderen Verbesserungsansatz."
+        )
         self.fields["architecture_fit"].help_text = (
             "Begründung und Quellen für Machbarkeit und Lösungsfit sowie Grenzen und fehlende "
             "Daten festhalten. 'unknown' bedeutet unbekannt / noch zu klären; vorhandene "
@@ -611,6 +615,7 @@ class SolutionOptionForm(StyledModelForm):
             "evidence_basis",
             "description",
             "expected_value",
+            "effort_assessment",
             "outcome_effect",
             "time_to_value",
             "bottleneck_coverage",
@@ -641,6 +646,28 @@ class SolutionOptionForm(StyledModelForm):
 
 
 class SolutionSelectionForm(forms.Form):
+    difference_reason = forms.CharField(
+        required=False,
+        label="Unterschiedliche Handlungshebel",
+        widget=forms.Textarea(attrs={"rows": 3, "class": FORM_CONTROL}),
+        help_text="Welche verglichenen Ansätze verändern die Arbeit unterschiedlich und warum? "
+        "Menschliche Begründung, keine automatische semantische oder wirtschaftliche Prüfung.",
+    )
+    uncertainty_reason = forms.CharField(
+        required=False,
+        label="Unsicherheiten und Entscheidungsgrenzen",
+        widget=forms.Textarea(attrs={"rows": 3, "class": FORM_CONTROL}),
+        help_text="Unbekannte Kosten, Aufwand, Nutzen und Evidenz je Option einordnen. "
+        "Warum ist die Auswahl trotzdem vertretbar? Kein Pflicht-ROI.",
+    )
+    diagnosis_basis = forms.ChoiceField(required=False, label="Grundlage der Ursachenbestätigung")
+    diagnosis_note = forms.CharField(
+        required=False,
+        label="Ursachenbegründung, Quellen und Grenzen",
+        widget=forms.Textarea(attrs={"rows": 3, "class": FORM_CONTROL}),
+        help_text="Bei Evidenz konkrete Quelle und Geltungsgrenze benennen; bei Annahme "
+        "die fachliche Plausibilität und den noch offenen Nachweis erläutern.",
+    )
     selected_option = forms.ModelChoiceField(
         queryset=SolutionOption.objects.none(),
         label="Bevorzugte Option",
@@ -672,9 +699,21 @@ class SolutionSelectionForm(forms.Form):
         confirmed_causes_initial="",
         process_version=None,
         require_diagnosis_confirmation=False,
+        quality_required=False,
+        strategic=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        from .comparison_policy import DIAGNOSIS_BASES
+
+        self.quality_required = quality_required
+        self.diagnosis_basis_required = quality_required and not strategic
+        self.fields["diagnosis_basis"].choices = [("", "Bitte einordnen"), *DIAGNOSIS_BASES]
+        self.fields["diagnosis_basis"].widget.attrs["class"] = "form-select"
+        for name in ("difference_reason", "uncertainty_reason"):
+            self.fields[name].required = quality_required
+        for name in ("diagnosis_basis", "diagnosis_note"):
+            self.fields[name].required = self.diagnosis_basis_required
         self.confirmed_causes_initial = str(confirmed_causes_initial or "").strip()
         self.process_version_initial = process_version
         self.require_diagnosis_confirmation = bool(require_diagnosis_confirmation)

@@ -21,6 +21,7 @@ from ki_radar.use_cases.outcome_contract import outcome_blockers
 from ki_radar.use_cases.services import create_use_case_from_selected_solution
 
 from .ap2_architecture import AP2ArchitectureError, generate_ap2_architecture_inputs
+from .comparison_policy import requires_decision_quality
 from .forms import SolutionSelectionForm
 from .models import ProcessAnalysis, SolutionOption
 from .permissions import can_edit_value_stream
@@ -142,6 +143,11 @@ def solution_option_compare(request, pk):
         confirmed_causes_initial=confirmed_cause_candidate,
         process_version=process_analysis.version,
         require_diagnosis_confirmation=diagnosis_confirmation_required,
+        # Preserve the existing focus refusal before asking for new binding-only inputs.
+        quality_required=requires_decision_quality(process_analysis) and not focus_blockers,
+        strategic=bool(
+            (path := process_analysis.discovery_path_decisions.first()) and path.path == "strategic"
+        ),
         initial={
             "selected_option": latest_selection.selected_option_id,
         }
@@ -165,6 +171,15 @@ def solution_option_compare(request, pk):
             )
             return redirect(f"{comparison_url}#selection-result")
         if form.is_valid():
+            quality_data = {
+                name: form.cleaned_data[name]
+                for name in (
+                    "difference_reason",
+                    "uncertainty_reason",
+                    "diagnosis_basis",
+                    "diagnosis_note",
+                )
+            }
             try:
                 if diagnosis_confirmation_required:
                     decision = confirm_diagnosis_and_select_solution(
@@ -174,6 +189,7 @@ def solution_option_compare(request, pk):
                         rationale=form.cleaned_data["rationale"],
                         expected_process_version=form.cleaned_data["process_version"],
                         actor=request.user,
+                        **quality_data,
                     )
                 else:
                     decision = select_preferred_solution(
@@ -182,6 +198,7 @@ def solution_option_compare(request, pk):
                         rationale=form.cleaned_data["rationale"],
                         actor=request.user,
                         expected_process_version=form.cleaned_data["process_version"],
+                        **quality_data,
                     )
             except ValidationError as exc:
                 form.add_error(None, exc)

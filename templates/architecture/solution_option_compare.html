@@ -104,6 +104,7 @@
         <tr><th scope="row">Erwarteter Beitrag</th>{% for option in options %}<td class="text-preline">{{ option.expected_value|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">Beleglage<span class="d-block small text-muted mt-1">Belastbarkeit der Aussagen zu Nutzen und Lösungsfit</span></th>{% for option in options %}<td>{{ option.get_evidence_basis_display }}</td>{% endfor %}</tr>
         <tr><th scope="row">Time-to-Value<span class="d-block small text-muted mt-1">Trade-off, keine automatische Priorisierung</span></th>{% for option in options %}<td>{{ option.get_time_to_value_display }}</td>{% endfor %}</tr>
+        <tr><th scope="row">Aufwand, Kosten und Umstellung<span class="d-block small text-muted mt-1">Einführung, laufender Aufwand, organisatorischer Change; unbekannt ist nicht kostenlos</span></th>{% for option in options %}<td class="text-preline">{{ option.effort_assessment|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">KI-Komponente</th>{% for option in options %}<td>{% if option.starts_ai_use_case %}Ja – KI-Use-Case-Pfad möglich{% else %}Nein – kein KI-Use-Case erforderlich{% endif %}</td>{% endfor %}</tr>
         <tr><th scope="row">{% comparison_coverage_label %}</th>{% for option in options %}<td class="text-preline">{{ option.bottleneck_coverage|comparison_text }}</td>{% endfor %}</tr>
         <tr><th scope="row">Machbarkeit<span class="d-block small text-muted mt-1">Qualitative Einschätzung; Begründung und Beleglage beachten</span></th>{% for option in options %}<td>{{ option.get_feasibility_display }}{% if option.evidence_basis == 'hypothesis' %}<span class="d-block small text-warning">Nicht belegt – Hypothese</span>{% endif %}</td>{% endfor %}</tr>
@@ -297,6 +298,16 @@
         </div>
       {% endif %}
       <div class="mb-3"><label class="form-label">{{ form.selected_option.label }}</label>{{ form.selected_option }}{{ form.selected_option.errors }}</div>
+      {% if form.quality_required %}
+        <p class="small">Die Auswahl dokumentiert eine menschliche Abwägung. Weder ausgefüllte Felder noch zwei verschiedene Namen beweisen wirtschaftliche Überlegenheit.</p>
+        {% include "architecture/includes/selection_quality_field.html" with field=form.difference_reason only %}
+        {% include "architecture/includes/selection_quality_field.html" with field=form.uncertainty_reason only %}
+        {% if form.diagnosis_basis_required %}
+          <p>Fachliche Ursachenbestätigung ist kein unabhängiger empirischer Beweis.</p>
+          {% include "architecture/includes/selection_quality_field.html" with field=form.diagnosis_basis only %}
+          {% include "architecture/includes/selection_quality_field.html" with field=form.diagnosis_note only %}
+        {% else %}<p>Strategischer Pfad: keine bestätigte Ursache erforderlich; Potenzial und Validierungsschritt bleiben maßgeblich.</p>{% endif %}
+      {% endif %}
       <div><label class="form-label" for="{{ form.rationale.id_for_label }}">{{ form.rationale.label }}</label>{{ form.rationale }}<div class="form-text">{{ form.rationale.help_text }}</div>{{ form.rationale.errors }}</div>
     {% endif %}
   </div>
@@ -342,6 +353,16 @@
           </details>
         {% endif %}
         {% if decision.outcome_snapshot %}<details><summary>Outcome-, Evidenz- und Fokusstand der Entscheidung</summary><p>{{ decision.outcome_snapshot.fields.business_outcome }}</p><p>{{ decision.outcome_snapshot.fields.impact_hypothesis }} · {{ decision.outcome_snapshot.evidence_level }}</p><p>Vorhaben {{ decision.outcome_snapshot.initiative_id }} · Revision {{ decision.outcome_snapshot.outcome_revision }} · Fokusrevision {{ decision.outcome_snapshot.focus.revision }}</p><p>Pfad: {{ decision.outcome_snapshot.discovery_path.path }} · {{ decision.outcome_snapshot.discovery_path.origin_basis }} · {{ decision.outcome_snapshot.discovery_path.validation_step }}</p></details>{% else %}<p class="small text-muted">Historisch nicht gebunden</p>{% endif %}
+        {% if decision.quality_snapshot %}
+        <details><summary>Handlungshebel, Aufwand und Entscheidungsgrenzen</summary>
+          <p>Menschlich begründeter Vergleich; kein unabhängiger Wirtschafts- oder Ursachenbeweis.</p>
+          <p class="text-preline">{{ decision.quality_snapshot.difference_reason }}</p>
+          <p class="text-preline">{{ decision.quality_snapshot.uncertainty_reason }}</p>
+          <p>{{ decision.diagnosis_snapshot.confirmation_basis.label }}</p>
+          <p class="text-preline">{{ decision.diagnosis_snapshot.confirmation_basis.note }}</p>
+          {% for row in decision.comparison_snapshot %}<p><strong>{{ row.name }}</strong></p><p class="text-preline">{{ row.effort_assessment|comparison_text }}</p>{% endfor %}
+        </details>
+        {% else %}<p class="small text-muted">Vergleich nach bisherigem Vertrag ohne gesonderten Handlungshebel-/Aufwandsnachweis; kein nachträglicher Beleg ergänzt.</p>{% endif %}
         <div class="text-preline mt-2">{{ decision.rationale }}</div>
       </section>
     {% empty %}<p class="text-muted mb-0">Noch keine auditierbare Auswahl dokumentiert.</p>{% endfor %}

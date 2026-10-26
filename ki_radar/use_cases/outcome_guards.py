@@ -46,7 +46,11 @@ class InitiativeManager(models.Manager.from_queryset(InitiativeQuerySet)):
 
 class OutcomeQuerySet(models.QuerySet):
     def bulk_update(self, objs, fields, batch_size=None):
-        if set(fields) & {"outcome_contract_version", "decision_status"}:
+        if set(fields) & {
+            "outcome_contract_version",
+            "comparison_contract_version",
+            "decision_status",
+        }:
             raise ValidationError("Serververwaltete Entscheidungsfelder benötigen den Service.")
         return super().bulk_update(objs, fields, batch_size=batch_size)
 
@@ -63,6 +67,8 @@ class OutcomeQuerySet(models.QuerySet):
         return super().bulk_create(objs, **kwargs)
 
     def update(self, **kwargs):
+        if "comparison_contract_version" in kwargs:
+            raise ValidationError("Die Vergleichskohorte ist serververwaltet.")
         if "outcome_snapshot" in kwargs:
             raise ValidationError("Outcome-Snapshots sind unveränderlich.")
         if (
@@ -154,6 +160,15 @@ class OptionManager(models.Manager.from_queryset(OptionQuerySet)):
 
 
 def protect_cohort(instance):
+    if hasattr(instance, "comparison_contract_version"):
+        previous_comparison = (
+            type(instance)
+            .objects.filter(pk=instance.pk)
+            .values_list("comparison_contract_version", flat=True)
+            .first()
+        )
+        if previous_comparison and previous_comparison != instance.comparison_contract_version:
+            raise ValidationError("Die aktive Vergleichskohorte darf nicht zurückgesetzt werden.")
     previous = (
         type(instance)
         .objects.filter(pk=instance.pk)
