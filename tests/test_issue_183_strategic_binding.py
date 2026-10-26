@@ -2,9 +2,10 @@
 
 from copy import deepcopy
 from hashlib import sha256
+from types import SimpleNamespace
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils import timezone
@@ -26,6 +27,10 @@ from ki_radar.use_cases.initiative_views import InitiativeForm
 from ki_radar.use_cases.initiatives import save_initiative
 from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.outcome_contract import confirm_initiative, set_discovery_path
+from ki_radar.use_cases.services import (
+    create_use_case_from_selected_solution,
+    submit_approval_decision,
+)
 from ki_radar.use_cases.workflow import build_process_analysis_journey
 
 pytestmark = pytest.mark.django_db
@@ -198,6 +203,181 @@ def assert_unknowns(process):
             "change_effort",
         )
     )
+
+
+def test_strategic_ai_handoff_routes_retry_screening_and_independent_approval(
+    owner, exploration, client, monkeypatch, coordinator, technical_admin
+):
+    from ki_radar.governance.models import GovernanceAssessment
+    from ki_radar.use_cases.models import DecisionAssessment
+
+    process = exploration
+    initiative = bind(owner, process)
+    assistant = options(owner, process, client)[1]
+    assert not process.diagnostic_observations
+    assert_unknowns(process)
+    url = reverse("architecture:solution_option_compare", args=[process.pk])
+    data = {
+        "selected_option": assistant.pk,
+        "process_version": process.version,
+        "rationale": "Quellenanzeige begrenzt prüfen; Wirkung und Ist-Prozess unbekannt",
+        **QUALITY,
+    }
+    assert client.post(url, data).status_code == 302
+    decision = process.solution_selection_decisions.get()
+    frozen = deepcopy((decision.outcome_snapshot, decision.diagnosis_snapshot))
+    case = UseCase.objects.get()
+    origin = case.architecture_origin
+    frozen_origin = deepcopy(origin.source_snapshot)
+    source = frozen_origin["problem_statement"]
+    assert case.initiative == initiative
+    assert origin.process_analysis == process and origin.solution_option == assistant
+    assert source["kind"] == "solution_selection_decision"
+    assert source["id"] == str(decision.pk)
+    assert source["outcome_snapshot"] == decision.outcome_snapshot
+    assert source["value"] == case.problem_statement
+    assert case.problem_statement.startswith("Strategischer Anlass / Potenzial:")
+    assert initiative.business_outcome in case.problem_statement
+    assert initiative.impact_hypothesis in case.problem_statement
+    assert "kein Nachweis eines Ist-Problems" in case.problem_statement
+    assert not case.approval_decisions.exists()
+    assert not case.ap2_planning_provenance
+    assert_unknowns(process)
+    assert not process.diagnostic_observations
+
+    # This explicit continuation also offers provider drafts; stub all three.
+    for name in (
+        "generate_and_apply_ap2_metric_pilot",
+        "generate_ap2_architecture_inputs",
+        "generate_ap2_decision_governance",
+    ):
+        monkeypatch.setattr(
+            f"ki_radar.architecture.solution_views.{name}",
+            lambda **kwargs: SimpleNamespace(changed_fields=()),
+        )
+    for _ in range(2):
+        assert client.post(url, {"continue_ai_handoff": "1"}).status_code == 302
+        result = create_use_case_from_selected_solution(decision=decision, actor=owner)
+        assert not result.created and result.use_case.pk == case.pk
+    assert UseCase.objects.count() == process.solution_selection_decisions.count() == 1
+
+    # New global knowledge must be interpreted in a new selection, without
+    # rewriting the historical strategic context or creating a second use case.
+    focus = ValueStreamFocus.objects.get(value_stream=process.stage.value_stream)
+    focus.status = "selected"
+    focus.rationale = "Synthetisches Screening nach fachlicher Prüfung abgeschlossen"
+    for field in (
+        "strategic_impact",
+        "economic_potential",
+        "pain_intensity",
+        "data_accessibility",
+        "change_effort",
+    ):
+        setattr(focus, field, "medium")
+    focus.save()
+    assert decision.outcome_review_required
+    with pytest.raises(ValidationError, match="geändert"):
+        create_use_case_from_selected_solution(decision=decision, actor=owner)
+    assert client.post(url, data).status_code == 302
+    new = process.solution_selection_decisions.first()
+    assert new.pk != decision.pk and not new.outcome_review_required
+    assert "strategic_binding" not in new.outcome_snapshot
+    assert not create_use_case_from_selected_solution(decision=new, actor=owner).created
+    assert UseCase.objects.count() == 1
+
+    DecisionAssessment.objects.create(
+        use_case=case,
+        assessed_by=coordinator,
+        version=1,
+        recommendation="approved",
+        evidence_quality=1,
+        evidence_recency=1,
+        evidence_coverage=1,
+        independent_review=1,
+        assumptions_resolved=1,
+    )
+    GovernanceAssessment.objects.create(
+        use_case=case, assessment_date=timezone.localdate(), basis_version="Test", result="no_flags"
+    )
+    approval = submit_approval_decision(
+        use_case=case,
+        actor=technical_admin,
+        data={"decision_status": "approved", "rationale": "Unabhängige synthetische Prüfung"},
+    )
+    assert approval.outcome_snapshot["source_selection_id"] == new.pk
+    decision.refresh_from_db()
+    origin.refresh_from_db()
+    assert (decision.outcome_snapshot, decision.diagnosis_snapshot) == frozen
+    assert origin.source_snapshot == frozen_origin
+
+
+@pytest.mark.parametrize("missing", ["provenance", "confirmation", "stale", "role"])
+def test_strategic_ai_handoff_still_protects_accepted_basis(
+    owner, exploration, client, reader, missing
+):
+    process = exploration
+    initiative = bind(owner, process)
+    assistant = options(owner, process, client)[1]
+    decision = choose(owner, process, assistant)
+    if missing == "provenance":
+        process.source_snapshot = {}
+        process.save()
+    elif missing == "confirmation":
+        save_initiative(
+            actor=owner, initiative=initiative, data={"impact_hypothesis": "Neue Annahme"}
+        )
+    elif missing == "stale":
+        assistant.risks = "Neues wesentliches Risiko"
+        assistant.save()
+    actor = reader if missing == "role" else owner
+    with pytest.raises(PermissionDenied if missing == "role" else ValidationError):
+        create_use_case_from_selected_solution(decision=decision, actor=actor)
+    client.force_login(actor)
+    response = client.post(
+        reverse("architecture:solution_option_compare", args=[process.pk]),
+        {"continue_ai_handoff": "1"},
+        follow=True,
+    )
+    assert response.status_code == (403 if missing == "role" else 200)
+    assert not UseCase.objects.exists()
+
+
+def test_saved_strategic_selection_recovers_after_handoff_validation_error(
+    owner, exploration, client, monkeypatch
+):
+    bind(owner, exploration)
+    assistant = options(owner, exploration, client)[1]
+    clean = UseCase.full_clean
+    attempts = 0
+
+    def fail_once(case, *args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise ValidationError({"problem_statement": "Kontext bitte fachlich prüfen."})
+        return clean(case, *args, **kwargs)
+
+    monkeypatch.setattr(UseCase, "full_clean", fail_once)
+    url = reverse("architecture:solution_option_compare", args=[exploration.pk])
+    response = client.post(
+        url,
+        {
+            "selected_option": assistant.pk,
+            "process_version": exploration.version,
+            "rationale": "Begrenzte strategische Erprobung",
+            **QUALITY,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert "Problemstellung: Kontext bitte fachlich prüfen." in response.content.decode()
+    assert "problem_statement" not in response.content.decode()
+    assert not UseCase.objects.exists()
+    decision = exploration.solution_selection_decisions.get()
+    result = create_use_case_from_selected_solution(decision=decision, actor=owner)
+    assert result.created
+    assert not create_use_case_from_selected_solution(decision=decision, actor=owner).created
+    assert UseCase.objects.count() == exploration.solution_selection_decisions.count() == 1
 
 
 def test_complete_b_routes_external_non_ai_record_review_and_honest_completion(

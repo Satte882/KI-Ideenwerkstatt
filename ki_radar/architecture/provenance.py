@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime
 from typing import Any
 
@@ -17,6 +18,43 @@ def _source(*, kind: str, label: str, obj, field: str, value: Any) -> dict[str, 
         "value": "" if value is None else str(value),
         "updated_at": _iso(getattr(obj, "updated_at", None)),
     }
+
+
+def selected_solution_problem_source(decision) -> dict[str, Any]:
+    """Map the accepted context without turning strategic potential into diagnosis."""
+    outcome = decision.outcome_snapshot
+    path = outcome.get("discovery_path", {})
+    if path.get("path") == "strategic":
+        fields = outcome["fields"]
+        value = (
+            f"Strategischer Anlass / Potenzial: {path['strategic_potential']}\n"
+            f"Herkunftsbezug: {path['origin_basis']}\n"
+            f"Geschäftsergebnis: {fields['business_outcome']}\n"
+            f"Vorhabensbeitrag: {fields['contribution']}\n"
+            f"Wirkannahme (zu prüfen): {fields['impact_hypothesis']}\n"
+            f"Geplanter Validierungsschritt: {path['validation_step']}\n"
+            "Dies ist ein bestätigter strategischer Untersuchungsanlass, "
+            "kein Nachweis eines Ist-Problems, einer Ursache oder einer Baseline."
+        )
+        return {
+            **_source(
+                kind="solution_selection_decision",
+                label="Bestätigter strategischer Anlass",
+                obj=decision,
+                field="outcome_snapshot",
+                value=value,
+            ),
+            "outcome_snapshot": deepcopy(outcome),
+        }
+    process = decision.process_analysis
+    field = "diagnostic_observations" if process.diagnostic_observations else "bottlenecks"
+    return _source(
+        kind="process_analysis",
+        label="Prozessanalyse",
+        obj=process,
+        field=field,
+        value=getattr(process, field),
+    )
 
 
 def build_process_source_snapshot(stage) -> dict[str, dict[str, Any]]:
