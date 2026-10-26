@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from .initiatives import OUTCOME_FIELDS, PLAN_FIELDS
+from .initiatives import OUTCOME_FIELDS, PLAN_FIELDS, _formal_text
 
 
 def original_measurement_anchor(*, selection=None, use_case=None):
@@ -86,7 +86,7 @@ def criteria_review_blocker(review):
             return "Vorab-Messplan fehlt; nachträglich bewerten oder ungeklärt lassen."
         if (
             any(
-                fields.get(name, "") != getattr(review.initiative, name)
+                _formal_text(fields.get(name, "")) != _formal_text(getattr(review.initiative, name))
                 for name in (*PLAN_FIELDS, "evaluation_criteria")
             )
             and not review.criteria_deviation.strip()
