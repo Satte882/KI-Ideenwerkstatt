@@ -2,6 +2,60 @@
  * Wiederverwendbare Daten-, Formular- und Entscheidungs-Komponenten.
  */
 
+.ui-vnext .business-context {
+  padding-block: 18px;
+  border-block: 1px solid var(--line-soft);
+  color: var(--ink);
+  font-size: .8rem;
+  line-height: 1.55;
+}
+
+.ui-vnext .business-context h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+
+.ui-vnext .business-context-caption {
+  color: var(--muted);
+  font-size: .76rem;
+}
+
+.ui-vnext .business-context-statement {
+  margin-block: 12px;
+}
+
+.ui-vnext .business-context-status {
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.ui-vnext .business-context-status--review {
+  color: var(--warning);
+}
+
+.ui-vnext .business-context-facts {
+  display: grid;
+  grid-template-columns: minmax(140px, 22%) minmax(0, 1fr);
+  gap: 7px 18px;
+  margin-block: 12px;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.ui-vnext .business-context-facts dt {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ui-vnext .business-context-facts dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
 .ui-vnext .btn {
   min-height: 42px;
   padding: .62rem .9rem;

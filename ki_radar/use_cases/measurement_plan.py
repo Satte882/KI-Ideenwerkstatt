@@ -119,9 +119,24 @@ def business_context(use_case):
         if review
         else None,
         "review_required": review.review_required if review else True,
+        "reviewed_at": review.reviewed_at.isoformat() if review and review.reviewed_at else None,
         "attribution": review.attribution if review else "unclear",
         "attribution_label": review.get_attribution_display() if review else "Noch ungeklärt",
         "attribution_reason": review.attribution_reason if review else "",
         "contribution_boundary": review.contribution_boundary if review else "",
         "coverage_limit": "Ein strukturierter Auswahl-/Use-Case-Bezug; keine ROI-Addition.",
     }
+
+
+def business_context_review_label(context):
+    """Interpret only captured review metadata; never re-evaluate historical claims."""
+    required = context.get("review_required")
+    if required is False:
+        return "Geprüft"
+    if required is True:
+        if "reviewed_at" not in context:
+            return "Wirkungsprüfung offen / erneut erforderlich (damals nicht weiter unterschieden)"
+        if context["reviewed_at"]:
+            return "Erneute Prüfung erforderlich"
+        return "Ungeprüft - Wirkungsprüfung offen"
+    return "Historisch nicht erfasst"

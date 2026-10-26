@@ -1,0 +1,12 @@
+{% if business_snapshot %}
+{% include "use_cases/includes/business_context_statement.html" with status_title="Prüfstatus damals" %}
+<dl class="business-context-facts">
+<dt>Geschäftsergebnis</dt><dd>{{ business_snapshot.current.business_outcome|default:"Historisch nicht erfasst" }}</dd>
+<dt>Beitrag</dt><dd>{{ business_snapshot.current.contribution|default:"Historisch nicht erfasst" }}</dd>
+<dt>Wirkannahme</dt><dd>{{ business_snapshot.current.impact_hypothesis|default:"Historisch nicht erfasst" }}</dd>
+<dt>Kriterien</dt><dd>{{ business_snapshot.current.evaluation_criteria|default:"Historisch nicht erfasst" }}</dd>
+<dt>Messabsicht: Methode / Zeitraum / Population / Vergleich</dt><dd>{{ business_snapshot.current.measurement_method|default:"Historisch nicht erfasst" }} · {{ business_snapshot.current.measurement_period|default:"Historisch nicht erfasst" }} · {{ business_snapshot.current.measurement_population|default:"Historisch nicht erfasst" }} · {{ business_snapshot.current.measurement_reference|default:"Historisch nicht erfasst" }}</dd>
+<dt>Offene Messangaben</dt><dd>{{ business_snapshot.current.measurement_unknowns|default:"Keine gespeichert" }}</dd>
+</dl>
+<p class="business-context-caption">{{ business_snapshot.coverage_limit }} {{ business_snapshot.contribution_boundary }}</p>
+{% else %}<p>Historischer Wirkungskontext nicht vorhanden.</p>{% endif %}

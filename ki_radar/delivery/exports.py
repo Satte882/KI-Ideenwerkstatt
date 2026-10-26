@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from ki_radar.use_cases.measurement_plan import business_context_review_label
+
 from .architecture_artifacts import get_delivery_architecture_artifacts
 from .models import DELIVERY_SECTION_DEFINITIONS, DeliveryPackage
 from .readiness import delivery_status_snapshot, evaluate_delivery_readiness
@@ -74,10 +76,49 @@ def _moscow_prioritization(package: DeliveryPackage) -> str:
     )
 
 
+def _historical_business_context(package: DeliveryPackage) -> str:
+    context = package.business_context_snapshot
+    if not context:
+        return "Historischer Wirkungskontext nicht vorhanden."
+    fields = context.get("current", {})
+    labels = (
+        ("Geschäftsergebnis", "business_outcome"),
+        ("Beitrag", "contribution"),
+        ("Wirkannahme", "impact_hypothesis"),
+        ("Kriterien", "evaluation_criteria"),
+        ("Messmethode", "measurement_method"),
+        ("Messzeitraum", "measurement_period"),
+        ("Messpopulation", "measurement_population"),
+        ("Messvergleich", "measurement_reference"),
+    )
+    rows = [
+        f"**{label}:** {fields.get(key) or 'Historisch nicht erfasst'}" for label, key in labels
+    ]
+    rows.extend(
+        [
+            f"**Offene Messangaben:** {fields.get('measurement_unknowns') or 'Keine gespeichert'}",
+            "**Gespeicherte Wirkungsaussage:** "
+            f"{context.get('effect_label') or 'Historisch nicht erfasst'} · "
+            f"{context.get('effect_reason', '')}",
+            "**Attribution:** "
+            f"{context.get('attribution_label') or 'Historisch nicht erfasst'} · "
+            f"{context.get('attribution_reason', '')}",
+            f"**Prüfstatus damals:** {business_context_review_label(context)}",
+            f"**Aussagegrenzen:** {context.get('coverage_limit', '')} "
+            f"{context.get('contribution_boundary', '')}",
+        ]
+    )
+    return "\n\n".join(rows)
+
+
 def render_delivery_markdown(package: DeliveryPackage) -> str:
     sections = [
         ("Problem und Geschäftskontext", package.problem_context),
         ("Ziel und Ergebnis", package.target_outcome),
+        (
+            "Bei Übergabe betrachteter Wirkungskontext (eingefroren)",
+            _historical_business_context(package),
+        ),
         (
             "Scope-Grenzen",
             f"### Im Scope\n{package.in_scope}\n\n### Nicht im Scope\n{package.out_of_scope}",
