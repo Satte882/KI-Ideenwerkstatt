@@ -134,7 +134,7 @@ def test_scale_readiness_go_live_reuses_review_and_persists_snapshot(scale_candi
 
     assert use_case.status == UseCase.Status.OPERATION
     assert review.decision == Review.Decision.GO_LIVE
-    assert review.scale_readiness_schema_version == 2
+    assert review.scale_readiness_schema_version == 3
     assert review.scale_readiness_snapshot["state"] == "ready"
     assert [item["key"] for item in review.scale_readiness_snapshot["dimensions"]] == [
         "pilot",

@@ -19,6 +19,10 @@ REVIEW_FIELDS = (
     "measurement_difference",
     "attribution",
     "attribution_reason",
+    "criteria_assessment",
+    "assessment_basis",
+    "criteria_deviation",
+    "contribution_boundary",
 )
 
 
@@ -101,6 +105,15 @@ def save_impact_review(*, initiative, actor, data, expected_revision, finalize=F
             raise ValidationError(
                 "Die Non-KI-Prozesswirkung benötigt Messdefinition, Stand und Nachweis."
             )
+    if finalize:
+        from .measurement_plan import build_criteria_snapshot
+
+        review.criteria_snapshot = build_criteria_snapshot(review)
+        # Legacy interventions retain their historical contract; no fictional backfill.
+        if review.criteria_snapshot and effect_status != ImprovementInitiative.Effect.UNCLEAR:
+            blocker = review.criteria_review_blocker
+            if blocker:
+                raise ValidationError(blocker)
     # Reuse the existing effect statement and its audit; no second business-result field.
     initiative = save_initiative(
         actor=actor,
@@ -134,7 +147,13 @@ def impact_review_context(initiative):
         )
         .first()
     )
+    from .measurement_plan import original_measurement_anchor
+
     return {
+        "criteria_anchor": original_measurement_anchor(
+            selection=review.selection if review else None,
+            use_case=review.use_case if review else None,
+        ),
         "impact_review": review,
         "impact_selections": SolutionSelectionDecision.objects.filter(
             process_analysis__initiative=initiative

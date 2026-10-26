@@ -7,9 +7,11 @@ from django.db import transaction
 from django.utils import timezone
 
 from .initiative_models import ImprovementInitiative
+from .initiatives import PLAN_FIELDS
 
 OUTCOME_CONTRACT_VERSION = 1
 MATERIAL_FIELDS = (
+    *PLAN_FIELDS,
     "business_outcome",
     "contribution",
     "impact_hypothesis",
@@ -104,7 +106,7 @@ def _origin_blockers(artifact, process):
     return blockers
 
 
-def build_outcome_snapshot(artifact, *, lock=False):
+def build_outcome_snapshot(artifact, *, lock=False, require_measurement_plan=True):
     if not artifact.outcome_contract_version:
         return {}
     if artifact.initiative_id:
@@ -120,6 +122,14 @@ def build_outcome_snapshot(artifact, *, lock=False):
     if blockers:
         raise ValidationError("Outcome-Bezug offen: " + ", ".join(blockers))
     initiative = artifact.initiative
+    if require_measurement_plan and not (
+        all(getattr(initiative, name).strip() for name in PLAN_FIELDS[:4])
+        or initiative.measurement_unknowns.strip()
+    ):
+        raise ValidationError(
+            "Vor neuer Bindung Messabsicht dokumentieren oder offene Messangaben "
+            "mit Grund und Klärungspunkt benennen. Eine Ist-Baseline ist nicht erforderlich."
+        )
     result = {
         "contract_version": OUTCOME_CONTRACT_VERSION,
         "initiative_id": str(initiative.pk),
@@ -133,6 +143,25 @@ def build_outcome_snapshot(artifact, *, lock=False):
         "confirmed_at": initiative.confirmed_at.isoformat(),
         "confirmation_reason": initiative.confirmation_reason,
     }
+    result["measurement_plan"] = {
+        "version": 1,
+        "state": "documented"
+        if all(getattr(initiative, f).strip() for f in PLAN_FIELDS[:4])
+        else "open"
+        if initiative.measurement_unknowns.strip()
+        else "missing",
+        "initiative_history_id": initiative.history.filter(
+            **{field: getattr(initiative, field) for field in MATERIAL_FIELDS},
+            outcome_revision=initiative.outcome_revision,
+        )
+        .order_by("history_date", "history_id")
+        .values_list("history_id", flat=True)
+        .first(),
+    }
+    if artifact._meta.model_name == "usecase":
+        result["measurement_plan"]["use_case_history_id"] = artifact.history.values_list(
+            "history_id", flat=True
+        ).first()
     process = _process(artifact)
     if process is not None:
         from ki_radar.architecture.stage_focus import get_phase_focus_decision
@@ -179,7 +208,7 @@ def snapshot_is_stale(artifact, snapshot):
     if not snapshot:
         return False
     try:
-        current = build_outcome_snapshot(artifact)
+        current = build_outcome_snapshot(artifact, require_measurement_plan=False)
     except ValidationError:
         return True
     # Revisions identify service changes; comparing the captured content also

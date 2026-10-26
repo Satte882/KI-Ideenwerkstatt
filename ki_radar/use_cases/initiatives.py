@@ -14,7 +14,16 @@ from .initiative_models import ImprovementInitiative, InitiativeImpactReview
 # #146 must explicitly introduce and enforce the new contract at both decision boundaries.
 LEGACY_OUTCOME_CONTRACT = 0
 
+PLAN_FIELDS = (
+    "measurement_method",
+    "measurement_period",
+    "measurement_population",
+    "measurement_reference",
+    "measurement_unknowns",
+)
+
 OUTCOME_FIELDS = (
+    *PLAN_FIELDS,
     "business_outcome",
     "contribution",
     "impact_hypothesis",
@@ -32,6 +41,7 @@ EDITABLE_FIELDS = (
     "effect_status",
     "effect_reason",
     "cancellation_reason",
+    "measurement_change_reason",
 )
 
 
@@ -117,6 +127,14 @@ def save_initiative(
             for key in OUTCOME_FIELDS
             if key in data and _text(getattr(initiative, key)) != _text(data[key])
         }
+        plan_changed = changed_fields & {*PLAN_FIELDS, "evaluation_criteria"}
+        if (
+            plan_changed
+            and any(getattr(initiative, name).strip() for name in PLAN_FIELDS)
+            and not data.get("measurement_change_reason", "").strip()
+            and not correction_reason.strip()
+        ):
+            raise ValidationError("Messplan-/Kriterienänderung bitte begründen.")
         formal_correction = bool(correction_reason.strip()) and all(
             key in MATERIAL_FIELDS
             and _formal_text(getattr(initiative, key)) == _formal_text(data[key])

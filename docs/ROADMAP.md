@@ -185,7 +185,12 @@ Non-KI (#147, ADR 0009). Er trennt Prozesswirkung, Geschäftsergebnismessung und
 Attribution; unbekannte Geschäftswirkung bleibt offen. KI-Prozessmetriken werden aus
 den bestehenden Use Cases referenziert, nicht erneut erfasst oder summiert. Entwürfe,
 Bestandsfälle und bestehende Governance-/Pilot-/Go-live-Gates bleiben erhalten.
-Versionierte Messreihen bleiben unter Later / Priorität 3 geparkt.
+Der ergänzte Vertrag aus #189 hält die Business-Messabsicht an bestehender Auswahl
+oder positiver Freigabe fest. Der Review unterscheidet ursprünglichen Maßstab,
+spätere Änderungen und Ex-post-Evidenz; fehlender Vorab-Beleg wird nicht rückdatiert.
+Bestehende Übergabe-/Skalierungsentscheidungen referenzieren den Wirkungskontext.
+Der strategische Bindungsvertrag, Mehrprozessaggregation und Menschentest #161
+bleiben eigenständige Grenzen. Versionierte Messreihen bleiben unter Later / Priorität 3 geparkt.
 
 ## 8. Business & Decision Control Room
 

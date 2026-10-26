@@ -9,6 +9,7 @@
   <div><div class="eyebrow mb-2">{{ use_case.short_id }} · {{ use_case.get_status_display }}</div><h1 class="page-title">{% if use_case.status == 'idea' %}Prüfung starten{% elif pilot_start_only %}Pilot starten{% elif form.scale_readiness_result %}Scale Readiness &amp; Entscheidung{% else %}Entscheidung dokumentieren{% endif %}</h1><p class="page-subtitle">{{ use_case.title }}</p></div>
   <a class="btn btn-outline-secondary" href="{{ use_case.get_absolute_url }}">Zurück zum Use Case</a>
 </div>
+{% include "use_cases/includes/business_context.html" with use_case=use_case %}
 <div class="row g-4">
   <div class="col-xl-4">
     <div class="app-card decision-panel mb-4">
