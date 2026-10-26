@@ -364,6 +364,7 @@ class InitiativeImpactReview(TimeStampedModel):
                     for name in REVIEW_FIELDS
                 ),
                 "reviewed_by_id",
+                "metric_history_id",
             )
         ):
             return True

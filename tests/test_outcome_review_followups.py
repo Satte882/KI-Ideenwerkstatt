@@ -111,6 +111,20 @@ def test_measurement_evidence_update_requires_review(owner, initiative, case):
     assert review.review_required
 
 
+def test_metric_history_reference_cannot_adopt_a_new_measurement_without_review(
+    owner, initiative, case
+):
+    review = reviewed(owner, initiative, case)
+    original = review.metric_history_id
+    case.metric_actual = Decimal("6.0000")
+    case.save()
+    review.metric_history_id = case.history.first().history_id
+    review.save()
+    assert review.review_required
+    assert case.history.get(history_id=original).metric_actual == Decimal("8.0000")
+    assert review.history.filter(metric_history_id=original).exists()
+
+
 def test_unknown_business_effect_can_close_without_fake_proof(owner, initiative):
     completed = save_initiative(
         actor=owner,

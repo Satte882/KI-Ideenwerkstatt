@@ -291,8 +291,7 @@ def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
     validation = process_analysis.validations.filter(
         process_version=process_analysis.version
     ).first()
-    return {
-        "process_basis": {key: getattr(process_analysis, key) for key in PROCESS_BASIS_FIELDS},
+    snapshot = {
         "diagnostic_observations": process_analysis.diagnostic_observations,
         "cause_hypotheses": process_analysis.cause_hypotheses,
         "confirmed_causes": process_analysis.confirmed_causes,
@@ -309,6 +308,11 @@ def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
             else None
         ),
     }
+    if process_analysis.outcome_contract_version:
+        snapshot["process_basis"] = {
+            key: getattr(process_analysis, key) for key in PROCESS_BASIS_FIELDS
+        }
+    return snapshot
 
 
 @transaction.atomic
