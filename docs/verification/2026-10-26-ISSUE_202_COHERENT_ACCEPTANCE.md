@@ -87,8 +87,9 @@ Ausführbar: `test_c_direct_ai_missing_baseline_unclear_end` in
 
 Zielgruppe: Vertrieb mit Rückfragen zu freigegebenen Angeboten. Outcome Owner:
 Vertriebsleitung. Weniger Rückfragen könnten wirtschaftliche Buchungen unterstützen.
-Messabsicht: Buchungsprotokoll für 100 freigegebene Testangebote über vier Wochen,
-absolutes Ziel 18 Buchungen; Vorperiode, Kosten und Kausalität unbekannt. Der direkte
+Messabsicht: Buchungsprotokoll mit fachlicher Wirtschaftlichkeitsprüfung für 100
+freigegebene Testangebote über vier Wochen, absolutes Ziel 18 wirtschaftlich tragfähige
+Buchungen; Vorperiode, Kosten, Tragfähigkeitsnachweise und Kausalität unbekannt. Der direkte
 Pfad behauptet keinen vorgelagerten Alternativenvergleich oder wirtschaftliche
 Überlegenheit der KI. Die fachliche Freigabe ist eine begrenzte menschliche Entscheidung.
 
@@ -141,6 +142,9 @@ Lokale PostgreSQL-Regression auf dem Implementierungscommit `1db4589`:
 zu #146, #147, #183 (einschließlich #198), #186, #188, #189, #199, #200 und #201.
 Die zusätzliche Fokusprüfung A/C/Mehrprozess bestand mit drei Fällen. Die elf
 Warnungen betreffen den bestehenden zukünftigen URL-Schemawechsel in Django 6.
+Nach der abschließenden Präzisierung von C auf wirtschaftlich tragfähige Buchungen
+wurde dieser Fall erneut auf PostgreSQL bestanden (1 bestanden, 18 gezielt abgewählt).
+Diese Auswahl ist keine übersprungene Prüfung der Gesamtsuite.
 Lockfile, Ruff-Lint/Format, Django-Systemprüfung, Migrationsprüfung und Bandit
 bestanden ebenfalls. Keine Produktänderung und keine zusätzliche Migration.
 

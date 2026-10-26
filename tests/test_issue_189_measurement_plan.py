@@ -472,11 +472,15 @@ def test_c_direct_ai_missing_baseline_unclear_end(
         actor=owner,
         initiative=initiative,
         data={
-            "evaluation_criteria": "Mindestens 18 von 100 freigegebenen Angeboten gebucht",
-            "measurement_method": "Freigegebene Angebote mit Buchungsprotokoll abgleichen",
+            "evaluation_criteria": "Mindestens 18 von 100 freigegebenen Angeboten gebucht "
+            "und fachlich als wirtschaftlich tragfähig geprüft",
+            "measurement_method": "Freigegebene Angebote mit Buchungsprotokoll und "
+            "fachlicher Wirtschaftlichkeitsprüfung abgleichen",
             "measurement_population": "100 freigegebene Testangebote im Vertrieb",
-            "measurement_reference": "Absolutes Ziel: 18 von 100 Angeboten gebucht",
-            "measurement_unknowns": "Keine Vorperiode; Kosten und Kausalität unbekannt",
+            "measurement_reference": "Absolutes Ziel: 18 von 100 Angeboten wirtschaftlich "
+            "tragfähig gebucht; keine Vorperiode",
+            "measurement_unknowns": "Keine Vorperiode; Kosten, Tragfähigkeitsnachweise und "
+            "Kausalität noch unbekannt",
             "measurement_change_reason": "Messabsicht passend zum direkten Vertriebsfall",
         },
     )
