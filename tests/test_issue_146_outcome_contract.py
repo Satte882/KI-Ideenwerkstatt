@@ -69,7 +69,7 @@ def confirmed(owner):
     )
 
 
-def bind_process(owner, process, *, path="problem", initiative=None):
+def bind_process(owner, process, *, path="problem", initiative=None, path_context=None):
     initiative = initiative or confirmed(owner)
     bind_initiative(initiative=initiative, artifact=process, actor=owner)
     process.refresh_from_db()
@@ -77,9 +77,14 @@ def bind_process(owner, process, *, path="problem", initiative=None):
         process=process,
         actor=owner,
         path=path,
-        origin_basis="Fachlicher Auftrag zur Untersuchung",
-        strategic_potential="Zusätzliche Buchungen aus vorhandenen Angeboten",
-        validation_step="Rückfragen und Buchungsabbrüche qualitativ vergleichen",
+        **(
+            path_context
+            or {
+                "origin_basis": "Fachlicher Auftrag zur Untersuchung",
+                "strategic_potential": "Zusätzliche Buchungen aus vorhandenen Angeboten",
+                "validation_step": "Rückfragen und Buchungsabbrüche qualitativ vergleichen",
+            }
+        ),
     )
     save_stage_focus_decision(
         initiative=initiative,

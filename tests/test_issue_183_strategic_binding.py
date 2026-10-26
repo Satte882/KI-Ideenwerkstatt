@@ -104,7 +104,8 @@ def bind(owner, process):
             "title": "Synthetischer B-Fall: tragfähige Buchungen und verlässliche Betreuung",
             "business_outcome": "Mehr tragfähige Buchungen bei verlässlicher Betreuung",
             "contribution": "Begrenzte Klärung von Kundenanfragen bis zur verantworteten Antwort",
-            "impact_hypothesis": "Klare Verbindlichkeit könnte Rückfragen und Aufwand senken.",
+            "impact_hypothesis": "Klare Verbindlichkeit könnte Rückfragen und Aufwand senken "
+            "und so Kapazität für tragfähige Buchungen bei verlässlicher Betreuung schaffen.",
             "evaluation_criteria": "Buchungsvolumen und Servicequalität getrennt von Prozesszeit",
             "outcome_owner": "Serviceleitung",
             "measurement_method": "Buchungs- und Qualitätsprotokolle im begrenzten Servicebereich",
@@ -120,7 +121,17 @@ def bind(owner, process):
         rationale="Begrenzte prüfbare Hypothese annehmen; keine gemessene Wirkung",
         expected_revision=initiative.revision,
     )
-    bind_process(owner, process, path="strategic", initiative=initiative)
+    bind_process(
+        owner,
+        process,
+        path="strategic",
+        initiative=initiative,
+        path_context={
+            "origin_basis": "Menschlicher Auftrag: Kundenanfragen im Service untersuchen",
+            "strategic_potential": "Kapazität für tragfähige Buchungen bei verlässlicher Betreuung",
+            "validation_step": "Buchungsvolumen und Servicequalität getrennt vom Aufwand prüfen",
+        },
+    )
     return initiative
 
 
