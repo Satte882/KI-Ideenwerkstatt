@@ -177,6 +177,11 @@ def build_outcome_snapshot(artifact, *, lock=False, require_measurement_plan=Tru
             "criteria": deepcopy(focus.criteria_snapshot),
             "selected_by": focus.selected_by_id,
         }
+        from ki_radar.architecture.strategic_exploration import strategic_binding_basis
+
+        binding = strategic_binding_basis(process)
+        if binding:
+            result["strategic_binding"] = binding
         result["discovery_path"] = {
             "id": path.pk,
             "revision": path.revision,
@@ -224,7 +229,7 @@ def snapshot_is_stale(artifact, snapshot):
         return True
     return any(
         snapshot.get(key) != current.get(key)
-        for key in ("initiative_id", "outcome_revision", "source_selection_id")
+        for key in ("initiative_id", "outcome_revision", "source_selection_id", "strategic_binding")
     ) or any(
         snapshot.get(key, {}).get("id") != current.get(key, {}).get("id")
         for key in ("focus", "discovery_path")

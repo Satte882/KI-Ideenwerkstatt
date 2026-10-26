@@ -398,7 +398,7 @@ def test_c_direct_ai_missing_baseline_unclear_end(
     assert not ProcessAnalysis.objects.exists()
 
 
-def test_b_actual_strategy_stops_at_unchanged_binding_gate(owner, tmp_path, monkeypatch, client):
+def test_b_actual_strategy_still_requires_complete_comparison(owner, tmp_path, monkeypatch, client):
     context = make_context(owner, tmp_path)
     analysis = analyze(owner, context, monkeypatch)
     result = materialize(owner, context[0], analysis)
@@ -423,7 +423,7 @@ def test_b_actual_strategy_stops_at_unchanged_binding_gate(owner, tmp_path, monk
     )
     initiative = planned(owner)
     bind_process(owner, process, path="strategic", initiative=initiative)
-    with pytest.raises(ValidationError, match="Fokus"):
+    with pytest.raises(ValidationError, match=r"Optionen|bewertet|Aufwand"):
         select_preferred_solution(
             process_analysis=process,
             selected_option=process.solution_options.get(),

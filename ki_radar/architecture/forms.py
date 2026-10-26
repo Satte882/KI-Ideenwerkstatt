@@ -700,12 +700,19 @@ class SolutionSelectionForm(forms.Form):
         process_version=None,
         require_diagnosis_confirmation=False,
         quality_required=False,
+        accept_open_screening=False,
         strategic=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         from .comparison_policy import DIAGNOSIS_BASES
 
+        if accept_open_screening:
+            self.fields["uncertainty_reason"].help_text = (
+                "Offene globale Screeningfragen und ihre Risiken ausdrücklich benennen. "
+                "Warum ist die begrenzte strategische Auswahl trotzdem vertretbar? "
+                "Unbekannte Kosten, Aufwand, Nutzen und Evidenz einordnen; keine Ratings erfinden."
+            )
         self.quality_required = quality_required
         self.diagnosis_basis_required = quality_required and not strategic
         self.fields["diagnosis_basis"].choices = [("", "Bitte einordnen"), *DIAGNOSIS_BASES]

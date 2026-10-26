@@ -208,6 +208,11 @@
       </div>
     {% endif %}
 
+    {% if strategic_binding %}<div class="alert alert-info" data-testid="strategic-binding-basis">
+      <strong>Strategische Auswahl auf bestätigtem Untersuchungsrahmen</strong>
+      <p>Das globale Screening bleibt offen. Die begrenzte Auswahl nutzt den bestätigten Outcome-, Phasen- und Strategiepfadbezug. Begründen Sie den Alternativenvergleich und die bewusste Annahme offener Screeningfragen. Dies bestätigt weder Ist-Daten noch Geschäftswirkung.</p>
+      <p>Offene Screeningangaben: {{ strategic_binding.open_screening_fields|join:", "|default:"Keine fehlenden Angaben; globale Auswahl noch offen" }}.</p>
+    </div>{% endif %}
     {% if selection_blocked %}
       <div class="alert alert-warning mb-0">
         <strong>Auswahl noch gesperrt.</strong>
@@ -223,7 +228,7 @@
         {% if focus_blockers %}
           <div class="mb-3" data-testid="selection-focus-blocker">
             <strong>Fokusfreigabe fehlt</strong>
-            <p class="mb-2">{{ focus_blockers|join:" " }} {% if strategic_exploration %}Diese Voraussetzung gilt weiterhin für die bindende Auswahl. Prozess- und Optionsentwürfe können bereits bearbeitet werden. Unbekannte Screeningwerte dürfen nicht erfunden werden; der strategische Auswahlvertrag ist fachlich noch zu entscheiden.{% else %}Erst danach können Optionen ergänzt oder bewertet und die Diagnose bearbeitet werden.{% endif %}</p>
+            <p class="mb-2">{{ focus_blockers|join:" " }} {% if strategic_exploration %}Diese Voraussetzung gilt weiterhin für die bindende Auswahl. Prozess- und Optionsentwürfe können bereits bearbeitet werden. Unbekannte Screeningwerte dürfen nicht erfunden werden; für eine strategische Auswahl sind der belegte Untersuchungsrahmen und der bestätigte Outcome-/Phasen-/Pfadbezug erforderlich.{% else %}Erst danach können Optionen ergänzt oder bewertet und die Diagnose bearbeitet werden.{% endif %}</p>
             <a class="btn btn-sm btn-outline-secondary" href="{% url 'architecture:value_stream_update' process_analysis.stage.value_stream_id %}">Screening und Fokusfreigabe abschließen</a>
           </div>
         {% endif %}
@@ -357,7 +362,7 @@
         <details><summary>Handlungshebel, Aufwand und Entscheidungsgrenzen</summary>
           <p>Menschlich begründeter Vergleich; kein unabhängiger Wirtschafts- oder Ursachenbeweis.</p>
           <p class="text-preline">{{ decision.quality_snapshot.difference_reason }}</p>
-          <p class="text-preline">{{ decision.quality_snapshot.uncertainty_reason }}</p>
+          <p class="text-preline">{{ decision.quality_snapshot.uncertainty_reason }}{% if decision.outcome_snapshot.strategic_binding %}<br>Strategischer Untersuchungsrahmen statt globalem Screening · offene Angaben: {{ decision.outcome_snapshot.strategic_binding.open_screening_fields|join:", " }}{% endif %}</p>
           <p>{{ decision.diagnosis_snapshot.confirmation_basis.label }}</p>
           <p class="text-preline">{{ decision.diagnosis_snapshot.confirmation_basis.note }}</p>
           {% for row in decision.comparison_snapshot %}<p><strong>{{ row.name }}</strong></p><p class="text-preline">{{ row.effort_assessment|comparison_text }}</p>{% endfor %}

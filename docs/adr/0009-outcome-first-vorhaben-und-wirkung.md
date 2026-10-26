@@ -236,3 +236,20 @@ Synthetischer Fall B aus #133 ist Regression, **kein realer RSD-Nutzenbeleg**. N
 - Issue #148 bleibt ausdrücklich ein separater Priorisierungsentscheid.
 
 **Merge dieses reinen Dokumentations-PR ist mit der fachlichen Nutzerannahme möglich.** Das ist **keine** vorzeitige Freigabe produktiver #145–#147-Änderungen, die ohne technische Abnahme unzulässig sind.
+
+
+## 12. Strategische Bindung bei offenem globalem Screening – 26.10.2026
+
+Nach ausdrücklichem Auftraggeberauftrag zu #183 ist die begrenzte Alternative freigegeben:
+belegter menschlicher strategischer Untersuchungsrahmen, aktuell bestätigter gemeinsamer
+Outcome-/Phasen-/Strategiepfadbezug, begründeter Vergleich nach #188 und ausdrücklich
+angenommene offene Screeningfragen ersetzen bei den aktiven neuen Vertragskohorten das
+globale Screening an der bindenden Lösungswahl. Keine erfundenen Ist-Daten oder Ratings.
+Explizite globale Zurückstellung/Ablehnung, Legacy und problemgetriebener Pfad bleiben
+unverändert. Die Auswahl sichert Ersatzbezug und Unknowns unveränderlich; materielle
+Änderungen verwenden denselben Aktualitätsvertrag. Governance und Lifecycle bleiben erhalten.
+Keine neue Rolle, Phase, Messplattform oder automatische Nutzenbehauptung.
+
+Genaue technische Grenze, B-Kette und verbleibende Realumsetzungs-/Evidenzgrenzen:
+[datierter Nachweis zu #183](../verification/ISSUE_183_STRATEGIC_BINDING.md).
+Die früheren Audit-/#185-/#189-Berichte bleiben historische Nachweise ihres damaligen Standes.
