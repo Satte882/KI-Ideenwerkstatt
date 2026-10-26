@@ -96,7 +96,6 @@ def _origin_blockers(artifact, process):
             and (
                 decision is None
                 or not decision.outcome_snapshot
-                or decision.process_version != process.version
                 or decision.outcome_review_required
                 or origin.solution_option.recommendation != "preferred"
             )
@@ -174,12 +173,25 @@ def build_outcome_snapshot(artifact, *, lock=False):
 
 
 def snapshot_is_stale(artifact, snapshot):
+    from .initiatives import _formal_text, _text
+
     # Historical unbound decisions are neither rewritten nor labelled stale.
     if not snapshot:
         return False
     try:
         current = build_outcome_snapshot(artifact)
     except ValidationError:
+        return True
+    # Revisions identify service changes; comparing the captured content also
+    # protects individual ORM edits without inventing a new revision counter.
+    if any(
+        _formal_text(snapshot.get("fields", {}).get(field, ""))
+        != _formal_text(current.get("fields", {}).get(field, ""))
+        for field in MATERIAL_FIELDS
+    ) or any(
+        _text(snapshot.get(field, "")) != _text(current.get(field, ""))
+        for field in ("outcome_owner", "evidence_level", "evidence_note", "hypothesis_origin")
+    ):
         return True
     return any(
         snapshot.get(key) != current.get(key)

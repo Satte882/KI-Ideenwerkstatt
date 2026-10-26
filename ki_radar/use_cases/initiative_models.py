@@ -3,7 +3,7 @@
 import uuid
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.urls import reverse
 from simple_history.models import HistoricalRecords
@@ -109,17 +109,14 @@ class ImprovementInitiative(TimeStampedModel):
             if not self.effect_reason.strip():
                 errors["effect_reason"] = "Bitte die Wirkungsaussage begründen."
             if self.effect_status in {self.Effect.CONFIRMED, self.Effect.REFUTED}:
-                from .initiatives import OUTCOME_FIELDS
+                from .initiatives import initiative_claim_matches
 
                 previous = (
                     type(self).objects.filter(pk=self.pk).first()
                     if not self._state.adding
                     else None
                 )
-                claim_changed = previous is None or any(
-                    getattr(previous, field) != getattr(self, field)
-                    for field in (*OUTCOME_FIELDS, "effect_status", "effect_reason")
-                )
+                claim_changed = previous is None or not initiative_claim_matches(previous, self)
                 # Grandfather unchanged historical completions, not new claims.
                 changing_claim = (
                     previous is None or previous.status != self.Status.COMPLETED or claim_changed
@@ -322,11 +319,44 @@ class InitiativeImpactReview(TimeStampedModel):
 
     @property
     def review_required(self):
+        from .impact_reviews import REVIEW_FIELDS
+        from .initiatives import initiative_claim_matches
+        from .outcome_contract import _origin_blockers
+
         if (
             not self.reviewed_at
-            or self.initiative_revision != self.initiative.revision
             or self.outcome_revision != self.initiative.outcome_revision
             or bool(self.selection_id and self.selection.outcome_review_required)
+        ):
+            return True
+        # Existing audit rows preserve the actual reviewed content. A technical
+        # revision still protects writes, but metadata does not change the claim.
+        original_initiative = (
+            self.initiative.history.filter(revision=self.initiative_revision)
+            .order_by("history_date", "history_id")
+            .first()
+        )
+        if original_initiative is None or not initiative_claim_matches(
+            original_initiative, self.initiative
+        ):
+            return True
+        original_review = (
+            self.history.filter(reviewed_at=self.reviewed_at)
+            .order_by("history_date", "history_id")
+            .first()
+        )
+        # Reference, measurement and evidence edits cannot inherit a prior
+        # interpretation, including edits through an individual ORM save.
+        if original_review is None or any(
+            getattr(original_review, field) != getattr(self, field)
+            for field in (
+                *(
+                    f"{name}_id" if name in {"selection", "use_case"} else name
+                    for name in REVIEW_FIELDS
+                ),
+                "reviewed_by_id",
+                "metric_history_id",
+            )
         ):
             return True
         if not self.use_case_id:
@@ -335,6 +365,18 @@ class InitiativeImpactReview(TimeStampedModel):
             return True
         original = self.use_case.history.filter(history_id=self.metric_history_id).first()
         if original is None:
+            return True
+        if original.initiative_id != self.use_case.initiative_id:
+            return True
+        try:
+            origin = self.use_case.architecture_origin
+        except ObjectDoesNotExist:
+            origin = None
+        if (
+            origin
+            and self.use_case.outcome_contract_version
+            and _origin_blockers(self.use_case, origin.process_analysis)
+        ):
             return True
         # Compare the reviewed metric snapshot, not the entire UseCase revision:
         # owner, dates or status changes must not invalidate unchanged measurements.

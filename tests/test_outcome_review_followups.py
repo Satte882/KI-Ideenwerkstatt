@@ -111,6 +111,47 @@ def test_measurement_evidence_update_requires_review(owner, initiative, case):
     assert review.review_required
 
 
+def test_metric_history_reference_cannot_adopt_a_new_measurement_without_review(
+    owner, initiative, case
+):
+    review = reviewed(owner, initiative, case)
+    original = review.metric_history_id
+    case.metric_actual = Decimal("6.0000")
+    case.save()
+    review.metric_history_id = case.history.first().history_id
+    review.save()
+    assert review.review_required
+    assert case.history.get(history_id=original).metric_actual == Decimal("8.0000")
+    assert review.history.filter(metric_history_id=original).exists()
+
+
+@pytest.mark.parametrize("field", ["business_outcome", "effect_reason"])
+def test_formal_correction_of_a_proven_completion_keeps_original_proof(
+    owner, initiative, case, field
+):
+    initiative = save_initiative(
+        actor=owner, initiative=initiative, data={"business_outcome": "Synthetisches Geschäftsziel"}
+    )
+    review = reviewed(owner, initiative, case)
+    completed = save_initiative(actor=owner, initiative=initiative, data={"status": "completed"})
+    value = (
+        completed.business_outcome + "."
+        if field == "business_outcome"
+        else ("  " + completed.effect_reason + "\n")
+    )
+    saved = save_initiative(
+        actor=owner,
+        initiative=completed,
+        data={field: value},
+        correction_reason="Nur formale Korrektur, unveränderte Wirkungsaussage",
+        expected_revision=completed.revision,
+    )
+    review.refresh_from_db()
+    assert saved.status == "completed" and not review.review_required
+    assert saved.outcome_revision == completed.outcome_revision
+    assert review.metric_history_id == case.history.first().history_id
+
+
 def test_unknown_business_effect_can_close_without_fake_proof(owner, initiative):
     completed = save_initiative(
         actor=owner,

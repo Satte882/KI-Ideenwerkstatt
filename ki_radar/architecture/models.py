@@ -695,33 +695,13 @@ class SolutionSelectionDecision(TimeStampedModel):
     def outcome_review_required(self):
         from ki_radar.use_cases.outcome_contract import snapshot_is_stale
 
+        from .solution_selection import selection_basis_is_stale
+
         if not self.outcome_snapshot:
             return False
-        selected = SolutionOption.objects.get(pk=self.selected_option_id)
-        captured = next(
-            (row for row in self.comparison_snapshot if row.get("id") == str(selected.pk)), {}
-        )
-        # #188 adds its material content to the existing check; #186 owns its unification.
-        effort_changed = False
-        if self.quality_snapshot:
-            current_effort = {
-                str(pk): effort
-                for pk, effort in self.process_analysis.solution_options.values_list(
-                    "pk", "effort_assessment"
-                )
-            }
-            effort_changed = any(
-                row.get("effort_assessment") != current_effort.get(row.get("id"))
-                for row in self.comparison_snapshot
-            )
-        return (
-            effort_changed
-            or snapshot_is_stale(self.process_analysis, self.outcome_snapshot)
-            or any(
-                captured.get(key) != getattr(selected, key)
-                for key in ("outcome_effect", "expected_value", "evidence_basis")
-            )
-        )
+        return snapshot_is_stale(
+            self.process_analysis, self.outcome_snapshot
+        ) or selection_basis_is_stale(self)
 
 
 class ProcessDiscoveryPathDecision(TimeStampedModel):
