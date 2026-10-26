@@ -719,7 +719,7 @@ def approval_check(
     if target_status in APPROVAL_STATUSES:
         from .outcome_contract import outcome_blockers
 
-        blockers.extend(outcome_blockers(use_case))
+        blockers.extend(outcome_blockers(use_case, require_measurement_plan=True))
         if assessment is None:
             blockers.append("Aktuelle strukturierte Bewertung")
         blockers.extend(_missing_fields(use_case, POSITIVE_APPROVAL_CORE_REQUIREMENTS))

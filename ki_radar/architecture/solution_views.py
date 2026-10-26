@@ -32,6 +32,7 @@ from .solution_selection import (
     confirm_diagnosis_and_select_solution,
     diagnosis_readiness_blockers,
     focus_readiness_blockers,
+    missing_effort_options,
     missing_outcome_effect_options,
     ordered_solution_options,
     select_preferred_solution,
@@ -110,7 +111,7 @@ def solution_option_compare(request, pk):
     blockers = comparison_blockers(options, process_analysis=process_analysis)
     diagnosis_blockers = diagnosis_readiness_blockers(process_analysis)
     focus_blockers = focus_readiness_blockers(process_analysis)
-    outcome_missing = outcome_blockers(process_analysis)
+    outcome_missing = outcome_blockers(process_analysis, require_measurement_plan=True)
     incomplete_options = [option for option in options if not option.comparison_complete]
     can_select = can_edit_value_stream(
         request.user,
@@ -261,6 +262,9 @@ def solution_option_compare(request, pk):
             "confirmed_cause_candidate": confirmed_cause_candidate,
             "incomplete_options": incomplete_options,
             "missing_outcome_effect_options": missing_outcome_effect_options(
+                options, process_analysis=process_analysis
+            ),
+            "missing_effort_options": missing_effort_options(
                 options, process_analysis=process_analysis
             ),
             "needs_more_options": len(options) < 2,

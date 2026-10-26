@@ -25,7 +25,7 @@ from .context_adoption import (
 )
 from .initiative_models import ImprovementInitiative
 from .initiative_views import InitiativeForm
-from .initiatives import bind_initiative, save_initiative
+from .initiatives import PLAN_FIELDS, bind_initiative, save_initiative
 from .models import UseCase
 from .outcome_contract import _process, confirm_initiative, set_discovery_path
 from .permissions import can_edit_use_case
@@ -55,6 +55,8 @@ class OutcomePreparationForm(InitiativeForm):
             "contribution",
             "impact_hypothesis",
             "evaluation_criteria",
+            *PLAN_FIELDS,
+            "measurement_change_reason",
             "outcome_owner",
             "target_group",
             "evidence_level",
