@@ -1,6 +1,6 @@
 # Fachlich kohärente technische Abnahme – #202
 
-Prüfdatum: 26.10.2026 (Europe/Berlin). Basis: aktuelles `main`,
+Prüfzeitraum: 26.–27.10.2026 (Europe/Berlin). Basis: aktuelles `main`,
 `8a1c781` (PR #206, #201). Referenzen: verbindlicher Re-Audit #196,
 Parent #197, integrierte Korrekturen #198 bis #201. Historische Auditberichte
 bleiben unverändert. Der geprüfte Änderungsstand ist der Head dieses PR;
@@ -136,12 +136,23 @@ Die Gesamtabnahme verwendet auch die bereits integrierten spezialisierten Tests:
 
 ## Ausführung und Branchbereinigung
 
-Ergebnisse der abschließenden lokalen PostgreSQL-Regression und vollständigen
-PR-CI werden nach Ausführung hier ergänzt. Die CI umfasst die gesamte PostgreSQL-Suite,
+Lokale PostgreSQL-Regression auf dem Implementierungscommit `1db4589`:
+**213 bestanden, keine übersprungen**, 269,09 Sekunden. Enthalten sind die Dateien
+zu #146, #147, #183 (einschließlich #198), #186, #188, #189, #199, #200 und #201.
+Die zusätzliche Fokusprüfung A/C/Mehrprozess bestand mit drei Fällen. Die elf
+Warnungen betreffen den bestehenden zukünftigen URL-Schemawechsel in Django 6.
+Lockfile, Ruff-Lint/Format, Django-Systemprüfung, Migrationsprüfung und Bandit
+bestanden ebenfalls. Keine Produktänderung und keine zusätzliche Migration.
+
+Die vollständige PR-CI ist über [PR #207](https://github.com/Satte882/KI-Ideenwerkstatt/pull/207/checks)
+dem jeweiligen Head zugeordnet; Ergebnis und Gesamtsuitenzahl stehen im Check und
+in der PR-Beschreibung. Sie umfasst die gesamte PostgreSQL-Suite,
 Architecture Real-DEMO E2E, Lockfile, Lint/Format, System-/Migrationsprüfungen,
 Bandit, Abhängigkeitsaudit sowie Compose-Validierungen und beide Container-Builds.
-Zusätzliche manuell auslösbare UI-/Messworkflows sind keine behaupteten menschlichen
-Beobachtungen und werden durch diesen Testauftrag nicht als solche ausgeführt.
+Die zusätzlichen pfadgebundenen Block-3/4/5-UI- und Block-9-Messworkflows werden
+nicht ausgelöst, weil ihre Auslösepfade unverändert sind. Sie werden nicht als
+Bestandteil der bestandenen Standard-CI oder als menschliche Beobachtung behauptet.
+Keine echten Modellaufrufe, Produktionsmessungen oder Durchführung von #161.
 
 Der #201-Branch `fix/201-historical-context-export` war über PR #206 squash-gemergt.
 Vor Löschung: aktuelles `main` geholt, leerer vollständiger Inhaltsvergleich und
