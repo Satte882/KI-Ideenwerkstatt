@@ -232,6 +232,21 @@ class InitiativeImpactReview(TimeStampedModel):
         verbose_name="Non-KI-Messdefinition und aktueller Messstand",
         help_text="Kennzahl, Methode, Zeitraum, Population, Stand und Nachweis benennen.",
     )
+    process_measurement_kind = models.CharField(
+        max_length=30,
+        blank=True,
+        choices=[("organizational", "Andere organisatorische Teilwirkung")],
+        verbose_name="Einordnung der zusätzlichen Prozessmessung",
+        help_text="Bei KI nur für eine andere organisatorische Messgröße auswählen. "
+        "Dieselbe KI-Metrik ausschließlich im Use Case führen.",
+    )
+    process_measurement_boundary = models.TextField(
+        blank=True,
+        verbose_name="Abgrenzung der organisatorischen Teilwirkung",
+        help_text="Gemessene Größe, organisatorische Komponente, Methode und Population "
+        "benennen und gegenüber der referenzierten KI-Metrik abgrenzen. "
+        "Menschliche Einordnung; keine automatische semantische Duplikatprüfung.",
+    )
     business_measurement = models.TextField(
         blank=True,
         verbose_name="Geschäftsergebnismetrik und aktueller Messstand",
@@ -277,18 +292,6 @@ class InitiativeImpactReview(TimeStampedModel):
             raise ValidationError(
                 {"selection": "Die Entscheidung gehört zu einem anderen Vorhaben."}
             )
-        if (
-            self.selection_id
-            and self.selection.selected_option.option_type
-            in self.selection.selected_option.fixed_ai_option_types()
-            and (
-                self.process_measurement.strip()
-                or self.process_result != self.ProcessResult.UNKNOWN
-            )
-        ):
-            raise ValidationError(
-                "KI-Prozesswirkung bitte über den bestehenden Use Case referenzieren."
-            )
         if self.use_case_id:
             if self.use_case.initiative_id != self.initiative_id:
                 raise ValidationError(
@@ -305,13 +308,47 @@ class InitiativeImpactReview(TimeStampedModel):
                     raise ValidationError(
                         "Use Case und Lösungsentscheidung haben verschiedene Herkunft."
                     )
-            if (
-                self.process_measurement.strip()
-                or self.process_result != self.ProcessResult.UNKNOWN
-            ):
-                raise ValidationError(
-                    "KI-Prozesswirkung ausschließlich aus UseCase.metric_* referenzieren."
+        blocker = self.measurement_reference_blocker()
+        if blocker:
+            raise ValidationError(blocker)
+
+    def measurement_reference_blocker(self, *, finalize=False):
+        """One explicit human boundary, shared by writes and freshness; no text inference."""
+        has_measurement = bool(
+            self.process_measurement.strip() or self.process_result != self.ProcessResult.UNKNOWN
+        )
+        ai_selection = bool(self.selection_id and self.selection.selected_option.starts_ai_use_case)
+        if not (self.use_case_id or ai_selection) or not has_measurement:
+            return ""
+        # Preserve the existing draft contract: linked UseCases/fixed AI types
+        # reject copies already on save; ambiguous historical types may save drafts.
+        strict_draft = bool(
+            self.use_case_id
+            or (
+                self.selection_id
+                and self.selection.selected_option.option_type
+                in self.selection.selected_option.fixed_ai_option_types()
+            )
+        )
+        if not self.process_measurement_kind:
+            if finalize or strict_draft:
+                return (
+                    "KI-Prozesswirkung aus UseCase.metric_* referenzieren. Eine andere "
+                    "organisatorische Teilwirkung ausdrücklich einordnen und abgrenzen."
                 )
+            return ""
+        if finalize:
+            if not self.use_case_id:
+                return (
+                    "Bitte den tatsächlich zugehörigen Use Case mit seiner KI-Metrik referenzieren."
+                )
+            if not self.process_measurement_boundary.strip():
+                return "Bitte die andere organisatorische Messgröße zur KI-Metrik abgrenzen."
+        return ""
+
+    @property
+    def measurement_review_blocker(self):
+        return self.measurement_reference_blocker(finalize=True)
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -325,6 +362,7 @@ class InitiativeImpactReview(TimeStampedModel):
 
         if (
             not self.reviewed_at
+            or self.measurement_review_blocker
             or self.outcome_revision != self.initiative.outcome_revision
             or bool(self.selection_id and self.selection.outcome_review_required)
         ):
