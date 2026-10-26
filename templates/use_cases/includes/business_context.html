@@ -4,12 +4,12 @@
 <h2>Geschäftswirkung und Messabsicht</h2>
 <p><a href="{% url 'use_cases:initiative_edit' business_context.initiative_id %}">Zum gemeinsamen Vorhaben</a></p>
 <p>{{ business_context.current.business_outcome }} · {{ business_context.current.contribution }}</p>
-<p>Geschäftsergebnis: {{ business_context.effect_status|default:"Ungeklärt" }} · Attribution: {{ business_context.attribution }} · {% if business_context.review_required %}Wirkungsprüfung offen / erneut erforderlich{% else %}Wirkungsstand geprüft{% endif %}</p>
+<p>Geschäftsergebnis: {{ business_context.effect_label|default:"Ungeklärt" }} · Attribution: {{ business_context.attribution_label }} · {% if business_context.review_required %}Wirkungsprüfung offen / erneut erforderlich{% else %}Wirkungsstand geprüft{% endif %}</p>
 <details class="architecture-disclosure"><summary>Kriterien, Messabsicht und historischen Entscheidungsbezug ansehen</summary><dl>
 <dt>Aktuelle Kriterien</dt><dd>{{ business_context.current.evaluation_criteria|default:"Offen" }}</dd>
 <dt>Messabsicht: Methode / Zeitraum / Population / Vergleich</dt><dd>{{ business_context.current.measurement_method|default:"Offen" }} · {{ business_context.current.measurement_period|default:"Offen" }} · {{ business_context.current.measurement_population|default:"Offen" }} · {{ business_context.current.measurement_reference|default:"Offen" }}</dd>
 <dt>Offene Angaben</dt><dd>{{ business_context.current.measurement_unknowns|default:"Keine benannt" }}</dd>
 <dt>Historischer Entscheidungsmaßstab</dt><dd>{% if business_context.original %}{{ business_context.original.kind }} {{ business_context.original.id }} · {{ business_context.original.at }}<br>{{ business_context.original.outcome.fields.evaluation_criteria|default:"Historischer Kriterienbeleg fehlt" }}<br>{{ business_context.original.timing_limit }}{% else %}Kein belegter Vorab-Stand{% endif %}</dd>
-<dt>Wirkung / Attribution</dt><dd>{{ business_context.effect_status|default:"Ungeklärt" }} · {{ business_context.effect_reason }}<br>Attribution: {{ business_context.attribution }} · {{ business_context.attribution_reason }}<br>{% if business_context.review_required %}Wirkungsprüfung offen / erneut erforderlich{% else %}Wirkungsstand geprüft{% endif %}</dd></dl></details>
+<dt>Wirkung / Attribution</dt><dd>{{ business_context.effect_label|default:"Ungeklärt" }} · {{ business_context.effect_reason }}<br>Attribution: {{ business_context.attribution_label }} · {{ business_context.attribution_reason }}<br>{% if business_context.review_required %}Wirkungsprüfung offen / erneut erforderlich{% else %}Wirkungsstand geprüft{% endif %}</dd></dl></details>
 <p>{{ business_context.coverage_limit }} {{ business_context.contribution_boundary }}</p>
 </div></section>{% endif %}

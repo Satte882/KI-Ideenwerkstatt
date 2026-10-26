@@ -686,3 +686,16 @@ def test_criteria_text_alone_is_not_business_measurement(owner, business_unit, e
         ).attribution
         == "unclear"
     )
+
+
+def test_saved_draft_criteria_text_is_never_presented_as_reviewed(owner, business_unit, client):
+    process = outcome_process(owner, business_unit)
+    initiative = planned(owner)
+    bind_process(owner, process, initiative=initiative)
+    selection = select(owner, process)
+    save(owner, initiative, finding(selection=selection))
+    save(owner, initiative, {"criteria_assessment": "Ungeprüfter neuer Abgleich"}, finalize=False)
+    client.force_login(owner)
+    html = client.get(initiative.get_absolute_url()).content.decode()
+    assert "Ungeprüfter / historisch nicht erfasster Abgleich" in html
+    assert "Geprüfter Abgleich:" not in html

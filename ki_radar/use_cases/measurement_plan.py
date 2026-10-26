@@ -112,6 +112,7 @@ def business_context(use_case):
         "current": {name: getattr(initiative, name) for name in OUTCOME_FIELDS},
         "original": original_measurement_anchor(use_case=use_case),
         "effect_status": initiative.effect_status,
+        "effect_label": initiative.get_effect_status_display() or "Noch ungeklärt",
         "effect_reason": initiative.effect_reason,
         "review_id": review.pk if review else None,
         "review_history_id": review.history.values_list("history_id", flat=True).first()
@@ -119,6 +120,7 @@ def business_context(use_case):
         else None,
         "review_required": review.review_required if review else True,
         "attribution": review.attribution if review else "unclear",
+        "attribution_label": review.get_attribution_display() if review else "Noch ungeklärt",
         "attribution_reason": review.attribution_reason if review else "",
         "contribution_boundary": review.contribution_boundary if review else "",
         "coverage_limit": "Ein strukturierter Auswahl-/Use-Case-Bezug; keine ROI-Addition.",

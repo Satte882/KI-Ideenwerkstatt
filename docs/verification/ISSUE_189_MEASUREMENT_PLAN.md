@@ -120,10 +120,10 @@ Umsetzung bleibt eine außerhalb dieser deterministischen Tests zu belegende Tä
 
 ## Verifikation und verbleibende Blocker
 
-`tests/test_issue_189_measurement_plan.py`: 18 zielgerichtete PostgreSQL-Fälle, darunter
+`tests/test_issue_189_measurement_plan.py`: 19 zielgerichtete PostgreSQL-Fälle, darunter
 nach Ergebniskenntnis geänderte Kriterien, frühester Anker trotz Neuauswahl, fehlender
 Vorab-Plan, Unknowns vor neuer Bindung, absolute Ziele ohne Baseline, fehlende Ist-Evidenz,
-Metadaten, Materialität, Schreibkonflikt, manipulierte Serverfelder, View-Eingabeerhalt,
+Metadaten, Materialität, Schreibkonflikt, manipulierte Serverfelder, View-Eingabeerhalt, ungeprüftem Kriterienentwurf,
 A/B/C und zwei Phasen. Der bestehende #187-Migrationstest prüft zusätzlich, dass die
 neuen Kriterien-/Planfelder auch an historischen Mess-/Auditzeilen leer bleiben.
 Bestehende gezielte #145/#146/#147/#158/#185–#188-, Delivery-, Scale- und Followup-Prüfungen
@@ -142,3 +142,14 @@ kausaler Praxisnutzen. Freitext und menschliche Einordnung garantieren keine inh
 Wahrheit. Der konservative ursprüngliche Anker verschmilzt spätere Präzisierungen nicht
 mit einer ursprünglichen Vereinbarung; ein vollständiges Interventions-/Messreihenmodell
 ist ausdrücklich nicht implementiert.
+
+
+### Desktopprüfung und bestehende Grenze
+
+1440×1000: Formular mit historischen Kriterien, zeitlicher Einordnung und separater
+Attribution; sichtbarer Tastaturfokus am Auswahlfeld; kein horizontaler Seitenüberlauf.
+Delivery zeigt aktuellen Kontext und den bei Übergabe betrachteten Stand in nativen
+Disclosures. Ein bestehendes Inline-Skript der Delivery-Seite wird durch die CSP blockiert;
+die neuen Anzeigen enthalten kein Skript und die nativen Disclosures funktionieren.
+Diese Beobachtung ist keine umfassende UI-/Accessibility-Abnahme und keine pauschale
+Bestätigung aller bestehenden Delivery-Bedienelemente. Keine CSP-Lockerung vorgenommen.
