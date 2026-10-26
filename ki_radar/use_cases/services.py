@@ -164,49 +164,16 @@ def create_use_case_from_selected_solution(*, decision, actor) -> SelectedSoluti
     stage = process.stage
     value_stream = stage.value_stream
 
-    if locked_decision.process_version != process.version:
-        raise ValidationError(
-            "Der Prozessstand wurde seit der Lösungsentscheidung geändert. "
-            "Der direkte AI-Use-Case-Handoff benötigt eine aktuelle menschliche Auswahl."
-        )
-    selected_snapshot = next(
-        (
-            item
-            for item in locked_decision.comparison_snapshot
-            if isinstance(item, dict) and item.get("id") == str(option.pk)
-        ),
-        None,
-    )
-    snapshot_fields = (
-        "name",
-        "option_type",
-        "evaluation_status",
-        "evidence_basis",
-        "description",
-        "expected_value",
-        "time_to_value",
-        "bottleneck_coverage",
-        "feasibility",
-        "data_requirements",
-        "application_impact",
-        "integration_effort",
-        "integration_impact",
-        "technology_constraints",
-        "risks",
-        "architecture_fit",
-    )
-    if (
-        selected_snapshot is None
-        or any(
-            selected_snapshot.get(field_name) != getattr(option, field_name)
-            for field_name in snapshot_fields
-        )
-        or selected_snapshot.get("contains_ai_component") != option.starts_ai_use_case
-    ):
-        raise ValidationError(
-            "Der Lösungsstand wurde seit der menschlichen Auswahl geändert. "
-            "Der direkte AI-Use-Case-Handoff benötigt eine aktuelle Auswahl."
-        )
+    # Legacy handoffs retain their original boundary; bound selections use the
+    # same material contract as new approvals and impact reviews above.
+    if not locked_decision.outcome_snapshot:
+        from ki_radar.architecture.solution_selection import selection_basis_is_stale
+
+        if selection_basis_is_stale(locked_decision):
+            raise ValidationError(
+                "Der Prozessstand oder Lösungsstand wurde seit der menschlichen Auswahl geändert. "
+                "Der direkte AI-Use-Case-Handoff benötigt eine aktuelle Auswahl."
+            )
 
     if option.recommendation != SolutionOption.Recommendation.PREFERRED:
         raise ValidationError(

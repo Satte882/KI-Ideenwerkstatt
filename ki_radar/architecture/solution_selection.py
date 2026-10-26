@@ -27,6 +27,97 @@ OPTION_TYPE_PRIORITY = {
     SolutionOption.OptionType.OTHER: 9,
 }
 
+# The existing diagnosis snapshot also captures the material process basis. Names,
+# timestamps and workflow status are not a change to the intervention itself.
+PROCESS_BASIS_FIELDS = (
+    "scope_start",
+    "scope_end",
+    "trigger",
+    "outcome",
+    "current_flow",
+    "roles",
+    "systems",
+    "data_objects",
+    "business_rules",
+    "handoffs",
+    "bottlenecks",
+    "diagnostic_observations",
+    "cause_hypotheses",
+    "confirmed_causes",
+    "constraints",
+    "exceptions",
+    "baseline_metrics",
+    "target_state_principles",
+)
+
+
+def selection_basis_is_stale(decision):
+    """One material comparison for handoff, approval and impact interpretation."""
+    from ki_radar.use_cases.initiatives import _text
+
+    process = decision.process_analysis
+    if not decision.outcome_snapshot:
+        # Preserve the historical selected-option-only handoff contract.
+        if decision.process_version != process.version:
+            return True
+        selected = process.solution_options.get(pk=decision.selected_option_id)
+        captured = next(
+            (row for row in decision.comparison_snapshot if row.get("id") == str(selected.pk)),
+            None,
+        )
+        if captured is None:
+            return True
+        current = build_comparison_snapshot([selected])[0]
+        ignored = {"id", "updated_at", "outcome_effect", "effort_assessment"}
+        return any(
+            value != captured.get(key)
+            for key, value in current.items()
+            if key not in ignored and not key.endswith("_label")
+        )
+    diagnosis = build_diagnosis_snapshot(process)
+    captured_basis = decision.diagnosis_snapshot.get("process_basis")
+    if captured_basis is None:
+        # Older snapshots lack the full process basis; never invent a backfill.
+        if decision.process_version != process.version:
+            return True
+    elif any(
+        _text(captured_basis.get(key, "")) != _text(diagnosis["process_basis"][key])
+        for key in PROCESS_BASIS_FIELDS
+    ):
+        return True
+    for key in ("diagnostic_observations", "cause_hypotheses", "confirmed_causes", "constraints"):
+        if _text(decision.diagnosis_snapshot.get(key, "")) != _text(diagnosis[key]):
+            return True
+    # Reconfirming the same finding changes audit time/version, not its evidence.
+    old_validation = decision.diagnosis_snapshot.get("validation") or {}
+    validation = diagnosis.get("validation") or {}
+    if not validation and captured_basis is not None:
+        previous_validation = process.validations.filter(
+            process_version=decision.process_version
+        ).first()
+        if previous_validation:
+            validation = {
+                key: getattr(previous_validation, key)
+                for key in ("validator_role", "evidence_url", "note")
+            }
+    if any(
+        _text(old_validation.get(key, "")) != _text(validation.get(key, ""))
+        for key in ("validator_role", "evidence_url", "note")
+    ):
+        return True
+    options = ordered_solution_options(process)
+    current = {row["id"]: row for row in build_comparison_snapshot(options)}
+    captured = {row["id"]: row for row in decision.comparison_snapshot}
+    if current.keys() != captured.keys():
+        return True
+    ignored = {"id", "name", "updated_at"}
+    return any(
+        _text(value) != _text(current[pk].get(key, ""))
+        for pk, row in captured.items()
+        for key, value in row.items()
+        if key not in ignored and not key.endswith("_label")
+    )
+
 
 def ordered_solution_options(process_analysis: ProcessAnalysis) -> list[SolutionOption]:
     return sorted(
@@ -201,6 +292,7 @@ def build_diagnosis_snapshot(process_analysis: ProcessAnalysis) -> dict:
         process_version=process_analysis.version
     ).first()
     return {
+        "process_basis": {key: getattr(process_analysis, key) for key in PROCESS_BASIS_FIELDS},
         "diagnostic_observations": process_analysis.diagnostic_observations,
         "cause_hypotheses": process_analysis.cause_hypotheses,
         "confirmed_causes": process_analysis.confirmed_causes,

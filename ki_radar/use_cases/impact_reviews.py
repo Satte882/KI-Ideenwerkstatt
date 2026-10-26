@@ -1,6 +1,6 @@
 """Current shared finding; UseCase metrics and transition services stay authoritative."""
 
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -49,6 +49,24 @@ def save_impact_review(*, initiative, actor, data, expected_revision, finalize=F
     effect_status = data.get("effect_status", initiative.effect_status)
     effect_reason = data.get("effect_reason", initiative.effect_reason)
     if finalize:
+        if review.selection_id and review.selection.outcome_review_required:
+            raise ValidationError(
+                "Die Lösungsgrundlage wurde geändert. Bitte im Optionenvergleich neu "
+                "bewerten und auswählen, danach den Wirkungsreview erneut bestätigen. "
+                "Messwerte bleiben erhalten; der Review kann als Entwurf gesichert werden."
+            )
+        if review.use_case_id and review.use_case.outcome_contract_version:
+            from .outcome_contract import _origin_blockers
+
+            try:
+                process = review.use_case.architecture_origin.process_analysis
+            except ObjectDoesNotExist:
+                process = None
+            if process is not None and _origin_blockers(review.use_case, process):
+                raise ValidationError(
+                    "Die Lösungsgrundlage der KI-Prozessmetrik benötigt eine aktuelle "
+                    "menschliche Auswahl im Optionenvergleich. Messwerte bleiben erhalten."
+                )
         if (
             review.use_case_id
             and review.business_measurement.strip()
