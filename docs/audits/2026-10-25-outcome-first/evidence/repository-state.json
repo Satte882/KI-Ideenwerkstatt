@@ -1,0 +1,39 @@
+{
+  "repository": "Satte882/KI-Ideenwerkstatt",
+  "audit_date": "2026-10-25",
+  "timezone": "Europe/Berlin",
+  "branch": "main",
+  "head": "abbfb302747510106a4eac0db807b50bc254deb2",
+  "origin_main": "abbfb302747510106a4eac0db807b50bc254deb2",
+  "remote_main_verified_with": "git ls-remote origin refs/heads/main",
+  "tracked_diff": "",
+  "status_after": "?? var/",
+  "status_before": "?? var/",
+  "python": "3.13.5",
+  "django": "5.2.17",
+  "pytest": "9.1.1",
+  "postgresql": "17.5-bookworm",
+  "full_suite": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "2",
+    "tests": "2594",
+    "time": "872.307",
+    "timestamp": "2026-10-25T20:32:49.630462+01:00",
+    "hostname": "DESKTOP-CEB2D8G"
+  },
+  "audit_probes": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "0",
+    "skipped": "0",
+    "tests": "8",
+    "time": "46.429",
+    "timestamp": "2026-10-25T20:41:08.426729+01:00",
+    "hostname": "DESKTOP-CEB2D8G"
+  },
+  "isolation": "Dedicated tmpfs PostgreSQL container; separate test databases; external socket connections blocked; no live model calls.",
+  "container_removed_after_run": true,
+  "interpretation": "Audit probes assert observed behavior including defects. Passed does not mean that the observed product behavior is correct."
+}

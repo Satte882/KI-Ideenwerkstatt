@@ -1,0 +1,62 @@
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+........................................................................ [ 33%]
+........................................................................ [ 36%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+.....................................................................s.. [ 44%]
+.......s................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+........................................................................ [ 91%]
+........................................................................ [ 94%]
+........................................................................ [ 97%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\django\db\models\fields\__init__.py:1148: 6 warnings
+tests/test_actionable_blockers.py: 2 warnings
+tests/test_business_unit_catalog.py: 4 warnings
+tests/test_status_transitions.py: 4 warnings
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\.venv\Lib\site-packages\django\db\models\fields\__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+ki_radar\delivery\forms.py:114
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\delivery\forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+ki_radar\reviews\forms.py:150
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\reviews\forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+ki_radar\reviews\forms.py:190
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\reviews\forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_issue_2_investigation_hardening.py:320: Symlink creation is not permitted on this platform.
+SKIPPED [1] tests\test_issue_2_investigation_sources.py:436: Symlink creation is not permitted on this platform.
+2592 passed, 2 skipped, 19 warnings in 872.48s (0:14:32)

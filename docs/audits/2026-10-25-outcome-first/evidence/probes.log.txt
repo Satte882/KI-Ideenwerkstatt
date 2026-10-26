@@ -1,0 +1,44 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\.venv\Scripts\python.exe
+cachedir: Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\probes-cache
+django: version: 5.2.17, settings: config.settings.test (from env)
+rootdir: C:\Users\user\Documents
+plugins: cov-6.3.0, django-4.12.0
+collecting ... collected 8 items
+
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure PASSED [ 12%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_scenario_b_actual_unknown_strategy_cannot_bind_non_ai PASSED [ 25%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_scenario_c_direct_approval_pilot_unknown_end PASSED [ 37%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_selected_risk_change_after_handoff_does_not_block_new_approval PASSED [ 50%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_changed_process_version_leaves_non_ai_effect_review_current PASSED [ 62%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_delivery_remains_eligible_after_material_outcome_change PASSED [ 75%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_multiple_processes_current_impact_review_replaces_intervention PASSED [ 87%]
+..\..\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\test_audit_probes.py::test_hybrid_ai_selection_accepts_second_editable_process_measurement PASSED [100%]
+
+============================== warnings summary ===============================
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\.venv\Lib\site-packages\django\db\models\fields\__init__.py:1148: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    return form_class(**defaults)
+
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\reviews\forms.py:150: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    scale_evidence_url = forms.URLField(
+
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\reviews\forms.py:190: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    ml_score_evidence_url = forms.URLField(
+
+Codex/2026-10-25/lokal-c-users-user-documents-github/work/outcome-audit/test_audit_probes.py::test_scenario_a_existing_fixture_to_pilot_and_unknown_closure
+  C:\Users\user\Documents\GitHub\KI-Ideenwerkstatt\ki_radar\delivery\forms.py:114: RemovedInDjango60Warning: The default scheme will be changed from 'http' to 'https' in Django 6.0. Pass the forms.URLField.assume_scheme argument to silence this warning, or set the FORMS_URLFIELD_ASSUME_HTTPS transitional setting to True to opt into using 'https' as the new default scheme.
+    architecture_artifacts_url = forms.URLField(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: C:\Users\user\Documents\Codex\2026-10-25\lokal-c-users-user-documents-github\work\outcome-audit\probes-results.xml -
+======================= 8 passed, 11 warnings in 46.68s =======================
