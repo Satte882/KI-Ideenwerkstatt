@@ -1,0 +1,9 @@
+{% load business_context_tags %}
+{% context_review_label business_snapshot as review_label %}
+<div class="business-context-statement">
+<p class="business-context-status{% if business_snapshot.review_required %} business-context-status--review{% endif %}"><strong>{{ status_title|default:"Prüfstatus" }}:</strong> {{ review_label }}</p>
+<dl class="business-context-facts">
+<dt>Gespeicherte Wirkungsaussage</dt><dd>{{ business_snapshot.effect_label|default:"Historisch nicht erfasst" }} · {{ business_snapshot.effect_reason }}</dd>
+<dt>Attribution</dt><dd>{{ business_snapshot.attribution_label|default:"Historisch nicht erfasst" }} · {{ business_snapshot.attribution_reason }}</dd>
+</dl>
+</div>
