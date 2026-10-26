@@ -12,6 +12,8 @@ REVIEW_FIELDS = (
     "use_case",
     "process_result",
     "process_measurement",
+    "process_measurement_kind",
+    "process_measurement_boundary",
     "business_measurement",
     "business_evidence",
     "measurement_difference",
@@ -49,6 +51,8 @@ def save_impact_review(*, initiative, actor, data, expected_revision, finalize=F
     effect_status = data.get("effect_status", initiative.effect_status)
     effect_reason = data.get("effect_reason", initiative.effect_reason)
     if finalize:
+        if review.measurement_review_blocker:
+            raise ValidationError(review.measurement_review_blocker)
         if review.selection_id and review.selection.outcome_review_required:
             raise ValidationError(
                 "Die Lösungsgrundlage wurde geändert. Bitte im Optionenvergleich neu "
@@ -91,8 +95,7 @@ def save_impact_review(*, initiative, actor, data, expected_revision, finalize=F
                 "Bestätigtes/widerlegtes Geschäftsergebnis benötigt Messstand und Nachweis."
             )
         if (
-            not review.use_case_id
-            and review.process_result != review.ProcessResult.UNKNOWN
+            review.process_result != review.ProcessResult.UNKNOWN
             and not review.process_measurement.strip()
         ):
             raise ValidationError(

@@ -12,10 +12,10 @@
   <div class="card-body">{{ form.non_field_errors }}
     {% for field in form %}{% if field.is_hidden %}{{ field }}{{ field.errors }}{% else %}
     <div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
-      {% if field.help_text %}<p class="form-text">{{ field.help_text }}</p>{% endif %}
+      {% if field.help_text %}<p class="form-text" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
       {% if field.errors %}<div class="text-danger" role="alert">{{ field.errors }}</div>{% endif %}
     </div>{% endif %}{% endfor %}
-    <p>Bei KI die vorhandene Prozessmetrik referenzieren und Non-KI-Prozessfelder offen lassen. Geschäftserfolg und Attribution bleiben eigenständige Aussagen. „Noch ungeklärt“ mit Grund ist ein zulässiger Review-Abschluss.</p>
+    <p>Bei KI die vorhandene Prozessmetrik über den zugehörigen Use Case referenzieren. Zusätzliche Prozessfelder nur für eine ausdrücklich eingeordnete und abgegrenzte andere organisatorische Teilwirkung verwenden. Geschäftserfolg und Attribution bleiben eigenständige Aussagen. „Noch ungeklärt“ mit Grund ist ein zulässiger Review-Abschluss.</p>
   </div>
   <div class="card-footer d-flex flex-wrap gap-2"><button class="btn btn-primary" name="action" value="review">Wirkungsstand prüfen</button><button class="btn btn-outline-secondary" name="action" value="draft">Als Entwurf sichern</button><a class="btn btn-outline-secondary" href="{{ initiative.get_absolute_url }}">Zum Vorhaben</a></div>
 </form></div>
