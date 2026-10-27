@@ -206,6 +206,8 @@ def test_preparation_is_idempotent_and_does_not_overwrite_credentials(solo, clie
     master, _, file = solo
     count = get_user_model().objects.count()
     original = master.password
+    # Windows PowerShell writes UTF-8 files with a BOM; it is not part of the password.
+    file.write_text(solo[1], encoding="utf-8-sig")
     call_command("prepare_solo_test", password_file=str(file))
     assert get_user_model().objects.count() == count
     master.refresh_from_db()

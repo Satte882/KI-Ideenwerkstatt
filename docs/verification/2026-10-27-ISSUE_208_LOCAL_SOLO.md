@@ -125,3 +125,16 @@ hochgeladenen synthetischen Geräteausleihe-Quelle erreichte OpenRouter und
 protokollierte Aufrufkosten 0,0362415 USD. Dies ist ausschließlich ein technischer
 Verbindungsnachweis; keine fachliche Abnahme. Die drei historischen Offline-Analysen
 blieben dabei nach Hashvergleich unverändert.
+
+Auch der strategische Einstieg B wurde mit derselben neuen synthetischen Quelle über
+den normalen HTTP-Pfad ausgeführt: echte Producer-, Verifier-, Repair- und erneute
+Verifier-Aufrufe, Analyse technisch erfolgreich, 39.712 Tokens und protokollierte Kosten
+0,078192 USD. Die historischen Offline-Analysen blieben erneut unverändert. Der
+konfigurierte Standardtransport mit `deepseek/deepseek-v4.1-flash` beantwortete zusätzlich
+einen realen kurzen Verbindungstest. Kein Scope und keine fachliche Freigabe wurden
+bei diesen technischen Verbindungstests bestätigt.
+
+Die Einstiege A/B/C wurden im Browser geöffnet; die Solo-Seite wurde bei 1440×1000
+geprüft. Ein zweiter Start verwendete denselben vorhandenen Worker-Supervisor weiter.
+Die Vorbereitung akzeptiert auch UTF-8-Passwortdateien mit Windows-BOM; zufällige
+Passwörter werden über eine mit Windows PowerShell kompatible Kryptografie-API erzeugt.

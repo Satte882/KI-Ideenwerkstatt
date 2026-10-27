@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         access.require_isolation()
-        password = Path(options["password_file"]).read_text(encoding="utf-8").strip()
+        password = Path(options["password_file"]).read_text(encoding="utf-8-sig").strip()
         if len(password) < 16:
             raise CommandError("Master password must contain at least 16 characters.")
         if options["create_database"]:

@@ -8,7 +8,8 @@ if ($Prepare) {
     if (-not (Test-Path -LiteralPath $soloPassword)) {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $soloPassword) | Out-Null
         $soloBytes = [byte[]]::new(24)
-        [System.Security.Cryptography.RandomNumberGenerator]::Fill($soloBytes)
+        $soloRandom = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $soloRandom.GetBytes($soloBytes) } finally { $soloRandom.Dispose() }
         [Convert]::ToBase64String($soloBytes) | Set-Content -LiteralPath $soloPassword -Encoding utf8
     }
     uv run python manage.py prepare_solo_test --create-database --password-file $soloPassword
