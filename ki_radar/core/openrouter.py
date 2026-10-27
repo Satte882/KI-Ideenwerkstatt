@@ -366,10 +366,6 @@ def request_openrouter(
     reasoning_effort: str | None = None,
     model_override: str | None = None,
 ) -> OpenRouterResult:
-    if getattr(settings, "SOLO_TEST_MODE", False):
-        from ki_radar.solo.offline import response
-
-        return response(messages=messages, response_format=response_format)
     api_key = _setting("OPENROUTER_API_KEY")
     if not api_key:
         raise OpenRouterUnavailable(

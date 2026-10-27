@@ -1,155 +1,127 @@
-# Lokaler Solo-Praxistest – #208
+# Issue #208 / PR #209: lokaler Praxistest mit echter KI-Anbindung
 
-Basis: `main` / `b91260d`, nach #202. Dies ist eine technische lokale
-Erprobungsumgebung für eine Person. #161 bleibt unverändert und zurückgestellt.
-Getrennte Konten bedeuten hier keine unabhängigen menschlichen Testpersonen.
-Keine Nutzerzeiten, realen Modellqualitäten, Wirkungen oder Abnahmen werden behauptet.
+## Zweck und Grenzen
 
-## Start und Zugang
+Der lokale Einstieg erleichtert einem einzelnen Tester den Wechsel zwischen getrennten
+Testidentitäten. Die Anwendung verwendet die produktiven Fachservices, Prompts, Schemas,
+Modelltransporte und Validierungen. Es gibt keinen eigenen Solo-Discovery-Workflow,
+keine festen KI-Antworten und keinen positiven Offline-Verifier.
 
-Im Repository `Satte882/KI-Ideenwerkstatt` unter PowerShell:
+Echte Modellaufrufe mit synthetischen Daten sind für diesen Auftrag ausdrücklich erlaubt.
+Quellen und Kontext werden an die konfigurierte Modellanbindung übermittelt; dabei können
+Kosten entstehen. Keine Unternehmensdaten oder personenbezogenen Echtdaten verwenden.
+Die lokale Datenhaltung verhindert diese ausdrücklich gewollten Modellaufrufe nicht.
+
+Ein Rollenwechsel ersetzt keine unabhängige menschliche Beurteilung. Die vorhandenen
+Vier-Augen-, Berechtigungs-, Evidenz- und Freigaberegeln bleiben unverändert. #161 bleibt
+unverändert und zurückgestellt. Technische Tests sind keine fachlichen Abnahmeergebnisse.
+
+## Start und Datenhaltung
+
+Voraussetzungen: bestehende Python-/uv-Umgebung, lokale PostgreSQL-Datenbank auf Port 5433
+und die normale Modellkonfiguration in `.env`. Die Solo-Settings überschreiben weder
+API-Schlüssel noch Modellnamen oder API-Endpunkt.
 
 ```powershell
 .\scripts\start-solo.ps1 -Prepare
 ```
 
-PostgreSQL muss lokal erreichbar sein (standardmäßig Port 5433, beispielsweise der
-vorhandene lokale Compose-Datenbankcontainer). Das Kommando legt ausschließlich
-die Datenbank `ki_radar_solo` an, wendet die vorhandenen Migrationen an und richtet
-die Testkonten ein. Es löscht keine Daten und überschreibt bestehende Passwörter
-oder Rollen nicht. Erneutes Vorbereiten erhält deine Versuche. Ein bestehender
-Testbenutzer mit unerwarteten Rechten führt zum Abbruch statt zur stillen Korrektur.
+Die Vorbereitung erstellt bei Bedarf ausschließlich `ki_radar_solo`, migriert diese
+Datenbank und legt Testkonten idempotent an. Bestehende Daten und Passwörter werden nicht
+ersetzt. Anschließend reicht `.\scripts\start-solo.ps1`.
 
-Danach genügt `.\scripts\start-solo.ps1`. Stoppen mit Strg+C. Einstieg:
-`http://127.0.0.1:8000/solo/`. Master: `solo_master`; das zufällige Passwort liegt
-unter `secrets/solo-master-password.txt`, außerhalb von Git. Nicht veröffentlichen.
-Die bereits vorhandene normale Datenbank `ki_radar` bleibt unverändert.
+Der Starter startet den regulären `run_investigation_worker` im Hintergrund und den
+Webserver auf `127.0.0.1:8000`. Der Worker verwendet dieselben Solo-Settings und dieselbe
+isolierte Datenbank wie der Webserver. Seine Protokolle und PID-Datei liegen unter
+`var/solo/`; der Webserver endet mit Strg+C. Der Hintergrundworker bleibt für ausstehende
+Untersuchungen aktiv. Vor einem manuellen Beenden den Prozess anhand der PID-Datei und
+seiner Kommandozeile prüfen; keine fremden Worker beenden.
 
-`SOLO_DATABASE_PORT` und optional `SOLO_DATABASE_NAME` konfigurieren die eigene
-lokale Datenbank; der Name muss mit `ki_radar_solo` beginnen. Der explizite
-Settings-Einstieg ist `config.settings.solo`. Ein bloßes Umgebungsflag aktiviert
-den Rollenwechsel in normalen Entwicklungs-/Produktionssettings nicht.
+Einstieg: `http://127.0.0.1:8000/solo/`. Benutzer: `solo_master`. Das zufällige lokale
+Passwort liegt in `secrets/solo-master-password.txt`, außerhalb von Git.
 
-## Rollenwechsel
+Nur der explizite Settings-Einstieg `config.settings.solo`, DEBUG, lokale Hosts und eine
+lokale PostgreSQL-Datenbank mit Präfix `ki_radar_solo` erlauben den Rollenwechsel.
+`SOLO_DATABASE_NAME` und `SOLO_DATABASE_PORT` erlauben weitere isolierte lokale Datenbanken;
+eine normale `DATABASE_URL` kann diese Datenbankauswahl nicht überschreiben. Session- und
+CSRF-Cookies, Quellen und Anonymisierungsledger sind vom normalen lokalen Betrieb getrennt.
+Der Server akzeptiert nur lokale Zugriffe. In normalen Settings existieren die Solo-Routen
+nicht. Ein bloßes Flag aktiviert sie nicht.
 
-Auf jeder lokalen Testseite stehen Modus und tatsächlicher Benutzer sichtbar.
-Über **Testrolle wechseln / Testfälle** zur Auswahl wechseln und bestätigen:
+## Identitäten
 
-| Identität | Vorhandene Fachgruppe |
-| --- | --- |
-| `solo_owner` | Business Owner |
-| `solo_coordination` | KI-Koordinator, etwa für strukturierte Bewertung |
-| `solo_review` | Zweiter KI-Koordinator für unabhängige Freigabe nach den bestehenden Regeln |
-| `solo_technical` | Technischer Administrator ohne Superuser- oder Staff-Flag |
-| `solo_reader` | Leser |
+| Auswahl | Tatsächlicher Benutzer | Zweck |
+| --- | --- | --- |
+| Master | `solo_master` | Testverwaltung und Rollenwechsel, keine Fachaktionen |
+| Business Owner | `solo_owner` | Eigene Szenarien erfassen und fachlich bearbeiten |
+| KI-Koordination | `solo_coordination` | Strukturierte Bewertung gemäß normalen Rechten |
+| Zweite KI-Koordination | `solo_review` | Getrennte Benutzeridentität für technische Freigabeschritte |
+| Technischer Administrator | `solo_technical` | Bestehende technische Fachrolle, kein Superuser |
+| Leser | `solo_reader` | Leseberechtigte Sicht und Prüfung abgewiesener Änderungen |
 
-Der Master dient nur der Testverwaltung. Schreibende Fachaktionen sind für ihn
-gesperrt. Ein Wechsel führt einen echten Django-Login in die gewählte Identität
-aus, verändert keine Gruppen und erhöht deren Fachrechte nicht. Die Fachservices
-sehen und auditieren diese Identität. Der bewertende Benutzer kann weiterhin nicht
-seine eigene positive Entscheidung freigeben. Der technische Administrator behält
-exakt die bestehenden Fachregeln; es gibt keinen zusätzlichen Test-Override.
+Der signierte Master-Nachweis läuft nach vier Stunden ab und wird bei Logout,
+Passwortänderung, deaktivierten Konten oder veränderten Zielrechten ungültig.
+Wechsel sind CSRF-geschützte POSTs und auf die Testkonten begrenzt. Pro Wechsel werden
+Master, vorheriger und wirksamer Benutzer protokolliert. Fachaktionen werden unter der
+tatsächlichen Zielidentität gespeichert. Nur die beiden normalen Intake-Entwurfsschlüssel
+werden pro Identität beim Wechsel erhalten; Authentifizierungsdaten werden nicht kopiert.
 
-Die Testkonten haben keine direkt nutzbaren Passwörter. Eine auf die Masteranmeldung
-zurückführbare, signierte Wechselberechtigung bleibt höchstens vier Stunden gültig.
-Abmeldung, Master-Passwortänderung und veränderte Testrechte entwerten sie.
-Wechsel werden mit Master-, vorheriger und effektiver Benutzer-ID protokolliert.
-Nach Ablauf wieder als Master anmelden.
+## Praktischer Durchlauf mit eigenen Szenarien
 
-Alle Tabs desselben Browsers verwenden dieselbe aktuelle Identität. Nach einem
-Wechsel andere Tabs neu laden; alte Formulare können wegen rotierendem CSRF-Token
-abgelehnt werden. Für den Solo-Test möglichst einen Tab verwenden.
+1. Als Master anmelden, auf der Solo-Seite **Business Owner** wählen. Einen eigenen
+   synthetischen Kontext und passende `.md`-, `.txt`- oder `.csv`-Quellen vorbereiten.
+   Unbekannte Baselines, Quoten und Zeitwerte ausdrücklich als unbekannt kennzeichnen.
+2. **A – Eigenes Geschäftsproblem untersuchen:** normalen Discovery-Einstieg öffnen,
+   Testorganisation auswählen, Problem und Kontext eingeben, eigene Quellen hochladen.
+   Die echte Modellanalyse erzeugt Wertstrom, Phasen und Fokusvorschläge; der reguläre
+   Review kann Rückfragen, Fehler oder eine Bestätigungsmöglichkeit ergeben. Diese
+   Ergebnisse selbst auf Quellenbezug und fachliche Stimmigkeit prüfen.
+3. **B – Eigenes strategisches Ziel untersuchen:** strategischen Einstieg öffnen,
+   Ziel und vorläufige Untersuchungsgrenze formulieren. Scope, Wertstromergebnis,
+   Geschäftsergebnis, Prozessbeitrag und Wirkannahme getrennt prüfen. Eine Tätigkeit
+   ist kein überprüfbares Ergebnis. Hypothesen sind keine nachgewiesenen Verbesserungen.
+   Den Scope erst nach eigener Prüfung über die normalen Schritte bestätigen.
+4. **C – Eigenen direkten Use Case erfassen:** normalen Use-Case-Einstieg verwenden.
+   Kontext, Nutzenhypothese und benötigte Nachweise selbst eintragen. Für KI-Funktionen
+   die normalen angebotenen Aktionen verwenden. Keine Ergebnisse oder Freigaben werden
+   durch den Solo-Einstieg vorgegeben.
+5. In allen drei Wegen die folgenden regulären Schritte einschließlich Untersuchung,
+   Lösungsalternativen, Bewertung und weiterer Ergebnisse durchlaufen, soweit die
+   Anwendung sie für den aktuellen Stand zulässt. Der normale Hintergrundworker führt
+   angeforderte Untersuchungen bis zur nächsten fachlichen Grenze aus. Offene Nachweise,
+   Quellen- oder Modellfehler bleiben sichtbar und blockieren gemäß den vorhandenen Regeln.
+6. Für eine andere Fachsicht über das Banner zur Solo-Seite zurückgehen und die passende
+   Identität wählen. Ein Wechsel ersetzt keine erforderliche Bestätigung. Getrennte
+   Benutzerkonten machen aus einem Tester keine zwei unabhängigen Menschen.
 
-Die zwei vorhandenen Sitzungsfelder des direkten Intakes werden beim Wechsel
-getrennt je Benutzer erhalten und nur beim Zurückwechseln in diese Identität
-wiederhergestellt. So geht ein begonnener C-Entwurf beim normalen Loginwechsel
-nicht verloren und erscheint nicht bei einer anderen Rolle. Authentifizierung,
-CSRF und sonstige Sitzungsdaten werden nicht rollenübergreifend übernommen.
-Dies ist keine neue serverübergreifende Entwurfsablage und kein V2-/Folgetag-
-Nachweis für #161; bei Abmeldung oder abgelaufener Masterberechtigung endet die Sitzung.
+Befunde getrennt von Anwendungsentscheidungen protokollieren: Kennung A1/B1/C1, Rolle,
+Schritt oder URL, eigener Eingabekontext, beobachtetes Ergebnis, erwartetes Ergebnis und
+gegebenenfalls Screenshot. Keine Qualität oder Verbesserung als erreicht markieren,
+bevor sie tatsächlich geprüft beziehungsweise gemessen wurde.
 
-## Drei Fälle selbst durchspielen
+## Vorhandene Offline-Daten
 
-1. **A – problemgetriebene Kundenbetreuung:** Business Owner wählen, auf der Solo-Seite
-   eine neue A-Discovery starten. Das unveränderliche synthetische Quellenpaket ist
-   bereits zugeordnet. **Analyse erneut starten**, Testentwurf lesen, anschließend
-   selbst Scope/Fokus übernehmen. Die erzeugte Prozessanalyse manuell bearbeiten,
-   organisatorische, regelbasierte und KI-Alternativen gegeneinander abwägen.
-   Vorhaben, Geschäftsergebnis, Beitrag, Wirkannahme und Messabsicht selbst vorbereiten;
-   fehlende Messwerte offen lassen. Eine Ursachenannahme ausdrücklich als Annahme
-   einordnen. Eine begründete KI-Auswahl führt in den normalen Use-Case-Pfad.
-2. **B – strategisches Servicewachstum:** Neue B-Discovery starten. Ist-Ablauf,
-   Einzelursache, Baseline und globale Screeningwerte bleiben offen. Den vorbereiteten
-   menschlichen Untersuchungsrahmen selbst prüfen. Im normalen Prozess-/Outcome-Pfad
-   strategischen Ursprung und begrenzten Beitrag bestätigen. Alternativen manuell
-   vergleichen; eine begründete organisatorische Auswahl erzeugt keinen künstlichen
-   KI-Use-Case. Geschäftswirkung bleibt bis zur tatsächlichen Messung ungeklärt.
-3. **C – direkte interne Wissenssuche:** Den direkten Use-Case-Einstieg auf der Solo-Seite
-   verwenden. Synthetischen Anwendungsfall und eigene Outcome-/Messabsicht erfassen,
-   ohne eine Idee oder Discovery künstlich anzulegen. Als KI-Koordination die Prüfung
-   starten und die strukturierte Bewertung vornehmen; für die zulässige Freigabe zur
-   getrennten Prüferidentität wechseln. Fehlende Governance-/Outcome-Voraussetzungen
-   werden weiterhin blockiert. Kein Pilot, Go-live oder Geschäftserfolg wird vorgegeben.
+Historische Analysen mit Modellkennung `solo/offline*` bleiben unverändert gespeichert,
+einschließlich Quellen und bisheriger Prüfpayloads. Die Review-Seite kennzeichnet sie als
+feste historische Testentwürfe. Sie gelten nicht mehr als unterstützte Discovery-Analysen
+und können nicht als aktuelle KI-Qualitätsevidenz materialisiert werden. Für den echten
+Test eine neue Untersuchung anlegen oder über den normalen Pfad erneut analysieren.
 
-Arbeitsobjekte über den normalen Arbeitsvorrat, die Analyseübersicht oder das
-Use-Case-Register wieder öffnen. Es werden keine fertigen Lösungsentscheidungen,
-Freigaben, Pilotmesswerte oder Ergebnisse vorbereitet.
+## Technische Prüfungen
 
-## Offline-Grenze und Sicherheit
+`tests/test_issue_208_solo.py` prüft Isolation, getrennte Rollen, unabhängige Freigaben,
+CSRF, Widerruf, Entwurfserhalt, idempotente Vorbereitung und die Abwesenheit der Routen
+im normalen Betrieb. Zusätzlich prüft es identischen konfigurierten Modelltransport mit
+und ohne Solo-Flag, eigene A/B-Eingaben über die produktiven Views und den unveränderten
+Erhalt historischer Offline-Payloads bei gesperrter Bestätigung.
 
-Die Transportgrenze fängt im expliziten Solo-Modus sämtliche OpenRouter-Aufrufe
-ab. Ausschließlich die unveränderten Pakete A/B-v1 einschließlich Quelleninhalt,
-Eingangstext, Kontext und strategischem Scope erhalten deterministische Discovery-
-Testentwürfe und einen passenden technischen Test-Verifier. Dieser ist kein
-unabhängiger Modell- oder Fachprüfer. Der gespeicherte Modellname lautet
-`solo/offline-fixture-v1`; die normale Transportkategorie bleibt OpenRouter.
-Die bestehende Schema-, Quellen-, Methodik- und Übernahmevalidierung läuft weiter.
+Unit-Tests ersetzen ausschließlich die externe HTTP-Verbindung beziehungsweise beobachten
+den normalen Analyse-Aufruf. Diese Testdoubles sind kein Laufzeitprovider und liefern
+keine fachlichen Qualitätsergebnisse für den Praxistest. Die gesamte CI bleibt aktiv.
 
-Fremde Eingaben, Zusatzquellen, Korrekturen oder fremde Verifier-Entwürfe werden
-abgelehnt. Es gibt keinen Rückfall auf einen Live-Provider. Frei formulierte
-Discovery-Experimente außerhalb dieser Pakete sind somit ein konkreter Offline-
-Blocker. Auch vertiefende Investigation, Optionsgenerierung, AP2-Generatoren und
-sonstige KI-Tasks sind offline nicht verfügbar. Sie dürfen nicht als erfolgreich
-getestet gelten. Die normale manuelle Prozess-/Alternativen-/Outcome-/Entscheidungs-
-strecke bleibt ausführbar. Keine zusätzlichen Worker mit echten Providern starten.
-
-Nur Loopback-Bindung, keine Freigabe ins LAN, kein Reverse Proxy und kein Deployment
-dieser Settings. Wechsel und Einstieg werden zusätzlich bei nichtlokaler Adresse,
-fremdem Host, falschem Settings-Modul, fehlendem Debug-Modus, fremder Datenbank oder
-fehlender Masterberechtigung verweigert. Produktionsrechte und fachliche Freigaben
-werden nicht geändert. Der reguläre Organisationskatalog bleibt ebenfalls unverändert:
-die eindeutig als synthetisch benannte Organisation benutzt ausschließlich in der
-eigenen Solo-Datenbank die normale aktive Katalogklasse, die Discovery benötigt.
-
-## Technische Verifikation
-
-23 neue PostgreSQL-Fälle: tatsächliche Identitäten und Gruppen, Master-Schreibsperre,
-Rollenrechte und unabhängige Freigabe, ungültige/abgelaufene Berechtigung, Passwort-
-und Rollenänderung, Abmeldung, POST/CSRF, nichtlokale/ anonyme Requests,
-idempotente Vorbereitung, Isolation und fehlende Routen im normalen Betrieb.
-Ein über die echte Intake-Route gespeicherter Entwurf überlebt den Rollenwechsel
-und ist ausschließlich bei seiner ursprünglichen Identität wieder verfügbar.
-A/B laufen über reale Discovery-, Analyse-, Materialisierungs- und Auswahlrouten;
-eine Netzwerksperre im Test beweist, dass kein echter Provider aufgerufen wird.
-Danach aktueller A-KI-Handoff und B-Non-KI-Auswahl ohne erfundene Baseline/Ursache.
-Veränderte Pakete, Zusatzquellen, fremde Scope- und Verifier-Eingaben sowie ein
-Modusflag ohne isolierte Settings werden ebenfalls ausdrücklich abgelehnt.
-Der C-Fall prüft die neue Outcome-Kohorte: ohne Zuordnung keine Freigabe,
-danach weiterhin keine Selbstfreigabe durch den Bewerter, schließlich positive
-Entscheidung unter der getrennten Prüferidentität. Abschließend erneut bestanden.
-
-Gemeinsam mit den Regressionen zu #166, #183/#198 und #189/#202:
-**78 bestanden** auf PostgreSQL, keine übersprungen. Ergebnis der vollständigen
-CI ist im PR dem geprüften Commit zugeordnet.
-Lockfile, Lint/Format, Django-System-/Migrationsprüfung und Bandit sowie die
-vollständige PostgreSQL-CI werden im PR dem jeweils geprüften Commit zugeordnet.
-Browserkontrolle prüft echte lokale Anmeldung, Rollenwechsel, synthetische Discovery
-und direkten Einstieg. Dies sind technische Agentenkontrollen, keine Beobachtungen
-eines unabhängigen Fachanwenders und keine Änderung des Status von #161.
-
-Die lokale Instanz wurde mit eigener vollständig migrierter Datenbank gestartet;
-Systemprüfung und `/health/live` erfolgreich. Die Browserkontrolle zeigt Master-
-Login, echte Ummeldung, A/B-Offline-Auswertung mit sichtbaren Unknowns und den
-direkten C-Intake. Das Browser-Prüffenster wurde auf 1440×1000 eingestellt; kein
-horizontaler Überlauf. Vorbereitet sind Konten und Quellenpakete, keine fachlichen
-Entscheidungen oder Freigaben in der tatsächlichen Solo-Datenbank.
+Ein realer Aufruf am 27.10.2026 über den regulären HTTP-Discovery-Einstieg mit einer neu
+hochgeladenen synthetischen Geräteausleihe-Quelle erreichte OpenRouter und
+`google/gemini-3.6-flash`: Transport/Analyse erfolgreich, ca. 62 Sekunden, 14.630 Tokens,
+protokollierte Aufrufkosten 0,0362415 USD. Dies ist ausschließlich ein technischer
+Verbindungsnachweis; keine fachliche Abnahme. Die drei historischen Offline-Analysen
+blieben dabei nach Hashvergleich unverändert.

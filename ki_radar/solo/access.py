@@ -23,7 +23,7 @@ DRAFTS = "solo_identity_drafts"
 ROLES = {
     "owner": ("solo_owner", "Business Owner", GROUP_BUSINESS_OWNER),
     "coordination": ("solo_coordination", "KI-Koordination", GROUP_COORDINATOR),
-    "review": ("solo_review", "Unabhängige Prüfung", GROUP_COORDINATOR),
+    "review": ("solo_review", "Zweite KI-Koordination", GROUP_COORDINATOR),
     "technical": ("solo_technical", "Technischer Administrator", GROUP_TECH_ADMIN),
     "reader": ("solo_reader", "Leser", GROUP_READER),
 }

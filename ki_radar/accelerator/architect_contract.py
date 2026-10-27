@@ -28,6 +28,8 @@ def discovery_versions(catalog_version):
 
 
 def supported_discovery_analysis(analysis):
+    if str(getattr(analysis, "model_name", "")).startswith("solo/offline"):
+        return False
     try:
         versions = discovery_versions(analysis.catalog_version)
     except ValueError:

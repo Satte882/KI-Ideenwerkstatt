@@ -1,6 +1,7 @@
 """Technical local solo rehearsal only; never independent human acceptance."""
 
 import copy
+import io
 import json
 import secrets
 from unittest.mock import Mock
@@ -11,21 +12,19 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core import signing
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import Client, override_settings
 from django.urls import include, path, reverse
-from test_issue_146_outcome_contract import bind_process, direct
-from test_solution_selection_ux import make_option
+from test_issue_98_autonomous_business_discovery import _approved_analysis, _session_and_snapshot
+from test_issue_146_outcome_contract import direct
 
 from config.urls import urlpatterns as normal_urls
 from ki_radar.accelerator.models import CaptureAnalysis, CaptureSession
 from ki_radar.architecture.models import ProcessAnalysis
-from ki_radar.core.openrouter import OpenRouterUnavailable, request_openrouter
+from ki_radar.core.openrouter import request_openrouter
 from ki_radar.solo import access
-from ki_radar.solo.offline import draft
-from ki_radar.solo.scenarios import PACKETS, SCOPE, source_text
 from ki_radar.use_cases.initiatives import bind_initiative, save_initiative
-from ki_radar.use_cases.models import UseCase
 from ki_radar.use_cases.outcome_contract import confirm_initiative
 
 pytestmark = pytest.mark.django_db
@@ -214,124 +213,6 @@ def test_preparation_is_idempotent_and_does_not_overwrite_credentials(solo, clie
     assert not ProcessAnalysis.objects.exists()
 
 
-@pytest.mark.parametrize("case", ["A", "B"])
-def test_discovery_real_routes_use_offline_packets_and_preserve_human_decisions(
-    solo, client, monkeypatch, case
-):
-    network = Mock(side_effect=AssertionError("No network allowed"))
-    monkeypatch.setattr("ki_radar.core.openrouter.urllib.request.urlopen", network)
-    switch(client, "owner")
-    response = client.post(f"/solo/discovery/{case}/")
-    assert response.status_code == 302
-    session = CaptureSession.objects.get()
-    assert not ProcessAnalysis.objects.exists()
-    assert client.post(response.url, {"action": "retry"}).status_code == 302
-    analysis = session.analyses.latest("created_at")
-    assert analysis.status == CaptureAnalysis.Status.SUCCESS, analysis.error_message
-    assert "solo/offline" in analysis.model_name
-    assert not ProcessAnalysis.objects.exists()
-    session.refresh_from_db()
-    result = client.post(
-        response.url,
-        {
-            "action": "confirm",
-            "selected_stage_key": "clarify",
-            "revision": session.revision,
-        },
-    )
-    assert result.status_code == 302
-    process = ProcessAnalysis.objects.get()
-    assert not process.solution_selection_decisions.exists() and not process.initiative_id
-    assert process.confirmed_causes == "" and process.baseline_metrics == ""
-    if case == "B":
-        assert process.diagnostic_observations == process.bottlenecks == ""
-    assert (
-        client.get(reverse("architecture:process_analysis_update", args=[process.pk])).status_code
-        == 200
-    )
-    network.assert_not_called()
-    with pytest.raises(OpenRouterUnavailable, match="nicht verfügbar"):
-        request_openrouter(messages=[], max_tokens=10, timeout_seconds=1)
-    owner = get_user_model().objects.get(username="solo_owner")
-    initiative = save_initiative(
-        actor=owner,
-        data={
-            "title": f"Synthetische SOLO-{case}-Kundenbetreuung",
-            "business_outcome": "Verlässliche Kundenbetreuung bei mehr Anfragen",
-            "contribution": "Anfragenklärung bis zur verantworteten Antwortvorbereitung",
-            "impact_hypothesis": "Weniger Klärarbeit könnte Kapazität bei verlässlicher "
-            "Betreuung schaffen",
-            "outcome_owner": "Serviceleitung",
-            "evaluation_criteria": "Anfragevolumen und Antwortqualität getrennt "
-            "von Klärzeit prüfen",
-            "measurement_unknowns": "Messdesign, Baseline und Zielwerte vor Versuch "
-            "mit Owner klären",
-        },
-    )
-    initiative = confirm_initiative(
-        actor=owner,
-        initiative=initiative,
-        rationale="Begrenzte synthetische Hypothese prüfen",
-        expected_revision=initiative.revision,
-    )
-    bind_process(
-        owner,
-        process,
-        initiative=initiative,
-        path="strategic" if case == "B" else "problem",
-        path_context={
-            "origin_basis": f"Synthetischer SOLO-{case}-Untersuchungsauftrag",
-            "strategic_potential": "Verlässliche Betreuung bei mehr Anfragen",
-            "validation_step": "Anfragevolumen und Antwortqualität getrennt prüfen",
-        },
-    )
-    for kind, label, description in [
-        ("organizational", "Verbindliche Quelle", "Zuständigkeit und Vertretung klären"),
-        ("assistant", "Assistierte Zuordnung", "Freie Formulierungen aufbereiten; Mensch prüft"),
-    ]:
-        option = make_option(process, owner, name=label, option_type=kind, assessed=True)
-        option.description = description
-        option.expected_value = "Weniger Klärarbeit; Geschäftswirkung noch unbekannt"
-        option.bottleneck_coverage = "Zuordnung klären; im strategischen Fall kein Ursachenbeleg"
-        option.data_requirements = "Synthetische Anfragen und freigegebene Zuständigkeitsregeln"
-        option.application_impact = "Servicearbeitsplatz"
-        option.integration_impact = "Quellenanzeige, Zugang vor Realversuch prüfen"
-        option.technology_constraints = "Keine automatische verbindliche Kundenzusage"
-        option.risks = "Adoption, fehlerhafte Zuordnung und Betriebskosten unbekannt"
-        option.outcome_effect = "Kapazität für verlässliche Betreuung könnte steigen"
-        option.effort_assessment = (
-            "Einführung, Quellenpflege und Schulung; bei KI Betrieb "
-            "und menschliche Einzelprüfung; Kosten noch offen"
-        )
-        option.save()
-    selected = process.solution_options.get(
-        option_type="organizational" if case == "B" else "assistant"
-    )
-    response = client.post(
-        reverse("architecture:solution_option_compare", args=[process.pk]),
-        {
-            "selected_option": selected.pk,
-            "process_version": process.version,
-            "confirmed_causes": process.cause_hypotheses,
-            "rationale": "Verbindlichkeit direkt organisatorisch klären; Adoption offen"
-            if case == "B"
-            else "Freie Formulierungen begrenzt assistieren; Prüfaufwand akzeptiert",
-            "difference_reason": "Verantwortlichkeit an der Quelle ändern gegenüber "
-            "Aufbereitung freier Formulierungen; Mensch bleibt verantwortlich",
-            "uncertainty_reason": "Globale Screeningfragen bei Strategie offen; "
-            "Adoption, Kosten und Geschäftswirkung sind nicht gemessen",
-            "diagnosis_basis": "assumption",
-            "diagnosis_note": "Synthetische fachliche Hypothese; kein empirischer Ursachenbeweis",
-        },
-    )
-    assert response.status_code == 302, response.context["form"].errors
-    process.refresh_from_db()
-    decision = process.solution_selection_decisions.get()
-    assert not decision.outcome_review_required
-    assert UseCase.objects.count() == (1 if case == "A" else 0)
-    network.assert_not_called()
-
-
 @pytest.mark.parametrize("invalid", ["mode", "module", "debug", "database", "host"])
 def test_isolation_fails_closed_even_with_mode_flag(invalid):
     databases = copy.deepcopy(settings.DATABASES)
@@ -357,48 +238,98 @@ def test_solo_routes_absent_in_normal_application(client):
     assert client.get("/solo/").status_code == 404
 
 
-@pytest.mark.parametrize("changed", ["input", "extra-source", "scope", "verifier"])
-def test_offline_rejects_changed_packets_and_foreign_verification(solo, monkeypatch, changed):
-    network = Mock(side_effect=AssertionError("No network allowed"))
-    monkeypatch.setattr("ki_radar.core.openrouter.urllib.request.urlopen", network)
-    document = {
-        **{key: PACKETS["B"][key] for key in ("problem_statement", "business_context")},
-        "sources": [{"content": source_text("B")}],
-        "human_scope": dict(SCOPE),
-    }
-    name = "autonomous_business_discovery_v3"
-    if changed == "input":
-        document["problem_statement"] = "Unrelated input"
-    elif changed == "extra-source":
-        document["sources"].append({"content": "Foreign source"})
-    elif changed == "scope":
-        document["human_scope"]["scope_start"] = "Other start"
-    else:
-        payload = draft("B", "ap1-discovery-v3", dict(SCOPE))
-        payload["process_analysis"]["baseline_metrics"] = "Invented measurement"
-        document = {"input": document, "draft": payload}
-        name = "autonomous_business_discovery_verifier_v2"
-    response_format = {
-        "json_schema": {
-            "name": name,
-            "schema": {
-                "properties": {"schema_version": {"enum": ["ap1-discovery-v3"]}},
-            },
+@pytest.mark.parametrize("solo_mode", [False, True])
+def test_solo_uses_the_same_configured_model_transport(monkeypatch, solo_mode):
+    payload = json.dumps(
+        {
+            "model": "configured/model",
+            "choices": [
+                {
+                    "message": {"content": "transport response"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
         }
-    }
-    with pytest.raises(OpenRouterUnavailable):
-        request_openrouter(
-            messages=[{"content": json.dumps(document)}],
-            max_tokens=10,
-            timeout_seconds=1,
-            response_format=response_format,
-        )
-    network.assert_not_called()
-
-
-def test_mode_flag_alone_never_enables_offline_transport(monkeypatch):
-    network = Mock(side_effect=AssertionError("No network allowed"))
+    ).encode()
+    network = Mock(side_effect=lambda *args, **kwargs: io.BytesIO(payload))
     monkeypatch.setattr("ki_radar.core.openrouter.urllib.request.urlopen", network)
-    with override_settings(SOLO_TEST_MODE=True), pytest.raises(PermissionDenied):
-        request_openrouter(messages=[], max_tokens=10, timeout_seconds=1)
-    network.assert_not_called()
+    with override_settings(
+        SOLO_TEST_MODE=solo_mode,
+        OPENROUTER_API_KEY="configured-test-key",
+        OPENROUTER_MODEL="configured/model",
+        OPENROUTER_API_URL="https://example.invalid/api",
+    ):
+        result = request_openrouter(
+            messages=[{"role": "user", "content": "arbitrary synthetic context"}],
+            max_tokens=100,
+            timeout_seconds=5,
+            response_format={"type": "json_schema", "json_schema": {"name": "ordinary-schema"}},
+            provider={"require_parameters": True},
+        )
+    assert result.model == "configured/model" and result.content == "transport response"
+    request = network.call_args.args[0]
+    assert request.full_url == "https://example.invalid/api"
+    body = json.loads(request.data)
+    assert body["model"] == "configured/model"
+    assert body["response_format"]["json_schema"]["name"] == "ordinary-schema"
+    assert body["provider"]["require_parameters"]
+
+
+@pytest.mark.parametrize("strategic", [False, True])
+def test_own_scenario_enters_normal_discovery_without_solo_response(
+    solo, client, monkeypatch, strategic
+):
+    actor = switch(client, "owner")
+    analysis = Mock(return_value=None)
+    monkeypatch.setattr("ki_radar.accelerator.architect_views._run_analysis", analysis)
+    url = reverse("accelerator:autonomous_discovery_start")
+    data = {
+        "business_unit": actor.business_unit_id,
+        "problem_statement": "Synthetische Laboraufträge bis zur freigegebenen Befundauskunft",
+        "business_context": (
+            "Eigener Testkontext; keine Baseline und keine reale Patienteninformation"
+        ),
+        "sources": SimpleUploadedFile("eigene-quelle.md", b"Synthetic laboratory process context"),
+    }
+    if strategic:
+        data.update(
+            strategic="1",
+            scope_start="Auftragseingang",
+            scope_end="Freigegebene Auskunft",
+            reason="Begrenztes Lernziel",
+            validation_step="Testquellen mit Verantwortlichen prüfen",
+        )
+    assert client.post(url, data).status_code == 302
+    session = CaptureSession.objects.get()
+    assert session.answers["problem_statement"] == data["problem_statement"]
+    assert session.catalog_version == ("3.0" if strategic else "2.0")
+    analysis.assert_called_once()
+    assert not CaptureAnalysis.objects.exists()
+    assert not ProcessAnalysis.objects.exists()
+    page = client.get("/solo/")
+    assert reverse("accelerator:autonomous_discovery_start") in page.content.decode()
+    assert "Offline-Testentwürfe" not in page.content.decode()
+    assert client.post("/solo/discovery/A/").status_code == 404
+
+
+def test_old_fixed_outputs_remain_visible_but_are_not_current_quality_evidence(
+    solo, client, tmp_path
+):
+    actor = switch(client, "owner")
+    session, snapshot = _session_and_snapshot(owner=actor, tmp_path=tmp_path)
+    analysis = _approved_analysis(session=session, snapshot=snapshot)
+    analysis.model_name = "solo/offline-fixture-v1"
+    analysis.save(update_fields=["model_name"])
+    original = copy.deepcopy((analysis.result_payload, analysis.verification_payload))
+    url = reverse("accelerator:autonomous_discovery_review", args=[session.pk])
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "Historischer fester Solo-Testentwurf" in response.content.decode()
+    assert not response.context["can_confirm"]
+    assert client.post(
+        url, {"action": "confirm", "selected_stage_key": "compare", "revision": session.revision}
+    ).status_code in {200, 302}
+    assert not ProcessAnalysis.objects.exists()
+    analysis.refresh_from_db()
+    assert (analysis.result_payload, analysis.verification_payload) == original

@@ -12,16 +12,13 @@
   </select>
   <button class="btn btn-primary mt-2" type="submit">Identität wechseln</button>
 </form>
-<h2 class="mt-4">Drei synthetische Fälle</h2>
-<p>A und B starten eine neue Discovery mit eingefrorenem Quellenpaket. Klicke dort selbst auf Analyse und prüfe den gekennzeichneten Testentwurf. Änderungen außerhalb dieses festen Pakets werden offline abgelehnt. Nach der Materialisierung kannst du die Prozessanalyse und Alternativen manuell bearbeiten.</p>
-<p>Die weiterführende KI-Untersuchung und sonstige Generatoren sind offline nicht verfügbar. Sie melden einen Testmodus-Blocker; es gibt keinen Aufruf eines echten Modells. Keine Entscheidungen, Freigaben oder Messwerte sind vorgegeben. #161 bleibt zurückgestellt.</p>
-{% for key, packet in packets.items %}
-<section class="mt-3">
-  <h3>{{ key }} · {{ packet.title }}</h3>
-  <p>{{ packet.problem_statement }}</p>
-  <p>{{ packet.business_context }}</p>
-  {% if user.username == 'solo_owner' %}<form method="post" action="{% url 'solo:discovery' key %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit">{{ key }}: Neue Discovery mit Testquellen</button></form>{% else %}<p>Zum Start die Identität Business Owner wählen.</p>{% endif %}
-</section>
-{% endfor %}
-<section class="mt-3"><h3>C · Direkte interne Wissenssuche</h3><p>Ein synthetischer Servicebereich möchte freigegebene interne Regeln mit Originalfundstelle finden. Nur öffentliche Testtexte, keine personenbezogenen Daten; der Mensch prüft Quelle und Gültigkeit. Geschäftsziel, Beitrag und Messabsicht selbst formulieren; Wirkung und Kosten sind unbekannt.</p><a class="btn btn-outline-primary" href="{% url 'use_cases:create' %}">Direkten Use Case selbst erfassen</a></section>
+<h2 class="mt-4">Eigene Geschäftsszenarien testen</h2>
+<p>Diese Einstiege führen in die reguläre Anwendung. Beschreibe dein eigenes synthetisches Szenario und lade passende Testquellen hoch. Wertströme, Phasen, Fokusvorschläge und weitere KI-Ergebnisse entstehen über die konfigurierte Modellanbindung und die bestehenden Prüfungen. Modellaufrufe können Kosten verursachen.</p>
+<p>Prüfe Quellenbezug, fachliche Ergebnisqualität, Grenzen und offene Fragen selbst. Es werden keine Antworten, positiven Prüfungen oder Entscheidungen vorgegeben. Bestehende Testdaten bleiben erhalten. #161 bleibt unverändert und zurückgestellt.</p>
+<ul>
+  <li><a href="{% url 'accelerator:autonomous_discovery_start' %}">A · Eigenes Geschäftsproblem untersuchen</a></li>
+  <li><a href="{% url 'accelerator:autonomous_discovery_start' %}?strategic=1">B · Eigenes strategisches Ziel untersuchen</a></li>
+  <li><a href="{% url 'use_cases:create' %}">C · Eigenen direkten Use Case erfassen</a></li>
+</ul>
+<p>Zum Start Business Owner wählen. Vorhandene Entwürfe und Ergebnisse findest du im <a href="{% url 'reporting:dashboard' %}">Arbeitsvorrat</a> und unter <a href="{% url 'accelerator:capture_list' %}">Meine Erfassungen</a>. Frühere feste Offline-Entwürfe sind keine KI-Qualitätsnachweise; starte für deine Bewertung eine neue Untersuchung mit eigenen Testquellen.</p>
 {% endblock %}
