@@ -108,7 +108,8 @@ def test_switch_does_not_remove_independent_approval_gate(solo, client):
             "impact_hypothesis": "Weniger Suchaufwand könnte Kapazität bei korrekten "
             "Auskünften schaffen",
             "outcome_owner": "Serviceleitung",
-            "evaluation_criteria": "Anfragevolumen und Quellenrichtigkeit getrennt von Suchzeit prüfen",
+            "evaluation_criteria": "Anfragevolumen und Quellenrichtigkeit getrennt "
+            "von Suchzeit prüfen",
             "measurement_unknowns": "Messdesign, Baseline und Zielwerte vor Versuch klären",
         },
     )
