@@ -82,6 +82,39 @@ def test_actual_identity_switch_preserves_rights_and_master_is_not_domain_actor(
     assert client.get("/solo/switch/").status_code == 405
 
 
+def test_intake_draft_returns_only_to_its_own_identity(solo, client):
+    owner = switch(client, "owner")
+    assert (
+        client.post(
+            reverse("use_cases:create"),
+            {
+                "title": "SOLO-C-Entwurf",
+                "business_unit": owner.business_unit_id,
+                "business_owner": owner.pk,
+                "problem_statement": "Synthetische interne Regelsuche",
+            },
+        ).status_code
+        == 302
+    )
+    assert client.session["use_case_intake"]["title"] == "SOLO-C-Entwurf"
+    switch(client, "reader")
+    assert "use_case_intake" not in client.session
+    switch(client, "coordination")
+    assert "use_case_intake" not in client.session
+    switch(client, "owner")
+    assert client.session["use_case_intake"]["title"] == "SOLO-C-Entwurf"
+    page = client.get(reverse("use_cases:create"))
+    assert page.status_code == 200
+    assert "SOLO-C-Entwurf" in page.content.decode()
+    # Clearing the current intake must not resurrect an older cached version.
+    session = client.session
+    session.pop("use_case_intake")
+    session.save()
+    switch(client, "master")
+    switch(client, "owner")
+    assert "use_case_intake" not in client.session
+
+
 def test_switch_does_not_remove_independent_approval_gate(solo, client):
     owner = switch(client, "owner")
     coordinator = get_user_model().objects.get(username="solo_coordination")

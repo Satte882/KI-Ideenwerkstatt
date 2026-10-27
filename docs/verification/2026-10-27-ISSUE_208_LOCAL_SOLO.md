@@ -60,6 +60,14 @@ Alle Tabs desselben Browsers verwenden dieselbe aktuelle Identität. Nach einem
 Wechsel andere Tabs neu laden; alte Formulare können wegen rotierendem CSRF-Token
 abgelehnt werden. Für den Solo-Test möglichst einen Tab verwenden.
 
+Die zwei vorhandenen Sitzungsfelder des direkten Intakes werden beim Wechsel
+getrennt je Benutzer erhalten und nur beim Zurückwechseln in diese Identität
+wiederhergestellt. So geht ein begonnener C-Entwurf beim normalen Loginwechsel
+nicht verloren und erscheint nicht bei einer anderen Rolle. Authentifizierung,
+CSRF und sonstige Sitzungsdaten werden nicht rollenübergreifend übernommen.
+Dies ist keine neue serverübergreifende Entwurfsablage und kein V2-/Folgetag-
+Nachweis für #161; bei Abmeldung oder abgelaufener Masterberechtigung endet die Sitzung.
+
 ## Drei Fälle selbst durchspielen
 
 1. **A – problemgetriebene Kundenbetreuung:** Business Owner wählen, auf der Solo-Seite
@@ -115,10 +123,12 @@ eigenen Solo-Datenbank die normale aktive Katalogklasse, die Discovery benötigt
 
 ## Technische Verifikation
 
-22 neue PostgreSQL-Fälle: tatsächliche Identitäten und Gruppen, Master-Schreibsperre,
+23 neue PostgreSQL-Fälle: tatsächliche Identitäten und Gruppen, Master-Schreibsperre,
 Rollenrechte und unabhängige Freigabe, ungültige/abgelaufene Berechtigung, Passwort-
 und Rollenänderung, Abmeldung, POST/CSRF, nichtlokale/ anonyme Requests,
 idempotente Vorbereitung, Isolation und fehlende Routen im normalen Betrieb.
+Ein über die echte Intake-Route gespeicherter Entwurf überlebt den Rollenwechsel
+und ist ausschließlich bei seiner ursprünglichen Identität wieder verfügbar.
 A/B laufen über reale Discovery-, Analyse-, Materialisierungs- und Auswahlrouten;
 eine Netzwerksperre im Test beweist, dass kein echter Provider aufgerufen wird.
 Danach aktueller A-KI-Handoff und B-Non-KI-Auswahl ohne erfundene Baseline/Ursache.
@@ -128,7 +138,9 @@ Der C-Fall prüft die neue Outcome-Kohorte: ohne Zuordnung keine Freigabe,
 danach weiterhin keine Selbstfreigabe durch den Bewerter, schließlich positive
 Entscheidung unter der getrennten Prüferidentität. Abschließend erneut bestanden.
 
-Gemeinsam mit den Regressionen zu #166, #183/#198 und #189/#202: **77 bestanden**.
+Gemeinsam mit den Regressionen zu #166, #183/#198 und #189/#202:
+**78 bestanden** auf PostgreSQL, keine übersprungen. Ergebnis der vollständigen
+CI ist im PR dem geprüften Commit zugeordnet.
 Lockfile, Lint/Format, Django-System-/Migrationsprüfung und Bandit sowie die
 vollständige PostgreSQL-CI werden im PR dem jeweils geprüften Commit zugeordnet.
 Browserkontrolle prüft echte lokale Anmeldung, Rollenwechsel, synthetische Discovery

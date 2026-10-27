@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 MASTER = "solo_master"
 UNIT = "[SOLO] Synthetischer Test-Service"
 GRANT = "solo_master_grant"
+DRAFTS = "solo_identity_drafts"
 ROLES = {
     "owner": ("solo_owner", "Business Owner", GROUP_BUSINESS_OWNER),
     "coordination": ("solo_coordination", "KI-Koordination", GROUP_COORDINATOR),
@@ -81,6 +82,8 @@ def valid_target(target, group):
 
 
 def switch_identity(request, role):
+    from ki_radar.use_cases.intake_views import IDEA_CANDIDATE_SESSION_KEY, SESSION_KEY
+
     master = master_for(request)
     if role == "master":
         target = master
@@ -93,8 +96,20 @@ def switch_identity(request, role):
             raise PermissionDenied("Testidentität wurde verändert; Einrichtung prüfen.")
     grant = request.session[GRANT]
     previous = request.user.pk
+    # Django correctly flushes session state when the authenticated user changes.
+    # Retain only the existing intake's two data keys, separately for each user;
+    # never transfer auth, CSRF, messages or another identity's active draft.
+    drafts = request.session.get(DRAFTS, {})
+    drafts[str(previous)] = {
+        key: request.session[key]
+        for key in (SESSION_KEY, IDEA_CANDIDATE_SESSION_KEY)
+        if key in request.session
+    }
     login(request, target, backend="django.contrib.auth.backends.ModelBackend")
     request.session[GRANT] = grant
+    request.session[DRAFTS] = drafts
+    for key, value in drafts.get(str(target.pk), {}).items():
+        request.session[key] = value
     logger.info(
         "solo_identity_switch master=%s previous=%s effective=%s", master.pk, previous, target.pk
     )
