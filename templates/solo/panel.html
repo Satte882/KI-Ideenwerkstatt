@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Lokaler Solo-Praxistest{% endblock %}
+{% block content %}
+<h1>Lokaler Solo-Praxistest</h1>
+<p>Du bedienst getrennte Testkonten. Fachrechte und Freigabesperren bleiben erhalten. Der Master verwaltet den Wechsel; Fachaktionen erfolgen unter der gewählten Identität.</p>
+<form method="post" action="{% url 'solo:switch' %}">
+  {% csrf_token %}
+  <label for="solo-role">Testidentität</label>
+  <select id="solo-role" name="role" class="form-select">
+    <option value="master" {% if active_role == 'master' %}selected{% endif %}>Master · nur Testverwaltung</option>
+    {% for key, role in roles.items %}<option value="{{ key }}" {% if active_role == key %}selected{% endif %}>{{ role.1 }} · {{ role.0 }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-primary mt-2" type="submit">Identität wechseln</button>
+</form>
+<h2 class="mt-4">Drei synthetische Fälle</h2>
+<p>A und B starten eine neue Discovery mit eingefrorenem Quellenpaket. Klicke dort selbst auf Analyse und prüfe den gekennzeichneten Testentwurf. Änderungen außerhalb dieses festen Pakets werden offline abgelehnt. Nach der Materialisierung kannst du die Prozessanalyse und Alternativen manuell bearbeiten.</p>
+<p>Die weiterführende KI-Untersuchung und sonstige Generatoren sind offline nicht verfügbar. Sie melden einen Testmodus-Blocker; es gibt keinen Aufruf eines echten Modells. Keine Entscheidungen, Freigaben oder Messwerte sind vorgegeben. #161 bleibt zurückgestellt.</p>
+{% for key, packet in packets.items %}
+<section class="mt-3">
+  <h3>{{ key }} · {{ packet.title }}</h3>
+  <p>{{ packet.problem_statement }}</p>
+  <p>{{ packet.business_context }}</p>
+  {% if user.username == 'solo_owner' %}<form method="post" action="{% url 'solo:discovery' key %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit">{{ key }}: Neue Discovery mit Testquellen</button></form>{% else %}<p>Zum Start die Identität Business Owner wählen.</p>{% endif %}
+</section>
+{% endfor %}
+<section class="mt-3"><h3>C · Direkte interne Wissenssuche</h3><p>Ein synthetischer Servicebereich möchte freigegebene interne Regeln mit Originalfundstelle finden. Nur öffentliche Testtexte, keine personenbezogenen Daten; der Mensch prüft Quelle und Gültigkeit. Geschäftsziel, Beitrag und Messabsicht selbst formulieren; Wirkung und Kosten sind unbekannt.</p><a class="btn btn-outline-primary" href="{% url 'use_cases:create' %}">Direkten Use Case selbst erfassen</a></section>
+{% endblock %}

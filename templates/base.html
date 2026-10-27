@@ -136,6 +136,13 @@
 <main class="login-shell">
 {% endif %}
       {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} shadow-sm">{{ message }}</div>{% endfor %}
+      {% if solo_mode %}
+      <div class="alert alert-warning" role="status">
+        <strong>Lokaler Solo-Test · Offline-Testentwürfe</strong>
+        {% if user.is_authenticated %}Aktive Identität: {{ user.username }} · <a href="{% url 'solo:panel' %}">Testrolle wechseln / Testfälle</a>{% endif %}
+        <span>Keine unabhängigen Personen, Modellleistung oder Geschäftswirkung nachgewiesen.</span>
+      </div>
+      {% endif %}
       {% if user.is_authenticated %}{% context_navigation %}{% endif %}
       {% block content %}{% endblock %}
       {% if user.is_authenticated and journey and request.resolver_match.namespace == 'architecture' %}
