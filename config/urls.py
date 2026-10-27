@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -26,3 +27,9 @@ urlpatterns = [
     path("health/ready", health.readiness, name="health-ready"),
     path("health/operations", health.operational_health, name="health-operations"),
 ]
+
+if (
+    getattr(settings, "SOLO_TEST_MODE", False)
+    and settings.SETTINGS_MODULE == "config.settings.solo"
+):
+    urlpatterns += [path("solo/", include("ki_radar.solo.urls"))]

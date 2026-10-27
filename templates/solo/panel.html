@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Lokaler Solo-Praxistest{% endblock %}
+{% block content %}
+<h1>Lokaler Solo-Praxistest</h1>
+<p>Du bedienst getrennte Testkonten. Fachrechte und Freigabesperren bleiben erhalten. Der Master verwaltet den Wechsel; Fachaktionen erfolgen unter der gewählten Identität.</p>
+<form method="post" action="{% url 'solo:switch' %}">
+  {% csrf_token %}
+  <label for="solo-role">Testidentität</label>
+  <select id="solo-role" name="role" class="form-select">
+    <option value="master" {% if active_role == 'master' %}selected{% endif %}>Master · nur Testverwaltung</option>
+    {% for key, role in roles.items %}<option value="{{ key }}" {% if active_role == key %}selected{% endif %}>{{ role.1 }} · {{ role.0 }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-primary mt-2" type="submit">Identität wechseln</button>
+</form>
+<h2 class="mt-4">Eigene Geschäftsszenarien testen</h2>
+<p>Diese Einstiege führen in die reguläre Anwendung. Beschreibe dein eigenes synthetisches Szenario und lade passende Testquellen hoch. Wertströme, Phasen, Fokusvorschläge und weitere KI-Ergebnisse entstehen über die konfigurierte Modellanbindung und die bestehenden Prüfungen. Modellaufrufe können Kosten verursachen.</p>
+<p>Prüfe Quellenbezug, fachliche Ergebnisqualität, Grenzen und offene Fragen selbst. Es werden keine Antworten, positiven Prüfungen oder Entscheidungen vorgegeben. Bestehende Testdaten bleiben erhalten. #161 bleibt unverändert und zurückgestellt.</p>
+<ul>
+  <li><a href="{% url 'accelerator:autonomous_discovery_start' %}">A · Eigenes Geschäftsproblem untersuchen</a></li>
+  <li><a href="{% url 'accelerator:autonomous_discovery_start' %}?strategic=1">B · Eigenes strategisches Ziel untersuchen</a></li>
+  <li><a href="{% url 'use_cases:create' %}">C · Eigenen direkten Use Case erfassen</a></li>
+</ul>
+<p>Zum Start Business Owner wählen. Vorhandene Entwürfe und Ergebnisse findest du im <a href="{% url 'reporting:dashboard' %}">Arbeitsvorrat</a> und unter <a href="{% url 'accelerator:capture_list' %}">Meine Erfassungen</a>. Frühere feste Offline-Entwürfe sind keine KI-Qualitätsnachweise; starte für deine Bewertung eine neue Untersuchung mit eigenen Testquellen.</p>
+{% endblock %}
